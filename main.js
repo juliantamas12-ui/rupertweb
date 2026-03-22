@@ -1,0 +1,253 @@
+/* ═══════════════════════════════════════════════════════════
+   RUPERT WEB — main.js
+   All data lives here. Edit the arrays below to update the
+   dashboard. No framework, no build step.
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Clock ─────────────────────────────────────────────────── */
+function updateClock() {
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2, '0');
+  const mm = String(now.getMinutes()).padStart(2, '0');
+  const ss = String(now.getSeconds()).padStart(2, '0');
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('clock').textContent = `${hh}:${mm}:${ss}`;
+  document.getElementById('date').textContent =
+    `${days[now.getDay()]} ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+
+/* ══════════════════════════════════════════════════════════════
+   DATA — ESSAYS
+   Add objects to this array to add essay cards.
+   Fields: title, date (YYYY-MM-DD), category, excerpt
+   Categories: 'History' | 'Geopolitics' | 'Philosophy' | 'Politics'
+   ══════════════════════════════════════════════════════════════ */
+const ESSAYS = [
+  {
+    title: "The Ottoman Collapse and the Birth of the Modern Middle East",
+    date: "2025-11-14",
+    category: "History",
+    excerpt: "How the dissolution of a six-century empire created borders that were never meant to last, and why the consequences are still unfolding a hundred years later."
+  },
+  {
+    title: "Realism vs. Liberalism: Why Neither Theory Survives Contact with Ukraine",
+    date: "2025-12-03",
+    category: "Geopolitics",
+    excerpt: "The war in Ukraine has broken both the realist and liberal internationalist frameworks that dominated post-Cold War strategic thinking. What comes next is unclear."
+  },
+  {
+    title: "On the Impossibility of Pure Objectivity",
+    date: "2026-01-09",
+    category: "Philosophy",
+    excerpt: "Every observer is embedded in a context. The pretense of a view from nowhere is not neutrality — it is a specific position dressed up as the absence of one."
+  },
+  {
+    title: "Populism Is Not an Aberration",
+    date: "2026-02-22",
+    category: "Politics",
+    excerpt: "Treating populist movements as temporary derangements misses the structural conditions that produce them. The institutions that fail people do not deserve unconditional loyalty."
+  },
+  {
+    title: "The Roman Empire Did Not Fall — It Transformed",
+    date: "2026-03-10",
+    category: "History",
+    excerpt: "The 476 AD date is a historiographical fiction. Decline was centuries-long, uneven, and partially self-imposed. The Eastern half survived for another millennium."
+  },
+];
+
+
+/* ══════════════════════════════════════════════════════════════
+   DATA — SCHOOL (ManageBac)
+   Add objects to this array to add tasks.
+   Fields: subject, title, due (YYYY-MM-DD), status ('pending'|'done')
+   ══════════════════════════════════════════════════════════════ */
+const SCHOOL_TASKS = [
+  // Last updated: 2026-03-22 via ManageBac scraper
+  { subject: "Math 8", title: "Apothem Exercises", due: "2026-03-23", time: "8:30 AM", status: "pending", type: "Homework" },
+  { subject: "English 7", title: "Eng 7 hw", due: "2026-03-23", time: "9:00 AM", status: "pending", type: "Deadline" },
+  { subject: "Science 7", title: "Classwork Science 7", due: "2026-03-23", time: "10:30 AM", status: "pending", type: "Class work" },
+  { subject: "Science 7", title: "HW Science 7", due: "2026-03-23", time: "11:35 AM", status: "pending", type: "Homework" },
+  { subject: "General Music 7", title: "Classical period worksheet", due: "2026-03-23", time: "12:45 PM", status: "done", type: "Classwork" },
+];
+
+
+/* ══════════════════════════════════════════════════════════════
+   DATA — STEAM
+   Will be populated via Steam API later.
+   Edit these fields manually in the meantime.
+   ══════════════════════════════════════════════════════════════ */
+const STEAM = {
+  profile: "MrWhale12",
+  totalGames: 49,
+  mostPlayed: "Sea of Thieves (2221h)",
+  hoursThisWeek: 46,         // Wallpaper Engine 24h + Overwatch 22h past 2 weeks
+  lastUpdated: "2026-03-22",
+};
+
+
+/* ══════════════════════════════════════════════════════════════
+   DATA — PROJECTS
+   Add objects to this array to add project cards.
+   Fields: name, url (optional), desc, tags (array of strings)
+   ══════════════════════════════════════════════════════════════ */
+const PROJECTS = [
+  {
+    name: "Rupert Web",
+    url: "https://rupertweb.com",
+    desc: "Personal command center and life dashboard. The page you are currently looking at.",
+    tags: ["HTML", "CSS", "JS", "Cloudflare"]
+  },
+];
+
+
+/* ══════════════════════════════════════════════════════════════
+   DATA — LIFE STATS
+   Add objects to this array for custom counters.
+   Fields: label, value (string|number), unit (optional string)
+   ══════════════════════════════════════════════════════════════ */
+const LIFE_STATS = [
+  { label: "Games on Steam", value: 49, unit: "games" },
+  { label: "Hours in Sea of Thieves", value: 2221, unit: "h" },
+  { label: "Projects shipped", value: 1, unit: "live" },
+];
+
+
+/* ═══════════════════════════════════════════════════════════
+   RENDER FUNCTIONS — do not edit unless changing structure
+   ═══════════════════════════════════════════════════════════ */
+
+/* Helper */
+const el = (tag, cls, html) => {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (html !== undefined) e.innerHTML = html;
+  return e;
+};
+
+const fmtDate = (str) => {
+  if (!str) return '';
+  const d = new Date(str + 'T00:00:00');
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+};
+
+/* Essays */
+function renderEssays() {
+  const grid = document.getElementById('essays-grid');
+  if (!grid) return;
+  const sorted = [...ESSAYS].sort((a, b) => b.date.localeCompare(a.date));
+  sorted.forEach(essay => {
+    const tagKey = essay.category.toLowerCase().replace(/\s+/g, '');
+    const card = el('div', 'essay-card');
+    card.innerHTML = `
+      <div class="essay-card__meta">
+        <span class="essay-card__tag tag--${tagKey}">${essay.category}</span>
+        <span class="essay-card__date">${fmtDate(essay.date)}</span>
+      </div>
+      <div class="essay-card__title">${essay.title}</div>
+      <div class="essay-card__excerpt">${essay.excerpt}</div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+/* School */
+function renderSchool() {
+  const list = document.getElementById('school-list');
+  if (!list) return;
+  const sorted = [...SCHOOL_TASKS].sort((a, b) => {
+    if (a.status === b.status) return a.due.localeCompare(b.due);
+    return a.status === 'done' ? 1 : -1;
+  });
+  sorted.forEach(task => {
+    const row = el('div', `task-row${task.status === 'done' ? ' done' : ''}`);
+    row.innerHTML = `
+      <span class="task-subject">${task.subject}</span>
+      <span class="task-title">${task.title}</span>
+      <span class="task-due">${fmtDate(task.due)}</span>
+      <span class="task-status task-status--${task.status}">${task.status}</span>
+    `;
+    list.appendChild(row);
+  });
+}
+
+/* Steam */
+function renderSteam() {
+  const container = document.getElementById('steam-stats');
+  if (!container) return;
+
+  const stats = [
+    {
+      label: "Games Owned",
+      value: STEAM.totalGames !== null ? STEAM.totalGames.toLocaleString() : null,
+      note: `@${STEAM.profile}`
+    },
+    {
+      label: "Most Played",
+      value: STEAM.mostPlayed || null,
+      note: "all time"
+    },
+    {
+      label: "Hours This Week",
+      value: STEAM.hoursThisWeek !== null ? `${STEAM.hoursThisWeek}h` : null,
+      note: "last 7 days"
+    },
+  ];
+
+  stats.forEach(s => {
+    const stat = el('div', 'steam-stat');
+    const isPlaceholder = s.value === null;
+    stat.innerHTML = `
+      <span class="steam-stat__label">${s.label}</span>
+      <span class="steam-stat__value${isPlaceholder ? ' placeholder' : ''}">${isPlaceholder ? 'API pending' : s.value}</span>
+      <span class="steam-stat__note">${s.note}</span>
+    `;
+    container.appendChild(stat);
+  });
+}
+
+/* Projects */
+function renderProjects() {
+  const grid = document.getElementById('projects-grid');
+  if (!grid) return;
+  PROJECTS.forEach(project => {
+    const card = el('div', 'project-card');
+    const urlHtml = project.url
+      ? `<a class="project-card__url" href="${project.url}" target="_blank" rel="noopener">${project.url.replace(/^https?:\/\//, '')}</a>`
+      : '';
+    const tagsHtml = (project.tags || []).map(t => `<span class="project-tag">${t}</span>`).join('');
+    card.innerHTML = `
+      <div class="project-card__name">${project.name}</div>
+      ${urlHtml}
+      <div class="project-card__desc">${project.desc}</div>
+      <div class="project-card__tags">${tagsHtml}</div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+/* Life Stats */
+function renderLifeStats() {
+  const grid = document.getElementById('life-grid');
+  if (!grid) return;
+  LIFE_STATS.forEach(stat => {
+    const tile = el('div', 'life-stat');
+    tile.innerHTML = `
+      <span class="life-stat__label">${stat.label}</span>
+      <span class="life-stat__value">${stat.value}</span>
+      ${stat.unit ? `<span class="life-stat__unit">${stat.unit}</span>` : ''}
+    `;
+    grid.appendChild(tile);
+  });
+}
+
+/* Boot */
+renderEssays();
+renderSchool();
+renderSteam();
+renderProjects();
+renderLifeStats();
