@@ -28,34 +28,18 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
-    title: "The Ottoman Collapse and the Birth of the Modern Middle East",
-    date: "2025-11-14",
-    category: "History",
-    excerpt: "How the dissolution of a six-century empire created borders that were never meant to last, and why the consequences are still unfolding a hundred years later."
-  },
-  {
-    title: "Realism vs. Liberalism: Why Neither Theory Survives Contact with Ukraine",
-    date: "2025-12-03",
+    title: "The Melian Dialogue and the Lie at the Heart of International Order",
+    date: "2026-03-23",
     category: "Geopolitics",
-    excerpt: "The war in Ukraine has broken both the realist and liberal internationalist frameworks that dominated post-Cold War strategic thinking. What comes next is unclear."
+    excerpt: "In 416 BC Athens massacred the island of Melos and delivered the most honest speech in diplomatic history. The strong do what they can, the weak suffer what they must. Every UN resolution since is a response to this — and none have been adequate.",
+    url: "essays/2026-03-23-melian-dialogue.html"
   },
   {
-    title: "On the Impossibility of Pure Objectivity",
-    date: "2026-01-09",
-    category: "Philosophy",
-    excerpt: "Every observer is embedded in a context. The pretense of a view from nowhere is not neutrality — it is a specific position dressed up as the absence of one."
-  },
-  {
-    title: "Populism Is Not an Aberration",
-    date: "2026-02-22",
-    category: "Politics",
-    excerpt: "Treating populist movements as temporary derangements misses the structural conditions that produce them. The institutions that fail people do not deserve unconditional loyalty."
-  },
-  {
-    title: "The Roman Empire Did Not Fall — It Transformed",
-    date: "2026-03-10",
+    title: "The Man Who Understood Civilizations Before Anyone Else",
+    date: "2026-03-22",
     category: "History",
-    excerpt: "The 476 AD date is a historiographical fiction. Decline was centuries-long, uneven, and partially self-imposed. The Eastern half survived for another millennium."
+    excerpt: "Ibn Khaldun sat in a desert fortress in 14th-century Algeria and wrote the introduction to a history of the world. That introduction turned out to be more important than anything written in the five centuries since. Western intellectual tradition has largely ignored him. This is a mistake.",
+    url: null  // full text not recovered — available from next run onwards
   },
 ];
 
@@ -156,7 +140,7 @@ function renderEssays() {
   const sorted = [...ESSAYS].sort((a, b) => b.date.localeCompare(a.date));
   sorted.forEach(essay => {
     const tagKey = essay.category.toLowerCase().replace(/\s+/g, '');
-    const card = el('div', 'essay-card');
+    const card = el('div', 'essay-card' + (essay.url ? ' essay-card--linked' : ''));
     card.innerHTML = `
       <div class="essay-card__meta">
         <span class="essay-card__tag tag--${tagKey}">${essay.category}</span>
@@ -164,7 +148,12 @@ function renderEssays() {
       </div>
       <div class="essay-card__title">${essay.title}</div>
       <div class="essay-card__excerpt">${essay.excerpt}</div>
+      ${essay.url ? '<div class="essay-card__read">Read essay &rarr;</div>' : '<div class="essay-card__read essay-card__read--na">Full text not yet archived</div>'}
     `;
+    if (essay.url) {
+      card.style.cursor = 'pointer';
+      card.addEventListener('click', () => { window.location.href = essay.url; });
+    }
     grid.appendChild(card);
   });
 }

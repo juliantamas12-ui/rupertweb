@@ -426,3 +426,8 @@ body {
     grid-column: 1 / -1;
   }
 }
+
+/* Essay linked card */
+.essay-card--linked:hover { border-color: var(--accent); }
+.essay-card__read { font-family: 'Space Mono', monospace; font-size: 0.7rem; color: var(--accent); margin-top: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; }
+.essay-card__read--na { color: #555; }
