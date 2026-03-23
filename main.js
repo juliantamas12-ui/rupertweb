@@ -66,12 +66,26 @@ const ESSAYS = [
    Fields: subject, title, due (YYYY-MM-DD), status ('pending'|'done')
    ══════════════════════════════════════════════════════════════ */
 const SCHOOL_TASKS = [
-  // Last updated: 2026-03-22 via ManageBac scraper
+  // Last updated: 2026-03-23 via ManageBac scraper
+  // --- Today (Mon Mar 23) ---
   { subject: "Math 8", title: "Apothem Exercises", due: "2026-03-23", time: "8:30 AM", status: "pending", type: "Homework" },
   { subject: "English 7", title: "Eng 7 hw", due: "2026-03-23", time: "9:00 AM", status: "pending", type: "Deadline" },
   { subject: "Science 7", title: "Classwork Science 7", due: "2026-03-23", time: "10:30 AM", status: "pending", type: "Class work" },
   { subject: "Science 7", title: "HW Science 7", due: "2026-03-23", time: "11:35 AM", status: "pending", type: "Homework" },
   { subject: "General Music 7", title: "Classical period worksheet", due: "2026-03-23", time: "12:45 PM", status: "done", type: "Classwork" },
+  // --- Tomorrow (Tue Mar 24) ---
+  { subject: "Italian", title: "Test di GRAMMATICA (Futuro)", due: "2026-03-24", time: "All Day", status: "pending", type: "Test" },
+  { subject: "Ed. Technology 7", title: "Ed. Tech 7 - Locally sourced building materials", due: "2026-03-24", time: "8:30 AM", status: "pending", type: "Homework" },
+  { subject: "Rel Ed 7", title: "Jesus at the Temple and Passover Meal", due: "2026-03-24", time: "12:25 PM", status: "pending", type: "Homework" },
+  { subject: "General Music 7", title: "Ukulele Assessment", due: "2026-03-24", time: "1:35 PM", status: "pending", type: "Performance/Assessment" },
+  // --- Wed Mar 25 ---
+  { subject: "Math 7", title: "Math 7 (Formative)", due: "2026-03-25", time: "12:35 PM", status: "pending", type: "Formative" },
+  { subject: "History 7", title: "RENAISSANCE PRESENTATIONS FIRST GROUPS", due: "2026-03-25", time: "2:30 PM", status: "pending", type: "Presentation" },
+  // --- Thu Mar 26 ---
+  { subject: "English 7", title: "Eng 7 hw", due: "2026-03-26", time: "9:00 AM", status: "pending", type: "Deadline" },
+  // --- Fri Mar 27 ---
+  { subject: "History 7", title: "Age of Exploration Summative Assessment", due: "2026-03-27", time: "11:20 AM", status: "pending", type: "Summative" },
+  { subject: "History 7", title: "RENAISSANCE PRESENTATIONS SECOND GROUPS", due: "2026-03-27", time: "2:30 PM", status: "pending", type: "Presentation" },
 ];
 
 
