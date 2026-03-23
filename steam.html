@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Steam — MrWhale12 / Rupert Web</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0d0d0d;
+      --surface:  #141414;
+      --border:   #1f1f1f;
+      --accent:   #c8f135;
+      --text:     #e8e8e8;
+      --muted:    #666;
+      --dimmed:   #333;
+      --green:    #4ade80;
+      --yellow:   #facc15;
+      --grey:     #6b7280;
+      --red:      #f87171;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ────────────────────────────────── */
+    .site-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      z-index: 100;
+    }
+
+    .header-left { display: flex; align-items: center; gap: 10px; }
+
+    .site-title {
+      font-family: 'Space Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 0.12em;
+    }
+
+    .back-link {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 13px;
+      transition: color 0.15s;
+    }
+    .back-link:hover { color: var(--text); }
+
+    .header-sep { color: var(--dimmed); }
+
+    .page-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+    }
+
+    .header-right {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    /* ── LAYOUT ────────────────────────────────── */
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 20px 60px;
+    }
+
+    /* ── PROFILE BAR ───────────────────────────── */
+    .profile-bar {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      padding: 20px 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .profile-avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 4px;
+      border: 2px solid var(--border);
+      background: var(--dimmed);
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    .profile-info { flex: 1; min-width: 160px; }
+
+    .profile-name {
+      font-family: 'Space Mono', monospace;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 0.04em;
+      margin-bottom: 4px;
+    }
+
+    .profile-meta {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .stat-blocks {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .stat-block {
+      text-align: center;
+      padding: 10px 20px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      min-width: 90px;
+    }
+
+    .stat-block .val {
+      font-family: 'Space Mono', monospace;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--accent);
+      display: block;
+    }
+
+    .stat-block .lbl {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    /* ── SECTIONS ──────────────────────────────── */
+    .section { margin-bottom: 32px; }
+
+    .section-header {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-title {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      color: var(--accent);
+      text-transform: uppercase;
+    }
+
+    .section-sub {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* ── RECENT PLAYS ──────────────────────────── */
+    .recent-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+    }
+
+    .recent-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 12px 14px;
+      transition: border-color 0.15s;
+    }
+    .recent-card:hover { border-color: var(--accent); }
+
+    .recent-name {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .recent-bar-wrap {
+      background: var(--dimmed);
+      border-radius: 2px;
+      height: 3px;
+      margin-bottom: 5px;
+      overflow: hidden;
+    }
+
+    .recent-bar {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 2px;
+    }
+
+    .recent-hours {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      color: var(--accent);
+    }
+
+    /* ── LIBRARY ───────────────────────────────── */
+    .library-controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .search-box {
+      flex: 1;
+      min-width: 180px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 7px 12px;
+      color: var(--text);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .search-box::placeholder { color: var(--muted); }
+    .search-box:focus { border-color: var(--accent); }
+
+    .filter-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    .filter-btn {
+      padding: 6px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--muted);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .filter-btn:hover { border-color: var(--text); color: var(--text); }
+    .filter-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(200,241,53,0.06); }
+
+    .library-count {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 8px;
+      font-family: 'Space Mono', monospace;
+    }
+
+    .library-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .library-table th {
+      text-align: left;
+      padding: 6px 10px;
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .library-table td {
+      padding: 7px 10px;
+      border-bottom: 1px solid rgba(31,31,31,0.7);
+      vertical-align: middle;
+    }
+
+    .library-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+    .rank {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      color: var(--dimmed);
+      width: 32px;
+    }
+
+    .game-link {
+      color: var(--text);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      transition: color 0.15s;
+    }
+    .game-link:hover { color: var(--accent); }
+
+    .hours {
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .hours-bar-cell { width: 80px; }
+
+    .mini-bar-wrap {
+      background: var(--dimmed);
+      border-radius: 2px;
+      height: 3px;
+      overflow: hidden;
+    }
+    .mini-bar { height: 100%; background: var(--accent); border-radius: 2px; }
+
+    /* ── BADGES ─────────────────────────────────── */
+    .badge {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-family: 'Space Mono', monospace;
+      font-weight: 700;
+      white-space: nowrap;
+      letter-spacing: 0.03em;
+    }
+
+    .badge-overwhelmingly {
+      background: rgba(74,222,128,0.15);
+      color: var(--green);
+      border: 1px solid rgba(74,222,128,0.3);
+    }
+
+    .badge-very {
+      background: rgba(74,222,128,0.1);
+      color: #7dd3a8;
+      border: 1px solid rgba(74,222,128,0.2);
+    }
+
+    .badge-mostly {
+      background: rgba(250,204,21,0.1);
+      color: var(--yellow);
+      border: 1px solid rgba(250,204,21,0.25);
+    }
+
+    .badge-mixed {
+      background: rgba(107,114,128,0.15);
+      color: var(--grey);
+      border: 1px solid rgba(107,114,128,0.3);
+    }
+
+    .badge-none {
+      background: transparent;
+      color: var(--dimmed);
+      border: 1px solid var(--dimmed);
+    }
+
+    /* ── CURATED / RECS ────────────────────────── */
+    .curated-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 12px;
+    }
+
+    .curated-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 14px 16px;
+      transition: border-color 0.15s;
+    }
+    .curated-card:hover { border-color: var(--accent); }
+
+    .curated-name {
+      font-weight: 600;
+      font-size: 14px;
+      margin-bottom: 3px;
+    }
+    .curated-name a {
+      color: var(--text);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .curated-name a:hover { color: var(--accent); }
+
+    .curated-genre {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 6px;
+    }
+
+    .curated-desc {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    /* ── FOOTER ─────────────────────────────────── */
+    .page-footer {
+      text-align: center;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      color: var(--dimmed);
+    }
+
+    /* ── RESPONSIVE ─────────────────────────────── */
+    @media (max-width: 640px) {
+      .site-header { padding: 12px 16px; }
+      .page { padding: 20px 12px 48px; }
+      .profile-bar { padding: 16px; gap: 16px; }
+      .stat-blocks { gap: 10px; }
+      .stat-block { padding: 8px 14px; min-width: 78px; }
+      .library-table .hours-bar-cell { display: none; }
+      .curated-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="site-header">
+    <div class="header-left">
+      <a class="site-title" href="index.html">RUPERT WEB</a>
+      <span class="header-sep">/</span>
+      <span class="page-label">STEAM</span>
+    </div>
+    <div class="header-right">
+      <a class="back-link" href="index.html">back to dashboard</a>
+    </div>
+  </header>
+
+  <div class="page">
+
+    <!-- PROFILE BAR -->
+    <div class="profile-bar">
+      <img
+        class="profile-avatar"
+        src="https://avatars.steamstatic.com/fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb_full.jpg"
+        alt="MrWhale12 avatar"
+        onerror="this.style.background='#1f1f1f';this.removeAttribute('src')"
+      />
+      <div class="profile-info">
+        <div class="profile-name">MrWhale12</div>
+        <div class="profile-meta">Member since March 2020 &nbsp;·&nbsp; Steam ID: 76561199040427763</div>
+      </div>
+      <div class="stat-blocks">
+        <div class="stat-block">
+          <span class="val">49</span>
+          <span class="lbl">Games</span>
+        </div>
+        <div class="stat-block">
+          <span class="val">6,897</span>
+          <span class="lbl">Total Hours</span>
+        </div>
+        <div class="stat-block">
+          <span class="val">71h</span>
+          <span class="lbl">Last 2 Weeks</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- RECENT PLAYS -->
+    <section class="section" id="recent">
+      <div class="section-header">
+        <span class="section-title">Recent Activity</span>
+        <span class="section-sub">Last 2 weeks</span>
+      </div>
+      <div class="recent-grid">
+        <div class="recent-card">
+          <div class="recent-name">Wallpaper Engine</div>
+          <div class="recent-bar-wrap"><div class="recent-bar" style="width:100%"></div></div>
+          <div class="recent-hours">40h</div>
+        </div>
+        <div class="recent-card">
+          <div class="recent-name">Overwatch</div>
+          <div class="recent-bar-wrap"><div class="recent-bar" style="width:55%"></div></div>
+          <div class="recent-hours">22h</div>
+        </div>
+        <div class="recent-card">
+          <div class="recent-name">Crimson Desert</div>
+          <div class="recent-bar-wrap"><div class="recent-bar" style="width:20%"></div></div>
+          <div class="recent-hours">8h</div>
+        </div>
+        <div class="recent-card">
+          <div class="recent-name">Bodycam</div>
+          <div class="recent-bar-wrap"><div class="recent-bar" style="width:2%"></div></div>
+          <div class="recent-hours">&lt;1h</div>
+        </div>
+        <div class="recent-card">
+          <div class="recent-name">Sea of Thieves</div>
+          <div class="recent-bar-wrap"><div class="recent-bar" style="width:2%"></div></div>
+          <div class="recent-hours">&lt;1h</div>
+        </div>
+        <div class="recent-card">
+          <div class="recent-name">Red Dead Redemption 2</div>
+          <div class="recent-bar-wrap"><div class="recent-bar" style="width:2%"></div></div>
+          <div class="recent-hours">&lt;1h</div>
+        </div>
+        <div class="recent-card">
+          <div class="recent-name">Counter-Strike 2</div>
+          <div class="recent-bar-wrap"><div class="recent-bar" style="width:2%"></div></div>
+          <div class="recent-hours">&lt;1h</div>
+        </div>
+        <div class="recent-card">
+          <div class="recent-name">Grounded</div>
+          <div class="recent-bar-wrap"><div class="recent-bar" style="width:2%"></div></div>
+          <div class="recent-hours">&lt;1h</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FULL LIBRARY -->
+    <section class="section" id="library">
+      <div class="section-header">
+        <span class="section-title">Library</span>
+        <span class="section-sub">Sorted by playtime</span>
+      </div>
+
+      <div class="library-controls">
+        <input class="search-box" type="text" id="libSearch" placeholder="Search games..." autocomplete="off" />
+        <div class="filter-btns">
+          <button class="filter-btn active" data-filter="all">All</button>
+          <button class="filter-btn" data-filter="overwhelmingly">Overwhelmingly Positive</button>
+          <button class="filter-btn" data-filter="very">Very Positive</button>
+          <button class="filter-btn" data-filter="mostly">Mostly Positive</button>
+          <button class="filter-btn" data-filter="mixed">Mixed</button>
+          <button class="filter-btn" data-filter="none">No Score</button>
+        </div>
+      </div>
+
+      <div class="library-count" id="libCount">44 games</div>
+
+      <div style="overflow-x:auto;">
+        <table class="library-table" id="libTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Game</th>
+              <th>Score</th>
+              <th>Hours</th>
+              <th class="hours-bar-cell"></th>
+            </tr>
+          </thead>
+          <tbody id="libBody">
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- INDIE DISCOVERIES -->
+    <section class="section" id="discoveries">
+      <div class="section-header">
+        <span class="section-title">Indie Discoveries</span>
+        <span class="section-sub">Upcoming and recent — curated for your taste</span>
+      </div>
+      <div class="curated-grid">
+
+        <div class="curated-card">
+          <div class="curated-name"><a href="https://store.steampowered.com/app/1363080/Manor_Lords/" target="_blank" rel="noopener">Manor Lords</a></div>
+          <div class="curated-genre">City Builder / Grand Strategy</div>
+          <div class="curated-desc">A slow-burn medieval city builder where supply chains, terrain, and real battle tactics matter more than rushing to the end state.</div>
+        </div>
+
+        <div class="curated-card">
+          <div class="curated-name"><a href="https://store.steampowered.com/app/1203620/Enshrouded/" target="_blank" rel="noopener">Enshrouded</a></div>
+          <div class="curated-genre">Survival / Action RPG / Open World</div>
+          <div class="curated-desc">Voxel-based survival RPG with a massive open world, skill trees, and co-op base building inside a decaying fog-covered realm.</div>
+        </div>
+
+        <div class="curated-card">
+          <div class="curated-name"><a href="https://store.steampowered.com/app/1336490/Against_the_Storm/" target="_blank" rel="noopener">Against the Storm</a></div>
+          <div class="curated-genre">Roguelite / Strategy</div>
+          <div class="curated-desc">A roguelite city builder where you race against a world-ending storm, balancing resource chains and faction morale each run.</div>
+        </div>
+
+        <div class="curated-card">
+          <div class="curated-name"><a href="https://store.steampowered.com/app/1458150/Pacific_Drive/" target="_blank" rel="noopener">Pacific Drive</a></div>
+          <div class="curated-genre">Survival / Driving Roguelite</div>
+          <div class="curated-desc">Your station wagon is your base — scavenge a Pacific Northwest exclusion zone full of anomalies, repair your car, and push further each run.</div>
+        </div>
+
+        <div class="curated-card">
+          <div class="curated-name"><a href="https://store.steampowered.com/app/2009740/Abiotic_Factor/" target="_blank" rel="noopener">Abiotic Factor</a></div>
+          <div class="curated-genre">Survival / Co-op</div>
+          <div class="curated-desc">Survive a massive underground research facility gone wrong — crafting, base-building, and monster wrangling with heavy Half-Life DNA.</div>
+        </div>
+
+        <div class="curated-card">
+          <div class="curated-name"><a href="https://store.steampowered.com/app/2767810/Flintlock_The_Siege_of_Dawn/" target="_blank" rel="noopener">Flintlock: The Siege of Dawn</a></div>
+          <div class="curated-genre">Action RPG / Open World</div>
+          <div class="curated-desc">A tight soulslike-adjacent action RPG with flintlock guns and magic set in a crumbling world overrun by gods and the undead.</div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- RECOMMENDATIONS -->
+    <section class="section" id="recs">
+      <div class="section-header">
+        <span class="section-title">Recommendations</span>
+        <span class="section-sub">Not in your library — based on what you play</span>
+      </div>
+      <div class="curated-grid">
+
+        <div class="curated-card">
+          <div class="curated-name"><a href="https://store.steampowered.com/app/892970/Valheim/" target="_blank" rel="noopener">Valheim</a></div>
+          <div class="curated-genre">Survival / Open World / Co-op</div>
+          <div class="curated-desc">Viking survival sandbox with a gorgeous procedural world — you clearly live in Grounded and Raft, and this is the adult version of both.</div>
+        </div>
+
+        <div class="curated-card">
+          <div class="curated-name"><a href="https://store.steampowered.com/app/1086940/Baldurs_Gate_3/" target="_blank" rel="noopener">Baldur's Gate 3</a></div>
+          <div class="curated-genre">CRPG / Action RPG</div>
+          <div class="curated-desc">Given 447h in Cyberpunk and 279h in RDR2, this is the logical next obsession — a 100h+ RPG where every choice has real weight.</div>
+        </div>
+
+        <div class="curated-card">
+          <div class="curated-name"><a href="https://store.steampowered.com/app/264710/Subnautica/" target="_blank" rel="noopener">Subnautica</a></div>
+          <div class="curated-genre">Survival / Exploration</div>
+          <div class="curated-desc">Underwater open-world survival with no weapons and no map — the tension and discovery loop is unlike anything else in the genre.</div>
+        </div>
+
+        <div class="curated-card">
+          <div class="curated-name"><a href="https://store.steampowered.com/app/1158310/Crusader_Kings_III/" target="_blank" rel="noopener">Crusader Kings III</a></div>
+          <div class="curated-genre">Grand Strategy / RPG</div>
+          <div class="curated-desc">You have 107h in Shogun 2 and 64h in Rome II — CK3 is the Total War endgame where dynasties are characters and intrigue is the combat.</div>
+        </div>
+
+        <div class="curated-card">
+          <div class="curated-name"><a href="https://store.steampowered.com/app/252490/Rust/" target="_blank" rel="noopener">Rust</a></div>
+          <div class="curated-genre">Survival / Multiplayer</div>
+          <div class="curated-desc">The brutal multiplayer survival game that Sea of Thieves players always find their way to — nothing is safe, nothing is permanent.</div>
+        </div>
+
+      </div>
+    </section>
+
+    <footer class="page-footer">
+      Last updated: <span id="lastUpdated"></span> &nbsp;·&nbsp; Data entered manually
+    </footer>
+
+  </div>
+
+  <script>
+    // ── LAST UPDATED ─────────────────────────────
+    document.getElementById('lastUpdated').textContent = 'March 23, 2026';
+
+    // ── LIBRARY DATA ─────────────────────────────
+    const GAMES = [
+      { rank: 1,  name: 'Sea of Thieves',                 hours: 2221, score: 89,  label: 'Very Positive',          tier: 'very',           appid: 1172620 },
+      { rank: 2,  name: 'Counter-Strike 2',               hours: 846,  score: 86,  label: 'Very Positive',          tier: 'very',           appid: 730 },
+      { rank: 3,  name: 'Cyberpunk 2077',                 hours: 447,  score: 89,  label: 'Very Positive',          tier: 'very',           appid: 1091500 },
+      { rank: 4,  name: 'Grounded',                       hours: 418,  score: 93,  label: 'Very Positive',          tier: 'very',           appid: 962130 },
+      { rank: 5,  name: 'Terraria',                       hours: 341,  score: 98,  label: 'Overwhelmingly Positive',tier: 'overwhelmingly', appid: 105600 },
+      { rank: 6,  name: 'Red Dead Redemption 2',          hours: 279,  score: 92,  label: 'Very Positive',          tier: 'very',           appid: 1174180 },
+      { rank: 7,  name: 'Banana',                         hours: 212,  score: null, label: null,                    tier: 'none',           appid: 2923300 },
+      { rank: 8,  name: 'Marvel Rivals',                  hours: 207,  score: null, label: null,                    tier: 'none',           appid: 2767030 },
+      { rank: 9,  name: 'Overwatch',                      hours: 196,  score: 47,  label: 'Mixed',                  tier: 'mixed',          appid: 2357570 },
+      { rank: 10, name: 'Grounded 2',                     hours: 144,  score: 86,  label: 'Very Positive',          tier: 'very',           appid: 2661300 },
+      { rank: 11, name: 'Forza Horizon 5',                hours: 141,  score: null, label: null,                    tier: 'none',           appid: 1551360 },
+      { rank: 12, name: 'Schedule I',                     hours: 141,  score: null, label: null,                    tier: 'none',           appid: 3164500 },
+      { rank: 13, name: 'Wallpaper Engine',               hours: 136,  score: null, label: null,                    tier: 'none',           appid: 431960 },
+      { rank: 14, name: 'Kingdom Come: Deliverance II',   hours: 108,  score: null, label: null,                    tier: 'none',           appid: 1771300 },
+      { rank: 15, name: 'Total War: SHOGUN 2',            hours: 107,  score: null, label: null,                    tier: 'none',           appid: 34330 },
+      { rank: 16, name: 'Raft',                           hours: 105,  score: null, label: null,                    tier: 'none',           appid: 648800 },
+      { rank: 17, name: 'Escape the Backrooms',           hours: 86,   score: null, label: null,                    tier: 'none',           appid: 1943950 },
+      { rank: 18, name: 'Total War: ROME II',             hours: 64,   score: null, label: null,                    tier: 'none',           appid: 214950 },
+      { rank: 19, name: 'skate.',                         hours: 60,   score: null, label: null,                    tier: 'none',           appid: 3354750 },
+      { rank: 20, name: 'BeamNG.drive',                   hours: 50,   score: null, label: null,                    tier: 'none',           appid: 284160 },
+      { rank: 21, name: 'Medieval Dynasty',               hours: 49,   score: null, label: null,                    tier: 'none',           appid: 1129580 },
+      { rank: 22, name: 'The Witcher 3',                  hours: 47,   score: null, label: null,                    tier: 'none',           appid: 292030 },
+      { rank: 23, name: 'Ultimate Epic Battle Simulator 2',hours: 45,  score: null, label: null,                    tier: 'none',           appid: 1468720 },
+      { rank: 24, name: 'THE FINALS',                     hours: 43,   score: null, label: null,                    tier: 'none',           appid: 2073850 },
+      { rank: 25, name: 'Battlefield 6',                  hours: 37,   score: null, label: null,                    tier: 'none',           appid: 2807960 },
+      { rank: 26, name: 'Total War: NAPOLEON',            hours: 36,   score: null, label: null,                    tier: 'none',           appid: 34030 },
+      { rank: 27, name: 'Age of Empires II DE',           hours: 30,   score: null, label: null,                    tier: 'none',           appid: 813780 },
+      { rank: 28, name: 'Steep',                          hours: 26,   score: null, label: null,                    tier: 'none',           appid: 460920 },
+      { rank: 29, name: 'Sons Of The Forest',             hours: 25,   score: null, label: null,                    tier: 'none',           appid: 1326470 },
+      { rank: 30, name: 'Ghost of Tsushima',              hours: 12,   score: null, label: null,                    tier: 'none',           appid: 2215430 },
+      { rank: 31, name: 'Among Us',                       hours: 10,   score: null, label: null,                    tier: 'none',           appid: 945360 },
+      { rank: 32, name: 'TABS',                           hours: 10,   score: null, label: null,                    tier: 'none',           appid: 508440 },
+      { rank: 33, name: 'Mafia: Definitive Edition',      hours: 9,    score: null, label: null,                    tier: 'none',           appid: 1030840 },
+      { rank: 34, name: 'Microsoft Flight Simulator',     hours: 9,    score: null, label: null,                    tier: 'none',           appid: 1250410 },
+      { rank: 35, name: 'Crimson Desert',                 hours: 8,    score: 78,  label: 'Mostly Positive',        tier: 'mostly',         appid: 3321460 },
+      { rank: 36, name: 'Half Sword',                     hours: 7,    score: null, label: null,                    tier: 'none',           appid: 2397300 },
+      { rank: 37, name: 'A Way Out',                      hours: 4,    score: null, label: null,                    tier: 'none',           appid: 1222700 },
+      { rank: 38, name: 'Pummel Party',                   hours: 3,    score: null, label: null,                    tier: 'none',           appid: 880940 },
+      { rank: 39, name: 'Geometry Dash',                  hours: 2,    score: null, label: null,                    tier: 'none',           appid: 322170 },
+      { rank: 40, name: 'R.E.P.O.',                       hours: 2,    score: null, label: null,                    tier: 'none',           appid: 3241660 },
+      { rank: 41, name: 'Battlefield 1',                  hours: 1,    score: null, label: null,                    tier: 'none',           appid: 1238840 },
+      { rank: 42, name: 'Bodycam',                        hours: 0,    score: 74,  label: 'Mostly Positive',        tier: 'mostly',         appid: 2406770 },
+      { rank: 43, name: 'War Thunder',                    hours: 0,    score: null, label: null,                    tier: 'none',           appid: 236390 },
+      { rank: 44, name: 'Grapples Galore',                hours: 0,    score: null, label: null,                    tier: 'none',           appid: 2239140 },
+    ];
+
+    const MAX_HOURS = 2221;
+
+    function badgeHTML(game) {
+      if (game.tier === 'overwhelmingly') return `<span class="badge badge-overwhelmingly">${game.score}% Overwhelmingly Positive</span>`;
+      if (game.tier === 'very')           return `<span class="badge badge-very">${game.score}% Very Positive</span>`;
+      if (game.tier === 'mostly')         return `<span class="badge badge-mostly">${game.score}% Mostly Positive</span>`;
+      if (game.tier === 'mixed')          return `<span class="badge badge-mixed">${game.score}% Mixed</span>`;
+      return `<span class="badge badge-none">—</span>`;
+    }
+
+    function hoursStr(h) {
+      if (h === 0) return '<1h';
+      if (h >= 1000) return (h).toLocaleString() + 'h';
+      return h + 'h';
+    }
+
+    function renderTable(games) {
+      const tbody = document.getElementById('libBody');
+      const count = document.getElementById('libCount');
+      count.textContent = games.length + ' game' + (games.length !== 1 ? 's' : '');
+      tbody.innerHTML = games.map(g => `
+        <tr data-tier="${g.tier}">
+          <td class="rank">${g.rank}</td>
+          <td>
+            <a class="game-link" href="https://store.steampowered.com/app/${g.appid}/" target="_blank" rel="noopener">${g.name}</a>
+          </td>
+          <td>${badgeHTML(g)}</td>
+          <td class="hours">${hoursStr(g.hours)}</td>
+          <td class="hours-bar-cell">
+            <div class="mini-bar-wrap"><div class="mini-bar" style="width:${Math.max(1, Math.round((g.hours / MAX_HOURS) * 100))}%"></div></div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // Initial render
+    renderTable(GAMES);
+
+    // Search + filter
+    let activeFilter = 'all';
+    let searchQuery = '';
+
+    function applyFilters() {
+      let filtered = GAMES;
+      if (activeFilter !== 'all') {
+        filtered = filtered.filter(g => g.tier === activeFilter);
+      }
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        filtered = filtered.filter(g => g.name.toLowerCase().includes(q));
+      }
+      renderTable(filtered);
+    }
+
+    document.getElementById('libSearch').addEventListener('input', e => {
+      searchQuery = e.target.value.trim();
+      applyFilters();
+    });
+
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeFilter = btn.dataset.filter;
+        applyFilters();
+      });
+    });
+  </script>
+
+</body>
+</html>
