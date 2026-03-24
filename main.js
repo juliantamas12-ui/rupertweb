@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The War That Killed Thirty Million People (And Nobody Talks About It)",
+    date: "2026-03-24",
+    category: "History",
+    excerpt: "Between 1850 and 1864, a civil war tore through southern China that killed somewhere between twenty and thirty million people. Some estimates push the figure to seventy million. Even at the conservative end, it is the deadliest civil conflict in reco...",
+    url: "essays/2026-03-24-the-war-that-killed-thirty-million-people-and-nobody-talks-a.html"
+  },
+  {
     title: "The Melian Dialogue and the Lie at the Heart of International Order",
     date: "2026-03-23",
     category: "Geopolitics",
