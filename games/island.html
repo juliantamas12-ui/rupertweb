@@ -187,6 +187,7 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;posit
   <div id="joystick-zone"></div>
   <div id="btn-zone">
     <div class="touch-btn" id="btn-use" style="background:rgba(80,200,80,0.6)" ontouchstart="touchBtnStart(event,'use')" ontouchend="touchBtnEnd(event,'use')">USE</div>
+    <div class="touch-btn" id="btn-mine" style="background:rgba(150,120,60,0.6)" ontouchstart="touchBtnStart(event,'mine')" ontouchend="touchBtnEnd(event,'mine')">MINE</div>
     <div class="touch-btn" id="btn-jmp" style="background:rgba(80,150,200,0.6)" ontouchstart="touchBtnStart(event,'jmp')" ontouchend="touchBtnEnd(event,'jmp')">JMP</div>
     <div class="touch-btn" id="btn-atk" style="background:rgba(200,80,80,0.6)" ontouchstart="touchBtnStart(event,'atk')" ontouchend="touchBtnEnd(event,'atk')">ATK</div>
   </div>
@@ -454,22 +455,32 @@ function genObjects() {
       const wy = y * TSIZE + TSIZE/2;
       const r = Math.random();
 
+      // Tree variety: jungle_tree2 = wide canopy, jungle_tree3 = tall thin, jungle_fern = ground cover
+      const treeVariant = () => {
+        const v = Math.random();
+        if (v < 0.4) return 'tree';
+        if (v < 0.7) return 'jungle_tree2';
+        return 'jungle_tree3';
+      };
+
       if (t === T.JUNGLE_LIGHT) {
-        if (r < 0.025) state.objects.push({type:'tree', x:wx, y:wy, hp:5, maxHp:5});
-        else if (r < 0.04) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4});
-        else if (r < 0.044) state.objects.push({type:'berry', x:wx, y:wy, hp:1, maxHp:1, respawn:0});
+        if (r < 0.04) state.objects.push({type:treeVariant(), x:wx, y:wy, hp:5, maxHp:5});
+        else if (r < 0.05) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4});
+        else if (r < 0.054) state.objects.push({type:'berry', x:wx, y:wy, hp:1, maxHp:1, respawn:0});
+        else if (r < 0.058) state.objects.push({type:'fern', x:wx, y:wy, decor:true});
       } else if (t === T.JUNGLE_DARK) {
-        if (r < 0.02) state.objects.push({type:'tree', x:wx, y:wy, hp:5, maxHp:5});
-        else if (r < 0.035) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4});
-        else if (r < 0.037) state.objects.push({type:'jungle_chest', x:wx, y:wy, opened:false});
-        else if (r < 0.041) state.creatures.push({type:'spider', x:wx, y:wy, hp:25, maxHp:25, spd:1.05, attackTimer:0, walkTimer:0});
+        if (r < 0.05) state.objects.push({type:treeVariant(), x:wx, y:wy, hp:5, maxHp:5});
+        else if (r < 0.06) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4});
+        else if (r < 0.062) state.objects.push({type:'jungle_chest', x:wx, y:wy, opened:false});
+        else if (r < 0.064) state.creatures.push({type:'spider', x:wx, y:wy, hp:25, maxHp:25, spd:1.05, attackTimer:0, walkTimer:0});
+        else if (r < 0.067) state.objects.push({type:'fern', x:wx, y:wy, decor:true});
       } else if (t === T.BEACH) {
-        if (r < 0.015) state.objects.push({type:'palm', x:wx, y:wy, hp:4, maxHp:4, respawn:0});
-        else if (r < 0.025) state.objects.push({type:'driftwood', x:wx, y:wy, collected:false});
-        else if (r < 0.031) state.objects.push({type:'fish_spot', x:wx, y:wy, shimmer:Math.random()*100});
+        if (r < 0.008) state.objects.push({type:'palm', x:wx, y:wy, hp:4, maxHp:4, respawn:0});
+        else if (r < 0.015) state.objects.push({type:'driftwood', x:wx, y:wy, collected:false});
+        else if (r < 0.02) state.objects.push({type:'fish_spot', x:wx, y:wy, shimmer:Math.random()*100});
       } else if (t === T.SHALLOW_WATER) {
         if (r < 0.006) state.objects.push({type:'fish_spot', x:wx, y:wy, shimmer:Math.random()*100});
-        else if (r < 0.009) state.creatures.push({type:'croc', x:wx, y:wy, hp:60, maxHp:60, spd:0.35, attackTimer:0, walkTimer:0});
+        else if (r < 0.008) state.creatures.push({type:'croc', x:wx, y:wy, hp:60, maxHp:60, spd:0.35, attackTimer:0, walkTimer:0});
       } else if (t === T.VOLCANIC) {
         if (r < 0.04) state.objects.push({type:'vol_rock', x:wx, y:wy, hp:3, maxHp:3});
       }
@@ -781,9 +792,9 @@ function drawEnemy(ctx, sx, sy, e) {
   px(ctx, isChief?'#f39c12':'#e74c3c', sx - bw/2, ay - Math.round(32*sc), Math.round(bw * e.hp/e.maxHp), 4);
 
   // Hit flash
-  if (e.hitFlash > 0) {
-    e.hitFlash--;
-    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  if (false) {
+    // hitFlash removed
+    ctx.fillStyle = 'rgba(255,255,255,0)';
     ctx.fillRect(sx - Math.round(8*sc), ay - Math.round(14*sc), Math.round(16*sc), Math.round(26*sc));
   }
 }
@@ -873,6 +884,35 @@ function drawBat(ctx, sx, sy) {
   // Red eyes
   px(ctx, '#cc0000', sx-2, sy-3, 2, 2);
   px(ctx, '#cc0000', sx+1, sy-3, 2, 2);
+}
+
+// Wide canopy jungle tree
+function drawJungleTree2(ctx, sx, sy) {
+  px(ctx, 'rgba(0,0,0,0.3)', sx-14, sy+14, 28, 6);
+  px(ctx, '#3d2010', sx-4, sy+2, 8, 16);
+  px(ctx, '#1a4a0a', sx-18, sy-8, 36, 12);
+  px(ctx, '#226614', sx-14, sy-16, 28, 10);
+  px(ctx, '#2d8020', sx-10, sy-22, 20, 8);
+  px(ctx, '#1a3a0a', sx-6, sy-26, 12, 6);
+  px(ctx, '#0d2a06', sx-16, sy-6, 6, 4);
+  px(ctx, '#0d2a06', sx+10, sy-4, 6, 4);
+}
+// Tall thin jungle tree
+function drawJungleTree3(ctx, sx, sy) {
+  px(ctx, 'rgba(0,0,0,0.25)', sx-8, sy+16, 16, 4);
+  px(ctx, '#4a2a10', sx-3, sy-4, 6, 22);
+  px(ctx, '#1a5a10', sx-8, sy-22, 16, 10);
+  px(ctx, '#228820', sx-6, sy-30, 12, 10);
+  px(ctx, '#2da030', sx-4, sy-36, 8, 8);
+  px(ctx, '#1a6618', sx-2, sy-42, 4, 8);
+}
+// Ground fern / undergrowth
+function drawFern(ctx, sx, sy) {
+  px(ctx, '#1a5a10', sx-10, sy-2, 4, 8);
+  px(ctx, '#228820', sx-6, sy-6, 4, 10);
+  px(ctx, '#2da030', sx-2, sy-8, 4, 10);
+  px(ctx, '#228820', sx+2, sy-6, 4, 10);
+  px(ctx, '#1a5a10', sx+6, sy-2, 4, 8);
 }
 
 function drawPalm(ctx, sx, sy) {
@@ -1501,7 +1541,7 @@ function updateEnemies() {
         e.attackTimer = 0;
         const dmg = e.type==='chief' ? 20 : (e.type==='shadow'?12:8);
         p.hp = Math.max(0, p.hp - dmg);
-        state.screenShake = 12;
+        
         spawnParticles(p.x, p.y, '#e74c3c', 8);
       }
     }
@@ -1596,7 +1636,7 @@ function updateProjectiles() {
     const dx = p.x - proj.x, dy = p.y - proj.y;
     if (Math.sqrt(dx*dx+dy*dy) < 20) {
       p.hp = Math.max(0, p.hp - proj.damage);
-      state.screenShake = 8;
+      
       spawnParticles(p.x, p.y, proj.type==='axe'?'#888':'#c8a060', 6);
       return false;
     }
@@ -1626,7 +1666,7 @@ function updateCreatures() {
         c.attackTimer = 0;
         p.hp = Math.max(0, p.hp - 8);
         p.poison = 180;
-        state.screenShake = 8;
+        
         spawnParticles(p.x, p.y, '#22cc44', 6);
         showMsg('POISONED BY SPIDER!', '#22cc44');
       }
@@ -1645,7 +1685,7 @@ function updateCreatures() {
         if (dist < 24 && c.attackTimer > 100) {
           c.attackTimer = 0;
           p.hp = Math.max(0, p.hp - 15);
-          state.screenShake = 14;
+          
           spawnParticles(p.x, p.y, '#e74c3c', 10);
           showMsg('CROCODILE ATTACK!', '#e74c3c');
         }
@@ -1662,7 +1702,7 @@ function updateCreatures() {
         if (dist < 20 && c.attackTimer > 60) {
           c.attackTimer = 0;
           p.hp = Math.max(0, p.hp - 5);
-          state.screenShake = 6;
+          
           spawnParticles(p.x, p.y, '#2a1040', 4);
         }
       }
@@ -1687,9 +1727,9 @@ function drawCreatures(ctx, camX, camY) {
       px(ctx, '#333', sx-8, sy-14, 16, 3);
       px(ctx, '#2a1040', sx-8, sy-14, Math.round(16*c.hp/c.maxHp), 3);
     }
-    if (c.hitFlash > 0) {
-      c.hitFlash--;
-      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    if (false) {
+      // hitFlash removed
+      ctx.fillStyle = 'rgba(255,255,255,0)';
       ctx.fillRect(sx-10, sy-8, 20, 16);
     }
   });
@@ -2080,12 +2120,12 @@ function updatePlayer() {
   const newTile = getTile(nx, ny);
   if (newTile === T.LAVA) {
     p.hp = Math.max(0, p.hp - 5);
-    state.screenShake = 6;
+    
     showMsg('LAVA! GET BACK!', '#ff4400');
     nx = p.x; ny = p.y;
   } else if (newTile === T.DEEP_OCEAN) {
     p.hp = Math.max(0, p.hp - 1);
-    state.screenShake = 4;
+    
     showMsg('TOO DEEP — TURN BACK!', '#3498db');
     nx = p.x; ny = p.y;
   } else {
@@ -2124,7 +2164,7 @@ function updatePlayer() {
         trap.triggered = true;
         state.traps.splice(i, 1);
         p.hp = Math.max(0, p.hp - 15);
-        state.screenShake = 10;
+        
         state.trapFlash = 2; // brief red flash frames
         showMsg('SPIKE TRAP!', '#e74c3c');
         spawnParticles(p.x, p.y, '#e74c3c', 8);
@@ -3169,11 +3209,7 @@ function render(ctx, minimapCtx) {
   state.cam.x += (targetCamX - state.cam.x) * 0.12;
   state.cam.y += (targetCamY - state.cam.y) * 0.12;
 
-  if (state.screenShake > 0) {
-    state.screenShake--;
-    state.cam.x += (Math.random()-0.5) * state.screenShake;
-    state.cam.y += (Math.random()-0.5) * state.screenShake;
-  }
+  // screenShake removed
 
   const camX = state.cam.x, camY = state.cam.y;
 
@@ -3357,6 +3393,9 @@ function render(ctx, minimapCtx) {
       }
       switch (capturedObj.type) {
         case 'tree': { const ttx2=Math.floor(capturedObj.x/TSIZE),tty2=Math.floor(capturedObj.y/TSIZE); const tt2=(state.map[tty2]&&state.map[tty2][ttx2])||0; if(tt2===T.JUNGLE_DARK)drawJungleTree(ctx,ssx,ssy); else drawTree(ctx,ssx,ssy); break; }
+        case 'jungle_tree2': drawJungleTree2(ctx,ssx,ssy); break;
+        case 'jungle_tree3': drawJungleTree3(ctx,ssx,ssy); break;
+        case 'fern': drawFern(ctx,ssx,ssy); break;
         case 'palm': drawPalm(ctx,ssx,ssy); break;
         case 'rock': case 'vol_rock': drawRock(ctx,ssx,ssy); if(capturedObj.type==='vol_rock')drawVolRock(ctx,ssx,ssy); break;
         case 'berry': case 'fruit': drawBerry(ctx,ssx,ssy); break;
@@ -3630,7 +3669,7 @@ function render(ctx, minimapCtx) {
       p.x = 125*TSIZE; p.y = 170*TSIZE;
       state.cam.x = p.x - canvas.width/2;
       state.cam.y = p.y - canvas.height/2;
-      state.screenShake = 0;
+      
       showMsg('YOU WAKE UP. FIND YOUR PACK.', '#c8f135');
     }
   }
@@ -4284,6 +4323,24 @@ function startGame() {
   window.touchBtnEnd = function(e, btn) {
     e.preventDefault();
     e.stopPropagation();
+    if (!state.running) return;
+    if (btn === 'atk') handleClick(window.innerWidth/2, window.innerHeight/2);
+    if (btn === 'jmp') handleJump();
+    if (btn === 'use') handleInteract();
+    if (btn === 'mine') {
+      // Find nearest rock/vol_rock and start mining minigame
+      const p = state.player;
+      const reach = 60;
+      for (const obj of state.objects) {
+        if (['rock','vol_rock'].includes(obj.type)) {
+          if (Math.hypot(p.x-obj.x, p.y-obj.y) < reach) {
+            if (!p.inv.pickaxe) { showMsg('NEED A PICKAXE'); return; }
+            startMineMinigame(obj); return;
+          }
+        }
+      }
+      showMsg('NO ROCK IN RANGE');
+    }
   };
 
   // Joystick zone element for touch tracking
