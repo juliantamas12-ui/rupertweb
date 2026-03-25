@@ -3992,11 +3992,7 @@ minimapCtx.imageSmoothingEnabled = false;
 window.addEventListener('keydown', e => {
   keys[e.key.toLowerCase()] = true;
   // If start screen is visible, any key advances it
-  const ss = document.getElementById('start-screen');
-  if (ss && ss.style.display !== 'none') {
-    startScreenClick();
-    return;
-  }
+  // start screen removed
   if (!state.running) return;
   if (e.key.toLowerCase() === 'i') { const p=document.getElementById('inv-panel'); p.style.display=p.style.display==='block'?'none':'block'; if(p.style.display==='block')renderInvMenu(); }
   if (e.key.toLowerCase() === 'c') openCraftMenu();
@@ -4300,7 +4296,7 @@ function startScreenClick() {
     state.shirtColor = SS_SHIRTS[ssShirt].c;
     state.skinColor = SS_SKINS[ssSkin].c;
     state.playerName = 'SURVIVOR';
-    document.getElementById('start-screen').style.display = 'none';
+    const _ss = document.getElementById('start-screen'); if(_ss) _ss.style.display = 'none';
     genMap(); genObjects();
     state.player.x = 125*TSIZE; state.player.y = 170*TSIZE;
     state.cam.x = state.player.x - canvas.width/2;
