@@ -4146,6 +4146,8 @@ function renderCCPreview() {
 
   // Simple pixel art character centered at (40, 46)
   const sx = 40, sy = 46;
+  const shirtC = (state && state.shirtColor) ? state.shirtColor : '#2d7a2d';
+  const skinC = (state && state.skinColor) ? state.skinColor : '#c8a07a';
   function ppx(color, x, y, w, h) {
     ctx.fillStyle = color;
     ctx.fillRect(x, y, w, h);
@@ -4156,15 +4158,15 @@ function renderCCPreview() {
   ppx('#4a2e10', sx-5, sy+6, 5, 10);
   ppx('#4a2e10', sx+0, sy+6, 5, 10);
   // Body (shirt)
-  ppx(state.shirtColor, sx-6, sy-4, 12, 12);
+  ppx(shirtC, sx-6, sy-4, 12, 12);
   // Head
-  ppx(state.skinColor, sx-5, sy-14, 10, 10);
+  ppx(skinC, sx-5, sy-14, 10, 10);
   // Eyes
   ppx('#1a0a00', sx-3, sy-11, 2, 2);
   ppx('#1a0a00', sx+1, sy-11, 2, 2);
   // Arms
-  ppx(state.shirtColor, sx-10, sy-2, 4, 8);
-  ppx(state.shirtColor, sx+6, sy-2, 4, 8);
+  ppx(shirtC, sx-10, sy-2, 4, 8);
+  ppx(shirtC, sx+6, sy-2, 4, 8);
   // Pixel art border decoration (palm leaf dots)
   ctx.strokeStyle = '#5c3a10';
   ctx.lineWidth = 1;
@@ -4192,7 +4194,7 @@ function confirmCharacter() {
   }, 50);
 }
 
-window.addEventListener('DOMContentLoaded', () => { initCharCreator(); });
+window.addEventListener('DOMContentLoaded', () => { initCharCreator(); setTimeout(renderCCPreview, 200); });
 
 function gameLoopWithUI() {
   if (!state.running) return;
