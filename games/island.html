@@ -64,10 +64,10 @@ canvas#c{pointer-events:none}
 .cc-field input[type=text]{background:#251408;border:1px solid #5c3a10;color:#f0d890;font-family:'Courier New';font-size:12px;letter-spacing:1px;padding:5px 8px;width:100%;outline:none}
 .cc-field input[type=text]:focus{border-color:#8B6020}
 .cc-swatches{display:flex;gap:6px;flex-wrap:wrap}
-.cc-swatch{width:28px;height:28px;border:2px solid #5c3a10;cursor:pointer;image-rendering:pixelated}
+.cc-swatch{width:44px;height:44px;border:2px solid #5c3a10;cursor:pointer;image-rendering:pixelated;touch-action:manipulation;-webkit-tap-highlight-color:rgba(255,255,255,0.3)}
 .cc-swatch:hover{border-color:#8B6020}
 .cc-swatch.selected{border-color:#f0d890;box-shadow:0 0 6px #f0d890}
-#cc-begin{background:#4a2a08;color:#f0d890;border:2px solid #8B6020;padding:10px 40px;font-family:'Courier New';font-size:12px;letter-spacing:4px;cursor:pointer;font-weight:bold;margin-top:20px;align-self:center}
+#cc-begin{background:#4a2a08;color:#f0d890;border:2px solid #8B6020;padding:14px 40px;font-family:'Courier New';font-size:12px;letter-spacing:4px;cursor:pointer;font-weight:bold;margin-top:20px;align-self:center;touch-action:manipulation;-webkit-tap-highlight-color:rgba(200,241,53,0.4);min-height:48px;width:100%}
 #cc-begin:hover{background:#6a4a18;color:#fff}
 #joystick-canvas{position:fixed;bottom:30px;left:30px;z-index:14;pointer-events:none;width:140px;height:140px}
 #touch-controls{position:fixed;inset:0;z-index:15;pointer-events:none}
@@ -130,7 +130,7 @@ canvas#c{pointer-events:none}
   <div id="craft-list"></div>
 </div>
 
-<div id="char-creator">
+<div id="char-creator" style="-webkit-tap-highlight-color:rgba(0,0,0,0);cursor:pointer">
   <h1>CREATE YOUR SURVIVOR</h1>
   <div class="cc-sub">ISLAND SURVIVAL</div>
   <div class="cc-card">
