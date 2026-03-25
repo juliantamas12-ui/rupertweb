@@ -3949,13 +3949,15 @@ window.addEventListener('keydown', e => {
   keys[e.key.toLowerCase()] = true;
   // If char-creator is visible, any key confirms and moves to tutorial
   const cc = document.getElementById('char-creator');
-  if (cc && cc.style.display !== 'none') {
+  const ccVisible = cc && getComputedStyle(cc).display !== 'none';
+  if (ccVisible) {
     confirmCharacter();
     return;
   }
   // If tutorial overlay is visible, any key starts the game
   const overlay = document.getElementById('overlay');
-  if (overlay && overlay.style.display !== 'none') {
+  const overlayVisible = overlay && getComputedStyle(overlay).display !== 'none';
+  if (overlayVisible) {
     nextSlide();
     return;
   }
