@@ -6,45 +6,68 @@
 <title>Island Survival</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#000;overflow:hidden;font-family:'Courier New',monospace;user-select:none}
+body{background:#000;overflow:hidden;font-family:'Courier New',monospace;letter-spacing:1px;user-select:none;font-size:12px}
 canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;position:fixed;top:0;left:0;z-index:1}
 #ui{position:fixed;top:0;left:0;right:0;padding:8px 12px;pointer-events:none;z-index:50}
-#bars{display:flex;gap:10px;align-items:center;background:rgba(0,0,0,0.8);padding:6px 12px;border:2px solid #333;width:fit-content;border-radius:2px}
+#bars{display:flex;gap:10px;align-items:center;background:rgba(26,58,26,0.92);padding:6px 12px;border:2px solid #2d6e2d;border-radius:0;width:fit-content}
 .bar-wrap{display:flex;align-items:center;gap:6px}
 .bar-icon{font-size:12px;width:14px;text-align:center}
-.bar-outer{width:90px;height:10px;background:#1a1a1a;border:1px solid #444}
+.bar-outer{width:90px;height:10px;background:#0d1f0d;border:1px solid #2d6e2d}
 .bar-inner{height:100%;transition:width 0.3s}
-#day-display{color:#c8f135;font-size:11px;letter-spacing:3px;margin-left:16px;font-family:Courier New}
-#settle-badge{color:#888;font-size:10px;margin-left:12px;letter-spacing:2px}
+#day-display{color:#e8f4b0;font-size:11px;letter-spacing:3px;margin-left:16px;font-family:Courier New}
+#settle-badge{color:#4a8a2a;font-size:10px;margin-left:12px;letter-spacing:2px}
 #weather-icon{font-size:14px;margin-left:8px}
-#build-menu{position:fixed;right:10px;top:60px;background:rgba(0,0,0,0.9);border:2px solid #c8f135;padding:12px;z-index:300;display:none;width:200px}
-#build-menu h3{color:#c8f135;font-size:11px;letter-spacing:3px;margin-bottom:10px}
-.build-btn{display:block;width:100%;padding:5px 8px;background:#1a1a1a;border:1px solid #444;color:#aaa;font-family:Courier New;font-size:10px;letter-spacing:1px;cursor:pointer;margin-bottom:4px;text-align:left}
-.build-btn:hover{border-color:#c8f135;color:#c8f135}
-#minimap{position:fixed;bottom:60px;right:10px;border:2px solid #444;z-index:10;image-rendering:pixelated}
-#hotbar{position:fixed;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:3px;z-index:10}
-.hslot{width:42px;height:42px;background:rgba(0,0,0,0.85);border:2px solid #444;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#aaa;font-size:8px;letter-spacing:1px;font-family:Courier New}
-.hslot.active{border-color:#c8f135}
-#inv-panel{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#111;border:2px solid #c8f135;padding:16px;z-index:300;min-width:320px;display:none;max-height:70vh;overflow-y:auto}
-#craft-panel{position:fixed;top:50%;left:70%;transform:translate(-50%,-50%);background:#111;border:2px solid #555;padding:16px;z-index:300;min-width:280px;display:none;max-height:70vh;overflow-y:auto}
-.panel-title{color:#c8f135;font-size:12px;letter-spacing:3px;margin-bottom:12px;border-bottom:1px solid #333;padding-bottom:6px}
-.close-x{position:absolute;top:8px;right:12px;color:#c8f135;cursor:pointer;font-size:14px}
+#build-menu{position:fixed;right:10px;top:60px;background:#1a3a1a;border:3px solid #4a8a2a;box-shadow:inset 0 0 0 1px #2d6e2d;padding:12px;z-index:300;display:none;width:200px}
+#build-menu h3{color:#e8f4b0;font-size:11px;letter-spacing:3px;margin-bottom:10px}
+.build-btn{display:block;width:100%;padding:5px 8px;background:#2d5a1a;border:1px solid #4a8a2a;color:#e8f4b0;font-family:Courier New;font-size:10px;letter-spacing:1px;cursor:pointer;margin-bottom:4px;text-align:left}
+.build-btn:hover{border-color:#c8f135;color:#c8f135;background:#1a3a1a}
+#minimap{position:fixed;bottom:60px;right:10px;border:2px solid #2d6e2d;z-index:10;image-rendering:pixelated}
+#hotbar{position:fixed;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:4px;z-index:10}
+.hslot{width:42px;height:42px;background:#1a3a1a;border:2px solid #2d6e2d;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#a8c870;font-size:8px;letter-spacing:1px;font-family:Courier New}
+.hslot.active{border-color:#c8f135;background:#2d5a1a}
+#inv-panel,#craft-panel{position:fixed;background:#1a3a1a;border:3px solid #4a8a2a;box-shadow:inset 0 0 0 1px #2d6e2d,0 4px 20px rgba(0,0,0,0.8);padding:18px;z-index:300;display:none;max-height:70vh;overflow-y:auto}
+#inv-panel{top:50%;left:50%;transform:translate(-50%,-50%);min-width:320px}
+#craft-panel{top:50%;left:70%;transform:translate(-50%,-50%);min-width:280px}
+.panel-title{color:#c8f135;font-size:11px;letter-spacing:4px;margin-bottom:12px;border-bottom:2px solid #2d6e2d;padding-bottom:8px}
+.close-x{position:absolute;top:8px;right:12px;color:#4a8a2a;cursor:pointer;font-size:16px}
+.close-x:hover{color:#c8f135}
 #inv-grid{display:grid;grid-template-columns:repeat(5,54px);gap:4px}
-#overlay{position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff}
+.inv-slot-themed{width:54px;height:54px;background:#0d1f0d;border:2px solid #2d6e2d;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Courier New';font-size:9px;color:#a8c870;text-align:center;cursor:pointer;position:relative}
+.inv-slot-themed:hover{border-color:#4a8a2a}
+.inv-slot-themed .count{color:#c8f135;font-size:14px;font-weight:bold}
+#overlay{position:fixed;inset:0;background:rgba(8,20,8,0.97);z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#e8f4b0}
 #overlay h1{color:#c8f135;font-size:30px;letter-spacing:8px;margin-bottom:8px;text-shadow:0 0 30px #c8f135}
-#overlay .subtitle{color:#555;font-size:11px;letter-spacing:4px;margin-bottom:30px}
-.slide-box{max-width:560px;text-align:center;padding:20px 30px;border:1px solid #333;margin-bottom:24px;line-height:1.9;font-size:12px;color:#bbb;letter-spacing:0.5px}
+#overlay .subtitle{color:#4a8a2a;font-size:11px;letter-spacing:4px;margin-bottom:30px}
+.slide-box{max-width:560px;text-align:center;padding:20px 30px;background:#1a3a1a;border:2px solid #2d6e2d;margin-bottom:24px;line-height:1.9;font-size:12px;color:#e8f4b0;letter-spacing:0.5px}
 .slide-box h3{color:#c8f135;font-size:14px;letter-spacing:4px;margin-bottom:14px}
-.slide-box b{color:#fff}
+.slide-box b{color:#e8f4b0}
 .slide-dots{display:flex;gap:8px;margin-bottom:20px}
-.dot{width:8px;height:8px;border:1px solid #555}
+.dot{width:8px;height:8px;border:1px solid #2d6e2d}
 .dot.active{background:#c8f135;border-color:#c8f135}
-#slide-btn{background:#c8f135;color:#000;border:none;padding:10px 36px;font-family:Courier New;font-size:12px;letter-spacing:4px;cursor:pointer;font-weight:bold}
-#slide-btn:hover{background:#fff}
-#win-screen{position:fixed;inset:0;background:#001133;z-index:200;display:none;flex-direction:column;align-items:center;justify-content:center}
+#slide-btn{background:#2d5a1a;color:#e8f4b0;border:2px solid #4a8a2a;padding:10px 36px;font-family:Courier New;font-size:12px;letter-spacing:4px;cursor:pointer;font-weight:bold}
+#slide-btn:hover{background:#4a8a2a;color:#fff}
+#win-screen{position:fixed;inset:0;background:#0a1a2a;z-index:200;display:none;flex-direction:column;align-items:center;justify-content:center}
 #win-screen h1{color:#c8f135;font-size:36px;letter-spacing:10px;margin-bottom:10px;text-shadow:0 0 30px #c8f135}
 #win-screen p{color:#888;font-size:13px;letter-spacing:2px;margin-top:16px}
-#controls-hint{position:fixed;bottom:60px;left:10px;color:#555;font-size:9px;letter-spacing:1px;line-height:1.8;pointer-events:none;z-index:5}
+#controls-hint{position:fixed;bottom:60px;left:10px;color:#2d6e2d;font-size:9px;letter-spacing:1px;line-height:1.8;pointer-events:none;z-index:5}
+/* CHARACTER CREATOR */
+#char-creator{position:fixed;inset:0;background:rgba(4,14,4,0.98);z-index:250;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#e8f4b0;font-family:'Courier New',monospace}
+#char-creator h1{color:#c8f135;font-size:26px;letter-spacing:8px;margin-bottom:4px;text-shadow:0 0 20px #c8f135}
+#char-creator .cc-sub{color:#4a8a2a;font-size:10px;letter-spacing:5px;margin-bottom:28px}
+.cc-card{background:#1a3a1a;border:2px solid #2d6e2d;padding:20px 28px;display:flex;gap:32px;align-items:flex-start;max-width:640px;width:100%}
+.cc-preview-wrap{display:flex;flex-direction:column;align-items:center;gap:8px}
+#cc-preview{image-rendering:pixelated;border:2px solid #2d6e2d;background:#0d1f0d}
+.cc-preview-label{color:#4a8a2a;font-size:9px;letter-spacing:3px}
+.cc-form{flex:1;display:flex;flex-direction:column;gap:16px}
+.cc-field label{display:block;color:#a8c870;font-size:10px;letter-spacing:3px;margin-bottom:6px}
+.cc-field input[type=text]{background:#0d1f0d;border:1px solid #2d6e2d;color:#e8f4b0;font-family:'Courier New';font-size:12px;letter-spacing:1px;padding:5px 8px;width:100%;outline:none}
+.cc-field input[type=text]:focus{border-color:#4a8a2a}
+.cc-swatches{display:flex;gap:6px;flex-wrap:wrap}
+.cc-swatch{width:28px;height:28px;border:2px solid #2d6e2d;cursor:pointer;image-rendering:pixelated}
+.cc-swatch:hover{border-color:#4a8a2a}
+.cc-swatch.selected{border-color:#c8f135;box-shadow:0 0 6px #c8f135}
+#cc-begin{background:#2d5a1a;color:#e8f4b0;border:2px solid #4a8a2a;padding:10px 40px;font-family:'Courier New';font-size:12px;letter-spacing:4px;cursor:pointer;font-weight:bold;margin-top:20px;align-self:center}
+#cc-begin:hover{background:#4a8a2a;color:#fff}
 #joystick-canvas{position:fixed;top:0;left:0;z-index:14;pointer-events:none}
 #touch-controls{position:fixed;inset:0;z-index:15;pointer-events:none}
 #joystick-zone{position:absolute;bottom:30px;left:30px;width:140px;height:140px;pointer-events:all}
@@ -102,19 +125,54 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;posit
   <div id="craft-list"></div>
 </div>
 
+<div id="char-creator">
+  <h1>CREATE YOUR SURVIVOR</h1>
+  <div class="cc-sub">ISLAND SURVIVAL</div>
+  <div class="cc-card">
+    <div class="cc-preview-wrap">
+      <canvas id="cc-preview" width="80" height="80"></canvas>
+      <div class="cc-preview-label">PREVIEW</div>
+    </div>
+    <div class="cc-form">
+      <div class="cc-field">
+        <label>SURVIVOR NAME</label>
+        <input type="text" id="cc-name" maxlength="16" value="SURVIVOR" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="cc-field">
+        <label>SHIRT COLOR</label>
+        <div class="cc-swatches" id="cc-shirts">
+          <div class="cc-swatch selected" data-color="#2d7a2d" style="background:#2d7a2d" title="Jungle Green"></div>
+          <div class="cc-swatch" data-color="#2d4a8a" style="background:#2d4a8a" title="Ocean Blue"></div>
+          <div class="cc-swatch" data-color="#8a2d2d" style="background:#8a2d2d" title="Survivor Red"></div>
+          <div class="cc-swatch" data-color="#8a5a2d" style="background:#8a5a2d" title="Sandy Orange"></div>
+        </div>
+      </div>
+      <div class="cc-field">
+        <label>SKIN TONE</label>
+        <div class="cc-swatches" id="cc-skins">
+          <div class="cc-swatch selected" data-color="#c8a07a" style="background:#c8a07a" title="Light"></div>
+          <div class="cc-swatch" data-color="#a07040" style="background:#a07040" title="Medium"></div>
+          <div class="cc-swatch" data-color="#6a4020" style="background:#6a4020" title="Dark"></div>
+        </div>
+      </div>
+      <button id="cc-begin" onclick="confirmCharacter()">BEGIN SURVIVAL</button>
+    </div>
+  </div>
+</div>
+
 <div id="overlay" onclick="nextSlide()">
   <h1>ISLAND SURVIVAL</h1>
   <div class="subtitle">A SHIPWRECK SURVIVAL STORY</div>
   <div class="slide-box" id="slide-content" style="max-height:60vh;overflow-y:auto;text-align:left">
-    <div style="margin-bottom:14px"><h3 style="color:#c8f135;font-size:12px;letter-spacing:3px;margin-bottom:8px">CONTROLS</h3><div style="font-size:11px;color:#bbb;line-height:1.8"><b>WASD</b> — Move &nbsp; <b>SHIFT</b> — Sprint &nbsp; <b>SPACE</b> — Jump<br><b>Click</b> — Attack/Harvest &nbsp; <b>E</b> — Interact &nbsp; <b>I</b> — Inventory<br><b>C</b> — Crafting &nbsp; <b>B</b> — Build menu &nbsp; <b>F</b> — Fish (need rod + near water)</div></div>
-    <hr style="border-color:#222;margin:8px 0">
-    <div style="margin-bottom:14px"><h3 style="color:#c8f135;font-size:12px;letter-spacing:3px;margin-bottom:8px">SURVIVAL</h3><div style="font-size:11px;color:#bbb;line-height:1.8">You have <b>Health</b>, <b>Water</b>, <b>Food</b>, and <b>Stamina</b> bars.<br>Water + Food deplete over time. If either hits zero, health drains.<br>Raw food has a 20% chance of making you sick. Cook on a Campfire.</div></div>
-    <hr style="border-color:#222;margin:8px 0">
-    <div style="margin-bottom:14px"><h3 style="color:#c8f135;font-size:12px;letter-spacing:3px;margin-bottom:8px">THE JUNGLE</h3><div style="font-size:11px;color:#bbb;line-height:1.8">Dark jungle has hidden <b>pit traps</b> — fall in and die without a Torch.<br>Craft Torch (2 wood + 1 stone) to reveal pits. Jungle holds chests and lore.</div></div>
-    <hr style="border-color:#222;margin:8px 0">
-    <div style="margin-bottom:14px"><h3 style="color:#c8f135;font-size:12px;letter-spacing:3px;margin-bottom:8px">RESOURCES</h3><div style="font-size:11px;color:#bbb;line-height:1.8"><b>Palm trees</b> → Coconuts (water) &nbsp; <b>Berry/Fruit</b> → Food (cook first!)<br><b>Fishing spots</b> → Fish (need Fishing Rod) &nbsp; <b>Trees</b> → Wood &nbsp; <b>Rocks</b> → Stone</div></div>
-    <hr style="border-color:#222;margin:8px 0">
-    <div><h3 style="color:#c8f135;font-size:12px;letter-spacing:3px;margin-bottom:8px">STORY & GOAL</h3><div style="font-size:11px;color:#bbb;line-height:1.8">You survived the Meridian shipwreck. Find <b>Mara</b>, <b>Felix</b>, and <b>Elder Kona</b>.<br>Tribal warriors attack from Day 3. Chief appears Day 15.<br>Defeat him, craft a <b>Superyacht</b>, and escape. Multiple endings.</div></div>
+    <div style="margin-bottom:14px"><h3 style="color:#c8f135;font-size:12px;letter-spacing:3px;margin-bottom:8px">CONTROLS</h3><div style="font-size:11px;color:#e8f4b0;line-height:1.8"><b>WASD</b> — Move &nbsp; <b>SHIFT</b> — Sprint &nbsp; <b>SPACE</b> — Jump<br><b>Click</b> — Attack/Harvest &nbsp; <b>E</b> — Interact &nbsp; <b>I</b> — Inventory<br><b>C</b> — Crafting &nbsp; <b>B</b> — Build menu &nbsp; <b>F</b> — Fish (need rod + near water)</div></div>
+    <hr style="border-color:#2d6e2d;margin:8px 0">
+    <div style="margin-bottom:14px"><h3 style="color:#c8f135;font-size:12px;letter-spacing:3px;margin-bottom:8px">SURVIVAL</h3><div style="font-size:11px;color:#e8f4b0;line-height:1.8">You have <b>Health</b>, <b>Water</b>, <b>Food</b>, and <b>Stamina</b> bars.<br>Water + Food deplete over time. If either hits zero, health drains.<br>Raw food has a 20% chance of making you sick. Cook on a Campfire.</div></div>
+    <hr style="border-color:#2d6e2d;margin:8px 0">
+    <div style="margin-bottom:14px"><h3 style="color:#c8f135;font-size:12px;letter-spacing:3px;margin-bottom:8px">THE JUNGLE</h3><div style="font-size:11px;color:#e8f4b0;line-height:1.8">Dark jungle has hidden <b>pit traps</b> — fall in and die without a Torch.<br>Craft Torch (2 wood + 1 stone) to reveal pits. Jungle holds chests and lore.</div></div>
+    <hr style="border-color:#2d6e2d;margin:8px 0">
+    <div style="margin-bottom:14px"><h3 style="color:#c8f135;font-size:12px;letter-spacing:3px;margin-bottom:8px">RESOURCES</h3><div style="font-size:11px;color:#e8f4b0;line-height:1.8"><b>Palm trees</b> → Coconuts (water) &nbsp; <b>Berry/Fruit</b> → Food (cook first!)<br><b>Fishing spots</b> → Fish (need Fishing Rod) &nbsp; <b>Trees</b> → Wood &nbsp; <b>Rocks</b> → Stone</div></div>
+    <hr style="border-color:#2d6e2d;margin:8px 0">
+    <div><h3 style="color:#c8f135;font-size:12px;letter-spacing:3px;margin-bottom:8px">STORY & GOAL</h3><div style="font-size:11px;color:#e8f4b0;line-height:1.8">You survived the Meridian shipwreck. Find <b>Mara</b>, <b>Felix</b>, and <b>Elder Kona</b>.<br>Tribal warriors attack from Day 3. Chief appears Day 15.<br>Defeat him, craft a <b>Superyacht</b>, and escape. Multiple endings.</div></div>
   </div>
   <button id="slide-btn" onclick="nextSlide()" style="margin-top:16px">START GAME</button>
 </div>
@@ -156,6 +214,9 @@ const TILE_COLORS = {
 // Game state
 const state = {
   running: false, paused: false,
+  playerName: 'SURVIVOR',
+  shirtColor: '#2d7a2d',
+  skinColor: '#c8a07a',
   day: 1, dayTime: 0, isNight: false,
   frameCount: 0,
   DAY_FRAMES: 60 * 240, // 4 min/day
@@ -511,12 +572,12 @@ function drawPlayer(ctx, sx, sy, p) {
     // Left arm (swimming stroke, alternating)
     const leftArmY = swimPhase === 0 ? ay - 2 : ay + 4;
     const rightArmY = swimPhase === 0 ? ay + 4 : ay - 2;
-    px(ctx, '#2a7a2a', sx-14, leftArmY, 10, 4); // left arm
-    px(ctx, '#2a7a2a', sx+4, rightArmY, 10, 4); // right arm
+    px(ctx, state.shirtColor, sx-14, leftArmY, 10, 4); // left arm
+    px(ctx, state.shirtColor, sx+4, rightArmY, 10, 4); // right arm
     // Body (just top half above water)
-    px(ctx, '#2a7a2a', sx-6, ay-4, 12, 8);
+    px(ctx, state.shirtColor, sx-6, ay-4, 12, 8);
     // Head visible above water
-    px(ctx, '#c8a07a', sx-5, ay-14, 10, 10);
+    px(ctx, state.skinColor, sx-5, ay-14, 10, 10);
     px(ctx, '#1a0a00', sx-3, ay-11, 2, 2);
     px(ctx, '#1a0a00', sx+1, ay-11, 2, 2);
   } else {
@@ -529,11 +590,11 @@ function drawPlayer(ctx, sx, sy, p) {
   px(ctx, '#4a2e10', sx-5, ay+6+legSwing, 5, 10); // left leg
   px(ctx, '#4a2e10', sx+0, ay+6-legSwing, 5, 10); // right leg
 
-  // Body (green shirt)
-  px(ctx, '#2a7a2a', sx-6, ay-4, 12, 12);
+  // Body (shirt)
+  px(ctx, state.shirtColor, sx-6, ay-4, 12, 12);
 
   // Head (simple square)
-  px(ctx, '#c8a07a', sx-5, ay-14, 10, 10);
+  px(ctx, state.skinColor, sx-5, ay-14, 10, 10);
   // Simple eyes
   px(ctx, '#1a0a00', sx-3, ay-11, 2, 2);
   px(ctx, '#1a0a00', sx+1, ay-11, 2, 2);
@@ -2019,8 +2080,8 @@ function renderCraftMenu() {
     const canAfford = Object.entries(item.cost).every(([k,v])=>(p.inv[k]||0)>=v);
 
     const div = document.createElement('div');
-    div.style.cssText = `padding:6px;border:1px solid ${canAfford?'#555':'#333'};margin-bottom:4px;cursor:${canAfford?'pointer':'default'};`;
-    div.innerHTML = `<span style="color:${canAfford?'#c8f135':'#555'}">${item.label}</span> <span style="color:#888;font-size:10px">— ${costStr}</span><br><span style="color:#666;font-size:10px">${item.desc}</span>`;
+    div.style.cssText = `padding:6px;background:#0d1f0d;border:1px solid ${canAfford?'#2d6e2d':'#1a3a1a'};margin-bottom:4px;cursor:${canAfford?'pointer':'default'};`;
+    div.innerHTML = `<span style="color:${canAfford?'#e8f4b0':'#2d6e2d'}">${item.label}</span> <span style="color:#a8c870;font-size:10px">— ${costStr}</span><br><span style="color:#2d6e2d;font-size:10px">${item.desc}</span>`;
     if (canAfford) div.onclick = () => tryCraft(item.id);
     list.appendChild(div);
   });
@@ -2119,9 +2180,9 @@ function drawDialogue(ctx) {
   const cw = ctx.canvas.width, ch = ctx.canvas.height;
   const bx = 40, by = ch-160, bw = cw-80, bh = 130;
 
-  ctx.fillStyle = 'rgba(0,0,0,0.92)';
+  ctx.fillStyle = 'rgba(20,50,20,0.95)';
   ctx.fillRect(bx, by, bw, bh);
-  ctx.strokeStyle = '#c8f135';
+  ctx.strokeStyle = '#4a8a2a';
   ctx.lineWidth = 2;
   ctx.strokeRect(bx, by, bw, bh);
 
@@ -2135,7 +2196,7 @@ function drawDialogue(ctx) {
     ctx.fillText(d.npc.name, bx+14, by+20);
   }
 
-  ctx.fillStyle = '#ddd';
+  ctx.fillStyle = '#e8f4b0';
   ctx.font = '11px "Courier New"';
   // Word wrap
   const words = d.displayed.split(' ');
@@ -2152,7 +2213,7 @@ function drawDialogue(ctx) {
 
   // Prompt
   if (d.charIdx >= d.text.length) {
-    ctx.fillStyle = '#666';
+    ctx.fillStyle = '#2d6e2d';
     ctx.font = '10px "Courier New"';
     ctx.fillText('[CLICK TO CONTINUE]', bx+bw-160, by+bh-10);
   }
@@ -2167,8 +2228,8 @@ function renderInvMenu() {
   const allItems = Object.entries(p.inv).filter(([k,v])=>v>0);
   allItems.forEach(([k,v]) => {
     const div = document.createElement('div');
-    div.style.cssText = 'width:52px;height:52px;background:#1a1a1a;border:1px solid #444;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:Courier New;font-size:9px;color:#aaa;text-align:center;cursor:pointer;';
-    div.innerHTML = `<div style="color:#c8f135;font-size:14px;font-weight:bold">${v}</div><div>${k.replace(/_/g,' ').toUpperCase()}</div>`;
+    div.className = 'inv-slot-themed';
+    div.innerHTML = `<div class="count">${v}</div><div>${k.replace(/_/g,' ').toUpperCase()}</div>`;
     // Click to consume food/water items
     div.onclick = () => {
       if (k==='coconut'&&p.inv.coconut>0){p.inv.coconut--;p.water=Math.min(p.maxWater,p.water+35);showMsg('+35 WATER',  '#3498db');}
@@ -2948,7 +3009,7 @@ const slides = [
 let slideIdx = 0;
 function showSlide() {
   // Show all tutorial content at once
-  const allContent = slides.map(s=>`<div style="margin-bottom:18px"><h3 style="color:#c8f135;font-size:12px;letter-spacing:3px;margin-bottom:8px">${s.t}</h3><div style="font-size:11px;color:#bbb;line-height:1.8">${s.b}</div></div>`).join('<hr style="border-color:#222;margin:10px 0">');
+  const allContent = slides.map(s=>`<div style="margin-bottom:18px"><h3 style="color:#c8f135;font-size:12px;letter-spacing:3px;margin-bottom:8px">${s.t}</h3><div style="font-size:11px;color:#e8f4b0;line-height:1.8">${s.b}</div></div>`).join('<hr style="border-color:#222;margin:10px 0">');
   document.getElementById('slide-content').innerHTML = allContent;
   document.getElementById('slide-dots').innerHTML = '';
   document.getElementById('slide-btn').textContent = 'START GAME';
@@ -2965,7 +3026,81 @@ function nextSlide() {
   showMsg('YOU WASHED ASHORE. FIND THE OTHER SURVIVORS.', '#c8f135');
   requestAnimationFrame(gameLoopWithUI);
 }
-window.addEventListener('DOMContentLoaded', showSlide);
+// ============================================================
+// CHARACTER CREATOR
+// ============================================================
+function initCharCreator() {
+  // Hide tutorial overlay initially; show char creator instead
+  document.getElementById('overlay').style.display = 'none';
+
+  // Swatch click handlers
+  document.querySelectorAll('#cc-shirts .cc-swatch').forEach(sw => {
+    sw.addEventListener('click', () => {
+      document.querySelectorAll('#cc-shirts .cc-swatch').forEach(s => s.classList.remove('selected'));
+      sw.classList.add('selected');
+      state.shirtColor = sw.dataset.color;
+      renderCCPreview();
+    });
+  });
+  document.querySelectorAll('#cc-skins .cc-swatch').forEach(sw => {
+    sw.addEventListener('click', () => {
+      document.querySelectorAll('#cc-skins .cc-swatch').forEach(s => s.classList.remove('selected'));
+      sw.classList.add('selected');
+      state.skinColor = sw.dataset.color;
+      renderCCPreview();
+    });
+  });
+  document.getElementById('cc-name').addEventListener('input', e => {
+    state.playerName = e.target.value.toUpperCase() || 'SURVIVOR';
+    e.target.value = state.playerName;
+  });
+  renderCCPreview();
+}
+
+function renderCCPreview() {
+  const cv = document.getElementById('cc-preview');
+  if (!cv) return;
+  const ctx = cv.getContext('2d');
+  ctx.clearRect(0, 0, 80, 80);
+  ctx.fillStyle = '#0d1f0d';
+  ctx.fillRect(0, 0, 80, 80);
+
+  // Simple pixel art character centered at (40, 46)
+  const sx = 40, sy = 46;
+  function ppx(color, x, y, w, h) {
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, w, h);
+  }
+  // Shadow
+  ppx('rgba(0,0,0,0.3)', sx-7, sy+16, 14, 3);
+  // Legs
+  ppx('#4a2e10', sx-5, sy+6, 5, 10);
+  ppx('#4a2e10', sx+0, sy+6, 5, 10);
+  // Body (shirt)
+  ppx(state.shirtColor, sx-6, sy-4, 12, 12);
+  // Head
+  ppx(state.skinColor, sx-5, sy-14, 10, 10);
+  // Eyes
+  ppx('#1a0a00', sx-3, sy-11, 2, 2);
+  ppx('#1a0a00', sx+1, sy-11, 2, 2);
+  // Arms
+  ppx(state.shirtColor, sx-10, sy-2, 4, 8);
+  ppx(state.shirtColor, sx+6, sy-2, 4, 8);
+  // Pixel art border decoration (palm leaf dots)
+  ctx.strokeStyle = '#2d6e2d';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(0.5, 0.5, 79, 79);
+}
+
+function confirmCharacter() {
+  const nameVal = document.getElementById('cc-name').value.trim().toUpperCase();
+  state.playerName = nameVal || 'SURVIVOR';
+  document.getElementById('char-creator').style.display = 'none';
+  document.getElementById('overlay').style.display = 'flex';
+  showSlide();
+}
+
+window.addEventListener('DOMContentLoaded', () => { initCharCreator(); });
 
 function gameLoopWithUI() {
   if (!state.running) return;
