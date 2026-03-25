@@ -99,9 +99,18 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges}
 <div id="overlay">
   <h1>ISLAND SURVIVAL</h1>
   <div class="subtitle">A SHIPWRECK SURVIVAL STORY</div>
-  <div class="slide-dots" id="slide-dots"></div>
-  <div class="slide-box" id="slide-content"></div>
-  <button id="slide-btn" onclick="nextSlide()">NEXT</button>
+  <div class="slide-box" id="slide-content" style="max-height:60vh;overflow-y:auto;text-align:left">
+    <div style="margin-bottom:14px"><h3 style="color:#c8f135;font-size:12px;letter-spacing:3px;margin-bottom:8px">CONTROLS</h3><div style="font-size:11px;color:#bbb;line-height:1.8"><b>WASD</b> — Move &nbsp; <b>SHIFT</b> — Sprint &nbsp; <b>SPACE</b> — Jump<br><b>Click</b> — Attack/Harvest &nbsp; <b>E</b> — Interact &nbsp; <b>I</b> — Inventory<br><b>C</b> — Crafting &nbsp; <b>B</b> — Build menu &nbsp; <b>F</b> — Fish (need rod + near water)</div></div>
+    <hr style="border-color:#222;margin:8px 0">
+    <div style="margin-bottom:14px"><h3 style="color:#c8f135;font-size:12px;letter-spacing:3px;margin-bottom:8px">SURVIVAL</h3><div style="font-size:11px;color:#bbb;line-height:1.8">You have <b>Health</b>, <b>Water</b>, <b>Food</b>, and <b>Stamina</b> bars.<br>Water + Food deplete over time. If either hits zero, health drains.<br>Raw food has a 20% chance of making you sick. Cook on a Campfire.</div></div>
+    <hr style="border-color:#222;margin:8px 0">
+    <div style="margin-bottom:14px"><h3 style="color:#c8f135;font-size:12px;letter-spacing:3px;margin-bottom:8px">THE JUNGLE</h3><div style="font-size:11px;color:#bbb;line-height:1.8">Dark jungle has hidden <b>pit traps</b> — fall in and die without a Torch.<br>Craft Torch (2 wood + 1 stone) to reveal pits. Jungle holds chests and lore.</div></div>
+    <hr style="border-color:#222;margin:8px 0">
+    <div style="margin-bottom:14px"><h3 style="color:#c8f135;font-size:12px;letter-spacing:3px;margin-bottom:8px">RESOURCES</h3><div style="font-size:11px;color:#bbb;line-height:1.8"><b>Palm trees</b> → Coconuts (water) &nbsp; <b>Berry/Fruit</b> → Food (cook first!)<br><b>Fishing spots</b> → Fish (need Fishing Rod) &nbsp; <b>Trees</b> → Wood &nbsp; <b>Rocks</b> → Stone</div></div>
+    <hr style="border-color:#222;margin:8px 0">
+    <div><h3 style="color:#c8f135;font-size:12px;letter-spacing:3px;margin-bottom:8px">STORY & GOAL</h3><div style="font-size:11px;color:#bbb;line-height:1.8">You survived the Meridian shipwreck. Find <b>Mara</b>, <b>Felix</b>, and <b>Elder Kona</b>.<br>Tribal warriors attack from Day 3. Chief appears Day 15.<br>Defeat him, craft a <b>Superyacht</b>, and escape. Multiple endings.</div></div>
+  </div>
+  <button id="slide-btn" onclick="nextSlide()" style="margin-top:16px">START GAME</button>
 </div>
 
 <div id="win-screen">
