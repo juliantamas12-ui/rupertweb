@@ -481,6 +481,7 @@ function genObjects() {
       } else if (t === T.SHALLOW_WATER) {
         if (r < 0.004) state.objects.push({type:'fish_spot', x:wx, y:wy, shimmer:Math.random()*100});
         else if (r < 0.006) state.creatures.push({type:'shark', x:wx, y:wy, hp:50, maxHp:50, spd:0.9, attackTimer:0, walkTimer:0});
+        else if (r < 0.02) state.objects.push({type:'reed', x:wx, y:wy, decor:true});
       } else if (t === T.VOLCANIC) {
         if (r < 0.04) state.objects.push({type:'vol_rock', x:wx, y:wy, hp:3, maxHp:3});
       }
@@ -1289,6 +1290,18 @@ function drawFishSpot(ctx, sx, sy) {
   ctx.fillStyle = 'rgba(200,240,255,0.8)';
   ctx.fillRect(sx-4, sy-1, 3, 3);
   ctx.fillRect(sx+1, sy-1, 3, 3);
+}
+
+function drawReed(ctx, sx, sy) {
+  // Reed cluster in shallow water
+  const offsets = [-8, -3, 2, 7];
+  offsets.forEach((ox, i) => {
+    const h = 18 + (i%2)*6;
+    px(ctx, '#5a7a30', sx+ox, sy-h, 2, h);
+    // Reed head (oval seed pod)
+    px(ctx, '#7a5a20', sx+ox-1, sy-h-6, 4, 7);
+    px(ctx, '#6a4a15', sx+ox, sy-h-8, 2, 4);
+  });
 }
 
 function drawVolcano(ctx, vcx, vcy) {
@@ -3386,6 +3399,7 @@ function render(ctx, minimapCtx) {
         case 'rock': case 'vol_rock': drawRock(ctx,ssx,ssy); if(capturedObj.type==='vol_rock')drawVolRock(ctx,ssx,ssy); break;
         case 'berry': case 'fruit': drawBerry(ctx,ssx,ssy); break;
         case 'fish_spot': drawFishSpot(ctx,ssx,ssy); break;
+        case 'reed': drawReed(ctx,ssx,ssy); break;
         case 'step_stone': px(ctx,'rgba(0,0,0,0.3)',ssx-11,ssy+4,22,5); px(ctx,'#3a2e20',ssx-10,ssy+0,20,6); px(ctx,'#6a5a4a',ssx-10,ssy-5,20,8); px(ctx,'#9a8a7a',ssx-8,ssy-7,16,4); px(ctx,'#7a6a5a',ssx-6,ssy-6,4,2); break;
         case 'dead_tree': drawDeadTree(ctx,ssx,ssy); break;
         case 'flower_patch': drawFlowerPatch(ctx,ssx,ssy); break;
