@@ -3085,98 +3085,14 @@ function drawTile(ctx, type, sx, sy) {
   ctx.fillRect(sx, sy, TSIZE, TSIZE);
 
   // Micro-variation: slight brightness offset per tile based on position hash
-  if (type !== T.LAVA && type !== T.DEEP_OCEAN) {
-    const tx2 = Math.round(sx/TSIZE), ty2 = Math.round(sy/TSIZE);
-    const v = (tx2*13 + ty2*7) % 5;
-    if (v === 0) { ctx.fillStyle = 'rgba(255,255,255,0.04)'; ctx.fillRect(sx, sy, TSIZE, TSIZE); }
-    else if (v === 1) { ctx.fillStyle = 'rgba(0,0,0,0.05)'; ctx.fillRect(sx, sy, TSIZE, TSIZE); }
-    else if (v === 4) { ctx.fillStyle = 'rgba(255,255,255,0.02)'; ctx.fillRect(sx, sy, TSIZE, TSIZE); }
-  }
+  // No per-frame tile overlays
 
   // Tile variation
+  // Minimal static tile variation — no animation, no random per-frame changes
   if (type === T.BEACH) {
     const tx = Math.round(sx/TSIZE), ty = Math.round(sy/TSIZE);
-    // Every 3rd beach tile slightly lighter or darker
-    const v = (tx + ty * 7) % 3;
-    if (v === 0) { ctx.fillStyle = 'rgba(255,255,200,0.12)'; ctx.fillRect(sx, sy, TSIZE, TSIZE); }
-    else if (v === 2) { ctx.fillStyle = 'rgba(0,0,0,0.08)'; ctx.fillRect(sx, sy, TSIZE, TSIZE); }
-    // Small pebbles (2x2 dots)
-    const h1 = (tx * 7 + ty * 13) % 23;
-    if (h1 < 3) {
-      ctx.fillStyle = '#c8b890';
-      const px2 = sx + (h1 * 3) % (TSIZE-2);
-      const py2 = sy + (h1 * 5 + 1) % (TSIZE-2);
-      ctx.fillRect(px2, py2, 2, 2);
-    }
-    // Sand ripples
-    if ((tx*5+ty*3)%20 === 0) {
-      ctx.fillStyle = '#c8a870';
-      ctx.fillRect(sx+1, sy+2, 6, 1);
-      ctx.fillRect(sx+2, sy+4, 5, 1);
-      ctx.fillRect(sx+1, sy+6, 4, 1);
-    }
-    // Seagull silhouette every 15th tile
-    if ((tx+ty)%15 === 0) {
-      const gsx = sx + 3, gsy = sy - 4;
-      ctx.fillStyle = '#888';
-      ctx.fillRect(gsx, gsy, 2, 1);
-      ctx.fillRect(gsx+3, gsy, 2, 1);
-      ctx.fillRect(gsx+2, gsy-1, 1, 1);
-    }
-  }
-  if (type === T.JUNGLE_LIGHT) {
-    const tx = Math.round(sx/TSIZE), ty = Math.round(sy/TSIZE);
-    if ((tx*3 + ty*7) % 13 === 0) { ctx.fillStyle = 'rgba(0,40,0,0.25)'; ctx.fillRect(sx, sy, TSIZE, TSIZE); }
-    // Grass tufts (3x4 green lines)
-    const h2 = (tx * 11 + ty * 17) % 19;
-    if (h2 < 2) {
-      ctx.fillStyle = '#2a6a18';
-      ctx.fillRect(sx + (h2*4)%5, sy, 1, 4);
-      ctx.fillRect(sx + (h2*4)%5 + 2, sy + 1, 1, 3);
-    }
-  }
-  if (type === T.JUNGLE_DARK) {
-    const tx = Math.round(sx/TSIZE), ty = Math.round(sy/TSIZE);
-    if ((tx*5 + ty*11) % 9 === 0) { ctx.fillStyle = 'rgba(0,20,0,0.3)'; ctx.fillRect(sx, sy, TSIZE, TSIZE); }
-    // Canopy shadow: darker top strip to simulate overhead canopy oppression
-    ctx.fillStyle = 'rgba(0,0,0,0.25)';
-    ctx.fillRect(sx, sy, TSIZE, 2);
-  }
-  if (type === T.SHALLOW_WATER) {
-    const wave = Math.sin(state.frameCount * 0.04 + sx * 0.05) * 0.15;
-    ctx.fillStyle = `rgba(120,200,255,${0.1+wave})`;
-    ctx.fillRect(sx, sy, TSIZE, TSIZE);
-    // Subtle shimmer lines
-    if ((Math.round(sx/TSIZE) + Math.round(sy/TSIZE) + Math.floor(state.frameCount * 0.03)) % 5 === 0) {
-      ctx.fillStyle = 'rgba(180,230,255,0.2)';
-      ctx.fillRect(sx, sy + TSIZE/2, TSIZE, 1);
-    }
-    // Coral reef blobs (static, hash-based)
-    const tx = Math.round(sx/TSIZE) + Math.floor(state.cam.x/TSIZE);
-    const ty = Math.round(sy/TSIZE) + Math.floor(state.cam.y/TSIZE);
-    if ((tx*7+ty*3)%12 < 3) {
-      const coralColors = ['#ff8844','#ff44aa','#8844ff'];
-      const ci = (tx*3+ty*5)%3;
-      ctx.fillStyle = coralColors[ci];
-      ctx.fillRect(sx+1, sy+1, 4, 4);
-      ctx.fillStyle = coralColors[(ci+1)%3];
-      ctx.fillRect(sx+4, sy+3, 3, 3);
-    }
-  }
-  if (type === T.DEEP_OCEAN) {
-    const wave2 = Math.sin(state.frameCount * 0.02 + sx * 0.04 + sy * 0.03) * 0.1;
-    if (wave2 > 0.05) {
-      ctx.fillStyle = 'rgba(60,120,180,0.15)';
-      ctx.fillRect(sx, sy + TSIZE/2, TSIZE, 2);
-    }
-    // Horizon shimmer: top 2px of deep ocean tiles get lighter strip
-    const tx_do = Math.round(sx/TSIZE) + Math.floor(state.cam.x/TSIZE);
-    const ty_do = Math.round(sy/TSIZE) + Math.floor(state.cam.y/TSIZE);
-    const aboveTile = state.map[ty_do - 1]?.[tx_do];
-    if (aboveTile !== T.DEEP_OCEAN && aboveTile !== T.SHALLOW_WATER) {
-      ctx.fillStyle = '#2a6a8a';
-      ctx.fillRect(sx, sy, TSIZE, 2);
-    }
+    const v = (tx * 7 + ty * 13) % 5;
+    if (v === 0) { ctx.fillStyle = 'rgba(0,0,0,0.06)'; ctx.fillRect(sx, sy, TSIZE, TSIZE); }
   }
 }
 
