@@ -216,7 +216,7 @@ canvas#c{pointer-events:none}
       <!-- Phase content injected by JS -->
     </div>
 
-    <button id="ss-btn" style="font-family:'Press Start 2P',monospace;font-size:10px;letter-spacing:3px;color:#c8f135;border:2px solid #4a7a1a;padding:14px 48px;background:#1a2e0a;margin-bottom:14px;cursor:pointer;border-radius:8px;transition:background 0.2s,border-color 0.2s;box-shadow:0 0 20px rgba(200,241,53,0.15)">&#9658; CLICK / TAP TO BEGIN</button>
+    <button id="ss-btn" onclick="startScreenClick();event.stopPropagation();" ontouchend="startScreenClick();event.stopPropagation();event.preventDefault();" style="font-family:'Press Start 2P',monospace;font-size:10px;letter-spacing:3px;color:#c8f135;border:2px solid #4a7a1a;padding:14px 48px;background:#1a2e0a;margin-bottom:14px;cursor:pointer;border-radius:8px;transition:background 0.2s,border-color 0.2s;box-shadow:0 0 20px rgba(200,241,53,0.15);touch-action:manipulation">&#9658; CLICK / TAP TO BEGIN</button>
     <div style="font-family:'Press Start 2P',monospace;font-size:7px;letter-spacing:2px;color:#4a7a1a">OR PRESS ANY KEY</div>
   </div>
 
