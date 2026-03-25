@@ -4296,7 +4296,7 @@ function startScreenClick() {
     state.shirtColor = SS_SHIRTS[ssShirt].c;
     state.skinColor = SS_SKINS[ssSkin].c;
     state.playerName = 'SURVIVOR';
-    const _ss = document.getElementById('start-screen'); if(_ss) _ss.style.display = 'none';
+    
     genMap(); genObjects();
     state.player.x = 125*TSIZE; state.player.y = 170*TSIZE;
     state.cam.x = state.player.x - canvas.width/2;
@@ -4308,7 +4308,6 @@ function startScreenClick() {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  // Auto-start immediately
   state.shirtColor = '#2d7a2d';
   state.skinColor = '#c8a07a';
   state.playerName = 'SURVIVOR';
