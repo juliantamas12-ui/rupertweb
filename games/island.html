@@ -124,8 +124,8 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;posit
 // ISLAND SURVIVAL v4 — Full game state and constants
 // ============================================================
 
-const TSIZE = 16;
-const MSIZE = 250;
+const TSIZE = 8;
+const MSIZE = 500;
 const WORLD_W = MSIZE * TSIZE;
 const WORLD_H = MSIZE * TSIZE;
 
@@ -142,10 +142,10 @@ const state = {
   running: false, paused: false,
   day: 1, dayTime: 0, isNight: false,
   frameCount: 0,
-  DAY_FRAMES: 60 * 180, // 3 min/day
+  DAY_FRAMES: 60 * 240, // 4 min/day
 
   player: {
-    x: 125*TSIZE, y: 170*TSIZE,
+    x: 250*TSIZE, y: 340*TSIZE,
     vx: 0, vy: 0,
     hp: 100, maxHp: 100,
     water: 100, maxWater: 100,
@@ -193,6 +193,10 @@ const state = {
   dialogue: null, // current dialogue state
   fishing: null,  // fishing state
 
+  birds: [], // ambient flying birds
+  birdTimer: 0,
+  footprints: [], // fading beach footprints
+
   cam: { x: 0, y: 0 },
   screenShake: 0,
   msg: [], // notification stack
@@ -207,7 +211,7 @@ const state = {
 const NPC_DATA = [
   {
     id: 'mara', name: 'MARA', color: '#e8a87c',
-    x: 125*TSIZE, y: 30*TSIZE,
+    x: 250*TSIZE, y: 60*TSIZE,
     desc: "Ship's cook. Survived on coconuts for three days.",
     lines: [
       ["I've been here since the wreck. Three days. I found water but the jungle... something's out there.", null],
@@ -219,7 +223,7 @@ const NPC_DATA = [
   },
   {
     id: 'felix', name: 'FELIX', color: '#7ca0b0',
-    x: 60*TSIZE, y: 120*TSIZE,
+    x: 120*TSIZE, y: 240*TSIZE,
     desc: "Ship's engineer. Sarcastic. Builds things.",
     lines: [
       ["Finally, another person. I've been talking to rocks. The rocks aren't great conversationalists.", null],
@@ -231,7 +235,7 @@ const NPC_DATA = [
   },
   {
     id: 'kona', name: 'ELDER KONA', color: '#c87050',
-    x: 128*TSIZE, y: 90*TSIZE,
+    x: 256*TSIZE, y: 180*TSIZE,
     desc: "Escaped tribe member. Knows the truth.",
     lines: [
       ["You no enemy. Chief... my brother. He protect old stone. Your ship come too close — stone angry.", null],
@@ -261,7 +265,7 @@ function genMap() {
   state.map = [];
   state.pits = new Set();
   const cx = MSIZE/2, cy = MSIZE/2;
-  const vcx = cx, vcy = cy - 60;
+  const vcx = cx, vcy = cy - 120;
 
   for (let y = 0; y < MSIZE; y++) {
     state.map[y] = new Uint8Array(MSIZE);
@@ -269,27 +273,27 @@ function genMap() {
       const dx = x - cx, dy = y - cy;
       const angle = Math.atan2(dy, dx);
       const noise = Math.sin(angle*3)*10 + Math.sin(angle*7)*5 + Math.cos(angle*5)*6 + Math.sin(angle*11)*3;
-      const islandR = 72 + noise;
+      const islandR = 144 + noise;
       const dist = Math.sqrt(dx*dx + dy*dy);
       const dvx = x - vcx, dvy = y - vcy;
       const vdist = Math.sqrt(dvx*dvx + dvy*dvy);
 
-      if (dist > islandR + 15) state.map[y][x] = T.DEEP_OCEAN;
-      else if (dist > islandR + 5) state.map[y][x] = T.SHALLOW_WATER;
+      if (dist > islandR + 30) state.map[y][x] = T.DEEP_OCEAN;
+      else if (dist > islandR + 10) state.map[y][x] = T.SHALLOW_WATER;
       else if (dist > islandR) state.map[y][x] = T.BEACH;
-      else if (vdist < 8) state.map[y][x] = T.LAVA;
-      else if (vdist < 18) state.map[y][x] = T.VOLCANIC;
-      else if (vdist < 30) state.map[y][x] = T.VOLCANIC;
-      else if (dist < islandR - 20) state.map[y][x] = T.JUNGLE_DARK;
-      else if (dist < islandR - 6) state.map[y][x] = T.JUNGLE_LIGHT;
+      else if (vdist < 16) state.map[y][x] = T.LAVA;
+      else if (vdist < 36) state.map[y][x] = T.VOLCANIC;
+      else if (vdist < 60) state.map[y][x] = T.VOLCANIC;
+      else if (dist < islandR - 40) state.map[y][x] = T.JUNGLE_DARK;
+      else if (dist < islandR - 12) state.map[y][x] = T.JUNGLE_LIGHT;
       else state.map[y][x] = T.BEACH;
     }
   }
 
   // Jungle maze walls — add impassable rock wall tiles in dark jungle
   for (let i = 0; i < 200; i++) {
-    const wx = 80 + Math.floor(Math.random() * 90);
-    const wy = 80 + Math.floor(Math.random() * 90);
+    const wx = 160 + Math.floor(Math.random() * 180);
+    const wy = 160 + Math.floor(Math.random() * 180);
     if (state.map[wy] && state.map[wy][wx] === T.JUNGLE_DARK) {
       // Place a short wall segment
       const len = 3 + Math.floor(Math.random() * 8);
@@ -337,14 +341,14 @@ function genObjects() {
         if (r < 0.04) state.objects.push({type:'tree', x:wx, y:wy, hp:5, maxHp:5});
         else if (r < 0.06) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4});
         else if (r < 0.062) state.objects.push({type:'jungle_chest', x:wx, y:wy, opened:false});
-        else if (r < 0.070) state.creatures.push({type:'spider', x:wx, y:wy, hp:25, maxHp:25, spd:1.5, attackTimer:0, walkTimer:0});
+        else if (r < 0.070) state.creatures.push({type:'spider', x:wx, y:wy, hp:25, maxHp:25, spd:1.05, attackTimer:0, walkTimer:0});
       } else if (t === T.BEACH) {
         if (r < 0.03) state.objects.push({type:'palm', x:wx, y:wy, hp:4, maxHp:4, respawn:0});
         else if (r < 0.04) state.objects.push({type:'driftwood', x:wx, y:wy, collected:false});
         else if (r < 0.05) state.objects.push({type:'fish_spot', x:wx, y:wy, shimmer:Math.random()*100});
       } else if (t === T.SHALLOW_WATER) {
         if (r < 0.02) state.objects.push({type:'fish_spot', x:wx, y:wy, shimmer:Math.random()*100});
-        else if (r < 0.026) state.creatures.push({type:'croc', x:wx, y:wy, hp:60, maxHp:60, spd:0.5, attackTimer:0, walkTimer:0});
+        else if (r < 0.026) state.creatures.push({type:'croc', x:wx, y:wy, hp:60, maxHp:60, spd:0.35, attackTimer:0, walkTimer:0});
       } else if (t === T.VOLCANIC) {
         if (r < 0.04) state.objects.push({type:'vol_rock', x:wx, y:wy, hp:3, maxHp:3});
       }
@@ -352,7 +356,7 @@ function genObjects() {
   }
 
   // Volcano loot chest at top
-  state.objects.push({type:'vol_chest', x:125*TSIZE, y:66*TSIZE, opened:false});
+  state.objects.push({type:'vol_chest', x:250*TSIZE, y:132*TSIZE, opened:false});
 
   // PARKOUR COURSE to volcano summit
   // Winding path around the volcano with gaps requiring jumps
@@ -360,31 +364,31 @@ function genObjects() {
   // Path spirals around the west side then up to the top
   const parkourCourse = [
     // Approach from south jungle — stepping stones with gaps
-    [125,155],[125,153],[125,151],
+    [250,310],[250,306],[250,302],
     // GAP (jump needed)
-    [124,148],[123,146],
+    [248,296],[246,292],
     // GAP
-    [121,143],[120,141],
+    [242,286],[240,282],
     // West side swing
-    [118,139],[116,137],[114,136],
+    [236,278],[232,274],[228,272],
     // GAP
-    [112,134],[110,133],
+    [224,268],[220,266],
     // Turn north
-    [109,131],[109,129],[109,127],
+    [218,262],[218,258],[218,254],
     // GAP
-    [109,124],[110,122],
+    [218,248],[220,244],
     // East turn toward volcano
-    [112,120],[114,119],[116,118],
+    [224,240],[228,238],[232,236],
     // GAP
-    [118,116],[120,115],
+    [236,232],[240,230],
     // Narrow ridge
-    [122,113],[123,111],
+    [244,226],[246,222],
     // GAP — hardest jump near top
-    [124,108],[125,106],
+    [248,216],[250,212],
     // Final approach to summit
-    [125,103],[125,101],[125,99],[125,97],[125,95],
-    [125,92],[125,89],[125,86],[125,83],[125,80],
-    [125,77],[125,74],[125,71],[125,68]
+    [250,206],[250,202],[250,198],[250,194],[250,190],
+    [250,184],[250,178],[250,172],[250,166],[250,160],
+    [250,154],[250,148],[250,142],[250,136]
   ];
 
   parkourCourse.forEach(([px2, py2]) => {
@@ -394,15 +398,15 @@ function genObjects() {
       // Remove pit traps on parkour path
       state.pits.delete(py2 * MSIZE + px2);
     }
-    state.objects.push({type:'step_stone', x:px2*TSIZE+8, y:py2*TSIZE+8});
+    state.objects.push({type:'step_stone', x:px2*TSIZE+TSIZE/2, y:py2*TSIZE+TSIZE/2});
   });
 
   // Block direct approach to volcano (make surrounding tiles lava to force parkour)
   for (let r = 0; r < 360; r += 5) {
     const rad = r * Math.PI / 180;
-    for (let d = 22; d <= 55; d += 2) {
-      const tx = Math.round(125 + Math.cos(rad) * d);
-      const ty = Math.round(65 + Math.sin(rad) * d);
+    for (let d = 44; d <= 110; d += 2) {
+      const tx = Math.round(250 + Math.cos(rad) * d);
+      const ty = Math.round(130 + Math.sin(rad) * d);
       if (ty >= 0 && ty < MSIZE && tx >= 0 && tx < MSIZE) {
         // Only turn to lava if not already a parkour stone position
         const isStone = parkourCourse.some(([px2,py2]) => Math.abs(px2-tx)<=1 && Math.abs(py2-ty)<=1);
@@ -415,11 +419,36 @@ function genObjects() {
 
   // Lore stones hidden in jungle
   const lorePositions = [
-    [95,110],[80,125],[105,95],[115,105],[88,100]
+    [190,220],[160,250],[210,190],[230,210],[176,200]
   ];
   lorePositions.forEach((pos, i) => {
     state.loreStones.push({x:pos[0]*TSIZE, y:pos[1]*TSIZE, text:LORE_TEXTS[i], read:false});
   });
+
+  // Decorative world objects (non-interactable, atmosphere only)
+  for (let y = 2; y < MSIZE-2; y++) {
+    for (let x = 2; x < MSIZE-2; x++) {
+      const t = state.map[y][x];
+      const wx = x * TSIZE + TSIZE/2;
+      const wy = y * TSIZE + TSIZE/2;
+      const r2 = Math.random();
+
+      if (t === T.BEACH) {
+        if (r2 < 0.008) state.objects.push({type:'dead_tree', x:wx, y:wy, decor:true});
+        else if (r2 < 0.020) state.objects.push({type:'flower_patch', x:wx, y:wy, decor:true});
+        else if (r2 < 0.025) state.objects.push({type:'campfire_remains', x:wx, y:wy, decor:true});
+        else if (r2 < 0.040) state.objects.push({type:'tide_pool', x:wx, y:wy, decor:true});
+      } else if (t === T.JUNGLE_LIGHT) {
+        if (r2 < 0.008) state.objects.push({type:'dead_tree', x:wx, y:wy, decor:true});
+        else if (r2 < 0.018) state.objects.push({type:'mossy_log', x:wx, y:wy, decor:true});
+        else if (r2 < 0.024) state.objects.push({type:'waterfall', x:wx, y:wy, decor:true});
+      } else if (t === T.JUNGLE_DARK) {
+        if (r2 < 0.010) state.objects.push({type:'mossy_log', x:wx, y:wy, decor:true});
+        else if (r2 < 0.014) state.objects.push({type:'skull_stake', x:wx, y:wy, decor:true});
+        else if (r2 < 0.017) state.objects.push({type:'ancient_statue', x:wx, y:wy, decor:true});
+      }
+    }
+  }
 
   // Place NPCs
   state.npcs = NPC_DATA.map(d => ({...d, dialogueIdx:0, bobTimer:0, questGiven:false}));
@@ -440,6 +469,41 @@ function drawPlayer(ctx, sx, sy, p) {
   const ay = sy + bob;
   const airTilt = p.onGround ? 0 : -4; // slight visual lift when airborne
 
+  // Check if swimming
+  const playerTile = getTile(p.x, p.y);
+  const isSwimming = playerTile === T.SHALLOW_WATER;
+
+  if (isSwimming) {
+    // Water ripple rings (expanding circles)
+    for (let r = 0; r < 3; r++) {
+      const rippleR = ((state.frameCount * 1.5 + r * 14) % 42);
+      const rippleA = 1 - rippleR / 42;
+      ctx.strokeStyle = `rgba(80,160,220,${rippleA * 0.7})`;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(sx, ay + 6, rippleR + 4, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    // Bubbles occasionally
+    if (Math.random() < 0.05) {
+      spawnParticle(p.x + (Math.random()-0.5)*10, p.y, (Math.random()-0.5)*0.3, -0.8, 'rgba(255,255,255,0.8)', 25);
+    }
+    // Only upper body visible (body lower in water)
+    const swimPhase = Math.floor(state.frameCount / 20) % 2;
+    // Water surface mask (everything below waterline is tinted)
+    px(ctx, 'rgba(74,154,180,0.65)', sx-14, ay+2, 28, 16);
+    // Left arm (swimming stroke, alternating)
+    const leftArmY = swimPhase === 0 ? ay - 2 : ay + 4;
+    const rightArmY = swimPhase === 0 ? ay + 4 : ay - 2;
+    px(ctx, '#2a7a2a', sx-14, leftArmY, 10, 4); // left arm
+    px(ctx, '#2a7a2a', sx+4, rightArmY, 10, 4); // right arm
+    // Body (just top half above water)
+    px(ctx, '#2a7a2a', sx-6, ay-4, 12, 8);
+    // Head visible above water
+    px(ctx, '#c8a07a', sx-5, ay-14, 10, 10);
+    px(ctx, '#1a0a00', sx-3, ay-11, 2, 2);
+    px(ctx, '#1a0a00', sx+1, ay-11, 2, 2);
+  } else {
   // Shadow
   px(ctx, 'rgba(0,0,0,0.25)', sx-7, ay+16, 14, 3);
 
@@ -457,6 +521,7 @@ function drawPlayer(ctx, sx, sy, p) {
   // Simple eyes
   px(ctx, '#1a0a00', sx-3, ay-11, 2, 2);
   px(ctx, '#1a0a00', sx+1, ay-11, 2, 2);
+  } // end else (not swimming)
 
   // Torch glow at night
   if (p.torch && state.isNight) {
@@ -669,6 +734,146 @@ function drawBerry(ctx, sx, sy) {
   px(ctx, '#e74c3c', sx-6, sy-2, 5, 5);
 }
 
+function drawDeadTree(ctx, sx, sy) {
+  // Bleached white/grey bare trunk
+  px(ctx, '#c8c8c0', sx-2, sy-20, 5, 22);
+  px(ctx, '#b8b8b0', sx+2, sy-12, 4, 14);
+  // Bare branches
+  px(ctx, '#b0b0a8', sx-10, sy-18, 10, 2);
+  px(ctx, '#b0b0a8', sx+3, sy-14, 8, 2);
+  px(ctx, '#a8a8a0', sx-6, sy-22, 6, 2);
+}
+
+function drawFlowerPatch(ctx, sx, sy) {
+  // Green stems
+  px(ctx, '#3a7a1a', sx-8, sy-4, 2, 6);
+  px(ctx, '#3a7a1a', sx-2, sy-6, 2, 8);
+  px(ctx, '#3a7a1a', sx+4, sy-4, 2, 6);
+  px(ctx, '#3a7a1a', sx+8, sy-3, 2, 5);
+  // Bright flowers
+  px(ctx, '#ff2222', sx-10, sy-8, 5, 4);
+  px(ctx, '#ffcc00', sx-4, sy-10, 5, 4);
+  px(ctx, '#ff4400', sx+2, sy-8, 5, 4);
+  px(ctx, '#ff2222', sx+7, sy-7, 5, 4);
+  // Centres
+  px(ctx, '#ffff44', sx-9, sy-7, 2, 2);
+  px(ctx, '#ff4400', sx-3, sy-9, 2, 2);
+  px(ctx, '#ffff44', sx+3, sy-7, 2, 2);
+  px(ctx, '#ff6600', sx+8, sy-6, 2, 2);
+}
+
+function drawMossyLog(ctx, sx, sy) {
+  // Fallen log body
+  px(ctx, '#5c3a1a', sx-14, sy-4, 28, 8);
+  px(ctx, '#7a5c2e', sx-12, sy-6, 26, 4);
+  // End grain circles
+  px(ctx, '#3a2010', sx-16, sy-5, 5, 8);
+  px(ctx, '#5c3a1a', sx+11, sy-5, 5, 8);
+  // Moss patches
+  px(ctx, '#2d6e1a', sx-8, sy-7, 6, 3);
+  px(ctx, '#3a8a22', sx+0, sy-7, 8, 3);
+  px(ctx, '#2d6e1a', sx+5, sy-7, 5, 3);
+  // Mushrooms
+  px(ctx, '#cc6622', sx-4, sy-10, 6, 4);
+  px(ctx, '#e87722', sx-5, sy-9, 8, 2);
+  px(ctx, '#f0d0a0', sx-4, sy-9, 1, 4);
+  px(ctx, '#cc6622', sx+6, sy-9, 5, 3);
+  px(ctx, '#f0d0a0', sx+7, sy-9, 1, 3);
+}
+
+function drawSkullStake(ctx, sx, sy) {
+  // Wooden stake
+  px(ctx, '#5c3a1a', sx-2, sy-28, 4, 30);
+  px(ctx, '#7a5c2e', sx-1, sy-30, 2, 4); // sharpened tip
+  // Skull
+  px(ctx, '#e8e0cc', sx-6, sy-26, 12, 10);
+  px(ctx, '#d0c8b4', sx-4, sy-28, 8, 4);
+  // Eye sockets
+  px(ctx, '#1a0a00', sx-5, sy-25, 4, 4);
+  px(ctx, '#1a0a00', sx+1, sy-25, 4, 4);
+  // Nose hole
+  px(ctx, '#2a1810', sx-1, sy-21, 2, 2);
+  // Jaw
+  px(ctx, '#c8c0ac', sx-4, sy-18, 8, 4);
+  px(ctx, '#1a0a00', sx-3, sy-17, 2, 3);
+  px(ctx, '#1a0a00', sx, sy-17, 2, 3);
+  px(ctx, '#1a0a00', sx+3, sy-17, 2, 3);
+  // Warning carvings on stake
+  px(ctx, '#8a5a2a', sx-1, sy-14, 2, 2);
+  px(ctx, '#8a5a2a', sx-1, sy-10, 2, 2);
+}
+
+function drawAncientStatue(ctx, sx, sy) {
+  // Stone base
+  px(ctx, '#5a5a52', sx-10, sy, 20, 8);
+  px(ctx, '#6a6a62', sx-8, sy-2, 16, 4);
+  // Idol body
+  px(ctx, '#686860', sx-6, sy-20, 12, 22);
+  px(ctx, '#7a7a72', sx-4, sy-22, 8, 4);
+  // Head
+  px(ctx, '#787870', sx-7, sy-30, 14, 12);
+  // Carved face
+  px(ctx, '#4a4a42', sx-5, sy-28, 4, 3); // left eye
+  px(ctx, '#4a4a42', sx+1, sy-28, 4, 3); // right eye
+  px(ctx, '#4a4a42', sx-3, sy-24, 6, 2); // mouth
+  // Cracks
+  px(ctx, '#3a3a32', sx-2, sy-18, 1, 8);
+  px(ctx, '#3a3a32', sx+3, sy-12, 1, 6);
+  // Tribal carvings
+  px(ctx, '#4a4a42', sx-5, sy-15, 10, 1);
+  px(ctx, '#4a4a42', sx-5, sy-10, 8, 1);
+  px(ctx, '#4a4a42', sx-4, sy-6, 6, 1);
+}
+
+function drawWaterfall(ctx, sx, sy) {
+  // Water source at top
+  px(ctx, '#3a7ab4', sx-8, sy-24, 16, 6);
+  // Falling water streams (animated)
+  const flow = state.frameCount * 0.1;
+  for (let i = 0; i < 3; i++) {
+    const foff = ((flow + i * 3) % 20);
+    const alpha = 0.6 + Math.sin(flow + i) * 0.2;
+    ctx.fillStyle = `rgba(80,160,220,${alpha})`;
+    ctx.fillRect(Math.round(sx - 6 + i * 4), Math.round(sy - 18 + foff), 3, 8);
+  }
+  // Splash pool at bottom
+  px(ctx, '#4a9ab4', sx-10, sy+4, 20, 6);
+  ctx.fillStyle = 'rgba(120,200,240,0.5)';
+  ctx.fillRect(sx-12, sy+2, 24, 4);
+}
+
+function drawCampfireRemains(ctx, sx, sy) {
+  // Ash circle
+  px(ctx, '#8a8a88', sx-10, sy-2, 20, 6);
+  px(ctx, '#6a6a68', sx-8, sy, 16, 4);
+  // Charred wood pieces
+  px(ctx, '#2a2220', sx-8, sy-3, 5, 3);
+  px(ctx, '#1a1812', sx+2, sy-4, 6, 3);
+  px(ctx, '#2a2220', sx-4, sy-2, 4, 2);
+  // Ash detail
+  px(ctx, '#b0b0aa', sx-6, sy+1, 4, 2);
+  px(ctx, '#9a9a98', sx+2, sy+2, 5, 2);
+}
+
+function drawTidePool(ctx, sx, sy) {
+  // Pool outline (dark sand rim)
+  px(ctx, '#b8a078', sx-12, sy-6, 24, 12);
+  // Water inside
+  px(ctx, '#3a88b4', sx-10, sy-4, 20, 8);
+  // Star shapes inside
+  px(ctx, '#e84444', sx-5, sy-2, 2, 2);
+  ctx.fillStyle = '#e84444';
+  ctx.fillRect(sx-6, sy-1, 4, 1);
+  ctx.fillRect(sx-5, sy-3, 2, 4);
+  ctx.fillRect(sx+3, sy+1, 2, 2);
+  ctx.fillRect(sx+2, sy, 4, 1);
+  ctx.fillRect(sx+3, sy-1, 2, 4);
+  // Shimmer
+  const shimmer = 0.3 + Math.sin(state.frameCount * 0.06 + sx * 0.1) * 0.2;
+  ctx.fillStyle = `rgba(180,230,255,${shimmer})`;
+  ctx.fillRect(sx-8, sy-3, 6, 3);
+}
+
 function drawFishSpot(ctx, sx, sy) {
   const shimmer = 0.4 + Math.sin(state.frameCount * 0.08 + sx) * 0.3;
   ctx.fillStyle = `rgba(120,200,255,${shimmer})`;
@@ -717,6 +922,8 @@ function drawVolcano(ctx, vcx, vcy) {
 function drawNPC(ctx, sx, sy, npc) {
   const bob = Math.sin(npc.bobTimer * 0.04) * 2;
   const ay = sy + bob;
+  // Shadow
+  px(ctx, 'rgba(0,0,0,0.2)', sx-8, ay+10, 16, 4);
   // Body color based on NPC
   px(ctx, npc.color || '#c8a07a', sx-5, ay-12, 10, 10);
   px(ctx, '#4a4a6a', sx-6, ay-4, 12, 10);
@@ -809,14 +1016,14 @@ function spawnEnemies(n, type) {
   for (let i = 0; i < n; i++) {
     const angle = Math.random() * Math.PI * 2;
     const r = (50 + Math.random() * 40) * TSIZE;
-    const cx = 125 * TSIZE, cy = 125 * TSIZE;
+    const cx = 250 * TSIZE, cy = 250 * TSIZE;
     const t = type || (state.isNight ? 'shadow' : 'scout');
     const hp = (t==='shadow'?25:20) + state.day * 3;
     state.enemies.push({
       x: cx + Math.cos(angle)*r,
       y: cy + Math.sin(angle)*r,
       hp, maxHp: hp,
-      spd: (t==='shadow'?1.2:0.7) + state.day*0.02,
+      spd: (t==='shadow'?0.84:0.49) + state.day*0.014,
       type: t,
       attackTimer: 0,
       walkTimer: 0,
@@ -827,11 +1034,11 @@ function spawnEnemies(n, type) {
 }
 
 function spawnChief() {
-  const cx = 126*TSIZE, cy = 80*TSIZE;
+  const cx = 252*TSIZE, cy = 160*TSIZE;
   state.chief = {
     x: cx, y: cy,
     hp: 300, maxHp: 300,
-    spd: 0.9, type: 'chief',
+    spd: 0.63, type: 'chief',
     attackTimer: 0, walkTimer: 0,
     phase: 1, phaseTimer: 0,
     axeTimer: 0
@@ -897,12 +1104,12 @@ function updateEnemies() {
     // Chief phases
     if (e.type === 'chief') {
       if (e.hp < 150 && e.phase === 1) {
-        e.phase = 2; e.spd = 1.4;
+        e.phase = 2; e.spd = 0.98;
         spawnEnemies(3, 'scout');
         showMsg('THE CHIEF ENRAGES!', '#ff4444');
       }
       if (e.hp < 75 && e.phase === 2) {
-        e.phase = 3; e.spd = 1.8;
+        e.phase = 3; e.spd = 1.26;
         spawnEnemies(5, 'scout');
       }
       // Phase 3 throws axes
@@ -1382,9 +1589,9 @@ function updatePlayer() {
   const inDarkJungle = tile === T.JUNGLE_DARK;
   const inDense = inDarkJungle; // slowed in dark jungle
 
-  let spd = 2.2;
-  if (sprinting) spd = 3.2;
-  if (inWater) spd *= 0.55;
+  let spd = 1.4;
+  if (sprinting) spd = 2.0;
+  if (inWater) spd *= 0.45;
   if (inDense) spd *= 0.6;
   if (p.stamina <= 0) spd *= 0.8;
 
@@ -1457,7 +1664,7 @@ function updatePlayer() {
   p.torch = p.inv.torch > 0;
 
   // Volcano proximity tint
-  const vcx = 125*TSIZE, vcy = 65*TSIZE;
+  const vcx = 250*TSIZE, vcy = 130*TSIZE;
   const vd = Math.sqrt((p.x-vcx)**2 + (p.y-vcy)**2);
   state.volcanoTint = Math.max(0, Math.min(0.35, (200*TSIZE - vd) / (200*TSIZE)));
 
@@ -1974,18 +2181,52 @@ function drawTile(ctx, type, sx, sy) {
   ctx.fillRect(sx, sy, TSIZE, TSIZE);
 
   // Tile variation
-  if (type === T.BEACH && ((Math.round(sx/TSIZE) + Math.round(sy/TSIZE)) % 7 === 0)) {
-    ctx.fillStyle = 'rgba(255,255,200,0.15)';
-    ctx.fillRect(sx, sy, TSIZE, TSIZE);
+  if (type === T.BEACH) {
+    const tx = Math.round(sx/TSIZE), ty = Math.round(sy/TSIZE);
+    // Every 3rd beach tile slightly lighter or darker
+    const v = (tx + ty * 7) % 3;
+    if (v === 0) { ctx.fillStyle = 'rgba(255,255,200,0.12)'; ctx.fillRect(sx, sy, TSIZE, TSIZE); }
+    else if (v === 2) { ctx.fillStyle = 'rgba(0,0,0,0.08)'; ctx.fillRect(sx, sy, TSIZE, TSIZE); }
+    // Small pebbles (2x2 dots)
+    const h1 = (tx * 7 + ty * 13) % 23;
+    if (h1 < 3) {
+      ctx.fillStyle = '#c8b890';
+      const px2 = sx + (h1 * 3) % (TSIZE-2);
+      const py2 = sy + (h1 * 5 + 1) % (TSIZE-2);
+      ctx.fillRect(px2, py2, 2, 2);
+    }
   }
-  if (type === T.JUNGLE_LIGHT && ((Math.round(sx/TSIZE)*3 + Math.round(sy/TSIZE)*7) % 13 === 0)) {
-    ctx.fillStyle = 'rgba(0,40,0,0.25)';
-    ctx.fillRect(sx, sy, TSIZE, TSIZE);
+  if (type === T.JUNGLE_LIGHT) {
+    const tx = Math.round(sx/TSIZE), ty = Math.round(sy/TSIZE);
+    if ((tx*3 + ty*7) % 13 === 0) { ctx.fillStyle = 'rgba(0,40,0,0.25)'; ctx.fillRect(sx, sy, TSIZE, TSIZE); }
+    // Grass tufts (3x4 green lines)
+    const h2 = (tx * 11 + ty * 17) % 19;
+    if (h2 < 2) {
+      ctx.fillStyle = '#2a6a18';
+      ctx.fillRect(sx + (h2*4)%5, sy, 1, 4);
+      ctx.fillRect(sx + (h2*4)%5 + 2, sy + 1, 1, 3);
+    }
+  }
+  if (type === T.JUNGLE_DARK) {
+    const tx = Math.round(sx/TSIZE), ty = Math.round(sy/TSIZE);
+    if ((tx*5 + ty*11) % 9 === 0) { ctx.fillStyle = 'rgba(0,20,0,0.3)'; ctx.fillRect(sx, sy, TSIZE, TSIZE); }
   }
   if (type === T.SHALLOW_WATER) {
     const wave = Math.sin(state.frameCount * 0.04 + sx * 0.05) * 0.15;
     ctx.fillStyle = `rgba(120,200,255,${0.1+wave})`;
     ctx.fillRect(sx, sy, TSIZE, TSIZE);
+    // Subtle shimmer lines
+    if ((Math.round(sx/TSIZE) + Math.round(sy/TSIZE) + Math.floor(state.frameCount * 0.03)) % 5 === 0) {
+      ctx.fillStyle = 'rgba(180,230,255,0.2)';
+      ctx.fillRect(sx, sy + TSIZE/2, TSIZE, 1);
+    }
+  }
+  if (type === T.DEEP_OCEAN) {
+    const wave2 = Math.sin(state.frameCount * 0.02 + sx * 0.04 + sy * 0.03) * 0.1;
+    if (wave2 > 0.05) {
+      ctx.fillStyle = 'rgba(60,120,180,0.15)';
+      ctx.fillRect(sx, sy + TSIZE/2, TSIZE, 2);
+    }
   }
 }
 
@@ -2120,6 +2361,42 @@ function render(ctx, minimapCtx) {
     }
   }
 
+  // Transition overlays: wet sand near water, jungle edge near beach
+  for (let ty = sy0; ty < sy1; ty++) {
+    for (let tx = sx0; tx < sx1; tx++) {
+      const t = state.map[ty][tx];
+      const tileX = tx*TSIZE - camX, tileY = ty*TSIZE - camY;
+      if (t === T.BEACH) {
+        // Check proximity to water tiles within 2 tiles
+        let nearWater = false;
+        for (let dy2 = -2; dy2 <= 2 && !nearWater; dy2++) {
+          for (let dx2 = -2; dx2 <= 2 && !nearWater; dx2++) {
+            const nt = state.map[ty+dy2]?.[tx+dx2];
+            if (nt === T.SHALLOW_WATER || nt === T.DEEP_OCEAN) nearWater = true;
+          }
+        }
+        if (nearWater) {
+          ctx.fillStyle = 'rgba(0,30,60,0.12)';
+          ctx.fillRect(tileX, tileY, TSIZE, TSIZE);
+        }
+      }
+      if (t === T.JUNGLE_LIGHT) {
+        // Check proximity to beach within 2 tiles
+        let nearBeach = false;
+        for (let dy2 = -2; dy2 <= 2 && !nearBeach; dy2++) {
+          for (let dx2 = -2; dx2 <= 2 && !nearBeach; dx2++) {
+            const nt = state.map[ty+dy2]?.[tx+dx2];
+            if (nt === T.BEACH) nearBeach = true;
+          }
+        }
+        if (nearBeach) {
+          ctx.fillStyle = 'rgba(220,200,120,0.2)';
+          ctx.fillRect(tileX, tileY, TSIZE, TSIZE);
+        }
+      }
+    }
+  }
+
   // Draw pit indicators (dark x marks in dark jungle, only if no torch)
   if (!p.torch) {
     for (let ty = sy0; ty < sy1; ty++) {
@@ -2134,7 +2411,7 @@ function render(ctx, minimapCtx) {
   }
 
   // Volcano
-  const vcx = 125*TSIZE - camX, vcy = 65*TSIZE - camY;
+  const vcx = 250*TSIZE - camX, vcy = 130*TSIZE - camY;
   if (vcx > -300 && vcx < canvas.width+300) drawVolcano(ctx, vcx, vcy);
 
   // World objects (non-placed)
@@ -2142,6 +2419,18 @@ function render(ctx, minimapCtx) {
     if (obj.placed) return;
     const sx = obj.x - camX, sy = obj.y - camY;
     if (sx < -40 || sx > canvas.width+40 || sy < -40 || sy > canvas.height+40) return;
+
+    // Shadow ellipse under solid objects
+    if (['tree','palm','rock','vol_rock','jungle_chest','vol_chest','step_stone','ancient_statue','skull_stake','dead_tree','mossy_log'].includes(obj.type)) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(0,0,0,0.18)';
+      ctx.scale(1, 0.35);
+      ctx.beginPath();
+      const shadowW = obj.type === 'tree' || obj.type === 'palm' ? 16 : 10;
+      ctx.ellipse(sx, (sy+12)*1/0.35, shadowW, 5/0.35, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+    }
 
     switch (obj.type) {
       case 'tree': {
@@ -2156,10 +2445,21 @@ function render(ctx, minimapCtx) {
       case 'berry': case 'fruit': drawBerry(ctx, sx, sy); break;
       case 'fish_spot': drawFishSpot(ctx, sx, sy); break;
       case 'step_stone':
-        px(ctx, '#6a5a4a', sx-10, sy-4, 20, 8);
-        px(ctx, '#8a7a6a', sx-8, sy-6, 16, 4);
-        px(ctx, '#4a3a2a', sx-10, sy+2, 20, 4);
+        // Raised stone platform: shadow, dark base, lighter top surface
+        px(ctx, 'rgba(0,0,0,0.3)', sx-11, sy+4, 22, 5); // shadow
+        px(ctx, '#3a2e20', sx-10, sy+0, 20, 6); // dark base sides
+        px(ctx, '#6a5a4a', sx-10, sy-5, 20, 8); // stone body
+        px(ctx, '#9a8a7a', sx-8, sy-7, 16, 4); // top lighter surface
+        px(ctx, '#7a6a5a', sx-6, sy-6, 4, 2); // detail
         break;
+      case 'dead_tree': drawDeadTree(ctx, sx, sy); break;
+      case 'flower_patch': drawFlowerPatch(ctx, sx, sy); break;
+      case 'mossy_log': drawMossyLog(ctx, sx, sy); break;
+      case 'skull_stake': drawSkullStake(ctx, sx, sy); break;
+      case 'ancient_statue': drawAncientStatue(ctx, sx, sy); break;
+      case 'waterfall': drawWaterfall(ctx, sx, sy); break;
+      case 'campfire_remains': drawCampfireRemains(ctx, sx, sy); break;
+      case 'tide_pool': drawTidePool(ctx, sx, sy); break;
       case 'driftwood':
         px(ctx, '#8B6914', sx-10, sy-2, 20, 4);
         px(ctx, '#7a5514', sx-6, sy-4, 6, 2);
@@ -2242,6 +2542,34 @@ function render(ctx, minimapCtx) {
 
   // Particles
   drawParticles(ctx, camX, camY);
+
+  // Footprints on beach
+  state.footprints.forEach(fp => {
+    const fpx = fp.x - camX, fpy = fp.y - camY;
+    const a = (fp.life / fp.maxLife) * 0.5;
+    ctx.fillStyle = `rgba(180,150,100,${a})`;
+    ctx.fillRect(Math.round(fpx-2), Math.round(fpy), 3, 2);
+    ctx.fillRect(Math.round(fpx+2), Math.round(fpy+3), 3, 2);
+  });
+
+  // Ambient birds (drawn in sky layer)
+  state.birds.forEach(b => {
+    const bsx = b.wx - camX, bsy = b.wy - camY;
+    if (bsx < -20 || bsx > canvas.width+20) return;
+    const flapPhase = Math.floor(b.flapFrame / 8) % 2;
+    ctx.fillStyle = '#222a22';
+    if (flapPhase === 0) {
+      // Wings up: V shape
+      ctx.fillRect(Math.round(bsx-6), Math.round(bsy-2), 5, 2);
+      ctx.fillRect(Math.round(bsx+1), Math.round(bsy-2), 5, 2);
+    } else {
+      // Wings level
+      ctx.fillRect(Math.round(bsx-6), Math.round(bsy), 5, 2);
+      ctx.fillRect(Math.round(bsx+1), Math.round(bsy), 5, 2);
+    }
+    // Body dot
+    ctx.fillRect(Math.round(bsx-1), Math.round(bsy-1), 3, 2);
+  });
 
   // Night overlay
   if (state.isNight) {
@@ -2338,7 +2666,7 @@ function updateDayNight() {
   if (!prevNight && state.isNight) {
     // Nightfall — spawn bat swarms at jungle edge
     const batCount = 3 + Math.floor(Math.random() * 3);
-    const cx = 125*TSIZE, cy = 125*TSIZE;
+    const cx = 250*TSIZE, cy = 250*TSIZE;
     for (let i = 0; i < batCount; i++) {
       const angle = Math.random() * Math.PI * 2;
       const r = (45 + Math.random() * 20) * TSIZE;
@@ -2347,7 +2675,7 @@ function updateDayNight() {
         x: cx + Math.cos(angle) * r,
         y: cy + Math.sin(angle) * r,
         hp: 15, maxHp: 15,
-        spd: 1.8,
+        spd: 1.26,
         attackTimer: 0,
         walkTimer: 0
       });
@@ -2405,6 +2733,44 @@ function updateDayNight() {
   state.objects.forEach(o => {
     if (o.respawn > 0) o.respawn--;
   });
+}
+
+function updateBirdsAndFootprints() {
+  const p = state.player;
+  // Bird spawning: every 30-60 seconds (1800-3600 frames)
+  state.birdTimer++;
+  if (state.birdTimer > 1800 + Math.random() * 1800) {
+    state.birdTimer = 0;
+    // Spawn bird entering from left or right edge of world view
+    const camX = state.cam.x, camY = state.cam.y;
+    const startX = Math.random() > 0.5 ? camX - 20 : camX + window.innerWidth + 20;
+    const dirX = startX < camX ? 1.5 : -1.5;
+    state.birds.push({
+      wx: startX, // world x
+      wy: camY + 30 + Math.random() * (window.innerHeight * 0.4),
+      vx: dirX,
+      vy: (Math.random() - 0.5) * 0.3,
+      life: 600 + Math.floor(Math.random() * 400),
+      flapFrame: 0
+    });
+  }
+  state.birds = state.birds.filter(b => {
+    b.wx += b.vx;
+    b.wy += b.vy;
+    b.flapFrame++;
+    b.life--;
+    return b.life > 0;
+  });
+
+  // Footprints: when walking on beach
+  const tile = getTile(p.x, p.y);
+  const moving = !!(state.frameCount % 8 === 0);
+  if (tile === T.BEACH && moving) {
+    const keys_moving = true; // simplified — add every 8 frames when alive
+    state.footprints.push({x: p.x + (Math.random()-0.5)*4, y: p.y + 8, life: 120, maxLife: 120});
+    if (state.footprints.length > 80) state.footprints.shift();
+  }
+  state.footprints = state.footprints.filter(fp => { fp.life--; return fp.life > 0; });
 }
 
 function updateNPCCompanions() {
@@ -2575,8 +2941,8 @@ function nextSlide() {
   document.getElementById('overlay').style.display='none';
   genMap();
   genObjects();
-  state.player.x = 125*TSIZE;
-  state.player.y = 170*TSIZE;
+  state.player.x = 250*TSIZE;
+  state.player.y = 340*TSIZE;
   state.cam.x = state.player.x - canvas.width/2;
   state.cam.y = state.player.y - canvas.height/2;
   state.running = true;
@@ -2598,6 +2964,7 @@ function gameLoopWithUI() {
   updateMinigame(canvas);
   updateDialogue();
   updateNPCCompanions();
+  updateBirdsAndFootprints();
   updateUI();
   render(ctx, minimapCtx);
 }
@@ -2605,8 +2972,8 @@ function gameLoopWithUI() {
 function startGame() {
   genMap();
   genObjects();
-  state.player.x = 125*TSIZE;
-  state.player.y = 170*TSIZE;
+  state.player.x = 250*TSIZE;
+  state.player.y = 340*TSIZE;
   state.cam.x = state.player.x - canvas.width/2;
   state.cam.y = state.player.y - canvas.height/2;
   state.running = true;
