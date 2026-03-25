@@ -519,14 +519,12 @@ function genObjects() {
         if (r < 0.022) state.objects.push({type:treeVariant(), x:wx, y:wy, hp:5, maxHp:5});
         else if (r < 0.027) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4});
         else if (r < 0.030) state.objects.push({type:'berry', x:wx, y:wy, hp:1, maxHp:1, respawn:0});
-        else if (r < 0.034) // removed fern // , x:wx, y:wy, decor:true});
-      } else if (t === T.JUNGLE_DARK) {
+        } else if (t === T.JUNGLE_DARK) {
         if (r < 0.028) state.objects.push({type:treeVariant(), x:wx, y:wy, hp:5, maxHp:5});
         else if (r < 0.032) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4});
         else if (r < 0.034) state.objects.push({type:'jungle_chest', x:wx, y:wy, opened:false});
         else if (r < 0.036) state.creatures.push({type:'spider', x:wx, y:wy, hp:25, maxHp:25, spd:1.05, attackTimer:0, walkTimer:0});
-        else if (r < 0.039) // removed fern // , x:wx, y:wy, decor:true});
-      } else if (t === T.BEACH) {
+        } else if (t === T.BEACH) {
         if (r < 0.006) state.objects.push({type:'palm', x:wx, y:wy, hp:4, maxHp:4, respawn:0});
         else if (r < 0.010) state.objects.push({type:'driftwood', x:wx, y:wy, collected:false});
         else if (r < 0.014) state.objects.push({type:'fish_spot', x:wx, y:wy, shimmer:Math.random()*100});
@@ -667,17 +665,14 @@ function genObjects() {
 
       if (t === T.BEACH) {
         if (r2 < 0.004) // removed dead_tree // , x:wx, y:wy, decor:true});
-        else if (r2 < 0.010) // removed flower_patch // state.objects.push({type:'flower_patch', x:wx, y:wy, decor:true});
-        else if (r2 < 0.013) // removed campfire_remains // , x:wx, y:wy, decor:true});
-        else if (r2 < 0.020) // removed tide_pool // , x:wx, y:wy, decor:true});
+
+
       } else if (t === T.JUNGLE_LIGHT) {
         if (r2 < 0.004) // removed dead_tree // , x:wx, y:wy, decor:true});
-        else if (r2 < 0.009) // removed mossy_log // , x:wx, y:wy, decor:true});
-        else if (r2 < 0.012) // removed waterfall decor // , x:wx, y:wy, decor:true});
+
       } else if (t === T.JUNGLE_DARK) {
         if (r2 < 0.005) // removed mossy_log // , x:wx, y:wy, decor:true});
-        else if (r2 < 0.007) // removed skull_stake // , x:wx, y:wy, decor:true});
-        else if (r2 < 0.009) // removed ancient_statue // , x:wx, y:wy, decor:true});
+
       }
     }
   }
