@@ -74,6 +74,12 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;posit
 #btn-zone{position:absolute;bottom:30px;right:20px;display:flex;flex-direction:column;gap:12px;pointer-events:all}
 .touch-btn{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Courier New',monospace;font-size:12px;font-weight:bold;color:#f0d890;letter-spacing:1px;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:none;border:2px solid #8B6020}
 @media(max-width:767px){#controls-hint{display:none}}
+@keyframes pulse-red { 0%,100%{opacity:1} 50%{opacity:0.4} }
+@keyframes pulse-blue { 0%,100%{opacity:1} 50%{opacity:0.4} }
+@keyframes pulse-orange { 0%,100%{opacity:1} 50%{opacity:0.4} }
+.bar-critical-red { animation: pulse-red 0.6s infinite; }
+.bar-critical-blue { animation: pulse-blue 0.6s infinite; }
+.bar-critical-orange { animation: pulse-orange 0.6s infinite; }
 </style>
 </head>
 <body>
@@ -86,6 +92,7 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;posit
     <div class="bar-wrap"><div class="bar-icon">FD</div><div class="bar-outer"><div class="bar-inner" id="food-bar" style="background:#e67e22;width:100%"></div></div></div>
     <div class="bar-wrap"><div class="bar-icon">SP</div><div class="bar-outer"><div class="bar-inner" id="stam-bar" style="background:#f1c40f;width:100%"></div></div></div>
     <span id="day-display">DAY 1</span>
+    <canvas id="time-icon" width="24" height="24" style="margin:0 8px;vertical-align:middle"></canvas>
     <span id="settle-badge">SURVIVOR</span>
     <span id="weather-icon"></span>
   </div>
@@ -241,7 +248,7 @@ const state = {
       fish_cooked:0, fruit_cooked:0,
       volcanic_stone:0, driftwood:0,
       torch:0, campfire:0, axe:0, spear:0,
-      fire_axe:0, fire_spear:0, fishing_rod:0,
+      fire_axe:0, fire_spear:0, fishing_rod:0, journal:0,
       pickaxe:0, sword:0,
       bed:0, chest:0, wall:0, watchtower:0,
       gate:0, forge:0, water_barrel:0, smoker:0, raft:0
@@ -278,10 +285,17 @@ const state = {
 
   cam: { x: 0, y: 0 },
   screenShake: 0,
-  msg: [], // notification stack
+  msg: [], // legacy (unused)
+  notifications: [], // notification queue
 
   buildMode: false,
   buildItem: null,
+
+  collapsing: false,
+  collapsed: false,
+  collapseTimer: 0,
+  collapseDeathX: 0,
+  collapseDeathY: 0,
 
   journalShown: false,
 };
@@ -298,6 +312,9 @@ const NPC_DATA = [
       ["I can come with you if you want. Two people are harder to ambush.", ['companion']],
     ],
     quest: { id:'mara_q1', text:"Find 5 coconuts", needs:{coconut:5}, reward:{water_barrel:1}, done:false },
+    quest2: { id:'mara_q2', text:"Find my journal in the dark jungle", needs:{journal:1}, reward:{fruit_cooked:5,fishing_rod:1}, done:false,
+              triggerLine:"I lost my journal somewhere in the dark jungle. It has important survival notes. Find it for me?",
+              rewardLine:"You found it! The notes in here could save your life." },
     companion: false,
   },
   {
@@ -310,6 +327,9 @@ const NPC_DATA = [
       ["Bring me 10 wood and 5 stone and I'll show you how to make a forge. Proper one, not your campfire nonsense.", ['forge_quest']],
     ],
     quest: { id:'felix_q1', text:"Bring 10 wood + 5 stone", needs:{wood:10,stone:5}, reward:{forge:1}, done:false },
+    quest2: { id:'felix_q2', text:"Bring 3 volcanic stone", needs:{volcanic_stone:3}, reward:{fire_axe:1}, done:false,
+              triggerLine:"Bring me 3 volcanic stone and I'll build you something special.",
+              rewardLine:"Magnificent. Here, I made this from the stone. Should help against those warriors." },
     companion: false,
   },
   {
@@ -436,6 +456,12 @@ function genObjects() {
 
   // Volcano loot chest at top
   state.objects.push({type:'vol_chest', x:250*TSIZE, y:132*TSIZE, opened:false});
+
+  // Shipwreck landmark on southwest beach
+  state.objects.push({type:'shipwreck', x:75*TSIZE, y:185*TSIZE, decor:true});
+
+  // Journal item in dark jungle for Mara's second quest
+  state.objects.push({type:'journal', x:110*TSIZE, y:115*TSIZE, decor:false});
 
   // PARKOUR COURSE to volcano summit
   // Winding path around the volcano with gaps requiring jumps
@@ -941,6 +967,66 @@ function drawCampfireRemains(ctx, sx, sy) {
   px(ctx, '#9a9a98', sx+2, sy+2, 5, 2);
 }
 
+function drawShipwreck(ctx, sx, sy) {
+  // Debris scattered
+  ctx.fillStyle = '#4a3010';
+  ctx.fillRect(sx-40, sy+18, 12, 4);
+  ctx.fillRect(sx+28, sy+20, 10, 3);
+  ctx.fillRect(sx-30, sy+22, 8, 3);
+  ctx.fillRect(sx+18, sy+24, 14, 4);
+  // Broken hull planks (angled)
+  ctx.save();
+  ctx.fillStyle = '#5c3a1a';
+  ctx.translate(sx, sy+10);
+  ctx.rotate(-0.2);
+  ctx.fillRect(-30, -8, 60, 14);
+  ctx.restore();
+  ctx.save();
+  ctx.fillStyle = '#4a2e10';
+  ctx.translate(sx-10, sy+6);
+  ctx.rotate(0.15);
+  ctx.fillRect(-28, -5, 56, 10);
+  ctx.restore();
+  ctx.save();
+  ctx.fillStyle = '#3a2010';
+  ctx.translate(sx+8, sy+14);
+  ctx.rotate(-0.35);
+  ctx.fillRect(-20, -4, 40, 8);
+  ctx.restore();
+  // Hull side board angled down
+  ctx.save();
+  ctx.fillStyle = '#6a4a20';
+  ctx.translate(sx-18, sy+2);
+  ctx.rotate(0.4);
+  ctx.fillRect(-6, 0, 10, 28);
+  ctx.restore();
+  // Broken mast (diagonal line)
+  ctx.strokeStyle = '#5c3a1a';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(sx-4, sy+8);
+  ctx.lineTo(sx+20, sy-22);
+  ctx.stroke();
+  // Torn sail (white triangle shape)
+  ctx.fillStyle = 'rgba(220,210,190,0.85)';
+  ctx.beginPath();
+  ctx.moveTo(sx+20, sy-22);
+  ctx.lineTo(sx+36, sy-8);
+  ctx.lineTo(sx+10, sy-4);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#aaa080';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  // Some rope
+  ctx.strokeStyle = '#8a6a30';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(sx+20, sy-22);
+  ctx.quadraticCurveTo(sx+30, sy, sx+14, sy+12);
+  ctx.stroke();
+}
+
 function drawTidePool(ctx, sx, sy) {
   // Pool outline (dark sand rim)
   px(ctx, '#b8a078', sx-12, sy-6, 24, 12);
@@ -1070,26 +1156,41 @@ function drawParticles(ctx, camX, camY) {
 }
 
 function showMsg(text, color) {
-  state.msg.push({text, color: color||'#c8f135', timer: 180});
+  if (!state.notifications) state.notifications = [];
+  // Max 5 visible; drop oldest if over limit
+  if (state.notifications.length >= 5) state.notifications.shift();
+  state.notifications.push({text, color: color||'#c8f135', timer: 200, maxTimer: 200, y: 50, targetY: 50});
+  // Recalculate target y positions for all notifications
+  _repositionNotifications();
 }
 
-function updateMsgs() {
-  state.msg = state.msg.filter(m => {
-    m.timer--;
-    return m.timer > 0;
+function _repositionNotifications() {
+  if (!state.notifications) return;
+  state.notifications.forEach((n, i) => {
+    n.targetY = 50 + i * 20;
   });
 }
 
+function updateMsgs() {
+  if (!state.notifications) state.notifications = [];
+  state.notifications = state.notifications.filter(m => {
+    m.timer--;
+    // Animate y toward targetY
+    if (m.y !== m.targetY) m.y += (m.targetY - m.y) * 0.2;
+    return m.timer > 0;
+  });
+  _repositionNotifications();
+}
+
 function drawMsgs(ctx) {
-  let y = 70;
-  state.msg.slice(-4).forEach(m => {
+  if (!state.notifications) return;
+  state.notifications.forEach(m => {
     const a = Math.min(1, m.timer / 30);
     ctx.globalAlpha = a;
     ctx.font = '12px "Courier New"';
     ctx.fillStyle = m.color;
     ctx.textAlign = 'center';
-    ctx.fillText(m.text, ctx.canvas.width/2, y);
-    y += 18;
+    ctx.fillText(m.text, ctx.canvas.width/2, m.y);
   });
   ctx.globalAlpha = 1;
   ctx.textAlign = 'left';
@@ -1138,25 +1239,66 @@ function updateEnemies() {
   const allE = [...state.enemies];
   if (state.chief) allE.push(state.chief);
 
+  // Flank offset update every 3 seconds (180 frames)
+  const doFlankUpdate = state.frameCount % 180 === 0;
+
   allE.forEach((e, idx) => {
     e.walkTimer++;
+    // Init smart AI fields if missing
+    if (e.fleeing === undefined) { e.fleeing = false; e.fleeTimer = 0; e.scatterTimer = 0; e.flankOffset = {x:0,y:0}; }
+
     const dx = p.x - e.x, dy = p.y - e.y;
     const dist = Math.sqrt(dx*dx+dy*dy);
     const detect = e.type==='shadow' ? 300 : 200;
 
-    if (dist < detect) {
-      const spd = e.spd * (e.type==='shadow' && state.isNight ? 1.3 : 1);
-      const nx = e.x + dx/dist * spd;
-      const ny = e.y + dy/dist * spd;
+    // Flee behavior: if HP < 30% and not chief, 40% chance to flee
+    if (e.hp < e.maxHp * 0.3 && !e.fleeing && !e.type==='chief' && Math.random() < 0.004) {
+      e.fleeing = true;
+      e.fleeTimer = 300; // 5 seconds
+    }
+    if (e.fleeing) {
+      e.fleeTimer--;
+      if (e.fleeTimer <= 0) e.fleeing = false;
+    }
+
+    // Scatter timer countdown
+    if (e.scatterTimer > 0) e.scatterTimer--;
+
+    // Flank offset update
+    if (doFlankUpdate && Math.random() < 0.3) {
+      e.flankOffset = {x:(Math.random()-0.5)*120, y:(Math.random()-0.5)*120};
+    }
+
+    if (dist < detect || e.fleeing || e.scatterTimer > 0) {
+      let moveX, moveY;
+      if (e.fleeing || e.scatterTimer > 0) {
+        // Run away from player
+        const fleeSpd = e.fleeing ? e.spd * 1.5 : e.spd * 1.2;
+        if (dist > 0) {
+          moveX = e.x - dx/dist * fleeSpd;
+          moveY = e.y - dy/dist * fleeSpd;
+        } else {
+          moveX = e.x + (Math.random()-0.5)*fleeSpd;
+          moveY = e.y + (Math.random()-0.5)*fleeSpd;
+        }
+      } else {
+        // Move toward player + flank offset
+        const targetX = p.x + e.flankOffset.x;
+        const targetY = p.y + e.flankOffset.y;
+        const tdx = targetX - e.x, tdy = targetY - e.y;
+        const td = Math.sqrt(tdx*tdx+tdy*tdy);
+        const spd = e.spd * (e.type==='shadow' && state.isNight ? 1.3 : 1);
+        moveX = td > 0 ? e.x + tdx/td * spd : e.x;
+        moveY = td > 0 ? e.y + tdy/td * spd : e.y;
+      }
+
       // Wall collision check
-      const tx = Math.floor(nx/TSIZE), ty = Math.floor(ny/TSIZE);
-      const tileAt = state.map[ty]?.[tx];
-      const wallHere = state.objects.find(o => o.type==='wall' && Math.abs(o.x-nx)<TSIZE && Math.abs(o.y-ny)<TSIZE);
+      const tileAt = state.map[Math.floor(moveY/TSIZE)]?.[Math.floor(moveX/TSIZE)];
+      const wallHere = state.objects.find(o => o.type==='wall' && Math.abs(o.x-moveX)<TSIZE && Math.abs(o.y-moveY)<TSIZE);
 
       if (!wallHere && tileAt !== T.LAVA) {
-        e.x = nx; e.y = ny;
-      } else if (wallHere) {
-        // Attack wall
+        e.x = moveX; e.y = moveY;
+      } else if (wallHere && !e.fleeing) {
         e.attackTimer++;
         if (e.attackTimer > 60) {
           e.attackTimer = 0;
@@ -1180,7 +1322,7 @@ function updateEnemies() {
     // Attack player
     e.attackTimer++;
     const attackR = e.type==='chief' ? 40 : 28;
-    if (dist < attackR && e.attackTimer > 80) {
+    if (dist < attackR && e.attackTimer > 80 && !e.fleeing && e.scatterTimer <= 0) {
       e.attackTimer = 0;
       const dmg = e.type==='chief' ? 20 : (e.type==='shadow'?12:8);
       p.hp = Math.max(0, p.hp - dmg);
@@ -1204,7 +1346,7 @@ function updateEnemies() {
         e.axeTimer++;
         if (e.axeTimer > 120) {
           e.axeTimer = 0;
-          state.projectiles.push({
+          if (dist > 0) state.projectiles.push({
             x: e.x, y: e.y,
             vx: dx/dist * 4, vy: dy/dist * 4,
             type: 'axe', life: 80, damage: 15
@@ -1214,11 +1356,11 @@ function updateEnemies() {
     }
 
     // Archer shoots
-    if (e.type === 'archer' && dist < 300) {
+    if (e.type === 'archer' && dist < 300 && !e.fleeing) {
       e.attackTimer++;
       if (e.attackTimer > 150) {
         e.attackTimer = 0;
-        state.projectiles.push({
+        if (dist > 0) state.projectiles.push({
           x: e.x, y: e.y,
           vx: dx/dist * 5, vy: dy/dist * 5,
           type: 'arrow', life: 60, damage: 10
@@ -1227,8 +1369,21 @@ function updateEnemies() {
     }
   });
 
-  // Remove dead enemies
-  state.enemies = state.enemies.filter(e => e.hp > 0);
+  // Remove dead enemies — trigger group scatter on kill
+  const prevCount = state.enemies.length;
+  state.enemies = state.enemies.filter(e => {
+    if (e.hp <= 0) {
+      // Scatter nearby enemies
+      state.enemies.forEach(other => {
+        if (other !== e && Math.hypot(other.x-e.x, other.y-e.y) < 150) {
+          other.scatterTimer = 120; // 2 seconds
+        }
+      });
+      return false;
+    }
+    return true;
+  });
+
   if (state.chief && state.chief.hp <= 0) {
     state.chief = null;
     p.chiefDefeated = true;
@@ -1674,7 +1829,7 @@ function getTile(x, y) {
 
 function updatePlayer() {
   const p = state.player;
-  if (state.paused || state.minigame || state.dialogue) return;
+  if (state.paused || state.minigame || state.dialogue || state.collapsing) return;
 
   // Movement
   const sprinting = keys['shift'] && p.stamina > 0;
@@ -1814,6 +1969,24 @@ function handleInteract() {
   const p = state.player;
   const reach = 40;
 
+  // Death pack pickup
+  for (let i = state.objects.length-1; i >= 0; i--) {
+    const obj = state.objects[i];
+    if (obj.type === 'death_pack') {
+      const d = Math.hypot(p.x-obj.x, p.y-obj.y);
+      if (d < reach) {
+        // Recover items
+        for (const [k,v] of Object.entries(obj.inv)) {
+          p.inv[k] = (p.inv[k]||0) + v;
+        }
+        state.objects.splice(i, 1);
+        showMsg('PACK RECOVERED! YOUR ITEMS ARE BACK.', '#c8f135');
+        spawnParticles(obj.x, obj.y, '#ffffff', 12);
+        return;
+      }
+    }
+  }
+
   // NPC interaction
   for (let npc of state.npcs) {
     const d = Math.hypot(p.x-npc.x, p.y-npc.y);
@@ -1942,6 +2115,7 @@ function handleClick(sx, sy) {
   for (let i = state.objects.length-1; i >= 0; i--) {
     const obj = state.objects[i];
     if (obj.placed) continue;
+    if (obj.type === 'death_pack' || obj.type === 'shipwreck') continue;
     const d = Math.hypot(wx-obj.x, wy-obj.y);
     if (d > reach) continue;
 
@@ -1983,6 +2157,13 @@ function handleClick(sx, sy) {
       obj.collected = true;
       p.inv.wood++;
       showMsg('+DRIFTWOOD', '#8B6914');
+      state.objects.splice(i,1);
+      return;
+    }
+    if (obj.type === 'journal') {
+      p.inv.journal = (p.inv.journal||0) + 1;
+      showMsg("MARA'S JOURNAL FOUND. RETURN IT TO HER.", '#c8a060');
+      spawnParticles(obj.x, obj.y, '#c8a060', 8);
       state.objects.splice(i,1);
       return;
     }
@@ -2158,6 +2339,27 @@ function tryCraft(id) {
 // DIALOGUE
 function startDialogue(npc) {
   if (!npc.lines || !npc.lines.length) return;
+
+  // Check second quest trigger: first quest done, second quest not yet started/done
+  if (npc.quest && npc.quest.done && npc.quest2 && !npc.quest2.done) {
+    // Check if player can complete the second quest
+    const q2 = npc.quest2;
+    const canComplete = Object.entries(q2.needs).every(([k,v])=>(state.player.inv[k]||0)>=v);
+    if (canComplete) {
+      // Reward
+      for (const [k,v] of Object.entries(q2.needs)) state.player.inv[k] = Math.max(0,(state.player.inv[k]||0)-v);
+      for (const [k,v] of Object.entries(q2.reward)) state.player.inv[k] = (state.player.inv[k]||0)+v;
+      q2.done = true;
+      showMsg(`QUEST COMPLETE: ${q2.text}`, '#c8f135');
+      state.dialogue = { type:'npc', npc:npc, text:q2.rewardLine, options:null, displayed:'', timer:0, charIdx:0 };
+      return;
+    } else if (!npc._quest2Offered) {
+      npc._quest2Offered = true;
+      state.dialogue = { type:'npc', npc:npc, text:q2.triggerLine, options:null, displayed:'', timer:0, charIdx:0 };
+      return;
+    }
+  }
+
   const idx = Math.min(npc.dialogueIdx, npc.lines.length-1);
   const line = npc.lines[idx];
   state.dialogue = {
@@ -2621,6 +2823,26 @@ function render(ctx, minimapCtx) {
     }
   }
 
+  // Shoreline waves at beach/water boundary
+  for (let ty = sy0; ty < sy1; ty++) {
+    for (let tx = sx0; tx < sx1; tx++) {
+      if (state.map[ty][tx] !== T.BEACH) continue;
+      const tileX = tx*TSIZE - camX, tileY = ty*TSIZE - camY;
+      const neighbors = [{dx:0,dy:-1,edge:'top'},{dx:0,dy:1,edge:'bot'},{dx:-1,dy:0,edge:'left'},{dx:1,dy:0,edge:'right'}];
+      neighbors.forEach(n => {
+        const nt = state.map[ty+n.dy]?.[tx+n.dx];
+        if (nt === T.SHALLOW_WATER || nt === T.DEEP_OCEAN) {
+          const waveA = 0.3 + Math.sin(state.frameCount*0.05 + tx*0.3 + ty*0.2)*0.3;
+          ctx.fillStyle = `rgba(220,240,255,${waveA})`;
+          if (n.edge === 'top') ctx.fillRect(tileX, tileY, TSIZE, 2);
+          else if (n.edge === 'bot') ctx.fillRect(tileX, tileY+TSIZE-2, TSIZE, 2);
+          else if (n.edge === 'left') ctx.fillRect(tileX, tileY, 2, TSIZE);
+          else if (n.edge === 'right') ctx.fillRect(tileX+TSIZE-2, tileY, 2, TSIZE);
+        }
+      });
+    }
+  }
+
   // Transition overlays: wet sand near water, jungle edge near beach
   for (let ty = sy0; ty < sy1; ty++) {
     for (let tx = sx0; tx < sx1; tx++) {
@@ -2639,6 +2861,23 @@ function render(ctx, minimapCtx) {
           ctx.fillStyle = 'rgba(0,30,60,0.12)';
           ctx.fillRect(tileX, tileY, TSIZE, TSIZE);
         }
+        // Green tufts at edge adjacent to JUNGLE_LIGHT
+        const jNeighbors = [{dx:0,dy:-1,edge:'top'},{dx:0,dy:1,edge:'bot'},{dx:-1,dy:0,edge:'left'},{dx:1,dy:0,edge:'right'}];
+        jNeighbors.forEach(n => {
+          if (state.map[ty+n.dy]?.[tx+n.dx] === T.JUNGLE_LIGHT) {
+            ctx.fillStyle = '#3a7a1a';
+            const hash = (tx*7 + ty*13) % 4;
+            if (n.edge === 'top') {
+              for (let i = 0; i < 3; i++) ctx.fillRect(tileX + 1 + i*3, tileY, 2, 4 + (hash+i)%3);
+            } else if (n.edge === 'bot') {
+              for (let i = 0; i < 3; i++) ctx.fillRect(tileX + 1 + i*3, tileY+TSIZE-4-(hash+i)%3, 2, 4 + (hash+i)%3);
+            } else if (n.edge === 'left') {
+              for (let i = 0; i < 3; i++) ctx.fillRect(tileX, tileY + 1 + i*3, 4+(hash+i)%3, 2);
+            } else {
+              for (let i = 0; i < 3; i++) ctx.fillRect(tileX+TSIZE-4-(hash+i)%3, tileY + 1 + i*3, 4+(hash+i)%3, 2);
+            }
+          }
+        });
       }
       if (t === T.JUNGLE_LIGHT) {
         // Check proximity to beach within 2 tiles
@@ -2677,6 +2916,7 @@ function render(ctx, minimapCtx) {
   // World objects (non-placed)
   state.objects.forEach(obj => {
     if (obj.placed) return;
+    if (obj.type === 'death_pack') return; // drawn later with glow
     const sx = obj.x - camX, sy = obj.y - camY;
     if (sx < -40 || sx > canvas.width+40 || sy < -40 || sy > canvas.height+40) return;
 
@@ -2719,6 +2959,28 @@ function render(ctx, minimapCtx) {
       case 'waterfall': drawWaterfall(ctx, sx, sy); break;
       case 'campfire_remains': drawCampfireRemains(ctx, sx, sy); break;
       case 'tide_pool': drawTidePool(ctx, sx, sy); break;
+      case 'shipwreck': drawShipwreck(ctx, sx, sy); break;
+      case 'journal':
+        // Glowing book icon
+        ctx.save();
+        ctx.fillStyle = '#8B6020';
+        ctx.fillRect(sx-6, sy-8, 12, 14);
+        ctx.fillStyle = '#c8a060';
+        ctx.fillRect(sx-5, sy-7, 10, 12);
+        ctx.fillStyle = '#5c3010';
+        ctx.fillRect(sx-5, sy-7, 2, 12);
+        ctx.fillStyle = '#f0d890';
+        ctx.fillRect(sx-2, sy-5, 7, 1);
+        ctx.fillRect(sx-2, sy-3, 7, 1);
+        ctx.fillRect(sx-2, sy-1, 5, 1);
+        // Glow
+        const jGlow = 0.3+Math.sin(state.frameCount*0.08)*0.2;
+        ctx.fillStyle = `rgba(255,220,100,${jGlow})`;
+        ctx.beginPath();
+        ctx.arc(sx, sy-2, 10, 0, Math.PI*2);
+        ctx.fill();
+        ctx.restore();
+        break;
       case 'driftwood':
         px(ctx, '#8B6914', sx-10, sy-2, 20, 4);
         px(ctx, '#7a5514', sx-6, sy-4, 6, 2);
@@ -2893,20 +3155,72 @@ function render(ctx, minimapCtx) {
   drawDialogue(ctx);
   drawMsgs(ctx);
 
-  // Death screen
-  if (p.hp <= 0) {
-    ctx.fillStyle = 'rgba(150,0,0,0.8)';
-    ctx.fillRect(0,0,canvas.width,canvas.height);
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 48px "Courier New"';
-    ctx.textAlign = 'center';
-    ctx.fillText('YOU DIED', canvas.width/2, canvas.height/2);
-    ctx.font = '18px "Courier New"';
-    ctx.fillStyle = '#aaa';
-    ctx.fillText('Press F5 to respawn', canvas.width/2, canvas.height/2+50);
-    ctx.textAlign = 'left';
-    state.running = false;
+  // Death / collapse mechanic
+  if (p.hp <= 0 && !state.collapsing && !state.collapsed) {
+    state.collapsing = true;
+    state.collapseTimer = 0;
+    state.collapseDeathX = p.x;
+    state.collapseDeathY = p.y;
+    // Save inventory copy
+    state.collapseInvCopy = Object.assign({}, p.inv);
+    // Place death pack
+    state.objects.push({type:'death_pack', x:p.x, y:p.y, inv:Object.assign({},p.inv)});
+    // Clear inventory (keep equipped tools by zeroing consumables)
+    const keepKeys = ['axe','pickaxe','sword','spear','fire_axe','fire_spear','torch','fishing_rod'];
+    for (const k of Object.keys(p.inv)) {
+      if (!keepKeys.includes(k)) p.inv[k] = 0;
+    }
+    const tileX = Math.floor(p.x/TSIZE), tileY = Math.floor(p.y/TSIZE);
+    showMsg(`YOU COLLAPSED. YOUR PACK DROPPED AT [${tileX},${tileY}]. Recover it or lose everything.`, '#ff4444');
   }
+  if (state.collapsing) {
+    state.collapseTimer++;
+    const t = state.collapseTimer / 180; // 0..1 over 3s
+    // Dark overlay fades in
+    ctx.fillStyle = `rgba(0,0,0,${t*0.85})`;
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    // Collapsed text
+    if (state.collapseTimer > 60) {
+      ctx.font = 'bold 36px "Courier New"';
+      ctx.fillStyle = `rgba(200,60,60,${Math.min(1,(state.collapseTimer-60)/40)})`;
+      ctx.textAlign = 'center';
+      ctx.fillText('YOU COLLAPSED', canvas.width/2, canvas.height/2);
+      ctx.textAlign = 'left';
+    }
+    if (state.collapseTimer >= 180) {
+      state.collapsing = false;
+      state.collapsed = false;
+      // Respawn
+      p.hp = 30; p.water = 50; p.food = 50;
+      p.x = 125*TSIZE; p.y = 170*TSIZE;
+      state.cam.x = p.x - canvas.width/2;
+      state.cam.y = p.y - canvas.height/2;
+      state.screenShake = 0;
+      showMsg('YOU WAKE UP. FIND YOUR PACK.', '#c8f135');
+    }
+  }
+
+  // Draw death packs in world (glowing white chest)
+  state.objects.forEach(obj => {
+    if (obj.type !== 'death_pack') return;
+    const dpsx = obj.x - camX, dpsy = obj.y - camY;
+    if (dpsx < -40 || dpsx > canvas.width+40 || dpsy < -40 || dpsy > canvas.height+40) return;
+    const glow = 0.4 + Math.sin(state.frameCount*0.1)*0.4;
+    ctx.save();
+    ctx.shadowColor = '#ffffff';
+    ctx.shadowBlur = 12;
+    ctx.fillStyle = `rgba(255,255,255,${glow})`;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(dpsx-10, dpsy-8, 20, 16);
+    ctx.fillStyle = '#c8e8ff';
+    ctx.fillRect(dpsx-9, dpsy-7, 18, 14);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(dpsx-9, dpsy-9, 18, 4);
+    ctx.fillStyle = '#888';
+    ctx.fillRect(dpsx-2, dpsy-4, 4, 8);
+    ctx.restore();
+  });
 
   // Minimap
   drawMinimap(minimapCtx);
@@ -3145,9 +3459,25 @@ function handleJump() {
 // UI update
 function updateUI() {
   const p = state.player;
-  document.getElementById('hp-bar').style.width = p.hp+'%';
-  document.getElementById('water-bar').style.width = (p.water/p.maxWater*100)+'%';
-  document.getElementById('food-bar').style.width = (p.food/p.maxFood*100)+'%';
+
+  // HP bar
+  const hpBar = document.getElementById('hp-bar');
+  hpBar.style.width = p.hp+'%';
+  if (p.hp < 25) hpBar.classList.add('bar-critical-red');
+  else hpBar.classList.remove('bar-critical-red');
+
+  // Water bar
+  const waterBar = document.getElementById('water-bar');
+  waterBar.style.width = (p.water/p.maxWater*100)+'%';
+  if (p.water < 20) waterBar.classList.add('bar-critical-blue');
+  else waterBar.classList.remove('bar-critical-blue');
+
+  // Food bar
+  const foodBar = document.getElementById('food-bar');
+  foodBar.style.width = (p.food/p.maxFood*100)+'%';
+  if (p.food < 20) foodBar.classList.add('bar-critical-orange');
+  else foodBar.classList.remove('bar-critical-orange');
+
   document.getElementById('stam-bar').style.width = (p.stamina/p.maxStamina*100)+'%';
   document.getElementById('day-display').textContent = `DAY ${state.day}`;
   const labels=['SURVIVOR','SETTLEMENT','FORTIFIED','VILLAGE'];
@@ -3161,6 +3491,45 @@ function updateUI() {
   const tool = p.inv.fire_spear>0?'FSPEAR':p.inv.spear>0?'SPEAR':p.inv.fire_axe>0?'FAXE':p.inv.sword>0?'SWORD':p.inv.axe>0?'AXE':p.inv.pickaxe>0?'PICK':'-';
   document.getElementById('ht').textContent = tool;
   document.getElementById('hd').textContent = state.day;
+
+  // Day/night clock icon
+  const timeCanvas = document.getElementById('time-icon');
+  if (timeCanvas) {
+    const tc = timeCanvas.getContext('2d');
+    tc.clearRect(0, 0, 24, 24);
+    const dt = state.dayTime;
+    if (dt >= 0.1 && dt <= 0.65) {
+      // Sun: position moves across arc based on time of day
+      const sunT = (dt - 0.1) / 0.55; // 0..1 across day
+      const sunAngle = Math.PI + sunT * Math.PI; // left to right arc (bottom of circle)
+      const sunX = 12 + Math.cos(sunAngle) * 9;
+      const sunY = 16 + Math.sin(sunAngle) * 9;
+      // Rays
+      tc.strokeStyle = '#ffdd44';
+      tc.lineWidth = 1;
+      for (let r = 0; r < 8; r++) {
+        const ra = r * Math.PI / 4;
+        tc.beginPath();
+        tc.moveTo(sunX + Math.cos(ra)*5, sunY + Math.sin(ra)*5);
+        tc.lineTo(sunX + Math.cos(ra)*8, sunY + Math.sin(ra)*8);
+        tc.stroke();
+      }
+      tc.fillStyle = '#ffee00';
+      tc.beginPath();
+      tc.arc(sunX, sunY, 4, 0, Math.PI*2);
+      tc.fill();
+    } else {
+      // Moon crescent
+      tc.fillStyle = '#ffffff';
+      tc.beginPath();
+      tc.arc(14, 12, 7, 0, Math.PI*2);
+      tc.fill();
+      tc.fillStyle = '#0a0a1e';
+      tc.beginPath();
+      tc.arc(17, 10, 6, 0, Math.PI*2);
+      tc.fill();
+    }
+  }
 }
 
 function renderBuildMenu() {
