@@ -1,0 +1,1546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>DEEP DIVE — Rupert Web</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0d0d0d;
+      color: #c8f135;
+      font-family: 'Space Mono', monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    #top-bar {
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 16px;
+      font-size: 12px;
+      letter-spacing: 0.1em;
+    }
+
+    #top-bar a {
+      color: #666;
+      text-decoration: none;
+      font-size: 11px;
+    }
+    #top-bar a:hover { color: #c8f135; }
+
+    #title {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      color: #c8f135;
+    }
+
+    #canvas-wrap {
+      position: relative;
+      width: 100%;
+      max-width: 900px;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      background: #0d1a2e;
+      cursor: crosshair;
+    }
+
+    #hud {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      padding: 10px 14px;
+      pointer-events: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .hud-col {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .hud-label {
+      font-size: 9px;
+      letter-spacing: 0.15em;
+      color: #888;
+      text-transform: uppercase;
+    }
+
+    .hud-val {
+      font-size: 13px;
+      font-weight: 700;
+      color: #c8f135;
+    }
+
+    .hud-bar-wrap {
+      width: 120px;
+      height: 8px;
+      background: #1a2a1a;
+      border: 1px solid #2a4a2a;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .hud-bar {
+      height: 100%;
+      transition: width 0.1s linear, background 0.3s;
+      border-radius: 2px;
+    }
+
+    #oxy-bar { background: #4af; }
+    #hp-bar  { background: #f44; }
+
+    /* Overlays */
+    .overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.82);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      padding: 20px;
+    }
+
+    .overlay h1 {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: 0.25em;
+      color: #c8f135;
+      margin-bottom: 8px;
+    }
+
+    .overlay h2 {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      color: #c8f135;
+      margin-bottom: 14px;
+    }
+
+    .overlay p {
+      font-size: 11px;
+      color: #888;
+      letter-spacing: 0.08em;
+      line-height: 1.8;
+      text-align: center;
+      margin-bottom: 6px;
+    }
+
+    .overlay .sub {
+      font-size: 10px;
+      color: #555;
+      margin-bottom: 20px;
+    }
+
+    .btn {
+      background: transparent;
+      border: 2px solid #c8f135;
+      color: #c8f135;
+      font-family: 'Space Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      padding: 10px 28px;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .btn:hover { background: #c8f135; color: #0d0d0d; }
+    .btn:disabled { opacity: 0.3; cursor: default; }
+    .btn:disabled:hover { background: transparent; color: #c8f135; }
+
+    /* Shop */
+    #shop-overlay {
+      overflow-y: auto;
+    }
+
+    .shop-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      width: 100%;
+      max-width: 500px;
+      margin: 10px 0 14px;
+    }
+
+    .shop-item {
+      border: 1px solid #2a3a2a;
+      padding: 12px 10px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      text-align: center;
+    }
+    .shop-item:hover:not(.maxed):not(.cant-afford) {
+      border-color: #c8f135;
+      background: rgba(200, 241, 53, 0.06);
+    }
+    .shop-item.maxed { opacity: 0.35; cursor: default; }
+    .shop-item.cant-afford { opacity: 0.45; cursor: default; }
+
+    .shop-item-name {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      color: #c8f135;
+      margin-bottom: 4px;
+    }
+    .shop-item-desc {
+      font-size: 9px;
+      color: #666;
+      margin-bottom: 6px;
+      line-height: 1.6;
+    }
+    .shop-item-cost {
+      font-size: 12px;
+      color: #f0c040;
+    }
+    .shop-item-level {
+      font-size: 9px;
+      color: #555;
+      margin-top: 3px;
+    }
+
+    .dive-summary {
+      font-size: 11px;
+      color: #aaa;
+      letter-spacing: 0.08em;
+      line-height: 2;
+      text-align: center;
+      margin: 6px 0 14px;
+    }
+    .dive-summary strong { color: #c8f135; }
+
+    #coins-display {
+      font-size: 14px;
+      color: #f0c040;
+      margin-bottom: 6px;
+    }
+
+    .hidden { display: none !important; }
+
+    #depth-indicator {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      pointer-events: none;
+    }
+
+    #depth-meter {
+      width: 6px;
+      height: 160px;
+      background: #0d1a2e;
+      border: 1px solid #1a3a5a;
+      border-radius: 3px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #depth-pip {
+      position: absolute;
+      left: 0; right: 0;
+      height: 6px;
+      background: #c8f135;
+      border-radius: 2px;
+      transition: top 0.1s;
+    }
+
+    #depth-label {
+      font-size: 9px;
+      color: #555;
+      letter-spacing: 0.1em;
+    }
+
+    #touch-controls {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .touch-btn {
+      position: absolute;
+      width: 52px;
+      height: 52px;
+      border: 2px solid rgba(200,241,53,0.3);
+      border-radius: 50%;
+      background: rgba(0,0,0,0.4);
+      color: rgba(200,241,53,0.7);
+      font-family: 'Space Mono', monospace;
+      font-size: 18px;
+      display: flex; align-items: center; justify-content: center;
+      pointer-events: all;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: none;
+    }
+
+    #touch-up    { bottom: 110px; left: 50%; transform: translateX(-50%); }
+    #touch-down  { bottom: 10px;  left: 50%; transform: translateX(-50%); }
+    #touch-left  { bottom: 60px;  left: calc(50% - 70px); transform: translateX(-50%); }
+    #touch-right { bottom: 60px;  left: calc(50% + 70px); transform: translateX(-50%); }
+    #touch-fire  { bottom: 60px;  right: 20px; width: 64px; height: 64px; font-size: 13px; letter-spacing: 0.08em; }
+  </style>
+</head>
+<body>
+
+<div id="top-bar">
+  <a href="../index.html">&larr; RUPERT WEB</a>
+  <span id="title">DEEP DIVE</span>
+  <span id="score-top">SCORE: 0</span>
+</div>
+
+<div id="canvas-wrap">
+  <canvas id="game-canvas"></canvas>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div class="hud-col">
+      <div class="hud-label">OXYGEN</div>
+      <div class="hud-bar-wrap"><div class="hud-bar" id="oxy-bar" style="width:100%"></div></div>
+      <div class="hud-label" style="margin-top:6px">HEALTH</div>
+      <div class="hud-bar-wrap"><div class="hud-bar" id="hp-bar" style="width:100%"></div></div>
+    </div>
+    <div class="hud-col" style="text-align:right">
+      <div class="hud-label">DEPTH</div>
+      <div class="hud-val" id="depth-val">0m</div>
+      <div class="hud-label" style="margin-top:6px">COINS</div>
+      <div class="hud-val" id="coins-val" style="color:#f0c040">0</div>
+    </div>
+  </div>
+
+  <!-- Depth meter sidebar -->
+  <div id="depth-indicator">
+    <div id="depth-label">DEPTH</div>
+    <div id="depth-meter"><div id="depth-pip" style="top:0"></div></div>
+  </div>
+
+  <!-- Touch controls -->
+  <div id="touch-controls">
+    <div class="touch-btn" id="touch-up">&#8593;</div>
+    <div class="touch-btn" id="touch-down">&#8595;</div>
+    <div class="touch-btn" id="touch-left">&#8592;</div>
+    <div class="touch-btn" id="touch-right">&#8594;</div>
+    <div class="touch-btn" id="touch-fire">FIRE</div>
+  </div>
+
+  <!-- START SCREEN -->
+  <div class="overlay" id="start-overlay">
+    <h1>DEEP DIVE</h1>
+    <p class="sub">Dave the Diver fan tribute</p>
+    <p>Dive down. Catch fish. Survive.<br>Return to surface before oxygen runs out.</p>
+    <p style="margin-top:8px;font-size:10px;color:#555">
+      WASD / ARROWS — move &nbsp;|&nbsp; SPACE — fire harpoon<br>
+      Deeper zones = better fish, more danger
+    </p>
+    <button class="btn" id="start-btn">DIVE IN</button>
+    <p style="font-size:9px;color:#333;margin-top:12px">HIGH SCORE: <span id="hi-score-start">0</span></p>
+  </div>
+
+  <!-- GAME OVER -->
+  <div class="overlay hidden" id="gameover-overlay">
+    <h1>GAME OVER</h1>
+    <div class="dive-summary" id="gameover-summary"></div>
+    <button class="btn" id="gameover-btn">TRY AGAIN</button>
+  </div>
+
+  <!-- SHOP -->
+  <div class="overlay hidden" id="shop-overlay">
+    <h2>SURFACE SHOP</h2>
+    <div class="dive-summary" id="shop-summary"></div>
+    <div id="coins-display">COINS: <span id="shop-coins">0</span></div>
+    <div class="shop-grid" id="shop-grid"></div>
+    <button class="btn" id="shop-dive-btn">DIVE AGAIN</button>
+    <p style="font-size:9px;color:#444;margin-top:8px">SCORE: <span id="shop-score">0</span> &nbsp;|&nbsp; HI: <span id="shop-hi">0</span></p>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// DEEP DIVE — canvas game
+// ============================================================
+
+const canvas = document.getElementById('game-canvas');
+const ctx = canvas.getContext('2d');
+
+// Responsive canvas sizing
+function resizeCanvas() {
+  const wrap = document.getElementById('canvas-wrap');
+  const w = Math.min(wrap.clientWidth, 900);
+  const h = Math.round(w * 0.65);
+  canvas.width = w;
+  canvas.height = h;
+}
+resizeCanvas();
+window.addEventListener('resize', () => { resizeCanvas(); });
+
+// ============================================================
+// AUDIO ENGINE
+// ============================================================
+let audioCtx = null;
+function getAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function playTone(freq, dur, type = 'sine', vol = 0.15, detune = 0) {
+  try {
+    const ac = getAudio();
+    const osc = ac.createOscillator();
+    const gain = ac.createGain();
+    osc.connect(gain);
+    gain.connect(ac.destination);
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, ac.currentTime);
+    osc.detune.setValueAtTime(detune, ac.currentTime);
+    gain.gain.setValueAtTime(vol, ac.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + dur);
+    osc.start(ac.currentTime);
+    osc.stop(ac.currentTime + dur);
+  } catch(e) {}
+}
+
+function sfxCatch()    { playTone(660, 0.12, 'square', 0.12); setTimeout(() => playTone(880, 0.1, 'square', 0.1), 60); }
+function sfxHit()      { playTone(120, 0.2, 'sawtooth', 0.18, 50); }
+function sfxLowOxy()   { playTone(320, 0.15, 'sine', 0.1); }
+function sfxSurface()  { playTone(440, 0.08, 'sine', 0.08); setTimeout(() => playTone(550, 0.1, 'sine', 0.1), 80); }
+function sfxHarpoon()  { playTone(200, 0.08, 'square', 0.08); }
+
+// ============================================================
+// CONSTANTS & CONFIG
+// ============================================================
+const WORLD_HEIGHT = 3500; // pixels total world height (surface to bottom)
+const METERS_PER_PX = 300 / WORLD_HEIGHT; // 300m total depth
+
+// Upgrade definitions
+const UPGRADES = [
+  { id: 'tank',    name: 'OXYGEN TANK',   desc: 'Increases max\noxygen capacity',    base: 40,  inc: 30, max: 4, levels: [0,1,2,3,4] },
+  { id: 'speed',   name: 'FIN UPGRADE',   desc: 'Increases swim\nspeed',             base: 40,  inc: 30, max: 4, levels: [0,1,2,3,4] },
+  { id: 'harpoon', name: 'HARPOON MK.II', desc: 'Longer harpoon\nrange & speed',    base: 50,  inc: 40, max: 3, levels: [0,1,2,3]   },
+  { id: 'armor',   name: 'WETSUIT',       desc: 'Reduces damage\nfrom enemies',      base: 45,  inc: 35, max: 3, levels: [0,1,2,3]   },
+];
+
+// Fish definitions
+const FISH_TYPES = [
+  { name: 'CLOWNFISH',  color: '#ff7a2a', trimColor: '#fff', points: 5,  size: 8,  zone: 0, speed: 0.6 },
+  { name: 'TUNA',       color: '#4488cc', trimColor: '#aad', points: 15, size: 14, zone: 0, speed: 0.9 },
+  { name: 'SWORDFISH',  color: '#66aaff', trimColor: '#ccf', points: 30, size: 18, zone: 1, speed: 1.3 },
+  { name: 'ANGLERFISH', color: '#446644', trimColor: '#8f8', points: 55, size: 13, zone: 1, speed: 0.7 },
+  { name: 'OARFISH',    color: '#cc66ff', trimColor: '#eaf', points: 100,size: 22, zone: 2, speed: 0.5 },
+];
+
+const ENEMY_TYPES = [
+  { name: 'JELLYFISH', color: '#ff88cc', trimColor: '#ffbbee', damage: 20, size: 14, zone: 1, speed: 0.4 },
+  { name: 'SHARK',     color: '#778899', trimColor: '#aabbcc', damage: 35, size: 22, zone: 2, speed: 1.6 },
+];
+
+// ============================================================
+// GAME STATE
+// ============================================================
+let state = {
+  screen: 'start', // start | diving | shop | gameover
+  score: 0,
+  hiScore: parseInt(localStorage.getItem('deepdive_hi') || '0'),
+  totalCoins: 0,
+  upgrades: { tank: 0, speed: 0, harpoon: 0, armor: 0 },
+  // Per-dive
+  oxygen: 1.0,
+  maxOxygen: 1.0,
+  health: 100,
+  maxHealth: 100,
+  diveFish: [],
+  diveCoins: 0,
+  diveDepthMax: 0,
+};
+
+let player = { x: 0, y: 0, vx: 0, vy: 0, facing: 1, bubbleTimer: 0, invincible: 0, flashTimer: 0 };
+let camera = { y: 0 }; // world Y of top of screen
+let entities = []; // fish, enemies, particles, harpoons
+let particles = [];
+let harpoons = [];
+let bubbles = [];
+let lowOxyWarning = 0;
+let lastTime = 0;
+let animId = null;
+
+const keys = {};
+const touchKeys = {};
+
+// ============================================================
+// INPUT
+// ============================================================
+window.addEventListener('keydown', e => {
+  keys[e.code] = true;
+  if (e.code === 'Space') { e.preventDefault(); tryFireHarpoon(); }
+  if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
+});
+window.addEventListener('keyup', e => { keys[e.code] = false; });
+
+// Touch controls
+function setupTouchBtn(id, key) {
+  const el = document.getElementById(id);
+  el.addEventListener('touchstart', e => { e.preventDefault(); touchKeys[key] = true; }, { passive: false });
+  el.addEventListener('touchend',   e => { e.preventDefault(); touchKeys[key] = false; }, { passive: false });
+  el.addEventListener('mousedown',  e => { touchKeys[key] = true; });
+  el.addEventListener('mouseup',    e => { touchKeys[key] = false; });
+}
+setupTouchBtn('touch-up',    'up');
+setupTouchBtn('touch-down',  'down');
+setupTouchBtn('touch-left',  'left');
+setupTouchBtn('touch-right', 'right');
+
+document.getElementById('touch-fire').addEventListener('touchstart', e => { e.preventDefault(); tryFireHarpoon(); });
+document.getElementById('touch-fire').addEventListener('click', () => tryFireHarpoon());
+
+function isKey(codes) {
+  return codes.some(c => keys[c] || touchKeys[c]);
+}
+
+// ============================================================
+// UPGRADE HELPERS
+// ============================================================
+function upgVal(id) { return state.upgrades[id]; }
+function getMaxOxy() { return 1 + upgVal('tank') * 0.35; }
+function getSpeed()  { return 2.8 + upgVal('speed') * 0.55; }
+function getHarpoonRange() { return 120 + upgVal('harpoon') * 60; }
+function getHarpoonSpeed() { return 7 + upgVal('harpoon') * 2; }
+function getArmor()  { return upgVal('armor') * 0.2; } // 0-60% dmg reduction
+
+// ============================================================
+// WORLD GENERATION
+// ============================================================
+function worldToDepthM(worldY) {
+  return Math.max(0, Math.round(worldY * METERS_PER_PX * 1000) / 10);
+}
+function depthZone(worldY) {
+  const m = worldToDepthM(worldY);
+  if (m < 100) return 0;
+  if (m < 200) return 1;
+  return 2;
+}
+
+function generateEntities() {
+  entities = [];
+  const W = canvas.width;
+
+  // Place fish and enemies in bands
+  for (let y = 200; y < WORLD_HEIGHT - 100; y += 80) {
+    const zone = depthZone(y);
+    const rand = Math.random();
+
+    // Enemy chance increases with depth
+    const enemyChance = zone === 0 ? 0.03 : zone === 1 ? 0.09 : 0.18;
+    if (rand < enemyChance) {
+      const etype = ENEMY_TYPES.filter(e => e.zone <= zone);
+      const et = etype[Math.floor(Math.random() * etype.length)];
+      entities.push({
+        type: 'enemy',
+        etype: et,
+        x: 80 + Math.random() * (W - 160),
+        y: y + Math.random() * 60,
+        vx: (Math.random() < 0.5 ? 1 : -1) * et.speed * (0.7 + Math.random() * 0.6),
+        vy: (Math.random() - 0.5) * 0.3,
+        wobble: Math.random() * Math.PI * 2,
+        alive: true,
+      });
+      continue;
+    }
+
+    // Fish — prefer zone-appropriate fish
+    const fishPool = FISH_TYPES.filter(f => f.zone <= zone);
+    // weight toward higher-zone fish at deeper depths
+    const ft = weightedFish(fishPool, zone);
+    if (!ft) continue;
+
+    entities.push({
+      type: 'fish',
+      ftype: ft,
+      x: 80 + Math.random() * (W - 160),
+      y: y + Math.random() * 50,
+      vx: (Math.random() < 0.5 ? 1 : -1) * ft.speed * (0.6 + Math.random() * 0.8),
+      vy: (Math.random() - 0.5) * 0.2,
+      wobble: Math.random() * Math.PI * 2,
+      alive: true,
+      hitFlash: 0,
+    });
+  }
+}
+
+function weightedFish(pool, zone) {
+  if (!pool.length) return null;
+  // Higher zone fish rarer
+  const weights = pool.map(f => f.zone === zone ? 3 : f.zone === zone - 1 ? 2 : 1);
+  const total = weights.reduce((a, b) => a + b, 0);
+  let r = Math.random() * total;
+  for (let i = 0; i < pool.length; i++) {
+    r -= weights[i];
+    if (r <= 0) return pool[i];
+  }
+  return pool[pool.length - 1];
+}
+
+// ============================================================
+// HARPOON
+// ============================================================
+let harpoonCooldown = 0;
+
+function tryFireHarpoon() {
+  if (state.screen !== 'diving') return;
+  if (harpoonCooldown > 0) return;
+  const speed = getHarpoonSpeed();
+  harpoons.push({
+    x: player.x,
+    y: player.y,
+    vx: player.facing * speed,
+    vy: -0.5,
+    range: getHarpoonRange(),
+    traveled: 0,
+    alive: true,
+  });
+  harpoonCooldown = 0.45;
+  sfxHarpoon();
+}
+
+// ============================================================
+// PARTICLES
+// ============================================================
+function spawnCatchParticles(x, y, color) {
+  for (let i = 0; i < 14; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 0.5 + Math.random() * 2.5;
+    particles.push({
+      x, y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      life: 1.0,
+      decay: 0.03 + Math.random() * 0.04,
+      color,
+      size: 2 + Math.random() * 3,
+    });
+  }
+}
+
+function spawnHitParticles(x, y) {
+  for (let i = 0; i < 8; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    particles.push({
+      x, y,
+      vx: Math.cos(angle) * (1 + Math.random() * 2),
+      vy: Math.sin(angle) * (1 + Math.random() * 2),
+      life: 1.0,
+      decay: 0.05,
+      color: '#ff4444',
+      size: 3 + Math.random() * 3,
+    });
+  }
+}
+
+function spawnBubble(x, y) {
+  bubbles.push({
+    x: x + (Math.random() - 0.5) * 10,
+    y,
+    vy: -(0.4 + Math.random() * 0.6),
+    size: 2 + Math.random() * 3,
+    life: 1.0,
+    wobble: Math.random() * Math.PI * 2,
+  });
+}
+
+// ============================================================
+// START / INIT DIVE
+// ============================================================
+function startGame() {
+  state.score = 0;
+  state.totalCoins = 0;
+  state.health = 100;
+  state.upgrades = { tank: 0, speed: 0, harpoon: 0, armor: 0 };
+  initDive();
+}
+
+function initDive() {
+  const W = canvas.width;
+  const H = canvas.height;
+  state.oxygen = getMaxOxy();
+  state.diveCoins = 0;
+  state.diveFish = [];
+  state.diveDepthMax = 0;
+  player.x = W / 2;
+  player.y = 60;
+  player.vx = 0;
+  player.vy = 0;
+  player.facing = 1;
+  player.invincible = 0;
+  player.flashTimer = 0;
+  player.bubbleTimer = 0;
+  camera.y = 0;
+  harpoons = [];
+  particles = [];
+  bubbles = [];
+  harpoonCooldown = 0;
+  lowOxyWarning = 0;
+  generateEntities();
+  state.screen = 'diving';
+  showOverlay(null);
+}
+
+// ============================================================
+// MAIN GAME LOOP
+// ============================================================
+function gameLoop(ts) {
+  const dt = Math.min((ts - lastTime) / 1000, 0.05); // seconds, capped
+  lastTime = ts;
+
+  if (state.screen === 'diving') {
+    update(dt);
+    render();
+  }
+
+  animId = requestAnimationFrame(gameLoop);
+}
+
+function update(dt) {
+  const W = canvas.width;
+  const H = canvas.height;
+  const speed = getSpeed();
+
+  // Player movement
+  let ax = 0, ay = 0;
+  if (isKey(['KeyA','ArrowLeft','left']))  { ax -= 1; player.facing = -1; }
+  if (isKey(['KeyD','ArrowRight','right'])) { ax += 1; player.facing = 1; }
+  if (isKey(['KeyW','ArrowUp','up']))    ay -= 1;
+  if (isKey(['KeyS','ArrowDown','down'])) ay += 1;
+
+  // Normalize diagonal
+  if (ax !== 0 && ay !== 0) { ax *= 0.707; ay *= 0.707; }
+
+  const accel = 18;
+  const drag = 0.88;
+
+  player.vx = (player.vx + ax * accel * dt) * drag;
+  player.vy = (player.vy + ay * accel * dt) * drag;
+
+  // Speed cap
+  const spd = Math.sqrt(player.vx * player.vx + player.vy * player.vy);
+  if (spd > speed) { player.vx *= speed / spd; player.vy *= speed / spd; }
+
+  player.x += player.vx;
+  player.y += player.vy;
+
+  // World boundary
+  player.x = Math.max(16, Math.min(W - 16, player.x));
+  player.y = Math.max(0, Math.min(WORLD_HEIGHT, player.y));
+
+  // Camera follows player (show player at ~30% from top)
+  const targetCamY = player.y - H * 0.3;
+  camera.y = Math.max(0, Math.min(WORLD_HEIGHT - H, targetCamY));
+
+  // Depth tracking
+  const worldDepth = player.y;
+  if (worldDepth > state.diveDepthMax) state.diveDepthMax = worldDepth;
+
+  // Oxygen
+  const oxyDrain = 0.018 + (worldDepth / WORLD_HEIGHT) * 0.012; // deeper = more drain
+  state.oxygen -= oxyDrain * dt;
+  state.oxygen = Math.max(0, state.oxygen);
+
+  // Refill at surface
+  if (player.y < 80) {
+    const wasLow = state.oxygen < getMaxOxy() * 0.5;
+    state.oxygen = Math.min(getMaxOxy(), state.oxygen + 0.8 * dt);
+    if (wasLow && state.oxygen >= getMaxOxy() * 0.9) sfxSurface();
+  }
+
+  // Low oxygen warning
+  if (state.oxygen < getMaxOxy() * 0.25) {
+    lowOxyWarning += dt;
+    if (lowOxyWarning > 1.5) { sfxLowOxy(); lowOxyWarning = 0; }
+  } else {
+    lowOxyWarning = 0;
+  }
+
+  // Oxygen death
+  if (state.oxygen <= 0) {
+    state.health -= 40 * dt;
+  }
+
+  // Invincibility frames
+  if (player.invincible > 0) player.invincible -= dt;
+  if (player.flashTimer > 0) player.flashTimer -= dt;
+
+  // Harpoon cooldown
+  if (harpoonCooldown > 0) harpoonCooldown -= dt;
+
+  // Bubbles from player
+  player.bubbleTimer -= dt;
+  if (player.bubbleTimer <= 0) {
+    spawnBubble(player.x, player.y - 8 + camera.y);
+    player.bubbleTimer = 0.18 + Math.random() * 0.2;
+  }
+
+  // Update entities
+  for (const e of entities) {
+    if (!e.alive) continue;
+    e.wobble += dt * 2;
+    e.x += e.vx;
+    e.vy += 0 * dt;
+    e.y += e.vy;
+
+    // Bounce off walls
+    if (e.x < 30 || e.x > W - 30) { e.vx *= -1; e.x = Math.max(30, Math.min(W - 30, e.x)); }
+    if (e.y < 50 || e.y > WORLD_HEIGHT - 50) { e.vy *= -1; }
+
+    if (e.type === 'fish') {
+      if (e.hitFlash > 0) e.hitFlash -= dt;
+    }
+
+    if (e.type === 'enemy') {
+      // Enemies track player loosely
+      const dx = player.x - e.x;
+      const dy = (player.y) - e.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 250) {
+        e.vx += (dx / dist) * e.etype.speed * 0.4 * dt * 60;
+        e.vy += (dy / dist) * e.etype.speed * 0.4 * dt * 60;
+      }
+      const spd2 = Math.sqrt(e.vx * e.vx + e.vy * e.vy);
+      const maxSpd = e.etype.speed * 1.5;
+      if (spd2 > maxSpd) { e.vx *= maxSpd / spd2; e.vy *= maxSpd / spd2; }
+
+      // Collision with player
+      if (player.invincible <= 0) {
+        const dx2 = player.x - e.x;
+        const dy2 = (player.y) - e.y;
+        const hitDist = e.etype.size + 10;
+        if (Math.sqrt(dx2*dx2 + dy2*dy2) < hitDist) {
+          const dmg = Math.round(e.etype.damage * (1 - getArmor()));
+          state.health -= dmg;
+          player.invincible = 1.2;
+          player.flashTimer = 1.2;
+          spawnHitParticles(player.x, player.y - camera.y);
+          sfxHit();
+        }
+      }
+    }
+  }
+
+  // Update harpoons
+  for (const h of harpoons) {
+    if (!h.alive) continue;
+    h.x += h.vx;
+    h.y += h.vy;
+    h.traveled += Math.abs(h.vx) + Math.abs(h.vy);
+    if (h.traveled > h.range) { h.alive = false; continue; }
+    if (h.x < 0 || h.x > W) { h.alive = false; continue; }
+
+    // Hit fish
+    for (const e of entities) {
+      if (!e.alive || e.type !== 'fish') continue;
+      const dx = h.x - e.x;
+      const dy = h.y - (e.y - camera.y);
+      if (Math.sqrt(dx*dx + dy*dy) < e.ftype.size + 6) {
+        catchFish(e, h.x, h.y);
+        h.alive = false;
+        break;
+      }
+    }
+  }
+
+  // Swim-into-fish catch
+  for (const e of entities) {
+    if (!e.alive || e.type !== 'fish') continue;
+    const dx = player.x - e.x;
+    const dy = player.y - e.y;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    if (dist < e.ftype.size + 13) {
+      catchFish(e, player.x, player.y - camera.y);
+    }
+  }
+
+  // Update particles
+  for (const p of particles) {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy -= 0.02; // slight upward drift
+    p.vx *= 0.96;
+    p.life -= p.decay;
+  }
+  particles = particles.filter(p => p.life > 0);
+
+  // Update bubbles (world coords)
+  for (const b of bubbles) {
+    b.wobble += dt * 3;
+    b.x += Math.sin(b.wobble) * 0.4;
+    b.y += b.vy;
+    b.life -= 0.004;
+  }
+  bubbles = bubbles.filter(b => b.life > 0 && b.y > camera.y - 20);
+
+  // Clamp health
+  state.health = Math.max(0, Math.min(state.maxHealth, state.health));
+
+  // Game over
+  if (state.health <= 0) {
+    state.screen = 'gameover';
+    if (state.score > state.hiScore) {
+      state.hiScore = state.score;
+      localStorage.setItem('deepdive_hi', state.hiScore);
+    }
+    showGameOver();
+    return;
+  }
+
+  // Update HUD
+  updateHUD();
+}
+
+function catchFish(entity, screenX, screenY) {
+  entity.alive = false;
+  const pts = entity.ftype.points;
+  const coins = Math.ceil(pts / 3);
+  state.score += pts;
+  state.diveCoins += coins;
+  state.totalCoins += coins;
+  state.diveFish.push(entity.ftype.name);
+  spawnCatchParticles(screenX, screenY, entity.ftype.color);
+  sfxCatch();
+  showFloatText('+' + pts, screenX, screenY, entity.ftype.color);
+}
+
+// Float text popups
+let floatTexts = [];
+function showFloatText(text, x, y, color) {
+  floatTexts.push({ text, x, y, vy: -1.2, life: 1.0, color });
+}
+
+function updateHUD() {
+  const maxOxy = getMaxOxy();
+  const oxyPct = Math.max(0, state.oxygen / maxOxy * 100);
+  const hpPct = Math.max(0, state.health / state.maxHealth * 100);
+
+  document.getElementById('oxy-bar').style.width = oxyPct + '%';
+  document.getElementById('oxy-bar').style.background = oxyPct < 25 ? '#f44' : oxyPct < 50 ? '#fa4' : '#4af';
+  document.getElementById('hp-bar').style.width = hpPct + '%';
+
+  const depthM = worldToDepthM(player.y);
+  document.getElementById('depth-val').textContent = depthM.toFixed(0) + 'm';
+  document.getElementById('coins-val').textContent = state.totalCoins;
+  document.getElementById('score-top').textContent = 'SCORE: ' + state.score;
+
+  // Depth pip
+  const pct = player.y / WORLD_HEIGHT;
+  document.getElementById('depth-pip').style.top = (pct * (160 - 6)) + 'px';
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+function render() {
+  const W = canvas.width;
+  const H = canvas.height;
+
+  // Sky/water gradient based on camera
+  const depthFrac = Math.min(1, camera.y / (WORLD_HEIGHT * 0.7));
+  const r = Math.round(13 * (1 - depthFrac) + 2 * depthFrac);
+  const g = Math.round(26 * (1 - depthFrac) + 8 * depthFrac);
+  const b = Math.round(46 * (1 - depthFrac) + 10 * depthFrac);
+  ctx.fillStyle = `rgb(${r},${g},${b})`;
+  ctx.fillRect(0, 0, W, H);
+
+  // Depth overlay
+  const darkOverlay = Math.min(0.75, depthFrac * 0.85);
+  ctx.fillStyle = `rgba(0,0,0,${darkOverlay})`;
+  ctx.fillRect(0, 0, W, H);
+
+  // Surface shimmer
+  if (camera.y < 200) {
+    const surfaceY = -camera.y;
+    if (surfaceY > -20 && surfaceY < H) {
+      const grad = ctx.createLinearGradient(0, surfaceY - 20, 0, surfaceY + 40);
+      grad.addColorStop(0, 'rgba(200,241,53,0.0)');
+      grad.addColorStop(0.4, 'rgba(100,180,255,0.18)');
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, Math.max(0, surfaceY - 20), W, 60);
+
+      // Surface line
+      ctx.strokeStyle = 'rgba(100,200,255,0.35)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(0, surfaceY);
+      ctx.lineTo(W, surfaceY);
+      ctx.stroke();
+    }
+  }
+
+  // Depth zone markers
+  drawZoneMarkers();
+
+  // Bubbles (world coords → screen)
+  ctx.fillStyle = 'rgba(150,210,255,0.5)';
+  for (const b of bubbles) {
+    const sy = b.y - camera.y;
+    if (sy < -10 || sy > H + 10) continue;
+    ctx.globalAlpha = b.life * 0.7;
+    ctx.beginPath();
+    ctx.arc(b.x, sy, b.size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  // Entities
+  for (const e of entities) {
+    if (!e.alive) continue;
+    const sy = e.y - camera.y;
+    if (sy < -40 || sy > H + 40) continue;
+    if (e.type === 'fish') drawFish(e, sy);
+    if (e.type === 'enemy') drawEnemy(e, sy);
+  }
+
+  // Harpoons
+  for (const h of harpoons) {
+    if (!h.alive) continue;
+    const sy = h.y;
+    ctx.strokeStyle = '#c8f135';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(h.x - h.vx * 3, sy - h.vy * 3);
+    ctx.lineTo(h.x, sy);
+    ctx.stroke();
+    // Tip
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(h.x, sy, 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Player
+  drawPlayer();
+
+  // Particles (screen coords)
+  for (const p of particles) {
+    ctx.globalAlpha = p.life;
+    ctx.fillStyle = p.color;
+    ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+  }
+  ctx.globalAlpha = 1;
+
+  // Float texts
+  for (const ft of floatTexts) {
+    ft.y += ft.vy;
+    ft.life -= 0.025;
+    ctx.globalAlpha = ft.life;
+    ctx.fillStyle = ft.color;
+    ctx.font = 'bold 12px "Space Mono", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(ft.text, ft.x, ft.y);
+  }
+  floatTexts = floatTexts.filter(ft => ft.life > 0);
+  ctx.globalAlpha = 1;
+  ctx.textAlign = 'left';
+
+  // Low oxygen vignette
+  if (state.oxygen < getMaxOxy() * 0.3) {
+    const pulse = 0.15 + 0.15 * Math.sin(Date.now() / 200);
+    const grad = ctx.createRadialGradient(W/2, H/2, H*0.3, W/2, H/2, H*0.8);
+    grad.addColorStop(0, 'rgba(0,0,0,0)');
+    grad.addColorStop(1, `rgba(200,50,50,${pulse})`);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  // Player flash on hit
+  if (player.flashTimer > 0 && Math.floor(player.flashTimer * 10) % 2 === 0) {
+    ctx.fillStyle = 'rgba(255,80,80,0.18)';
+    ctx.fillRect(0, 0, W, H);
+  }
+}
+
+function drawZoneMarkers() {
+  const W = canvas.width;
+  const H = canvas.height;
+  const zones = [
+    { worldY: 100 / (300 / WORLD_HEIGHT), label: '100m — MID ZONE', color: 'rgba(100,150,255,0.15)' },
+    { worldY: 200 / (300 / WORLD_HEIGHT), label: '200m — DEEP ZONE', color: 'rgba(255,100,100,0.12)' },
+  ];
+  ctx.font = '9px "Space Mono", monospace';
+  ctx.textAlign = 'right';
+  for (const z of zones) {
+    const sy = z.worldY - camera.y;
+    if (sy < 0 || sy > H) continue;
+    ctx.strokeStyle = z.color.replace('0.12', '0.3').replace('0.15', '0.3');
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 6]);
+    ctx.beginPath();
+    ctx.moveTo(0, sy);
+    ctx.lineTo(W - 20, sy);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = z.color.replace('0.12', '0.5').replace('0.15', '0.5');
+    ctx.fillText(z.label, W - 22, sy - 3);
+  }
+  ctx.textAlign = 'left';
+}
+
+function drawFish(e, sy) {
+  ctx.save();
+  ctx.translate(e.x, sy);
+  const dir = e.vx < 0 ? -1 : 1;
+  ctx.scale(dir, 1);
+
+  const s = e.ftype.size;
+  const wobbleY = Math.sin(e.wobble) * 1.5;
+
+  if (e.hitFlash > 0) {
+    ctx.filter = 'brightness(3)';
+  }
+
+  ctx.translate(0, wobbleY);
+
+  // Body
+  ctx.fillStyle = e.ftype.color;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, s, s * 0.55, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Tail
+  ctx.fillStyle = e.ftype.color;
+  ctx.beginPath();
+  ctx.moveTo(-s * 0.8, 0);
+  ctx.lineTo(-s * 1.4, -s * 0.5);
+  ctx.lineTo(-s * 1.4, s * 0.5);
+  ctx.closePath();
+  ctx.fill();
+
+  // Stripe/detail
+  ctx.fillStyle = e.ftype.trimColor;
+  ctx.fillRect(-s * 0.1, -s * 0.35, s * 0.15, s * 0.7);
+
+  // Eye
+  ctx.fillStyle = '#222';
+  ctx.beginPath();
+  ctx.arc(s * 0.55, -s * 0.1, s * 0.18, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.arc(s * 0.58, -s * 0.13, s * 0.08, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.filter = 'none';
+  ctx.restore();
+}
+
+function drawEnemy(e, sy) {
+  ctx.save();
+  ctx.translate(e.x, sy);
+
+  if (e.etype.name === 'JELLYFISH') {
+    drawJellyfish(e);
+  } else {
+    drawShark(e);
+  }
+
+  ctx.restore();
+}
+
+function drawJellyfish(e) {
+  const s = e.etype.size;
+  const pulse = 1 + 0.1 * Math.sin(e.wobble * 2);
+  ctx.save();
+  ctx.scale(pulse, pulse);
+
+  // Bell
+  ctx.fillStyle = e.etype.color;
+  ctx.globalAlpha = 0.75;
+  ctx.beginPath();
+  ctx.arc(0, 0, s, Math.PI, 0);
+  ctx.fill();
+
+  // Skirt
+  ctx.beginPath();
+  ctx.moveTo(-s, 0);
+  ctx.quadraticCurveTo(-s * 0.7, s * 0.5, -s * 0.4, s * 0.2);
+  ctx.quadraticCurveTo(-s * 0.1, s * 0.5, 0, s * 0.3);
+  ctx.quadraticCurveTo(s * 0.1, s * 0.5, s * 0.4, s * 0.2);
+  ctx.quadraticCurveTo(s * 0.7, s * 0.5, s, 0);
+  ctx.closePath();
+  ctx.fill();
+
+  // Tentacles
+  ctx.globalAlpha = 0.5;
+  ctx.strokeStyle = e.etype.trimColor;
+  ctx.lineWidth = 1.5;
+  for (let i = -2; i <= 2; i++) {
+    ctx.beginPath();
+    ctx.moveTo(i * s * 0.25, s * 0.3);
+    ctx.quadraticCurveTo(
+      i * s * 0.25 + Math.sin(e.wobble + i) * 6,
+      s + 10 + Math.sin(e.wobble * 0.7) * 5,
+      i * s * 0.25 + Math.sin(e.wobble * 1.3 + i) * 8,
+      s + 22
+    );
+    ctx.stroke();
+  }
+
+  // Glow
+  ctx.globalAlpha = 0.15;
+  ctx.fillStyle = e.etype.trimColor;
+  ctx.beginPath();
+  ctx.arc(0, -s * 0.2, s * 0.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+function drawShark(e) {
+  const s = e.etype.size;
+  const dir = e.vx < 0 ? -1 : 1;
+  ctx.save();
+  ctx.scale(dir, 1);
+
+  // Body
+  ctx.fillStyle = e.etype.color;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, s * 1.4, s * 0.45, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Belly
+  ctx.fillStyle = '#c8c8d8';
+  ctx.beginPath();
+  ctx.ellipse(s * 0.1, s * 0.15, s * 0.8, s * 0.22, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Dorsal fin
+  ctx.fillStyle = e.etype.color;
+  ctx.beginPath();
+  ctx.moveTo(0, -s * 0.4);
+  ctx.lineTo(s * 0.4, -s * 0.9);
+  ctx.lineTo(s * 0.7, -s * 0.4);
+  ctx.closePath();
+  ctx.fill();
+
+  // Tail
+  ctx.beginPath();
+  ctx.moveTo(-s * 1.2, 0);
+  ctx.lineTo(-s * 1.8, -s * 0.6);
+  ctx.lineTo(-s * 1.6, 0);
+  ctx.lineTo(-s * 1.8, s * 0.6);
+  ctx.closePath();
+  ctx.fill();
+
+  // Pectoral fin
+  ctx.beginPath();
+  ctx.moveTo(s * 0.2, s * 0.1);
+  ctx.lineTo(s * 0.6, s * 0.6);
+  ctx.lineTo(s * 0.9, s * 0.2);
+  ctx.closePath();
+  ctx.fill();
+
+  // Eye
+  ctx.fillStyle = '#111';
+  ctx.beginPath();
+  ctx.arc(s * 0.9, -s * 0.08, s * 0.14, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Teeth
+  ctx.fillStyle = '#fff';
+  for (let i = 0; i < 4; i++) {
+    ctx.beginPath();
+    ctx.moveTo(s * 1.1 + i * s * 0.1, s * 0.1);
+    ctx.lineTo(s * 1.15 + i * s * 0.1, s * 0.22);
+    ctx.lineTo(s * 1.2 + i * s * 0.1, s * 0.1);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  ctx.restore();
+}
+
+function drawPlayer() {
+  const H = canvas.height;
+  const px = player.x;
+  const py = player.y - camera.y;
+  if (py < -30 || py > H + 30) return;
+
+  ctx.save();
+  ctx.translate(px, py);
+
+  // Flash effect
+  if (player.flashTimer > 0 && Math.floor(player.flashTimer * 10) % 2 === 0) {
+    ctx.restore();
+    return;
+  }
+
+  const dir = player.facing;
+  ctx.scale(dir, 1);
+
+  // Swim wobble
+  const wobble = Math.sin(Date.now() / 180) * 0.12;
+  ctx.rotate(wobble);
+
+  // Fins (back)
+  ctx.fillStyle = '#1a6060';
+  ctx.beginPath();
+  ctx.moveTo(-8, 12);
+  ctx.lineTo(-18, 22);
+  ctx.lineTo(-4, 18);
+  ctx.closePath();
+  ctx.fill();
+
+  // Tank
+  ctx.fillStyle = '#1a3a60';
+  ctx.fillRect(-10, -8, 6, 16);
+  ctx.strokeStyle = '#4af';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(-10, -8, 6, 16);
+
+  // Body (wetsuit)
+  ctx.fillStyle = '#1a4a80';
+  ctx.beginPath();
+  ctx.ellipse(0, 2, 10, 14, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Wetsuit highlight
+  ctx.fillStyle = '#2a6aaa';
+  ctx.beginPath();
+  ctx.ellipse(-2, 0, 4, 9, -0.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Head
+  ctx.fillStyle = '#f0c090';
+  ctx.beginPath();
+  ctx.arc(0, -14, 9, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Mask
+  ctx.fillStyle = '#1a2a3a';
+  ctx.beginPath();
+  ctx.roundRect(-7, -18, 14, 9, 2);
+  ctx.fill();
+  ctx.strokeStyle = '#4af';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Eyes through mask
+  ctx.fillStyle = '#4af';
+  ctx.beginPath();
+  ctx.arc(-3, -15, 2.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(3, -15, 2.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Regulator
+  ctx.strokeStyle = '#888';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(-4, -9);
+  ctx.quadraticCurveTo(-12, -4, -10, 2);
+  ctx.stroke();
+  ctx.fillStyle = '#aaa';
+  ctx.beginPath();
+  ctx.arc(-10, 2, 3, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Harpoon gun
+  ctx.fillStyle = '#334';
+  ctx.fillRect(4, -2, 22, 5);
+  ctx.fillStyle = '#555';
+  ctx.fillRect(22, -1, 6, 3);
+  // Handle
+  ctx.fillStyle = '#334';
+  ctx.fillRect(8, 3, 8, 8);
+
+  ctx.restore();
+}
+
+// ============================================================
+// SCREENS
+// ============================================================
+function showOverlay(id) {
+  const ids = ['start-overlay','gameover-overlay','shop-overlay'];
+  ids.forEach(i => {
+    const el = document.getElementById(i);
+    if (i === id) el.classList.remove('hidden');
+    else el.classList.add('hidden');
+  });
+  // Touch controls visibility
+  document.getElementById('touch-controls').style.display = (id === null) ? '' : 'none';
+}
+
+function showGameOver() {
+  const summary = document.getElementById('gameover-summary');
+  const depthM = worldToDepthM(state.diveDepthMax).toFixed(0);
+  summary.innerHTML = `
+    Score: <strong>${state.score}</strong> &nbsp;|&nbsp; High Score: <strong>${state.hiScore}</strong><br>
+    Max Depth: <strong>${depthM}m</strong> &nbsp;|&nbsp; Fish Caught: <strong>${state.diveFish.length}</strong>
+  `;
+  showOverlay('gameover-overlay');
+}
+
+function showShop() {
+  state.screen = 'shop';
+  const summary = document.getElementById('shop-summary');
+  const depthM = worldToDepthM(state.diveDepthMax).toFixed(0);
+  const fishCounts = {};
+  state.diveFish.forEach(f => fishCounts[f] = (fishCounts[f] || 0) + 1);
+  const fishList = Object.entries(fishCounts).map(([n, c]) => `${n} x${c}`).join(' &nbsp; ');
+  summary.innerHTML = `
+    Dive coins: <strong>+${state.diveCoins}</strong> &nbsp;|&nbsp; Max depth: <strong>${depthM}m</strong><br>
+    ${fishList || 'No fish caught'}
+  `;
+  document.getElementById('shop-coins').textContent = state.totalCoins;
+  document.getElementById('shop-score').textContent = state.score;
+  document.getElementById('shop-hi').textContent = state.hiScore;
+  renderShopItems();
+  showOverlay('shop-overlay');
+}
+
+function renderShopItems() {
+  const grid = document.getElementById('shop-grid');
+  grid.innerHTML = '';
+  UPGRADES.forEach(upg => {
+    const lvl = state.upgrades[upg.id];
+    const maxed = lvl >= upg.max;
+    const cost = maxed ? 0 : upg.base + lvl * upg.inc;
+    const canAfford = state.totalCoins >= cost;
+
+    const item = document.createElement('div');
+    item.className = 'shop-item' + (maxed ? ' maxed' : canAfford ? '' : ' cant-afford');
+    item.innerHTML = `
+      <div class="shop-item-name">${upg.name}</div>
+      <div class="shop-item-desc">${upg.desc.replace('\n', '<br>')}</div>
+      <div class="shop-item-cost">${maxed ? 'MAXED' : canAfford ? cost + ' coins' : cost + ' coins'}</div>
+      <div class="shop-item-level">LVL ${lvl} / ${upg.max}</div>
+    `;
+    if (!maxed && canAfford) {
+      item.addEventListener('click', () => buyUpgrade(upg.id));
+    }
+    grid.appendChild(item);
+  });
+}
+
+function buyUpgrade(id) {
+  const upg = UPGRADES.find(u => u.id === id);
+  const lvl = state.upgrades[id];
+  if (lvl >= upg.max) return;
+  const cost = upg.base + lvl * upg.inc;
+  if (state.totalCoins < cost) return;
+  state.totalCoins -= cost;
+  state.upgrades[id]++;
+  playTone(660, 0.1, 'square', 0.1);
+  setTimeout(() => playTone(880, 0.12, 'square', 0.12), 80);
+  document.getElementById('shop-coins').textContent = state.totalCoins;
+  renderShopItems();
+}
+
+// ============================================================
+// BUTTONS
+// ============================================================
+document.getElementById('start-btn').addEventListener('click', () => {
+  document.getElementById('hi-score-start').textContent = state.hiScore;
+  startGame();
+  if (animId) cancelAnimationFrame(animId);
+  lastTime = performance.now();
+  animId = requestAnimationFrame(gameLoop);
+});
+
+document.getElementById('gameover-btn').addEventListener('click', () => {
+  startGame();
+  showOverlay(null);
+});
+
+document.getElementById('shop-dive-btn').addEventListener('click', () => {
+  state.health = Math.min(state.maxHealth, state.health + 30); // heal a bit between dives
+  initDive();
+});
+
+// Surface detection → show shop (when player reaches top after diving)
+let surfaceTimer = 0;
+const origUpdate = update;
+
+// Patch: detect intentional surface return (had dived, now back up)
+let hasDived = false;
+let surfaceDebounce = 0;
+
+function wrappedUpdate(dt) {
+  update(dt);
+  if (state.screen !== 'diving') return;
+
+  if (player.y > 300) hasDived = true;
+  if (surfaceDebounce > 0) surfaceDebounce -= dt;
+
+  if (hasDived && player.y < 50 && surfaceDebounce <= 0) {
+    // Trigger shop
+    hasDived = false;
+    surfaceDebounce = 3;
+    state.score += state.diveCoins * 2; // bonus
+    if (state.score > state.hiScore) {
+      state.hiScore = state.score;
+      localStorage.setItem('deepdive_hi', state.hiScore);
+    }
+    showShop();
+  }
+}
+
+// Override the game loop to use wrapped update
+(function() {
+  const origLoop = gameLoop;
+  window.gameLoop = function(ts) {
+    const dt = Math.min((ts - lastTime) / 1000, 0.05);
+    lastTime = ts;
+    if (state.screen === 'diving') {
+      wrappedUpdate(dt);
+      if (state.screen === 'diving') render();
+    }
+    animId = requestAnimationFrame(window.gameLoop);
+  };
+})();
+
+// ============================================================
+// INIT
+// ============================================================
+document.getElementById('hi-score-start').textContent = state.hiScore;
+showOverlay('start-overlay');
+// Draw static background while on start screen
+resizeCanvas();
+(function staticBg() {
+  const W = canvas.width, H = canvas.height;
+  ctx.fillStyle = '#0d1a2e';
+  ctx.fillRect(0, 0, W, H);
+  // Draw some decorative fish
+  ctx.save();
+  ctx.globalAlpha = 0.3;
+  [[100,200,'#ff7a2a',10],[300,350,'#4488cc',14],[500,180,'#cc66ff',18],[200,400,'#66aaff',12]].forEach(([x,y,c,s]) => {
+    ctx.fillStyle = c;
+    ctx.beginPath();
+    ctx.ellipse(x, y, s, s*0.55, 0, 0, Math.PI*2);
+    ctx.fill();
+  });
+  ctx.restore();
+})();
+</script>
+</body>
+</html>

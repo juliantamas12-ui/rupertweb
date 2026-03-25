@@ -431,3 +431,16 @@ body {
 .essay-card--linked:hover { border-color: var(--accent); }
 .essay-card__read { font-family: 'Space Mono', monospace; font-size: 0.7rem; color: var(--accent); margin-top: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; }
 .essay-card__read--na { color: #555; }
+
+/* Game cards */
+.card--game {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  transition: border-color 0.15s, background 0.15s;
+}
+.card--game:hover {
+  border-color: var(--accent);
+  background: rgba(200, 241, 53, 0.04);
+}
