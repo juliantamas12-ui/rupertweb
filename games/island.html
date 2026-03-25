@@ -45,6 +45,12 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;posit
 #win-screen h1{color:#c8f135;font-size:36px;letter-spacing:10px;margin-bottom:10px;text-shadow:0 0 30px #c8f135}
 #win-screen p{color:#888;font-size:13px;letter-spacing:2px;margin-top:16px}
 #controls-hint{position:fixed;bottom:60px;left:10px;color:#555;font-size:9px;letter-spacing:1px;line-height:1.8;pointer-events:none;z-index:5}
+#joystick-canvas{position:fixed;top:0;left:0;z-index:14;pointer-events:none}
+#touch-controls{position:fixed;inset:0;z-index:15;pointer-events:none}
+#joystick-zone{position:absolute;bottom:30px;left:30px;width:140px;height:140px;pointer-events:all}
+#btn-zone{position:absolute;bottom:30px;right:20px;display:flex;flex-direction:column;gap:12px;pointer-events:all}
+.touch-btn{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Courier New',monospace;font-size:12px;font-weight:bold;color:#fff;letter-spacing:1px;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:none}
+@media(max-width:767px){#controls-hint{display:none}}
 </style>
 </head>
 <body>
@@ -111,6 +117,16 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;posit
     <div><h3 style="color:#c8f135;font-size:12px;letter-spacing:3px;margin-bottom:8px">STORY & GOAL</h3><div style="font-size:11px;color:#bbb;line-height:1.8">You survived the Meridian shipwreck. Find <b>Mara</b>, <b>Felix</b>, and <b>Elder Kona</b>.<br>Tribal warriors attack from Day 3. Chief appears Day 15.<br>Defeat him, craft a <b>Superyacht</b>, and escape. Multiple endings.</div></div>
   </div>
   <button id="slide-btn" onclick="nextSlide()" style="margin-top:16px">START GAME</button>
+</div>
+
+<canvas id="joystick-canvas"></canvas>
+<div id="touch-controls">
+  <div id="joystick-zone"></div>
+  <div id="btn-zone">
+    <div class="touch-btn" id="btn-use" style="background:rgba(80,200,80,0.6)" ontouchstart="touchBtnStart(event,'use')" ontouchend="touchBtnEnd(event,'use')">USE</div>
+    <div class="touch-btn" id="btn-jmp" style="background:rgba(80,150,200,0.6)" ontouchstart="touchBtnStart(event,'jmp')" ontouchend="touchBtnEnd(event,'jmp')">JMP</div>
+    <div class="touch-btn" id="btn-atk" style="background:rgba(200,80,80,0.6)" ontouchstart="touchBtnStart(event,'atk')" ontouchend="touchBtnEnd(event,'atk')">ATK</div>
+  </div>
 </div>
 
 <div id="win-screen">
@@ -2980,6 +2996,162 @@ function startGame() {
   showMsg('YOU WASHED ASHORE. FIND THE OTHER SURVIVORS.', '#c8f135');
   requestAnimationFrame(gameLoopWithUI);
 }
+</script>
+
+<script>
+// ============================================================
+// MOBILE TOUCH CONTROLS
+// ============================================================
+
+(function() {
+  const joyCanvas = document.getElementById('joystick-canvas');
+  const jCtx = joyCanvas.getContext('2d');
+
+  function resizeJoyCanvas() {
+    joyCanvas.width = window.innerWidth;
+    joyCanvas.height = window.innerHeight;
+  }
+  resizeJoyCanvas();
+  window.addEventListener('resize', resizeJoyCanvas);
+
+  // Joystick state
+  const joy = {
+    active: false,
+    touchId: null,
+    centerX: 0,
+    centerY: 0,
+    knobX: 0,
+    knobY: 0,
+    dx: 0,
+    dy: 0,
+    radius: 55, // outer ring radius
+    knobRadius: 15,
+  };
+
+  // Default joystick center (bottom-left zone center)
+  function getDefaultJoyCenter() {
+    return { x: 100, y: window.innerHeight - 100 };
+  }
+
+  function drawJoystick() {
+    jCtx.clearRect(0, 0, joyCanvas.width, joyCanvas.height);
+    if (!joy.active) return;
+
+    // Outer ring
+    jCtx.beginPath();
+    jCtx.arc(joy.centerX, joy.centerY, joy.radius, 0, Math.PI * 2);
+    jCtx.fillStyle = 'rgba(255,255,255,0.15)';
+    jCtx.fill();
+    jCtx.strokeStyle = 'rgba(255,255,255,0.4)';
+    jCtx.lineWidth = 2;
+    jCtx.stroke();
+
+    // Inner knob
+    jCtx.beginPath();
+    jCtx.arc(joy.knobX, joy.knobY, joy.knobRadius, 0, Math.PI * 2);
+    jCtx.fillStyle = 'rgba(255,255,255,0.4)';
+    jCtx.fill();
+  }
+
+  function updateJoystickKeys() {
+    const threshold = 0.25;
+    keys['w'] = joy.active && joy.dy < -threshold;
+    keys['s'] = joy.active && joy.dy > threshold;
+    keys['a'] = joy.active && joy.dx < -threshold;
+    keys['d'] = joy.active && joy.dx > threshold;
+  }
+
+  function resetJoystick() {
+    joy.active = false;
+    joy.touchId = null;
+    joy.dx = 0;
+    joy.dy = 0;
+    keys['w'] = false;
+    keys['s'] = false;
+    keys['a'] = false;
+    keys['d'] = false;
+    jCtx.clearRect(0, 0, joyCanvas.width, joyCanvas.height);
+  }
+
+  // Button tap handlers (called via inline ontouchstart/end)
+  window.touchBtnStart = function(e, btn) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (btn === 'atk') {
+      // Simulate click at canvas center
+      if (state.running) {
+        handleClick(window.innerWidth / 2, window.innerHeight / 2);
+      }
+    } else if (btn === 'jmp') {
+      handleJump();
+    } else if (btn === 'use') {
+      handleInteract();
+    }
+  };
+
+  window.touchBtnEnd = function(e, btn) {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  // Joystick zone element for touch tracking
+  const joyZone = document.getElementById('joystick-zone');
+
+  document.addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      const t = e.changedTouches[i];
+      // Only claim joystick touch if on left half of screen and no active joystick touch
+      if (t.clientX < window.innerWidth / 2 && joy.touchId === null) {
+        joy.active = true;
+        joy.touchId = t.identifier;
+        joy.centerX = t.clientX;
+        joy.centerY = t.clientY;
+        joy.knobX = t.clientX;
+        joy.knobY = t.clientY;
+        joy.dx = 0;
+        joy.dy = 0;
+        drawJoystick();
+      }
+    }
+  }, { passive: false });
+
+  document.addEventListener('touchmove', function(e) {
+    e.preventDefault();
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      const t = e.changedTouches[i];
+      if (t.identifier === joy.touchId) {
+        const rawDx = t.clientX - joy.centerX;
+        const rawDy = t.clientY - joy.centerY;
+        const dist = Math.sqrt(rawDx * rawDx + rawDy * rawDy);
+        const clampedDist = Math.min(dist, joy.radius);
+        const angle = Math.atan2(rawDy, rawDx);
+        joy.knobX = joy.centerX + Math.cos(angle) * clampedDist;
+        joy.knobY = joy.centerY + Math.sin(angle) * clampedDist;
+        joy.dx = Math.cos(angle) * (clampedDist / joy.radius);
+        joy.dy = Math.sin(angle) * (clampedDist / joy.radius);
+        updateJoystickKeys();
+        drawJoystick();
+      }
+    }
+  }, { passive: false });
+
+  document.addEventListener('touchend', function(e) {
+    e.preventDefault();
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      const t = e.changedTouches[i];
+      if (t.identifier === joy.touchId) {
+        resetJoystick();
+      }
+    }
+  }, { passive: false });
+
+  document.addEventListener('touchcancel', function(e) {
+    e.preventDefault();
+    resetJoystick();
+  }, { passive: false });
+
+})();
 </script>
 </body>
 </html>
