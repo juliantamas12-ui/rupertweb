@@ -1,0 +1,1741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Island Survival</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #000;
+    overflow: hidden;
+    font-family: 'Georgia', serif;
+    user-select: none;
+  }
+  #canvas {
+    display: block;
+    cursor: crosshair;
+  }
+  #ui {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    padding: 12px 20px;
+    pointer-events: none;
+    z-index: 10;
+  }
+  #top-bar {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: rgba(0,0,0,0.45);
+    border-radius: 10px;
+    padding: 8px 16px;
+    backdrop-filter: blur(4px);
+  }
+  .bar-group { display: flex; flex-direction: column; gap: 3px; min-width: 130px; }
+  .bar-label {
+    color: #f0e6c8;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .bar-outer {
+    height: 12px;
+    background: rgba(255,255,255,0.12);
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.18);
+  }
+  .bar-inner {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.3s ease;
+  }
+  #health-bar .bar-inner { background: linear-gradient(90deg, #c0392b, #e74c3c); }
+  #hunger-bar .bar-inner { background: linear-gradient(90deg, #e67e22, #f39c12); }
+  #day-display {
+    color: #f0e6c8;
+    font-size: 16px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    margin-left: auto;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+  }
+  #tooltip {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.65);
+    color: #f0e6c8;
+    font-size: 13px;
+    padding: 6px 16px;
+    border-radius: 20px;
+    pointer-events: none;
+    z-index: 10;
+    letter-spacing: 0.5px;
+    transition: opacity 0.4s;
+  }
+  #inventory-panel {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(30,20,10,0.93);
+    border: 2px solid rgba(240,220,160,0.3);
+    border-radius: 14px;
+    padding: 24px;
+    z-index: 20;
+    display: none;
+    min-width: 360px;
+    backdrop-filter: blur(8px);
+    color: #f0e6c8;
+  }
+  #inventory-panel h2 {
+    text-align: center;
+    font-size: 18px;
+    letter-spacing: 3px;
+    margin-bottom: 16px;
+    color: #f0e6c8;
+    text-transform: uppercase;
+  }
+  #inv-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 64px);
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 16px;
+  }
+  .inv-slot {
+    width: 64px; height: 64px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: #d4c89a;
+    gap: 4px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .inv-slot:hover { background: rgba(255,255,255,0.14); }
+  .inv-slot .icon { font-size: 24px; }
+  .inv-slot .count { font-size: 12px; font-weight: bold; color: #f0e6c8; }
+  #craft-section { border-top: 1px solid rgba(255,255,255,0.12); padding-top: 12px; }
+  #craft-section h3 { font-size: 13px; letter-spacing: 2px; margin-bottom: 10px; color: #c8b870; text-transform: uppercase; }
+  #craft-list { display: flex; flex-direction: column; gap: 6px; }
+  .craft-btn {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: #f0e6c8;
+    font-size: 12px;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.2s;
+    font-family: 'Georgia', serif;
+  }
+  .craft-btn:hover:not(:disabled) { background: rgba(255,200,80,0.18); border-color: rgba(255,200,80,0.4); }
+  .craft-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .craft-cost { color: #a09060; font-size: 11px; margin-top: 2px; }
+  #overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Georgia', serif;
+  }
+  #overlay.hidden { display: none; }
+  #overlay h1 { font-size: 52px; letter-spacing: 6px; text-shadow: 0 2px 12px rgba(0,0,0,0.7); margin-bottom: 16px; }
+  #overlay p { font-size: 18px; margin-bottom: 32px; letter-spacing: 1px; opacity: 0.85; }
+  #overlay button {
+    background: rgba(240,220,160,0.15);
+    border: 2px solid rgba(240,220,160,0.5);
+    border-radius: 8px;
+    color: #f0e6c8;
+    font-family: 'Georgia', serif;
+    font-size: 16px;
+    letter-spacing: 2px;
+    padding: 12px 40px;
+    cursor: pointer;
+    transition: background 0.2s;
+    text-transform: uppercase;
+  }
+  #overlay button:hover { background: rgba(240,220,160,0.3); }
+  #start-screen { background: linear-gradient(160deg, #0a3a5c 0%, #1a6e3a 60%, #c8a040 100%); color: #f0e6c8; }
+  #win-screen { background: linear-gradient(160deg, #1a5c2a 0%, #2a8c4a 50%, #40b870 100%); color: #f0ffe8; }
+  #death-screen { background: linear-gradient(160deg, #1a0a0a 0%, #3a0a0a 60%, #600000 100%); color: #ffd8d8; }
+  #controls-hint {
+    font-size: 13px;
+    color: rgba(240,220,160,0.6);
+    text-align: center;
+    max-width: 380px;
+    line-height: 1.8;
+    margin-bottom: 24px;
+  }
+  #crosshair-hint {
+    position: fixed;
+    pointer-events: none;
+    z-index: 5;
+    width: 24px; height: 24px;
+    transform: translate(-50%, -50%);
+    display: none;
+  }
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+
+<div id="ui">
+  <div id="top-bar">
+    <div class="bar-group" id="health-bar">
+      <div class="bar-label">Health</div>
+      <div class="bar-outer"><div class="bar-inner" id="health-fill" style="width:100%"></div></div>
+    </div>
+    <div class="bar-group" id="hunger-bar">
+      <div class="bar-label">Hunger</div>
+      <div class="bar-outer"><div class="bar-inner" id="hunger-fill" style="width:100%"></div></div>
+    </div>
+    <div id="day-display">DAY 1</div>
+  </div>
+</div>
+
+<div id="tooltip" style="opacity:0">Click to harvest</div>
+
+<div id="inventory-panel">
+  <h2>Inventory</h2>
+  <div id="inv-grid"></div>
+  <div id="craft-section">
+    <h3>Crafting</h3>
+    <div id="craft-list"></div>
+  </div>
+</div>
+
+<div id="overlay" class="start-screen" id="start-screen">
+  <h1 style="color:#f0e6c8;text-shadow:0 2px 20px rgba(0,150,80,0.6)">ISLAND</h1>
+  <p style="color:#c8e8c8">Survive. Build. Escape.</p>
+  <div id="controls-hint">
+    WASD — Move &nbsp;|&nbsp; Mouse — Aim &nbsp;|&nbsp; Click — Attack / Harvest<br>
+    I — Inventory &nbsp;|&nbsp; Collect Wood, Stone &amp; Food<br>
+    Build a Yacht to escape before the tribe overwhelms you
+  </div>
+  <button id="start-btn">Begin Survival</button>
+</div>
+
+<div id="win-screen" class="hidden" style="position:fixed;inset:0;z-index:30;display:none;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(160deg,#1a5c2a,#2a8c4a,#40b870);color:#f0ffe8;font-family:'Georgia',serif;">
+  <h1 style="font-size:52px;letter-spacing:6px;text-shadow:0 2px 12px rgba(0,0,0,0.4);margin-bottom:16px">ESCAPED!</h1>
+  <p style="font-size:18px;margin-bottom:8px;opacity:0.9">You built the yacht and sailed to freedom.</p>
+  <p id="win-stats" style="font-size:14px;opacity:0.7;margin-bottom:28px"></p>
+  <button id="win-restart-btn" style="background:rgba(240,255,240,0.15);border:2px solid rgba(240,255,240,0.5);border-radius:8px;color:#f0ffe8;font-family:'Georgia',serif;font-size:16px;letter-spacing:2px;padding:12px 40px;cursor:pointer;text-transform:uppercase;">Play Again</button>
+</div>
+
+<div id="death-screen" style="position:fixed;inset:0;z-index:30;display:none;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(160deg,#1a0a0a,#3a0a0a,#600000);color:#ffd8d8;font-family:'Georgia',serif;">
+  <h1 style="font-size:52px;letter-spacing:6px;text-shadow:0 2px 12px rgba(200,0,0,0.5);margin-bottom:16px">PERISHED</h1>
+  <p id="death-reason" style="font-size:18px;margin-bottom:8px;opacity:0.9">You did not survive.</p>
+  <p id="death-stats" style="font-size:14px;opacity:0.7;margin-bottom:28px"></p>
+  <button id="death-restart-btn" style="background:rgba(255,200,200,0.15);border:2px solid rgba(255,200,200,0.5);border-radius:8px;color:#ffd8d8;font-family:'Georgia',serif;font-size:16px;letter-spacing:2px;padding:12px 40px;cursor:pointer;text-transform:uppercase;">Try Again</button>
+</div>
+
+<script>
+// =====================================================================
+//  ISLAND SURVIVAL  — complete single-file game
+// =====================================================================
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+// Resize canvas
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+// ========================= CONSTANTS =================================
+const MAP_W = 2000, MAP_H = 2000;
+const OCEAN_MARGIN = 160;   // ocean ring width
+const BEACH_MARGIN = 260;   // beach ring width
+const CENTER_X = MAP_W / 2, CENTER_Y = MAP_H / 2;
+const ISLAND_RADIUS = 780;  // rough island radius from center
+
+const DAY_DURATION = 60000; // ms per full day
+const HUNGER_RATE  = 0.008; // per frame at 60fps ~ 0.5/s
+const PLAYER_SPEED = 180;   // px/s
+const ATTACK_RANGE = 90;
+const ATTACK_COOLDOWN = 600; // ms
+
+const RECIPES = [
+  { id: 'campfire',  label: 'Campfire',   cost: { wood: 5 },             result: 'campfire',  desc: 'Slows hunger at night' },
+  { id: 'axe',       label: 'Stone Axe',  cost: { wood: 3, stone: 2 },   result: 'axe',       desc: '+50% chop speed' },
+  { id: 'spear',     label: 'Spear',      cost: { wood: 4, stone: 3 },   result: 'spear',     desc: '+40% attack damage' },
+  { id: 'raft',      label: 'Small Raft', cost: { wood: 10 },            result: 'raft',      desc: 'Foundation for yacht' },
+  { id: 'yacht',     label: 'Yacht',      cost: { wood: 25, stone: 10, food: 5, raft: 1 }, result: 'yacht', desc: 'WIN — Sail away!' },
+];
+
+// ========================= WORLD GENERATION ==========================
+
+const RNG = (() => {
+  let s = 42;
+  return () => { s = (s * 1664525 + 1013904223) & 0xffffffff; return (s >>> 0) / 0xffffffff; };
+})();
+
+function isOnIsland(x, y) {
+  const dx = x - CENTER_X, dy = y - CENTER_Y;
+  // Slightly irregular island
+  const angle = Math.atan2(dy, dx);
+  const wobble = 1 + 0.18 * Math.sin(angle * 3) + 0.12 * Math.sin(angle * 7 + 1.2);
+  return Math.sqrt(dx*dx + dy*dy) < ISLAND_RADIUS * wobble;
+}
+
+function isBeach(x, y) {
+  const dx = x - CENTER_X, dy = y - CENTER_Y;
+  const angle = Math.atan2(dy, dx);
+  const wobble = 1 + 0.18 * Math.sin(angle * 3) + 0.12 * Math.sin(angle * 7 + 1.2);
+  const r = Math.sqrt(dx*dx + dy*dy);
+  const ir = ISLAND_RADIUS * wobble;
+  return r < ir && r > ir - 110;
+}
+
+function isJungle(x, y) {
+  return isOnIsland(x, y) && !isBeach(x, y);
+}
+
+// Generate world objects
+const trees   = [];
+const rocks   = [];
+const berries = [];
+const campfires = [];  // placed by player
+
+function generateWorld() {
+  trees.length = 0; rocks.length = 0; berries.length = 0;
+  const N_TREES   = 220;
+  const N_ROCKS   = 80;
+  const N_BERRIES = 60;
+
+  for (let i = 0; i < N_TREES * 6 && trees.length < N_TREES; i++) {
+    const x = RNG() * MAP_W, y = RNG() * MAP_H;
+    if (!isJungle(x, y)) continue;
+    trees.push({ x, y, hp: 3, maxHp: 3, radius: 22 + RNG()*10,
+      color1: `hsl(${115+RNG()*25},${60+RNG()*20}%,${28+RNG()*14}%)`,
+      color2: `hsl(${120+RNG()*20},${55+RNG()*20}%,${35+RNG()*10}%)`,
+      color3: `hsl(${130+RNG()*15},${50+RNG()*15}%,${22+RNG()*10}%)`,
+      wobble: RNG()*Math.PI*2,
+      dead: false });
+  }
+  for (let i = 0; i < N_ROCKS * 5 && rocks.length < N_ROCKS; i++) {
+    const x = RNG() * MAP_W, y = RNG() * MAP_H;
+    if (!isOnIsland(x, y)) continue;
+    rocks.push({ x, y, hp: 4, maxHp: 4, radius: 14 + RNG()*10,
+      gray: 100 + Math.floor(RNG()*60),
+      dead: false });
+  }
+  for (let i = 0; i < N_BERRIES * 5 && berries.length < N_BERRIES; i++) {
+    const x = RNG() * MAP_W, y = RNG() * MAP_H;
+    if (!isJungle(x, y)) continue;
+    berries.push({ x, y, hp: 2, maxHp: 2, radius: 10 + RNG()*6, dead: false,
+      respawn: 0 });
+  }
+}
+generateWorld();
+
+// ========================= PLAYER ====================================
+const player = {
+  x: CENTER_X, y: CENTER_Y,
+  vx: 0, vy: 0,
+  health: 100, maxHealth: 100,
+  hunger: 100, maxHunger: 100,
+  attackCd: 0,
+  invincibleTimer: 0,
+  dead: false,
+  hatAngle: 0,
+};
+
+const inventory = {
+  wood: 0, stone: 0, food: 0,
+  campfire: 0, axe: 0, spear: 0, raft: 0, yacht: 0,
+};
+
+// ========================= ANIMALS ===================================
+const animals = [];
+function spawnAnimals() {
+  animals.length = 0;
+  for (let i = 0; i < 12; i++) {
+    for (let tries = 0; tries < 30; tries++) {
+      const x = RNG() * MAP_W, y = RNG() * MAP_H;
+      if (!isJungle(x, y)) continue;
+      animals.push({
+        x, y, type: 'deer',
+        hp: 20, maxHp: 20,
+        vx: 0, vy: 0,
+        state: 'idle',
+        stateTimer: 0,
+        wanderAngle: RNG()*Math.PI*2,
+        dead: false,
+      });
+      break;
+    }
+  }
+  for (let i = 0; i < 7; i++) {
+    for (let tries = 0; tries < 30; tries++) {
+      const x = RNG() * MAP_W, y = RNG() * MAP_H;
+      if (!isJungle(x, y)) continue;
+      animals.push({
+        x, y, type: 'boar',
+        hp: 35, maxHp: 35,
+        vx: 0, vy: 0,
+        state: 'idle',
+        stateTimer: 0,
+        wanderAngle: RNG()*Math.PI*2,
+        dead: false,
+        attackCd: 0,
+      });
+      break;
+    }
+  }
+}
+spawnAnimals();
+
+// ========================= ENEMIES ===================================
+const enemies = [];
+function spawnTribesmen(count) {
+  for (let i = 0; i < count; i++) {
+    // Spawn near island edge
+    const angle = RNG()*Math.PI*2;
+    const r = ISLAND_RADIUS * 0.8 + RNG()*120;
+    const x = CENTER_X + Math.cos(angle)*r;
+    const y = CENTER_Y + Math.sin(angle)*r;
+    enemies.push({
+      x, y, hp: 40, maxHp: 40,
+      vx: 0, vy: 0,
+      attackCd: 0,
+      dead: false,
+      color: `hsl(${20+Math.floor(RNG()*20)},${60+Math.floor(RNG()*20)}%,${35+Math.floor(RNG()*15)}%)`,
+    });
+  }
+}
+
+// ========================= GAME STATE ================================
+let gameState = 'start'; // start | playing | dead | won
+let dayTime   = 0;       // 0..1 within a day
+let totalTime = 0;       // ms elapsed
+let dayNumber = 1;
+let lastTime  = 0;
+let mouseX = 0, mouseY = 0;
+let keys = {};
+
+const camera = { x: 0, y: 0 };
+let damageNumbers = [];
+let particles     = [];
+let messages      = [];  // floating text messages
+let tribeSpawned  = false;
+
+// ========================= INPUT =====================================
+document.addEventListener('keydown', e => {
+  keys[e.code] = true;
+  if (e.code === 'KeyI' && gameState === 'playing') toggleInventory();
+  if (e.code === 'Escape') { if (invOpen) toggleInventory(); }
+});
+document.addEventListener('keyup', e => { keys[e.code] = false; });
+canvas.addEventListener('mousemove', e => { mouseX = e.clientX; mouseY = e.clientY; });
+canvas.addEventListener('click', e => {
+  if (gameState !== 'playing') return;
+  if (invOpen) return;
+  handleAttack(e.clientX, e.clientY);
+});
+
+document.getElementById('start-btn').addEventListener('click', startGame);
+document.getElementById('win-restart-btn').addEventListener('click', restartGame);
+document.getElementById('death-restart-btn').addEventListener('click', restartGame);
+
+let invOpen = false;
+function toggleInventory() {
+  invOpen = !invOpen;
+  const panel = document.getElementById('inventory-panel');
+  panel.style.display = invOpen ? 'block' : 'none';
+  if (invOpen) renderInventoryUI();
+}
+
+// ========================= START / RESTART ===========================
+function startGame() {
+  document.getElementById('overlay').style.display = 'none';
+  gameState = 'playing';
+  requestAnimationFrame(loop);
+}
+function restartGame() {
+  document.getElementById('win-screen').style.display = 'none';
+  document.getElementById('death-screen').style.display = 'none';
+  // Reset everything
+  player.x = CENTER_X; player.y = CENTER_Y;
+  player.health = 100; player.hunger = 100;
+  player.dead = false; player.attackCd = 0; player.invincibleTimer = 0;
+  Object.keys(inventory).forEach(k => inventory[k] = 0);
+  dayTime = 0; totalTime = 0; dayNumber = 1;
+  tribeSpawned = false; invOpen = false;
+  document.getElementById('inventory-panel').style.display = 'none';
+  animals.length = 0; enemies.length = 0;
+  damageNumbers.length = 0; particles.length = 0; messages.length = 0;
+  campfires.length = 0;
+  generateWorld();
+  spawnAnimals();
+  gameState = 'playing';
+  requestAnimationFrame(loop);
+}
+
+// ========================= ATTACK / HARVEST ==========================
+function handleAttack(cx, cy) {
+  const now = performance.now();
+  if (now - player.attackCd < ATTACK_COOLDOWN) return;
+  player.attackCd = now;
+
+  // World coordinates of click
+  const wx = cx - canvas.width/2 + camera.x;
+  const wy = cy - canvas.height/2 + camera.y;
+
+  const dmg = inventory.spear > 0 ? 28 : 20;
+  const chopDmg = inventory.axe > 0 ? 2 : 1;
+
+  let hit = false;
+
+  // Check enemies first
+  for (const e of enemies) {
+    if (e.dead) continue;
+    const d = dist(player.x, player.y, e.x, e.y);
+    if (d < ATTACK_RANGE) {
+      e.hp -= dmg;
+      spawnDmgNum(e.x, e.y, dmg, '#ff6060');
+      spawnBloodParticles(e.x, e.y);
+      if (e.hp <= 0) { e.dead = true; inventory.food += 1; addMessage('Enemy down! +1 food'); }
+      hit = true;
+      break;
+    }
+  }
+
+  // Animals
+  if (!hit) {
+    for (const a of animals) {
+      if (a.dead) continue;
+      const d = dist(player.x, player.y, a.x, a.y);
+      if (d < ATTACK_RANGE) {
+        a.hp -= dmg;
+        spawnDmgNum(a.x, a.y, dmg, '#ff9040');
+        spawnBloodParticles(a.x, a.y);
+        if (a.hp <= 0) {
+          a.dead = true;
+          inventory.food += (a.type === 'boar') ? 3 : 2;
+          addMessage(`+${a.type === 'boar' ? 3 : 2} food`);
+        }
+        hit = true;
+        break;
+      }
+    }
+  }
+
+  // Trees
+  if (!hit) {
+    for (const t of trees) {
+      if (t.dead) continue;
+      const d = dist(wx, wy, t.x, t.y);
+      if (d < t.radius + 16) {
+        t.hp -= chopDmg;
+        spawnDmgNum(t.x, t.y - t.radius, chopDmg, '#90d050');
+        spawnLeafParticles(t.x, t.y);
+        if (t.hp <= 0) {
+          t.dead = true;
+          const gained = 2 + Math.floor(Math.random()*2);
+          inventory.wood += gained;
+          addMessage(`+${gained} wood`);
+        }
+        hit = true;
+        break;
+      }
+    }
+  }
+
+  // Rocks
+  if (!hit) {
+    for (const r of rocks) {
+      if (r.dead) continue;
+      const d = dist(wx, wy, r.x, r.y);
+      if (d < r.radius + 14) {
+        r.hp -= 1;
+        spawnDmgNum(r.x, r.y, 1, '#c0c0c0');
+        spawnStoneParticles(r.x, r.y);
+        if (r.hp <= 0) {
+          r.dead = true;
+          const gained = 2 + Math.floor(Math.random()*2);
+          inventory.stone += gained;
+          addMessage(`+${gained} stone`);
+        }
+        hit = true;
+        break;
+      }
+    }
+  }
+
+  // Berries
+  if (!hit) {
+    for (const b of berries) {
+      if (b.dead) continue;
+      const d = dist(wx, wy, b.x, b.y);
+      if (d < b.radius + 14) {
+        b.hp -= 1;
+        if (b.hp <= 0) {
+          b.dead = true;
+          b.respawn = totalTime + 30000;
+          const gained = 1 + Math.floor(Math.random()*2);
+          inventory.food += gained;
+          player.hunger = Math.min(100, player.hunger + 15);
+          addMessage(`+${gained} food (+15 hunger)`);
+        }
+        hit = true;
+        break;
+      }
+    }
+  }
+
+  // Swing effect regardless
+  spawnSwingParticles(player.x, player.y,
+    Math.atan2(wy - player.y, wx - player.x));
+}
+
+// ========================= CRAFTING ==================================
+function canCraft(recipe) {
+  return Object.entries(recipe.cost).every(([k, v]) => (inventory[k] || 0) >= v);
+}
+function doCraft(recipeId) {
+  const recipe = RECIPES.find(r => r.id === recipeId);
+  if (!recipe || !canCraft(recipe)) return;
+  Object.entries(recipe.cost).forEach(([k, v]) => inventory[k] -= v);
+  inventory[recipe.result] = (inventory[recipe.result] || 0) + 1;
+  addMessage(`Crafted: ${recipe.label}`);
+  if (recipe.result === 'yacht') {
+    setTimeout(() => triggerWin(), 1200);
+  }
+  if (invOpen) renderInventoryUI();
+}
+
+function triggerWin() {
+  gameState = 'won';
+  document.getElementById('win-stats').textContent =
+    `Survived ${dayNumber} days  ·  ${Math.floor(totalTime/1000)}s elapsed`;
+  document.getElementById('win-screen').style.display = 'flex';
+}
+
+// ========================= INVENTORY UI ==============================
+const INV_ITEMS = [
+  { key: 'wood',     icon: '🪵', label: 'Wood'     },
+  { key: 'stone',    icon: '🪨', label: 'Stone'    },
+  { key: 'food',     icon: '🍖', label: 'Food'     },
+  { key: 'campfire', icon: '🔥', label: 'Campfire' },
+  { key: 'axe',      icon: '🪓', label: 'Stone Axe'},
+  { key: 'spear',    icon: '🗡️', label: 'Spear'    },
+  { key: 'raft',     icon: '🛖', label: 'Raft'     },
+  { key: 'yacht',    icon: '⛵', label: 'Yacht'    },
+];
+
+function renderInventoryUI() {
+  const grid = document.getElementById('inv-grid');
+  grid.innerHTML = '';
+  for (const item of INV_ITEMS) {
+    const slot = document.createElement('div');
+    slot.className = 'inv-slot';
+    slot.innerHTML = `<span class="icon">${item.icon}</span>
+      <span>${item.label}</span>
+      <span class="count">${inventory[item.key] || 0}</span>`;
+    grid.appendChild(slot);
+  }
+  const craftList = document.getElementById('craft-list');
+  craftList.innerHTML = '';
+  for (const recipe of RECIPES) {
+    const btn = document.createElement('button');
+    btn.className = 'craft-btn';
+    const costStr = Object.entries(recipe.cost).map(([k,v]) => `${v} ${k}`).join(', ');
+    btn.innerHTML = `<div>${recipe.label} <span style="opacity:0.6;font-size:11px">— ${recipe.desc}</span></div>
+      <div class="craft-cost">Cost: ${costStr}</div>`;
+    btn.disabled = !canCraft(recipe);
+    btn.addEventListener('click', () => doCraft(recipe.id));
+    craftList.appendChild(btn);
+  }
+}
+
+// ========================= HELPERS ===================================
+function dist(x1, y1, x2, y2) {
+  return Math.sqrt((x2-x1)**2 + (y2-y1)**2);
+}
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+function lerp(a, b, t) { return a + (b - a) * t; }
+
+function spawnDmgNum(x, y, dmg, color) {
+  damageNumbers.push({ x, y, dmg, color, vy: -60, life: 1.2, age: 0 });
+}
+function spawnBloodParticles(x, y) {
+  for (let i = 0; i < 8; i++) {
+    const a = RNG()*Math.PI*2;
+    particles.push({ x, y, vx: Math.cos(a)*80*(0.5+RNG()), vy: Math.sin(a)*80*(0.5+RNG()),
+      color: `rgba(200,30,30,${0.6+RNG()*0.3})`, r: 3+RNG()*4, life: 0.6+RNG()*0.4, age: 0 });
+  }
+}
+function spawnLeafParticles(x, y) {
+  for (let i = 0; i < 10; i++) {
+    const a = RNG()*Math.PI*2;
+    particles.push({ x, y: y-20, vx: Math.cos(a)*70*(0.4+RNG()), vy: Math.sin(a)*70*(0.4+RNG())-30,
+      color: `hsla(${110+Math.floor(RNG()*30)},60%,40%,${0.7+RNG()*0.2})`, r: 4+RNG()*5, life: 0.8+RNG()*0.5, age: 0 });
+  }
+}
+function spawnStoneParticles(x, y) {
+  for (let i = 0; i < 7; i++) {
+    const a = RNG()*Math.PI*2;
+    particles.push({ x, y, vx: Math.cos(a)*55*(0.5+RNG()), vy: Math.sin(a)*55*(0.5+RNG())-20,
+      color: `rgba(160,150,140,${0.7+RNG()*0.2})`, r: 3+RNG()*4, life: 0.5+RNG()*0.4, age: 0 });
+  }
+}
+function spawnSwingParticles(x, y, angle) {
+  for (let i = 0; i < 5; i++) {
+    const a = angle + (RNG()-0.5)*0.8;
+    const sp = 100 + RNG()*80;
+    particles.push({ x: x + Math.cos(angle)*20, y: y + Math.sin(angle)*20,
+      vx: Math.cos(a)*sp, vy: Math.sin(a)*sp,
+      color: `rgba(255,255,200,${0.5+RNG()*0.3})`, r: 2+RNG()*2, life: 0.25+RNG()*0.2, age: 0 });
+  }
+}
+function addMessage(text) {
+  messages.push({ text, age: 0, life: 2.5, y: canvas.height - 60 - messages.length * 22 });
+  if (messages.length > 5) messages.shift();
+}
+
+// ========================= PAINTING FUNCTIONS ========================
+
+function drawOcean(cx, cy) {
+  // Tiling ocean (just fill viewport)
+  const t = totalTime * 0.001;
+  const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  grad.addColorStop(0, '#0a3a6a');
+  grad.addColorStop(1, '#0d5280');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Ocean ripples
+  ctx.save();
+  ctx.globalAlpha = 0.08;
+  for (let i = 0; i < 6; i++) {
+    const waveY = ((i * 80 - (t*20) % 80)) % canvas.height;
+    ctx.strokeStyle = '#80d0ff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let x = 0; x < canvas.width; x += 4) {
+      const y = waveY + Math.sin(x * 0.02 + t + i) * 4;
+      if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawIslandTerrain(camX, camY) {
+  const vW = canvas.width, vH = canvas.height;
+  const left = camX - vW/2 - 50, top = camY - vH/2 - 50;
+  const right = camX + vW/2 + 50, bottom = camY + vH/2 + 50;
+
+  // Draw in tiles for performance — but island is organic so we do a scanline approach
+  // We'll draw large rects and clip to island shape
+
+  // Sand base (entire island)
+  ctx.save();
+  ctx.translate(vW/2 - camX, vH/2 - camY);
+
+  // Sand
+  const sandGrad = ctx.createRadialGradient(CENTER_X, CENTER_Y, 0, CENTER_X, CENTER_Y, ISLAND_RADIUS);
+  sandGrad.addColorStop(0, '#c8a05a');
+  sandGrad.addColorStop(0.6, '#d4b06a');
+  sandGrad.addColorStop(1, '#e8c870');
+  ctx.fillStyle = sandGrad;
+
+  // Approximate island shape with polygon
+  ctx.beginPath();
+  const steps = 120;
+  for (let i = 0; i <= steps; i++) {
+    const a = (i / steps) * Math.PI * 2;
+    const wobble = 1 + 0.18 * Math.sin(a * 3) + 0.12 * Math.sin(a * 7 + 1.2);
+    const r = ISLAND_RADIUS * wobble;
+    const x = CENTER_X + Math.cos(a) * r;
+    const y = CENTER_Y + Math.sin(a) * r;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.fill();
+
+  // Jungle interior
+  const jungleGrad = ctx.createRadialGradient(CENTER_X, CENTER_Y, 0, CENTER_X, CENTER_Y, ISLAND_RADIUS * 0.72);
+  jungleGrad.addColorStop(0, '#2a6a2a');
+  jungleGrad.addColorStop(0.5, '#3a8a3a');
+  jungleGrad.addColorStop(1, '#4a9a40');
+  ctx.fillStyle = jungleGrad;
+  ctx.beginPath();
+  for (let i = 0; i <= steps; i++) {
+    const a = (i / steps) * Math.PI * 2;
+    const wobble = 1 + 0.22 * Math.sin(a * 4 + 0.5) + 0.14 * Math.sin(a * 9 + 2.1);
+    const r = (ISLAND_RADIUS - 110) * wobble * 0.95;
+    const x = CENTER_X + Math.cos(a) * r;
+    const y = CENTER_Y + Math.sin(a) * r;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.fill();
+
+  // Beach highlights (foam edge)
+  ctx.globalAlpha = 0.25;
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 5;
+  ctx.setLineDash([12, 8]);
+  ctx.beginPath();
+  for (let i = 0; i <= steps; i++) {
+    const a = (i / steps) * Math.PI * 2;
+    const wobble = 1 + 0.18 * Math.sin(a * 3) + 0.12 * Math.sin(a * 7 + 1.2);
+    const r = ISLAND_RADIUS * wobble;
+    const x = CENTER_X + Math.cos(a) * r;
+    const y = CENTER_Y + Math.sin(a) * r;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.globalAlpha = 1;
+
+  ctx.restore();
+}
+
+function drawTree(t, camX, camY) {
+  const sx = canvas.width/2 + t.x - camX;
+  const sy = canvas.height/2 + t.y - camY;
+
+  // Trunk
+  ctx.fillStyle = '#5a3a1a';
+  ctx.beginPath();
+  ctx.ellipse(sx, sy + t.radius * 0.5, t.radius * 0.22, t.radius * 0.55, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.18)';
+  ctx.beginPath();
+  ctx.ellipse(sx + 8, sy + t.radius*0.4, t.radius * 0.9, t.radius * 0.35, 0.3, 0, Math.PI*2);
+  ctx.fill();
+
+  // Canopy layers — painted look
+  const hp_ratio = t.hp / t.maxHp;
+  const fade = hp_ratio < 0.5 ? 0.5 + hp_ratio : 1;
+  ctx.globalAlpha = fade;
+
+  for (let layer = 0; layer < 4; layer++) {
+    const off = layer * 0.1;
+    const rx = t.radius * (1.1 - layer*0.12) + Math.sin(t.wobble + layer)*3;
+    const ry = t.radius * (1.0 - layer*0.1);
+    const lx = sx + Math.sin(t.wobble * 0.5 + layer)*5;
+    const ly = sy - t.radius * 0.3 - layer * t.radius * 0.18;
+    const colors = [t.color2, t.color1, t.color3, t.color2];
+    ctx.fillStyle = colors[layer % colors.length];
+    ctx.beginPath();
+    ctx.ellipse(lx, ly, rx, ry, t.wobble * 0.1, 0, Math.PI*2);
+    ctx.fill();
+  }
+  // Highlight
+  ctx.globalAlpha = 0.2;
+  ctx.fillStyle = '#c8ff80';
+  ctx.beginPath();
+  ctx.ellipse(sx - t.radius*0.25, sy - t.radius*0.55, t.radius*0.35, t.radius*0.25, -0.5, 0, Math.PI*2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+}
+
+function drawRock(r, camX, camY) {
+  const sx = canvas.width/2 + r.x - camX;
+  const sy = canvas.height/2 + r.y - camY;
+  const g = r.gray;
+
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.2)';
+  ctx.beginPath();
+  ctx.ellipse(sx+5, sy+r.radius*0.6, r.radius*1.1, r.radius*0.4, 0.2, 0, Math.PI*2);
+  ctx.fill();
+
+  // Main rock
+  ctx.fillStyle = `rgb(${g},${g-8},${g-15})`;
+  ctx.beginPath();
+  ctx.ellipse(sx, sy, r.radius, r.radius*0.8, 0.3, 0, Math.PI*2);
+  ctx.fill();
+
+  // Dark side
+  ctx.fillStyle = `rgba(${g-30},${g-38},${g-45},0.6)`;
+  ctx.beginPath();
+  ctx.ellipse(sx+r.radius*0.2, sy+r.radius*0.2, r.radius*0.7, r.radius*0.55, 0.3, 0, Math.PI*2);
+  ctx.fill();
+
+  // Highlight
+  ctx.fillStyle = `rgba(255,255,255,0.25)`;
+  ctx.beginPath();
+  ctx.ellipse(sx-r.radius*0.25, sy-r.radius*0.3, r.radius*0.4, r.radius*0.25, -0.4, 0, Math.PI*2);
+  ctx.fill();
+}
+
+function drawBerry(b, camX, camY) {
+  const sx = canvas.width/2 + b.x - camX;
+  const sy = canvas.height/2 + b.y - camY;
+
+  // Bush body
+  ctx.fillStyle = '#2d7a2d';
+  ctx.beginPath();
+  ctx.ellipse(sx, sy, b.radius*1.3, b.radius, 0.2, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = '#3a9a3a';
+  ctx.beginPath();
+  ctx.ellipse(sx-b.radius*0.3, sy-b.radius*0.3, b.radius*0.9, b.radius*0.8, -0.3, 0, Math.PI*2);
+  ctx.fill();
+
+  // Berries
+  const berryPositions = [[-0.3,-0.2],[0.2,-0.3],[0.4,0.1],[-0.1,0.2],[0.1,-0.05]];
+  for (const [bx, by] of berryPositions) {
+    ctx.fillStyle = '#cc2244';
+    ctx.beginPath();
+    ctx.arc(sx + bx*b.radius*2, sy + by*b.radius*2, b.radius*0.28, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,150,180,0.5)';
+    ctx.beginPath();
+    ctx.arc(sx + bx*b.radius*2 - b.radius*0.08, sy + by*b.radius*2 - b.radius*0.08, b.radius*0.1, 0, Math.PI*2);
+    ctx.fill();
+  }
+}
+
+function drawAnimal(a, camX, camY) {
+  if (a.dead) return;
+  const sx = canvas.width/2 + a.x - camX;
+  const sy = canvas.height/2 + a.y - camY;
+  const angle = Math.atan2(a.vy, a.vx) || 0;
+
+  ctx.save();
+  ctx.translate(sx, sy);
+  ctx.rotate(angle);
+
+  if (a.type === 'deer') {
+    // Body
+    ctx.fillStyle = '#8B5E3C';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 16, 10, 0, 0, Math.PI*2);
+    ctx.fill();
+    // Head
+    ctx.fillStyle = '#9a6a44';
+    ctx.beginPath();
+    ctx.ellipse(18, -2, 9, 7, 0.2, 0, Math.PI*2);
+    ctx.fill();
+    // Ear
+    ctx.fillStyle = '#b08060';
+    ctx.beginPath();
+    ctx.ellipse(22, -8, 4, 7, -0.4, 0, Math.PI*2);
+    ctx.fill();
+    // White belly
+    ctx.fillStyle = 'rgba(255,240,220,0.5)';
+    ctx.beginPath();
+    ctx.ellipse(0, 3, 10, 6, 0, 0, Math.PI*2);
+    ctx.fill();
+    // Eye
+    ctx.fillStyle = '#1a0a00';
+    ctx.beginPath();
+    ctx.arc(22, -3, 2, 0, Math.PI*2);
+    ctx.fill();
+  } else {
+    // Boar
+    ctx.fillStyle = '#7a3a1a';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 18, 12, 0, 0, Math.PI*2);
+    ctx.fill();
+    // Head
+    ctx.fillStyle = '#8a4020';
+    ctx.beginPath();
+    ctx.ellipse(20, 0, 12, 10, 0, 0, Math.PI*2);
+    ctx.fill();
+    // Snout
+    ctx.fillStyle = '#6a2a10';
+    ctx.beginPath();
+    ctx.ellipse(31, 1, 6, 5, 0, 0, Math.PI*2);
+    ctx.fill();
+    // Tusk
+    ctx.fillStyle = '#f0e8c0';
+    ctx.beginPath();
+    ctx.moveTo(30, 4); ctx.lineTo(38, 8); ctx.lineTo(35, 4);
+    ctx.closePath();
+    ctx.fill();
+    // Eye
+    ctx.fillStyle = '#ff2020';
+    ctx.beginPath();
+    ctx.arc(24, -3, 2.5, 0, Math.PI*2);
+    ctx.fill();
+    // Ridge
+    ctx.fillStyle = '#5a2010';
+    ctx.beginPath();
+    ctx.ellipse(-2, -9, 10, 4, 0.1, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  ctx.restore();
+
+  // Health bar
+  if (a.hp < a.maxHp) {
+    const bw = 36;
+    const bx = sx - bw/2, by = sy - 22;
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.fillRect(bx, by, bw, 5);
+    ctx.fillStyle = a.type === 'boar' ? '#e84040' : '#40c840';
+    ctx.fillRect(bx, by, bw * (a.hp/a.maxHp), 5);
+  }
+}
+
+function drawEnemy(e, camX, camY) {
+  if (e.dead) return;
+  const sx = canvas.width/2 + e.x - camX;
+  const sy = canvas.height/2 + e.y - camY;
+
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.25)';
+  ctx.beginPath();
+  ctx.ellipse(sx+3, sy+16, 14, 6, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  // Body
+  ctx.fillStyle = e.color;
+  ctx.beginPath();
+  ctx.ellipse(sx, sy+4, 12, 14, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  // War paint stripes
+  ctx.fillStyle = 'rgba(200,40,0,0.7)';
+  ctx.beginPath();
+  ctx.fillRect(sx-12, sy, 24, 4);
+  ctx.beginPath();
+  ctx.fillRect(sx-12, sy+6, 24, 2);
+
+  // Head
+  ctx.fillStyle = `hsl(${30+Math.floor((sx*e.y)%20)},50%,45%)`;
+  ctx.beginPath();
+  ctx.arc(sx, sy-8, 11, 0, Math.PI*2);
+  ctx.fill();
+
+  // Headdress
+  ctx.fillStyle = '#c84000';
+  ctx.beginPath();
+  ctx.moveTo(sx-8, sy-16); ctx.lineTo(sx, sy-30); ctx.lineTo(sx+8, sy-16);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#f06000';
+  ctx.beginPath();
+  ctx.moveTo(sx-4, sy-16); ctx.lineTo(sx, sy-26); ctx.lineTo(sx+4, sy-16);
+  ctx.closePath();
+  ctx.fill();
+
+  // Eyes
+  ctx.fillStyle = '#fff';
+  ctx.beginPath(); ctx.arc(sx-4, sy-9, 2.5, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(sx+4, sy-9, 2.5, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#200000';
+  ctx.beginPath(); ctx.arc(sx-4, sy-9, 1.2, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(sx+4, sy-9, 1.2, 0, Math.PI*2); ctx.fill();
+
+  // Spear
+  ctx.strokeStyle = '#6a4a20';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(sx+10, sy-20);
+  ctx.lineTo(sx+10, sy+20);
+  ctx.stroke();
+  ctx.fillStyle = '#808080';
+  ctx.beginPath();
+  ctx.moveTo(sx+8, sy-20); ctx.lineTo(sx+12, sy-20); ctx.lineTo(sx+10, sy-30);
+  ctx.closePath();
+  ctx.fill();
+
+  // HP bar
+  if (e.hp < e.maxHp) {
+    const bw = 36;
+    const bx = sx - bw/2, by = sy - 38;
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.fillRect(bx, by, bw, 5);
+    ctx.fillStyle = '#e84040';
+    ctx.fillRect(bx, by, bw * (e.hp/e.maxHp), 5);
+  }
+}
+
+function drawPlayer(camX, camY) {
+  const sx = canvas.width/2;
+  const sy = canvas.height/2;
+
+  const flash = player.invincibleTimer > 0 && Math.floor(player.invincibleTimer * 8) % 2 === 0;
+  if (flash) return;
+
+  // Mouse direction
+  const mx = mouseX - sx, my = mouseY - sy;
+  const angle = Math.atan2(my, mx);
+
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.2)';
+  ctx.beginPath();
+  ctx.ellipse(sx+4, sy+18, 16, 6, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  // Body
+  const bodyGrad = ctx.createRadialGradient(sx-4, sy-4, 2, sx, sy, 20);
+  bodyGrad.addColorStop(0, '#f0c890');
+  bodyGrad.addColorStop(1, '#c8904a');
+  ctx.fillStyle = bodyGrad;
+  ctx.beginPath();
+  ctx.arc(sx, sy, 17, 0, Math.PI*2);
+  ctx.fill();
+
+  // Shirt
+  ctx.fillStyle = '#4080c0';
+  ctx.beginPath();
+  ctx.arc(sx, sy+4, 14, 0, Math.PI);
+  ctx.fill();
+  // Shirt detail
+  ctx.fillStyle = '#2060a0';
+  ctx.beginPath();
+  ctx.fillRect(sx-3, sy+2, 6, 8);
+
+  // Arms
+  ctx.fillStyle = '#e8b880';
+  ctx.save();
+  ctx.translate(sx, sy);
+  ctx.rotate(angle + 0.4);
+  ctx.beginPath();
+  ctx.ellipse(16, 0, 8, 5, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+  ctx.save();
+  ctx.translate(sx, sy);
+  ctx.rotate(angle - 0.4);
+  ctx.beginPath();
+  ctx.ellipse(16, 0, 8, 5, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+
+  // Head
+  const headGrad = ctx.createRadialGradient(sx-3, sy-18, 2, sx, sy-14, 12);
+  headGrad.addColorStop(0, '#f5d5a0');
+  headGrad.addColorStop(1, '#d4a060');
+  ctx.fillStyle = headGrad;
+  ctx.beginPath();
+  ctx.arc(sx, sy-14, 12, 0, Math.PI*2);
+  ctx.fill();
+
+  // Eyes
+  ctx.save();
+  ctx.translate(sx, sy-14);
+  ctx.rotate(angle);
+  ctx.fillStyle = '#fff';
+  ctx.beginPath(); ctx.arc(8, -2, 3, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(8, 3, 3, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#1a0a00';
+  ctx.beginPath(); ctx.arc(9, -2, 1.5, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(9, 3, 1.5, 0, Math.PI*2); ctx.fill();
+  ctx.restore();
+
+  // Hat (explorer hat)
+  ctx.save();
+  ctx.translate(sx, sy-22);
+  // Brim
+  ctx.fillStyle = '#8B5E2A';
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 18, 6, 0, 0, Math.PI*2);
+  ctx.fill();
+  // Crown
+  const hatGrad = ctx.createLinearGradient(-10, -18, 10, 0);
+  hatGrad.addColorStop(0, '#a07030');
+  hatGrad.addColorStop(1, '#6a4010');
+  ctx.fillStyle = hatGrad;
+  ctx.beginPath();
+  ctx.ellipse(0, -2, 12, 5, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(0, -10, 10, 10, 0, Math.PI, Math.PI*2);
+  ctx.fill();
+  // Hat band
+  ctx.strokeStyle = '#c84000';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.ellipse(0, -3, 12, 5, 0, 0, Math.PI*2);
+  ctx.stroke();
+  ctx.restore();
+
+  // Attack range indicator (faint)
+  ctx.save();
+  ctx.globalAlpha = 0.06;
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(sx, sy, ATTACK_RANGE, 0, Math.PI*2);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawCampfire(cf, camX, camY) {
+  const sx = canvas.width/2 + cf.x - camX;
+  const sy = canvas.height/2 + cf.y - camY;
+  const t = totalTime * 0.003;
+
+  // Base stones
+  ctx.fillStyle = '#808080';
+  for (let i = 0; i < 5; i++) {
+    const a = (i/5)*Math.PI*2;
+    ctx.beginPath();
+    ctx.arc(sx + Math.cos(a)*10, sy + 5 + Math.sin(a)*5, 4, 0, Math.PI*2);
+    ctx.fill();
+  }
+  // Logs
+  ctx.fillStyle = '#5a3010';
+  ctx.save(); ctx.translate(sx, sy+2); ctx.rotate(0.5);
+  ctx.fillRect(-12, -3, 24, 5); ctx.restore();
+  ctx.save(); ctx.translate(sx, sy+2); ctx.rotate(-0.5);
+  ctx.fillRect(-12, -3, 24, 5); ctx.restore();
+  // Fire
+  for (let i = 3; i >= 0; i--) {
+    const h = 18 - i*3;
+    const flicker = Math.sin(t*6+i)*3;
+    ctx.fillStyle = i === 0 ? 'rgba(255,240,60,0.9)' : i === 1 ? 'rgba(255,140,20,0.85)' : 'rgba(220,60,10,0.8)';
+    ctx.beginPath();
+    ctx.ellipse(sx + flicker*0.5, sy - i*4, 6-i, h, 0, 0, Math.PI*2);
+    ctx.fill();
+  }
+  // Glow
+  ctx.globalAlpha = 0.15 + Math.sin(t*5)*0.05;
+  ctx.fillStyle = '#ffaa00';
+  ctx.beginPath();
+  ctx.arc(sx, sy, 30, 0, Math.PI*2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+}
+
+// ========================= NIGHT OVERLAY ============================
+function drawNightOverlay() {
+  const night = getNightIntensity();
+  if (night <= 0) return;
+  ctx.fillStyle = `rgba(0,5,30,${night * 0.72})`;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Stars
+  if (night > 0.3) {
+    ctx.save();
+    ctx.globalAlpha = (night - 0.3) / 0.7;
+    for (let i = 0; i < 80; i++) {
+      // deterministic based on i
+      const sx = ((i * 1237 + 543) % canvas.width);
+      const sy = ((i * 769 + 211) % (canvas.height * 0.6));
+      const pulse = 0.4 + 0.6 * Math.sin(totalTime * 0.002 + i);
+      ctx.fillStyle = `rgba(255,255,220,${pulse})`;
+      ctx.beginPath();
+      ctx.arc(sx, sy, 1 + (i%3)*0.5, 0, Math.PI*2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+}
+
+function getNightIntensity() {
+  // dayTime 0..1: 0=dawn, 0.25=noon, 0.5=dusk, 0.75=midnight
+  // Night from 0.55 to 0.95
+  if (dayTime < 0.5) return 0;
+  if (dayTime < 0.6) return (dayTime - 0.5) / 0.1;
+  if (dayTime < 0.85) return 1;
+  if (dayTime < 0.95) return 1 - (dayTime - 0.85) / 0.1;
+  return 0;
+}
+
+function getSkyColor() {
+  // Returns background color based on time of day
+  const t = dayTime;
+  if (t < 0.1)  return lerpColor('#1a2a4a','#f0a060', t/0.1);       // pre-dawn
+  if (t < 0.2)  return lerpColor('#f0a060','#87ceeb', (t-0.1)/0.1); // sunrise
+  if (t < 0.5)  return '#5aaae0';                                    // day
+  if (t < 0.6)  return lerpColor('#5aaae0','#e0803a', (t-0.5)/0.1); // sunset
+  if (t < 0.7)  return lerpColor('#e0803a','#0a1a3a', (t-0.6)/0.1); // dusk
+  return '#060c22';                                                   // night
+}
+function lerpColor(c1, c2, t) {
+  const p1 = parseHex(c1), p2 = parseHex(c2);
+  const r = Math.round(lerp(p1[0], p2[0], t));
+  const g = Math.round(lerp(p1[1], p2[1], t));
+  const b = Math.round(lerp(p1[2], p2[2], t));
+  return `rgb(${r},${g},${b})`;
+}
+function parseHex(hex) {
+  const v = parseInt(hex.slice(1), 16);
+  return [(v>>16)&255, (v>>8)&255, v&255];
+}
+
+// ========================= PARTICLES & DAMAGE NUMS ===================
+function updateParticles(dt) {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.age += dt;
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.vx *= 0.92;
+    p.vy *= 0.92;
+    if (p.age >= p.life) particles.splice(i, 1);
+  }
+}
+function drawParticles(camX, camY) {
+  for (const p of particles) {
+    const alpha = 1 - p.age / p.life;
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = p.color;
+    const sx = canvas.width/2 + p.x - camX;
+    const sy = canvas.height/2 + p.y - camY;
+    ctx.beginPath();
+    ctx.arc(sx, sy, p.r * (1 - p.age / p.life * 0.5), 0, Math.PI*2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+function updateDamageNumbers(dt) {
+  for (let i = damageNumbers.length - 1; i >= 0; i--) {
+    const d = damageNumbers[i];
+    d.age += dt;
+    d.y += d.vy * dt;
+    d.vy += 20 * dt; // gravity
+    if (d.age >= d.life) damageNumbers.splice(i, 1);
+  }
+}
+function drawDamageNumbers(camX, camY) {
+  for (const d of damageNumbers) {
+    const alpha = 1 - d.age / d.life;
+    const sx = canvas.width/2 + d.x - camX;
+    const sy = canvas.height/2 + d.y - camY;
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = d.color;
+    ctx.font = `bold ${14 + d.dmg * 0.3}px Georgia`;
+    ctx.textAlign = 'center';
+    ctx.fillText(d.dmg, sx, sy);
+  }
+  ctx.globalAlpha = 1;
+  ctx.textAlign = 'left';
+}
+
+function updateMessages(dt) {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    messages[i].age += dt;
+    if (messages[i].age >= messages[i].life) messages.splice(i, 1);
+  }
+}
+function drawMessages() {
+  let y = canvas.height - 50;
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const m = messages[i];
+    const alpha = Math.min(1, (m.life - m.age) / 0.5);
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = '#f0e6a0';
+    ctx.font = '14px Georgia';
+    ctx.textAlign = 'center';
+    ctx.fillText(m.text, canvas.width/2, y);
+    y -= 22;
+  }
+  ctx.globalAlpha = 1;
+  ctx.textAlign = 'left';
+}
+
+// ========================= ANIMAL AI =================================
+function updateAnimals(dt) {
+  for (const a of animals) {
+    if (a.dead) continue;
+    const dpx = player.x - a.x, dpy = player.y - a.y;
+    const distToPlayer = Math.sqrt(dpx*dpx + dpy*dpy);
+
+    if (a.type === 'deer') {
+      if (distToPlayer < 180) {
+        // Flee
+        a.state = 'flee';
+        const fl = Math.sqrt(dpx*dpx+dpy*dpy) || 1;
+        a.vx = lerp(a.vx, -(dpx/fl)*140, 0.12);
+        a.vy = lerp(a.vy, -(dpy/fl)*140, 0.12);
+      } else {
+        // Wander
+        a.stateTimer -= dt;
+        if (a.stateTimer <= 0) {
+          a.stateTimer = 1.5 + RNG()*3;
+          a.wanderAngle += (RNG()-0.5)*Math.PI;
+        }
+        a.vx = lerp(a.vx, Math.cos(a.wanderAngle)*40, 0.05);
+        a.vy = lerp(a.vy, Math.sin(a.wanderAngle)*40, 0.05);
+      }
+    } else { // boar
+      if (distToPlayer < 220) {
+        // Charge
+        const fl = Math.sqrt(dpx*dpx+dpy*dpy) || 1;
+        a.vx = lerp(a.vx, (dpx/fl)*130, 0.1);
+        a.vy = lerp(a.vy, (dpy/fl)*130, 0.1);
+        if (distToPlayer < 35) {
+          // Attack player
+          if (!a.attackCd || performance.now() - a.attackCd > 1200) {
+            a.attackCd = performance.now();
+            if (player.invincibleTimer <= 0) {
+              player.health -= 12;
+              player.invincibleTimer = 0.8;
+              spawnBloodParticles(player.x, player.y);
+              addMessage('Boar attacked! -12 hp');
+            }
+          }
+        }
+      } else {
+        a.stateTimer -= dt;
+        if (a.stateTimer <= 0) {
+          a.stateTimer = 2 + RNG()*3;
+          a.wanderAngle += (RNG()-0.5)*Math.PI*0.8;
+        }
+        a.vx = lerp(a.vx, Math.cos(a.wanderAngle)*55, 0.05);
+        a.vy = lerp(a.vy, Math.sin(a.wanderAngle)*55, 0.05);
+      }
+    }
+
+    a.x += a.vx * dt;
+    a.y += a.vy * dt;
+    // Keep on island
+    a.x = clamp(a.x, 100, MAP_W-100);
+    a.y = clamp(a.y, 100, MAP_H-100);
+    if (!isOnIsland(a.x, a.y)) {
+      const dx = CENTER_X - a.x, dy = CENTER_Y - a.y;
+      const l = Math.sqrt(dx*dx+dy*dy);
+      a.vx += (dx/l)*80;
+      a.vy += (dy/l)*80;
+    }
+  }
+}
+
+// ========================= ENEMY AI ==================================
+function updateEnemies(dt) {
+  for (const e of enemies) {
+    if (e.dead) continue;
+    const dpx = player.x - e.x, dpy = player.y - e.y;
+    const d = Math.sqrt(dpx*dpx+dpy*dpy);
+    const l = d || 1;
+
+    // Move toward player
+    e.vx = lerp(e.vx, (dpx/l)*95, 0.08);
+    e.vy = lerp(e.vy, (dpy/l)*95, 0.08);
+    e.x += e.vx * dt;
+    e.y += e.vy * dt;
+
+    // Attack
+    if (d < 38) {
+      const now = performance.now();
+      if (now - e.attackCd > 1500) {
+        e.attackCd = now;
+        if (player.invincibleTimer <= 0) {
+          const dmg = 15;
+          player.health -= dmg;
+          player.invincibleTimer = 0.5;
+          spawnBloodParticles(player.x, player.y);
+          addMessage(`Tribesman strikes! -${dmg} hp`);
+        }
+      }
+    }
+  }
+}
+
+// ========================= UPDATE ====================================
+function update(dt) {
+  if (gameState !== 'playing') return;
+
+  totalTime += dt * 1000;
+  dayTime += dt / (DAY_DURATION / 1000);
+  if (dayTime >= 1) {
+    dayTime -= 1;
+    dayNumber++;
+    // Respawn some animals
+    if (animals.filter(a=>!a.dead).length < 6) {
+      for (let i = 0; i < 3; i++) {
+        const tries = 30;
+        for (let t = 0; t < tries; t++) {
+          const x = RNG()*MAP_W, y = RNG()*MAP_H;
+          if (!isJungle(x, y)) continue;
+          animals.push({ x, y, type: RNG()>0.5 ? 'deer' : 'boar',
+            hp: 20, maxHp: 20, vx:0, vy:0, state:'idle', stateTimer:0,
+            wanderAngle: RNG()*Math.PI*2, dead: false, attackCd: 0 });
+          break;
+        }
+      }
+    }
+  }
+
+  // Tribe spawning
+  if (dayNumber >= 5 && !tribeSpawned) {
+    tribeSpawned = true;
+    spawnTribesmen(4);
+    addMessage('WARNING: Tribal enemies approach!');
+  }
+  // Additional waves
+  if (dayNumber >= 7 && enemies.filter(e=>!e.dead).length < 3) {
+    spawnTribesmen(2);
+    addMessage('More tribesmen arrive!');
+  }
+
+  // Player movement
+  let mx = 0, my = 0;
+  if (keys['KeyW'] || keys['ArrowUp'])    my -= 1;
+  if (keys['KeyS'] || keys['ArrowDown'])  my += 1;
+  if (keys['KeyA'] || keys['ArrowLeft'])  mx -= 1;
+  if (keys['KeyD'] || keys['ArrowRight']) mx += 1;
+  if (mx !== 0 || my !== 0) {
+    const l = Math.sqrt(mx*mx+my*my);
+    player.x += (mx/l) * PLAYER_SPEED * dt;
+    player.y += (my/l) * PLAYER_SPEED * dt;
+    player.x = clamp(player.x, 50, MAP_W-50);
+    player.y = clamp(player.y, 50, MAP_H-50);
+  }
+
+  // Camera
+  camera.x = lerp(camera.x, player.x, 0.1);
+  camera.y = lerp(camera.y, player.y, 0.1);
+
+  // Hunger
+  const nightBonus = getNightIntensity() * (campfires.length > 0 ? 0.4 : 1);
+  player.hunger -= HUNGER_RATE * (1 + nightBonus * 0.3) * 60 * dt;
+  if (player.hunger <= 0) {
+    player.hunger = 0;
+    player.health -= 4 * dt;
+    if (Math.floor(totalTime/1000) % 3 === 0) addMessage('Starving!');
+  }
+
+  // Invincibility timer
+  if (player.invincibleTimer > 0) player.invincibleTimer -= dt;
+
+  // Eat food if hunger low (auto from inv)
+  if (player.hunger < 30 && inventory.food > 0) {
+    inventory.food--;
+    player.hunger = Math.min(100, player.hunger + 30);
+    addMessage('Ate food. +30 hunger');
+  }
+
+  // Berry respawn
+  for (const b of berries) {
+    if (b.dead && b.respawn > 0 && totalTime > b.respawn) {
+      b.dead = false;
+      b.hp = b.maxHp;
+      b.respawn = 0;
+    }
+  }
+
+  // Death check
+  if (player.health <= 0) {
+    player.health = 0;
+    gameState = 'dead';
+    const reason = player.hunger <= 0 ? 'You died of starvation.' :
+      enemies.some(e=>!e.dead) ? 'You were slain by the tribe.' : 'You succumbed to injuries.';
+    document.getElementById('death-reason').textContent = reason;
+    document.getElementById('death-stats').textContent =
+      `Survived ${dayNumber} days  ·  Wood: ${inventory.wood}  ·  Stone: ${inventory.stone}`;
+    document.getElementById('death-screen').style.display = 'flex';
+    return;
+  }
+
+  updateAnimals(dt);
+  updateEnemies(dt);
+  updateParticles(dt);
+  updateDamageNumbers(dt);
+  updateMessages(dt);
+
+  // Update UI
+  document.getElementById('health-fill').style.width = player.health + '%';
+  document.getElementById('hunger-fill').style.width = player.hunger + '%';
+  document.getElementById('day-display').textContent = `DAY ${dayNumber}`;
+
+  // Tooltip
+  const tt = document.getElementById('tooltip');
+  const wx = mouseX - canvas.width/2 + camera.x;
+  const wy = mouseY - canvas.height/2 + camera.y;
+  let nearResource = false;
+  for (const t of trees) {
+    if (!t.dead && dist(wx, wy, t.x, t.y) < t.radius + 20) {
+      tt.textContent = 'Click to chop tree (Wood)';
+      nearResource = true; break;
+    }
+  }
+  if (!nearResource) for (const r of rocks) {
+    if (!r.dead && dist(wx, wy, r.x, r.y) < r.radius + 18) {
+      tt.textContent = 'Click to mine rock (Stone)';
+      nearResource = true; break;
+    }
+  }
+  if (!nearResource) for (const b of berries) {
+    if (!b.dead && dist(wx, wy, b.x, b.y) < b.radius + 18) {
+      tt.textContent = 'Click to harvest berries (Food)';
+      nearResource = true; break;
+    }
+  }
+  tt.style.opacity = nearResource ? '1' : '0';
+}
+
+// ========================= DRAW ======================================
+function draw() {
+  const camX = camera.x, camY = camera.y;
+  const vW = canvas.width, vH = canvas.height;
+
+  // Sky / ocean background
+  const sky = getSkyColor();
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, vW, vH);
+
+  // Ocean
+  drawOcean(camX, camY);
+
+  // Island terrain
+  drawIslandTerrain(camX, camY);
+
+  // World objects (back to front, sorted by Y)
+  ctx.save();
+  ctx.translate(vW/2 - camX, vH/2 - camY);
+
+  // Sort trees/rocks/berries by y for painter's algo
+  const drawables = [
+    ...trees.filter(t => !t.dead),
+    ...rocks.filter(r => !r.dead),
+    ...berries.filter(b => !b.dead),
+    ...campfires,
+  ].sort((a, b) => a.y - b.y);
+
+  ctx.restore();
+
+  // Draw each object
+  for (const obj of drawables) {
+    if ('color1' in obj) drawTree(obj, camX, camY);
+    else if ('gray' in obj) drawRock(obj, camX, camY);
+    else if ('respawn' in obj) drawBerry(obj, camX, camY);
+    else drawCampfire(obj, camX, camY);
+  }
+
+  // Animals (sorted by y)
+  const sortedAnimals = [...animals].sort((a,b) => a.y - b.y);
+  for (const a of sortedAnimals) drawAnimal(a, camX, camY);
+
+  // Enemies
+  for (const e of enemies) drawEnemy(e, camX, camY);
+
+  // Player
+  drawPlayer(camX, camY);
+
+  // Particles
+  drawParticles(camX, camY);
+
+  // Damage numbers
+  drawDamageNumbers(camX, camY);
+
+  // Night overlay
+  drawNightOverlay();
+
+  // Messages
+  drawMessages();
+
+  // Minimap
+  drawMinimap();
+}
+
+// ========================= MINIMAP ===================================
+function drawMinimap() {
+  const mw = 120, mh = 120;
+  const mx = canvas.width - mw - 14;
+  const my = canvas.height - mh - 14;
+  const scale = mw / MAP_W;
+
+  ctx.save();
+  ctx.globalAlpha = 0.78;
+  ctx.fillStyle = '#071428';
+  ctx.beginPath();
+  ctx.roundRect(mx, my, mw, mh, 8);
+  ctx.fill();
+
+  // Island
+  ctx.fillStyle = '#c8a060';
+  ctx.beginPath();
+  const steps = 60;
+  for (let i = 0; i <= steps; i++) {
+    const a = (i/steps)*Math.PI*2;
+    const wobble = 1 + 0.18*Math.sin(a*3) + 0.12*Math.sin(a*7+1.2);
+    const r = ISLAND_RADIUS * wobble * scale;
+    const x = mx + CENTER_X*scale + Math.cos(a)*r;
+    const y = my + CENTER_Y*scale + Math.sin(a)*r;
+    if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.closePath();
+  ctx.fill();
+
+  // Jungle
+  ctx.fillStyle = '#3a7a3a';
+  ctx.beginPath();
+  for (let i = 0; i <= steps; i++) {
+    const a = (i/steps)*Math.PI*2;
+    const wobble = 1 + 0.22*Math.sin(a*4+0.5) + 0.14*Math.sin(a*9+2.1);
+    const r = (ISLAND_RADIUS - 110) * wobble * 0.95 * scale;
+    const x = mx + CENTER_X*scale + Math.cos(a)*r;
+    const y = my + CENTER_Y*scale + Math.sin(a)*r;
+    if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.closePath();
+  ctx.fill();
+
+  // Player dot
+  ctx.fillStyle = '#f0f060';
+  ctx.beginPath();
+  ctx.arc(mx + player.x*scale, my + player.y*scale, 3, 0, Math.PI*2);
+  ctx.fill();
+
+  // Enemy dots
+  ctx.fillStyle = '#ff3030';
+  for (const e of enemies) {
+    if (e.dead) continue;
+    ctx.beginPath();
+    ctx.arc(mx + e.x*scale, my + e.y*scale, 2, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  // Border
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(mx, my, mw, mh, 8);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+// ========================= MAIN LOOP =================================
+function loop(timestamp) {
+  if (gameState !== 'playing') return;
+  const dt = Math.min((timestamp - lastTime) / 1000, 0.05);
+  lastTime = timestamp;
+  update(dt);
+  draw();
+  requestAnimationFrame(loop);
+}
+
+// Start first frame timestamp properly
+requestAnimationFrame(ts => { lastTime = ts; });
+
+// Canvas context roundRect polyfill if needed
+if (!CanvasRenderingContext2D.prototype.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+    if (w < 2*r) r = w/2;
+    if (h < 2*r) r = h/2;
+    this.beginPath();
+    this.moveTo(x+r, y);
+    this.arcTo(x+w, y, x+w, y+h, r);
+    this.arcTo(x+w, y+h, x, y+h, r);
+    this.arcTo(x, y+h, x, y, r);
+    this.arcTo(x, y, x+w, y, r);
+    this.closePath();
+    return this;
+  };
+}
+</script>
+</body>
+</html>
