@@ -182,7 +182,7 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;posit
   <button id="slide-btn" onclick="nextSlide()" ontouchend="nextSlide(); event.preventDefault();" style="margin-top:16px;touch-action:manipulation;-webkit-tap-highlight-color:rgba(200,241,53,0.3);cursor:pointer">START GAME</button>
 </div>
 
-<canvas id="joystick-canvas"></canvas>
+
 <div id="touch-controls">
   <div id="joystick-zone"></div>
   <div id="btn-zone">
@@ -467,13 +467,13 @@ function genObjects() {
         if (r < 0.022) state.objects.push({type:treeVariant(), x:wx, y:wy, hp:5, maxHp:5});
         else if (r < 0.027) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4});
         else if (r < 0.030) state.objects.push({type:'berry', x:wx, y:wy, hp:1, maxHp:1, respawn:0});
-        else if (r < 0.034) state.objects.push({type:'fern', x:wx, y:wy, decor:true});
+        else if (r < 0.034) // removed fern // , x:wx, y:wy, decor:true});
       } else if (t === T.JUNGLE_DARK) {
         if (r < 0.028) state.objects.push({type:treeVariant(), x:wx, y:wy, hp:5, maxHp:5});
         else if (r < 0.032) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4});
         else if (r < 0.034) state.objects.push({type:'jungle_chest', x:wx, y:wy, opened:false});
         else if (r < 0.036) state.creatures.push({type:'spider', x:wx, y:wy, hp:25, maxHp:25, spd:1.05, attackTimer:0, walkTimer:0});
-        else if (r < 0.039) state.objects.push({type:'fern', x:wx, y:wy, decor:true});
+        else if (r < 0.039) // removed fern // , x:wx, y:wy, decor:true});
       } else if (t === T.BEACH) {
         if (r < 0.006) state.objects.push({type:'palm', x:wx, y:wy, hp:4, maxHp:4, respawn:0});
         else if (r < 0.010) state.objects.push({type:'driftwood', x:wx, y:wy, collected:false});
@@ -491,7 +491,7 @@ function genObjects() {
   state.objects.push({type:'vol_chest', x:250*TSIZE, y:132*TSIZE, opened:false});
 
   // Waterfall (interactable)
-  state.objects.push({type:'waterfall', x:200*TSIZE, y:140*TSIZE, decor:false});
+  // removed waterfall decor // , x:200*TSIZE, y:140*TSIZE, decor:false});
 
   // Tidal cave (interactable, one-time loot)
   state.objects.push({type:'cave', x:40*TSIZE, y:160*TSIZE, decor:false, opened:false});
@@ -613,18 +613,18 @@ function genObjects() {
       const r2 = Math.random();
 
       if (t === T.BEACH) {
-        if (r2 < 0.004) state.objects.push({type:'dead_tree', x:wx, y:wy, decor:true});
-        else if (r2 < 0.010) state.objects.push({type:'flower_patch', x:wx, y:wy, decor:true});
-        else if (r2 < 0.013) state.objects.push({type:'campfire_remains', x:wx, y:wy, decor:true});
-        else if (r2 < 0.020) state.objects.push({type:'tide_pool', x:wx, y:wy, decor:true});
+        if (r2 < 0.004) // removed dead_tree // , x:wx, y:wy, decor:true});
+        else if (r2 < 0.010) // removed flower_patch // state.objects.push({type:'flower_patch', x:wx, y:wy, decor:true});
+        else if (r2 < 0.013) // removed campfire_remains // , x:wx, y:wy, decor:true});
+        else if (r2 < 0.020) // removed tide_pool // , x:wx, y:wy, decor:true});
       } else if (t === T.JUNGLE_LIGHT) {
-        if (r2 < 0.004) state.objects.push({type:'dead_tree', x:wx, y:wy, decor:true});
-        else if (r2 < 0.009) state.objects.push({type:'mossy_log', x:wx, y:wy, decor:true});
-        else if (r2 < 0.012) state.objects.push({type:'waterfall', x:wx, y:wy, decor:true});
+        if (r2 < 0.004) // removed dead_tree // , x:wx, y:wy, decor:true});
+        else if (r2 < 0.009) // removed mossy_log // , x:wx, y:wy, decor:true});
+        else if (r2 < 0.012) // removed waterfall decor // , x:wx, y:wy, decor:true});
       } else if (t === T.JUNGLE_DARK) {
-        if (r2 < 0.005) state.objects.push({type:'mossy_log', x:wx, y:wy, decor:true});
-        else if (r2 < 0.007) state.objects.push({type:'skull_stake', x:wx, y:wy, decor:true});
-        else if (r2 < 0.009) state.objects.push({type:'ancient_statue', x:wx, y:wy, decor:true});
+        if (r2 < 0.005) // removed mossy_log // , x:wx, y:wy, decor:true});
+        else if (r2 < 0.007) // removed skull_stake // , x:wx, y:wy, decor:true});
+        else if (r2 < 0.009) // removed ancient_statue // , x:wx, y:wy, decor:true});
       }
     }
   }
@@ -1283,14 +1283,12 @@ function drawTidePool(ctx, sx, sy) {
 }
 
 function drawFishSpot(ctx, sx, sy) {
-  const shimmer = 0.4 + Math.sin(state.frameCount * 0.08 + sx) * 0.3;
-  ctx.fillStyle = `rgba(120,200,255,${shimmer})`;
-  ctx.fillRect(sx-12, sy-5, 24, 10);
-  ctx.fillStyle = `rgba(200,240,255,0.7)`;
-  ctx.fillRect(sx-6, sy-3, 4, 4);
-  ctx.fillRect(sx+2, sy-3, 4, 4);
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(sx-2, sy-1, 4, 2);
+  // Static fish spot marker — just a small ripple icon, no animation
+  ctx.fillStyle = 'rgba(100,180,255,0.5)';
+  ctx.fillRect(sx-8, sy-3, 16, 6);
+  ctx.fillStyle = 'rgba(200,240,255,0.8)';
+  ctx.fillRect(sx-4, sy-1, 3, 3);
+  ctx.fillRect(sx+1, sy-1, 3, 3);
 }
 
 function drawVolcano(ctx, vcx, vcy) {
