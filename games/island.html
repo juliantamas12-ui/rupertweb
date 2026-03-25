@@ -35,7 +35,7 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;posit
 .inv-slot-themed{width:54px;height:54px;background:#0d1f0d;border:2px solid #2d6e2d;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Courier New';font-size:9px;color:#a8c870;text-align:center;cursor:pointer;position:relative}
 .inv-slot-themed:hover{border-color:#4a8a2a}
 .inv-slot-themed .count{color:#c8f135;font-size:14px;font-weight:bold}
-#overlay{position:fixed;inset:0;background:rgba(8,20,8,0.97);z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#e8f4b0}
+#overlay{position:fixed;inset:0;background:rgba(8,20,8,0.97);z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#e8f4b0;pointer-events:all;touch-action:manipulation}
 #overlay h1{color:#c8f135;font-size:30px;letter-spacing:8px;margin-bottom:8px;text-shadow:0 0 30px #c8f135}
 #overlay .subtitle{color:#4a8a2a;font-size:11px;letter-spacing:4px;margin-bottom:30px}
 .slide-box{max-width:560px;text-align:center;padding:20px 30px;background:#1a3a1a;border:2px solid #2d6e2d;margin-bottom:24px;line-height:1.9;font-size:12px;color:#e8f4b0;letter-spacing:0.5px}
@@ -160,7 +160,7 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;posit
   </div>
 </div>
 
-<div id="overlay" onclick="nextSlide()">
+<div id="overlay" onclick="nextSlide()" ontouchend="nextSlide(); event.preventDefault();">
   <h1>ISLAND SURVIVAL</h1>
   <div class="subtitle">A SHIPWRECK SURVIVAL STORY</div>
   <div class="slide-box" id="slide-content" style="max-height:60vh;overflow-y:auto;text-align:left">
@@ -174,7 +174,7 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;posit
     <hr style="border-color:#2d6e2d;margin:8px 0">
     <div><h3 style="color:#c8f135;font-size:12px;letter-spacing:3px;margin-bottom:8px">STORY & GOAL</h3><div style="font-size:11px;color:#e8f4b0;line-height:1.8">You survived the Meridian shipwreck. Find <b>Mara</b>, <b>Felix</b>, and <b>Elder Kona</b>.<br>Tribal warriors attack from Day 3. Chief appears Day 15.<br>Defeat him, craft a <b>Superyacht</b>, and escape. Multiple endings.</div></div>
   </div>
-  <button id="slide-btn" onclick="nextSlide()" style="margin-top:16px">START GAME</button>
+  <button id="slide-btn" onclick="nextSlide()" ontouchend="nextSlide(); event.preventDefault();" style="margin-top:16px;touch-action:manipulation;-webkit-tap-highlight-color:rgba(200,241,53,0.3);cursor:pointer">START GAME</button>
 </div>
 
 <canvas id="joystick-canvas"></canvas>
