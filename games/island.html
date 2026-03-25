@@ -2304,7 +2304,7 @@ function nextSlide() {
   showMsg('YOU WASHED ASHORE. FIND THE OTHER SURVIVORS.', '#c8f135');
   requestAnimationFrame(gameLoopWithUI);
 }
-showSlide();
+window.addEventListener('DOMContentLoaded', showSlide);
 
 // Main game loop override to include UI update
 const _origLoop = gameLoop;
