@@ -348,23 +348,64 @@ function genObjects() {
   // Volcano loot chest at top
   state.objects.push({type:'vol_chest', x:125*TSIZE, y:66*TSIZE, opened:false});
 
-  // Parkour stepping stones — path from jungle to volcano summit
-  // These are visual platforms (BEACH tiles carved into lava zones)
-  // The map already handles this via tile types; add visual stone markers
-  const parkourPath = [
-    [125,155],[125,150],[124,145],[125,140],[126,135],
-    [125,130],[124,125],[125,120],[125,115],[125,110],
-    [125,105],[125,100],[125,95],[125,90],[125,85],
-    [125,80],[125,75],[125,70]
+  // PARKOUR COURSE to volcano summit
+  // Winding path around the volcano with gaps requiring jumps
+  // Stones are placed with deliberate gaps (2-3 tiles) that require Space to cross
+  // Path spirals around the west side then up to the top
+  const parkourCourse = [
+    // Approach from south jungle — stepping stones with gaps
+    [125,155],[125,153],[125,151],
+    // GAP (jump needed)
+    [124,148],[123,146],
+    // GAP
+    [121,143],[120,141],
+    // West side swing
+    [118,139],[116,137],[114,136],
+    // GAP
+    [112,134],[110,133],
+    // Turn north
+    [109,131],[109,129],[109,127],
+    // GAP
+    [109,124],[110,122],
+    // East turn toward volcano
+    [112,120],[114,119],[116,118],
+    // GAP
+    [118,116],[120,115],
+    // Narrow ridge
+    [122,113],[123,111],
+    // GAP — hardest jump near top
+    [124,108],[125,106],
+    // Final approach to summit
+    [125,103],[125,101],[125,99],[125,97],[125,95],
+    [125,92],[125,89],[125,86],[125,83],[125,80],
+    [125,77],[125,74],[125,71],[125,68]
   ];
-  parkourPath.forEach(([px2, py2]) => {
-    // Carve safe path through volcanic zone — force VOLCANIC (passable) not LAVA
-    if (state.map[py2] && state.map[py2][px2] === T.LAVA) {
-      state.map[py2][px2] = T.VOLCANIC;
+
+  parkourCourse.forEach(([px2, py2]) => {
+    if (py2 >= 0 && py2 < MSIZE && px2 >= 0 && px2 < MSIZE) {
+      // Make tile walkable
+      if (state.map[py2][px2] === T.LAVA) state.map[py2][px2] = T.VOLCANIC;
+      // Remove pit traps on parkour path
+      state.pits.delete(py2 * MSIZE + px2);
     }
-    // Add stone marker objects for visibility
     state.objects.push({type:'step_stone', x:px2*TSIZE+8, y:py2*TSIZE+8});
   });
+
+  // Block direct approach to volcano (make surrounding tiles lava to force parkour)
+  for (let r = 0; r < 360; r += 5) {
+    const rad = r * Math.PI / 180;
+    for (let d = 22; d <= 55; d += 2) {
+      const tx = Math.round(125 + Math.cos(rad) * d);
+      const ty = Math.round(65 + Math.sin(rad) * d);
+      if (ty >= 0 && ty < MSIZE && tx >= 0 && tx < MSIZE) {
+        // Only turn to lava if not already a parkour stone position
+        const isStone = parkourCourse.some(([px2,py2]) => Math.abs(px2-tx)<=1 && Math.abs(py2-ty)<=1);
+        if (!isStone && state.map[ty][tx] !== T.BEACH) {
+          state.map[ty][tx] = T.LAVA;
+        }
+      }
+    }
+  }
 
   // Lore stones hidden in jungle
   const lorePositions = [
