@@ -52,7 +52,7 @@ canvas#c{pointer-events:none}
 #win-screen p{color:#888;font-size:13px;letter-spacing:2px;margin-top:16px}
 #controls-hint{position:fixed;bottom:60px;left:10px;color:#2d6e2d;font-size:9px;letter-spacing:1px;line-height:1.8;pointer-events:none;z-index:5}
 /* CHARACTER CREATOR */
-#char-creator{position:fixed;inset:0;background:rgba(4,2,0,0.98);z-index:250;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#f0d890;font-family:'Courier New',monospace;pointer-events:all;touch-action:manipulation}
+#char-creator{position:fixed;inset:0;background:rgba(4,2,0,0.98);z-index:250;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#f0d890;font-family:'Courier New',monospace;pointer-events:all;touch-action:manipulation;overflow:hidden}
 #char-creator h1{color:#f0d890;font-size:26px;letter-spacing:8px;margin-bottom:4px;text-shadow:0 0 20px #8B6020}
 #char-creator .cc-sub{color:#a08040;font-size:10px;letter-spacing:5px;margin-bottom:28px}
 .cc-card{background:#3d2010;border:2px solid #8B6020;box-shadow:inset 0 0 0 1px #5c3a10;padding:20px 28px;display:flex;gap:32px;align-items:flex-start;max-width:640px;width:100%}
@@ -130,7 +130,7 @@ canvas#c{pointer-events:none}
   <div id="craft-list"></div>
 </div>
 
-<div id="char-creator" style="-webkit-tap-highlight-color:rgba(0,0,0,0);cursor:pointer">
+<div id="char-creator" style="-webkit-tap-highlight-color:rgba(0,0,0,0);cursor:pointer" onclick="confirmCharacter()" ontouchend="confirmCharacter();event.stopPropagation();">
   <h1>CREATE YOUR SURVIVOR</h1>
   <div class="cc-sub">ISLAND SURVIVAL</div>
   <div class="cc-card">
