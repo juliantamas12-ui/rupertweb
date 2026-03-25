@@ -724,6 +724,7 @@ function drawEnemy(ctx, sx, sy, e) {
 
 function drawTree(ctx, sx, sy) {
   const sway = Math.sin(state.frameCount * 0.02 + sx * 0.1) * 2;
+  ctx.save(); ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(sx+2, sy+14, 8, 3, 0, 0, Math.PI*2); ctx.fill(); ctx.restore();
   px(ctx, '#5c3d1e', sx-3, sy+2, 7, 14);
   px(ctx, '#1a5c1a', sx-12+sway, sy-6, 24, 10);
   px(ctx, '#226622', sx-8+sway, sy-14, 16, 10);
@@ -732,6 +733,7 @@ function drawTree(ctx, sx, sy) {
 
 function drawJungleTree(ctx, sx, sy) {
   const sway = Math.sin(state.frameCount * 0.018 + sx * 0.09) * 2.5;
+  ctx.save(); ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(sx+2, sy+14, 9, 3, 0, 0, Math.PI*2); ctx.fill(); ctx.restore();
   // Thick darker trunk
   px(ctx, '#3d2010', sx-4, sy+2, 9, 16);
   // Moss dots on trunk
@@ -809,6 +811,7 @@ function drawBat(ctx, sx, sy) {
 
 function drawPalm(ctx, sx, sy) {
   const sway = Math.sin(state.frameCount * 0.015 + sx * 0.08) * 3;
+  ctx.save(); ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(sx, sy+14, 7, 3, 0, 0, Math.PI*2); ctx.fill(); ctx.restore();
   px(ctx, '#7a5c2e', sx-3, sy, 6, 20);
   px(ctx, '#5c3d1e', sx-3, sy-4, 4, 8);
   // Fronds
@@ -821,6 +824,7 @@ function drawPalm(ctx, sx, sy) {
 }
 
 function drawRock(ctx, sx, sy) {
+  ctx.save(); ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(sx, sy+14, 8, 3, 0, 0, Math.PI*2); ctx.fill(); ctx.restore();
   px(ctx, '#444455', sx-8, sy, 16, 10);
   px(ctx, '#666677', sx-6, sy-6, 12, 8);
   px(ctx, '#888899', sx-4, sy-8, 8, 4);
@@ -1824,6 +1828,22 @@ function getTile(x, y) {
   return state.map[ty][tx];
 }
 
+function checkCollisions(nx, ny) {
+  const playerR = 8;
+  for (const obj of state.objects) {
+    if (obj.placed && obj.type !== 'wall') continue;
+    if (!['tree','rock','palm','vol_rock','wall'].includes(obj.type)) continue;
+    if (obj.placed && obj.type === 'wall') {
+      if (nx > obj.x - 12 && nx < obj.x + 12 && ny > obj.y - 12 && ny < obj.y + 12) return true;
+    } else {
+      const r = obj.type === 'tree' ? 10 : 8;
+      const dx = nx - obj.x, dy = ny - obj.y;
+      if (dx*dx + dy*dy < (r + playerR) * (r + playerR)) return true;
+    }
+  }
+  return false;
+}
+
 function updatePlayer() {
   const p = state.player;
   if (state.paused || state.minigame || state.dialogue || state.collapsing) return;
@@ -1866,8 +1886,24 @@ function updatePlayer() {
     showMsg('TOO DEEP — TURN BACK!', '#3498db');
     nx = p.x; ny = p.y;
   } else {
-    p.x = nx; p.y = ny;
+    // Object collision with sliding
+    if (!checkCollisions(nx, ny)) {
+      p.x = nx; p.y = ny;
+    } else {
+      if (!checkCollisions(nx, p.y)) { p.x = nx; }
+      else if (!checkCollisions(p.x, ny)) { p.y = ny; }
+    }
   }
+
+  // Creature soft push (animals nudge the player)
+  state.creatures.forEach(c => {
+    const cdx = p.x - c.x, cdy = p.y - c.y;
+    const cdist = Math.sqrt(cdx*cdx + cdy*cdy);
+    if (cdist > 0 && cdist < 16) {
+      p.x += (cdx/cdist) * 0.5;
+      p.y += (cdy/cdist) * 0.5;
+    }
+  });
 
   // Pit check in dark jungle (without torch)
   const tx = Math.floor(p.x/TSIZE), ty2 = Math.floor(p.y/TSIZE);
@@ -2910,87 +2946,6 @@ function render(ctx, minimapCtx) {
   const vcx = 250*TSIZE - camX, vcy = 130*TSIZE - camY;
   if (vcx > -300 && vcx < canvas.width+300) drawVolcano(ctx, vcx, vcy);
 
-  // World objects (non-placed)
-  state.objects.forEach(obj => {
-    if (obj.placed) return;
-    if (obj.type === 'death_pack') return; // drawn later with glow
-    const sx = obj.x - camX, sy = obj.y - camY;
-    if (sx < -40 || sx > canvas.width+40 || sy < -40 || sy > canvas.height+40) return;
-
-    // Shadow ellipse under solid objects
-    if (['tree','palm','rock','vol_rock','jungle_chest','vol_chest','step_stone','ancient_statue','skull_stake','dead_tree','mossy_log'].includes(obj.type)) {
-      ctx.save();
-      ctx.fillStyle = 'rgba(0,0,0,0.22)';
-      const shadowW = obj.type === 'tree' || obj.type === 'palm' ? 18 : obj.type === 'rock' || obj.type === 'vol_rock' ? 12 : 10;
-      ctx.beginPath();
-      ctx.ellipse(sx + 4, sy + 12, shadowW, shadowW * 0.3, 0, 0, Math.PI*2);
-      ctx.fill();
-      ctx.restore();
-    }
-
-    switch (obj.type) {
-      case 'tree': {
-        const ttx = Math.floor(obj.x/TSIZE), tty = Math.floor(obj.y/TSIZE);
-        const tileType = (state.map[tty] && state.map[tty][ttx]) || 0;
-        if (tileType === T.JUNGLE_DARK) drawJungleTree(ctx, sx, sy);
-        else drawTree(ctx, sx, sy);
-        break;
-      }
-      case 'palm': drawPalm(ctx, sx, sy); break;
-      case 'rock': case 'vol_rock': drawRock(ctx, sx, sy); if(obj.type==='vol_rock')drawVolRock(ctx,sx,sy); break;
-      case 'berry': case 'fruit': drawBerry(ctx, sx, sy); break;
-      case 'fish_spot': drawFishSpot(ctx, sx, sy); break;
-      case 'step_stone':
-        // Raised stone platform: shadow, dark base, lighter top surface
-        px(ctx, 'rgba(0,0,0,0.3)', sx-11, sy+4, 22, 5); // shadow
-        px(ctx, '#3a2e20', sx-10, sy+0, 20, 6); // dark base sides
-        px(ctx, '#6a5a4a', sx-10, sy-5, 20, 8); // stone body
-        px(ctx, '#9a8a7a', sx-8, sy-7, 16, 4); // top lighter surface
-        px(ctx, '#7a6a5a', sx-6, sy-6, 4, 2); // detail
-        break;
-      case 'dead_tree': drawDeadTree(ctx, sx, sy); break;
-      case 'flower_patch': drawFlowerPatch(ctx, sx, sy); break;
-      case 'mossy_log': drawMossyLog(ctx, sx, sy); break;
-      case 'skull_stake': drawSkullStake(ctx, sx, sy); break;
-      case 'ancient_statue': drawAncientStatue(ctx, sx, sy); break;
-      case 'waterfall': drawWaterfall(ctx, sx, sy); break;
-      case 'campfire_remains': drawCampfireRemains(ctx, sx, sy); break;
-      case 'tide_pool': drawTidePool(ctx, sx, sy); break;
-      case 'shipwreck': drawShipwreck(ctx, sx, sy); break;
-      case 'journal':
-        // Glowing book icon
-        ctx.save();
-        ctx.fillStyle = '#8B6020';
-        ctx.fillRect(sx-6, sy-8, 12, 14);
-        ctx.fillStyle = '#c8a060';
-        ctx.fillRect(sx-5, sy-7, 10, 12);
-        ctx.fillStyle = '#5c3010';
-        ctx.fillRect(sx-5, sy-7, 2, 12);
-        ctx.fillStyle = '#f0d890';
-        ctx.fillRect(sx-2, sy-5, 7, 1);
-        ctx.fillRect(sx-2, sy-3, 7, 1);
-        ctx.fillRect(sx-2, sy-1, 5, 1);
-        // Glow
-        const jGlow = 0.3+Math.sin(state.frameCount*0.08)*0.2;
-        ctx.fillStyle = `rgba(255,220,100,${jGlow})`;
-        ctx.beginPath();
-        ctx.arc(sx, sy-2, 10, 0, Math.PI*2);
-        ctx.fill();
-        ctx.restore();
-        break;
-      case 'driftwood':
-        px(ctx, '#8B6914', sx-10, sy-2, 20, 4);
-        px(ctx, '#7a5514', sx-6, sy-4, 6, 2);
-        break;
-      case 'jungle_chest':
-        if (!obj.opened) { px(ctx,'#7a5c2e',sx-8,sy-6,16,12); px(ctx,'#c8a060',sx-8,sy-8,16,4); }
-        break;
-      case 'vol_chest':
-        if (!obj.opened) { px(ctx,'#7a3020',sx-10,sy-8,20,16); px(ctx,'#ff6600',sx-10,sy-10,20,4); }
-        break;
-    }
-  });
-
   // Lore stones
   state.loreStones.forEach(stone => {
     const sx = stone.x - camX, sy = stone.y - camY;
@@ -3030,33 +2985,128 @@ function render(ctx, minimapCtx) {
   // Projectiles
   drawProjectiles(ctx, camX, camY);
 
+  // --- Depth-sorted entity rendering ---
+  const drawList = [];
+
+  // World objects (non-placed, already filtered above for shadow ellipses)
+  // We draw the objects again here in sorted order, skip the old forEach above for world objects
+  state.objects.forEach(obj => {
+    if (obj.placed) return;
+    if (obj.type === 'death_pack') return;
+    const osx = obj.x - camX, osy = obj.y - camY;
+    if (osx < -40 || osx > canvas.width+40 || osy < -40 || osy > canvas.height+40) return;
+    const capturedObj = obj, capturedOsx = osx, capturedOsy = osy;
+    drawList.push({y: obj.y, draw: () => {
+      const ssx = capturedObj.x - camX, ssy = capturedObj.y - camY;
+      // Shadow ellipse
+      if (['tree','palm','rock','vol_rock','jungle_chest','vol_chest','step_stone','ancient_statue','skull_stake','dead_tree','mossy_log'].includes(capturedObj.type)) {
+        ctx.save(); ctx.fillStyle = 'rgba(0,0,0,0.22)';
+        const shadowW = capturedObj.type === 'tree' || capturedObj.type === 'palm' ? 18 : capturedObj.type === 'rock' || capturedObj.type === 'vol_rock' ? 12 : 10;
+        ctx.beginPath(); ctx.ellipse(ssx + 4, ssy + 12, shadowW, shadowW * 0.3, 0, 0, Math.PI*2); ctx.fill(); ctx.restore();
+      }
+      switch (capturedObj.type) {
+        case 'tree': { const ttx2=Math.floor(capturedObj.x/TSIZE),tty2=Math.floor(capturedObj.y/TSIZE); const tt2=(state.map[tty2]&&state.map[tty2][ttx2])||0; if(tt2===T.JUNGLE_DARK)drawJungleTree(ctx,ssx,ssy); else drawTree(ctx,ssx,ssy); break; }
+        case 'palm': drawPalm(ctx,ssx,ssy); break;
+        case 'rock': case 'vol_rock': drawRock(ctx,ssx,ssy); if(capturedObj.type==='vol_rock')drawVolRock(ctx,ssx,ssy); break;
+        case 'berry': case 'fruit': drawBerry(ctx,ssx,ssy); break;
+        case 'fish_spot': drawFishSpot(ctx,ssx,ssy); break;
+        case 'step_stone': px(ctx,'rgba(0,0,0,0.3)',ssx-11,ssy+4,22,5); px(ctx,'#3a2e20',ssx-10,ssy+0,20,6); px(ctx,'#6a5a4a',ssx-10,ssy-5,20,8); px(ctx,'#9a8a7a',ssx-8,ssy-7,16,4); px(ctx,'#7a6a5a',ssx-6,ssy-6,4,2); break;
+        case 'dead_tree': drawDeadTree(ctx,ssx,ssy); break;
+        case 'flower_patch': drawFlowerPatch(ctx,ssx,ssy); break;
+        case 'mossy_log': drawMossyLog(ctx,ssx,ssy); break;
+        case 'skull_stake': drawSkullStake(ctx,ssx,ssy); break;
+        case 'ancient_statue': drawAncientStatue(ctx,ssx,ssy); break;
+        case 'waterfall': drawWaterfall(ctx,ssx,ssy); break;
+        case 'campfire_remains': drawCampfireRemains(ctx,ssx,ssy); break;
+        case 'tide_pool': drawTidePool(ctx,ssx,ssy); break;
+        case 'shipwreck': drawShipwreck(ctx,ssx,ssy); break;
+        case 'journal': {
+          ctx.save(); ctx.fillStyle='#8B6020'; ctx.fillRect(ssx-6,ssy-8,12,14); ctx.fillStyle='#c8a060'; ctx.fillRect(ssx-5,ssy-7,10,12); ctx.fillStyle='#5c3010'; ctx.fillRect(ssx-5,ssy-7,2,12); ctx.fillStyle='#f0d890'; ctx.fillRect(ssx-2,ssy-5,7,1); ctx.fillRect(ssx-2,ssy-3,7,1); ctx.fillRect(ssx-2,ssy-1,5,1);
+          const jGlow=0.3+Math.sin(state.frameCount*0.08)*0.2; ctx.fillStyle=`rgba(255,220,100,${jGlow})`; ctx.beginPath(); ctx.arc(ssx,ssy-2,10,0,Math.PI*2); ctx.fill(); ctx.restore(); break;
+        }
+        case 'driftwood': px(ctx,'#8B6914',ssx-10,ssy-2,20,4); px(ctx,'#7a5514',ssx-6,ssy-4,6,2); break;
+        case 'jungle_chest': if(!capturedObj.opened){px(ctx,'#7a5c2e',ssx-8,ssy-6,16,12);px(ctx,'#c8a060',ssx-8,ssy-8,16,4);} break;
+        case 'vol_chest': if(!capturedObj.opened){px(ctx,'#7a3020',ssx-10,ssy-8,20,16);px(ctx,'#ff6600',ssx-10,ssy-10,20,4);} break;
+      }
+    }});
+  });
+
   // Enemies
   state.enemies.forEach(e => {
-    const sx = e.x - camX, sy = e.y - camY;
-    if (sx < -60 || sx > canvas.width+60) return;
-    e.walkTimer++;
-    drawEnemy(ctx, sx, sy, e);
+    const esx = e.x - camX, esy = e.y - camY;
+    if (esx < -60 || esx > canvas.width+60) return;
+    const capturedE = e;
+    drawList.push({y: e.y, draw: () => {
+      capturedE.walkTimer++;
+      drawEnemy(ctx, capturedE.x - camX, capturedE.y - camY, capturedE);
+    }});
   });
   if (state.chief) {
-    const sx = state.chief.x - camX, sy = state.chief.y - camY;
-    state.chief.walkTimer++;
-    drawEnemy(ctx, sx, sy, state.chief);
+    const capturedChief = state.chief;
+    drawList.push({y: state.chief.y, draw: () => {
+      capturedChief.walkTimer++;
+      drawEnemy(ctx, capturedChief.x - camX, capturedChief.y - camY, capturedChief);
+    }});
   }
 
-  // Creatures (jungle mobs)
-  drawCreatures(ctx, camX, camY);
+  // Creatures
+  state.creatures.forEach(c => {
+    const csx = c.x - camX, csy = c.y - camY;
+    if (csx < -60 || csx > ctx.canvas.width+60 || csy < -60 || csy > ctx.canvas.height+60) return;
+    const capturedC = c;
+    drawList.push({y: c.y, draw: () => {
+      const sx2 = capturedC.x - camX, sy2 = capturedC.y - camY;
+      if (capturedC.type === 'spider') {
+        drawSpider(ctx, sx2, sy2);
+        px(ctx, '#333', sx2-10, sy2-18, 20, 3);
+        px(ctx, '#22cc44', sx2-10, sy2-18, Math.round(20*capturedC.hp/capturedC.maxHp), 3);
+      } else if (capturedC.type === 'croc') {
+        drawCroc(ctx, sx2, sy2);
+        px(ctx, '#333', sx2-14, sy2-18, 28, 3);
+        px(ctx, '#2d8a22', sx2-14, sy2-18, Math.round(28*capturedC.hp/capturedC.maxHp), 3);
+      } else if (capturedC.type === 'bat') {
+        drawBat(ctx, sx2, sy2);
+        px(ctx, '#333', sx2-8, sy2-14, 16, 3);
+        px(ctx, '#2a1040', sx2-8, sy2-14, Math.round(16*capturedC.hp/capturedC.maxHp), 3);
+      }
+      if (capturedC.hitFlash > 0) {
+        capturedC.hitFlash--;
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.fillRect(sx2-8, sy2-10, 16, 16);
+      }
+    }});
+  });
 
   // NPCs
   state.npcs.forEach(npc => {
     if (!npc || npc.companion) return;
-    const sx = npc.x - camX, sy = npc.y - camY;
-    if (sx < -60 || sx > canvas.width+60) return;
-    npc.bobTimer++;
-    drawNPC(ctx, sx, sy, npc);
+    const nsx = npc.x - camX, nsy = npc.y - camY;
+    if (nsx < -60 || nsx > canvas.width+60) return;
+    const capturedNpc = npc;
+    drawList.push({y: npc.y, draw: () => {
+      capturedNpc.bobTimer++;
+      drawNPC(ctx, capturedNpc.x - camX, capturedNpc.y - camY, capturedNpc);
+    }});
   });
 
-  // Player (always center)
-  drawPlayer(ctx, canvas.width/2, canvas.height/2 + (p.jumpOffset||0), p);
+  // Player
+  drawList.push({y: p.y, draw: () => {
+    const tile = getTile(p.x, p.y);
+    drawPlayer(ctx, canvas.width/2, canvas.height/2 + (p.jumpOffset||0), p);
+    // Swimming depth: draw water-colored rect over lower half when in shallow water
+    if (tile === T.SHALLOW_WATER) {
+      ctx.save();
+      ctx.globalAlpha = 0.45;
+      ctx.fillStyle = '#4aa8d8';
+      ctx.fillRect(canvas.width/2 - 6, canvas.height/2 + 4, 12, 8);
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    }
+  }});
+
+  // Sort by y and draw
+  drawList.sort((a, b) => a.y - b.y);
+  drawList.forEach(item => item.draw());
 
   // Particles
   drawParticles(ctx, camX, camY);
