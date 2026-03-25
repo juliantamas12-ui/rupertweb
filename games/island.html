@@ -2235,7 +2235,11 @@ window.addEventListener('keydown', e => {
 });
 window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
 window.addEventListener('mousemove', e => { mx=e.clientX; my=e.clientY; });
-window.addEventListener('click', e => handleClick(e.clientX, e.clientY));
+window.addEventListener('click', e => {
+  // Don't intercept clicks on HTML UI elements
+  if (e.target !== canvas) return;
+  handleClick(e.clientX, e.clientY);
+});
 window.addEventListener('resize', () => { canvas.width=window.innerWidth; canvas.height=window.innerHeight; });
 
 function handleJump() {
