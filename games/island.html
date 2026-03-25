@@ -51,7 +51,7 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;posit
 #win-screen p{color:#888;font-size:13px;letter-spacing:2px;margin-top:16px}
 #controls-hint{position:fixed;bottom:60px;left:10px;color:#2d6e2d;font-size:9px;letter-spacing:1px;line-height:1.8;pointer-events:none;z-index:5}
 /* CHARACTER CREATOR */
-#char-creator{position:fixed;inset:0;background:rgba(4,14,4,0.98);z-index:250;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#e8f4b0;font-family:'Courier New',monospace}
+#char-creator{position:fixed;inset:0;background:rgba(4,14,4,0.98);z-index:250;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#e8f4b0;font-family:'Courier New',monospace;pointer-events:all;touch-action:manipulation}
 #char-creator h1{color:#c8f135;font-size:26px;letter-spacing:8px;margin-bottom:4px;text-shadow:0 0 20px #c8f135}
 #char-creator .cc-sub{color:#4a8a2a;font-size:10px;letter-spacing:5px;margin-bottom:28px}
 .cc-card{background:#1a3a1a;border:2px solid #2d6e2d;padding:20px 28px;display:flex;gap:32px;align-items:flex-start;max-width:640px;width:100%}
@@ -155,7 +155,7 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;posit
           <div class="cc-swatch" data-color="#6a4020" style="background:#6a4020" title="Dark"></div>
         </div>
       </div>
-      <button id="cc-begin" onclick="confirmCharacter()">BEGIN SURVIVAL</button>
+      <button id="cc-begin" onclick="confirmCharacter()" ontouchend="confirmCharacter();event.preventDefault();" style="touch-action:manipulation;-webkit-tap-highlight-color:rgba(200,241,53,0.3)">BEGIN SURVIVAL</button>
     </div>
   </div>
 </div>
@@ -3033,23 +3033,21 @@ function initCharCreator() {
   // Hide tutorial overlay initially; show char creator instead
   document.getElementById('overlay').style.display = 'none';
 
-  // Swatch click handlers
-  document.querySelectorAll('#cc-shirts .cc-swatch').forEach(sw => {
-    sw.addEventListener('click', () => {
-      document.querySelectorAll('#cc-shirts .cc-swatch').forEach(s => s.classList.remove('selected'));
+  // Swatch click/touch handlers
+  function addSwatchHandler(sw, group) {
+    const handler = (e) => {
+      e.preventDefault();
+      document.querySelectorAll(`#${group} .cc-swatch`).forEach(s => s.classList.remove('selected'));
       sw.classList.add('selected');
-      state.shirtColor = sw.dataset.color;
+      if (group === 'cc-shirts') state.shirtColor = sw.dataset.color;
+      else state.skinColor = sw.dataset.color;
       renderCCPreview();
-    });
-  });
-  document.querySelectorAll('#cc-skins .cc-swatch').forEach(sw => {
-    sw.addEventListener('click', () => {
-      document.querySelectorAll('#cc-skins .cc-swatch').forEach(s => s.classList.remove('selected'));
-      sw.classList.add('selected');
-      state.skinColor = sw.dataset.color;
-      renderCCPreview();
-    });
-  });
+    };
+    sw.addEventListener('click', handler);
+    sw.addEventListener('touchend', handler, {passive: false});
+  }
+  document.querySelectorAll('#cc-shirts .cc-swatch').forEach(sw => addSwatchHandler(sw, 'cc-shirts'));
+  document.querySelectorAll('#cc-skins .cc-swatch').forEach(sw => addSwatchHandler(sw, 'cc-skins'));
   document.getElementById('cc-name').addEventListener('input', e => {
     state.playerName = e.target.value.toUpperCase() || 'SURVIVOR';
     e.target.value = state.playerName;
