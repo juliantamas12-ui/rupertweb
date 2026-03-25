@@ -2145,11 +2145,12 @@ function updatePlayer() {
     nx = p.x; ny = p.y;
   } else {
     // Object collision with sliding
-    if (!checkCollisions(nx, ny)) {
+    // Skip object collision when jumping (player is airborne)
+    if (!p.onGround || !checkCollisions(nx, ny)) {
       p.x = nx; p.y = ny;
     } else {
-      if (!checkCollisions(nx, p.y)) { p.x = nx; }
-      else if (!checkCollisions(p.x, ny)) { p.y = ny; }
+      if (!p.onGround || !checkCollisions(nx, p.y)) { p.x = nx; }
+      else if (!p.onGround || !checkCollisions(p.x, ny)) { p.y = ny; }
     }
   }
 
