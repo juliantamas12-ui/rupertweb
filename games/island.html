@@ -174,13 +174,6 @@ canvas#c{pointer-events:none}
 @keyframes ssFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
 </style>
 
-<div id="start-screen" style="position:fixed;inset:0;background:#0a1a06;z-index:250;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Courier New',monospace;color:#e8f0b0;cursor:pointer;user-select:none;overflow:hidden" onclick="startScreenClick()" ontouchend="startScreenClick();event.preventDefault();">
-
-  <!-- Palm trees flanking title -->
-  <div style="position:absolute;top:0;left:0;bottom:80px;display:flex;align-items:flex-end;padding-left:40px;pointer-events:none;z-index:1">
-    <div style="animation:palmSway 3s ease-in-out infinite;transform-origin:bottom center">
-      <!-- Palm trunk -->
-      <div style="width:12px;height:120px;background:linear-gradient(to top,#5a3a10,#7a5a20);margin:0 auto;border-radius:4px 4px 2px 2px"></div>
       <!-- Palm leaves -->
       <div style="position:relative;top:0;left:-30px;width:0">
         <div style="position:absolute;width:70px;height:14px;background:#2d6a10;border-radius:0 50% 50% 0;top:-10px;left:-5px;transform:rotate(-40deg)"></div>
@@ -4319,14 +4312,17 @@ function startScreenClick() {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  updateSSPhase();
-  // Auto-advance every 5 seconds so the game starts even if buttons broken
-  let autoTimer = setInterval(() => {
-    if (typeof state === 'undefined') return;
-    if (state.running) { clearInterval(autoTimer); return; }
-    startScreenClick();
-    if (state.running) clearInterval(autoTimer);
-  }, 5000);
+  // Auto-start immediately
+  state.shirtColor = '#2d7a2d';
+  state.skinColor = '#c8a07a';
+  state.playerName = 'SURVIVOR';
+  genMap(); genObjects();
+  state.player.x = 125*TSIZE; state.player.y = 170*TSIZE;
+  state.cam.x = state.player.x - canvas.width/2;
+  state.cam.y = state.player.y - canvas.height/2;
+  state.running = true;
+  showMsg('YOU WASHED ASHORE. FIND THE OTHER SURVIVORS.', '#c8f135');
+  requestAnimationFrame(gameLoopWithUI);
 });
 
 function gameLoopWithUI() {
