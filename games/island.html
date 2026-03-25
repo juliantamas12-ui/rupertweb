@@ -2181,32 +2181,7 @@ function animateYacht() {
 // MAIN LOOP
 // ============================================================
 
-function gameLoop() {
-  if (!state.running) return;
-  requestAnimationFrame(gameLoop);
-  updatePlayer();
-  updateEnemies();
-  updateProjectiles();
-  updateDayNight();
-  updateParticles();
-  updateMsgs();
-  updateMinigame();
-  updateDialogue();
-  updateNPCCompanions();
-  render(ctx, minimapCtx);
-}
-
-function startGame() {
-  genMap();
-  genObjects();
-  state.player.x = 125*TSIZE;
-  state.player.y = 170*TSIZE;
-  state.cam.x = state.player.x - canvas.width/2;
-  state.cam.y = state.player.y - canvas.height/2;
-  state.running = true;
-  showMsg('YOU WASHED ASHORE. SURVIVE.', '#c8f135');
-  requestAnimationFrame(gameLoop);
-}
+// gameLoop and startGame defined below
 
 </script>
 
@@ -2220,8 +2195,6 @@ const minimapCtx = document.getElementById('minimap').getContext('2d');
 minimapCtx.imageSmoothingEnabled = false;
 
 // INPUT
-const keys = {};
-let mx = 0, my = 0;
 window.addEventListener('keydown', e => {
   keys[e.key.toLowerCase()] = true;
   // If tutorial overlay is visible, any key starts the game
@@ -2325,8 +2298,6 @@ function nextSlide() {
 }
 window.addEventListener('DOMContentLoaded', showSlide);
 
-// Main game loop override to include UI update
-const _origLoop = gameLoop;
 function gameLoopWithUI() {
   if (!state.running) return;
   requestAnimationFrame(gameLoopWithUI);
