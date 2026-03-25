@@ -2286,26 +2286,23 @@ const slides = [
 ];
 let slideIdx = 0;
 function showSlide() {
-  const s = slides[slideIdx];
-  document.getElementById('slide-content').innerHTML = `<h3>${s.t}</h3>${s.b}`;
-  const dots = document.getElementById('slide-dots');
-  dots.innerHTML = slides.map((_,i)=>`<div class="dot${i===slideIdx?' active':''}"></div>`).join('');
-  document.getElementById('slide-btn').textContent = slideIdx===slides.length-1?'START GAME':'NEXT';
+  // Show all tutorial content at once
+  const allContent = slides.map(s=>`<div style="margin-bottom:18px"><h3 style="color:#c8f135;font-size:12px;letter-spacing:3px;margin-bottom:8px">${s.t}</h3><div style="font-size:11px;color:#bbb;line-height:1.8">${s.b}</div></div>`).join('<hr style="border-color:#222;margin:10px 0">');
+  document.getElementById('slide-content').innerHTML = allContent;
+  document.getElementById('slide-dots').innerHTML = '';
+  document.getElementById('slide-btn').textContent = 'START GAME';
 }
 function nextSlide() {
-  if (slideIdx < slides.length-1) { slideIdx++; showSlide(); }
-  else {
-    document.getElementById('overlay').style.display='none';
-    genMap();
-    genObjects();
-    state.player.x = 125*TSIZE;
-    state.player.y = 170*TSIZE;
-    state.cam.x = state.player.x - canvas.width/2;
-    state.cam.y = state.player.y - canvas.height/2;
-    state.running = true;
-    showMsg('YOU WASHED ASHORE. FIND THE OTHER SURVIVORS.', '#c8f135');
-    requestAnimationFrame(gameLoopWithUI);
-  }
+  document.getElementById('overlay').style.display='none';
+  genMap();
+  genObjects();
+  state.player.x = 125*TSIZE;
+  state.player.y = 170*TSIZE;
+  state.cam.x = state.player.x - canvas.width/2;
+  state.cam.y = state.player.y - canvas.height/2;
+  state.running = true;
+  showMsg('YOU WASHED ASHORE. FIND THE OTHER SURVIVORS.', '#c8f135');
+  requestAnimationFrame(gameLoopWithUI);
 }
 showSlide();
 
