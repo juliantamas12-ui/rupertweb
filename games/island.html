@@ -49,7 +49,7 @@ canvas#c{pointer-events:none}
 .inv-slot-themed .count{color:#e8f0b0;font-size:14px;font-weight:bold}
 
 /* ── OVERLAY (start/death) ── */
-#overlay{position:fixed;inset:0;background:rgba(4,10,2,0.97);z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#e8f0b0;pointer-events:all;touch-action:manipulation}
+#overlay{position:fixed;inset:0;background:rgba(4,10,2,0.97);z-index:200;display:none;flex-direction:column;align-items:center;justify-content:center;color:#e8f0b0;pointer-events:all;touch-action:manipulation}
 #overlay h1{color:#c8f135;font-size:28px;letter-spacing:6px;margin-bottom:8px;text-shadow:0 0 30px #4a7a1a;font-family:'Press Start 2P',monospace}
 #overlay .subtitle{color:#8aa060;font-size:10px;letter-spacing:4px;margin-bottom:30px;font-family:'Press Start 2P',monospace}
 .slide-box{max-width:560px;text-align:center;padding:20px 30px;background:#1a2e0a;border:2px solid #4a7a1a;box-shadow:inset 0 0 0 1px #2a4a08;margin-bottom:24px;line-height:1.9;font-size:12px;color:#e8f0b0;letter-spacing:0.5px;border-radius:8px}
@@ -71,7 +71,7 @@ canvas#c{pointer-events:none}
 @media(max-width:767px){#controls-hint{display:none}}
 
 /* ── CHARACTER CREATOR ── */
-#char-creator{position:fixed;inset:0;background:rgba(4,10,2,0.98);z-index:250;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#e8f0b0;font-family:'Courier New',monospace;pointer-events:all;touch-action:manipulation;overflow:hidden}
+#char-creator{position:fixed;inset:0;background:rgba(4,10,2,0.98);z-index:250;display:none;flex-direction:column;align-items:center;justify-content:center;color:#e8f0b0;font-family:'Courier New',monospace;pointer-events:all;touch-action:manipulation;overflow:hidden}
 #char-creator h1{color:#c8f135;font-family:'Press Start 2P',monospace;font-size:20px;letter-spacing:6px;margin-bottom:4px;text-shadow:0 0 20px #4a7a1a}
 #char-creator .cc-sub{color:#8aa060;font-family:'Press Start 2P',monospace;font-size:8px;letter-spacing:4px;margin-bottom:28px}
 .cc-card{background:#1a2e0a;border:2px solid #4a7a1a;box-shadow:inset 0 0 0 1px #2a4a08;padding:20px 28px;display:flex;gap:32px;align-items:flex-start;max-width:640px;width:100%;border-radius:10px;background-image:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.06) 3px,rgba(0,0,0,0.06) 4px),repeating-linear-gradient(90deg,transparent,transparent 8px,rgba(255,255,255,0.015) 8px,rgba(255,255,255,0.015) 9px)}
@@ -4243,70 +4243,6 @@ function confirmCharacter() {
 }
 
 // NEW SIMPLE START SCREEN
-let ssPhase = 0; // 0=title, 1=choose shirt, 2=choose skin, 3=tutorial
-const SS_SHIRTS = [{c:'#2d7a2d',l:'JUNGLE GREEN'},{c:'#2d4a8a',l:'OCEAN BLUE'},{c:'#8a2d2d',l:'SURVIVOR RED'},{c:'#8a5a2d',l:'SANDY ORANGE'}];
-const SS_SKINS = [{c:'#c8a07a',l:'LIGHT'},{c:'#a07040',l:'MEDIUM'},{c:'#6a4020',l:'DARK'}];
-let ssShirt = 0, ssSkin = 0;
-
-function updateSSPhase() {
-  const ph = document.getElementById('ss-phase');
-  const btn = document.getElementById('ss-btn');
-  if (!ph) return;
-  if (ssPhase === 0) {
-    ph.innerHTML = '<div style="font-family:\'Courier New\',monospace;font-size:11px;letter-spacing:1px;color:#8aa060;text-align:center;line-height:2.2;background:rgba(10,26,6,0.7);border:1px solid #2a4a08;padding:14px 20px;border-radius:8px">You are a survivor of the Meridian shipwreck.<br>You washed ashore on a volcanic island.<br>Find the other survivors. Defeat the Tribal Chief.<br>Build a superyacht. <span style="color:#c8f135">Escape.</span></div>';
-    btn.textContent = '\u25BA CLICK / TAP TO CONTINUE';
-  } else if (ssPhase === 1) {
-    ph.innerHTML = '<div style="font-family:\'Press Start 2P\',monospace;font-size:9px;letter-spacing:2px;color:#c8f135;margin-bottom:16px">CHOOSE YOUR SHIRT</div>' +
-      '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">' +
-      SS_SHIRTS.map((s,i)=>`<div onclick="ssShirt=${i};updateSSPhase();event.stopPropagation()" ontouchend="ssShirt=${i};updateSSPhase();event.stopPropagation();event.preventDefault()" style="width:64px;height:64px;background:${s.c};border-radius:10px;border:3px solid ${i===ssShirt?'#c8f135':'#4a7a1a'};cursor:pointer;box-shadow:${i===ssShirt?'0 0 12px rgba(200,241,53,0.5)':'none'};transition:border-color 0.15s"></div>`).join('') +
-      '</div>' +
-      `<div style="margin-top:10px;font-family:'Press Start 2P',monospace;font-size:7px;color:#8aa060;letter-spacing:2px">${SS_SHIRTS[ssShirt].l}</div>`;
-    btn.textContent = '\u25BA CONFIRM COLOR';
-  } else if (ssPhase === 2) {
-    ph.innerHTML = '<div style="font-family:\'Press Start 2P\',monospace;font-size:9px;letter-spacing:2px;color:#c8f135;margin-bottom:16px">CHOOSE YOUR SKIN TONE</div>' +
-      '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">' +
-      SS_SKINS.map((s,i)=>`<div onclick="ssSkin=${i};updateSSPhase();event.stopPropagation()" ontouchend="ssSkin=${i};updateSSPhase();event.stopPropagation();event.preventDefault()" style="width:64px;height:64px;background:${s.c};border-radius:10px;border:3px solid ${i===ssSkin?'#c8f135':'#4a7a1a'};cursor:pointer;box-shadow:${i===ssSkin?'0 0 12px rgba(200,241,53,0.5)':'none'};transition:border-color 0.15s"></div>`).join('') +
-      '</div>' +
-      `<div style="margin-top:10px;font-family:'Press Start 2P',monospace;font-size:7px;color:#8aa060;letter-spacing:2px">${SS_SKINS[ssSkin].l}</div>`;
-    btn.textContent = '\u25BA CONFIRM TONE';
-  } else if (ssPhase === 3) {
-    ph.innerHTML = '<div style="font-family:\'Courier New\',monospace;font-size:10px;color:#8aa060;line-height:2.2;letter-spacing:1px;text-align:left;background:rgba(10,26,6,0.7);border:1px solid #2a4a08;padding:14px 20px;border-radius:8px"><b style="color:#c8f135">WASD</b> Move &nbsp; <b style="color:#c8f135">SPACE</b> Jump &nbsp; <b style="color:#c8f135">CLICK</b> Attack/Harvest<br><b style="color:#c8f135">E</b> Interact &nbsp; <b style="color:#c8f135">I</b> Inventory &nbsp; <b style="color:#c8f135">C</b> Crafting &nbsp; <b style="color:#c8f135">B</b> Build<br><b style="color:#c8f135">F</b> Fish (need rod) &nbsp; <b style="color:#c8f135">Q</b> Throw coconut<br><br>Gather wood + stone &#9658; craft axe &#9658; chop trees<br>Find Mara on the north beach to start your quest.</div>';
-    btn.textContent = '\u25BA PLAY';
-  }
-}
-
-// ── PAUSE MENU FUNCTIONS ──
-function resumeGame() {
-  document.getElementById('pause-menu').style.display = 'none';
-}
-function setBrightness(v) {
-  document.getElementById('c').style.filter = 'brightness(' + (v/100) + ')';
-}
-function saveAndQuit() {
-  try { localStorage.setItem('island_save', JSON.stringify({day:state.day, inv:state.player.inv, hp:state.player.hp})); } catch(e) {}
-  location.reload();
-}
-
-function startScreenClick() {
-  if (ssPhase < 3) {
-    ssPhase++;
-    updateSSPhase();
-  } else {
-    // Launch game
-    state.shirtColor = SS_SHIRTS[ssShirt].c;
-    state.skinColor = SS_SKINS[ssSkin].c;
-    state.playerName = 'SURVIVOR';
-    
-    genMap(); genObjects();
-    state.player.x = 125*TSIZE; state.player.y = 170*TSIZE;
-    state.cam.x = state.player.x - canvas.width/2;
-    state.cam.y = state.player.y - canvas.height/2;
-    state.running = true;
-    showMsg('YOU WASHED ASHORE. FIND THE OTHER SURVIVORS.', '#c8f135');
-    requestAnimationFrame(gameLoopWithUI);
-  }
-}
-
 window.addEventListener('DOMContentLoaded', () => {
   state.shirtColor = '#2d7a2d';
   state.skinColor = '#c8a07a';
