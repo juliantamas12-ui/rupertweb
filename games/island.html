@@ -464,23 +464,23 @@ function genObjects() {
       };
 
       if (t === T.JUNGLE_LIGHT) {
-        if (r < 0.04) state.objects.push({type:treeVariant(), x:wx, y:wy, hp:5, maxHp:5});
-        else if (r < 0.05) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4});
-        else if (r < 0.054) state.objects.push({type:'berry', x:wx, y:wy, hp:1, maxHp:1, respawn:0});
-        else if (r < 0.058) state.objects.push({type:'fern', x:wx, y:wy, decor:true});
+        if (r < 0.022) state.objects.push({type:treeVariant(), x:wx, y:wy, hp:5, maxHp:5});
+        else if (r < 0.027) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4});
+        else if (r < 0.030) state.objects.push({type:'berry', x:wx, y:wy, hp:1, maxHp:1, respawn:0});
+        else if (r < 0.034) state.objects.push({type:'fern', x:wx, y:wy, decor:true});
       } else if (t === T.JUNGLE_DARK) {
-        if (r < 0.05) state.objects.push({type:treeVariant(), x:wx, y:wy, hp:5, maxHp:5});
-        else if (r < 0.06) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4});
-        else if (r < 0.062) state.objects.push({type:'jungle_chest', x:wx, y:wy, opened:false});
-        else if (r < 0.064) state.creatures.push({type:'spider', x:wx, y:wy, hp:25, maxHp:25, spd:1.05, attackTimer:0, walkTimer:0});
-        else if (r < 0.067) state.objects.push({type:'fern', x:wx, y:wy, decor:true});
+        if (r < 0.028) state.objects.push({type:treeVariant(), x:wx, y:wy, hp:5, maxHp:5});
+        else if (r < 0.032) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4});
+        else if (r < 0.034) state.objects.push({type:'jungle_chest', x:wx, y:wy, opened:false});
+        else if (r < 0.036) state.creatures.push({type:'spider', x:wx, y:wy, hp:25, maxHp:25, spd:1.05, attackTimer:0, walkTimer:0});
+        else if (r < 0.039) state.objects.push({type:'fern', x:wx, y:wy, decor:true});
       } else if (t === T.BEACH) {
-        if (r < 0.008) state.objects.push({type:'palm', x:wx, y:wy, hp:4, maxHp:4, respawn:0});
-        else if (r < 0.015) state.objects.push({type:'driftwood', x:wx, y:wy, collected:false});
-        else if (r < 0.02) state.objects.push({type:'fish_spot', x:wx, y:wy, shimmer:Math.random()*100});
+        if (r < 0.006) state.objects.push({type:'palm', x:wx, y:wy, hp:4, maxHp:4, respawn:0});
+        else if (r < 0.010) state.objects.push({type:'driftwood', x:wx, y:wy, collected:false});
+        else if (r < 0.014) state.objects.push({type:'fish_spot', x:wx, y:wy, shimmer:Math.random()*100});
       } else if (t === T.SHALLOW_WATER) {
-        if (r < 0.006) state.objects.push({type:'fish_spot', x:wx, y:wy, shimmer:Math.random()*100});
-        else if (r < 0.008) state.creatures.push({type:'croc', x:wx, y:wy, hp:60, maxHp:60, spd:0.35, attackTimer:0, walkTimer:0});
+        if (r < 0.004) state.objects.push({type:'fish_spot', x:wx, y:wy, shimmer:Math.random()*100});
+        else if (r < 0.006) state.creatures.push({type:'croc', x:wx, y:wy, hp:60, maxHp:60, spd:0.35, attackTimer:0, walkTimer:0});
       } else if (t === T.VOLCANIC) {
         if (r < 0.04) state.objects.push({type:'vol_rock', x:wx, y:wy, hp:3, maxHp:3});
       }
