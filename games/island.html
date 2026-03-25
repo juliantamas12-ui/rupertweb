@@ -348,6 +348,24 @@ function genObjects() {
   // Volcano loot chest at top
   state.objects.push({type:'vol_chest', x:125*TSIZE, y:66*TSIZE, opened:false});
 
+  // Parkour stepping stones — path from jungle to volcano summit
+  // These are visual platforms (BEACH tiles carved into lava zones)
+  // The map already handles this via tile types; add visual stone markers
+  const parkourPath = [
+    [125,155],[125,150],[124,145],[125,140],[126,135],
+    [125,130],[124,125],[125,120],[125,115],[125,110],
+    [125,105],[125,100],[125,95],[125,90],[125,85],
+    [125,80],[125,75],[125,70]
+  ];
+  parkourPath.forEach(([px2, py2]) => {
+    // Carve safe path through volcanic zone — force VOLCANIC (passable) not LAVA
+    if (state.map[py2] && state.map[py2][px2] === T.LAVA) {
+      state.map[py2][px2] = T.VOLCANIC;
+    }
+    // Add stone marker objects for visibility
+    state.objects.push({type:'step_stone', x:px2*TSIZE+8, y:py2*TSIZE+8});
+  });
+
   // Lore stones hidden in jungle
   const lorePositions = [
     [95,110],[80,125],[105,95],[115,105],[88,100]
@@ -371,46 +389,27 @@ function px(ctx, color, x, y, w, h) {
 
 function drawPlayer(ctx, sx, sy, p) {
   const wf = p.walkFrame;
-  const bob = p.onGround ? Math.sin(p.walkTimer * 0.3) * 2 : 0;
+  const bob = p.onGround ? Math.sin(p.walkTimer * 0.3) * 1.5 : 0;
   const ay = sy + bob;
+  const airTilt = p.onGround ? 0 : -4; // slight visual lift when airborne
 
   // Shadow
-  px(ctx, 'rgba(0,0,0,0.3)', sx-8, ay+18, 16, 4);
+  px(ctx, 'rgba(0,0,0,0.25)', sx-7, ay+16, 14, 3);
 
-  // Legs
-  const lLeg = Math.sin(wf * 0.5) * 5;
-  const rLeg = -Math.sin(wf * 0.5) * 5;
-  px(ctx, '#6b3d1e', sx-6, ay+8+lLeg, 5, 10);
-  px(ctx, '#6b3d1e', sx+1, ay+8+rLeg, 5, 10);
-  // Boots
-  px(ctx, '#3d1e0a', sx-7, ay+16+lLeg, 7, 4);
-  px(ctx, '#3d1e0a', sx+0, ay+16+rLeg, 7, 4);
+  // Simple Terraria-style character: head + body + 2 legs
+  // Legs (alternating when walking)
+  const legSwing = p.onGround ? Math.sin(p.walkTimer * 0.35) * 4 : 0;
+  px(ctx, '#4a2e10', sx-5, ay+6+legSwing, 5, 10); // left leg
+  px(ctx, '#4a2e10', sx+0, ay+6-legSwing, 5, 10); // right leg
 
-  // Body
-  px(ctx, '#2d7a2d', sx-7, ay-2, 14, 12);
-  // Belt
-  px(ctx, '#5c3d1e', sx-7, ay+8, 14, 2);
+  // Body (green shirt)
+  px(ctx, '#2a7a2a', sx-6, ay-4, 12, 12);
 
-  // Arms
-  const lArm = -lLeg * 0.5;
-  const rArm = -rLeg * 0.5;
-  px(ctx, '#c8a07a', sx-11, ay+lArm, 5, 9);
-  px(ctx, '#c8a07a', sx+6, ay+rArm, 5, 9);
-
-  // Head
-  px(ctx, '#c8a07a', sx-6, ay-14, 12, 12);
-  // Ears
-  px(ctx, '#b89060', sx-8, ay-11, 3, 5);
-  px(ctx, '#b89060', sx+5, ay-11, 3, 5);
-  // Hair
-  px(ctx, '#5c3d1e', sx-7, ay-16, 14, 4);
-  px(ctx, '#5c3d1e', sx-8, ay-14, 3, 6);
-  px(ctx, '#5c3d1e', sx+5, ay-14, 3, 6);
-  // Eyes
-  px(ctx, '#2c1810', sx-3, ay-9, 2, 3);
-  px(ctx, '#2c1810', sx+1, ay-9, 2, 3);
-  px(ctx, '#fff', sx-2, ay-10, 1, 1);
-  px(ctx, '#fff', sx+2, ay-10, 1, 1);
+  // Head (simple square)
+  px(ctx, '#c8a07a', sx-5, ay-14, 10, 10);
+  // Simple eyes
+  px(ctx, '#1a0a00', sx-3, ay-11, 2, 2);
+  px(ctx, '#1a0a00', sx+1, ay-11, 2, 2);
 
   // Torch glow at night
   if (p.torch && state.isNight) {
@@ -1263,9 +1262,17 @@ function updatePlayer() {
   }
 
   // Jump
+  // Jump arc — gives visual Y offset used in render
   if (!p.onGround) {
     p.airTime++;
-    if (p.airTime > 24) p.onGround = true;
+    // Parabolic arc: peak at frame 15, land at frame 30
+    p.jumpOffset = p.airTime < 15
+      ? -(p.airTime * 3.2)
+      : -((30 - p.airTime) * 3.2);
+    if (p.jumpOffset > 0) p.jumpOffset = 0;
+    if (p.airTime > 30) { p.onGround = true; p.jumpOffset = 0; }
+  } else {
+    p.jumpOffset = 0;
   }
 }
 
@@ -1905,6 +1912,11 @@ function render(ctx, minimapCtx) {
       case 'rock': case 'vol_rock': drawRock(ctx, sx, sy); if(obj.type==='vol_rock')drawVolRock(ctx,sx,sy); break;
       case 'berry': case 'fruit': drawBerry(ctx, sx, sy); break;
       case 'fish_spot': drawFishSpot(ctx, sx, sy); break;
+      case 'step_stone':
+        px(ctx, '#6a5a4a', sx-10, sy-4, 20, 8);
+        px(ctx, '#8a7a6a', sx-8, sy-6, 16, 4);
+        px(ctx, '#4a3a2a', sx-10, sy+2, 20, 4);
+        break;
       case 'driftwood':
         px(ctx, '#8B6914', sx-10, sy-2, 20, 4);
         px(ctx, '#7a5514', sx-6, sy-4, 6, 2);
@@ -1980,7 +1992,7 @@ function render(ctx, minimapCtx) {
   });
 
   // Player (always center)
-  drawPlayer(ctx, canvas.width/2, canvas.height/2, p);
+  drawPlayer(ctx, canvas.width/2, canvas.height/2 + (p.jumpOffset||0), p);
 
   // Particles
   drawParticles(ctx, camX, camY);
