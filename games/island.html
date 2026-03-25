@@ -9,33 +9,59 @@
 body{background:#000;overflow:hidden;font-family:'Courier New',monospace;user-select:none}
 canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges}
 #ui{position:fixed;top:0;left:0;right:0;padding:10px;pointer-events:none;z-index:10}
-#bars{display:flex;gap:12px;align-items:center;background:rgba(0,0,0,0.7);padding:8px 12px;border:2px solid #333;width:fit-content}
+#bars{display:flex;gap:12px;align-items:center;background:rgba(0,0,0,0.7);padding:8px 12px;border:2px solid #333;width:fit-content;flex-wrap:wrap}
 .bar-wrap{display:flex;flex-direction:column;gap:2px}
 .bar-lbl{color:#c8f135;font-size:10px;letter-spacing:2px}
 .bar-outer{width:120px;height:10px;background:#222;border:1px solid #555}
 .bar-inner{height:100%;transition:width 0.3s}
-#day-display{color:#c8f135;font-size:12px;letter-spacing:3px;margin-left:20px}
-#msg{position:fixed;top:60px;left:50%;transform:translateX(-50%);color:#ff4444;font-size:14px;letter-spacing:2px;text-align:center;pointer-events:none;z-index:10;text-shadow:0 0 10px #ff0000}
+#day-display{color:#c8f135;font-size:12px;letter-spacing:3px;margin-left:8px}
+#zone-display{color:#ff8844;font-size:11px;letter-spacing:2px;margin-left:8px}
+#build-mode-indicator{color:#44ffaa;font-size:11px;letter-spacing:2px;margin-left:8px;display:none}
+#msg{position:fixed;top:70px;left:50%;transform:translateX(-50%);color:#ff4444;font-size:14px;letter-spacing:2px;text-align:center;pointer-events:none;z-index:10;text-shadow:0 0 10px #ff0000;max-width:80%}
 #minimap{position:fixed;bottom:10px;right:10px;border:2px solid #555;z-index:10}
 #hotbar{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);display:flex;gap:4px;z-index:10}
-.slot{width:44px;height:44px;background:rgba(0,0,0,0.8);border:2px solid #555;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#c8f135;font-size:9px;letter-spacing:1px}
+.slot{width:44px;height:44px;background:rgba(0,0,0,0.8);border:2px solid #555;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#c8f135;font-size:9px;letter-spacing:1px;text-align:center}
 .slot.active{border-color:#c8f135}
 #overlay{position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff}
 #overlay h1{color:#c8f135;font-size:28px;letter-spacing:6px;margin-bottom:30px;text-shadow:0 0 20px #c8f135}
-#overlay .slide{max-width:520px;text-align:center;line-height:1.8;font-size:13px;letter-spacing:1px;color:#ccc;margin-bottom:30px}
+#overlay .slide{max-width:560px;text-align:center;line-height:1.8;font-size:13px;letter-spacing:1px;color:#ccc;margin-bottom:30px}
 #overlay .slide b{color:#c8f135}
 #overlay button{background:#c8f135;color:#000;border:none;padding:10px 32px;font-family:'Courier New',monospace;font-size:13px;letter-spacing:3px;cursor:pointer;font-weight:bold}
 #overlay button:hover{background:#fff}
-#inv-panel,#craft-panel{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#111;border:2px solid #c8f135;padding:20px;z-index:50;min-width:300px;display:none}
-#inv-panel h2,#craft-panel h2{color:#c8f135;font-size:14px;letter-spacing:3px;margin-bottom:15px}
-.inv-grid{display:grid;grid-template-columns:repeat(5,50px);gap:4px}
-.inv-slot{width:50px;height:50px;background:#222;border:1px solid #444;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#aaa;font-size:10px;text-align:center}
+#inv-panel,#craft-panel,#storage-panel,#minigame-panel{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#111;border:2px solid #c8f135;padding:20px;z-index:50;display:none}
+#inv-panel{min-width:320px}
+#craft-panel{min-width:340px}
+#storage-panel{min-width:360px}
+#minigame-panel{min-width:400px;min-height:200px;text-align:center}
+#inv-panel h2,#craft-panel h2,#storage-panel h2,#minigame-panel h2{color:#c8f135;font-size:14px;letter-spacing:3px;margin-bottom:15px}
+.inv-grid{display:grid;grid-template-columns:repeat(5,56px);gap:4px}
+.inv-slot{width:56px;height:56px;background:#222;border:1px solid #444;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#aaa;font-size:9px;text-align:center;cursor:pointer}
+.inv-slot:hover{border-color:#c8f135}
 .craft-recipe{padding:6px;border:1px solid #333;margin-bottom:6px;cursor:pointer;color:#aaa;font-size:11px;letter-spacing:1px}
 .craft-recipe:hover{border-color:#c8f135;color:#c8f135}
+.craft-recipe.locked{color:#444;cursor:default}
+.craft-recipe.locked:hover{border-color:#333;color:#444}
 .close-btn{position:absolute;top:8px;right:12px;color:#c8f135;cursor:pointer;font-size:16px}
+#build-selector{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);display:none;gap:8px;z-index:20}
+.build-opt{padding:8px 14px;background:rgba(0,0,0,0.9);border:2px solid #44ffaa;color:#44ffaa;font-size:11px;letter-spacing:2px;cursor:pointer;font-family:'Courier New',monospace}
+.build-opt.selected{background:#44ffaa;color:#000}
+.build-opt:hover{background:#44ffaa;color:#000}
 #win-screen{position:fixed;inset:0;background:#001133;z-index:200;display:none;flex-direction:column;align-items:center;justify-content:center;color:#fff}
 #win-screen h1{color:#c8f135;font-size:32px;letter-spacing:8px;margin-bottom:20px}
 #win-screen p{font-size:14px;letter-spacing:2px;color:#aaa}
+#controls-hint{position:fixed;top:10px;right:10px;background:rgba(0,0,0,0.7);border:1px solid #333;padding:8px;color:#888;font-size:10px;letter-spacing:1px;z-index:10;pointer-events:none;line-height:1.8}
+/* Minigame styles */
+#chop-bar-track{width:300px;height:28px;background:#333;border:2px solid #888;position:relative;margin:16px auto;overflow:hidden}
+#chop-bar-sweet{position:absolute;top:0;height:100%;background:#2ecc71;opacity:0.7}
+#chop-bar-indicator{position:absolute;top:0;width:8px;height:100%;background:#fff;transition:none}
+#chop-hits{color:#c8f135;font-size:18px;letter-spacing:4px;margin-top:8px}
+#fish-state{font-size:24px;margin:20px 0;letter-spacing:4px}
+#mine-crack-wrap{position:relative;width:120px;height:120px;margin:0 auto}
+#mine-zones{display:grid;grid-template-columns:1fr 1fr;gap:16px;width:200px;margin:10px auto}
+.mine-zone{width:60px;height:40px;border:2px solid #888;background:#222;cursor:pointer;font-size:10px;letter-spacing:1px;color:#aaa;display:flex;align-items:center;justify-content:center}
+.mine-zone.active{border-color:#c8f135;background:#333;color:#c8f135}
+.mine-zone.done{border-color:#2ecc71;background:#0a3a0a;color:#2ecc71}
+.mine-zone.wrong{border-color:#e74c3c;background:#3a0a0a;color:#e74c3c}
 </style>
 </head>
 <body>
@@ -46,8 +72,11 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges}
     <div class="bar-wrap"><div class="bar-lbl">WATER</div><div class="bar-outer"><div class="bar-inner" id="water-bar" style="width:100%;background:#3498db"></div></div></div>
     <div class="bar-wrap"><div class="bar-lbl">FOOD</div><div class="bar-outer"><div class="bar-inner" id="food-bar" style="width:100%;background:#e67e22"></div></div></div>
     <div id="day-display">DAY 1</div>
+    <div id="zone-display"></div>
+    <div id="build-mode-indicator">[ BUILD MODE ]</div>
   </div>
 </div>
+<div id="controls-hint">WASD:Move &nbsp; Space:Jump<br>B:Build &nbsp; I:Inv &nbsp; C:Craft<br>Click:Attack/Harvest</div>
 <div id="msg"></div>
 <canvas id="minimap" width="100" height="100"></canvas>
 <div id="hotbar">
@@ -57,15 +86,45 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges}
   <div class="slot" id="slot3">-</div>
   <div class="slot" id="slot4">-</div>
 </div>
+<!-- Build selector -->
+<div id="build-selector">
+  <div class="build-opt selected" data-type="campfire" onclick="selectBuild('campfire')">CAMPFIRE<br><small>5 Wood</small></div>
+  <div class="build-opt" data-type="wall" onclick="selectBuild('wall')">WALL<br><small>2 Wood</small></div>
+  <div class="build-opt" data-type="chest" onclick="selectBuild('chest')">CHEST<br><small>4 Wood+2 Stone</small></div>
+  <div class="build-opt" data-type="shelter" onclick="selectBuild('shelter')">SHELTER<br><small>10 Wood</small></div>
+</div>
+<!-- Panels -->
 <div id="inv-panel">
   <span class="close-btn" onclick="toggleInv()">X</span>
   <h2>INVENTORY</h2>
   <div class="inv-grid" id="inv-grid"></div>
+  <div style="margin-top:12px;color:#555;font-size:10px;letter-spacing:1px">CLICK FOOD TO EAT / DRINK</div>
 </div>
 <div id="craft-panel">
   <span class="close-btn" onclick="toggleCraft()">X</span>
   <h2>CRAFTING</h2>
   <div id="craft-list"></div>
+</div>
+<div id="storage-panel">
+  <span class="close-btn" onclick="closeStorage()">X</span>
+  <h2>STORAGE CHEST</h2>
+  <div style="display:flex;gap:20px">
+    <div>
+      <div style="color:#888;font-size:10px;letter-spacing:2px;margin-bottom:8px">YOUR INVENTORY</div>
+      <div class="inv-grid" id="storage-inv-grid"></div>
+    </div>
+    <div style="display:flex;align-items:center;color:#555;font-size:20px">&harr;</div>
+    <div>
+      <div style="color:#888;font-size:10px;letter-spacing:2px;margin-bottom:8px">CHEST</div>
+      <div class="inv-grid" id="storage-chest-grid"></div>
+    </div>
+  </div>
+</div>
+<!-- Minigame panel -->
+<div id="minigame-panel">
+  <span class="close-btn" id="minigame-close" onclick="cancelMinigame()">X</span>
+  <h2 id="minigame-title">MINIGAME</h2>
+  <div id="minigame-content"></div>
 </div>
 <div id="overlay">
   <h1>ISLAND SURVIVAL</h1>
@@ -78,19 +137,23 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges}
   <p style="margin-top:20px">You became the island leader and sailed away on your superyacht.</p>
 </div>
 <script>
+'use strict';
 const canvas=document.getElementById('c');
 const ctx=canvas.getContext('2d');
 ctx.imageSmoothingEnabled=false;
 canvas.width=window.innerWidth;
 canvas.height=window.innerHeight;
 
-// TUTORIAL
+// ===== TUTORIAL SLIDES =====
 const slides=[
-  {t:'CONTROLS',b:'<b>WASD</b> — Move<br><b>Mouse</b> — Aim<br><b>Click</b> — Attack / Harvest<br><b>I</b> — Inventory<br><b>C</b> — Crafting'},
-  {t:'SURVIVAL',b:'You have <b>Health</b>, <b>Water</b>, and <b>Food</b> bars.<br>Water and Food deplete over time.<br>If either runs out, your <b>Health</b> will drain.<br>Keep all three bars up to survive.'},
-  {t:'RESOURCES',b:'<b>Palm Trees</b> on the beach → Coconuts (Water)<br><b>Fruit Trees</b> in the jungle → Fruit (Food)<br><b>Fishing Spots</b> (shimmering water) → Fish (Food)<br><b>Trees</b> → Wood &nbsp;&nbsp; <b>Rocks</b> → Stone'},
-  {t:'ENEMIES',b:'<b>Tribal Warriors</b> patrol the jungle and volcano area.<br>They attack on sight. More appear each night.<br>The <b>Tribal Chief</b> appears on <b>Day 15</b>.<br>Defeat him to become <b>Island Leader</b>.'},
-  {t:'YOUR GOAL',b:'Gather resources. Build shelter and weapons.<br>Survive the tribal raids. Find the <b>Volcano</b>.<br>Defeat the <b>Tribal Chief</b> on Day 15.<br>Craft a <b>Superyacht</b> and escape the island!'}
+  {t:'CONTROLS',b:'<b>WASD</b> — Move &nbsp; <b>Space</b> — Jump<br><b>Mouse Click</b> — Attack / Harvest<br><b>I</b> — Inventory &nbsp; <b>C</b> — Crafting<br><b>B</b> — Build Mode'},
+  {t:'SURVIVAL',b:'You have <b>Health</b>, <b>Water</b>, and <b>Food</b> bars.<br>They deplete over time. Keep them up.<br>Eat fruit, fish, and coconuts to survive.'},
+  {t:'RESOURCES',b:'<b>Palm Trees</b> on beach → Coconuts (Water)<br><b>Fruit Trees</b> in jungle → Fruit (Food)<br><b>Fishing Spots</b> (shimmer) → Fishing minigame!<br><b>Trees</b> → Wood &nbsp; <b>Rocks</b> → Stone<br>Near <b>Volcano</b>: Volcanic Stone (rare)'},
+  {t:'MINIGAMES',b:'<b>Tree Chopping:</b> Press Space in sweet spot!<br><b>Mining:</b> Click crack zones in sequence!<br><b>Fishing:</b> Wait for the bite, press Space fast!<br>Better timing = more resources.'},
+  {t:'BUILD MODE',b:'Press <b>B</b> to enter build mode.<br>Choose: <b>Campfire</b>, <b>Wall</b>, <b>Chest</b>, <b>Shelter</b>.<br>Click to place. Walls <b>block enemies</b>.<br>Chests store items. Shelter boosts max HP.'},
+  {t:'JUNGLE + VOLCANO',b:'The <b>Jungle</b> has dense zones that slow you.<br>Navigate maze paths toward the <b>Volcano</b>.<br>Near the volcano: <b>Volcanic Zone</b> — warm tint, rare resources, stronger enemies.<br>Reach the top for the <b>Fire Axe &amp; Fire Spear</b>!'},
+  {t:'ENEMIES',b:'Warriors spawn at night, more each day.<br><b>Day 5</b>: Archers with ranged attacks appear!<br><b>Day 15</b>: The <b>Tribal Chief</b> appears.<br>Chief has 3 phases — fight carefully.<br>Defeat him to become <b>Island Leader</b>.'},
+  {t:'YOUR GOAL',b:'Gather resources. Build shelter and weapons.<br>Survive the raids. Conquer the Jungle maze.<br>Defeat the <b>Tribal Chief</b> on Day 15.<br>Craft a <b>Superyacht</b> and escape the island!'}
 ];
 let slideIdx=0;
 function showSlide(){
@@ -104,139 +167,234 @@ function nextSlide(){
 }
 showSlide();
 
-// TILE TYPES
-const T={OCEAN:0,BEACH:1,JUNGLE:2,VOLCANIC:3,ROCK:4};
+// ===== TILE TYPES =====
+const T={OCEAN:0,BEACH:1,JUNGLE:2,VOLCANIC:3,ROCK:4,LAVA:5,DENSE_JUNGLE:6,WALL:7};
 const TSIZE=16;
 const MSIZE=250;
 let map=[];
+let jungleMazeWalls=new Set(); // "tx,ty" keys for maze walls
 
+// ===== MAP GENERATION =====
 function genMap(){
   map=[];
+  jungleMazeWalls.clear();
   const cx=MSIZE/2,cy=MSIZE/2;
+  const vx=cx,vy=cy-60; // volcano center
+
   for(let y=0;y<MSIZE;y++){
     map[y]=[];
     for(let x=0;x<MSIZE;x++){
       const dx=x-cx,dy=y-cy;
-      // Volcano area
-      const vx=cx,vy=cy-60;
       const dvx=x-vx,dvy=y-vy;
       const vdist=Math.sqrt(dvx*dvx+dvy*dvy);
-      // Island shape with noise
       const angle=Math.atan2(dy,dx);
       const noise=Math.sin(angle*3)*8+Math.sin(angle*7)*4+Math.cos(angle*5)*5;
       const islandR=70+noise;
       const dist=Math.sqrt(dx*dx+dy*dy);
-      if(dist>islandR+12)map[y][x]=T.OCEAN;
-      else if(dist>islandR)map[y][x]=T.BEACH;
-      else if(vdist<20)map[y][x]=T.VOLCANIC;
-      else if(vdist<35)map[y][x]=T.ROCK;
-      else if(dist<islandR-8)map[y][x]=T.JUNGLE;
+      if(dist>islandR+12) map[y][x]=T.OCEAN;
+      else if(dist>islandR) map[y][x]=T.BEACH;
+      else if(vdist<8) map[y][x]=T.LAVA;
+      else if(vdist<18) map[y][x]=T.VOLCANIC;
+      else if(vdist<32) map[y][x]=T.ROCK;
+      else if(dist<islandR-8) map[y][x]=T.JUNGLE;
       else map[y][x]=T.BEACH;
+    }
+  }
+
+  // Dense jungle zones
+  const rng=(s)=>{ let h=s;for(let i=0;i<8;i++)h=(h^(h<<13)^(h>>7))>>>0;return(h%1000)/1000; };
+  for(let y=0;y<MSIZE;y++){
+    for(let x=0;x<MSIZE;x++){
+      if(map[y][x]===T.JUNGLE){
+        const r=rng(x*1000+y);
+        if(r<0.20) map[y][x]=T.DENSE_JUNGLE;
+      }
+    }
+  }
+
+  // Jungle maze walls (vine/rock barriers that create paths)
+  // Horizontal corridors through jungle
+  for(let i=0;i<30;i++){
+    const wx=Math.floor(cx-30+Math.random()*60);
+    const wy=Math.floor(vy+30+Math.random()*50);
+    const len=Math.floor(3+Math.random()*8);
+    const horiz=Math.random()>0.5;
+    for(let j=0;j<len;j++){
+      const tx=horiz?wx+j:wx;
+      const ty=horiz?wy:wy+j;
+      if(ty>=0&&ty<MSIZE&&tx>=0&&tx<MSIZE&&map[ty][tx]===T.JUNGLE){
+        jungleMazeWalls.add(`${tx},${ty}`);
+      }
+    }
+  }
+
+  // Lava rock platforms near volcano (for parkour)
+  for(let i=0;i<20;i++){
+    const a=Math.random()*Math.PI*2;
+    const r=20+Math.random()*15;
+    const lx=Math.round(vx+Math.cos(a)*r);
+    const ly=Math.round(vy+Math.sin(a)*r);
+    if(ly>=0&&ly<MSIZE&&lx>=0&&lx<MSIZE&&map[ly][lx]===T.OCEAN||map[ly]&&map[ly][lx]===T.BEACH){
+      // Skip — keep lava near volcano
+    }
+    if(ly>=0&&ly<MSIZE&&lx>=0&&lx<MSIZE&&(map[ly][lx]===T.VOLCANIC||map[ly][lx]===T.ROCK)){
+      // Already good
     }
   }
 }
 
-// OBJECTS
+// ===== OBJECTS =====
 let trees=[],rocks=[],palms=[],fruits=[],fishSpots=[],enemies=[],particles=[];
+let placedObjects=[]; // {type, x, y, hp, storage:{...}}
+let arrows=[]; // {x, y, vx, vy, life}
 let chief=null;
+let lavaParticles=[];
 
 function genObjects(){
+  trees=[];rocks=[];palms=[];fruits=[];fishSpots=[];enemies=[];particles=[];arrows=[];
+  placedObjects=[];chief=null;lavaParticles=[];
+
+  const cx=MSIZE/2,cy=MSIZE/2;
+  const vx=cx,vy=cy-60;
+
   for(let y=0;y<MSIZE;y++){
     for(let x=0;x<MSIZE;x++){
       const t=map[y][x];
       const wx=x*TSIZE+8,wy=y*TSIZE+8;
-      if(t===T.JUNGLE&&Math.random()<0.06)trees.push({x:wx,y:wy,hp:5,maxHp:5,type:'tree'});
-      if(t===T.JUNGLE&&Math.random()<0.04)fruits.push({x:wx,y:wy,hp:3,maxHp:3,type:'fruit',respawn:0});
-      if((t===T.BEACH||t===T.JUNGLE)&&Math.random()<0.015)rocks.push({x:wx,y:wy,hp:4,maxHp:4,type:'rock'});
-      if(t===T.BEACH&&Math.random()<0.04)palms.push({x:wx,y:wy,hp:4,maxHp:4,type:'palm',respawn:0});
-      if(t===T.BEACH&&Math.random()<0.01)fishSpots.push({x:wx,y:wy,type:'fish',shimmer:0});
+      const key=`${x},${y}`;
+      if(jungleMazeWalls.has(key)) continue; // skip maze wall tiles for objects
+      if((t===T.JUNGLE||t===T.DENSE_JUNGLE)&&Math.random()<0.07) trees.push({x:wx,y:wy,hp:5,maxHp:5,type:'tree',swayOff:Math.random()*Math.PI*2});
+      if((t===T.JUNGLE||t===T.DENSE_JUNGLE)&&Math.random()<0.04) fruits.push({x:wx,y:wy,hp:3,maxHp:3,type:'fruit',respawn:0});
+      if((t===T.BEACH||t===T.JUNGLE)&&Math.random()<0.015) rocks.push({x:wx,y:wy,hp:4,maxHp:4,type:'rock',crackLevel:0});
+      if(t===T.ROCK&&Math.random()<0.05) rocks.push({x:wx,y:wy,hp:5,maxHp:5,type:'volcrock',crackLevel:0});
+      if(t===T.BEACH&&Math.random()<0.04) palms.push({x:wx,y:wy,hp:4,maxHp:4,type:'palm',respawn:0});
+      if(t===T.BEACH&&Math.random()<0.012) fishSpots.push({x:wx,y:wy,type:'fish',shimmer:0});
     }
   }
 }
 
-// PLAYER
+// ===== PLAYER =====
 let player={
   x:MSIZE/2*TSIZE,y:(MSIZE/2+50)*TSIZE,
   hp:100,maxHp:100,water:100,maxWater:100,food:100,maxFood:100,
-  spd:2,dir:0,attacking:false,attackTimer:0,
-  inv:{wood:0,stone:0,coconut:0,fruit:0,fish:0,campfire:0,axe:0,spear:0,raft:0},
-  chiefDefeated:false
+  spd:2,dir:1,
+  velY:0, // for jumping
+  isJumping:false,
+  jumpHeight:0, // visual height offset
+  lastGroundY:0,
+  inv:{wood:0,stone:0,volcstone:0,coconut:0,fruit:0,fish:0,axe:0,spear:0,fireaxe:0,firespear:0,raft:0},
+  chiefDefeated:false,
+  hasShelter:false,
+  hasSmoker:false,
+  hasWaterBarrel:false,
+  walkFrame:0,
+  walkTimer:0
 };
 
-// GAME STATE
+// ===== GAME STATE =====
 let gameRunning=false;
-let dayTime=0; // 0-1
+let dayTime=0;
 let dayCount=1;
-const DAY_DURATION=180*60; // 3 min in frames
+const DAY_DURATION=180*60;
 let frameCount=0;
 let isNight=false;
 let keys={};
 let mx=0,my=0;
-let msgTimer=0;
-let msgText='';
+let msgTimer=0,msgText='';
 let waterTimer=0,foodTimer=0;
 let enemySpawnTimer=0;
+let screenShake={x:0,y:0,timer:0};
+let volcanoChestLooted=false;
 
-function showMsg(t){msgText=t;msgTimer=180;}
+// Build mode
+let buildMode=false;
+let buildType='campfire';
 
-// COLORS
-const TILE_COLORS=[
-  '#1a3a5c', // OCEAN
-  '#e8d49a', // BEACH
-  '#2d6e2d', // JUNGLE
-  '#4a3030', // VOLCANIC
-  '#555566', // ROCK
-];
-const OCEAN_DARK='#0d1f33';
+// Minigame state
+let activeMinigame=null; // 'chop','mine','fish'
+let minigameTarget=null; // reference to the object
+let chopProgress=0,chopHits=0,chopIndicatorPos=0,chopIndicatorDir=1,chopSweetStart=0.35,chopSweetEnd=0.65;
+let minePhase=0,mineSequence=[],mineUserSeq=[],mineZones=[];
+let fishState='idle',fishWaitTimer=0,fishBiteTimer=0;
 
-function getTileColor(type,x,y){
-  if(type===T.OCEAN){
-    // Vary ocean depth
-    const cx=MSIZE/2,cy=MSIZE/2;
-    const dx=(x/TSIZE)-cx,dy=(y/TSIZE)-cy;
-    const d=Math.sqrt(dx*dx+dy*dy);
-    return d>100?OCEAN_DARK:TILE_COLORS[0];
-  }
-  return TILE_COLORS[type];
+// Storage
+let openChest=null; // reference to placed chest object
+
+function showMsg(t,color){
+  msgText=t;msgTimer=200;
+  const el=document.getElementById('msg');
+  el.textContent=t;
+  el.style.color=color||'#ff4444';
+  el.style.textShadow=color?`0 0 10px ${color}`:'0 0 10px #ff0000';
+}
+function doScreenShake(intensity){
+  screenShake.timer=15;
+  screenShake.x=(Math.random()-0.5)*intensity;
+  screenShake.y=(Math.random()-0.5)*intensity;
 }
 
-// DRAW PIXEL SPRITES
-function drawPixelTree(x,y,trunk){
-  // Trunk
-  ctx.fillStyle=trunk||'#5c3d1e';
-  ctx.fillRect(x-4,y+4,8,12);
-  // Foliage layers
-  ctx.fillStyle='#1a5c1a';
-  ctx.fillRect(x-12,y-4,24,10);
-  ctx.fillStyle='#22772a';
-  ctx.fillRect(x-8,y-12,16,10);
-  ctx.fillStyle='#2d9e35';
-  ctx.fillRect(x-4,y-18,8,8);
+// ===== COLORS =====
+const TILE_COLORS=['#1a3a5c','#e8d49a','#2d6e2d','#4a3030','#555566','#cc3300','#1a4a1a','#5c4a2a'];
+const OCEAN_DARK='#0d1f33';
+let waterAnimPhase=0;
+
+function getTileColor(type,tx,ty){
+  if(type===T.OCEAN){
+    const cx=MSIZE/2,cy=MSIZE/2;
+    const dx=tx-cx,dy=ty-cy;
+    const d=Math.sqrt(dx*dx+dy*dy);
+    const wave=Math.sin(waterAnimPhase*0.05+tx*0.3+ty*0.2)*10;
+    const r=Math.round(26+wave);const g=Math.round(58+wave*0.5);const b=Math.round(92+wave*0.8);
+    return d>100?OCEAN_DARK:`rgb(${r},${g},${b})`;
+  }
+  if(type===T.DENSE_JUNGLE) return '#1a4a1a';
+  if(type===T.WALL) return '#5c4a2a';
+  return TILE_COLORS[type]||'#222';
+}
+
+// ===== PIXEL SPRITE DRAWERS =====
+function drawPixelTree(x,y,sway,isDense){
+  const sw=Math.sin(sway)*3;
+  ctx.fillStyle='#5c3d1e';
+  ctx.fillRect(x-4+sw*0.3,y+4,8,12);
+  ctx.fillStyle=isDense?'#0d3a0d':'#1a5c1a';
+  ctx.fillRect(x-12+sw,y-4,24,10);
+  ctx.fillStyle=isDense?'#124a12':'#22772a';
+  ctx.fillRect(x-8+sw*0.8,y-12,16,10);
+  ctx.fillStyle=isDense?'#1a6020':'#2d9e35';
+  ctx.fillRect(x-4+sw*0.5,y-18,8,8);
 }
 
 function drawPixelPalm(x,y){
   ctx.fillStyle='#7a5c2e';
   ctx.fillRect(x-3,y,6,20);
-  ctx.fillStyle='#7a5c2e';
   ctx.fillRect(x-3,y-4,4,8);
-  // Fronds
   ctx.fillStyle='#2d8c2d';
   ctx.fillRect(x-20,y-8,18,4);
   ctx.fillRect(x+2,y-8,18,4);
   ctx.fillRect(x-10,y-16,20,4);
-  // Coconuts
   ctx.fillStyle='#5c3d1e';
   ctx.fillRect(x-5,y-2,4,4);
   ctx.fillRect(x+1,y-2,4,4);
 }
 
-function drawPixelRock(x,y){
-  ctx.fillStyle='#666677';
+function drawPixelRock(x,y,crackLevel,isVolc){
+  ctx.fillStyle=isVolc?'#4a3030':'#666677';
   ctx.fillRect(x-8,y-4,16,10);
-  ctx.fillStyle='#888899';
+  ctx.fillStyle=isVolc?'#5a4040':'#888899';
   ctx.fillRect(x-6,y-8,12,6);
-  ctx.fillStyle='#444455';
+  ctx.fillStyle=isVolc?'#333020':'#444455';
   ctx.fillRect(x-4,y+4,8,4);
+  if(crackLevel>0){
+    ctx.fillStyle='rgba(0,0,0,0.7)';
+    ctx.fillRect(x-2,y-6,1,6);
+    if(crackLevel>1) ctx.fillRect(x+2,y-4,1,8);
+    if(crackLevel>2) ctx.fillRect(x-4,y,6,1);
+  }
+  if(isVolc){
+    ctx.fillStyle='rgba(255,100,0,0.3)';
+    ctx.fillRect(x-8,y-4,16,10);
+  }
 }
 
 function drawPixelFruit(x,y){
@@ -254,48 +412,81 @@ function drawPixelFishSpot(x,y,shimmer){
   ctx.fillStyle='rgba(200,240,255,0.6)';
   ctx.fillRect(x-6,y-2,4,4);
   ctx.fillRect(x+2,y-2,4,4);
-}
-
-function drawPixelPlayer(x,y,dir){
-  // Shadow
-  ctx.fillStyle='rgba(0,0,0,0.3)';
-  ctx.fillRect(x-6,y+14,12,4);
-  // Legs
-  ctx.fillStyle='#7a4a1e';
-  ctx.fillRect(x-6,y+6,5,10);
-  ctx.fillRect(x+1,y+6,5,10);
-  // Body
-  ctx.fillStyle='#2d7a2d';
-  ctx.fillRect(x-7,y-4,14,12);
-  // Arms
-  ctx.fillStyle='#c8a07a';
-  ctx.fillRect(x-11,y-2,5,8);
-  ctx.fillRect(x+6,y-2,5,8);
-  // Head
-  ctx.fillStyle='#c8a07a';
-  ctx.fillRect(x-6,y-14,12,12);
-  // Hair/hat
-  ctx.fillStyle='#5c3d1e';
-  ctx.fillRect(x-7,y-16,14,4);
-  ctx.fillRect(x-8,y-14,16,2);
-  // Eyes
-  ctx.fillStyle='#000';
-  if(dir>=0){ctx.fillRect(x-3,y-10,2,2);ctx.fillRect(x+1,y-10,2,2);}
-  else{ctx.fillRect(x-3,y-10,2,2);ctx.fillRect(x+1,y-10,2,2);}
-  // Weapon
-  if(player.inv.spear>0){
-    ctx.fillStyle='#5c3d1e';
-    ctx.fillRect(x+10,y-20,3,30);
-    ctx.fillStyle='#888';
-    ctx.fillRect(x+8,y-24,6,6);
+  // Fish icon when biting
+  if(fishState==='biting'&&minigameTarget&&Math.hypot(minigameTarget.x-x,minigameTarget.y-y)<2){
+    ctx.fillStyle='#ff8800';
+    ctx.fillRect(x-8,y-14,16,10);
+    ctx.fillStyle='#ffaa44';
+    ctx.fillRect(x-6,y-12,4,6);
   }
 }
 
-function drawPixelEnemy(x,y,isChief){
+function drawPixelPlayer(x,y,dir,wf,jh){
+  const yy=y-jh;
+  ctx.fillStyle='rgba(0,0,0,0.3)';
+  ctx.fillRect(x-6,y+14,12,4);
+  // Walking legs
+  const l1=Math.sin(wf*0.2)*4;
+  const l2=Math.sin(wf*0.2+Math.PI)*4;
+  ctx.fillStyle='#7a4a1e';
+  ctx.fillRect(x-6,yy+6,5,10+l1);
+  ctx.fillRect(x+1,yy+6,5,10+l2);
+  // Body
+  ctx.fillStyle='#2d7a2d';
+  ctx.fillRect(x-7,yy-4,14,12);
+  // Arms (swing with walk)
+  ctx.fillStyle='#c8a07a';
+  ctx.fillRect(x-11,yy-2+l2*0.5,5,8);
+  ctx.fillRect(x+6,yy-2+l1*0.5,5,8);
+  // Head
+  ctx.fillStyle='#c8a07a';
+  ctx.fillRect(x-6,yy-14,12,12);
+  // Hat
+  ctx.fillStyle='#5c3d1e';
+  ctx.fillRect(x-7,yy-16,14,4);
+  ctx.fillRect(x-8,yy-14,16,2);
+  // Eyes
+  ctx.fillStyle='#000';
+  if(dir>0){ctx.fillRect(x+1,yy-10,2,2);ctx.fillRect(x-3,yy-10,2,2);}
+  else{ctx.fillRect(x-3,yy-10,2,2);ctx.fillRect(x+1,yy-10,2,2);}
+  // Weapon
+  if(player.inv.firespear>0){
+    ctx.fillStyle='#5c3d1e';ctx.fillRect(x+10,yy-20,3,30);
+    ctx.fillStyle='#ff6600';ctx.fillRect(x+8,yy-24,6,6);
+    ctx.fillStyle='rgba(255,100,0,0.5)';ctx.fillRect(x+7,yy-26,8,8);
+  } else if(player.inv.spear>0){
+    ctx.fillStyle='#5c3d1e';ctx.fillRect(x+10,yy-20,3,30);
+    ctx.fillStyle='#888';ctx.fillRect(x+8,yy-24,6,6);
+  } else if(player.inv.fireaxe>0){
+    ctx.fillStyle='#5c3d1e';ctx.fillRect(x+10,yy-10,3,16);
+    ctx.fillStyle='#ff6600';ctx.fillRect(x+8,yy-14,10,10);
+  } else if(player.inv.axe>0){
+    ctx.fillStyle='#5c3d1e';ctx.fillRect(x+10,yy-10,3,16);
+    ctx.fillStyle='#888';ctx.fillRect(x+8,yy-14,10,8);
+  }
+  // Jump effect
+  if(player.isJumping&&jh>2){
+    ctx.fillStyle='rgba(255,255,255,0.15)';
+    ctx.fillRect(x-8,yy+16,16,4);
+  }
+}
+
+function drawPixelEnemy(x,y,e){
+  const isChief=e.isChief;
   const sc=isChief?1.5:1;
   const h=isChief?20:14;
+  const phase=e.chiefPhase||0;
+  // Enraged coloring
+  const bodyCol=phase>=2?'#cc0000':phase>=1?(isChief?'#8b1a1a':'#5c2e0a'):(isChief?'#7a1a1a':'#5c2e0a');
+  // Walk animation
+  const wf=e.walkFrame||0;
+  const l1=Math.sin(wf*0.15)*3,l2=Math.sin(wf*0.15+Math.PI)*3;
+  // Legs
+  ctx.fillStyle='#3a1e06';
+  ctx.fillRect(x-Math.round(6*sc),y+4,Math.round(5*sc),8+l1);
+  ctx.fillRect(x+Math.round(1*sc),y+4,Math.round(5*sc),8+l2);
   // Body
-  ctx.fillStyle=isChief?'#8b1a1a':'#5c2e0a';
+  ctx.fillStyle=bodyCol;
   ctx.fillRect(x-Math.round(7*sc),y-4,Math.round(14*sc),Math.round(10*sc));
   // War paint
   ctx.fillStyle='#e74c3c';
@@ -304,121 +495,357 @@ function drawPixelEnemy(x,y,isChief){
   // Head
   ctx.fillStyle='#7a4a20';
   ctx.fillRect(x-Math.round(6*sc),y-h,Math.round(12*sc),Math.round(12*sc));
-  // Eyes
-  ctx.fillStyle='#ff4444';
+  // Eyes (red for enraged)
+  ctx.fillStyle=phase>=1?'#ff0000':'#ff4444';
   ctx.fillRect(x-Math.round(3*sc),y-h+4,2,2);
   ctx.fillRect(x+Math.round(1*sc),y-h+4,2,2);
-  // Headdress for chief
+  // Chief headdress
   if(isChief){
     ctx.fillStyle='#e74c3c';
-    ctx.fillRect(x-10,y-h-10,6,12);
-    ctx.fillRect(x-4,y-h-14,4,16);
-    ctx.fillRect(x+0,y-h-10,6,12);
+    ctx.fillRect(x-10,y-h-10,6,12);ctx.fillRect(x-4,y-h-14,4,16);ctx.fillRect(x+0,y-h-10,6,12);
     ctx.fillStyle='#f39c12';
-    ctx.fillRect(x-10,y-h-8,4,4);
-    ctx.fillRect(x+6,y-h-8,4,4);
+    ctx.fillRect(x-10,y-h-8,4,4);ctx.fillRect(x+6,y-h-8,4,4);
+    if(phase>=2){
+      ctx.fillStyle='rgba(255,50,0,0.5)';
+      ctx.fillRect(x-14,y-h-18,28,20);
+    }
   }
-  // Spear
-  ctx.fillStyle='#5c3d1e';
-  ctx.fillRect(x+10,y-20,3,28);
-  ctx.fillStyle='#aaa';
-  ctx.fillRect(x+8,y-24,6,6);
+  // Archer bow
+  if(e.isArcher){
+    ctx.fillStyle='#8b4513';
+    ctx.fillRect(x+10,y-16,3,20);
+    ctx.fillRect(x+10,y-14,8,2);
+    ctx.fillRect(x+10,y-4,8,2);
+    ctx.strokeStyle='#aaa';
+    ctx.beginPath();ctx.moveTo(x+18,y-12);ctx.lineTo(x+18,y-2);ctx.stroke();
+  } else {
+    // Spear
+    ctx.fillStyle='#5c3d1e';ctx.fillRect(x+10,y-20,3,28);
+    ctx.fillStyle='#aaa';ctx.fillRect(x+8,y-24,6,6);
+  }
 }
 
-function drawVolcano(cx,cy){
+function drawPixelArrow(x,y,vx,vy){
+  ctx.fillStyle='#8b4513';
+  ctx.fillRect(x-2,y-2,4,4);
+  ctx.fillStyle='#ccc';
+  ctx.fillRect(x,y,Math.sign(vx)*6,1);
+  ctx.fillRect(x,y,1,Math.sign(vy)*6);
+}
+
+function drawPlacedObject(x,y,type){
+  if(type==='campfire'){
+    ctx.fillStyle='#5c3d1e';
+    ctx.fillRect(x-8,y+4,16,6);
+    ctx.fillStyle='rgba(255,100,0,0.9)';
+    ctx.fillRect(x-4,y-6,8,10);
+    ctx.fillStyle='rgba(255,200,0,0.8)';
+    ctx.fillRect(x-2,y-10,4,8);
+    ctx.fillStyle='rgba(255,50,0,0.5)';
+    ctx.fillRect(x-6,y-4,12,8);
+  } else if(type==='wall'){
+    ctx.fillStyle='#8b7355';
+    ctx.fillRect(x-8,y-14,16,28);
+    ctx.fillStyle='#6b5a40';
+    ctx.fillRect(x-8,y-14,16,4);
+    ctx.fillRect(x-8,y-6,16,4);
+    ctx.fillRect(x-8,y+2,16,4);
+    ctx.fillRect(x-8,y+10,16,4);
+    ctx.fillStyle='rgba(0,0,0,0.2)';
+    ctx.fillRect(x-8,y-14,2,28);
+  } else if(type==='chest'){
+    ctx.fillStyle='#8b6914';
+    ctx.fillRect(x-12,y-6,24,16);
+    ctx.fillStyle='#5c4a0a';
+    ctx.fillRect(x-12,y-6,24,6);
+    ctx.fillStyle='#c8a020';
+    ctx.fillRect(x-3,y-4,6,4);
+    ctx.fillRect(x-1,y-8,2,2);
+    ctx.fillStyle='#6b5010';
+    ctx.fillRect(x-12,y-8,24,4);
+  } else if(type==='shelter'){
+    ctx.fillStyle='#5c4a2e';
+    ctx.fillRect(x-18,y,36,16);
+    ctx.fillStyle='#7a3a1e';
+    ctx.fillRect(x-20,y-12,40,14);
+    ctx.fillRect(x-14,y-22,28,12);
+    ctx.fillRect(x-8,y-30,16,10);
+    ctx.fillStyle='rgba(0,0,0,0.3)';
+    ctx.fillRect(x-4,y,8,16);
+  }
+}
+
+function drawVolcano(cx,cy,t){
   // Base
-  ctx.fillStyle='#3a2020';
-  ctx.fillRect(cx-80,cy-20,160,60);
-  // Mountain shape
-  ctx.fillStyle='#4a2828';
-  ctx.fillRect(cx-60,cy-50,120,40);
-  ctx.fillStyle='#5c3030';
-  ctx.fillRect(cx-40,cy-70,80,30);
-  ctx.fillStyle='#4a2020';
-  ctx.fillRect(cx-24,cy-90,48,28);
+  ctx.fillStyle='#3a2020';ctx.fillRect(cx-80,cy-20,160,60);
+  ctx.fillStyle='#4a2828';ctx.fillRect(cx-60,cy-50,120,40);
+  ctx.fillStyle='#5c3030';ctx.fillRect(cx-40,cy-70,80,30);
+  ctx.fillStyle='#4a2020';ctx.fillRect(cx-24,cy-90,48,28);
+  // Lava rocks (parkour ledges)
+  ctx.fillStyle='#3a2010';
+  for(let i=0;i<8;i++){
+    const a=i/8*Math.PI*2;
+    const r=40+Math.sin(a*3)*8;
+    const lx=cx+Math.cos(a)*r;
+    const ly=cy+Math.sin(a)*r*0.5-10;
+    ctx.fillRect(lx-6,ly-4,12,8);
+    ctx.fillStyle='rgba(255,80,0,0.4)';
+    ctx.fillRect(lx-4,ly-2,8,4);
+    ctx.fillStyle='#3a2010';
+  }
   // Crater
-  ctx.fillStyle='#ff4400';
-  ctx.fillRect(cx-16,cy-94,32,16);
-  ctx.fillStyle='#ff6600';
-  ctx.fillRect(cx-12,cy-96,24,8);
-  ctx.fillStyle='#ffaa00';
-  ctx.fillRect(cx-6,cy-98,12,6);
+  ctx.fillStyle='#ff4400';ctx.fillRect(cx-16,cy-94,32,16);
+  ctx.fillStyle='#ff6600';ctx.fillRect(cx-12,cy-96,24,8);
+  ctx.fillStyle='#ffaa00';ctx.fillRect(cx-6,cy-98,12,6);
   // Lava drips
   ctx.fillStyle='#ff4400';
-  ctx.fillRect(cx-20,cy-80,6,20);
-  ctx.fillRect(cx+14,cy-75,6,18);
+  ctx.fillRect(cx-20,cy-80,6,20);ctx.fillRect(cx+14,cy-75,6,18);
+  // Volcano chest at top
+  if(!volcanoChestLooted){
+    ctx.fillStyle='#c8a020';ctx.fillRect(cx-8,cy-102,16,10);
+    ctx.fillStyle='#8b6914';ctx.fillRect(cx-8,cy-102,16,5);
+    ctx.fillStyle='#ffff00';
+    ctx.fillRect(cx-2,cy-100,4,3);
+  }
 }
 
+// ===== LAVA PARTICLES =====
+function updateLavaParticles(){
+  const vx=MSIZE/2*TSIZE,vy=(MSIZE/2-60)*TSIZE;
+  if(Math.random()<0.3){
+    lavaParticles.push({
+      x:vx+(Math.random()-0.5)*24,
+      y:vy-88*1,
+      vx:(Math.random()-0.5)*1.5,
+      vy:-(Math.random()*2+1),
+      life:60+Math.random()*40,
+      maxLife:100
+    });
+  }
+  lavaParticles=lavaParticles.filter(p=>{
+    p.x+=p.vx;p.y+=p.vy;p.vy*=0.98;p.life--;
+    return p.life>0;
+  });
+}
+
+function drawLavaParticles(camX,camY){
+  lavaParticles.forEach(p=>{
+    const a=p.life/p.maxLife;
+    ctx.globalAlpha=a*0.8;
+    const r=Math.round(255);
+    const g=Math.round(a*150);
+    ctx.fillStyle=`rgb(${r},${g},0)`;
+    ctx.fillRect(p.x-camX-2,p.y-camY-2,4,4);
+  });
+  ctx.globalAlpha=1;
+}
+
+// ===== SPAWN ENEMIES =====
 function spawnEnemies(n,isChiefSpawn){
+  const cx=MSIZE/2*TSIZE,cy=(MSIZE/2-20)*TSIZE;
   if(isChiefSpawn){
     const a=Math.random()*Math.PI*2;
-    const r=40*TSIZE;
     chief={
-      x:MSIZE/2*TSIZE+Math.cos(a)*r,
-      y:(MSIZE/2-60)*TSIZE+Math.sin(a)*r,
-      hp:300,maxHp:300,spd:0.8,isChief:true,
-      attackTimer:0,type:'chief'
+      x:cx+Math.cos(a)*40*TSIZE,y:cy+Math.sin(a)*40*TSIZE,
+      hp:400,maxHp:400,spd:0.8,isChief:true,
+      attackTimer:0,chiefPhase:0,walkFrame:0,walkTimer:0
     };
-    showMsg('THE TRIBAL CHIEF HAS APPEARED!');
+    showMsg('THE TRIBAL CHIEF HAS APPEARED!','#ff4444');
     return;
   }
+  const hpScale=1+dayCount*0.15;
+  const spdScale=1+dayCount*0.04;
   for(let i=0;i<n;i++){
     const a=Math.random()*Math.PI*2;
     const r=(50+Math.random()*30)*TSIZE;
+    const isArcher=(dayCount>=5&&Math.random()<0.3);
     enemies.push({
-      x:MSIZE/2*TSIZE+Math.cos(a)*r,
-      y:(MSIZE/2-20)*TSIZE+Math.sin(a)*r,
-      hp:30,maxHp:30,spd:0.7+Math.random()*0.4,
-      attackTimer:0,isChief:false
+      x:cx+Math.cos(a)*r,y:cy+Math.sin(a)*r,
+      hp:Math.round(30*hpScale),maxHp:Math.round(30*hpScale),
+      spd:(0.7+Math.random()*0.4)*spdScale,
+      attackTimer:0,isChief:false,isArcher,
+      walkFrame:0,walkTimer:0,
+      arrowCooldown:0
     });
   }
 }
 
-// INPUT
+// ===== INPUT =====
 window.addEventListener('keydown',e=>{
-  keys[e.key.toLowerCase()]=true;
-  if(e.key.toLowerCase()==='i')toggleInv();
-  if(e.key.toLowerCase()==='c')toggleCraft();
+  const k=e.key.toLowerCase();
+  keys[k]=true;
+  if(k==='i'&&gameRunning){toggleInv();}
+  if(k==='c'&&gameRunning){toggleCraft();}
+  if(k==='b'&&gameRunning){toggleBuildMode();}
+  if(k==='escape'){
+    if(buildMode){toggleBuildMode();}
+    closeStorage();
+    cancelMinigame();
+  }
+  if(k===' '&&gameRunning){
+    e.preventDefault();
+    if(activeMinigame==='chop'){
+      handleChopPress();
+    } else if(activeMinigame==='fish'){
+      handleFishPress();
+    } else if(!player.isJumping){
+      doJump();
+    }
+  }
 });
 window.addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
 window.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;});
 window.addEventListener('click',e=>{
   if(!gameRunning)return;
+  if(activeMinigame)return;
+  if(document.getElementById('inv-panel').style.display==='block')return;
+  if(document.getElementById('craft-panel').style.display==='block')return;
+  if(document.getElementById('storage-panel').style.display==='block')return;
+  if(buildMode){handleBuildPlace(e.clientX,e.clientY);return;}
   handleClick(e.clientX,e.clientY);
 });
 
+// ===== BUILD MODE =====
+function toggleBuildMode(){
+  buildMode=!buildMode;
+  document.getElementById('build-selector').style.display=buildMode?'flex':'none';
+  document.getElementById('build-mode-indicator').style.display=buildMode?'block':'none';
+  if(buildMode) showMsg('BUILD MODE — Click to place | B/Esc to exit','#44ffaa');
+}
+
+function selectBuild(type){
+  buildType=type;
+  document.querySelectorAll('.build-opt').forEach(el=>{
+    el.classList.toggle('selected',el.dataset.type===type);
+  });
+}
+
+function handleBuildPlace(sx,sy){
+  const camX=player.x-canvas.width/2;
+  const camY=player.y-canvas.height/2;
+  const wx=sx+camX,wy=sy+camY;
+  const dist=Math.hypot(wx-player.x,wy-player.y);
+  if(dist>120){showMsg('TOO FAR TO BUILD','#ff8844');return;}
+
+  const costs={campfire:{wood:5},wall:{wood:2},chest:{wood:4,stone:2},shelter:{wood:10}};
+  const cost=costs[buildType];
+  for(const[k,v] of Object.entries(cost)){
+    if((player.inv[k]||0)<v){showMsg(`NEED MORE ${k.toUpperCase()}','#ff8844`);return;}
+  }
+  for(const[k,v] of Object.entries(cost)) player.inv[k]-=v;
+
+  const obj={type:buildType,x:wx,y:wy,hp:buildType==='wall'?50:100};
+  if(buildType==='chest') obj.storage={};
+  if(buildType==='shelter'){
+    player.maxHp+=20;player.hp=Math.min(player.hp+20,player.maxHp);
+    showMsg('+20 MAX HP — SHELTER BUILT','#44ffaa');
+  }
+  placedObjects.push(obj);
+  if(buildType!=='shelter') showMsg(`${buildType.toUpperCase()} PLACED`,'#44ffaa');
+  renderInv();
+}
+
+// ===== PANELS =====
 function toggleInv(){
   const p=document.getElementById('inv-panel');
-  p.style.display=p.style.display==='block'?'none':'block';
-  if(p.style.display==='block')renderInv();
+  const open=p.style.display==='block';
+  p.style.display=open?'none':'block';
+  if(!open)renderInv();
 }
 function toggleCraft(){
   const p=document.getElementById('craft-panel');
-  p.style.display=p.style.display==='block'?'none':'block';
-  if(p.style.display==='block')renderCraft();
+  const open=p.style.display==='block';
+  p.style.display=open?'none':'block';
+  if(!open)renderCraft();
 }
+function closeStorage(){
+  document.getElementById('storage-panel').style.display='none';
+  openChest=null;
+}
+function openChestUI(chest){
+  openChest=chest;
+  if(!chest.storage) chest.storage={};
+  renderStorageUI();
+  document.getElementById('storage-panel').style.display='block';
+}
+
+const ALL_ITEMS=[
+  {k:'wood',l:'WOOD'},{k:'stone',l:'STONE'},{k:'volcstone',l:'VOLC STONE'},
+  {k:'coconut',l:'COCONUT'},{k:'fruit',l:'FRUIT'},{k:'fish',l:'FISH'},
+  {k:'axe',l:'STONE AXE'},{k:'spear',l:'SPEAR'},{k:'fireaxe',l:'FIRE AXE'},
+  {k:'firespear',l:'FIRE SPEAR'},{k:'raft',l:'RAFT'}
+];
 
 function renderInv(){
   const grid=document.getElementById('inv-grid');
   grid.innerHTML='';
-  const items=[
-    {k:'wood',l:'WOOD'},{k:'stone',l:'STONE'},{k:'coconut',l:'COCONUT'},
-    {k:'fruit',l:'FRUIT'},{k:'fish',l:'FISH'},{k:'campfire',l:'CAMPFIRE'},
-    {k:'axe',l:'AXE'},{k:'spear',l:'SPEAR'},{k:'raft',l:'RAFT'}
-  ];
-  items.forEach(it=>{
+  ALL_ITEMS.forEach(it=>{
     const d=document.createElement('div');
     d.className='inv-slot';
-    d.innerHTML=`<div>${it.l}</div><div style="color:#c8f135;font-size:14px">${player.inv[it.k]||0}</div>`;
+    const amt=player.inv[it.k]||0;
+    const isFood=(it.k==='coconut'||it.k==='fruit'||it.k==='fish');
+    d.innerHTML=`<div style="font-size:8px;color:#888">${it.l}</div><div style="color:#c8f135;font-size:14px">${amt}</div>`;
+    if(isFood&&amt>0){
+      d.style.cursor='pointer';
+      d.onclick=()=>consumeItem(it.k);
+    }
     grid.appendChild(d);
   });
 }
 
+function consumeItem(k){
+  if((player.inv[k]||0)<=0)return;
+  player.inv[k]--;
+  if(k==='coconut'){player.water=Math.min(player.maxWater,player.water+40);showMsg('+WATER','#3498db');}
+  if(k==='fruit'){player.food=Math.min(player.maxFood,player.food+35);showMsg('+FOOD','#e67e22');}
+  if(k==='fish'){player.food=Math.min(player.maxFood,player.food+45);showMsg('+FOOD','#e67e22');}
+  renderInv();
+}
+
+function renderStorageUI(){
+  if(!openChest)return;
+  const ig=document.getElementById('storage-inv-grid');
+  const sg=document.getElementById('storage-chest-grid');
+  ig.innerHTML='';sg.innerHTML='';
+  ALL_ITEMS.forEach(it=>{
+    // Player slot
+    const d=document.createElement('div');
+    d.className='inv-slot';
+    d.innerHTML=`<div style="font-size:7px;color:#888">${it.l}</div><div style="color:#c8f135;font-size:12px">${player.inv[it.k]||0}</div>`;
+    d.title='Click to move to chest';
+    d.onclick=()=>{
+      if((player.inv[it.k]||0)>0){
+        openChest.storage[it.k]=(openChest.storage[it.k]||0)+1;
+        player.inv[it.k]--;
+        renderStorageUI();
+      }
+    };
+    ig.appendChild(d);
+    // Chest slot
+    const d2=document.createElement('div');
+    d2.className='inv-slot';
+    d2.innerHTML=`<div style="font-size:7px;color:#888">${it.l}</div><div style="color:#c8f135;font-size:12px">${openChest.storage[it.k]||0}</div>`;
+    d2.title='Click to take';
+    d2.onclick=()=>{
+      if((openChest.storage[it.k]||0)>0){
+        player.inv[it.k]=(player.inv[it.k]||0)+1;
+        openChest.storage[it.k]--;
+        renderStorageUI();
+      }
+    };
+    sg.appendChild(d2);
+  });
+}
+
 const recipes=[
-  {name:'CAMPFIRE',needs:{wood:5},gives:'campfire',desc:'5 Wood'},
+  {name:'CAMPFIRE',needs:{wood:5},gives:'campfire',desc:'5 Wood — Light & warmth',category:'place'},
   {name:'STONE AXE',needs:{wood:2,stone:3},gives:'axe',desc:'2W+3S — Better chopping'},
   {name:'SPEAR',needs:{wood:4,stone:2},gives:'spear',desc:'4W+2S — Weapon'},
-  {name:'RAFT',needs:{wood:10},gives:'raft',desc:'10 Wood'},
+  {name:'RAFT',needs:{wood:10},gives:'raft',desc:'10 Wood — First step to escape'},
+  {name:'WATER BARREL',needs:{wood:5,stone:2},gives:'waterbarrel',desc:'5W+2S — +50 max water',effect:'waterbarrel'},
+  {name:'SMOKER',needs:{stone:3,wood:2},gives:'smoker',desc:'3S+2W — Slows food decay',effect:'smoker'},
+  {name:'FIRE AXE',needs:{volcstone:3,wood:2},gives:'fireaxe',desc:'3 Volc Stone+2W — Instant chop, fire damage'},
+  {name:'FIRE SPEAR',needs:{volcstone:3,wood:4},gives:'firespear',desc:'3 Volc Stone+4W — 3x damage, fire particles'},
   {name:'SUPERYACHT',needs:{wood:25,stone:10,raft:1},gives:'yacht',desc:'25W+10S+1 Raft — ESCAPE!',needsChief:true}
 ];
 
@@ -426,10 +853,14 @@ function renderCraft(){
   const list=document.getElementById('craft-list');
   list.innerHTML='';
   recipes.forEach(r=>{
-    if(r.needsChief&&!player.chiefDefeated){return;}
+    if(r.needsChief&&!player.chiefDefeated)return;
     const d=document.createElement('div');
     d.className='craft-recipe';
-    d.innerHTML=`<b>${r.name}</b> — ${r.desc}`;
+    // Check if craftable
+    let canCraft=true;
+    for(const[k,v] of Object.entries(r.needs)){if((player.inv[k]||0)<v){canCraft=false;break;}}
+    if(!canCraft) d.style.color='#555';
+    d.innerHTML=`<b style="color:${canCraft?'#c8f135':'#555'}">${r.name}</b> <span style="color:#666">— ${r.desc}</span>`;
     d.onclick=()=>tryCraft(r);
     list.appendChild(d);
   });
@@ -437,14 +868,21 @@ function renderCraft(){
 
 function tryCraft(r){
   for(const[k,v] of Object.entries(r.needs)){
-    if((player.inv[k]||0)<v){showMsg(`NEED MORE ${k.toUpperCase()}`);return;}
+    if((player.inv[k]||0)<v){showMsg(`NEED MORE ${k.toUpperCase()}`.replace('VOLCSTONE','VOLCANIC STONE'),'#ff8844');return;}
   }
-  for(const[k,v] of Object.entries(r.needs))player.inv[k]-=v;
+  for(const[k,v] of Object.entries(r.needs)) player.inv[k]-=v;
   if(r.gives==='yacht'){triggerWin();return;}
-  player.inv[r.gives]=(player.inv[r.gives]||0)+1;
-  showMsg(`CRAFTED: ${r.name}`);
-  renderCraft();
-  renderInv();
+  if(r.effect==='waterbarrel'){
+    player.maxWater+=50;player.water=Math.min(player.maxWater,player.water+50);
+    showMsg('+50 MAX WATER','#3498db');
+  } else if(r.effect==='smoker'){
+    player.hasSmoker=true;
+    showMsg('SMOKER: FOOD DECAYS SLOWER','#e67e22');
+  } else {
+    player.inv[r.gives]=(player.inv[r.gives]||0)+1;
+    showMsg(`CRAFTED: ${r.name}`,'#c8f135');
+  }
+  renderCraft();renderInv();
 }
 
 function triggerWin(){
@@ -459,135 +897,377 @@ function animateYacht(){
   yctx.imageSmoothingEnabled=false;
   let yx=20;
   function frame(){
-    yctx.fillStyle='#001133';
-    yctx.fillRect(0,0,300,150);
-    // Ocean
-    yctx.fillStyle='#1a4a8c';
-    yctx.fillRect(0,90,300,60);
-    yctx.fillStyle='#2266bb';
-    yctx.fillRect(0,88,300,6);
-    // Yacht hull
-    yctx.fillStyle='#ffffff';
-    yctx.fillRect(yx,80,80,20);
-    yctx.fillStyle='#cccccc';
-    yctx.fillRect(yx+4,76,70,8);
-    // Mast
-    yctx.fillStyle='#aaaaaa';
-    yctx.fillRect(yx+36,40,4,38);
-    // Sail
-    yctx.fillStyle='rgba(255,255,255,0.9)';
-    yctx.fillRect(yx+40,42,30,32);
-    // Flag
-    yctx.fillStyle='#c8f135';
-    yctx.fillRect(yx+40,40,10,8);
+    yctx.fillStyle='#001133';yctx.fillRect(0,0,300,150);
+    yctx.fillStyle='#1a4a8c';yctx.fillRect(0,90,300,60);
+    yctx.fillStyle='#2266bb';yctx.fillRect(0,88,300,6);
+    yctx.fillStyle='#ffffff';yctx.fillRect(yx,80,80,20);
+    yctx.fillStyle='#cccccc';yctx.fillRect(yx+4,76,70,8);
+    yctx.fillStyle='#aaaaaa';yctx.fillRect(yx+36,40,4,38);
+    yctx.fillStyle='rgba(255,255,255,0.9)';yctx.fillRect(yx+40,42,30,32);
+    yctx.fillStyle='#c8f135';yctx.fillRect(yx+40,40,10,8);
     yx+=1;
     if(yx<300)requestAnimationFrame(frame);
   }
   frame();
 }
 
+// ===== MINIGAMES =====
+function startChopMinigame(tree){
+  if(player.inv.fireaxe>0){
+    // Fire axe: instant chop, no minigame
+    const woodGain=3;
+    player.inv.wood+=woodGain;
+    spawnParticles(tree.x,tree.y,'#5c3d1e',8);
+    spawnParticles(tree.x,tree.y,'#ff6600',6);
+    trees.splice(trees.indexOf(tree),1);
+    showMsg(`+${woodGain} WOOD (FIRE AXE!)`,'#ff6600');
+    return;
+  }
+  activeMinigame='chop';
+  minigameTarget=tree;
+  chopProgress=0;chopHits=0;chopIndicatorPos=0;chopIndicatorDir=1;
+  chopSweetStart=0.3+Math.random()*0.2;
+  chopSweetEnd=chopSweetStart+0.2;
+  const needed=player.inv.axe>0?3:6;
+  document.getElementById('minigame-title').textContent='TREE CHOPPING';
+  document.getElementById('minigame-content').innerHTML=`
+    <div style="color:#888;font-size:11px;letter-spacing:2px">Press SPACE when indicator hits the green zone!</div>
+    <div id="chop-bar-track">
+      <div id="chop-bar-sweet" style="left:${chopSweetStart*100}%;width:${(chopSweetEnd-chopSweetStart)*100}%"></div>
+      <div id="chop-bar-indicator" style="left:0%"></div>
+    </div>
+    <div id="chop-hits" style="color:#c8f135">HITS: 0 / ${needed}</div>
+    <div style="color:#555;font-size:10px;margin-top:8px">(or press X to cancel)</div>
+  `;
+  document.getElementById('minigame-panel').style.display='block';
+}
+
+function updateChopMinigame(){
+  if(activeMinigame!=='chop')return;
+  chopIndicatorPos+=chopIndicatorDir*0.025;
+  if(chopIndicatorPos>1){chopIndicatorPos=1;chopIndicatorDir=-1;}
+  if(chopIndicatorPos<0){chopIndicatorPos=0;chopIndicatorDir=1;}
+  const el=document.getElementById('chop-bar-indicator');
+  if(el) el.style.left=(chopIndicatorPos*100)+'%';
+}
+
+function handleChopPress(){
+  if(activeMinigame!=='chop')return;
+  const inSweet=(chopIndicatorPos>=chopSweetStart&&chopIndicatorPos<=chopSweetEnd);
+  chopHits++;
+  const needed=player.inv.axe>0?3:6;
+  const el=document.getElementById('chop-hits');
+  if(inSweet){
+    spawnParticles(minigameTarget.x,minigameTarget.y,'#c8f135',5);
+    if(el) el.style.color='#2ecc71';
+    chopProgress+=inSweet?2:1;
+  } else {
+    spawnParticles(minigameTarget.x,minigameTarget.y,'#5c3d1e',3);
+    if(el) el.style.color='#e74c3c';
+    chopProgress+=0.5;
+  }
+  if(el) el.textContent=`HITS: ${chopHits} / ${needed} ${inSweet?'SWEET!':''}`;
+  // New sweet spot position
+  chopSweetStart=0.2+Math.random()*0.5;
+  chopSweetEnd=Math.min(chopSweetStart+0.2,1);
+  const sw=document.getElementById('chop-bar-sweet');
+  if(sw){sw.style.left=(chopSweetStart*100)+'%';sw.style.width=((chopSweetEnd-chopSweetStart)*100)+'%';}
+
+  if(chopHits>=needed){
+    const woodBonus=player.inv.axe>0?3:2;
+    player.inv.wood+=woodBonus;
+    trees.splice(trees.indexOf(minigameTarget),1);
+    spawnParticles(minigameTarget.x,minigameTarget.y,'#5c3d1e',12);
+    showMsg(`+${woodBonus} WOOD`,'#c8f135');
+    cancelMinigame();
+  }
+}
+
+function startMineMinigame(rock){
+  activeMinigame='mine';
+  minigameTarget=rock;
+  minePhase=0;
+  mineSequence=[0,1,2,3].sort(()=>Math.random()-0.5).slice(0,4);
+  mineUserSeq=[];
+  rock.crackLevel=0;
+  document.getElementById('minigame-title').textContent='MINING';
+  document.getElementById('minigame-content').innerHTML=`
+    <div style="color:#888;font-size:11px;letter-spacing:2px">Click the zones in order (1 → 4)!</div>
+    <div id="mine-zones">
+      <div class="mine-zone active" id="mzone0" onclick="handleMineClick(0)">1</div>
+      <div class="mine-zone" id="mzone1" onclick="handleMineClick(1)">2</div>
+      <div class="mine-zone" id="mzone2" onclick="handleMineClick(2)">3</div>
+      <div class="mine-zone" id="mzone3" onclick="handleMineClick(3)">4</div>
+    </div>
+    <div id="mine-result" style="color:#888;font-size:11px;margin-top:8px">Hit the zones in order!</div>
+  `;
+  document.getElementById('minigame-panel').style.display='block';
+}
+
+function handleMineClick(zoneIdx){
+  if(activeMinigame!=='mine')return;
+  mineUserSeq.push(zoneIdx);
+  const expected=mineSequence[mineUserSeq.length-1];
+  const el=document.getElementById('mzone'+zoneIdx);
+  if(zoneIdx===expected){
+    el.classList.add('done');
+    minigameTarget.crackLevel=mineUserSeq.length;
+    spawnParticles(minigameTarget.x,minigameTarget.y,'#888',4);
+    if(mineUserSeq.length>=4){
+      // Success!
+      const bonus=Math.random()<0.5?1:0;
+      const isVolc=minigameTarget.type==='volcrock';
+      if(isVolc){
+        player.inv.volcstone=(player.inv.volcstone||0)+(1+bonus);
+        showMsg(`+${1+bonus} VOLCANIC STONE`,'#ff6600');
+      } else {
+        player.inv.stone+=(2+bonus);
+        showMsg(`+${2+bonus} STONE${bonus?' BONUS!':''}`,'#c8f135');
+      }
+      rocks.splice(rocks.indexOf(minigameTarget),1);
+      spawnParticles(minigameTarget.x,minigameTarget.y,'#888',12);
+      cancelMinigame();
+    } else {
+      // Highlight next
+      const nextEl=document.getElementById('mzone'+mineSequence[mineUserSeq.length]);
+      if(nextEl) nextEl.classList.add('active');
+      document.getElementById('mine-result').textContent=`${mineUserSeq.length}/4 correct!`;
+    }
+  } else {
+    el.classList.add('wrong');
+    spawnParticles(minigameTarget.x,minigameTarget.y,'#e74c3c',3);
+    document.getElementById('mine-result').textContent='Wrong order! Try again...';
+    // Reset after delay
+    setTimeout(()=>{
+      mineUserSeq=[];
+      document.querySelectorAll('.mine-zone').forEach((z,i)=>{
+        z.classList.remove('done','wrong','active');
+        if(i===0)z.classList.add('active');
+      });
+      document.getElementById('mine-result').textContent='Sequence reset — try again!';
+    },600);
+  }
+}
+
+function startFishMinigame(spot){
+  activeMinigame='fish';
+  minigameTarget=spot;
+  fishState='waiting';
+  fishWaitTimer=Math.round((2+Math.random()*3)*60);
+  fishBiteTimer=0;
+  document.getElementById('minigame-title').textContent='FISHING';
+  document.getElementById('minigame-content').innerHTML=`
+    <div id="fish-state" style="color:#3498db">LINE CAST... WAITING FOR BITE...</div>
+    <div style="color:#555;font-size:11px">Press SPACE when you see the fish!</div>
+    <canvas id="fish-canvas" width="200" height="80" style="display:block;margin:8px auto;border:1px solid #333"></canvas>
+  `;
+  document.getElementById('minigame-panel').style.display='block';
+  animateFishLine();
+}
+
+function animateFishLine(){
+  if(activeMinigame!=='fish')return;
+  const fc=document.getElementById('fish-canvas');
+  if(!fc)return;
+  const fctx=fc.getContext('2d');
+  fctx.imageSmoothingEnabled=false;
+  // Water
+  fctx.fillStyle='#1a3a5c';fctx.fillRect(0,0,200,80);
+  // Animated water surface
+  fctx.fillStyle='#2a5a8c';
+  for(let x=0;x<200;x+=4){
+    const h=Math.sin(Date.now()*0.003+x*0.1)*4+20;
+    fctx.fillRect(x,h,4,80-h);
+  }
+  // Line
+  fctx.fillStyle='rgba(255,255,255,0.6)';
+  fctx.fillRect(98,0,2,25);
+  // Bobber
+  fctx.fillStyle='#e74c3c';fctx.fillRect(92,22,6,6);
+  fctx.fillStyle='#fff';fctx.fillRect(92,22,6,3);
+  // Fish icon if biting
+  if(fishState==='biting'){
+    fctx.fillStyle='#f39c12';
+    fctx.fillRect(80,32,24,14);
+    fctx.fillStyle='#e67e22';
+    fctx.fillRect(80,32,8,14);
+    fctx.fillStyle='#000';
+    fctx.fillRect(96,36,4,4);
+  }
+  if(activeMinigame==='fish') requestAnimationFrame(animateFishLine);
+}
+
+function updateFishMinigame(){
+  if(activeMinigame!=='fish')return;
+  if(fishState==='waiting'){
+    fishWaitTimer--;
+    if(fishWaitTimer<=0){
+      fishState='biting';
+      fishBiteTimer=90; // 1.5 seconds at 60fps
+      const el=document.getElementById('fish-state');
+      if(el){el.textContent='FISH ON THE LINE! PRESS SPACE!';el.style.color='#f39c12';}
+    }
+  } else if(fishState==='biting'){
+    fishBiteTimer--;
+    if(fishBiteTimer<=0){
+      fishState='missed';
+      const el=document.getElementById('fish-state');
+      if(el){el.textContent='FISH ESCAPED...';el.style.color='#e74c3c';}
+      setTimeout(()=>{
+        if(activeMinigame==='fish'){
+          fishState='waiting';
+          fishWaitTimer=Math.round((2+Math.random()*3)*60);
+          const el2=document.getElementById('fish-state');
+          if(el2){el2.textContent='LINE CAST... WAITING FOR BITE...';el2.style.color='#3498db';}
+        }
+      },1000);
+    }
+  }
+}
+
+function handleFishPress(){
+  if(activeMinigame!=='fish')return;
+  if(fishState==='biting'){
+    // Caught!
+    player.inv.fish++;
+    spawnParticles(minigameTarget.x,minigameTarget.y,'#3498db',10);
+    spawnParticles(minigameTarget.x,minigameTarget.y,'#fff',5);
+    showMsg('+FISH CAUGHT! +FOOD','#3498db');
+    cancelMinigame();
+  } else if(fishState==='waiting'){
+    const el=document.getElementById('fish-state');
+    if(el){el.textContent='TOO EARLY! Wait for the fish...';el.style.color='#e74c3c';}
+  }
+}
+
+function cancelMinigame(){
+  activeMinigame=null;
+  minigameTarget=null;
+  fishState='idle';
+  document.getElementById('minigame-panel').style.display='none';
+}
+
+// ===== CLICK HANDLER =====
 function handleClick(sx,sy){
-  // World coordinates
-  const camX=player.x-canvas.width/2;
-  const camY=player.y-canvas.height/2;
-  const wx=sx+camX;
-  const wy=sy+camY;
-  const reach=48;
+  const camX=player.x-canvas.width/2+screenShake.x;
+  const camY=player.y-canvas.height/2+screenShake.y;
+  const wx=sx+camX,wy=sy+camY;
+  const reach=56;
+
+  // Click placed chests
+  for(const obj of placedObjects){
+    if(obj.type==='chest'&&Math.hypot(wx-obj.x,wy-obj.y)<24){
+      openChestUI(obj);return;
+    }
+  }
 
   // Attack enemies
+  let hit=false;
   enemies.forEach((e,i)=>{
     const d=Math.hypot(wx-e.x,wy-e.y);
     if(d<reach+20){
-      const dmg=player.inv.spear>0?20:10;
+      let dmg=10;
+      if(player.inv.firespear>0){dmg=30;spawnParticles(e.x,e.y,'#ff6600',8);}
+      else if(player.inv.spear>0){dmg=20;}
+      else if(player.inv.fireaxe>0){dmg=18;spawnParticles(e.x,e.y,'#ff6600',4);}
+      else if(player.inv.axe>0){dmg=14;}
       e.hp-=dmg;
-      spawnParticles(e.x,e.y,'#e74c3c');
+      spawnParticles(e.x,e.y,'#e74c3c',5);
       if(e.hp<=0)enemies.splice(i,1);
+      hit=true;
     }
   });
   if(chief){
     const d=Math.hypot(wx-chief.x,wy-chief.y);
     if(d<reach+30){
-      chief.hp-=player.inv.spear>0?20:10;
-      spawnParticles(chief.x,chief.y,'#e74c3c');
-      if(chief.hp<=0){
-        chief=null;
-        player.chiefDefeated=true;
-        showMsg('TRIBAL CHIEF DEFEATED! YOU ARE ISLAND LEADER!');
-        spawnParticles(wx,wy,'#c8f135');
+      let dmg=player.inv.firespear>0?30:player.inv.spear>0?20:player.inv.fireaxe>0?18:player.inv.axe>0?14:10;
+      chief.hp-=dmg;
+      spawnParticles(chief.x,chief.y,'#e74c3c',6);
+      if(player.inv.firespear>0) spawnParticles(chief.x,chief.y,'#ff6600',4);
+      // Phase transitions
+      if(chief.hp<=chief.maxHp*0.5&&chief.chiefPhase===0){
+        chief.chiefPhase=1;chief.spd*=1.4;
+        showMsg('CHIEF ENRAGED!','#ff4444');
       }
+      if(chief.hp<=chief.maxHp*0.25&&chief.chiefPhase===1){
+        chief.chiefPhase=2;chief.spd*=1.3;
+        showMsg('CHIEF FINAL PHASE — SUMMONING WARRIORS!','#ff0000');
+        spawnEnemies(4,false);
+      }
+      if(chief.hp<=0){
+        chief=null;player.chiefDefeated=true;
+        showMsg('TRIBAL CHIEF DEFEATED! YOU ARE ISLAND LEADER!','#c8f135');
+        spawnParticles(wx,wy,'#c8f135',20);
+      }
+      hit=true;
+    }
+  }
+  if(hit) return;
+
+  // Volcano chest
+  if(!volcanoChestLooted){
+    const vx=MSIZE/2*TSIZE,vy=(MSIZE/2-60)*TSIZE-96;
+    if(Math.hypot(wx-vx,wy-vy)<30){
+      volcanoChestLooted=true;
+      player.inv.fireaxe=(player.inv.fireaxe||0)+1;
+      player.inv.firespear=(player.inv.firespear||0)+1;
+      showMsg('FIRE AXE + FIRE SPEAR OBTAINED!','#ff6600');
+      spawnParticles(vx,vy,'#ff6600',20);
+      return;
     }
   }
 
-  // Harvest trees
-  [...trees].forEach((t,i)=>{
+  // Harvest trees — trigger minigame
+  for(const t of trees){
     if(Math.hypot(wx-t.x,wy-t.y)<reach){
-      t.hp--;
-      spawnParticles(t.x,t.y,'#5c3d1e');
-      if(t.hp<=0){
-        player.inv.wood+=player.inv.axe>0?3:2;
-        trees.splice(i,1);
-        showMsg('+WOOD');
-      }
+      startChopMinigame(t);return;
     }
-  });
+  }
+
+  // Harvest rocks — trigger minigame
+  for(const r of rocks){
+    if(Math.hypot(wx-r.x,wy-r.y)<reach){
+      startMineMinigame(r);return;
+    }
+  }
 
   // Harvest palms
-  [...palms].forEach((t,i)=>{
+  for(const t of palms){
     if(Math.hypot(wx-t.x,wy-t.y)<reach&&t.respawn<=0){
-      player.inv.coconut++;
-      t.respawn=600;
-      showMsg('+COCONUT (+WATER)');
+      player.inv.coconut++;t.respawn=600;
+      showMsg('+COCONUT (+WATER)','#3498db');return;
     }
-  });
+  }
 
   // Harvest fruits
-  [...fruits].forEach((t,i)=>{
-    if(Math.hypot(wx-t.x,wy-t.y)<reach&&t.respawn<=0){
-      player.inv.fruit++;
-      t.respawn=900;
-      showMsg('+FRUIT (+FOOD)');
+  for(const f of fruits){
+    if(Math.hypot(wx-f.x,wy-f.y)<reach&&f.respawn<=0){
+      player.inv.fruit++;f.respawn=900;
+      showMsg('+FRUIT (+FOOD)','#e67e22');return;
     }
-  });
+  }
 
-  // Harvest rocks
-  [...rocks].forEach((t,i)=>{
-    if(Math.hypot(wx-t.x,wy-t.y)<reach){
-      t.hp--;
-      spawnParticles(t.x,t.y,'#666');
-      if(t.hp<=0){
-        player.inv.stone+=2;
-        rocks.splice(i,1);
-        showMsg('+STONE');
-      }
-    }
-  });
-
-  // Fishing spots
-  fishSpots.forEach(f=>{
+  // Fishing
+  for(const f of fishSpots){
     if(Math.hypot(wx-f.x,wy-f.y)<reach){
-      // Simple: just give fish
-      player.inv.fish++;
-      showMsg('+FISH (+FOOD)');
+      startFishMinigame(f);return;
     }
-  });
-
-  // Use coconut / fruit from inventory
-  // Auto-consume handled by I key
+  }
 }
 
-function spawnParticles(x,y,color){
-  for(let i=0;i<6;i++){
+// ===== PARTICLES =====
+function spawnParticles(x,y,color,n){
+  for(let i=0;i<(n||6);i++){
     particles.push({
-      x,y,vx:(Math.random()-0.5)*3,vy:(Math.random()-0.5)*3,
-      life:30,maxLife:30,color
+      x,y,vx:(Math.random()-0.5)*3,vy:(Math.random()-0.5)*3-1,
+      life:30+Math.random()*20,maxLife:50,color
     });
   }
 }
 
 function updateParticles(){
   particles=particles.filter(p=>{
-    p.x+=p.vx;p.y+=p.vy;p.life--;
-    return p.life>0;
+    p.x+=p.vx;p.y+=p.vy;p.vy+=0.05;p.life--;return p.life>0;
   });
 }
 
@@ -601,72 +1281,139 @@ function drawParticles(camX,camY){
   ctx.globalAlpha=1;
 }
 
-// MINIMAP
-function drawMinimap(){
-  const mc=document.getElementById('minimap');
-  const mctx=mc.getContext('2d');
-  const scale=100/MSIZE;
-  for(let y=0;y<MSIZE;y+=2){
-    for(let x=0;x<MSIZE;x+=2){
-      mctx.fillStyle=TILE_COLORS[map[y][x]];
-      mctx.fillRect(x*scale,y*scale,2*scale+1,2*scale+1);
+// ===== JUMP / PARKOUR =====
+function doJump(){
+  if(player.isJumping)return;
+  player.isJumping=true;
+  player.velY=-8;
+  player.lastGroundY=player.y;
+}
+
+function updateJump(){
+  if(!player.isJumping)return;
+  player.velY+=0.4; // gravity
+  player.jumpHeight-=player.velY;
+  if(player.jumpHeight<0){
+    const fallDist=player.jumpHeight; // negative
+    player.jumpHeight=0;
+    player.isJumping=false;
+    player.velY=0;
+    // Fall damage if jumped from height
+    if(fallDist<-120){
+      const dmg=Math.round((-fallDist-120)*0.1);
+      player.hp=Math.max(0,player.hp-dmg);
+      doScreenShake(6);
+      showMsg(`FALL DAMAGE -${dmg}`,'#e74c3c');
     }
   }
-  // Player dot
-  mctx.fillStyle='#c8f135';
-  mctx.fillRect(player.x/TSIZE*scale-2,player.y/TSIZE*scale-2,4,4);
-  // Enemies
-  mctx.fillStyle='#e74c3c';
-  enemies.forEach(e=>mctx.fillRect(e.x/TSIZE*scale-1,e.y/TSIZE*scale-1,3,3));
-  if(chief)mctx.fillRect(chief.x/TSIZE*scale-2,chief.y/TSIZE*scale-2,5,5);
 }
 
-// MAIN GAME LOOP
-function startGame(){
-  genMap();
-  genObjects();
-  player.x=MSIZE/2*TSIZE;
-  player.y=(MSIZE/2+55)*TSIZE;
-  gameRunning=true;
-  requestAnimationFrame(loop);
+// ===== COLLISION: WALLS & MAZE =====
+function isBlocked(nx,ny){
+  const tx=Math.floor(nx/TSIZE),ty=Math.floor(ny/TSIZE);
+  if(tx<0||ty<0||tx>=MSIZE||ty>=MSIZE)return true;
+  const tile=map[ty]&&map[ty][tx];
+  if(tile===T.OCEAN&&!player.isJumping)return true;
+  if(tile===T.LAVA&&!player.isJumping){
+    player.hp=Math.max(0,player.hp-0.5);
+    return false;
+  }
+  if(jungleMazeWalls.has(`${tx},${ty}`))return true;
+  // Check placed walls
+  for(const obj of placedObjects){
+    if(obj.type==='wall'&&Math.hypot(nx-obj.x,ny-obj.y)<12)return true;
+  }
+  return false;
 }
 
+// ===== PLAYER UPDATE =====
 function updatePlayer(){
-  const spd=player.inv.axe>0?player.spd+0.5:player.spd;
+  const tile=map[Math.floor(player.y/TSIZE)]?.[Math.floor(player.x/TSIZE)];
+  let spd=player.spd;
+  if(tile===T.DENSE_JUNGLE) spd*=0.5;
+  if(tile===T.VOLCANIC||tile===T.ROCK) spd*=0.85;
+  if(player.inv.fireaxe>0||player.inv.axe>0) spd+=0.4;
+
   let nx=player.x,ny=player.y;
+  const moving=(keys['w']||keys['s']||keys['a']||keys['d']||keys['arrowup']||keys['arrowdown']||keys['arrowleft']||keys['arrowright']);
+  if(moving){
+    player.walkTimer++;
+    if(player.walkTimer>4){player.walkTimer=0;player.walkFrame++;}
+  }
   if(keys['w']||keys['arrowup'])ny-=spd;
   if(keys['s']||keys['arrowdown'])ny+=spd;
-  if(keys['a']||keys['arrowleft'])nx-=spd;
-  if(keys['d']||keys['arrowright'])nx+=spd;
+  if(keys['a']||keys['arrowleft']){nx-=spd;player.dir=-1;}
+  if(keys['d']||keys['arrowright']){nx+=spd;player.dir=1;}
+  if(mx<canvas.width/2) player.dir=-1; else player.dir=1;
 
-  // Bounds
   nx=Math.max(8,Math.min(MSIZE*TSIZE-8,nx));
   ny=Math.max(8,Math.min(MSIZE*TSIZE-8,ny));
 
-  const tx=Math.floor(nx/TSIZE),ty=Math.floor(ny/TSIZE);
-  const tile=map[ty]&&map[ty][tx];
+  if(!isBlocked(nx,player.y)) player.x=nx;
+  if(!isBlocked(player.x,ny)) player.y=ny;
 
-  if(tile===T.OCEAN){
-    showMsg('TOO DEEP — SWIM BACK!');
-    player.hp-=0.5;
-    // Bounce back
-    nx=player.x;ny=player.y;
+  updateJump();
+
+  // Ocean bounce
+  const ttx=Math.floor(player.x/TSIZE),tty=Math.floor(player.y/TSIZE);
+  if(map[tty]&&map[tty][ttx]===T.OCEAN&&!player.isJumping){
+    showMsg('TOO DEEP!','#3498db');
+    player.hp=Math.max(0,player.hp-0.3);
   }
-  player.x=nx;player.y=ny;
 
-  // Survival timers
+  // Volcanic zone detection
+  const vdist=Math.hypot(player.x-MSIZE/2*TSIZE,player.y-(MSIZE/2-60)*TSIZE);
+  const inVolcZone=vdist<60*TSIZE;
+  document.getElementById('zone-display').textContent=inVolcZone?'VOLCANIC ZONE':'';
+
+  // Survival
   waterTimer++;foodTimer++;
+  const foodRate=player.hasSmoker?700:500;
   if(waterTimer>300){waterTimer=0;player.water=Math.max(0,player.water-2);}
-  if(foodTimer>500){foodTimer=0;player.food=Math.max(0,player.food-2);}
+  if(foodTimer>foodRate){foodTimer=0;player.food=Math.max(0,player.food-2);}
   if(player.water<=0)player.hp=Math.max(0,player.hp-0.1);
   if(player.food<=0)player.hp=Math.max(0,player.hp-0.1);
 
-  // Auto consume if critically low
-  if(player.water<20&&player.inv.coconut>0){player.inv.coconut--;player.water=Math.min(100,player.water+40);showMsg('DRANK COCONUT');}
-  if(player.food<20&&player.inv.fruit>0){player.inv.fruit--;player.food=Math.min(100,player.food+35);showMsg('ATE FRUIT');}
-  if(player.food<20&&player.inv.fish>0){player.inv.fish--;player.food=Math.min(100,player.food+45);showMsg('ATE FISH');}
+  // Campfire regen
+  for(const obj of placedObjects){
+    if(obj.type==='campfire'&&Math.hypot(player.x-obj.x,player.y-obj.y)<64){
+      if(frameCount%120===0) player.hp=Math.min(player.maxHp,player.hp+2);
+    }
+  }
+
+  // Lava damage
+  if(map[tty]&&map[tty][ttx]===T.LAVA){
+    player.hp=Math.max(0,player.hp-0.8);
+    doScreenShake(3);
+    spawnParticles(player.x,player.y,'#ff4400',2);
+  }
+
+  // Screen shake decay
+  if(screenShake.timer>0){
+    screenShake.timer--;
+    screenShake.x=(Math.random()-0.5)*(screenShake.timer/15)*8;
+    screenShake.y=(Math.random()-0.5)*(screenShake.timer/15)*8;
+  } else {
+    screenShake.x=0;screenShake.y=0;
+  }
 }
 
+// ===== ARROWS =====
+function updateArrows(){
+  arrows=arrows.filter(a=>{
+    a.x+=a.vx;a.y+=a.vy;a.life--;
+    const d=Math.hypot(a.x-player.x,a.y-player.y);
+    if(d<14){
+      player.hp=Math.max(0,player.hp-8);
+      doScreenShake(5);
+      spawnParticles(player.x,player.y,'#8b4513',4);
+      return false;
+    }
+    return a.life>0;
+  });
+}
+
+// ===== ENEMY UPDATE =====
 function updateEnemies(){
   const allEnemies=[...enemies];
   if(chief)allEnemies.push(chief);
@@ -674,82 +1421,184 @@ function updateEnemies(){
   allEnemies.forEach(e=>{
     const dx=player.x-e.x,dy=player.y-e.y;
     const d=Math.hypot(dx,dy);
-    if(d<300){
-      e.x+=dx/d*e.spd;
-      e.y+=dy/d*e.spd;
+    if(d<350){
+      // Avoid placed walls
+      let ex=e.x+dx/d*e.spd,ey=e.y+dy/d*e.spd;
+      let blocked=false;
+      for(const obj of placedObjects){
+        if(obj.type==='wall'&&Math.hypot(ex-obj.x,ey-obj.y)<14){blocked=true;break;}
+      }
+      if(!blocked){e.x=ex;e.y=ey;}
+      else{
+        // Try to go around
+        e.x+=Math.sin(frameCount*0.05)*2;
+        e.y+=Math.cos(frameCount*0.05)*2;
+      }
     }
+    e.walkTimer=(e.walkTimer||0)+1;
+    if(e.walkTimer>4){e.walkTimer=0;e.walkFrame=(e.walkFrame||0)+1;}
+
     e.attackTimer++;
     if(d<24&&e.attackTimer>60){
       e.attackTimer=0;
-      const dmg=e.isChief?15:8;
+      const baseDmg=e.isChief?15:8;
+      const vdist=Math.hypot(e.x-MSIZE/2*TSIZE,e.y-(MSIZE/2-60)*TSIZE);
+      const dmg=vdist<60*TSIZE?baseDmg*1.5:baseDmg;
       player.hp=Math.max(0,player.hp-dmg);
-      spawnParticles(player.x,player.y,'#e74c3c');
+      doScreenShake(6);
+      spawnParticles(player.x,player.y,'#e74c3c',5);
+    }
+
+    // Archer ranged attack
+    if(e.isArcher){
+      e.arrowCooldown=(e.arrowCooldown||0)-1;
+      if(d<300&&d>50&&e.arrowCooldown<=0){
+        e.arrowCooldown=180;
+        const speed=3;
+        arrows.push({x:e.x,y:e.y,vx:dx/d*speed,vy:dy/d*speed,life:120});
+      }
     }
   });
 
-  // Spawn schedule
   enemySpawnTimer++;
-  if(dayCount>=3&&isNight&&enemySpawnTimer>300){
+  const nightWaveSize=Math.min(2+dayCount,12);
+  if(dayCount>=2&&isNight&&enemySpawnTimer>240){
     enemySpawnTimer=0;
-    const n=Math.min(3+dayCount,10);
-    spawnEnemies(n,false);
+    spawnEnemies(nightWaveSize,false);
   }
-  if(dayCount>=15&&!chief&&!player.chiefDefeated){
-    spawnEnemies(0,true);
-  }
+  if(dayCount>=15&&!chief&&!player.chiefDefeated) spawnEnemies(0,true);
 }
 
+// ===== DAY/NIGHT =====
 function updateDayNight(){
   frameCount++;
+  waterAnimPhase=frameCount;
   dayTime=frameCount%DAY_DURATION/DAY_DURATION;
   const prevNight=isNight;
   isNight=dayTime>0.6||dayTime<0.05;
   if(!prevNight&&isNight){
     dayCount++;
     document.getElementById('day-display').textContent=`DAY ${dayCount}`;
-    if(dayCount===3)showMsg('TRIBAL SCOUTS SPOTTED!');
-    if(dayCount===15&&!player.chiefDefeated)showMsg('THE CHIEF APPROACHES...');
+    if(dayCount===3)showMsg('TRIBAL SCOUTS SPOTTED!','#e74c3c');
+    if(dayCount===5)showMsg('ARCHERS HAVE JOINED THE TRIBES!','#ff8844');
+    if(dayCount===15&&!player.chiefDefeated)showMsg('THE CHIEF APPROACHES...','#ff4444');
   }
-}
-
-function updatePalmsAndFruits(){
-  palms.forEach(p=>{if(p.respawn>0)p.respawn--;});
-  fruits.forEach(f=>{if(f.respawn>0)f.respawn--;});
-  fishSpots.forEach(f=>f.shimmer++);
 }
 
 function updateUI(){
-  document.getElementById('hp-bar').style.width=player.hp+'%';
-  document.getElementById('water-bar').style.width=player.water+'%';
-  document.getElementById('food-bar').style.width=player.food+'%';
-  if(msgTimer>0){
-    document.getElementById('msg').textContent=msgText;
-    msgTimer--;
-  } else {
-    document.getElementById('msg').textContent='';
-  }
+  document.getElementById('hp-bar').style.width=(player.hp/player.maxHp*100)+'%';
+  document.getElementById('water-bar').style.width=(player.water/player.maxWater*100)+'%';
+  document.getElementById('food-bar').style.width=(player.food/player.maxFood*100)+'%';
+  if(msgTimer>0){msgTimer--;}
+  else{document.getElementById('msg').textContent='';}
 }
 
+// ===== MINIMAP =====
+function drawMinimap(){
+  const mc=document.getElementById('minimap');
+  const mctx=mc.getContext('2d');
+  mctx.imageSmoothingEnabled=false;
+  const scale=100/MSIZE;
+  for(let y=0;y<MSIZE;y+=2){
+    for(let x=0;x<MSIZE;x+=2){
+      mctx.fillStyle=TILE_COLORS[map[y][x]]||'#222';
+      mctx.fillRect(x*scale,y*scale,2*scale+1,2*scale+1);
+    }
+  }
+  // Maze walls
+  mctx.fillStyle='#6b5a40';
+  jungleMazeWalls.forEach(k=>{
+    const[x,y]=k.split(',').map(Number);
+    mctx.fillRect(x*scale,y*scale,2*scale,2*scale);
+  });
+  // Player
+  mctx.fillStyle='#c8f135';
+  mctx.fillRect(player.x/TSIZE*scale-2,player.y/TSIZE*scale-2,4,4);
+  mctx.fillStyle='#e74c3c';
+  enemies.forEach(e=>mctx.fillRect(e.x/TSIZE*scale-1,e.y/TSIZE*scale-1,3,3));
+  if(chief){mctx.fillStyle='#ff4400';mctx.fillRect(chief.x/TSIZE*scale-2,chief.y/TSIZE*scale-2,5,5);}
+}
+
+// ===== GAME START =====
+function startGame(){
+  genMap();
+  genObjects();
+  player.x=MSIZE/2*TSIZE;
+  player.y=(MSIZE/2+55)*TSIZE;
+  gameRunning=true;
+  loadSave();
+  requestAnimationFrame(loop);
+}
+
+// ===== SAVE / LOAD =====
+function saveGame(){
+  try{
+    localStorage.setItem('island_save',JSON.stringify({
+      player:{...player},
+      dayCount,frameCount,isNight,dayTime,
+      volcanoChestLooted
+    }));
+  }catch(e){}
+}
+
+function loadSave(){
+  try{
+    const s=localStorage.getItem('island_save');
+    if(!s)return;
+    const d=JSON.parse(s);
+    if(d.player){Object.assign(player,d.player);}
+    if(d.dayCount)dayCount=d.dayCount;
+    if(d.frameCount)frameCount=d.frameCount;
+    if(d.isNight!==undefined)isNight=d.isNight;
+    if(d.dayTime!==undefined)dayTime=d.dayTime;
+    if(d.volcanoChestLooted!==undefined)volcanoChestLooted=d.volcanoChestLooted;
+    document.getElementById('day-display').textContent=`DAY ${dayCount}`;
+    showMsg('SAVE LOADED','#c8f135');
+  }catch(e){}
+}
+
+// ===== MAIN LOOP =====
 function loop(){
   if(!gameRunning)return;
   requestAnimationFrame(loop);
 
+  if(activeMinigame==='chop') updateChopMinigame();
+  if(activeMinigame==='fish') updateFishMinigame();
+
   updatePlayer();
   updateEnemies();
+  updateArrows();
   updateDayNight();
   updateParticles();
-  updatePalmsAndFruits();
+  updateLavaParticles();
+
+  // Palm/fruit respawn
+  palms.forEach(p=>{if(p.respawn>0)p.respawn--;});
+  fruits.forEach(f=>{if(f.respawn>0)f.respawn--;});
+  fishSpots.forEach(f=>f.shimmer++);
+
+  // Tree sway
+  const swayTime=frameCount;
+  trees.forEach(t=>t.sway=t.swayOff+swayTime*0.02);
+
   updateUI();
 
-  // RENDER
-  const camX=player.x-canvas.width/2;
-  const camY=player.y-canvas.height/2;
+  // Auto-save every 10 seconds
+  if(frameCount%600===0) saveGame();
 
-  // Sky
+  // ===== RENDER =====
+  const camX=player.x-canvas.width/2+screenShake.x;
+  const camY=player.y-canvas.height/2+screenShake.y;
+
+  // Sky gradient based on time of day
   let skyColor;
-  if(dayTime<0.25)skyColor=`rgb(${Math.round(30+dayTime*4*130)},${Math.round(50+dayTime*4*120)},${Math.round(80+dayTime*4*100)})`;
-  else if(dayTime<0.6)skyColor='#87CEEB';
-  else if(dayTime<0.7)skyColor=`rgb(${Math.round(255-((dayTime-0.6)*10)*200)},${Math.round(150-((dayTime-0.6)*10)*100)},50)`;
+  const tod=dayTime;
+  if(tod<0.05) skyColor=`rgb(10,10,25)`;
+  else if(tod<0.15){const t=(tod-0.05)/0.1;skyColor=`rgb(${Math.round(10+t*80)},${Math.round(10+t*30)},${Math.round(25+t*20)})`;}
+  else if(tod<0.25){const t=(tod-0.15)/0.1;skyColor=`rgb(${Math.round(90+t*165)},${Math.round(40+t*110)},${Math.round(45+t*5)})`;}
+  else if(tod<0.55) skyColor='#87CEEB';
+  else if(tod<0.65){const t=(tod-0.55)/0.1;skyColor=`rgb(${Math.round(135+t*120)},${Math.round(206-t*136)},${Math.round(235-t*185)})`;}
+  else if(tod<0.75){const t=(tod-0.65)/0.1;skyColor=`rgb(${Math.round(255-t*200)},${Math.round(70-t*60)},${Math.round(50-t*40)})`;}
   else skyColor='#0a0a1a';
   ctx.fillStyle=skyColor;
   ctx.fillRect(0,0,canvas.width,canvas.height);
@@ -763,83 +1612,167 @@ function loop(){
   for(let ty=startY;ty<endY;ty++){
     for(let tx=startX;tx<endX;tx++){
       const t=map[ty][tx];
-      ctx.fillStyle=getTileColor(t,tx*TSIZE,ty*TSIZE);
+      const key=`${tx},${ty}`;
+      let color=getTileColor(t,tx,ty);
+      if(jungleMazeWalls.has(key)) color='#4a3d20';
+      ctx.fillStyle=color;
       ctx.fillRect(tx*TSIZE-camX,ty*TSIZE-camY,TSIZE,TSIZE);
       // Tile variation
-      if(t===T.BEACH&&(tx+ty)%5===0){ctx.fillStyle='rgba(255,255,200,0.2)';ctx.fillRect(tx*TSIZE-camX,ty*TSIZE-camY,TSIZE,TSIZE);}
-      if(t===T.JUNGLE&&(tx*3+ty*7)%11===0){ctx.fillStyle='rgba(0,60,0,0.3)';ctx.fillRect(tx*TSIZE-camX,ty*TSIZE-camY,TSIZE,TSIZE);}
+      if(t===T.BEACH&&(tx+ty)%5===0){ctx.fillStyle='rgba(255,255,200,0.15)';ctx.fillRect(tx*TSIZE-camX,ty*TSIZE-camY,TSIZE,TSIZE);}
+      if(t===T.JUNGLE&&(tx*3+ty*7)%11===0){ctx.fillStyle='rgba(0,40,0,0.2)';ctx.fillRect(tx*TSIZE-camX,ty*TSIZE-camY,TSIZE,TSIZE);}
+      if(t===T.DENSE_JUNGLE&&(tx*2+ty*5)%7===0){ctx.fillStyle='rgba(0,0,0,0.25)';ctx.fillRect(tx*TSIZE-camX,ty*TSIZE-camY,TSIZE,TSIZE);}
+      if(t===T.LAVA){
+        const lava=Math.sin(waterAnimPhase*0.05+tx*0.5+ty*0.3);
+        ctx.fillStyle=`rgba(255,${Math.round(60+lava*40)},0,0.4)`;
+        ctx.fillRect(tx*TSIZE-camX,ty*TSIZE-camY,TSIZE,TSIZE);
+      }
+      // Maze wall visual
+      if(jungleMazeWalls.has(key)){
+        ctx.fillStyle='#2d1e0a';
+        ctx.fillRect(tx*TSIZE-camX+2,ty*TSIZE-camY+2,TSIZE-4,TSIZE-4);
+        ctx.fillStyle='rgba(0,80,0,0.3)';
+        ctx.fillRect(tx*TSIZE-camX,ty*TSIZE-camY,4,TSIZE);
+        ctx.fillRect(tx*TSIZE-camX,ty*TSIZE-camY,TSIZE,4);
+      }
     }
   }
 
   // Volcano
   const vcx=MSIZE/2*TSIZE-camX;
   const vcy=(MSIZE/2-60)*TSIZE-camY;
-  if(vcx>-200&&vcx<canvas.width+200)drawVolcano(vcx,vcy);
+  if(vcx>-250&&vcx<canvas.width+250&&vcy>-300&&vcy<canvas.height+100){
+    drawVolcano(vcx,vcy,swayTime);
+  }
 
-  // Objects
-  trees.forEach(t=>{const sx=t.x-camX,sy=t.y-camY;if(sx>-30&&sx<canvas.width+30)drawPixelTree(sx,sy);});
-  rocks.forEach(t=>{const sx=t.x-camX,sy=t.y-camY;if(sx>-20&&sx<canvas.width+20)drawPixelRock(sx,sy);});
-  palms.forEach(t=>{const sx=t.x-camX,sy=t.y-camY;if(sx>-30&&sx<canvas.width+30)drawPixelPalm(sx,sy);});
-  fruits.forEach(t=>{const sx=t.x-camX,sy=t.y-camY;if(sx>-20&&sx<canvas.width+20)drawPixelFruit(sx,sy);});
-  fishSpots.forEach(f=>{const sx=f.x-camX,sy=f.y-camY;if(sx>-20&&sx<canvas.width+20)drawPixelFishSpot(sx,sy,f.shimmer);});
+  // Lava particles
+  drawLavaParticles(camX,camY);
 
-  // Enemies
+  // Objects (sorted by Y for depth)
+  const allObjs=[
+    ...trees.map(t=>({...t,_draw:'tree'})),
+    ...rocks.map(r=>({...r,_draw:'rock'})),
+    ...palms.map(p=>({...p,_draw:'palm'})),
+    ...fruits.map(f=>({...f,_draw:'fruit'})),
+    ...fishSpots.map(f=>({...f,_draw:'fish'})),
+    ...placedObjects.map(o=>({...o,_draw:'placed'}))
+  ].sort((a,b)=>a.y-b.y);
+
+  allObjs.forEach(o=>{
+    const sx=o.x-camX,sy=o.y-camY;
+    if(sx<-60||sx>canvas.width+60||sy<-60||sy>canvas.height+60)return;
+    if(o._draw==='tree') drawPixelTree(sx,sy,o.sway||0,map[Math.floor(o.y/TSIZE)]?.[Math.floor(o.x/TSIZE)]===T.DENSE_JUNGLE);
+    else if(o._draw==='rock') drawPixelRock(sx,sy,o.crackLevel||0,o.type==='volcrock');
+    else if(o._draw==='palm') drawPixelPalm(sx,sy);
+    else if(o._draw==='fruit') drawPixelFruit(sx,sy);
+    else if(o._draw==='fish') drawPixelFishSpot(sx,sy,o.shimmer);
+    else if(o._draw==='placed') drawPlacedObject(sx,sy,o.type);
+  });
+
+  // Enemies (with HP bars)
   enemies.forEach(e=>{
     const sx=e.x-camX,sy=e.y-camY;
-    if(sx>-50&&sx<canvas.width+50){
-      drawPixelEnemy(sx,sy,false);
-      ctx.fillStyle='#e74c3c';ctx.fillRect(sx-15,sy-30,30,4);
-      ctx.fillStyle='#2ecc71';ctx.fillRect(sx-15,sy-30,30*(e.hp/e.maxHp),4);
-    }
+    if(sx<-80||sx>canvas.width+80)return;
+    drawPixelEnemy(sx,sy,e);
+    ctx.fillStyle='#e74c3c';ctx.fillRect(sx-15,sy-32,30,4);
+    ctx.fillStyle='#2ecc71';ctx.fillRect(sx-15,sy-32,30*(e.hp/e.maxHp),4);
   });
   if(chief){
     const sx=chief.x-camX,sy=chief.y-camY;
-    if(sx>-80&&sx<canvas.width+80){
-      drawPixelEnemy(sx,sy,true);
-      ctx.fillStyle='#e74c3c';ctx.fillRect(sx-25,sy-50,50,6);
-      ctx.fillStyle='#f39c12';ctx.fillRect(sx-25,sy-50,50*(chief.hp/chief.maxHp),6);
+    if(sx>-100&&sx<canvas.width+100){
+      drawPixelEnemy(sx,sy,chief);
+      ctx.fillStyle='#e74c3c';ctx.fillRect(sx-30,sy-56,60,7);
+      ctx.fillStyle='#f39c12';ctx.fillRect(sx-30,sy-56,60*(chief.hp/chief.maxHp),7);
+      ctx.fillStyle='#fff';ctx.font='bold 10px Courier New';ctx.textAlign='center';
+      ctx.fillText('TRIBAL CHIEF',sx,sy-60);
     }
   }
 
+  // Arrows
+  arrows.forEach(a=>{
+    const sx=a.x-camX,sy=a.y-camY;
+    drawPixelArrow(sx,sy,a.vx,a.vy);
+  });
+
   // Player
-  drawPixelPlayer(canvas.width/2,canvas.height/2,mx>canvas.width/2?1:-1);
+  const psx=canvas.width/2,psy=canvas.height/2;
+  drawPixelPlayer(psx,psy,player.dir,player.walkFrame,player.jumpHeight);
 
   // Particles
   drawParticles(camX,camY);
 
-  // Night overlay
+  // Ghost preview in build mode
+  if(buildMode){
+    ctx.globalAlpha=0.5;
+    const gx=mx,gy=my;
+    drawPlacedObject(gx,gy,buildType);
+    ctx.globalAlpha=1;
+    ctx.strokeStyle='#44ffaa';
+    ctx.lineWidth=1;
+    ctx.strokeRect(gx-20,gy-20,40,40);
+  }
+
+  // Night overlay + stars
   if(isNight){
-    ctx.fillStyle=`rgba(0,0,15,${Math.min(0.65,(dayTime>0.6?(dayTime-0.6)/0.1:0.05/dayTime)*0.65)})`;
+    let alpha;
+    if(dayTime>0.75) alpha=Math.min(0.65,(dayTime-0.75)/0.15*0.65);
+    else if(dayTime<0.05) alpha=0.65;
+    else alpha=Math.max(0,(0.05-dayTime)/0.05*0.65);
+    ctx.fillStyle=`rgba(0,0,15,${alpha})`;
     ctx.fillRect(0,0,canvas.width,canvas.height);
     // Stars
-    ctx.fillStyle='rgba(255,255,255,0.8)';
-    for(let i=0;i<80;i++){
-      const sx=(i*137+40)%canvas.width;
-      const sy=(i*97+20)%canvas.height;
-      ctx.fillRect(sx,sy,2,2);
+    if(alpha>0.2){
+      ctx.fillStyle=`rgba(255,255,255,${alpha})`;
+      for(let i=0;i<100;i++){
+        const sx=(i*137+40)%canvas.width;
+        const sy=(i*97+20)%(canvas.height*0.6);
+        ctx.fillRect(sx,sy,i%3===0?2:1,i%3===0?2:1);
+      }
     }
   }
 
-  // Water warning flash
-  const tx2=Math.floor(player.x/TSIZE),ty2=Math.floor(player.y/TSIZE);
-  if(map[ty2]&&map[ty2][tx2]===T.OCEAN){
-    ctx.fillStyle='rgba(0,100,200,0.25)';
+  // Volcanic zone warm tint
+  const vd=Math.hypot(player.x-MSIZE/2*TSIZE,player.y-(MSIZE/2-60)*TSIZE);
+  if(vd<60*TSIZE){
+    const strength=Math.max(0,1-vd/(60*TSIZE))*0.3;
+    ctx.fillStyle=`rgba(255,80,0,${strength})`;
     ctx.fillRect(0,0,canvas.width,canvas.height);
   }
 
-  // Death check
+  // Dense jungle slow indicator
+  const playerTile=map[Math.floor(player.y/TSIZE)]?.[Math.floor(player.x/TSIZE)];
+  if(playerTile===T.DENSE_JUNGLE){
+    ctx.fillStyle='rgba(0,30,0,0.15)';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+  }
+
+  // Ocean warning
+  if(playerTile===T.OCEAN){
+    ctx.fillStyle='rgba(0,50,150,0.25)';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+  }
+
+  // Death screen
   if(player.hp<=0){
-    ctx.fillStyle='rgba(150,0,0,0.7)';
+    ctx.fillStyle='rgba(150,0,0,0.75)';
     ctx.fillRect(0,0,canvas.width,canvas.height);
-    ctx.fillStyle='#fff';
-    ctx.font='bold 48px Courier New';
-    ctx.textAlign='center';
+    ctx.fillStyle='#fff';ctx.font='bold 48px Courier New';ctx.textAlign='center';
     ctx.fillText('YOU DIED',canvas.width/2,canvas.height/2);
-    ctx.font='20px Courier New';
+    ctx.font='18px Courier New';
     ctx.fillText('Refresh to try again',canvas.width/2,canvas.height/2+50);
+    ctx.fillText('(Your save is kept)',canvas.width/2,canvas.height/2+80);
     gameRunning=false;
+    return;
   }
 
+  // Low resource warnings
+  if(player.water<20&&frameCount%60<30){
+    ctx.fillStyle='rgba(0,100,200,0.15)';ctx.fillRect(0,0,canvas.width,canvas.height);
+  }
+  if(player.food<20&&frameCount%60<30){
+    ctx.fillStyle='rgba(200,100,0,0.1)';ctx.fillRect(0,0,canvas.width,canvas.height);
+  }
+
+  ctx.textAlign='left';
   drawMinimap();
 }
 
