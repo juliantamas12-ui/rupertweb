@@ -664,14 +664,11 @@ function genObjects() {
       const r2 = Math.random();
 
       if (t === T.BEACH) {
-        if (r2 < 0.004) // removed dead_tree // , x:wx, y:wy, decor:true});
 
 
       } else if (t === T.JUNGLE_LIGHT) {
-        if (r2 < 0.004) // removed dead_tree // , x:wx, y:wy, decor:true});
 
       } else if (t === T.JUNGLE_DARK) {
-        if (r2 < 0.005) // removed mossy_log // , x:wx, y:wy, decor:true});
 
       }
     }
@@ -4110,132 +4107,11 @@ const slides = [
   { t:'ENEMIES & STORY', b:'You are the survivor of the Meridian shipwreck.<br><b>Mara</b> (north beach), <b>Felix</b> (west jungle), and <b>Elder Kona</b> (near volcano) also survived.<br><b>Tribal warriors</b> patrol the jungle from Day 3. Raids at night.<br><b>The Tribal Chief</b> appears on Day 15.<br>Defeat him — or listen to Kona. There are <b>multiple endings</b>.<br>Your goal: survive, build, and <b>escape on a superyacht</b>.' },
 ];
 let slideIdx = 0;
-function showSlide() {
-  // Show all tutorial content at once
-  const allContent = slides.map(s=>`<div style="margin-bottom:18px"><h3 style="color:#f0d890;font-size:12px;letter-spacing:3px;margin-bottom:8px">${s.t}</h3><div style="font-size:11px;color:#f0d890;line-height:1.8">${s.b}</div></div>`).join('<hr style="border-color:#5c3a10;margin:10px 0">');
-  document.getElementById('slide-content').innerHTML = allContent;
-  document.getElementById('slide-dots').innerHTML = '';
-  document.getElementById('slide-btn').textContent = 'BEGIN SURVIVAL';
-
-  // Draw title palm icon
-  const pc = document.getElementById('title-palm');
-  if (pc) {
-    const pctx = pc.getContext('2d');
-    pctx.clearRect(0, 0, 40, 48);
-    // Trunk
-    pctx.fillStyle = '#7a5c2e';
-    pctx.fillRect(18, 20, 5, 26);
-    pctx.fillStyle = '#5c3d1e';
-    pctx.fillRect(19, 16, 3, 8);
-    // 3 fronds
-    pctx.fillStyle = '#2d8c2d';
-    pctx.fillRect(0, 12, 16, 4);   // left
-    pctx.fillRect(24, 12, 16, 4);  // right
-    pctx.fillRect(8, 4, 24, 4);    // top
-    // Coconuts
-    pctx.fillStyle = '#5c3d1e';
-    pctx.fillRect(16, 18, 4, 4);
-    pctx.fillRect(21, 18, 4, 4);
-  }
-}
-function nextSlide() {
-  document.getElementById('overlay').style.display='none';
-  genMap();
-  genObjects();
-  state.player.x = 250*TSIZE;
-  state.player.y = 340*TSIZE;
-  state.cam.x = state.player.x - canvas.width/2;
-  state.cam.y = state.player.y - canvas.height/2;
-  state.running = true;
-  showMsg('YOU WASHED ASHORE. FIND THE OTHER SURVIVORS.', '#c8f135');
-  requestAnimationFrame(gameLoopWithUI);
-}
 // ============================================================
 // CHARACTER CREATOR
 // ============================================================
-function initCharCreator() {
-  // Hide tutorial overlay initially; show char creator instead
-  document.getElementById('overlay').style.display = 'none';
 
-  // Swatch click/touch handlers
-  function addSwatchHandler(sw, group) {
-    const handler = (e) => {
-      e.preventDefault();
-      document.querySelectorAll(`#${group} .cc-swatch`).forEach(s => s.classList.remove('selected'));
-      sw.classList.add('selected');
-      if (group === 'cc-shirts') state.shirtColor = sw.dataset.color;
-      else state.skinColor = sw.dataset.color;
-      renderCCPreview();
-    };
-    sw.addEventListener('click', handler);
-    sw.addEventListener('touchend', handler, {passive: false});
-  }
-  document.querySelectorAll('#cc-shirts .cc-swatch').forEach(sw => addSwatchHandler(sw, 'cc-shirts'));
-  document.querySelectorAll('#cc-skins .cc-swatch').forEach(sw => addSwatchHandler(sw, 'cc-skins'));
-  document.getElementById('cc-name').addEventListener('input', e => {
-    state.playerName = e.target.value.toUpperCase() || 'SURVIVOR';
-    e.target.value = state.playerName;
-  });
-  renderCCPreview();
-}
 
-function renderCCPreview() {
-  const cv = document.getElementById('cc-preview');
-  if (!cv) return;
-  const ctx = cv.getContext('2d');
-  ctx.clearRect(0, 0, 80, 80);
-  ctx.fillStyle = '#251408';
-  ctx.fillRect(0, 0, 80, 80);
-
-  // Simple pixel art character centered at (40, 46)
-  const sx = 40, sy = 46;
-  const shirtC = (state && state.shirtColor) ? state.shirtColor : '#2d7a2d';
-  const skinC = (state && state.skinColor) ? state.skinColor : '#c8a07a';
-  function ppx(color, x, y, w, h) {
-    ctx.fillStyle = color;
-    ctx.fillRect(x, y, w, h);
-  }
-  // Shadow
-  ppx('rgba(0,0,0,0.3)', sx-7, sy+16, 14, 3);
-  // Legs
-  ppx('#4a2e10', sx-5, sy+6, 5, 10);
-  ppx('#4a2e10', sx+0, sy+6, 5, 10);
-  // Body (shirt)
-  ppx(shirtC, sx-6, sy-4, 12, 12);
-  // Head
-  ppx(skinC, sx-5, sy-14, 10, 10);
-  // Eyes
-  ppx('#1a0a00', sx-3, sy-11, 2, 2);
-  ppx('#1a0a00', sx+1, sy-11, 2, 2);
-  // Arms
-  ppx(shirtC, sx-10, sy-2, 4, 8);
-  ppx(shirtC, sx+6, sy-2, 4, 8);
-  // Pixel art border decoration (palm leaf dots)
-  ctx.strokeStyle = '#5c3a10';
-  ctx.lineWidth = 1;
-  ctx.strokeRect(0.5, 0.5, 79, 79);
-}
-
-function confirmCharacter() {
-  const nameVal = document.getElementById('cc-name').value.trim().toUpperCase();
-  state.playerName = nameVal || 'SURVIVOR';
-  document.getElementById('char-creator').style.display = 'none';
-  document.getElementById('overlay').style.display = 'flex';
-  showSlide();
-  // Draw palm after overlay is shown
-  setTimeout(() => {
-    const pc = document.getElementById('title-palm');
-    if (pc) {
-      const pctx = pc.getContext('2d');
-      pctx.clearRect(0,0,40,48);
-      pctx.fillStyle='#7a5c2e'; pctx.fillRect(18,20,5,26);
-      pctx.fillStyle='#5c3d1e'; pctx.fillRect(19,16,3,8);
-      pctx.fillStyle='#2d8c2d';
-      pctx.fillRect(0,12,16,4); pctx.fillRect(24,12,16,4); pctx.fillRect(8,4,24,4);
-      pctx.fillStyle='#5c3d1e'; pctx.fillRect(16,18,4,4); pctx.fillRect(21,18,4,4);
-    }
-  }, 50);
-}
 
 // NEW SIMPLE START SCREEN
 window.addEventListener('DOMContentLoaded', () => {
@@ -4269,17 +4145,6 @@ function gameLoopWithUI() {
   render(ctx, minimapCtx);
 }
 
-function startGame() {
-  genMap();
-  genObjects();
-  state.player.x = 250*TSIZE;
-  state.player.y = 340*TSIZE;
-  state.cam.x = state.player.x - canvas.width/2;
-  state.cam.y = state.player.y - canvas.height/2;
-  state.running = true;
-  showMsg('YOU WASHED ASHORE. FIND THE OTHER SURVIVORS.', '#c8f135');
-  requestAnimationFrame(gameLoopWithUI);
-}
 </script>
 
 <script>
