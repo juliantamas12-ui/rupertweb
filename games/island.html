@@ -89,7 +89,7 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;posit
     <div class="bar-wrap"><div class="bar-icon">FD</div><div class="bar-outer"><div class="bar-inner" id="food-bar" style="background:#e67e22;width:100%"></div></div></div>
     <div class="bar-wrap"><div class="bar-icon">SP</div><div class="bar-outer"><div class="bar-inner" id="stam-bar" style="background:#f1c40f;width:100%"></div></div></div>
     <span id="day-display">DAY 1</span>
-    <canvas id="time-icon" width="24" height="24" style="margin:0 8px;vertical-align:middle"></canvas>
+    <span id="time-icon" style="margin:0 8px;font-size:14px;vertical-align:middle"></span>
     <span id="settle-badge">SURVIVOR</span>
     <span id="weather-icon"></span>
   </div>
@@ -4004,42 +4004,14 @@ function updateUI() {
   document.getElementById('hd').textContent = state.day;
 
   // Day/night clock icon
-  const timeCanvas = document.getElementById('time-icon');
-  if (timeCanvas) {
-    const tc = timeCanvas.getContext('2d');
-    tc.clearRect(0, 0, 24, 24);
+  // Time icon — simple text, no canvas
+  const timeEl = document.getElementById('time-icon');
+  if (timeEl) {
     const dt = state.dayTime;
-    if (dt >= 0.1 && dt <= 0.65) {
-      // Sun: position moves across arc based on time of day
-      const sunT = (dt - 0.1) / 0.55; // 0..1 across day
-      const sunAngle = Math.PI + sunT * Math.PI; // left to right arc (bottom of circle)
-      const sunX = 12 + Math.cos(sunAngle) * 9;
-      const sunY = 16 + Math.sin(sunAngle) * 9;
-      // Rays
-      tc.strokeStyle = '#ffdd44';
-      tc.lineWidth = 1;
-      for (let r = 0; r < 8; r++) {
-        const ra = r * Math.PI / 4;
-        tc.beginPath();
-        tc.moveTo(sunX + Math.cos(ra)*5, sunY + Math.sin(ra)*5);
-        tc.lineTo(sunX + Math.cos(ra)*8, sunY + Math.sin(ra)*8);
-        tc.stroke();
-      }
-      tc.fillStyle = '#ffee00';
-      tc.beginPath();
-      tc.arc(sunX, sunY, 4, 0, Math.PI*2);
-      tc.fill();
-    } else {
-      // Moon crescent
-      tc.fillStyle = '#ffffff';
-      tc.beginPath();
-      tc.arc(14, 12, 7, 0, Math.PI*2);
-      tc.fill();
-      tc.fillStyle = '#0a0a1e';
-      tc.beginPath();
-      tc.arc(17, 10, 6, 0, Math.PI*2);
-      tc.fill();
-    }
+    timeEl.textContent = (dt >= 0.1 && dt <= 0.65) ? 'DAY' : 'NIGHT';
+    timeEl.style.color = (dt >= 0.1 && dt <= 0.65) ? '#f0d890' : '#8899cc';
+    timeEl.style.fontSize = '10px';
+    timeEl.style.letterSpacing = '2px';
   }
 }
 
