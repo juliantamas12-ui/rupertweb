@@ -4320,6 +4320,12 @@ function startScreenClick() {
 
 window.addEventListener('DOMContentLoaded', () => {
   updateSSPhase();
+  // Auto-advance every 5 seconds so the game starts even if buttons broken
+  let autoTimer = setInterval(() => {
+    if (state.running) { clearInterval(autoTimer); return; }
+    startScreenClick();
+    if (state.running) clearInterval(autoTimer);
+  }, 5000);
 });
 
 function gameLoopWithUI() {
