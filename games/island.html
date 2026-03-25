@@ -2294,7 +2294,18 @@ function showSlide() {
 }
 function nextSlide() {
   if (slideIdx < slides.length-1) { slideIdx++; showSlide(); }
-  else { document.getElementById('overlay').style.display='none'; startGame(); }
+  else {
+    document.getElementById('overlay').style.display='none';
+    genMap();
+    genObjects();
+    state.player.x = 125*TSIZE;
+    state.player.y = 170*TSIZE;
+    state.cam.x = state.player.x - canvas.width/2;
+    state.cam.y = state.player.y - canvas.height/2;
+    state.running = true;
+    showMsg('YOU WASHED ASHORE. FIND THE OTHER SURVIVORS.', '#c8f135');
+    requestAnimationFrame(gameLoopWithUI);
+  }
 }
 showSlide();
 
@@ -2316,8 +2327,6 @@ function gameLoopWithUI() {
   render(ctx, minimapCtx);
 }
 
-// Override startGame to use correct loop
-const _origStart = startGame;
 function startGame() {
   genMap();
   genObjects();
