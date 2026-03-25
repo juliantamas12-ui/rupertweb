@@ -8,6 +8,7 @@
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#000;overflow:hidden;font-family:'Courier New',monospace;letter-spacing:1px;user-select:none;font-size:12px}
 canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;position:fixed;top:0;left:0;z-index:1}
+canvas#c{pointer-events:none}
 #ui{position:fixed;top:0;left:0;right:0;padding:8px 12px;pointer-events:none;z-index:50}
 #bars{display:flex;gap:10px;align-items:center;background:rgba(61,32,16,0.95);padding:6px 12px;border:2px solid #8B6020;box-shadow:inset 0 0 0 1px #5c3a10;border-radius:0;width:fit-content}
 .bar-wrap{display:flex;align-items:center;gap:6px}
@@ -3965,10 +3966,22 @@ window.addEventListener('keydown', e => {
 window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
 window.addEventListener('mousemove', e => { mx=e.clientX; my=e.clientY; });
 window.addEventListener('click', e => {
+  if (!state.running) return;
   // Don't intercept clicks on HTML UI elements
-  if (e.target !== canvas) return;
+  const tag = e.target.tagName.toLowerCase();
+  if (tag === 'button' || tag === 'input' || tag === 'div' || tag === 'span') return;
   handleClick(e.clientX, e.clientY);
 });
+// Touch tap during gameplay
+window.addEventListener('touchend', e => {
+  if (!state.running) return;
+  const tag = e.target.tagName.toLowerCase();
+  if (tag === 'button' || tag === 'input') return;
+  if (e.changedTouches.length > 0) {
+    const t = e.changedTouches[0];
+    handleClick(t.clientX, t.clientY);
+  }
+}, {passive: true});
 window.addEventListener('resize', () => { canvas.width=window.innerWidth; canvas.height=window.innerHeight; });
 
 function handleJump() {
