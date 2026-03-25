@@ -4342,6 +4342,9 @@ function startGame() {
   const joyZone = document.getElementById('joystick-zone');
 
   document.addEventListener('touchstart', function(e) {
+    if (!state.running) return; // Don't intercept during start screens
+    const tag = e.target.tagName.toLowerCase();
+    if (tag === 'button' || tag === 'input' || tag === 'div' || tag === 'span') return;
     e.preventDefault();
     for (let i = 0; i < e.changedTouches.length; i++) {
       const t = e.changedTouches[i];
@@ -4362,6 +4365,7 @@ function startGame() {
   }, { passive: false });
 
   document.addEventListener('touchmove', function(e) {
+    if (!state.running) return;
     e.preventDefault();
     for (let i = 0; i < e.changedTouches.length; i++) {
       const t = e.changedTouches[i];
