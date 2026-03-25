@@ -8,7 +8,7 @@
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#000;overflow:hidden;font-family:'Courier New',monospace;letter-spacing:1px;user-select:none;font-size:12px}
 canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;position:fixed;top:0;left:0;z-index:1}
-canvas#c{pointer-events:none}
+canvas#c{pointer-events:auto}
 #ui{position:fixed;top:0;left:0;right:0;padding:8px 12px;pointer-events:none;z-index:50}
 #bars{display:flex;gap:10px;align-items:center;background:rgba(61,32,16,0.95);padding:6px 12px;border:2px solid #8B6020;box-shadow:inset 0 0 0 1px #5c3a10;border-radius:0;width:fit-content}
 .bar-wrap{display:flex;align-items:center;gap:6px}
@@ -130,7 +130,7 @@ canvas#c{pointer-events:none}
   <div id="craft-list"></div>
 </div>
 
-<div id="char-creator" style="-webkit-tap-highlight-color:rgba(0,0,0,0);cursor:pointer">
+<div id="char-creator" style="display:none!important">
   <h1>CREATE YOUR SURVIVOR</h1>
   <div class="cc-sub">ISLAND SURVIVAL</div>
   <div class="cc-card">
@@ -165,7 +165,7 @@ canvas#c{pointer-events:none}
   </div>
 </div>
 
-<div id="overlay" onclick="nextSlide()" ontouchend="nextSlide(); event.preventDefault();">
+<div id="overlay" style="display:none!important">
   <canvas id="title-palm" width="40" height="48" style="image-rendering:pixelated;margin-bottom:4px"></canvas>
   <h1>ISLAND SURVIVAL</h1>
   <div class="subtitle">A SHIPWRECK SURVIVAL STORY</div>
@@ -3944,13 +3944,247 @@ canvas.height = window.innerHeight;
 const minimapCtx = document.getElementById('minimap').getContext('2d');
 minimapCtx.imageSmoothingEnabled = false;
 
+// ============================================================
+// CANVAS START SCREEN SYSTEM
+// ============================================================
+const startScreen = {
+  phase: 'char', // 'char' | 'tutorial' | 'playing'
+  shirtIdx: 0,
+  skinIdx: 0,
+  name: 'SURVIVOR',
+};
+const SHIRT_COLORS = ['#2d7a2d','#2d4a8a','#8a2d2d','#8a5a2d'];
+const SKIN_COLORS = ['#c8a07a','#a07040','#6a4020'];
+const SHIRT_LABELS = ['JUNGLE','OCEAN','RED','SAND'];
+
+// Hit regions for start screen — populated each draw frame
+let _ssHitRegions = [];
+
+function drawStartScreen() {
+  const W = canvas.width, H = canvas.height;
+  _ssHitRegions = [];
+
+  if (startScreen.phase === 'char') {
+    // Background
+    ctx.fillStyle = '#1a0e04';
+    ctx.fillRect(0, 0, W, H);
+
+    // Title
+    ctx.fillStyle = '#c8f135';
+    ctx.font = 'bold ' + Math.min(28, Math.floor(W/14)) + 'px "Courier New", monospace';
+    ctx.textAlign = 'center';
+    ctx.letterSpacing = '4px';
+    ctx.fillText('CREATE YOUR SURVIVOR', W/2, 60);
+    ctx.font = '11px "Courier New", monospace';
+    ctx.fillStyle = '#a08040';
+    ctx.fillText('ISLAND SURVIVAL', W/2, 82);
+
+    // Character preview — centered top area
+    const previewX = W/2, previewY = 155;
+    drawCanvasCharPreview(ctx, previewX, previewY,
+      SHIRT_COLORS[startScreen.shirtIdx], SKIN_COLORS[startScreen.skinIdx]);
+
+    // Shirt color section
+    const swatchY = 215;
+    const swatchSize = Math.min(52, Math.floor((W - 60) / 6));
+    const shirtTotalW = 4 * swatchSize + 3 * 10;
+    const shirtStartX = W/2 - shirtTotalW/2;
+    ctx.fillStyle = '#f0d890';
+    ctx.font = '10px "Courier New", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('SHIRT COLOR', W/2, swatchY - 10);
+    for (let i = 0; i < 4; i++) {
+      const sx = shirtStartX + i * (swatchSize + 10);
+      const sy = swatchY;
+      ctx.fillStyle = SHIRT_COLORS[i];
+      ctx.fillRect(sx, sy, swatchSize, swatchSize);
+      if (i === startScreen.shirtIdx) {
+        ctx.strokeStyle = '#c8f135';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(sx - 2, sy - 2, swatchSize + 4, swatchSize + 4);
+      } else {
+        ctx.strokeStyle = '#5c3a10';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(sx, sy, swatchSize, swatchSize);
+      }
+      ctx.fillStyle = '#a08040';
+      ctx.font = '8px "Courier New", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(SHIRT_LABELS[i], sx + swatchSize/2, sy + swatchSize + 12);
+      _ssHitRegions.push({ type: 'shirt', idx: i, x: sx-4, y: sy-4, w: swatchSize+8, h: swatchSize+8 });
+    }
+
+    // Skin tone section
+    const skinSectionY = swatchY + swatchSize + 34;
+    const skinTotalW = 3 * swatchSize + 2 * 10;
+    const skinStartX = W/2 - skinTotalW/2;
+    ctx.fillStyle = '#f0d890';
+    ctx.font = '10px "Courier New", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('SKIN TONE', W/2, skinSectionY - 10);
+    const skinLabels = ['LIGHT','MEDIUM','DARK'];
+    for (let i = 0; i < 3; i++) {
+      const sx = skinStartX + i * (swatchSize + 10);
+      const sy = skinSectionY;
+      ctx.fillStyle = SKIN_COLORS[i];
+      ctx.fillRect(sx, sy, swatchSize, swatchSize);
+      if (i === startScreen.skinIdx) {
+        ctx.strokeStyle = '#c8f135';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(sx - 2, sy - 2, swatchSize + 4, swatchSize + 4);
+      } else {
+        ctx.strokeStyle = '#5c3a10';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(sx, sy, swatchSize, swatchSize);
+      }
+      ctx.fillStyle = '#a08040';
+      ctx.font = '8px "Courier New", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(skinLabels[i], sx + swatchSize/2, sy + swatchSize + 12);
+      _ssHitRegions.push({ type: 'skin', idx: i, x: sx-4, y: sy-4, w: swatchSize+8, h: swatchSize+8 });
+    }
+
+    // BEGIN button
+    const btnW = Math.min(300, W - 60), btnH = 60;
+    const btnX = W/2 - btnW/2, btnY = H - 100;
+    ctx.fillStyle = '#4a2a08';
+    ctx.fillRect(btnX, btnY, btnW, btnH);
+    ctx.strokeStyle = '#c8f135';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(btnX, btnY, btnW, btnH);
+    ctx.fillStyle = '#c8f135';
+    ctx.font = 'bold 14px "Courier New", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('BEGIN SURVIVAL', W/2, btnY + btnH/2 + 5);
+    _ssHitRegions.push({ type: 'begin', x: btnX, y: btnY, w: btnW, h: btnH });
+
+  } else if (startScreen.phase === 'tutorial') {
+    // Background
+    ctx.fillStyle = '#0a0604';
+    ctx.fillRect(0, 0, W, H);
+
+    // Title
+    ctx.fillStyle = '#c8f135';
+    ctx.font = 'bold ' + Math.min(28, Math.floor(W/12)) + 'px "Courier New", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('HOW TO PLAY', W/2, 55);
+
+    const lines = [
+      ['#f0d890', 'CONTROLS'],
+      ['#e8f4b0', 'WASD — Move   SHIFT — Sprint   SPACE — Jump'],
+      ['#e8f4b0', 'Tap/Click — Attack or Harvest   E — Interact'],
+      ['#e8f4b0', 'I — Inventory   C — Crafting   B — Build'],
+      ['#f0d890', 'SURVIVAL'],
+      ['#e8f4b0', 'Monitor Health, Water, Food, Stamina bars'],
+      ['#e8f4b0', 'Raw food may make you sick — cook on Campfire'],
+      ['#f0d890', 'GOAL'],
+      ['#e8f4b0', 'Find Mara, Felix, Elder Kona. Survive the tribe.'],
+      ['#e8f4b0', 'Defeat the Chief (Day 15+) and escape by yacht.'],
+      ['#f0d890', 'JUNGLE'],
+      ['#e8f4b0', 'Dark jungle has hidden pit traps — craft a Torch first!'],
+    ];
+
+    const lineH = Math.min(28, (H - 180) / lines.length);
+    let ly = 95;
+    for (const [color, text] of lines) {
+      ctx.fillStyle = color;
+      const isHeader = color === '#f0d890';
+      ctx.font = (isHeader ? 'bold 11px' : '11px') + ' "Courier New", monospace';
+      ctx.textAlign = 'center';
+      if (isHeader) {
+        ctx.fillStyle = '#f0d890';
+        ctx.fillText('— ' + text + ' —', W/2, ly);
+      } else {
+        ctx.fillStyle = '#e8f4b0';
+        ctx.fillText(text, W/2, ly);
+      }
+      ly += lineH;
+    }
+
+    // START button
+    const btnW = Math.min(300, W - 60), btnH = 60;
+    const btnX = W/2 - btnW/2, btnY = H - 90;
+    ctx.fillStyle = '#4a2a08';
+    ctx.fillRect(btnX, btnY, btnW, btnH);
+    ctx.strokeStyle = '#c8f135';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(btnX, btnY, btnW, btnH);
+    ctx.fillStyle = '#c8f135';
+    ctx.font = 'bold 14px "Courier New", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('START GAME', W/2, btnY + btnH/2 + 5);
+    _ssHitRegions.push({ type: 'start', x: btnX, y: btnY, w: btnW, h: btnH });
+  }
+}
+
+function drawCanvasCharPreview(ctx, cx, cy, shirtColor, skinColor) {
+  function ppx(color, x, y, w, h) { ctx.fillStyle = color; ctx.fillRect(x, y, w, h); }
+  const scale = 2;
+  const sx = cx, sy = cy;
+  // Shadow
+  ppx('rgba(0,0,0,0.3)', sx - 14*scale/2, sy + 8*scale, 14*scale, 3);
+  // Legs
+  ppx('#4a2e10', sx - 5, sy + 6, 5, 10);
+  ppx('#4a2e10', sx,     sy + 6, 5, 10);
+  // Body (shirt)
+  ppx(shirtColor, sx - 6, sy - 4, 12, 12);
+  // Head
+  ppx(skinColor, sx - 5, sy - 14, 10, 10);
+  // Eyes
+  ppx('#1a0a00', sx - 3, sy - 11, 2, 2);
+  ppx('#1a0a00', sx + 1, sy - 11, 2, 2);
+  // Arms
+  ppx(shirtColor, sx - 10, sy - 2, 4, 8);
+  ppx(shirtColor, sx + 6,  sy - 2, 4, 8);
+}
+
+function handleStartScreenClick(x, y) {
+  for (const r of _ssHitRegions) {
+    if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) {
+      if (r.type === 'shirt') {
+        startScreen.shirtIdx = r.idx;
+      } else if (r.type === 'skin') {
+        startScreen.skinIdx = r.idx;
+      } else if (r.type === 'begin') {
+        startScreen.phase = 'tutorial';
+      } else if (r.type === 'start') {
+        launchGame();
+      }
+      return;
+    }
+  }
+}
+
+function launchGame() {
+  startScreen.phase = 'playing';
+  state.shirtColor = SHIRT_COLORS[startScreen.shirtIdx];
+  state.skinColor = SKIN_COLORS[startScreen.skinIdx];
+  state.playerName = startScreen.name;
+  genMap();
+  genObjects();
+  state.player.x = 250*TSIZE;
+  state.player.y = 340*TSIZE;
+  state.cam.x = state.player.x - canvas.width/2;
+  state.cam.y = state.player.y - canvas.height/2;
+  state.running = true;
+  showMsg('YOU WASHED ASHORE. FIND THE OTHER SURVIVORS.', '#c8f135');
+  requestAnimationFrame(gameLoopWithUI);
+}
+
+// Render start screen loop (runs before game starts)
+function startScreenLoop() {
+  if (state.running) return;
+  drawStartScreen();
+  requestAnimationFrame(startScreenLoop);
+}
+
 // INPUT
 window.addEventListener('keydown', e => {
   keys[e.key.toLowerCase()] = true;
-  // If tutorial overlay is visible, any key starts the game
-  const overlay = document.getElementById('overlay');
-  if (overlay && overlay.style.display !== 'none') {
-    nextSlide();
+  // If on start screen, any key advances
+  if (!state.running && startScreen.phase !== 'playing') {
+    if (startScreen.phase === 'char') { startScreen.phase = 'tutorial'; }
+    else if (startScreen.phase === 'tutorial') { launchGame(); }
     return;
   }
   if (!state.running) return;
@@ -3966,7 +4200,12 @@ window.addEventListener('keydown', e => {
 window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
 window.addEventListener('mousemove', e => { mx=e.clientX; my=e.clientY; });
 window.addEventListener('click', e => {
-  if (!state.running) return;
+  if (!state.running) {
+    if (startScreen.phase !== 'playing') {
+      handleStartScreenClick(e.clientX, e.clientY);
+    }
+    return;
+  }
   // Don't intercept clicks on HTML UI elements
   const tag = e.target.tagName.toLowerCase();
   if (tag === 'button' || tag === 'input' || tag === 'div' || tag === 'span') return;
@@ -3974,7 +4213,13 @@ window.addEventListener('click', e => {
 });
 // Touch tap during gameplay
 window.addEventListener('touchend', e => {
-  if (!state.running) return;
+  if (!state.running) {
+    if (startScreen.phase !== 'playing' && e.changedTouches.length > 0) {
+      const t = e.changedTouches[0];
+      handleStartScreenClick(t.clientX, t.clientY);
+    }
+    return;
+  }
   const tag = e.target.tagName.toLowerCase();
   if (tag === 'button' || tag === 'input') return;
   if (e.changedTouches.length > 0) {
@@ -4194,7 +4439,15 @@ function confirmCharacter() {
   }, 50);
 }
 
-window.addEventListener('DOMContentLoaded', () => { initCharCreator(); setTimeout(renderCCPreview, 200); });
+window.addEventListener('DOMContentLoaded', () => {
+  // Hide legacy HTML overlays just in case
+  const cc = document.getElementById('char-creator');
+  const ov = document.getElementById('overlay');
+  if (cc) cc.style.display = 'none';
+  if (ov) ov.style.display = 'none';
+  // Boot canvas start screen
+  requestAnimationFrame(startScreenLoop);
+});
 
 function gameLoopWithUI() {
   if (!state.running) return;
@@ -4342,6 +4595,8 @@ function startGame() {
   const joyZone = document.getElementById('joystick-zone');
 
   document.addEventListener('touchstart', function(e) {
+    // Don't intercept touches during start screen — let canvas touchend fire
+    if (!state.running) return;
     e.preventDefault();
     for (let i = 0; i < e.changedTouches.length; i++) {
       const t = e.changedTouches[i];
@@ -4362,6 +4617,7 @@ function startGame() {
   }, { passive: false });
 
   document.addEventListener('touchmove', function(e) {
+    if (!state.running) return;
     e.preventDefault();
     for (let i = 0; i < e.changedTouches.length; i++) {
       const t = e.changedTouches[i];
@@ -4383,6 +4639,7 @@ function startGame() {
   }, { passive: false });
 
   document.addEventListener('touchend', function(e) {
+    if (!state.running) return;
     e.preventDefault();
     for (let i = 0; i < e.changedTouches.length; i++) {
       const t = e.changedTouches[i];
