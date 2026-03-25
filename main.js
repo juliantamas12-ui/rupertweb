@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Ransom of Haiti: How a Nation Paid for Its Own Freedom",
+    date: "2026-03-25",
+    category: "History",
+    excerpt: "In 1825, the most successful slave revolution in history was extorted. Haiti — the first Black republic, born from the blood of men and women who had burned the plantations of Saint-Domingue and defeated Napoleon's best generals — agreed to pay Franc...",
+    url: "essays/2026-03-25-the-ransom-of-haiti-how-a-nation-paid-for-its-own-freedom.html"
+  },
+  {
     title: "The War That Killed Thirty Million People (And Nobody Talks About It)",
     date: "2026-03-24",
     category: "History",
