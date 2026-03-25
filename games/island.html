@@ -2541,11 +2541,11 @@ function handleClick(sx, sy) {
     if (d > reach) continue;
 
     if (obj.type === 'tree') {
-      if (p.inv.axe <= 0 && p.inv.fire_axe <= 0) { showMsg('NEED AN AXE TO CHOP TREES', '#e74c3c'); return; }
+      // No axe = very slow chopping (10 hits). Axe = normal (5 hits). Fire axe = instant.
       startChopMinigame(obj); return;
     }
     if (obj.type === 'rock' || obj.type === 'vol_rock') {
-      if (p.inv.pickaxe <= 0) { showMsg('NEED A PICKAXE TO MINE ROCKS', '#e74c3c'); return; }
+      // No pickaxe needed — just takes more hits. Pickaxe speeds it up.
       startMineMinigame(obj); return;
     }
     if (obj.type === 'palm' && obj.respawn<=0) {
@@ -2644,7 +2644,7 @@ const BUILD_ITEMS = [
 
 const CRAFT_ITEMS = [
   {id:'torch',       label:'TORCH',        cost:{wood:2,stone:1},              desc:'Reveals jungle pits, night light'},
-  {id:'axe',         label:'STONE AXE',    cost:{wood:2,stone:3},              desc:'Required to chop trees'},
+  {id:'axe',         label:'STONE AXE',    cost:{wood:2,stone:2},              desc:'Required to chop trees'},
   {id:'pickaxe',     label:'PICKAXE',      cost:{wood:3,stone:4},              desc:'Required to mine rocks'},
   {id:'sword',       label:'SWORD',        cost:{stone:2,wood:3},              desc:'15 damage melee weapon'},
   {id:'spear',       label:'STONE SPEAR',  cost:{wood:4,stone:2},              desc:'18 damage thrown weapon'},
