@@ -3065,6 +3065,7 @@ function renderInvMenu() {
 // ============================================================
 
 function drawTile(ctx, type, sx, sy) {
+  sx = Math.floor(sx); sy = Math.floor(sy);
   const animated = type === T.LAVA;
   if (animated) {
     const lavaFlicker = 0.7 + Math.sin(state.frameCount * 0.1 + sx * 0.3 + sy * 0.2) * 0.3;
@@ -3191,8 +3192,8 @@ function render(ctx, minimapCtx) {
   // Camera with shake
   const targetCamX = p.x - canvas.width/2;
   const targetCamY = p.y - canvas.height/2;
-  state.cam.x += (targetCamX - state.cam.x) * 0.12;
-  state.cam.y += (targetCamY - state.cam.y) * 0.12;
+  state.cam.x = Math.floor(state.cam.x + (targetCamX - state.cam.x) * 0.12);
+  state.cam.y = Math.floor(state.cam.y + (targetCamY - state.cam.y) * 0.12);
 
   // screenShake removed
 
@@ -3224,7 +3225,7 @@ function render(ctx, minimapCtx) {
   // Draw tiles
   for (let ty = sy0; ty < sy1; ty++) {
     for (let tx = sx0; tx < sx1; tx++) {
-      drawTile(ctx, state.map[ty][tx], tx*TSIZE - camX, ty*TSIZE - camY);
+      drawTile(ctx, state.map[ty][tx], Math.floor(tx*TSIZE - camX), Math.floor(ty*TSIZE - camY));
     }
   }
 
