@@ -96,7 +96,7 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;posit
   <div id="craft-list"></div>
 </div>
 
-<div id="overlay">
+<div id="overlay" onclick="nextSlide()">
   <h1>ISLAND SURVIVAL</h1>
   <div class="subtitle">A SHIPWRECK SURVIVAL STORY</div>
   <div class="slide-box" id="slide-content" style="max-height:60vh;overflow-y:auto;text-align:left">
@@ -2224,6 +2224,12 @@ const keys = {};
 let mx = 0, my = 0;
 window.addEventListener('keydown', e => {
   keys[e.key.toLowerCase()] = true;
+  // If tutorial overlay is visible, any key starts the game
+  const overlay = document.getElementById('overlay');
+  if (overlay && overlay.style.display !== 'none') {
+    nextSlide();
+    return;
+  }
   if (!state.running) return;
   if (e.key.toLowerCase() === 'i') { const p=document.getElementById('inv-panel'); p.style.display=p.style.display==='block'?'none':'block'; if(p.style.display==='block')renderInvMenu(); }
   if (e.key.toLowerCase() === 'c') openCraftMenu();
