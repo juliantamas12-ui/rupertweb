@@ -3947,6 +3947,12 @@ minimapCtx.imageSmoothingEnabled = false;
 // INPUT
 window.addEventListener('keydown', e => {
   keys[e.key.toLowerCase()] = true;
+  // If char-creator is visible, any key confirms and moves to tutorial
+  const cc = document.getElementById('char-creator');
+  if (cc && cc.style.display !== 'none') {
+    confirmCharacter();
+    return;
+  }
   // If tutorial overlay is visible, any key starts the game
   const overlay = document.getElementById('overlay');
   if (overlay && overlay.style.display !== 'none') {
