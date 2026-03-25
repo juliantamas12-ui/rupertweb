@@ -2090,14 +2090,20 @@ function render(ctx, minimapCtx) {
 
   const camX = state.cam.x, camY = state.cam.y;
 
-  // Sky
+  // Sky — clean day/night cycle, no orange tint
   let sky;
   const dt = state.dayTime;
-  if (dt < 0.15) sky = `rgb(20,30,60)`;
-  else if (dt < 0.25) { const t=(dt-0.15)/0.1; sky=`rgb(${Math.round(20+t*200)},${Math.round(30+t*130)},${Math.round(60+t*100)})`; }
-  else if (dt < 0.55) sky = '#87CEEB';
-  else if (dt < 0.65) { const t=(dt-0.55)/0.1; sky=`rgb(${Math.round(135+t*120)},${Math.round(206-t*100)},${Math.round(235-t*200)})`; }
-  else sky = `rgb(${Math.max(5,15-state.frameCount%20)},${Math.max(5,15)},${Math.max(10,30)})`;
+  if (dt < 0.1) sky = '#0a0a1e';                    // deep night
+  else if (dt < 0.2) {                               // dawn
+    const t = (dt-0.1)/0.1;
+    sky = `rgb(${Math.round(10+t*225)},${Math.round(10+t*196)},${Math.round(30+t*205)})`;
+  }
+  else if (dt < 0.6) sky = '#87CEEB';               // bright day
+  else if (dt < 0.7) {                               // dusk — purple/blue not orange
+    const t = (dt-0.6)/0.1;
+    sky = `rgb(${Math.round(135-t*80)},${Math.round(206-t*180)},${Math.round(235-t*200)})`;
+  }
+  else sky = '#0a0a1e';                              // night
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -2239,8 +2245,8 @@ function render(ctx, minimapCtx) {
 
   // Night overlay
   if (state.isNight) {
-    const darkness = Math.min(0.75, (dt > 0.65 ? (dt-0.65)/0.1 : (0.15-dt)/0.15) * 0.75);
-    ctx.fillStyle = `rgba(0,0,15,${darkness})`;
+    const darkness = Math.min(0.7, (dt > 0.65 ? (dt-0.65)/0.08 : (0.1-dt)/0.1) * 0.7);
+    ctx.fillStyle = `rgba(0,5,20,${darkness})`;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Stars
@@ -2252,9 +2258,9 @@ function render(ctx, minimapCtx) {
     }
   }
 
-  // Volcano tint
-  if (state.volcanoTint > 0.01) {
-    ctx.fillStyle = `rgba(255,60,0,${state.volcanoTint})`;
+  // Volcano heat shimmer (subtle, only very close)
+  if (state.volcanoTint > 0.25) {
+    ctx.fillStyle = `rgba(255,80,0,0.08)`;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
 
