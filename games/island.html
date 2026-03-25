@@ -1576,11 +1576,10 @@ function updateEnemies() {
     if (!shadowBlockedByCampfire) {
       e.attackTimer++;
       const attackR = e.type==='chief' ? 40 : 28;
-      if (dist < attackR && e.attackTimer > 80 && !e.fleeing && e.scatterTimer <= 0) {
+      if (dist < attackR && e.attackTimer > 80 && !e.fleeing && e.scatterTimer <= 0 && !state.invincible) {
         e.attackTimer = 0;
         const dmg = e.type==='chief' ? 20 : (e.type==='shadow'?12:8);
         p.hp = Math.max(0, p.hp - dmg);
-        
         spawnParticles(p.x, p.y, '#e74c3c', 8);
       }
     }
@@ -3617,8 +3616,11 @@ function render(ctx, minimapCtx) {
   drawDialogue(ctx);
   drawMsgs(ctx);
 
+  // Invincibility frames after respawn
+  if (state.invincible > 0) { state.invincible--; p.hp = Math.max(1, p.hp); }
+
   // Death / collapse mechanic
-  if (p.hp <= 0 && !state.collapsing && !state.collapsed) {
+  if (p.hp <= 0 && !state.collapsing && !state.collapsed && !state.invincible) {
     state.collapsing = true;
     state.collapseTimer = 0;
     state.collapseDeathX = p.x;
@@ -3652,12 +3654,14 @@ function render(ctx, minimapCtx) {
     if (state.collapseTimer >= 180) {
       state.collapsing = false;
       state.collapsed = false;
-      // Respawn
-      p.hp = 30; p.water = 50; p.food = 50;
+      // Respawn — full reset, clear enemies, grant invincibility frames
+      p.hp = 100; p.water = 80; p.food = 80; p.stamina = 100;
       p.x = 125*TSIZE; p.y = 170*TSIZE;
       state.cam.x = p.x - canvas.width/2;
       state.cam.y = p.y - canvas.height/2;
-      
+      state.enemies = []; // clear all enemies
+      state.creatures = state.creatures.filter(c => c.type !== 'bat'); // clear bats
+      state.invincible = 300; // 5 seconds of invincibility
       showMsg('YOU WAKE UP. FIND YOUR PACK.', '#c8f135');
     }
   }
