@@ -9,70 +9,70 @@
 body{background:#000;overflow:hidden;font-family:'Courier New',monospace;letter-spacing:1px;user-select:none;font-size:12px}
 canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;position:fixed;top:0;left:0;z-index:1}
 #ui{position:fixed;top:0;left:0;right:0;padding:8px 12px;pointer-events:none;z-index:50}
-#bars{display:flex;gap:10px;align-items:center;background:rgba(26,58,26,0.92);padding:6px 12px;border:2px solid #2d6e2d;border-radius:0;width:fit-content}
+#bars{display:flex;gap:10px;align-items:center;background:rgba(61,32,16,0.95);padding:6px 12px;border:2px solid #8B6020;box-shadow:inset 0 0 0 1px #5c3a10;border-radius:0;width:fit-content}
 .bar-wrap{display:flex;align-items:center;gap:6px}
 .bar-icon{font-size:12px;width:14px;text-align:center}
-.bar-outer{width:90px;height:10px;background:#0d1f0d;border:1px solid #2d6e2d}
+.bar-outer{width:90px;height:10px;background:#251408;border:1px solid #5c3a10}
 .bar-inner{height:100%;transition:width 0.3s}
-#day-display{color:#e8f4b0;font-size:11px;letter-spacing:3px;margin-left:16px;font-family:Courier New}
-#settle-badge{color:#4a8a2a;font-size:10px;margin-left:12px;letter-spacing:2px}
+#day-display{color:#f0d890;font-size:11px;letter-spacing:3px;margin-left:16px;font-family:Courier New}
+#settle-badge{color:#a08040;font-size:10px;margin-left:12px;letter-spacing:2px}
 #weather-icon{font-size:14px;margin-left:8px}
-#build-menu{position:fixed;right:10px;top:60px;background:#1a3a1a;border:3px solid #4a8a2a;box-shadow:inset 0 0 0 1px #2d6e2d;padding:12px;z-index:300;display:none;width:200px}
-#build-menu h3{color:#e8f4b0;font-size:11px;letter-spacing:3px;margin-bottom:10px}
-.build-btn{display:block;width:100%;padding:5px 8px;background:#2d5a1a;border:1px solid #4a8a2a;color:#e8f4b0;font-family:Courier New;font-size:10px;letter-spacing:1px;cursor:pointer;margin-bottom:4px;text-align:left}
-.build-btn:hover{border-color:#c8f135;color:#c8f135;background:#1a3a1a}
-#minimap{position:fixed;bottom:60px;right:10px;border:2px solid #2d6e2d;z-index:10;image-rendering:pixelated}
+#build-menu{position:fixed;right:10px;top:60px;background:#3d2010;border:3px solid #8B6020;box-shadow:inset 0 0 0 2px #5c3a10,0 0 0 1px #8B6020;padding:12px;z-index:300;display:none;width:200px}
+#build-menu h3{color:#f0d890;font-size:11px;letter-spacing:3px;margin-bottom:10px}
+.build-btn{display:block;width:100%;padding:5px 8px;background:#4a2a08;border:1px solid #8B6020;color:#f0d890;font-family:Courier New;font-size:10px;letter-spacing:1px;cursor:pointer;margin-bottom:4px;text-align:left}
+.build-btn:hover{border-color:#f0d890;color:#f0d890;background:#6a4a18}
+#minimap{position:fixed;bottom:60px;right:10px;border:2px solid #8B6020;box-shadow:inset 0 0 0 1px #5c3a10;z-index:10;image-rendering:pixelated}
 #hotbar{position:fixed;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:4px;z-index:10}
-.hslot{width:42px;height:42px;background:#1a3a1a;border:2px solid #2d6e2d;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#a8c870;font-size:8px;letter-spacing:1px;font-family:Courier New}
-.hslot.active{border-color:#c8f135;background:#2d5a1a}
-#inv-panel,#craft-panel{position:fixed;background:#1a3a1a;border:3px solid #4a8a2a;box-shadow:inset 0 0 0 1px #2d6e2d,0 4px 20px rgba(0,0,0,0.8);padding:18px;z-index:300;display:none;max-height:70vh;overflow-y:auto}
+.hslot{width:42px;height:42px;background:#3d2010;border:2px solid #5c3a10;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#a08040;font-size:8px;letter-spacing:1px;font-family:Courier New}
+.hslot.active{border-color:#f0d890;background:#5c3010}
+#inv-panel,#craft-panel{position:fixed;background:#3d2010;border:3px solid #8B6020;box-shadow:inset 0 0 0 2px #5c3a10,0 0 0 1px #8B6020,0 4px 20px rgba(0,0,0,0.8);padding:18px;z-index:300;display:none;max-height:70vh;overflow-y:auto}
 #inv-panel{top:50%;left:50%;transform:translate(-50%,-50%);min-width:320px}
 #craft-panel{top:50%;left:70%;transform:translate(-50%,-50%);min-width:280px}
-.panel-title{color:#c8f135;font-size:11px;letter-spacing:4px;margin-bottom:12px;border-bottom:2px solid #2d6e2d;padding-bottom:8px}
-.close-x{position:absolute;top:8px;right:12px;color:#4a8a2a;cursor:pointer;font-size:16px}
-.close-x:hover{color:#c8f135}
+.panel-title{color:#f0d890;font-size:11px;letter-spacing:4px;margin-bottom:12px;border-bottom:2px solid #5c3a10;padding-bottom:8px}
+.close-x{position:absolute;top:8px;right:12px;color:#a08040;cursor:pointer;font-size:16px}
+.close-x:hover{color:#f0d890}
 #inv-grid{display:grid;grid-template-columns:repeat(5,54px);gap:4px}
-.inv-slot-themed{width:54px;height:54px;background:#0d1f0d;border:2px solid #2d6e2d;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Courier New';font-size:9px;color:#a8c870;text-align:center;cursor:pointer;position:relative}
-.inv-slot-themed:hover{border-color:#4a8a2a}
-.inv-slot-themed .count{color:#c8f135;font-size:14px;font-weight:bold}
-#overlay{position:fixed;inset:0;background:rgba(8,20,8,0.97);z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#e8f4b0;pointer-events:all;touch-action:manipulation}
-#overlay h1{color:#c8f135;font-size:30px;letter-spacing:8px;margin-bottom:8px;text-shadow:0 0 30px #c8f135}
-#overlay .subtitle{color:#4a8a2a;font-size:11px;letter-spacing:4px;margin-bottom:30px}
-.slide-box{max-width:560px;text-align:center;padding:20px 30px;background:#1a3a1a;border:2px solid #2d6e2d;margin-bottom:24px;line-height:1.9;font-size:12px;color:#e8f4b0;letter-spacing:0.5px}
-.slide-box h3{color:#c8f135;font-size:14px;letter-spacing:4px;margin-bottom:14px}
-.slide-box b{color:#e8f4b0}
+.inv-slot-themed{width:54px;height:54px;background:#251408;border:2px solid #5c3a10;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Courier New';font-size:9px;color:#a08040;text-align:center;cursor:pointer;position:relative}
+.inv-slot-themed:hover{border-color:#8B6020}
+.inv-slot-themed .count{color:#f0d890;font-size:14px;font-weight:bold}
+#overlay{position:fixed;inset:0;background:rgba(8,4,2,0.97);z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#f0d890;pointer-events:all;touch-action:manipulation}
+#overlay h1{color:#f0d890;font-size:30px;letter-spacing:8px;margin-bottom:8px;text-shadow:0 0 30px #8B6020}
+#overlay .subtitle{color:#a08040;font-size:11px;letter-spacing:4px;margin-bottom:30px}
+.slide-box{max-width:560px;text-align:center;padding:20px 30px;background:#3d2010;border:2px solid #8B6020;box-shadow:inset 0 0 0 1px #5c3a10;margin-bottom:24px;line-height:1.9;font-size:12px;color:#f0d890;letter-spacing:0.5px}
+.slide-box h3{color:#f0d890;font-size:14px;letter-spacing:4px;margin-bottom:14px}
+.slide-box b{color:#f0d890}
 .slide-dots{display:flex;gap:8px;margin-bottom:20px}
-.dot{width:8px;height:8px;border:1px solid #2d6e2d}
-.dot.active{background:#c8f135;border-color:#c8f135}
-#slide-btn{background:#2d5a1a;color:#e8f4b0;border:2px solid #4a8a2a;padding:10px 36px;font-family:Courier New;font-size:12px;letter-spacing:4px;cursor:pointer;font-weight:bold}
-#slide-btn:hover{background:#4a8a2a;color:#fff}
+.dot{width:8px;height:8px;border:1px solid #5c3a10}
+.dot.active{background:#f0d890;border-color:#f0d890}
+#slide-btn{background:#4a2a08;color:#f0d890;border:2px solid #8B6020;padding:10px 36px;font-family:Courier New;font-size:12px;letter-spacing:4px;cursor:pointer;font-weight:bold}
+#slide-btn:hover{background:#6a4a18;color:#fff}
 #win-screen{position:fixed;inset:0;background:#0a1a2a;z-index:200;display:none;flex-direction:column;align-items:center;justify-content:center}
 #win-screen h1{color:#c8f135;font-size:36px;letter-spacing:10px;margin-bottom:10px;text-shadow:0 0 30px #c8f135}
 #win-screen p{color:#888;font-size:13px;letter-spacing:2px;margin-top:16px}
 #controls-hint{position:fixed;bottom:60px;left:10px;color:#2d6e2d;font-size:9px;letter-spacing:1px;line-height:1.8;pointer-events:none;z-index:5}
 /* CHARACTER CREATOR */
-#char-creator{position:fixed;inset:0;background:rgba(4,14,4,0.98);z-index:250;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#e8f4b0;font-family:'Courier New',monospace;pointer-events:all;touch-action:manipulation}
-#char-creator h1{color:#c8f135;font-size:26px;letter-spacing:8px;margin-bottom:4px;text-shadow:0 0 20px #c8f135}
-#char-creator .cc-sub{color:#4a8a2a;font-size:10px;letter-spacing:5px;margin-bottom:28px}
-.cc-card{background:#1a3a1a;border:2px solid #2d6e2d;padding:20px 28px;display:flex;gap:32px;align-items:flex-start;max-width:640px;width:100%}
+#char-creator{position:fixed;inset:0;background:rgba(4,2,0,0.98);z-index:250;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#f0d890;font-family:'Courier New',monospace;pointer-events:all;touch-action:manipulation}
+#char-creator h1{color:#f0d890;font-size:26px;letter-spacing:8px;margin-bottom:4px;text-shadow:0 0 20px #8B6020}
+#char-creator .cc-sub{color:#a08040;font-size:10px;letter-spacing:5px;margin-bottom:28px}
+.cc-card{background:#3d2010;border:2px solid #8B6020;box-shadow:inset 0 0 0 1px #5c3a10;padding:20px 28px;display:flex;gap:32px;align-items:flex-start;max-width:640px;width:100%}
 .cc-preview-wrap{display:flex;flex-direction:column;align-items:center;gap:8px}
-#cc-preview{image-rendering:pixelated;border:2px solid #2d6e2d;background:#0d1f0d}
-.cc-preview-label{color:#4a8a2a;font-size:9px;letter-spacing:3px}
+#cc-preview{image-rendering:pixelated;border:2px solid #5c3a10;background:#251408}
+.cc-preview-label{color:#a08040;font-size:9px;letter-spacing:3px}
 .cc-form{flex:1;display:flex;flex-direction:column;gap:16px}
-.cc-field label{display:block;color:#a8c870;font-size:10px;letter-spacing:3px;margin-bottom:6px}
-.cc-field input[type=text]{background:#0d1f0d;border:1px solid #2d6e2d;color:#e8f4b0;font-family:'Courier New';font-size:12px;letter-spacing:1px;padding:5px 8px;width:100%;outline:none}
-.cc-field input[type=text]:focus{border-color:#4a8a2a}
+.cc-field label{display:block;color:#f0d890;font-size:10px;letter-spacing:3px;margin-bottom:6px}
+.cc-field input[type=text]{background:#251408;border:1px solid #5c3a10;color:#f0d890;font-family:'Courier New';font-size:12px;letter-spacing:1px;padding:5px 8px;width:100%;outline:none}
+.cc-field input[type=text]:focus{border-color:#8B6020}
 .cc-swatches{display:flex;gap:6px;flex-wrap:wrap}
-.cc-swatch{width:28px;height:28px;border:2px solid #2d6e2d;cursor:pointer;image-rendering:pixelated}
-.cc-swatch:hover{border-color:#4a8a2a}
-.cc-swatch.selected{border-color:#c8f135;box-shadow:0 0 6px #c8f135}
-#cc-begin{background:#2d5a1a;color:#e8f4b0;border:2px solid #4a8a2a;padding:10px 40px;font-family:'Courier New';font-size:12px;letter-spacing:4px;cursor:pointer;font-weight:bold;margin-top:20px;align-self:center}
-#cc-begin:hover{background:#4a8a2a;color:#fff}
+.cc-swatch{width:28px;height:28px;border:2px solid #5c3a10;cursor:pointer;image-rendering:pixelated}
+.cc-swatch:hover{border-color:#8B6020}
+.cc-swatch.selected{border-color:#f0d890;box-shadow:0 0 6px #f0d890}
+#cc-begin{background:#4a2a08;color:#f0d890;border:2px solid #8B6020;padding:10px 40px;font-family:'Courier New';font-size:12px;letter-spacing:4px;cursor:pointer;font-weight:bold;margin-top:20px;align-self:center}
+#cc-begin:hover{background:#6a4a18;color:#fff}
 #joystick-canvas{position:fixed;top:0;left:0;z-index:14;pointer-events:none}
 #touch-controls{position:fixed;inset:0;z-index:15;pointer-events:none}
 #joystick-zone{position:absolute;bottom:30px;left:30px;width:140px;height:140px;pointer-events:all}
 #btn-zone{position:absolute;bottom:30px;right:20px;display:flex;flex-direction:column;gap:12px;pointer-events:all}
-.touch-btn{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Courier New',monospace;font-size:12px;font-weight:bold;color:#fff;letter-spacing:1px;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:none}
+.touch-btn{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Courier New',monospace;font-size:12px;font-weight:bold;color:#f0d890;letter-spacing:1px;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:none;border:2px solid #8B6020}
 @media(max-width:767px){#controls-hint{display:none}}
 </style>
 </head>
@@ -115,13 +115,13 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;posit
 
 <div id="inv-panel">
   <span class="close-x" onclick="document.getElementById('inv-panel').style.display='none'">X</span>
-  <div class="panel-title">INVENTORY (click item to consume)</div>
+  <div class="panel-title">PACK — INVENTORY (click to use)</div>
   <div id="inv-grid"></div>
 </div>
 
 <div id="craft-panel">
   <span class="close-x" onclick="document.getElementById('craft-panel').style.display='none'">X</span>
-  <div class="panel-title">CRAFTING</div>
+  <div class="panel-title">WORKBENCH — CRAFTING</div>
   <div id="craft-list"></div>
 </div>
 
@@ -161,6 +161,7 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;posit
 </div>
 
 <div id="overlay" onclick="nextSlide()" ontouchend="nextSlide(); event.preventDefault();">
+  <canvas id="title-palm" width="40" height="48" style="image-rendering:pixelated;margin-bottom:4px"></canvas>
   <h1>ISLAND SURVIVAL</h1>
   <div class="subtitle">A SHIPWRECK SURVIVAL STORY</div>
   <div class="slide-box" id="slide-content" style="max-height:60vh;overflow-y:auto;text-align:left">
@@ -241,6 +242,7 @@ const state = {
       volcanic_stone:0, driftwood:0,
       torch:0, campfire:0, axe:0, spear:0,
       fire_axe:0, fire_spear:0, fishing_rod:0,
+      pickaxe:0, sword:0,
       bed:0, chest:0, wall:0, watchtower:0,
       gate:0, forge:0, water_barrel:0, smoker:0, raft:0
     },
@@ -411,21 +413,21 @@ function genObjects() {
       const r = Math.random();
 
       if (t === T.JUNGLE_LIGHT) {
-        if (r < 0.05) state.objects.push({type:'tree', x:wx, y:wy, hp:5, maxHp:5});
-        else if (r < 0.08) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4});
-        else if (r < 0.085) state.objects.push({type:'berry', x:wx, y:wy, hp:1, maxHp:1, respawn:0});
+        if (r < 0.025) state.objects.push({type:'tree', x:wx, y:wy, hp:5, maxHp:5});
+        else if (r < 0.04) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4});
+        else if (r < 0.044) state.objects.push({type:'berry', x:wx, y:wy, hp:1, maxHp:1, respawn:0});
       } else if (t === T.JUNGLE_DARK) {
-        if (r < 0.04) state.objects.push({type:'tree', x:wx, y:wy, hp:5, maxHp:5});
-        else if (r < 0.06) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4});
-        else if (r < 0.062) state.objects.push({type:'jungle_chest', x:wx, y:wy, opened:false});
-        else if (r < 0.070) state.creatures.push({type:'spider', x:wx, y:wy, hp:25, maxHp:25, spd:1.05, attackTimer:0, walkTimer:0});
+        if (r < 0.02) state.objects.push({type:'tree', x:wx, y:wy, hp:5, maxHp:5});
+        else if (r < 0.035) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4});
+        else if (r < 0.037) state.objects.push({type:'jungle_chest', x:wx, y:wy, opened:false});
+        else if (r < 0.041) state.creatures.push({type:'spider', x:wx, y:wy, hp:25, maxHp:25, spd:1.05, attackTimer:0, walkTimer:0});
       } else if (t === T.BEACH) {
-        if (r < 0.03) state.objects.push({type:'palm', x:wx, y:wy, hp:4, maxHp:4, respawn:0});
-        else if (r < 0.04) state.objects.push({type:'driftwood', x:wx, y:wy, collected:false});
-        else if (r < 0.05) state.objects.push({type:'fish_spot', x:wx, y:wy, shimmer:Math.random()*100});
+        if (r < 0.015) state.objects.push({type:'palm', x:wx, y:wy, hp:4, maxHp:4, respawn:0});
+        else if (r < 0.025) state.objects.push({type:'driftwood', x:wx, y:wy, collected:false});
+        else if (r < 0.031) state.objects.push({type:'fish_spot', x:wx, y:wy, shimmer:Math.random()*100});
       } else if (t === T.SHALLOW_WATER) {
-        if (r < 0.02) state.objects.push({type:'fish_spot', x:wx, y:wy, shimmer:Math.random()*100});
-        else if (r < 0.026) state.creatures.push({type:'croc', x:wx, y:wy, hp:60, maxHp:60, spd:0.35, attackTimer:0, walkTimer:0});
+        if (r < 0.006) state.objects.push({type:'fish_spot', x:wx, y:wy, shimmer:Math.random()*100});
+        else if (r < 0.009) state.creatures.push({type:'croc', x:wx, y:wy, hp:60, maxHp:60, spd:0.35, attackTimer:0, walkTimer:0});
       } else if (t === T.VOLCANIC) {
         if (r < 0.04) state.objects.push({type:'vol_rock', x:wx, y:wy, hp:3, maxHp:3});
       }
@@ -511,18 +513,18 @@ function genObjects() {
       const r2 = Math.random();
 
       if (t === T.BEACH) {
-        if (r2 < 0.008) state.objects.push({type:'dead_tree', x:wx, y:wy, decor:true});
-        else if (r2 < 0.020) state.objects.push({type:'flower_patch', x:wx, y:wy, decor:true});
-        else if (r2 < 0.025) state.objects.push({type:'campfire_remains', x:wx, y:wy, decor:true});
-        else if (r2 < 0.040) state.objects.push({type:'tide_pool', x:wx, y:wy, decor:true});
+        if (r2 < 0.004) state.objects.push({type:'dead_tree', x:wx, y:wy, decor:true});
+        else if (r2 < 0.010) state.objects.push({type:'flower_patch', x:wx, y:wy, decor:true});
+        else if (r2 < 0.013) state.objects.push({type:'campfire_remains', x:wx, y:wy, decor:true});
+        else if (r2 < 0.020) state.objects.push({type:'tide_pool', x:wx, y:wy, decor:true});
       } else if (t === T.JUNGLE_LIGHT) {
-        if (r2 < 0.008) state.objects.push({type:'dead_tree', x:wx, y:wy, decor:true});
-        else if (r2 < 0.018) state.objects.push({type:'mossy_log', x:wx, y:wy, decor:true});
-        else if (r2 < 0.024) state.objects.push({type:'waterfall', x:wx, y:wy, decor:true});
+        if (r2 < 0.004) state.objects.push({type:'dead_tree', x:wx, y:wy, decor:true});
+        else if (r2 < 0.009) state.objects.push({type:'mossy_log', x:wx, y:wy, decor:true});
+        else if (r2 < 0.012) state.objects.push({type:'waterfall', x:wx, y:wy, decor:true});
       } else if (t === T.JUNGLE_DARK) {
-        if (r2 < 0.010) state.objects.push({type:'mossy_log', x:wx, y:wy, decor:true});
-        else if (r2 < 0.014) state.objects.push({type:'skull_stake', x:wx, y:wy, decor:true});
-        else if (r2 < 0.017) state.objects.push({type:'ancient_statue', x:wx, y:wy, decor:true});
+        if (r2 < 0.005) state.objects.push({type:'mossy_log', x:wx, y:wy, decor:true});
+        else if (r2 < 0.007) state.objects.push({type:'skull_stake', x:wx, y:wy, decor:true});
+        else if (r2 < 0.009) state.objects.push({type:'ancient_statue', x:wx, y:wy, decor:true});
       }
     }
   }
@@ -688,6 +690,13 @@ function drawEnemy(ctx, sx, sy, e) {
   const bw = Math.round(30*sc);
   px(ctx, '#333', sx - bw/2, ay - Math.round(32*sc), bw, 4);
   px(ctx, isChief?'#f39c12':'#e74c3c', sx - bw/2, ay - Math.round(32*sc), Math.round(bw * e.hp/e.maxHp), 4);
+
+  // Hit flash
+  if (e.hitFlash > 0) {
+    e.hitFlash--;
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.fillRect(sx - Math.round(8*sc), ay - Math.round(14*sc), Math.round(16*sc), Math.round(26*sc));
+  }
 }
 
 function drawTree(ctx, sx, sy) {
@@ -1054,7 +1063,8 @@ function drawParticles(ctx, camX, camY) {
     const a = p.life / p.maxLife;
     ctx.globalAlpha = a;
     ctx.fillStyle = p.color;
-    ctx.fillRect(Math.round(p.x-camX)-2, Math.round(p.y-camY)-2, 4, 4);
+    const sz = p.size || 4;
+    ctx.fillRect(Math.round(p.x-camX)-sz/2, Math.round(p.y-camY)-sz/2, sz, sz);
   });
   ctx.globalAlpha = 1;
 }
@@ -1316,7 +1326,6 @@ function drawCreatures(ctx, camX, camY) {
     if (sx < -60 || sx > ctx.canvas.width+60 || sy < -60 || sy > ctx.canvas.height+60) return;
     if (c.type === 'spider') {
       drawSpider(ctx, sx, sy);
-      // HP bar
       px(ctx, '#333', sx-10, sy-18, 20, 3);
       px(ctx, '#22cc44', sx-10, sy-18, Math.round(20*c.hp/c.maxHp), 3);
     } else if (c.type === 'croc') {
@@ -1327,6 +1336,11 @@ function drawCreatures(ctx, camX, camY) {
       drawBat(ctx, sx, sy);
       px(ctx, '#333', sx-8, sy-14, 16, 3);
       px(ctx, '#2a1040', sx-8, sy-14, Math.round(16*c.hp/c.maxHp), 3);
+    }
+    if (c.hitFlash > 0) {
+      c.hitFlash--;
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.fillRect(sx-10, sy-8, 20, 16);
     }
   });
 }
@@ -1476,14 +1490,17 @@ function drawMinigame(ctx) {
   const cw = ctx.canvas.width, ch = ctx.canvas.height;
   const bx = cw/2 - 180, by = ch - 180, bw = 360, bh = 120;
 
-  ctx.fillStyle = 'rgba(0,0,0,0.88)';
+  ctx.fillStyle = 'rgba(61,32,16,0.96)';
   ctx.fillRect(bx, by, bw, bh);
-  ctx.strokeStyle = '#c8f135';
+  ctx.strokeStyle = '#8B6020';
   ctx.lineWidth = 2;
   ctx.strokeRect(bx, by, bw, bh);
+  ctx.strokeStyle = '#5c3a10';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(bx+3, by+3, bw-6, bh-6);
 
   ctx.font = '11px "Courier New"';
-  ctx.fillStyle = '#c8f135';
+  ctx.fillStyle = '#f0d890';
   ctx.textAlign = 'center';
 
   if (mg.type === 'chop') {
@@ -1720,6 +1737,27 @@ function updatePlayer() {
   if (moving) {
     p.walkTimer++;
     p.walkFrame = Math.floor(p.walkTimer/6) % 8;
+    // Dirt particle trail
+    if (p.walkTimer % 8 === 0 && p.onGround) {
+      const tileUnder = getTile(p.x, p.y);
+      let dirtColor = null;
+      if (tileUnder === T.BEACH) dirtColor = '#c8b060';
+      else if (tileUnder === T.JUNGLE_LIGHT || tileUnder === T.JUNGLE_DARK) dirtColor = '#3a6a1a';
+      if (dirtColor) {
+        const n = 2 + Math.floor(Math.random()*2);
+        for (let di = 0; di < n; di++) {
+          const dp = {
+            x: p.x + (Math.random()-0.5)*6,
+            y: p.y + 8,
+            vx: (Math.random()-0.5)*1.2,
+            vy: -0.3 - Math.random()*0.5,
+            color: dirtColor,
+            life: 20, maxLife: 20, size: 2
+          };
+          state.particles.push(dp);
+        }
+      }
+    }
   } else {
     p.walkFrame = 0;
   }
@@ -1830,13 +1868,12 @@ function handleInteract() {
   }
 
   // Fishing
-  if (p.inv.fishing_rod > 0) {
-    const tile = getTile(p.x, p.y);
-    const nearWater = [T.SHALLOW_WATER, T.BEACH].includes(tile);
-    if (nearWater && !state.minigame) {
-      startFishMinigame();
-      return;
-    }
+  const tile2 = getTile(p.x, p.y);
+  const nearWater2 = [T.SHALLOW_WATER, T.BEACH].includes(tile2);
+  if (nearWater2 && !state.minigame) {
+    if (p.inv.fishing_rod <= 0) { showMsg('NEED A FISHING ROD TO FISH', '#e74c3c'); return; }
+    startFishMinigame();
+    return;
   }
 }
 
@@ -1869,12 +1906,14 @@ function handleClick(sx, sy) {
 
   // Attack enemies
   let hit = false;
+  const combatDmg = p.inv.fire_spear>0 ? 30 : p.inv.fire_axe>0 ? 22 : p.inv.spear>0 ? 18 : p.inv.sword>0 ? 15 : 4;
+  const combatColor = p.inv.fire_spear>0||p.inv.fire_axe>0 ? '#ff6600' : '#e74c3c';
   [...state.enemies, ...(state.chief?[state.chief]:[])].forEach(e => {
     const d = Math.hypot(wx-e.x, wy-e.y);
     if (d < reach+20) {
-      const dmg = p.inv.fire_spear>0 ? 30 : p.inv.spear>0 ? 18 : 8;
-      e.hp -= dmg;
-      spawnParticles(e.x, e.y, p.inv.fire_spear>0?'#ff6600':'#e74c3c', 6);
+      e.hp -= combatDmg;
+      e.hitFlash = 6;
+      spawnParticles(e.x, e.y, combatColor, 6);
       hit = true;
     }
   });
@@ -1885,8 +1924,8 @@ function handleClick(sx, sy) {
     const c = state.creatures[i];
     const d = Math.hypot(wx-c.x, wy-c.y);
     if (d < reach+20) {
-      const dmg = p.inv.fire_spear>0 ? 30 : p.inv.spear>0 ? 18 : 8;
-      c.hp -= dmg;
+      c.hp -= combatDmg;
+      c.hitFlash = 6;
       spawnParticles(c.x, c.y, '#22cc44', 4);
       if (c.hp <= 0) {
         if (c.type === 'spider') { p.inv.wood++; showMsg('+1 WOOD (SPIDER WEB)', '#8B6914'); }
@@ -1906,9 +1945,14 @@ function handleClick(sx, sy) {
     const d = Math.hypot(wx-obj.x, wy-obj.y);
     if (d > reach) continue;
 
-    if (obj.type === 'tree') { startChopMinigame(obj); return; }
-    if (obj.type === 'rock') { startMineMinigame(obj); return; }
-    if (obj.type === 'vol_rock') { startMineMinigame(obj); return; }
+    if (obj.type === 'tree') {
+      if (p.inv.axe <= 0 && p.inv.fire_axe <= 0) { showMsg('NEED AN AXE TO CHOP TREES', '#e74c3c'); return; }
+      startChopMinigame(obj); return;
+    }
+    if (obj.type === 'rock' || obj.type === 'vol_rock') {
+      if (p.inv.pickaxe <= 0) { showMsg('NEED A PICKAXE TO MINE ROCKS', '#e74c3c'); return; }
+      startMineMinigame(obj); return;
+    }
     if (obj.type === 'palm' && obj.respawn<=0) {
       obj.respawn = 1800;
       p.inv.coconut++;
@@ -1997,8 +2041,10 @@ const BUILD_ITEMS = [
 
 const CRAFT_ITEMS = [
   {id:'torch',       label:'TORCH',        cost:{wood:2,stone:1},              desc:'Reveals jungle pits, night light'},
-  {id:'axe',         label:'STONE AXE',    cost:{wood:2,stone:3},              desc:'Faster chopping'},
-  {id:'spear',       label:'STONE SPEAR',  cost:{wood:4,stone:2},              desc:'18 damage weapon'},
+  {id:'axe',         label:'STONE AXE',    cost:{wood:2,stone:3},              desc:'Required to chop trees'},
+  {id:'pickaxe',     label:'PICKAXE',      cost:{wood:3,stone:4},              desc:'Required to mine rocks'},
+  {id:'sword',       label:'SWORD',        cost:{stone:2,wood:3},              desc:'15 damage melee weapon'},
+  {id:'spear',       label:'STONE SPEAR',  cost:{wood:4,stone:2},              desc:'18 damage thrown weapon'},
   {id:'fishing_rod', label:'FISHING ROD',  cost:{wood:3,stone:1},              desc:'Required to fish'},
   {id:'water_barrel',label:'WATER BARREL', cost:{wood:5,stone:2},              desc:'+50 max water'},
   {id:'raft',        label:'RAFT',         cost:{wood:10},                     desc:'Needed for yacht'},
@@ -2080,8 +2126,8 @@ function renderCraftMenu() {
     const canAfford = Object.entries(item.cost).every(([k,v])=>(p.inv[k]||0)>=v);
 
     const div = document.createElement('div');
-    div.style.cssText = `padding:6px;background:#0d1f0d;border:1px solid ${canAfford?'#2d6e2d':'#1a3a1a'};margin-bottom:4px;cursor:${canAfford?'pointer':'default'};`;
-    div.innerHTML = `<span style="color:${canAfford?'#e8f4b0':'#2d6e2d'}">${item.label}</span> <span style="color:#a8c870;font-size:10px">— ${costStr}</span><br><span style="color:#2d6e2d;font-size:10px">${item.desc}</span>`;
+    div.style.cssText = `padding:6px;background:#251408;border:1px solid ${canAfford?'#8B6020':'#3a1e08'};margin-bottom:4px;cursor:${canAfford?'pointer':'default'};`;
+    div.innerHTML = `<span style="color:${canAfford?'#f0d890':'#5c3a10'}">${item.label}</span> <span style="color:#a08040;font-size:10px">— ${costStr}</span><br><span style="color:#5c3a10;font-size:10px">${item.desc}</span>`;
     if (canAfford) div.onclick = () => tryCraft(item.id);
     list.appendChild(div);
   });
@@ -2180,23 +2226,26 @@ function drawDialogue(ctx) {
   const cw = ctx.canvas.width, ch = ctx.canvas.height;
   const bx = 40, by = ch-160, bw = cw-80, bh = 130;
 
-  ctx.fillStyle = 'rgba(20,50,20,0.95)';
+  ctx.fillStyle = 'rgba(61,32,16,0.97)';
   ctx.fillRect(bx, by, bw, bh);
-  ctx.strokeStyle = '#4a8a2a';
+  ctx.strokeStyle = '#8B6020';
   ctx.lineWidth = 2;
   ctx.strokeRect(bx, by, bw, bh);
+  ctx.strokeStyle = '#5c3a10';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(bx+3, by+3, bw-6, bh-6);
 
   if (d.type === 'lore') {
-    ctx.fillStyle = '#ff8800';
+    ctx.fillStyle = '#f0a840';
     ctx.font = 'bold 11px "Courier New"';
     ctx.fillText('CARVED STONE', bx+14, by+20);
   } else if (d.npc) {
-    ctx.fillStyle = d.npc.color || '#c8f135';
+    ctx.fillStyle = d.npc.color || '#f0d890';
     ctx.font = 'bold 12px "Courier New"';
     ctx.fillText(d.npc.name, bx+14, by+20);
   }
 
-  ctx.fillStyle = '#e8f4b0';
+  ctx.fillStyle = '#f0d890';
   ctx.font = '11px "Courier New"';
   // Word wrap
   const words = d.displayed.split(' ');
@@ -2213,10 +2262,114 @@ function drawDialogue(ctx) {
 
   // Prompt
   if (d.charIdx >= d.text.length) {
-    ctx.fillStyle = '#2d6e2d';
+    ctx.fillStyle = '#a08040';
     ctx.font = '10px "Courier New"';
     ctx.fillText('[CLICK TO CONTINUE]', bx+bw-160, by+bh-10);
   }
+}
+
+// ============================================================
+// ITEM ICONS (pixel art drawn on canvas)
+// ============================================================
+function drawItemIcon(ctx, item, x, y, size) {
+  const s = size || 28;
+  const cx = x + s/2, cy = y + s/2;
+  ctx.save();
+  switch(item) {
+    case 'wood':
+      // Log cross-section: brown circle with rings
+      ctx.fillStyle = '#7a4a18'; ctx.fillRect(x+4, y+4, s-8, s-8);
+      ctx.fillStyle = '#5c3010'; ctx.fillRect(x+6, y+6, s-12, s-12);
+      ctx.fillStyle = '#3a1a08'; ctx.fillRect(x+10, y+10, s-20, s-20);
+      ctx.strokeStyle = '#3a1a08'; ctx.lineWidth = 1;
+      ctx.strokeRect(x+4, y+4, s-8, s-8);
+      break;
+    case 'stone':
+      ctx.fillStyle = '#666677'; ctx.fillRect(x+2, y+8, s-4, s-10);
+      ctx.fillStyle = '#888899'; ctx.fillRect(x+4, y+4, s-10, s-8);
+      ctx.fillStyle = '#aaaacc'; ctx.fillRect(x+8, y+2, s-16, 6);
+      break;
+    case 'coconut':
+      ctx.fillStyle = '#5c3d1e'; ctx.beginPath(); ctx.arc(cx, cy, s*0.38, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = '#3a2010'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(cx-4, cy-4); ctx.lineTo(cx+4, cy+4); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx+4, cy-4); ctx.lineTo(cx-4, cy+4); ctx.stroke();
+      break;
+    case 'fruit':
+      ctx.fillStyle = '#cc4400'; ctx.beginPath(); ctx.ellipse(cx, cy+2, s*0.35, s*0.42, 0, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#ff6600'; ctx.beginPath(); ctx.ellipse(cx-2, cy-1, s*0.2, s*0.25, -0.3, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = '#2d8a18'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cx+2, y+2); ctx.lineTo(cx+6, y-2); ctx.stroke();
+      break;
+    case 'fish':
+      ctx.fillStyle = '#2a6ab4'; ctx.beginPath(); ctx.ellipse(cx-2, cy, s*0.38, s*0.22, 0, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#3a8ad4'; ctx.beginPath(); ctx.ellipse(cx-4, cy-2, s*0.2, s*0.12, 0, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#2a6ab4';
+      ctx.beginPath(); ctx.moveTo(cx+s*0.3, cy); ctx.lineTo(cx+s*0.48, cy-6); ctx.lineTo(cx+s*0.48, cy+6); ctx.fill();
+      ctx.fillStyle = '#000'; ctx.fillRect(Math.round(cx-s*0.28), Math.round(cy-2), 2, 2);
+      break;
+    case 'fish_cooked':
+      ctx.strokeStyle = '#5c3d1e'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x+4, y+22); ctx.lineTo(x+s-4, y+8); ctx.stroke();
+      ctx.fillStyle = '#e07020'; ctx.beginPath(); ctx.ellipse(cx, cy+2, s*0.32, s*0.18, -0.4, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#f0a040'; ctx.fillRect(Math.round(cx-4), Math.round(cy), 8, 3);
+      break;
+    case 'axe':
+      ctx.strokeStyle = '#5c3d1e'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x+8, y+s-4); ctx.lineTo(x+s-6, y+4); ctx.stroke();
+      ctx.fillStyle = '#888899'; ctx.beginPath(); ctx.moveTo(x+s-10, y+2); ctx.lineTo(x+s-2, y+10); ctx.lineTo(x+s-12, y+16); ctx.fill();
+      break;
+    case 'spear':
+      ctx.strokeStyle = '#5c3d1e'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x+4, y+s-4); ctx.lineTo(x+s-4, y+4); ctx.stroke();
+      ctx.fillStyle = '#aaaacc'; ctx.beginPath(); ctx.moveTo(x+s-4, y+4); ctx.lineTo(x+s-10, y+8); ctx.lineTo(x+s-8, y+14); ctx.fill();
+      break;
+    case 'sword':
+      ctx.strokeStyle = '#aaaacc'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(cx, y+s-4); ctx.lineTo(cx, y+4); ctx.stroke();
+      ctx.strokeStyle = '#7a5c2e'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(x+4, cy+2); ctx.lineTo(x+s-4, cy+2); ctx.stroke();
+      ctx.fillStyle = '#c8a060'; ctx.fillRect(Math.round(cx-2), Math.round(cy+2), 4, 6);
+      break;
+    case 'pickaxe':
+      ctx.strokeStyle = '#5c3d1e'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x+s-6, y+10); ctx.lineTo(x+6, y+s-6); ctx.stroke();
+      ctx.fillStyle = '#888899';
+      ctx.beginPath(); ctx.moveTo(x+s-8, y+4); ctx.lineTo(x+s, y+12); ctx.lineTo(x+s-14, y+18); ctx.closePath(); ctx.fill();
+      break;
+    case 'fishing_rod':
+      ctx.strokeStyle = '#5c3d1e'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(x+4, y+s-4); ctx.quadraticCurveTo(x+s-4, y+s-8, x+s-4, y+4); ctx.stroke();
+      ctx.strokeStyle = '#c8c8c8'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x+s-4, y+4); ctx.lineTo(x+s-2, y+s-2); ctx.stroke();
+      ctx.fillStyle = '#e74c3c'; ctx.beginPath(); ctx.arc(x+s-2, y+s-2, 3, 0, Math.PI*2); ctx.fill();
+      break;
+    case 'torch':
+      ctx.fillStyle = '#5c3d1e'; ctx.fillRect(Math.round(cx-2), Math.round(cy), 4, s/2);
+      ctx.fillStyle = '#ff8800'; ctx.beginPath(); ctx.ellipse(cx, cy-2, 5, 8, 0, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#ffcc00'; ctx.beginPath(); ctx.ellipse(cx, cy-4, 3, 5, 0, 0, Math.PI*2); ctx.fill();
+      break;
+    case 'bed':
+      ctx.fillStyle = '#8B6914'; ctx.fillRect(x+2, y+8, s-4, s-10);
+      ctx.fillStyle = '#e8e8e0'; ctx.fillRect(x+2, y+6, s-4, 8);
+      ctx.fillStyle = '#b8b8b0'; ctx.fillRect(x+2, y+6, 8, 8);
+      break;
+    case 'wall':
+      ctx.fillStyle = '#5c5c44';
+      for (let wy2 = 0; wy2 < 3; wy2++) for (let wx2 = 0; wx2 < 3; wx2++) {
+        ctx.fillRect(x+2+wx2*9, y+2+wy2*9, 7, 7);
+      }
+      ctx.fillStyle = '#7a7a5a';
+      for (let wy2 = 0; wy2 < 3; wy2++) for (let wx2 = 0; wx2 < 3; wx2++) {
+        ctx.fillRect(x+2+wx2*9, y+2+wy2*9, 7, 3);
+      }
+      break;
+    case 'raft':
+      ctx.fillStyle = '#7a5c2e';
+      for (let i = 0; i < 3; i++) { ctx.fillRect(x+2+i*8, y+6, 6, s-12); }
+      ctx.strokeStyle = '#5c3d1e'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(x+2, y+10); ctx.lineTo(x+s-2, y+10); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x+2, y+s-8); ctx.lineTo(x+s-2, y+s-8); ctx.stroke();
+      break;
+    default:
+      ctx.fillStyle = '#a08040'; ctx.font = `${Math.round(s*0.3)}px Courier New`; ctx.textAlign = 'center';
+      ctx.fillText(item.substring(0,3).toUpperCase(), cx, cy+4);
+      ctx.textAlign = 'left';
+  }
+  ctx.restore();
 }
 
 // INVENTORY
@@ -2229,10 +2382,31 @@ function renderInvMenu() {
   allItems.forEach(([k,v]) => {
     const div = document.createElement('div');
     div.className = 'inv-slot-themed';
-    div.innerHTML = `<div class="count">${v}</div><div>${k.replace(/_/g,' ').toUpperCase()}</div>`;
-    // Click to consume food/water items
+    div.style.padding = '2px';
+
+    // Icon canvas
+    const ic = document.createElement('canvas');
+    ic.width = 28; ic.height = 28;
+    ic.style.cssText = 'image-rendering:pixelated;display:block;margin:0 auto 2px';
+    const ictx = ic.getContext('2d');
+    drawItemIcon(ictx, k, 0, 0, 28);
+    div.appendChild(ic);
+
+    // Count
+    const countEl = document.createElement('div');
+    countEl.className = 'count';
+    countEl.style.fontSize = '11px';
+    countEl.textContent = v;
+    div.appendChild(countEl);
+
+    // Short label
+    const labelEl = document.createElement('div');
+    labelEl.style.cssText = 'font-size:7px;color:#a08040;line-height:1.1;text-align:center;';
+    labelEl.textContent = k.replace(/_/g,' ').toUpperCase().substring(0,8);
+    div.appendChild(labelEl);
+
     div.onclick = () => {
-      if (k==='coconut'&&p.inv.coconut>0){p.inv.coconut--;p.water=Math.min(p.maxWater,p.water+35);showMsg('+35 WATER',  '#3498db');}
+      if (k==='coconut'&&p.inv.coconut>0){p.inv.coconut--;p.water=Math.min(p.maxWater,p.water+35);showMsg('+35 WATER','#3498db');}
       if (k==='fish'&&p.inv.fish>0){p.inv.fish--;if(Math.random()<0.2){p.sick=200;showMsg('SICK FROM RAW FISH!','#e74c3c');}else{p.food=Math.min(p.maxFood,p.food+25);showMsg('+25 FOOD (RAW)','#e67e22');}}
       if (k==='fish_cooked'&&p.inv.fish_cooked>0){p.inv.fish_cooked--;p.food=Math.min(p.maxFood,p.food+50);showMsg('+50 FOOD (COOKED)','#e67e22');}
       if (k==='fruit'&&p.inv.fruit>0){p.inv.fruit--;if(Math.random()<0.2){p.sick=200;showMsg('SICK FROM RAW FRUIT!','#e74c3c');}else{p.food=Math.min(p.maxFood,p.food+20);showMsg('+20 FOOD (RAW)','#e67e22');}}
@@ -2256,6 +2430,15 @@ function drawTile(ctx, type, sx, sy) {
     ctx.fillStyle = TILE_COLORS[type];
   }
   ctx.fillRect(sx, sy, TSIZE, TSIZE);
+
+  // Micro-variation: slight brightness offset per tile based on position hash
+  if (type !== T.LAVA && type !== T.DEEP_OCEAN) {
+    const tx2 = Math.round(sx/TSIZE), ty2 = Math.round(sy/TSIZE);
+    const v = (tx2*13 + ty2*7) % 5;
+    if (v === 0) { ctx.fillStyle = 'rgba(255,255,255,0.04)'; ctx.fillRect(sx, sy, TSIZE, TSIZE); }
+    else if (v === 1) { ctx.fillStyle = 'rgba(0,0,0,0.05)'; ctx.fillRect(sx, sy, TSIZE, TSIZE); }
+    else if (v === 4) { ctx.fillStyle = 'rgba(255,255,255,0.02)'; ctx.fillRect(sx, sy, TSIZE, TSIZE); }
+  }
 
   // Tile variation
   if (type === T.BEACH) {
@@ -2500,11 +2683,10 @@ function render(ctx, minimapCtx) {
     // Shadow ellipse under solid objects
     if (['tree','palm','rock','vol_rock','jungle_chest','vol_chest','step_stone','ancient_statue','skull_stake','dead_tree','mossy_log'].includes(obj.type)) {
       ctx.save();
-      ctx.fillStyle = 'rgba(0,0,0,0.18)';
-      ctx.scale(1, 0.35);
+      ctx.fillStyle = 'rgba(0,0,0,0.22)';
+      const shadowW = obj.type === 'tree' || obj.type === 'palm' ? 18 : obj.type === 'rock' || obj.type === 'vol_rock' ? 12 : 10;
       ctx.beginPath();
-      const shadowW = obj.type === 'tree' || obj.type === 'palm' ? 16 : 10;
-      ctx.ellipse(sx, (sy+12)*1/0.35, shadowW, 5/0.35, 0, 0, Math.PI*2);
+      ctx.ellipse(sx + 4, sy + 12, shadowW, shadowW * 0.3, 0, 0, Math.PI*2);
       ctx.fill();
       ctx.restore();
     }
@@ -2976,7 +3158,7 @@ function updateUI() {
   const totalFood=(p.inv.fish||0)+(p.inv.fruit||0)+(p.inv.fish_cooked||0)+(p.inv.fruit_cooked||0)+(p.inv.coconut||0);
   document.getElementById('hf').textContent = totalFood;
   document.getElementById('hwt').textContent = Math.round(p.water);
-  const tool = p.inv.fire_spear>0?'FSPEAR':p.inv.spear>0?'SPEAR':p.inv.fire_axe>0?'FAXE':p.inv.axe>0?'AXE':'-';
+  const tool = p.inv.fire_spear>0?'FSPEAR':p.inv.spear>0?'SPEAR':p.inv.fire_axe>0?'FAXE':p.inv.sword>0?'SWORD':p.inv.axe>0?'AXE':p.inv.pickaxe>0?'PICK':'-';
   document.getElementById('ht').textContent = tool;
   document.getElementById('hd').textContent = state.day;
 }
@@ -3009,10 +3191,31 @@ const slides = [
 let slideIdx = 0;
 function showSlide() {
   // Show all tutorial content at once
-  const allContent = slides.map(s=>`<div style="margin-bottom:18px"><h3 style="color:#c8f135;font-size:12px;letter-spacing:3px;margin-bottom:8px">${s.t}</h3><div style="font-size:11px;color:#e8f4b0;line-height:1.8">${s.b}</div></div>`).join('<hr style="border-color:#222;margin:10px 0">');
+  const allContent = slides.map(s=>`<div style="margin-bottom:18px"><h3 style="color:#f0d890;font-size:12px;letter-spacing:3px;margin-bottom:8px">${s.t}</h3><div style="font-size:11px;color:#f0d890;line-height:1.8">${s.b}</div></div>`).join('<hr style="border-color:#5c3a10;margin:10px 0">');
   document.getElementById('slide-content').innerHTML = allContent;
   document.getElementById('slide-dots').innerHTML = '';
-  document.getElementById('slide-btn').textContent = 'START GAME';
+  document.getElementById('slide-btn').textContent = 'BEGIN SURVIVAL';
+
+  // Draw title palm icon
+  const pc = document.getElementById('title-palm');
+  if (pc) {
+    const pctx = pc.getContext('2d');
+    pctx.clearRect(0, 0, 40, 48);
+    // Trunk
+    pctx.fillStyle = '#7a5c2e';
+    pctx.fillRect(18, 20, 5, 26);
+    pctx.fillStyle = '#5c3d1e';
+    pctx.fillRect(19, 16, 3, 8);
+    // 3 fronds
+    pctx.fillStyle = '#2d8c2d';
+    pctx.fillRect(0, 12, 16, 4);   // left
+    pctx.fillRect(24, 12, 16, 4);  // right
+    pctx.fillRect(8, 4, 24, 4);    // top
+    // Coconuts
+    pctx.fillStyle = '#5c3d1e';
+    pctx.fillRect(16, 18, 4, 4);
+    pctx.fillRect(21, 18, 4, 4);
+  }
 }
 function nextSlide() {
   document.getElementById('overlay').style.display='none';
@@ -3060,7 +3263,7 @@ function renderCCPreview() {
   if (!cv) return;
   const ctx = cv.getContext('2d');
   ctx.clearRect(0, 0, 80, 80);
-  ctx.fillStyle = '#0d1f0d';
+  ctx.fillStyle = '#251408';
   ctx.fillRect(0, 0, 80, 80);
 
   // Simple pixel art character centered at (40, 46)
@@ -3085,7 +3288,7 @@ function renderCCPreview() {
   ppx(state.shirtColor, sx-10, sy-2, 4, 8);
   ppx(state.shirtColor, sx+6, sy-2, 4, 8);
   // Pixel art border decoration (palm leaf dots)
-  ctx.strokeStyle = '#2d6e2d';
+  ctx.strokeStyle = '#5c3a10';
   ctx.lineWidth = 1;
   ctx.strokeRect(0.5, 0.5, 79, 79);
 }
@@ -3096,6 +3299,19 @@ function confirmCharacter() {
   document.getElementById('char-creator').style.display = 'none';
   document.getElementById('overlay').style.display = 'flex';
   showSlide();
+  // Draw palm after overlay is shown
+  setTimeout(() => {
+    const pc = document.getElementById('title-palm');
+    if (pc) {
+      const pctx = pc.getContext('2d');
+      pctx.clearRect(0,0,40,48);
+      pctx.fillStyle='#7a5c2e'; pctx.fillRect(18,20,5,26);
+      pctx.fillStyle='#5c3d1e'; pctx.fillRect(19,16,3,8);
+      pctx.fillStyle='#2d8c2d';
+      pctx.fillRect(0,12,16,4); pctx.fillRect(24,12,16,4); pctx.fillRect(8,4,24,4);
+      pctx.fillStyle='#5c3d1e'; pctx.fillRect(16,18,4,4); pctx.fillRect(21,18,4,4);
+    }
+  }, 50);
 }
 
 window.addEventListener('DOMContentLoaded', () => { initCharCreator(); });
