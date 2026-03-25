@@ -4513,7 +4513,8 @@ function startGame() {
   }, { passive: false });
 
   document.addEventListener('touchend', function(e) {
-    e.preventDefault();
+    if (!state.running) return;
+    if (joy.touchId !== null) e.preventDefault();
     for (let i = 0; i < e.changedTouches.length; i++) {
       const t = e.changedTouches[i];
       if (t.identifier === joy.touchId) {
@@ -4523,6 +4524,7 @@ function startGame() {
   }, { passive: false });
 
   document.addEventListener('touchcancel', function(e) {
+    if (!state.running) return;
     e.preventDefault();
     resetJoystick();
   }, { passive: false });
