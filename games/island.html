@@ -643,9 +643,9 @@ function px(ctx, color, x, y, w, h) {
 }
 
 function drawPlayer(ctx, sx, sy, p) {
-  const wf = p.walkFrame;
-  const bob = p.onGround ? Math.sin(p.walkTimer * 0.3) * 1.5 : 0;
-  const ay = sy + bob;
+  const wf = p.walkFrame; // 0-7 walk frame
+  const bob = 0; // body bob handled per-section below
+  const ay = sy;
   const airTilt = p.onGround ? 0 : -4; // slight visual lift when airborne
 
   // Check if swimming
@@ -686,20 +686,45 @@ function drawPlayer(ctx, sx, sy, p) {
   // Shadow
   px(ctx, 'rgba(0,0,0,0.25)', sx-7, ay+16, 14, 3);
 
-  // Simple Terraria-style character: head + body + 2 legs
-  // Legs (alternating when walking)
-  const legSwing = p.onGround ? Math.sin(p.walkTimer * 0.35) * 4 : 0;
-  px(ctx, '#4a2e10', sx-5, ay+6+legSwing, 5, 10); // left leg
-  px(ctx, '#4a2e10', sx+0, ay+6-legSwing, 5, 10); // right leg
+  // 8-frame walk cycle (wf already declared at top)
+  const isWalking = p.walkTimer > 0;
+  const bodyBob = isWalking ? Math.round(Math.sin(wf * Math.PI / 4) * 1.5) : 0;
+  const breathBob = (!isWalking && p.onGround) ? (Math.floor(state.frameCount / 60) % 2 === 0 ? 0 : -1) : 0;
+  const bobOff = bodyBob + breathBob;
+
+  let lLegX, lLegY, rLegX, rLegY, lArmAngle, rArmAngle;
+  if (!p.onGround) {
+    // Jumping: spread legs apart, raise arms
+    lLegX = -6; rLegX = 4; lLegY = 0; rLegY = 0;
+    lArmAngle = -4; rArmAngle = -4;
+  } else {
+    // Left leg: forward on frames 0-3, back on frames 4-7
+    lLegX = (wf < 4) ? -3 : -5;
+    lLegY = (wf < 4) ? Math.sin(wf * Math.PI / 3) * 5 : -Math.sin((wf-4) * Math.PI / 3) * 3;
+    // Right leg: opposite phase
+    rLegX = (wf >= 4) ? 1 : 3;
+    rLegY = (wf >= 4) ? Math.sin((wf-4) * Math.PI / 3) * 5 : -Math.sin(wf * Math.PI / 3) * 3;
+    // Arms swing opposite to legs
+    lArmAngle = (wf < 4) ? -Math.sin(wf * Math.PI / 3) * 6 : Math.sin((wf-4) * Math.PI / 3) * 4;
+    rArmAngle = -lArmAngle;
+  }
+
+  // Arms (drawn before body so body overlaps)
+  px(ctx, state.shirtColor, sx-10, ay-2+lArmAngle+bobOff, 4, 8);
+  px(ctx, state.shirtColor, sx+6, ay-2+rArmAngle+bobOff, 4, 8);
+
+  // Legs
+  px(ctx, '#4a2e10', sx+lLegX, ay+6+lLegY+bobOff, 5, 10);
+  px(ctx, '#4a2e10', sx+rLegX, ay+6+rLegY+bobOff, 5, 10);
 
   // Body (shirt)
-  px(ctx, state.shirtColor, sx-6, ay-4, 12, 12);
+  px(ctx, state.shirtColor, sx-6, ay-4+bobOff, 12, 12);
 
   // Head (simple square)
-  px(ctx, state.skinColor, sx-5, ay-14, 10, 10);
+  px(ctx, state.skinColor, sx-5, ay-14+bobOff, 10, 10);
   // Simple eyes
-  px(ctx, '#1a0a00', sx-3, ay-11, 2, 2);
-  px(ctx, '#1a0a00', sx+1, ay-11, 2, 2);
+  px(ctx, '#1a0a00', sx-3, ay-11+bobOff, 2, 2);
+  px(ctx, '#1a0a00', sx+1, ay-11+bobOff, 2, 2);
   } // end else (not swimming)
 
   // Torch glow at night
@@ -933,9 +958,14 @@ function drawPalm(ctx, sx, sy) {
   px(ctx, '#2d8c2d', sx-22+sway, sy-10, 18, 4);
   px(ctx, '#2d8c2d', sx+4+sway, sy-10, 18, 4);
   px(ctx, '#2d8c2d', sx-12+sway, sy-18, 24, 4);
-  // Coconuts
-  px(ctx, '#5c3d1e', sx-5, sy-4, 4, 4);
-  px(ctx, '#5c3d1e', sx+1, sy-4, 4, 4);
+  // Coconuts — 3 clustered at frond base, more visible
+  px(ctx, '#4a2a08', sx-6, sy-5, 5, 5);
+  px(ctx, '#2a1800', sx-5, sy-4, 1, 1); // highlight
+  px(ctx, '#6a4a18', sx-6, sy-5, 2, 2); // lighter highlight
+  px(ctx, '#4a2a08', sx+1, sy-5, 5, 5);
+  px(ctx, '#6a4a18', sx+1, sy-5, 2, 2);
+  px(ctx, '#4a2a08', sx-2, sy-7, 5, 5);
+  px(ctx, '#6a4a18', sx-2, sy-7, 2, 2);
 }
 
 function drawRock(ctx, sx, sy) {
@@ -3078,6 +3108,21 @@ function drawTile(ctx, type, sx, sy) {
       const py2 = sy + (h1 * 5 + 1) % (TSIZE-2);
       ctx.fillRect(px2, py2, 2, 2);
     }
+    // Sand ripples
+    if ((tx*5+ty*3)%20 === 0) {
+      ctx.fillStyle = '#c8a870';
+      ctx.fillRect(sx+1, sy+2, 6, 1);
+      ctx.fillRect(sx+2, sy+4, 5, 1);
+      ctx.fillRect(sx+1, sy+6, 4, 1);
+    }
+    // Seagull silhouette every 15th tile
+    if ((tx+ty)%15 === 0) {
+      const gsx = sx + 3, gsy = sy - 4;
+      ctx.fillStyle = '#888';
+      ctx.fillRect(gsx, gsy, 2, 1);
+      ctx.fillRect(gsx+3, gsy, 2, 1);
+      ctx.fillRect(gsx+2, gsy-1, 1, 1);
+    }
   }
   if (type === T.JUNGLE_LIGHT) {
     const tx = Math.round(sx/TSIZE), ty = Math.round(sy/TSIZE);
@@ -3093,6 +3138,9 @@ function drawTile(ctx, type, sx, sy) {
   if (type === T.JUNGLE_DARK) {
     const tx = Math.round(sx/TSIZE), ty = Math.round(sy/TSIZE);
     if ((tx*5 + ty*11) % 9 === 0) { ctx.fillStyle = 'rgba(0,20,0,0.3)'; ctx.fillRect(sx, sy, TSIZE, TSIZE); }
+    // Canopy shadow: darker top strip to simulate overhead canopy oppression
+    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+    ctx.fillRect(sx, sy, TSIZE, 2);
   }
   if (type === T.SHALLOW_WATER) {
     const wave = Math.sin(state.frameCount * 0.04 + sx * 0.05) * 0.15;
@@ -3120,6 +3168,14 @@ function drawTile(ctx, type, sx, sy) {
     if (wave2 > 0.05) {
       ctx.fillStyle = 'rgba(60,120,180,0.15)';
       ctx.fillRect(sx, sy + TSIZE/2, TSIZE, 2);
+    }
+    // Horizon shimmer: top 2px of deep ocean tiles get lighter strip
+    const tx_do = Math.round(sx/TSIZE) + Math.floor(state.cam.x/TSIZE);
+    const ty_do = Math.round(sy/TSIZE) + Math.floor(state.cam.y/TSIZE);
+    const aboveTile = state.map[ty_do - 1]?.[tx_do];
+    if (aboveTile !== T.DEEP_OCEAN && aboveTile !== T.SHALLOW_WATER) {
+      ctx.fillStyle = '#2a6a8a';
+      ctx.fillRect(sx, sy, TSIZE, 2);
     }
   }
 }
@@ -3567,7 +3623,7 @@ function render(ctx, minimapCtx) {
     const bsx = b.wx - camX, bsy = b.wy - camY;
     if (bsx < -20 || bsx > canvas.width+20) return;
     const flapPhase = Math.floor(b.flapFrame / 8) % 2;
-    ctx.fillStyle = '#222a22';
+    ctx.fillStyle = b.color || '#e8e8e8';
     if (flapPhase === 0) {
       // Wings up: V shape
       ctx.fillRect(Math.round(bsx-6), Math.round(bsy-2), 5, 2);
@@ -3846,13 +3902,19 @@ function updateBirdsAndFootprints() {
     const camX = state.cam.x, camY = state.cam.y;
     const startX = Math.random() > 0.5 ? camX - 20 : camX + window.innerWidth + 20;
     const dirX = startX < camX ? 1.5 : -1.5;
+    // Assign bird type: 60% seagull, 25% kingfisher, 15% tropic bird
+    const birdRnd = Math.random();
+    const birdType = birdRnd < 0.60 ? 0 : birdRnd < 0.85 ? 1 : 2;
+    const birdColors = ['#e8e8e8', '#2a88cc', '#cc3322'];
     state.birds.push({
       wx: startX, // world x
       wy: camY + 30 + Math.random() * (window.innerHeight * 0.4),
       vx: dirX,
       vy: (Math.random() - 0.5) * 0.3,
       life: 600 + Math.floor(Math.random() * 400),
-      flapFrame: 0
+      flapFrame: 0,
+      birdType: birdType,
+      color: birdColors[birdType]
     });
   }
   state.birds = state.birds.filter(b => {
