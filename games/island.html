@@ -329,7 +329,7 @@ const state = {
 const NPC_DATA = [
   {
     id: 'oonga', name: 'OONGA', color: '#6a3010',
-    x: 128*TSIZE, y: 174*TSIZE,
+    x: 128*TSIZE, y: 165*TSIZE,
     desc: "Tribe outcast. Your first guide on the island.",
     lines: [
       { text: "You... from ship. Yes. I saw it sink. The volcano stone — it called the storm. I am Oonga. My people... they are not all bad. I was one of them.", options: ["What happened?", "Who are you?"], optionNext: [1, 1] },
@@ -3020,7 +3020,7 @@ function updatePlayer() {
   // Gate 1: Jungle (y < 145) requires zone 1 (unlocked by Oonga)
   if (pty < 145 && state.zoneUnlocked < 1) {
     p.y = 145 * TSIZE;
-    if (canShowGateMsg) { showMsg("OONGA: 'The jungle is dangerous. Talk to me first.'", '#c8a060'); state._gateMsg = 180; }
+    if (canShowGateMsg) { showMsg("[ BLOCKED ] Talk to Oonga first to explore the jungle (press E near him)", '#c8a060'); state._gateMsg = 180; }
   }
   // Gate 2: Inner jungle (y < 120) requires zone 2 (unlocked by Mara quest)
   else if (pty < 120 && state.zoneUnlocked < 2) {
