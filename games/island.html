@@ -3500,13 +3500,9 @@ function handleClick(sx, sy) {
 
     if (obj.type === 'tree') {
       // No axe = very slow chopping (10 hits). Axe = normal (5 hits). Fire axe = instant.
-      const at = getActiveTool();
-      if (at !== "axe" && at !== "fire_axe") { showMsg("EQUIP AN AXE (press 1-6 to select from hotbar)", "#e74c3c"); return; }
       startChopMinigame(obj); return;
     }
     if (obj.type === 'rock' || obj.type === 'vol_rock') {
-      const atm = getActiveTool();
-      if (atm !== "pickaxe" && atm !== "fire_axe") { showMsg("EQUIP A PICKAXE (press 1-6 to select from hotbar)", "#e74c3c"); return; }
       startMineMinigame(obj); return;
     }
     if (obj.type === 'palm' && obj.respawn<=0) {
@@ -6309,9 +6305,36 @@ function updateUI() {
   const totalFood=(p.inv.fish||0)+(p.inv.fruit||0)+(p.inv.fish_cooked||0)+(p.inv.fruit_cooked||0)+(p.inv.coconut||0);
   const hfEl = document.getElementById('hf'); if(hfEl) hfEl.textContent = totalFood;
   const hwtEl = document.getElementById('hwt'); if(hwtEl) hwtEl.textContent = Math.round(p.water);
-  const tool = p.inv.fire_spear>0?'FSPEAR':p.inv.spear>0?'SPEAR':p.inv.fire_axe>0?'FAXE':p.inv.sword>0?'SWORD':p.inv.axe>0?'AXE':p.inv.pickaxe>0?'PICK':'-';
-  const htEl=document.getElementById('ht'); if(htEl) htEl.textContent=tool;
+  const htEl=document.getElementById('ht'); if(htEl) htEl.textContent='';
   const hdEl=document.getElementById('hd'); if(hdEl) hdEl.textContent=state.day;
+
+  // Hotbar - tools only, press 1-6 to equip
+  const toolSlots = [
+    {id:'axe', label:'AXE'},
+    {id:'pickaxe', label:'PICK'},
+    {id:'sword', label:'SWORD'},
+    {id:'spear', label:'SPEAR'},
+    {id:'fire_axe', label:'F.AXE'},
+    {id:'fire_spear', label:'F.SPEAR'},
+    {id:'fishing_rod', label:'ROD'},
+    {id:'torch', label:'TORCH'},
+  ].filter(t => (p.inv[t.id]||0) > 0);
+
+  for (let i = 1; i <= 6; i++) {
+    const slot = toolSlots[i-1];
+    const el = document.getElementById('h'+i+'name'); if (!el) continue;
+    const ec = document.getElementById('h'+i+'count');
+    const hs = document.getElementById('hslot'+i);
+    if (slot) {
+      el.textContent = slot.label;
+      if(ec) ec.textContent = '';
+      if(hs) { hs.style.borderColor = (state.activeSlot===i) ? '#c8f135' : ''; hs.style.boxShadow = (state.activeSlot===i) ? '0 0 10px rgba(200,241,53,0.5)' : ''; }
+    } else {
+      el.textContent = '-';
+      if(ec) ec.textContent = '';
+      if(hs) { hs.style.borderColor = ''; hs.style.boxShadow = ''; }
+    }
+  }
 
   // Day/night clock icon
   // Time icon — simple text, no canvas
