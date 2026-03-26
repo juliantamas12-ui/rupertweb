@@ -3017,10 +3017,17 @@ function updatePlayer() {
   const gateMsg = (state._gateMsg || 0);
   const canShowGateMsg = gateMsg <= 0;
 
-  // Gate 1: Jungle (y < 145) requires zone 1 (unlocked by Oonga)
-  if (pty < 145 && state.zoneUnlocked < 1) {
-    p.y = 145 * TSIZE;
-    if (canShowGateMsg) { showMsg("[ BLOCKED ] Talk to Oonga first to explore the jungle (press E near him)", '#c8a060'); state._gateMsg = 180; }
+  // Gate 1: Two giant pit traps guard jungle entrance - fall in and die
+  // Pits placed at y~143, x~105-115 and x~135-145 (flanking the central path)
+  if (state.zoneUnlocked < 1) {
+    // Check if player is in either giant pit zone
+    const inLeftPit = (ptx >= 100 && ptx <= 118 && pty >= 140 && pty <= 150);
+    const inRightPit = (ptx >= 132 && ptx <= 150 && pty >= 140 && pty <= 150);
+    if (inLeftPit || inRightPit) {
+      // Fall into pit - instant death with message
+      p.hp = 0;
+      showMsg('YOU FELL INTO A PIT! The jungle is not safe yet.', '#e74c3c');
+    }
   }
   // Gate 2: Inner jungle (y < 120) requires zone 2 (unlocked by Mara quest)
   else if (pty < 120 && state.zoneUnlocked < 2) {
