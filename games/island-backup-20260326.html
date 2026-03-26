@@ -1629,7 +1629,6 @@ function updateEnemies() {
         const dmg = e.type==='chief' ? 20 : (e.type==='shadow'?12:8);
         p.hp = Math.max(0, p.hp - dmg);
         spawnParticles(p.x, p.y, '#e74c3c', 8);
-        SFX.hurt();
       }
     }
 
@@ -2105,17 +2104,13 @@ function handleMinigameKey(key) {
 
     const prog = result === 'green' ? 2 : result === 'yellow' ? 1 : 0;
     mg.progress += prog;
-    if (result !== 'miss') {
-      spawnParticles(mg.target.x, mg.target.y, '#5c3d1e', 4);
-      SFX.chop();
-    }
+    if (result !== 'miss') spawnParticles(mg.target.x, mg.target.y, '#5c3d1e', 4);
 
     if (mg.progress >= mg.maxProgress) {
       const quality = mg.progress >= 7 ? 'HIGH' : 'NORMAL';
       const yield_ = state.player.inv.axe > 0 ? 3 : 2;
       state.player.inv.wood += yield_;
       showMsg(`+${yield_} WOOD${quality==='HIGH'?' (HIGH QUALITY)':''}`, '#8B6914');
-      SFX.pickup();
       // Remove tree
       state.objects = state.objects.filter(o => o !== mg.target);
       state.minigame = null;
@@ -2141,7 +2136,6 @@ function handleMineClick(wx, wy) {
   if (wx >= zx && wx <= zx+16 && wy >= zy && wy <= zy+16) {
     z.hit = true;
     spawnParticles(mg.target.x, mg.target.y, '#666677', 4);
-    SFX.chop();
     mg.currentZone++;
     mg.zoneTimer = 180;
     if (mg.currentZone >= mg.zones.length) {
@@ -2149,145 +2143,11 @@ function handleMineClick(wx, wy) {
       const yield_ = perfect ? 3 : 1;
       state.player.inv.stone += yield_;
       showMsg(`+${yield_} STONE${perfect?' (PERFECT!)':''}`, '#888899');
-      SFX.pickup();
       state.objects = state.objects.filter(o => o !== mg.target);
       state.minigame = null;
     }
   }
 }
-
-// ============================================================
-// WEB AUDIO — PROCEDURAL SOUND EFFECTS
-// ============================================================
-
-const SFX = (() => {
-  let ctx = null;
-  let unlocked = false;
-
-  function getCtx() {
-    if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
-    if (ctx.state === 'suspended') ctx.resume();
-    return ctx;
-  }
-
-  // Unlock audio on first user interaction
-  function unlock() {
-    if (unlocked) return;
-    unlocked = true;
-    getCtx();
-  }
-
-  function _osc(type, freq, gain, dur, freqEnd) {
-    try {
-      const c = getCtx();
-      const osc = c.createOscillator();
-      const gainNode = c.createGain();
-      osc.connect(gainNode);
-      gainNode.connect(c.destination);
-      osc.type = type;
-      osc.frequency.setValueAtTime(freq, c.currentTime);
-      if (freqEnd !== undefined) osc.frequency.exponentialRampToValueAtTime(freqEnd, c.currentTime + dur);
-      gainNode.gain.setValueAtTime(gain, c.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, c.currentTime + dur);
-      osc.start(c.currentTime);
-      osc.stop(c.currentTime + dur);
-    } catch(e) {}
-  }
-
-  function _noise(gainVal, dur, filterFreq) {
-    try {
-      const c = getCtx();
-      const bufSz = Math.ceil(c.sampleRate * dur);
-      const buf = c.createBuffer(1, bufSz, c.sampleRate);
-      const data = buf.getChannelData(0);
-      for (let i = 0; i < bufSz; i++) data[i] = Math.random() * 2 - 1;
-      const src = c.createBufferSource();
-      src.buffer = buf;
-      const filter = c.createBiquadFilter();
-      filter.type = 'bandpass';
-      filter.frequency.value = filterFreq || 800;
-      filter.Q.value = 0.5;
-      const gainNode = c.createGain();
-      gainNode.gain.setValueAtTime(gainVal, c.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, c.currentTime + dur);
-      src.connect(filter);
-      filter.connect(gainNode);
-      gainNode.connect(c.destination);
-      src.start();
-      src.stop(c.currentTime + dur);
-    } catch(e) {}
-  }
-
-  return {
-    unlock,
-
-    // Attack swing — short airy whoosh
-    swing() {
-      _noise(0.12, 0.09, 2400);
-      _osc('sine', 220, 0.04, 0.09, 110);
-    },
-
-    // Hit landed on enemy — sharp impact
-    hit() {
-      _noise(0.22, 0.06, 600);
-      _osc('square', 180, 0.08, 0.07, 60);
-    },
-
-    // Enemy death — descending crunch
-    enemyDie() {
-      _osc('sawtooth', 260, 0.12, 0.25, 40);
-      _noise(0.18, 0.12, 300);
-    },
-
-    // Player hurt — dull thud + low grunt
-    hurt() {
-      _osc('sine', 100, 0.18, 0.18, 50);
-      _noise(0.15, 0.1, 200);
-    },
-
-    // Chop / mine click
-    chop() {
-      _noise(0.2, 0.07, 1200);
-      _osc('triangle', 300, 0.06, 0.05, 200);
-    },
-
-    // Item pickup — quick ascending sparkle
-    pickup() {
-      _osc('sine', 440, 0.07, 0.06, 660);
-      setTimeout(() => _osc('sine', 660, 0.05, 0.06, 880), 60);
-    },
-
-    // Jump — brief bounce
-    jump() {
-      _osc('sine', 280, 0.06, 0.1, 420);
-    },
-
-    // Thunder — low rumble during storm
-    thunder() {
-      _noise(0.35, 1.2, 80);
-      _osc('sine', 55, 0.15, 1.0, 30);
-    },
-
-    // Campfire crackle — brief noise burst
-    crackle() {
-      _noise(0.08, 0.15, 1800);
-    },
-
-    // Crafting complete — ascending major chord hit
-    craft() {
-      _osc('sine', 330, 0.07, 0.15, 330);
-      setTimeout(() => _osc('sine', 415, 0.06, 0.12, 415), 60);
-      setTimeout(() => _osc('sine', 495, 0.07, 0.18, 495), 120);
-    },
-
-    // Victory sting
-    victory() {
-      [523, 659, 784, 1047].forEach((f, i) => {
-        setTimeout(() => _osc('sine', f, 0.1, 0.3), i * 100);
-      });
-    }
-  };
-})();
 
 // ============================================================
 // PLAYER UPDATE, INPUT, INTERACTION
@@ -2692,15 +2552,12 @@ function handleClick(sx, sy) {
   let hit = false;
   const combatDmg = p.inv.fire_spear>0 ? 30 : p.inv.fire_axe>0 ? 22 : p.inv.spear>0 ? 18 : p.inv.sword>0 ? 15 : 4;
   const combatColor = p.inv.fire_spear>0||p.inv.fire_axe>0 ? '#ff6600' : '#e74c3c';
-  SFX.swing(); // always play swing on attack click
   [...state.enemies, ...(state.chief?[state.chief]:[])].forEach(e => {
     const d = Math.hypot(wx-e.x, wy-e.y);
     if (d < reach+20) {
       e.hp -= combatDmg;
       e.hitFlash = 6;
       spawnParticles(e.x, e.y, combatColor, 6);
-      SFX.hit();
-      if (e.hp <= 0) SFX.enemyDie();
       hit = true;
     }
   });
@@ -2714,9 +2571,7 @@ function handleClick(sx, sy) {
       c.hp -= combatDmg;
       c.hitFlash = 6;
       spawnParticles(c.x, c.y, '#22cc44', 4);
-      SFX.hit();
       if (c.hp <= 0) {
-        SFX.enemyDie();
         if (c.type === 'spider') { p.inv.wood++; showMsg('+1 WOOD (SPIDER WEB)', '#8B6914'); }
         if (c.type === 'shark') { p.inv.fish = (p.inv.fish||0)+2; showMsg('+1 FOOD (SHARK MEAT)', '#e67e22'); }
         state.creatures.splice(i, 1);
@@ -2748,26 +2603,24 @@ function handleClick(sx, sy) {
       p.inv.coconut++;
       p.water = Math.min(p.maxWater, p.water+20);
       showMsg('+COCONUT (+WATER)', '#3498db');
-      SFX.pickup();
       return;
     }
     if (obj.type === 'berry' && obj.respawn<=0) {
       obj.respawn = 3600;
       // Raw berry — risk of sickness
-      if (Math.random() < 0.2) { p.sick = 200; showMsg('SICK FROM RAW BERRIES!', '#e74c3c'); SFX.hurt(); }
-      else { p.food = Math.min(p.maxFood, p.food+15); showMsg('+BERRIES (RAW)', '#e67e22'); SFX.pickup(); }
+      if (Math.random() < 0.2) { p.sick = 200; showMsg('SICK FROM RAW BERRIES!', '#e74c3c'); }
+      else { p.food = Math.min(p.maxFood, p.food+15); showMsg('+BERRIES (RAW)', '#e67e22'); }
       return;
     }
     if (obj.type === 'fruit') {
-      if (Math.random() < 0.2) { p.sick = 200; showMsg('SICK FROM RAW FRUIT!', '#e74c3c'); SFX.hurt(); }
-      else { p.food = Math.min(p.maxFood, p.food+20); showMsg('+FRUIT (RAW)', '#e67e22'); SFX.pickup(); }
+      if (Math.random() < 0.2) { p.sick = 200; showMsg('SICK FROM RAW FRUIT!', '#e74c3c'); }
+      else { p.food = Math.min(p.maxFood, p.food+20); showMsg('+FRUIT (RAW)', '#e67e22'); }
       spawnParticles(obj.x, obj.y, '#2ecc71', 4);
       state.objects.splice(i,1);
       return;
     }
     if (obj.type === 'fish_cooked' || obj.type === 'fish_cooked') {
       p.food = Math.min(p.maxFood, p.food+40);
-      SFX.pickup();
       state.objects.splice(i,1);
       return;
     }
@@ -2775,7 +2628,6 @@ function handleClick(sx, sy) {
       obj.collected = true;
       p.inv.wood++;
       showMsg('+DRIFTWOOD', '#8B6914');
-      SFX.pickup();
       state.objects.splice(i,1);
       return;
     }
@@ -2783,7 +2635,6 @@ function handleClick(sx, sy) {
       p.inv.journal = (p.inv.journal||0) + 1;
       showMsg("MARA'S JOURNAL FOUND. RETURN IT TO HER.", '#c8a060');
       spawnParticles(obj.x, obj.y, '#c8a060', 8);
-      SFX.pickup();
       state.objects.splice(i,1);
       return;
     }
@@ -2794,7 +2645,6 @@ function handleClick(sx, sy) {
       if (item==='stone') { p.inv.stone+=3; showMsg('+3 STONE (JUNGLE CHEST)', '#888'); }
       else if (item==='volcanic_stone') { p.inv.volcanic_stone+=2; showMsg('+2 VOLCANIC STONE!', '#ff6600'); }
       spawnParticles(obj.x, obj.y, '#c8f135', 10);
-      SFX.craft(); // chest open = satisfying ding
       return;
     }
     if (obj.type === 'vol_chest' && !obj.opened) {
@@ -2804,7 +2654,6 @@ function handleClick(sx, sy) {
       p.inv.volcanic_stone += 5;
       showMsg('FIRE AXE + FIRE SPEAR FOUND!', '#ff6600');
       spawnParticles(obj.x, obj.y, '#ff6600', 20);
-      SFX.victory();
       return;
     }
   }
@@ -2952,7 +2801,6 @@ function tryCraft(id) {
 
   p.inv[id] = (p.inv[id]||0) + 1;
   showMsg(`CRAFTED: ${item.label}`, '#c8f135');
-  SFX.craft();
 
   if (id === 'water_barrel') p.maxWater += 50;
   if (id === 'torch') p.torch = true;
@@ -4008,11 +3856,6 @@ function updateDayNight() {
   }
   if (!state.weatherRain) state.vesselFilled = false;
 
-  // Occasional thunder during storms (roughly every 8-20 seconds)
-  if (state.weatherRain && state.frameCount % 30 === 0 && Math.random() < 0.025) {
-    SFX.thunder();
-  }
-
   // Respawn timers
   state.objects.forEach(o => {
     if (o.respawn > 0) o.respawn--;
@@ -4092,7 +3935,6 @@ function updateNPCCompanions() {
 function triggerWin() {
   document.getElementById('win-screen').style.display = 'flex';
   state.running = false;
-  SFX.victory();
   animateYacht();
 }
 
@@ -4140,7 +3982,6 @@ minimapCtx.imageSmoothingEnabled = false;
 
 // INPUT
 window.addEventListener('keydown', e => {
-  SFX.unlock();
   keys[e.key.toLowerCase()] = true;
   // If start screen is visible, any key advances it
   // start screen removed
@@ -4165,7 +4006,6 @@ window.addEventListener('keydown', e => {
 window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
 window.addEventListener('mousemove', e => { mx=e.clientX; my=e.clientY; });
 window.addEventListener('click', e => {
-  SFX.unlock();
   if (!state.running) return;
   // Don't intercept clicks on HTML UI elements
   const tag = e.target.tagName.toLowerCase();
@@ -4190,7 +4030,6 @@ function handleJump() {
     state.player.airTime = 0;
     state.player.jumpStartY = state.player.y;
     spawnParticles(state.player.x, state.player.y+16, '#aaa', 4);
-    SFX.jump();
   }
 }
 
