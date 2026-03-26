@@ -4192,13 +4192,14 @@ function handleClick(sx, sy) {
   });
   if (hit) return;
 
-  // Harvest objects
+  // Harvest objects - check player proximity (not click position)
+  const interactReach = 80; // 10 tiles
   for (let i = state.objects.length-1; i >= 0; i--) {
     const obj = state.objects[i];
     if (obj.placed) continue;
     if (obj.type === 'death_pack' || obj.type === 'shipwreck') continue;
-    const d = Math.hypot(wx-obj.x, wy-obj.y);
-    if (d > reach) continue;
+    const d = Math.hypot(p.x-obj.x, p.y-obj.y); // distance from PLAYER not click
+    if (d > interactReach) continue;
 
     if (['tree','breadfruit','mape','purau','pandanus','filao','hutu'].includes(obj.type)) {
       startChopMinigame(obj); return;
@@ -6119,21 +6120,27 @@ function updateNPCCompanions() {
     npc.bobTimer = (npc.bobTimer || 0) + 1;
     // Non-companion NPCs wander slowly
     if (!npc.companion) {
+      // Store home position on first update
+      if (!npc.homeX) { npc.homeX = npc.x; npc.homeY = npc.y; }
       if (!npc.wanderTimer) { npc.wanderTimer = 0; npc.wanderDx = 0; npc.wanderDy = 0; }
       npc.wanderTimer++;
       if (npc.wanderTimer % 180 === 0) {
-        // New random direction every 3 seconds
         const a = Math.random() * Math.PI * 2;
-        npc.wanderDx = Math.cos(a) * 0.3;
-        npc.wanderDy = Math.sin(a) * 0.3;
-        if (npc.wanderTimer > 720) npc.wanderDx = npc.wanderDy = 0; // stop occasionally
+        npc.wanderDx = Math.cos(a) * 0.25;
+        npc.wanderDy = Math.sin(a) * 0.25;
         if (npc.wanderTimer > 900) npc.wanderTimer = 0;
       }
-      // Don't wander if player is close (ready to talk)
       const distToPlayer = Math.hypot(p.x - npc.x, p.y - npc.y);
-      if (distToPlayer > 60) {
+      const distFromHome = Math.hypot(npc.homeX - npc.x, npc.homeY - npc.y);
+      // Only wander within 40px of home position
+      if (distToPlayer > 60 && distFromHome < 40) {
         npc.x += npc.wanderDx;
         npc.y += npc.wanderDy;
+      } else if (distFromHome >= 40) {
+        // Return toward home
+        const homeAngle = Math.atan2(npc.homeY - npc.y, npc.homeX - npc.x);
+        npc.x += Math.cos(homeAngle) * 0.4;
+        npc.y += Math.sin(homeAngle) * 0.4;
       }
       return;
     }
