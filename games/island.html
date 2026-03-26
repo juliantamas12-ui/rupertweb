@@ -4585,6 +4585,48 @@ function drawMinimap(minimapCtx) {
   mc.fillRect(state.player.x/TSIZE*scale-2, state.player.y/TSIZE*scale-2, 5, 5);
 }
 
+
+function drawGuide(ctx) {
+  if (!state.running || state.cutscenePlaying) return;
+  const p = state.player;
+  let msg = null;
+
+  // Determine what the player should do next
+  if ((p.inv.wood||0) === 0 && (p.inv.driftwood||0) === 0) {
+    msg = ["STEP 1", "Click the brown logs", "on the beach to get wood"];
+  } else if ((p.inv.stone||0) < 2) {
+    msg = ["STEP 2", "Click grey rocks to mine stone", "(bare hands work, slowly)"];
+  } else if ((p.inv.axe||0) === 0 && (p.inv.pickaxe||0) === 0) {
+    msg = ["STEP 3", "Press C to open crafting", "Make a Stone Axe (2W+2S)"];
+  } else if ((p.inv.axe||0) > 0 && state.activeSlot !== 1) {
+    msg = ["TIP", "Press 1 to equip your AXE", "Then click a tree"];
+  } else if (state.zoneUnlocked < 1) {
+    msg = ["NEXT", "Talk to OONGA", "Press E near him"];
+  }
+
+  if (!msg) return;
+
+  const bx = canvas.width - 180, by = 60;
+  ctx.fillStyle = 'rgba(40,20,8,0.85)';
+  ctx.strokeStyle = '#8b6020';
+  ctx.lineWidth = 1;
+  // Draw guide box
+  ctx.beginPath();
+  ctx.roundRect(bx, by, 170, 60, 8);
+  ctx.fill();
+  ctx.stroke();
+  
+  ctx.font = 'bold 10px Cinzel, serif';
+  ctx.fillStyle = '#c8f135';
+  ctx.textAlign = 'left';
+  ctx.fillText(msg[0], bx+10, by+16);
+  ctx.font = '10px Lato, sans-serif';
+  ctx.fillStyle = '#e8d49a';
+  ctx.fillText(msg[1], bx+10, by+32);
+  ctx.fillStyle = '#a08040';
+  ctx.fillText(msg[2], bx+10, by+48);
+  ctx.textAlign = 'left';
+}
 function render(ctx, minimapCtx) {
   const p = state.player;
   const canvas = ctx.canvas;
