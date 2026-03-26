@@ -1848,11 +1848,14 @@ function drawNPC(ctx, sx, sy, npc) {
   px(ctx, npc.color || '#c8a07a', sx+0, ay-2, 4, 8);
   px(ctx, npc.color || '#c8a07a', sx-7, ay-2, 4, 8);
   px(ctx, npc.color || '#c8a07a', sx+3, ay-2, 4, 8);
-  // Name tag
-  ctx.font = '9px "Courier New"';
-  ctx.fillStyle = '#c8f135';
+  // Name tag with background for readability
+  ctx.font = 'bold 11px "Courier New"';
   ctx.textAlign = 'center';
-  ctx.fillText(npc.name, sx, ay - 20);
+  const nameW = ctx.measureText(npc.name).width;
+  ctx.fillStyle = 'rgba(0,0,0,0.7)';
+  ctx.fillRect(sx - nameW/2 - 4, ay - 34, nameW + 8, 14);
+  ctx.fillStyle = '#c8f135';
+  ctx.fillText(npc.name, sx, ay - 23);
   ctx.textAlign = 'left';
   // Talk bubble
   px(ctx, '#c8f135', sx-3, ay-26, 6, 6);
