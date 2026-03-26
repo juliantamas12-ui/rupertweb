@@ -3387,6 +3387,17 @@ function handleInteract() {
   }
 }
 
+
+// Get currently equipped tool from hotbar
+function getActiveTool() {
+  const p = state.player;
+  const tools = [
+    {id:'fire_axe'}, {id:'fire_spear'}, {id:'spear'}, {id:'sword'},
+    {id:'axe'}, {id:'pickaxe'}, {id:'fishing_rod'}, {id:'torch'}
+  ].filter(t => (p.inv[t.id]||0) > 0);
+  const slot = tools[state.activeSlot - 1];
+  return slot ? slot.id : null;
+}
 function handleClick(sx, sy) {
   if (state.cutscenePlaying) { advanceCutscene(); return; }
   if (!state.running) return;
@@ -3477,10 +3488,13 @@ function handleClick(sx, sy) {
 
     if (obj.type === 'tree') {
       // No axe = very slow chopping (10 hits). Axe = normal (5 hits). Fire axe = instant.
+      const at = getActiveTool();
+      if (at !== "axe" && at !== "fire_axe") { showMsg("EQUIP AN AXE (press 1-6 to select from hotbar)", "#e74c3c"); return; }
       startChopMinigame(obj); return;
     }
     if (obj.type === 'rock' || obj.type === 'vol_rock') {
-      // No pickaxe needed — just takes more hits. Pickaxe speeds it up.
+      const atm = getActiveTool();
+      if (atm !== "pickaxe" && atm !== "fire_axe") { showMsg("EQUIP A PICKAXE (press 1-6 to select from hotbar)", "#e74c3c"); return; }
       startMineMinigame(obj); return;
     }
     if (obj.type === 'palm' && obj.respawn<=0) {
