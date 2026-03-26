@@ -3447,7 +3447,7 @@ function handleClick(sx, sy) {
 
   const camX = state.cam.x, camY = state.cam.y;
   const wx = sx + camX, wy = sy + camY;
-  const reach = 40;
+  const reach = 80; // generous reach for tree/rock interaction
 
   // Attack enemies
   let hit = false;
@@ -6212,7 +6212,12 @@ window.addEventListener('keydown', e => {
   if (e.key === ' ') { handleMinigameKey(' '); handleJump(); e.preventDefault(); }
   // Hotbar number keys
   const numKey = parseInt(e.key);
-  if (numKey >= 1 && numKey <= 6) { state.activeSlot = numKey; }
+  if (numKey >= 1 && numKey <= 6) { state.activeSlot = numKey;
+  // Show context help when equipping tools
+  const activeT = getActiveTool ? getActiveTool() : null;
+  if (activeT === 'axe' || activeT === 'fire_axe') showMsg('AXE equipped — walk to a tree and click it', '#c8a060');
+  if (activeT === 'pickaxe') showMsg('PICKAXE equipped — walk to a rock and click it', '#888899');
+  if (activeT === 'sword' || activeT === 'spear') showMsg('WEAPON equipped — click near enemies to attack', '#cc4422'); }
   if (e.key.toLowerCase() === 'f') { handleMinigameKey('f'); if(!state.minigame && state.running) { if(state.player.inv.fishing_rod>0){ const tile=getTile(state.player.x,state.player.y); if([1,2].includes(tile))startFishMinigame(); } } }
   // Quick-consume hotkeys 1-5 }else{pl.food=Math.min(pl.maxFood,pl.food+20);showMsg('+20 FOOD (FRUIT)','#e67e22');}updateUI();} else if(pl.inv.fruit_cooked>0){pl.inv.fruit_cooked--;pl.food=Math.min(pl.maxFood,pl.food+40);showMsg('+40 FOOD (COOKED FRUIT)','#e67e22');updateUI();} } else if(pl.inv.fish>0){pl.inv.fish--;if(Math.random()<0.2){pl.sick=200;showMsg('SICK FROM RAW FISH!','#e74c3c');}else{pl.food=Math.min(pl.maxFood,pl.food+25);showMsg('+25 FOOD (RAW FISH)','#e67e22');}updateUI();} } } }
   if (e.key === 'Escape') {
