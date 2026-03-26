@@ -5769,6 +5769,14 @@ function render(ctx, minimapCtx) {
   // Invincibility frames after respawn
   if (state.invincible > 0) { state.invincible--; p.hp = Math.max(1, p.hp); }
 
+  // Damage flash indicator
+  if (p.hitFlash > 0) {
+    p.hitFlash--;
+    const flashAlpha = (p.hitFlash / 12) * 0.4;
+    ctx.fillStyle = `rgba(220,0,0,${flashAlpha})`;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+
   // Death / collapse mechanic
   if (p.hp <= 0 && !state.collapsing && !state.collapsed && !(state.invincible > 0)) {
     state.collapsing = true;
