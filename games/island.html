@@ -6582,7 +6582,17 @@ window.addEventListener('touchend', e => {
     handleClick(t.clientX, t.clientY);
   }
 }, {passive: true});
-window.addEventListener('resize', () => { canvas.width=window.innerWidth; canvas.height=window.innerHeight; });
+window.addEventListener('resize', () => {
+  if (window.innerWidth < 768) {
+    canvas.width = Math.round(window.innerWidth * 0.7);
+    canvas.height = Math.round(window.innerHeight * 0.7);
+    canvas.style.width = window.innerWidth + 'px';
+    canvas.style.height = window.innerHeight + 'px';
+  } else {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+});
 
 function handleJump() {
   if (state.player.onGround && !state.jumping && !state.minigame) {
