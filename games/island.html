@@ -161,11 +161,7 @@ canvas#c{pointer-events:none}
   <div class="hslot" id="hslot6"><div class="hkey">6</div><div id="h6name">-</div><div id="h6count"></div></div>
 </div>
 
-<div id="controls-hint">
-  WASD — Move &nbsp; SHIFT — Sprint &nbsp; SPACE — Jump<br>
-  E — Interact &nbsp; I — Inventory &nbsp; C — Crafting &nbsp; B — Build<br>
-  F — Fish (need rod + near water) &nbsp; Q — Throw Coconut
-</div>
+<!-- controls hint removed -->
 
 <div id="inv-panel">
   <span class="close-x" onclick="document.getElementById('inv-panel').style.display='none'">&#10005;</span>
@@ -3473,6 +3469,7 @@ function handleClick(sx, sy) {
   // Attack creatures
   for (let i = state.creatures.length-1; i >= 0; i--) {
     const c = state.creatures[i];
+    if (c.type === 'crab') continue; // crabs are ambient, not attackable
     const dToPlayer = Math.hypot(p.x-c.x, p.y-c.y);
     if (dToPlayer < attackReach) {
       c.hp -= combatDmg;
@@ -4240,9 +4237,13 @@ function drawPlacedObject(ctx, obj, sx, sy) {
       px(ctx, '#ffcc00', sx-2, sy-12+flicker, 4, 6);
       break;
     case 'wall':
-      px(ctx, '#5c5c44', sx-8, sy-12, 16, 24);
-      px(ctx, '#7a7a5a', sx-8, sy-14, 16, 4);
-      px(ctx, '#3a3a2a', sx-8, sy+10, 16, 4);
+      // Wooden wall
+      px(ctx, '#5c3d1e', sx-8, sy-14, 16, 28);  // dark wood base
+      px(ctx, '#7a5c2e', sx-6, sy-12, 12, 24);  // lighter wood face
+      px(ctx, '#3d2010', sx-8, sy-14, 2, 28);   // left edge shadow
+      px(ctx, '#8b6020', sx-8, sy-14, 16, 3);   // top cap
+      px(ctx, '#4a2e10', sx-4, sy-8, 2, 16);    // wood grain line 1
+      px(ctx, '#4a2e10', sx+2, sy-8, 2, 16);    // wood grain line 2
       if (obj.hp !== undefined && obj.hp < 20) {
         ctx.fillStyle = '#e74c3c';
         ctx.fillRect(sx-8, sy-16, 16*(obj.hp/20), 3);
