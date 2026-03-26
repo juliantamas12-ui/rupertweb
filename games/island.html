@@ -501,9 +501,7 @@ function genObjects() {
         else if (r < 0.026) state.objects.push({type:'crab', x:wx, y:wy, decor:true, dir:Math.random()<0.5?1:-1, walkTimer:0});
       } else if (t === T.SHALLOW_WATER) {
         if (r < 0.004) state.objects.push({type:'fish_spot', x:wx, y:wy, shimmer:Math.random()*100});
-        else if (r < 0.006) state.creatures.push({type:'shark', x:wx, y:wy, hp:50, maxHp:50, spd:0.9, attackTimer:0, walkTimer:0});
-        else if (r < 0.014) state.objects.push({type:'coral', x:wx, y:wy, decor:true});
-      } else if (t === T.VOLCANIC) {
+        else if (r < 0.006) state.creatures.push({type:'shark', x:wx, y:wy, hp:50, maxHp:50, spd:0.9, attackTimer:0, walkTimer:0});      } else if (t === T.VOLCANIC) {
         if (r < 0.04) state.objects.push({type:'vol_rock', x:wx, y:wy, hp:3, maxHp:3});
       }
     }
