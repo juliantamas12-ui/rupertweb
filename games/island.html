@@ -33,7 +33,7 @@ canvas#c{pointer-events:none}
 
 /* ── HOTBAR ── */
 #hotbar{position:fixed;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:5px;z-index:10}
-.hslot{width:44px;height:44px;background:#1a2e0a;border:2px solid #4a7a1a;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#8aa060;font-size:6px;letter-spacing:0;font-family:'Press Start 2P',monospace;transition:border-color 0.15s,box-shadow 0.15s}
+.hslot{width:52px;height:52px;background:#1a2e0a;border:2px solid #4a7a1a;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#8aa060;font-size:6px;letter-spacing:0;font-family:'Press Start 2P',monospace;transition:border-color 0.15s,box-shadow 0.15s;position:relative}.hkey{position:absolute;top:2px;left:4px;font-size:7px;color:#4a7a1a;font-family:'Courier New'}
 .hslot.active{border-color:#c8f135;background:#2a4a08;box-shadow:0 0 10px rgba(200,241,53,0.5)}
 
 /* ── PANELS ── */
@@ -118,6 +118,7 @@ canvas#c{pointer-events:none}
 .bar-critical-blue{background:#2244ff !important}
 .bar-critical-orange{background:#ff6600 !important}
 @media (min-width: 768px) { #touch-controls, #btn-zone, #joystick-zone, #joystick-canvas { display: none !important; } }
+@media (min-width: 769px) { #touch-controls, #btn-zone, #joystick-zone, #joystick-canvas { display: none !important; } }
 </style>
 </head>
 <body>
@@ -144,12 +145,12 @@ canvas#c{pointer-events:none}
 <canvas id="minimap" width="120" height="120"></canvas>
 
 <div id="hotbar">
-  <div class="hslot active">WOOD<br><span id="hw">0</span></div>
-  <div class="hslot">STONE<br><span id="hs">0</span></div>
-  <div class="hslot">FOOD<br><span id="hf">0</span></div>
-  <div class="hslot">WATER<br><span id="hwt">0</span></div>
-  <div class="hslot">TOOLS<br><span id="ht">-</span></div>
-  <div class="hslot">DAY<br><span id="hd">1</span></div>
+  <div class="hslot" id="hslot1"><div class="hkey">1</div><div id="h1name">-</div><div id="h1count"></div></div>
+  <div class="hslot" id="hslot2"><div class="hkey">2</div><div id="h2name">-</div><div id="h2count"></div></div>
+  <div class="hslot" id="hslot3"><div class="hkey">3</div><div id="h3name">-</div><div id="h3count"></div></div>
+  <div class="hslot" id="hslot4"><div class="hkey">4</div><div id="h4name">-</div><div id="h4count"></div></div>
+  <div class="hslot" id="hslot5"><div class="hkey">5</div><div id="h5name">-</div><div id="h5count"></div></div>
+  <div class="hslot" id="hslot6"><div class="hkey">6</div><div id="h6name">-</div><div id="h6count"></div></div>
 </div>
 
 <div id="controls-hint">
@@ -4812,6 +4813,9 @@ window.addEventListener('keydown', e => {
   if (e.key.toLowerCase() === 'e') handleInteract();
   if (e.key.toLowerCase() === 'q') throwCoconut();
   if (e.key === ' ') { handleMinigameKey(' '); handleJump(); e.preventDefault(); }
+  // Hotbar number keys
+  const numKey = parseInt(e.key);
+  if (numKey >= 1 && numKey <= 6) { state.activeSlot = numKey; }
   if (e.key.toLowerCase() === 'f') { handleMinigameKey('f'); if(!state.minigame && state.running) { if(state.player.inv.fishing_rod>0){ const tile=getTile(state.player.x,state.player.y); if([1,2].includes(tile))startFishMinigame(); } } }
   // Quick-consume hotkeys 1-5
   if (e.key === '1') { const pl=state.player; if(pl.inv.coconut>0){pl.inv.coconut--;pl.water=Math.min(pl.maxWater,pl.water+35);showMsg('+35 WATER (COCONUT)','#3498db');updateUI();} }
