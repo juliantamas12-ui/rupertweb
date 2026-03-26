@@ -249,6 +249,8 @@ const state = {
     torch: false,
     sick: 0, // frames of sickness
     poison: 0, // frames of poison (spider bite)
+    attackCooldown: 0, // frames until next weapon swing
+    attackFlash: 0,    // brief flash on player sprite when attacking
     inv: {
       wood:0, stone:0, coconut:0, fruit:0, fish:0,
       fish_cooked:0, fruit_cooked:0,
@@ -846,6 +848,12 @@ function drawPlayer(ctx, sx, sy, p) {
   } else if (p.inv.spear > 0) {
     px(ctx, '#5c3d1e', sx+12, ay-24, 3, 32);
     px(ctx, '#aaaaaa', sx+10, ay-28, 6, 6);
+  }
+
+  // Attack flash — brief white flash when swinging
+  if (p.attackFlash > 0) {
+    ctx.fillStyle = `rgba(255,255,100,${p.attackFlash/6 * 0.5})`;
+    ctx.fillRect(sx-12, ay-20, 24, 40);
   }
 
   // Sick tint
@@ -2568,9 +2576,9 @@ function startChopMinigame(obj) {
   state.minigame = {
     type: 'chop', target: obj,
     indicatorPos: 0, indicatorDir: 1,
-    progress: 0, maxProgress: 5,
+    progress: 0, maxProgress: 2, // 2 hits to fell tree
     result: null, timer: 0,
-    speed: 0.015
+    speed: 0.018
   };
 }
 
@@ -2693,7 +2701,7 @@ function drawMinigame(ctx) {
   ctx.textAlign = 'center';
 
   if (mg.type === 'chop') {
-    ctx.fillText('CHOPPING — PRESS SPACE IN THE GREEN ZONE', cw/2, by+18);
+    ctx.fillText('AXE EQUIPPED: 2 hits needed — PRESS SPACE IN THE GREEN ZONE', cw/2, by+18);
     const barX = bx+20, barY = by+35, barW = bw-40, barH = 24;
     // Bar background
     ctx.fillStyle = '#cc2222'; ctx.fillRect(barX, barY, barW, barH);
@@ -2808,11 +2816,16 @@ function handleMinigameKey(key) {
     }
 
     if (mg.progress >= mg.maxProgress) {
-      const quality = mg.progress >= 7 ? 'HIGH' : 'NORMAL';
-      const yield_ = state.player.inv.axe > 0 ? 3 : 2;
+      const yield_ = 2 + (Math.random() < 0.4 ? 1 : 0); // 2 or 3 wood
       state.player.inv.wood += yield_;
-      showMsg(`+${yield_} WOOD${quality==='HIGH'?' (HIGH QUALITY)':''}`, '#8B6914');
+      showMsg(`+${yield_} WOOD`, '#8B6914');
       SFX.pickup();
+      // Floating "+N WOOD" particle
+      const tx = mg.target.x, ty = mg.target.y;
+      spawnParticle(tx, ty-20, 0, -1.5, '#c8f135', 80);
+      spawnParticle(tx-8, ty-10, -0.5, -0.8, '#8B6914', 50);
+      spawnParticle(tx+8, ty-10, 0.5, -0.8, '#8B6914', 50);
+      spawnParticles(tx, ty, '#5c3d1e', 8);
       // Remove tree
       state.objects = state.objects.filter(o => o !== mg.target);
       state.minigame = null;
@@ -2844,7 +2857,7 @@ function handleMineClick(wx, wy) {
     mg.zoneTimer = 180;
     if (mg.currentZone >= mg.zones.length) {
       const perfect = mg.zones.every(z2=>z2.hit);
-      const yield_ = perfect ? 3 : 2;
+      const yield_ = perfect ? 3 : (2 + (Math.random() < 0.3 ? 1 : 0)); // 2-3 stone
       const wasZeroStone = (state.player.inv.stone||0) === 0;
       state.player.inv.stone += yield_;
       showMsg(`+${yield_} STONE${perfect?' (PERFECT!)':''}`, '#888899');
@@ -3110,6 +3123,10 @@ function updatePlayer() {
     }
   }
   if (state._gateMsg > 0) state._gateMsg--;
+
+  // Attack cooldown tick
+  if (p.attackCooldown > 0) p.attackCooldown--;
+  if (p.attackFlash > 0) p.attackFlash--;
 
   // Creature soft push (animals nudge the player)
   state.creatures.forEach(c => {
@@ -3404,10 +3421,12 @@ function handleInteract() {
 // Get currently equipped tool from hotbar
 function getActiveTool() {
   const p = state.player;
+  // Build tool list: same order as hotbar (excluding fishing_rod from hotbar per spec)
   const tools = [
-    {id:'fire_axe'}, {id:'fire_spear'}, {id:'spear'}, {id:'sword'},
-    {id:'axe'}, {id:'pickaxe'}, {id:'fishing_rod'}, {id:'torch'}
+    {id:'axe'}, {id:'fire_axe'}, {id:'pickaxe'}, {id:'sword'},
+    {id:'spear'}, {id:'fire_spear'}, {id:'torch'}, {id:'coconut'}
   ].filter(t => (p.inv[t.id]||0) > 0);
+  if (!state.activeSlot) state.activeSlot = 1;
   const slot = tools[state.activeSlot - 1];
   return slot ? slot.id : null;
 }
@@ -3452,45 +3471,174 @@ function handleClick(sx, sy) {
   const wx = sx + camX, wy = sy + camY;
   const reach = 80; // generous reach for tree/rock interaction
 
-  // Attack enemies
+  const tool = getActiveTool();
+
+  // ── WEAPON TOOLS: attack nearest enemy within 56px of PLAYER ──
+  const isWeapon = tool === 'sword' || tool === 'spear' || tool === 'fire_spear' || tool === 'fire_axe';
+  if (isWeapon) {
+    if (p.attackCooldown > 0) {
+      showMsg('WEAPON COOLING DOWN...', '#888');
+      return;
+    }
+    const dmgMap = {sword:15, spear:18, fire_spear:30, fire_axe:22};
+    const combatDmg = dmgMap[tool] || 8;
+    const combatColor = (tool==='fire_spear'||tool==='fire_axe') ? '#ff6600' : '#e74c3c';
+    const attackReach = 56;
+    SFX.swing();
+    p.attackCooldown = 30; // 0.5s at 60fps
+    p.attackFlash = 6;
+    let hit = false;
+    [...state.enemies, ...(state.chief?[state.chief]:[])].forEach(e => {
+      if (Math.hypot(p.x-e.x, p.y-e.y) < attackReach) {
+        e.hp -= combatDmg;
+        e.hitFlash = 6;
+        spawnParticles(e.x, e.y, combatColor, 6);
+        SFX.hit();
+        if (e.hp <= 0) SFX.enemyDie();
+        hit = true;
+      }
+    });
+    for (let i = state.creatures.length-1; i >= 0; i--) {
+      const c = state.creatures[i];
+      if (c.type === 'crab') continue;
+      if (Math.hypot(p.x-c.x, p.y-c.y) < attackReach) {
+        c.hp -= combatDmg;
+        c.hitFlash = 6;
+        spawnParticles(c.x, c.y, '#22cc44', 4);
+        SFX.hit();
+        if (c.hp <= 0) {
+          SFX.enemyDie();
+          if (c.type === 'spider') { p.inv.wood++; showMsg('+1 WOOD (SPIDER WEB)', '#8B6914'); }
+          if (c.type === 'shark') { p.inv.fish = (p.inv.fish||0)+2; showMsg('+2 FISH (SHARK)', '#e67e22'); }
+          state.creatures.splice(i, 1);
+        }
+        hit = true;
+        break;
+      }
+    }
+    if (!hit) showMsg('NO ENEMIES IN RANGE (need within 56px)', '#888');
+    return;
+  }
+
+  // ── AXE TOOL: click on tree ──
+  if (tool === 'axe') {
+    // find nearest tree within 80px of WORLD click position
+    let nearest = null, nearestDist = 80;
+    for (const obj of state.objects) {
+      if (obj.placed) continue;
+      const isTree = ['tree','breadfruit','mape','purau','pandanus','filao','hutu','palm'].includes(obj.type);
+      if (!isTree) continue;
+      const d = Math.hypot(wx-obj.x, wy-obj.y);
+      if (d < nearestDist) { nearest = obj; nearestDist = d; }
+    }
+    if (nearest) {
+      startChopMinigame(nearest);
+    } else {
+      showMsg('No tree in range — click closer to a tree', '#888');
+    }
+    return;
+  }
+
+  // ── FIRE AXE: instant chop ──
+  if (tool === 'fire_axe') {
+    // fire_axe also attacks enemies (handled in weapon block above)
+    // here: click on tree for instant chop
+    let nearest = null, nearestDist = 80;
+    for (const obj of state.objects) {
+      if (obj.placed) continue;
+      const isTree = ['tree','breadfruit','mape','purau','pandanus','filao','hutu','palm'].includes(obj.type);
+      if (!isTree) continue;
+      const d = Math.hypot(wx-obj.x, wy-obj.y);
+      if (d < nearestDist) { nearest = obj; nearestDist = d; }
+    }
+    if (nearest) {
+      // Instant chop, 3 wood
+      const yield_ = 3;
+      p.inv.wood = (p.inv.wood||0) + yield_;
+      state.objects = state.objects.filter(o => o !== nearest);
+      showMsg(`+${yield_} WOOD (FIRE AXE)`, '#ff6600');
+      spawnParticles(nearest.x, nearest.y, '#ff6600', 8);
+      // +WOOD floating particle
+      spawnParticle(nearest.x, nearest.y-20, 0, -1.2, '#c8f135', 60);
+      SFX.chop(); SFX.pickup();
+    } else {
+      // No tree: treat as weapon attack (already handled above via isWeapon check)
+      showMsg('No tree in range — or equip to attack enemies', '#888');
+    }
+    return;
+  }
+
+  // ── PICKAXE TOOL: click on rock ──
+  if (tool === 'pickaxe') {
+    let nearest = null, nearestDist = 80;
+    for (const obj of state.objects) {
+      if (obj.placed) continue;
+      if (obj.type !== 'rock' && obj.type !== 'vol_rock') continue;
+      const d = Math.hypot(wx-obj.x, wy-obj.y);
+      if (d < nearestDist) { nearest = obj; nearestDist = d; }
+    }
+    if (nearest) {
+      startMineMinigame(nearest);
+    } else {
+      showMsg('No rock in range — click closer to a rock', '#888');
+    }
+    return;
+  }
+
+  // ── FISHING ROD: click on shallow water tile ──
+  if (tool === 'fishing_rod') {
+    const clickTile = getTile(wx, wy);
+    if (clickTile === 1) { // SHALLOW_WATER
+      if (!state.minigame) startFishMinigame();
+    } else {
+      showMsg('Click on shallow water to fish (F key also works)', '#3dd6d0');
+    }
+    return;
+  }
+
+  // ── TORCH: toggle on/off (also handled by hotbar key) ──
+  if (tool === 'torch') {
+    p.torch = !p.torch;
+    showMsg(p.torch ? 'TORCH ON — reveals pit traps in dark jungle' : 'TORCH OFF', p.torch ? '#ffaa00' : '#888');
+    return;
+  }
+
+  // ── COCONUT: throw toward click ──
+  if (tool === 'coconut') {
+    throwCoconut();
+    return;
+  }
+
+  // ── NO TOOL / UNARMED: try to interact with objects at click position ──
+  // Check if clicking tree without axe
+  for (const obj of state.objects) {
+    if (obj.placed) continue;
+    const isTree = ['tree','breadfruit','mape','purau','pandanus','filao','hutu'].includes(obj.type);
+    if (isTree && Math.hypot(wx-obj.x, wy-obj.y) < 80) {
+      showMsg('You need an AXE — craft one (C menu: 2 wood + 2 stone)', '#e74c3c');
+      return;
+    }
+    if ((obj.type==='rock'||obj.type==='vol_rock') && Math.hypot(wx-obj.x, wy-obj.y) < 80) {
+      showMsg('You need a PICKAXE — craft one (C menu: 3 wood + 4 stone)', '#e74c3c');
+      return;
+    }
+  }
+
+  // Unarmed attacks (very weak)
   let hit = false;
-  const combatDmg = p.inv.fire_spear>0 ? 30 : p.inv.fire_axe>0 ? 22 : p.inv.spear>0 ? 18 : p.inv.sword>0 ? 15 : 4;
-  const combatColor = p.inv.fire_spear>0||p.inv.fire_axe>0 ? '#ff6600' : '#e74c3c';
-  SFX.swing(); // always play swing on attack click
-  const attackReach = 56; // pixels, about 7 tiles
+  const combatDmg = 4;
+  const attackReach = 56;
+  SFX.swing();
   [...state.enemies, ...(state.chief?[state.chief]:[])].forEach(e => {
-    const dToPlayer = Math.hypot(p.x-e.x, p.y-e.y); // distance from PLAYER to enemy
-    if (dToPlayer < attackReach) {
+    if (Math.hypot(p.x-e.x, p.y-e.y) < attackReach) {
       e.hp -= combatDmg;
       e.hitFlash = 6;
-      spawnParticles(e.x, e.y, combatColor, 6);
+      spawnParticles(e.x, e.y, '#e74c3c', 4);
       SFX.hit();
       if (e.hp <= 0) SFX.enemyDie();
       hit = true;
     }
   });
-  if (hit) return;
-
-  // Attack creatures
-  for (let i = state.creatures.length-1; i >= 0; i--) {
-    const c = state.creatures[i];
-    if (c.type === 'crab') continue; // crabs are ambient, not attackable
-    const dToPlayer = Math.hypot(p.x-c.x, p.y-c.y);
-    if (dToPlayer < attackReach) {
-      c.hp -= combatDmg;
-      c.hitFlash = 6;
-      spawnParticles(c.x, c.y, '#22cc44', 4);
-      SFX.hit();
-      if (c.hp <= 0) {
-        SFX.enemyDie();
-        if (c.type === 'spider') { p.inv.wood++; showMsg('+1 WOOD (SPIDER WEB)', '#8B6914'); }
-        if (c.type === 'shark') { p.inv.fish = (p.inv.fish||0)+2; showMsg('+1 FOOD (SHARK MEAT)', '#e67e22'); }
-        state.creatures.splice(i, 1);
-      }
-      hit = true;
-      break;
-    }
-  }
   if (hit) return;
 
   // Harvest objects
@@ -3501,12 +3649,15 @@ function handleClick(sx, sy) {
     const d = Math.hypot(wx-obj.x, wy-obj.y);
     if (d > reach) continue;
 
-    if (obj.type === 'tree') {
-      // No axe = very slow chopping (10 hits). Axe = normal (5 hits). Fire axe = instant.
-      startChopMinigame(obj); return;
+    // Trees: require axe tool (handled above)
+    if (['tree','breadfruit','mape','purau','pandanus','filao','hutu'].includes(obj.type)) {
+      showMsg('You need an AXE — craft one (C menu: 2 wood + 2 stone)', '#e74c3c');
+      return;
     }
+    // Rocks: require pickaxe tool (handled above)
     if (obj.type === 'rock' || obj.type === 'vol_rock') {
-      startMineMinigame(obj); return;
+      showMsg('You need a PICKAXE — craft one (C menu: 3 wood + 4 stone)', '#e74c3c');
+      return;
     }
     if (obj.type === 'palm' && obj.respawn<=0) {
       obj.respawn = 1800;
@@ -4195,6 +4346,110 @@ function renderInvMenu() {
     };
     grid.appendChild(div);
   });
+}
+
+// ============================================================
+// TOOL ICONS (pixel art drawn on canvas HUD)
+// ============================================================
+
+function drawToolIcon(ctx, toolId, x, y, size) {
+  const s = size || 20;
+  ctx.save();
+  switch(toolId) {
+    case 'axe':
+      // Brown handle diagonal, grey blade
+      ctx.strokeStyle = '#7a5c2e'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(x+3, y+s-3); ctx.lineTo(x+s-5, y+4); ctx.stroke();
+      ctx.fillStyle = '#888899';
+      ctx.beginPath(); ctx.moveTo(x+s-7, y+2); ctx.lineTo(x+s, y+8); ctx.lineTo(x+s-8, y+14); ctx.closePath(); ctx.fill();
+      break;
+    case 'fire_axe':
+      ctx.strokeStyle = '#7a5c2e'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(x+3, y+s-3); ctx.lineTo(x+s-5, y+4); ctx.stroke();
+      ctx.fillStyle = '#ff6600';
+      ctx.beginPath(); ctx.moveTo(x+s-7, y+2); ctx.lineTo(x+s, y+8); ctx.lineTo(x+s-8, y+14); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#ffcc00'; ctx.fillRect(x+s-6, y+3, 4, 3);
+      break;
+    case 'pickaxe':
+      ctx.strokeStyle = '#7a5c2e'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(x+s-4, y+8); ctx.lineTo(x+4, y+s-4); ctx.stroke();
+      ctx.fillStyle = '#888899';
+      ctx.beginPath(); ctx.moveTo(x+s-6, y+2); ctx.lineTo(x+s+2, y+10); ctx.lineTo(x+s-10, y+16); ctx.closePath(); ctx.fill();
+      break;
+    case 'sword':
+      ctx.strokeStyle = '#aaaacc'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(x+s/2, y+s-2); ctx.lineTo(x+s/2, y+3); ctx.stroke();
+      ctx.strokeStyle = '#c8a020'; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.moveTo(x+2, y+s/2+2); ctx.lineTo(x+s-2, y+s/2+2); ctx.stroke();
+      ctx.fillStyle = '#c8a060'; ctx.fillRect(Math.round(x+s/2-2), Math.round(y+s/2+3), 5, 5);
+      break;
+    case 'spear':
+      ctx.strokeStyle = '#7a5c2e'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(x+3, y+s-3); ctx.lineTo(x+s-4, y+3); ctx.stroke();
+      ctx.fillStyle = '#aaaacc';
+      ctx.beginPath(); ctx.moveTo(x+s-4, y+3); ctx.lineTo(x+s-10, y+8); ctx.lineTo(x+s-8, y+14); ctx.closePath(); ctx.fill();
+      break;
+    case 'fire_spear':
+      ctx.strokeStyle = '#7a5c2e'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(x+3, y+s-3); ctx.lineTo(x+s-4, y+3); ctx.stroke();
+      ctx.fillStyle = '#ff8800';
+      ctx.beginPath(); ctx.moveTo(x+s-4, y+3); ctx.lineTo(x+s-10, y+8); ctx.lineTo(x+s-8, y+14); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#ffcc00'; ctx.fillRect(x+s-7, y+3, 3, 4);
+      break;
+    case 'torch':
+      ctx.fillStyle = '#7a5c2e'; ctx.fillRect(Math.round(x+s/2-2), Math.round(y+s/2-2), 4, s/2+2);
+      ctx.fillStyle = '#ff8800';
+      ctx.beginPath(); ctx.arc(x+s/2, y+s/2-4, 5, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#ffcc00';
+      ctx.beginPath(); ctx.arc(x+s/2, y+s/2-6, 3, 0, Math.PI*2); ctx.fill();
+      break;
+    case 'fishing_rod':
+      ctx.strokeStyle = '#7a5c2e'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(x+3, y+s-3); ctx.quadraticCurveTo(x+s-3, y+s-6, x+s-3, y+3); ctx.stroke();
+      ctx.strokeStyle = '#c8c8c8'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x+s-3, y+3); ctx.lineTo(x+s-1, y+s-2); ctx.stroke();
+      ctx.fillStyle = '#e74c3c';
+      ctx.beginPath(); ctx.arc(x+s-1, y+s-2, 3, 0, Math.PI*2); ctx.fill();
+      break;
+    case 'coconut':
+      ctx.fillStyle = '#5c3d1e';
+      ctx.beginPath(); ctx.arc(x+s/2, y+s/2, s*0.38, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = '#3a2010'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x+s/2-4, y+s/2-4); ctx.lineTo(x+s/2+4, y+s/2+4); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x+s/2+4, y+s/2-4); ctx.lineTo(x+s/2-4, y+s/2+4); ctx.stroke();
+      break;
+    default:
+      ctx.fillStyle = '#a08040'; ctx.font = `${Math.round(s*0.35)}px Courier New`; ctx.textAlign = 'center';
+      ctx.fillText(toolId.substring(0,3).toUpperCase(), x+s/2, y+s/2+4); ctx.textAlign = 'left';
+  }
+  ctx.restore();
+}
+
+function drawHotbarIcons(ctx) {
+  const p = state.player;
+  // Same tool order as updateUI hotbar
+  const toolSlots = [
+    {id:'axe'},{id:'fire_axe'},{id:'pickaxe'},{id:'sword'},
+    {id:'spear'},{id:'fire_spear'},{id:'torch'},{id:'coconut'},
+  ].filter(t => (p.inv[t.id]||0) > 0).slice(0, 6);
+
+  if (toolSlots.length === 0) return;
+
+  const slotSize = 48, gap = 6;
+  const totalW = toolSlots.length * slotSize + (toolSlots.length-1) * gap;
+  const startX = (ctx.canvas.width - totalW) / 2;
+  const slotY = ctx.canvas.height - 52;
+
+  for (let i = 0; i < toolSlots.length; i++) {
+    const sl = toolSlots[i];
+    if (!sl) continue;
+    const x = startX + i * (slotSize + gap);
+    // Draw pixel icon centered in slot (20x20 icon, centered in 48px slot)
+    const iconSize = 20;
+    const iconX = x + (slotSize - iconSize) / 2;
+    const iconY = slotY + (slotSize - iconSize) / 2 - 2;
+    drawToolIcon(ctx, sl.id, iconX, iconY, iconSize);
+  }
 }
 
 // ============================================================
@@ -4931,6 +5186,9 @@ function render(ctx, minimapCtx) {
 
   // Minimap
   drawMinimap(minimapCtx);
+
+  // HUD hotbar icons overlay (draw pixel icons on canvas)
+  drawHotbarIcons(ctx);
 }
 
 // ============================================================
@@ -6215,17 +6473,23 @@ window.addEventListener('keydown', e => {
   if (e.key === ' ') { handleMinigameKey(' '); handleJump(); e.preventDefault(); }
   // Hotbar number keys
   const numKey = parseInt(e.key);
-  if (numKey >= 1 && numKey <= 6) { state.activeSlot = numKey;
-  // Show context help when equipping tools
-  const activeT = getActiveTool ? getActiveTool() : null;
-  if (activeT === 'axe' || activeT === 'fire_axe') showMsg('AXE ready — click a tree to chop', '#c8a060');
-  if (activeT === 'pickaxe') showMsg('PICKAXE ready — click a rock to mine', '#888899');
-  if (activeT === 'sword' || activeT === 'spear' || activeT === 'fire_spear') showMsg('WEAPON ready — walk near enemies and click', '#cc4422');
-  if (activeT === 'torch') {
-    state.player.torch = !state.player.torch;
-    showMsg(state.player.torch ? 'TORCH LIT — reveals pits, lights the dark' : 'TORCH OUT', state.player.torch ? '#ffaa00' : '#888');
+  if (numKey >= 1 && numKey <= 6) {
+    state.activeSlot = numKey;
+    const activeT = getActiveTool ? getActiveTool() : null;
+    if (activeT === 'axe') showMsg('AXE ready — click a tree to chop (2 hits)', '#c8a060');
+    else if (activeT === 'fire_axe') showMsg('FIRE AXE ready — click tree (instant) or attack enemies', '#ff6600');
+    else if (activeT === 'pickaxe') showMsg('PICKAXE ready — click a rock to mine', '#888899');
+    else if (activeT === 'sword') showMsg('SWORD [15 dmg] — click anywhere to attack nearby enemies', '#cc4422');
+    else if (activeT === 'spear') showMsg('SPEAR [18 dmg] — click anywhere to attack nearby enemies', '#cc4422');
+    else if (activeT === 'fire_spear') showMsg('FIRE SPEAR [30 dmg] — click anywhere to attack', '#ff6600');
+    else if (activeT === 'torch') {
+      // Toggle torch on/off
+      state.player.torch = !state.player.torch;
+      showMsg(state.player.torch ? 'TORCH ON — reveals pit traps in dark jungle' : 'TORCH OFF', state.player.torch ? '#ffaa00' : '#888');
+    }
+    else if (activeT === 'coconut') showMsg('COCONUT — click to throw toward cursor (Q key also works)', '#c8a870');
+    else if (!activeT) showMsg('Empty slot', '#888');
   }
-  if (activeT === 'fishing_rod') showMsg('ROD ready — walk to shallow water and press F', '#3dd6d0'); }
   if (e.key.toLowerCase() === 'f') { handleMinigameKey('f'); if(!state.minigame && state.running) { if(state.player.inv.fishing_rod>0){ const tile=getTile(state.player.x,state.player.y); if([1,2].includes(tile))startFishMinigame(); } } }
   // Quick-consume hotkeys 1-5 }else{pl.food=Math.min(pl.maxFood,pl.food+20);showMsg('+20 FOOD (FRUIT)','#e67e22');}updateUI();} else if(pl.inv.fruit_cooked>0){pl.inv.fruit_cooked--;pl.food=Math.min(pl.maxFood,pl.food+40);showMsg('+40 FOOD (COOKED FRUIT)','#e67e22');updateUI();} } else if(pl.inv.fish>0){pl.inv.fish--;if(Math.random()<0.2){pl.sick=200;showMsg('SICK FROM RAW FISH!','#e74c3c');}else{pl.food=Math.min(pl.maxFood,pl.food+25);showMsg('+25 FOOD (RAW FISH)','#e67e22');}updateUI();} } } }
   if (e.key === 'Escape') {
@@ -6321,16 +6585,16 @@ function updateUI() {
   const htEl=document.getElementById('ht'); if(htEl) htEl.textContent='';
   const hdEl=document.getElementById('hd'); if(hdEl) hdEl.textContent=state.day;
 
-  // Hotbar - tools only, press 1-6 to equip
+  // Hotbar - tools only (fishing_rod excluded from hotbar — use F key)
   const toolSlots = [
     {id:'axe', label:'AXE'},
+    {id:'fire_axe', label:'F.AXE'},
     {id:'pickaxe', label:'PICK'},
     {id:'sword', label:'SWORD'},
     {id:'spear', label:'SPEAR'},
-    {id:'fire_axe', label:'F.AXE'},
     {id:'fire_spear', label:'F.SPEAR'},
-    {id:'fishing_rod', label:'ROD'},
     {id:'torch', label:'TORCH'},
+    {id:'coconut', label:'COCONUT'},
   ].filter(t => (p.inv[t.id]||0) > 0);
 
   for (let i = 1; i <= 6; i++) {
@@ -6338,19 +6602,28 @@ function updateUI() {
     const el = document.getElementById('h'+i+'name'); if (!el) continue;
     const ec = document.getElementById('h'+i+'count');
     const hs = document.getElementById('hslot'+i);
+    const isActive = state.activeSlot === i && slot;
     if (slot) {
       el.textContent = slot.label;
-      if(ec) ec.textContent = '';
-      if(hs) { hs.style.borderColor = (state.activeSlot===i) ? '#c8f135' : ''; hs.style.boxShadow = (state.activeSlot===i) ? '0 0 10px rgba(200,241,53,0.5)' : ''; }
+      // Show count badge for consumables
+      if (ec) {
+        if (slot.id === 'coconut') ec.textContent = 'x'+(p.inv.coconut||0);
+        else if (slot.id === 'torch') ec.textContent = p.torch ? 'ON' : '';
+        else ec.textContent = '';
+      }
+      if (hs) {
+        hs.style.borderColor = isActive ? '#d4a020' : '';
+        hs.style.background = isActive ? 'rgba(212,160,32,0.18)' : '';
+        hs.style.boxShadow = isActive ? '0 0 14px rgba(212,160,32,0.6),inset 0 0 6px rgba(212,160,32,0.25)' : '';
+      }
     } else {
       el.textContent = '-';
-      if(ec) ec.textContent = '';
-      if(hs) { hs.style.borderColor = ''; hs.style.boxShadow = ''; }
+      if (ec) ec.textContent = '';
+      if (hs) { hs.style.borderColor = ''; hs.style.background = ''; hs.style.boxShadow = ''; }
     }
   }
 
   // Day/night clock icon
-  // Time icon — simple text, no canvas
   const timeEl = document.getElementById('time-icon');
   if (timeEl) {
     const dt = state.dayTime;
@@ -6359,21 +6632,6 @@ function updateUI() {
     timeEl.style.fontSize = '11px';
     timeEl.style.letterSpacing = '2px';
     timeEl.style.fontFamily = "'Lato', sans-serif";
-  }
-
-  // Hotbar - tools only
-  const toolSlots2 = [
-    {id:'axe',label:'AXE'},{id:'pickaxe',label:'PICK'},{id:'sword',label:'SWORD'},
-    {id:'spear',label:'SPEAR'},{id:'fire_axe',label:'F.AXE'},{id:'fire_spear',label:'F.SPEAR'},
-    {id:'fishing_rod',label:'ROD'},{id:'torch',label:'TORCH'}
-  ].filter(t => (p.inv[t.id]||0) > 0);
-  for (let i = 1; i <= 6; i++) {
-    const sl = toolSlots2[i-1];
-    const el = document.getElementById('h'+i+'name');
-    const hs = document.getElementById('hslot'+i);
-    if (!el) continue;
-    el.textContent = sl ? sl.label : '-';
-    if (hs) { hs.style.borderColor = (state.activeSlot===i && sl) ? '#c8f135' : ''; hs.style.boxShadow = (state.activeSlot===i && sl) ? '0 0 10px rgba(200,241,53,0.5)' : ''; }
   }
 
 }
