@@ -72,6 +72,7 @@ canvas#c{pointer-events:none}
 /* ── FORCE-HIDE START SCREENS & MOBILE UI ON DESKTOP ── */
 #char-creator,#overlay{display:none !important}
 @media(min-width:768px){#touch-controls,#joystick-zone,#btn-zone,#joystick-canvas{display:none !important}}
+@media(min-width:769px){#touch-controls{display:none !important}#joystick-zone{display:none !important}#btn-zone{display:none !important}#joystick-canvas{display:none !important}}
 
 /* ── CHARACTER CREATOR ── */
 #char-creator{position:fixed;inset:0;background:rgba(4,10,2,0.98);z-index:250;display:none!important;flex-direction:column;align-items:center;justify-content:center;color:#e8f0b0;font-family:'Courier New',monospace;pointer-events:all;touch-action:manipulation;overflow:hidden}
@@ -214,6 +215,7 @@ canvas#c{pointer-events:none}
     </div>
 
     <button id="ss-btn" onclick="startScreenClick();event.stopPropagation();" ontouchend="startScreenClick();event.stopPropagation();event.preventDefault();" style="font-family:'Press Start 2P',monospace;font-size:10px;letter-spacing:3px;color:#c8f135;border:2px solid #4a7a1a;padding:14px 48px;background:#1a2e0a;margin-bottom:14px;cursor:pointer;border-radius:8px;transition:background 0.2s,border-color 0.2s;box-shadow:0 0 20px rgba(200,241,53,0.15);touch-action:manipulation">&#9658; CLICK / TAP TO BEGIN</button>
+    <script>function startScreenClick(){var cc=document.getElementById('char-creator');if(cc)cc.style.setProperty('display','none','important');var o=document.getElementById('overlay');if(o)o.style.setProperty('display','none','important');}</script>
     <div style="font-family:'Press Start 2P',monospace;font-size:7px;letter-spacing:2px;color:#4a7a1a">OR PRESS ANY KEY</div>
   </div>
 
@@ -259,6 +261,9 @@ canvas#c{pointer-events:none}
 // ============================================================
 // ISLAND SURVIVAL v4 — Full game state and constants
 // ============================================================
+
+// Global overlay dismiss - called by HTML onclick attributes
+function startScreenClick(){['char-creator','overlay','start-screen'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.cssText='display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;';});}
 
 const TSIZE = 8;
 const MSIZE = 300;
@@ -482,10 +487,12 @@ function genMap() {
     }
   }
 
-  // Hidden pits in dark jungle
+  // Hidden pits in dark jungle (not near volcano)
+  const vPitCx = 150, vPitCy = 78;
   for (let y = 0; y < MSIZE; y++) {
     for (let x = 0; x < MSIZE; x++) {
-      if (state.map[y][x] === T.JUNGLE_DARK && Math.random() < 0.025) {
+      const dvPit = Math.sqrt((x-vPitCx)**2 + (y-vPitCy)**2);
+      if (state.map[y][x] === T.JUNGLE_DARK && Math.random() < 0.025 && dvPit > 30) {
         state.pits.add(y * MSIZE + x);
       }
     }
@@ -533,17 +540,23 @@ function genObjects() {
         if (r < 0.022) state.objects.push({type:selectTree(t,nearWater), x:wx, y:wy, hp:5, maxHp:5});
         else if (r < 0.027) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4});
         else if (r < 0.030) state.objects.push({type:'berry', x:wx, y:wy, hp:1, maxHp:1, respawn:0});
+        else if (r < 0.033) state.objects.push({type:'jungle_bird', x:wx, y:wy, decor:true, colorIdx:Math.floor(Math.random()*3)});
+        else if (r < 0.048) state.objects.push({type:'jungle_flower', x:wx, y:wy, decor:true, colorIdx:Math.floor(Math.random()*3)});
       } else if (t === T.JUNGLE_DARK) {
-        if (r < 0.028) state.objects.push({type:selectTree(t,nearWater), x:wx, y:wy, hp:5, maxHp:5});
-        else if (r < 0.032) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4});
-        else if (r < 0.034) state.objects.push({type:'jungle_chest', x:wx, y:wy, opened:false});
-        else if (r < 0.036) state.creatures.push({type:'spider', x:wx, y:wy, hp:25, maxHp:25, spd:1.05, attackTimer:0, walkTimer:0});
+        if (r < 0.045) state.objects.push({type:selectTree(t,nearWater), x:wx, y:wy, hp:5, maxHp:5});
+        else if (r < 0.049) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4});
+        else if (r < 0.051) state.objects.push({type:'jungle_chest', x:wx, y:wy, opened:false});
+        else if (r < 0.053) state.creatures.push({type:'spider', x:wx, y:wy, hp:25, maxHp:25, spd:1.05, attackTimer:0, walkTimer:0});
+        else if (r < 0.056) state.objects.push({type:'jungle_bird', x:wx, y:wy, decor:true, colorIdx:Math.floor(Math.random()*3)});
+        else if (r < 0.071) state.objects.push({type:'jungle_flower', x:wx, y:wy, decor:true, colorIdx:Math.floor(Math.random()*3)});
+        else if (r < 0.077) state.objects.push({type:'jungle_floor', x:wx, y:wy, decor:true});
       } else if (t === T.BEACH) {
         if (r < 0.006) state.objects.push({type:'palm', x:wx, y:wy, hp:4, maxHp:4, respawn:0});
         else if (r < 0.010) state.objects.push({type:'driftwood', x:wx, y:wy, collected:false});
         else if (r < 0.014) state.objects.push({type:'fish_spot', x:wx, y:wy, shimmer:Math.random()*100});
         // Coastal Tahitian trees on beach
         else if (r < 0.018) state.objects.push({type:selectTree(t,nearWater), x:wx, y:wy, hp:4, maxHp:4});
+        else if (r < 0.026) state.objects.push({type:'crab', x:wx, y:wy, decor:true, dir:Math.random()<0.5?1:-1, walkTimer:0});
       } else if (t === T.SHALLOW_WATER) {
         if (r < 0.004) state.objects.push({type:'fish_spot', x:wx, y:wy, shimmer:Math.random()*100});
         else if (r < 0.006) state.creatures.push({type:'shark', x:wx, y:wy, hp:50, maxHp:50, spd:0.9, attackTimer:0, walkTimer:0});
@@ -598,8 +611,25 @@ function genObjects() {
     }
   }
 
-  // Shipwreck landmark on southwest beach (scaled)
-  state.objects.push({type:'shipwreck', x:45*TSIZE, y:111*TSIZE, decor:true});
+  // Shipwreck landmark on beach/land edge
+  state.objects.push({type:'shipwreck', x:40*TSIZE, y:165*TSIZE, decor:true});
+
+  // Tribal village in northeast area
+  const villageHuts = [{x:196,y:82},{x:200,y:84},{x:204,y:80},{x:198,y:87},{x:207,y:85}];
+  villageHuts.forEach(h => {
+    state.objects.push({type:'hut', x:h.x*TSIZE, y:h.y*TSIZE, decor:false});
+  });
+  // Central fire
+  state.objects.push({type:'tribal_fire', x:201*TSIZE, y:83*TSIZE, decor:true});
+  // Skull stakes around perimeter
+  [{x:194,y:80},{x:209,y:80},{x:194,y:88},{x:209,y:88}].forEach(s => {
+    state.objects.push({type:'skull_stake', x:s.x*TSIZE, y:s.y*TSIZE, decor:true});
+  });
+  // Village warriors (stronger, always present)
+  const villageSpawns = [{x:196,y:83},{x:203,y:81},{x:206,y:86},{x:199,y:86}];
+  villageSpawns.forEach(vs => {
+    state.enemies.push({type:'shadow', x:vs.x*TSIZE, y:vs.y*TSIZE, hp:37, maxHp:37, spd:1.1, attackTimer:0, walkTimer:0, patrolTarget:{x:vs.x*TSIZE,y:vs.y*TSIZE}, fleeing:false, scatterTimer:0, villageGuard:true, respawnTimer:0});
+  });
 
   // Journal item in dark jungle for Mara's second quest (scaled)
   state.objects.push({type:'journal', x:66*TSIZE, y:69*TSIZE, decor:false});
@@ -727,8 +757,6 @@ function drawPlayer(ctx, sx, sy, p) {
     }
     // Only upper body visible (body lower in water)
     const swimPhase = Math.floor(state.frameCount / 20) % 2;
-    // Water surface mask (everything below waterline is tinted)
-    px(ctx, 'rgba(74,154,180,0.65)', sx-14, ay+2, 28, 16);
     // Left arm (swimming stroke, alternating)
     const leftArmY = swimPhase === 0 ? ay - 2 : ay + 4;
     const rightArmY = swimPhase === 0 ? ay + 4 : ay - 2;
@@ -740,6 +768,8 @@ function drawPlayer(ctx, sx, sy, p) {
     px(ctx, state.skinColor, sx-5, ay-14, 10, 10);
     px(ctx, '#1a0a00', sx-3, ay-11, 2, 2);
     px(ctx, '#1a0a00', sx+1, ay-11, 2, 2);
+    // Water-colored mask over lower body - blends cleanly with tile
+    px(ctx, '#3dd6d0', sx-8, ay+2, 16, 14);
   } else {
   // Shadow
   px(ctx, 'rgba(0,0,0,0.25)', sx-7, ay+16, 14, 3);
@@ -1381,6 +1411,86 @@ function drawCoral(ctx, sx, sy) {
   });
 }
 
+function drawJungleBird(ctx, sx, sy, colorIdx) {
+  const bodyColors = ['#ee2200','#2244ee','#eecc00']; // red lorikeet, blue parrot, yellow
+  const wingColors = ['#ee6600','#44aaee','#88cc00'];
+  const bc = bodyColors[colorIdx%3], wc = wingColors[colorIdx%3];
+  // Body
+  ctx.fillStyle = bc; ctx.fillRect(Math.round(sx-3), Math.round(sy-4), 6, 4);
+  // Wing
+  ctx.fillStyle = wc; ctx.fillRect(Math.round(sx-4), Math.round(sy-3), 3, 3);
+  // Tail
+  ctx.fillStyle = bc; ctx.fillRect(Math.round(sx-5), Math.round(sy-2), 3, 2);
+  // Head
+  ctx.fillStyle = bc; ctx.fillRect(Math.round(sx+2), Math.round(sy-6), 4, 4);
+  // Beak
+  ctx.fillStyle = '#ffcc00'; ctx.fillRect(Math.round(sx+5), Math.round(sy-5), 3, 2);
+  // Eye
+  ctx.fillStyle = '#000'; ctx.fillRect(Math.round(sx+3), Math.round(sy-5), 1, 1);
+}
+
+function drawJungleFlower(ctx, sx, sy, colorIdx) {
+  const cols = ['#ff4400','#ffaa00','#ff2288'];
+  const col = cols[colorIdx%3];
+  // Stem
+  ctx.fillStyle = '#2a6a10'; ctx.fillRect(Math.round(sx), Math.round(sy-4), 2, 6);
+  // Petals
+  ctx.fillStyle = col;
+  ctx.fillRect(Math.round(sx-2), Math.round(sy-6), 2, 2); // left
+  ctx.fillRect(Math.round(sx+2), Math.round(sy-6), 2, 2); // right
+  ctx.fillRect(Math.round(sx-1), Math.round(sy-8), 3, 2); // top
+  // Center
+  ctx.fillStyle = '#ffee88'; ctx.fillRect(Math.round(sx), Math.round(sy-6), 2, 2);
+}
+
+function drawJungleFloor(ctx, sx, sy) {
+  // Fern-like ground cover: small triangular green shapes pointing up
+  const fc = '#1a4a0a';
+  for (let i = 0; i < 4; i++) {
+    const ox = sx - 6 + i * 4;
+    ctx.fillStyle = i%2===0 ? '#1a4a0a' : '#2a6010';
+    ctx.beginPath();
+    ctx.moveTo(ox + 1, sy);
+    ctx.lineTo(ox - 1, sy + 5);
+    ctx.lineTo(ox + 3, sy + 5);
+    ctx.fill();
+  }
+}
+
+function drawCrab(ctx, sx, sy, dir) {
+  const flip = dir < 0 ? -1 : 1;
+  // Body (orange-red, 12x8px)
+  ctx.fillStyle = '#cc4400'; ctx.fillRect(Math.round(sx-6), Math.round(sy-4), 12, 8);
+  ctx.fillStyle = '#dd5511'; ctx.fillRect(Math.round(sx-5), Math.round(sy-4), 10, 5); // top lighter
+  // Eyes (white 2x2 each)
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(Math.round(sx-4), Math.round(sy-6), 2, 2); ctx.fillRect(Math.round(sx+2), Math.round(sy-6), 2, 2);
+  ctx.fillStyle = '#111'; ctx.fillRect(Math.round(sx-4), Math.round(sy-5), 1, 1); ctx.fillRect(Math.round(sx+2), Math.round(sy-5), 1, 1);
+  // Front claws
+  ctx.fillStyle = '#cc4400';
+  ctx.fillRect(Math.round(sx - 6*flip - 4*flip), Math.round(sy-5), 4, 3);
+  ctx.fillRect(Math.round(sx - 6*flip - 5*flip), Math.round(sy-7), 3, 3);
+  // Legs (4 tiny)
+  for (let i = 0; i < 4; i++) {
+    const lx = sx - 4 + i*3, ly = sy + 3;
+    ctx.fillStyle = '#bb3300'; ctx.fillRect(Math.round(lx), Math.round(ly), 2, 4);
+  }
+}
+
+function drawHut(ctx, sx, sy) {
+  // Circular grass hut, thatched roof
+  ctx.fillStyle = '#8B6914'; // walls
+  ctx.beginPath(); ctx.ellipse(sx, sy, 14, 10, 0, 0, Math.PI*2); ctx.fill();
+  // Thatched roof (brown triangles)
+  ctx.fillStyle = '#5c3d1e';
+  ctx.beginPath(); ctx.moveTo(sx, sy-18); ctx.lineTo(sx-18, sy-4); ctx.lineTo(sx+18, sy-4); ctx.fill();
+  ctx.fillStyle = '#7a5530';
+  ctx.beginPath(); ctx.moveTo(sx, sy-14); ctx.lineTo(sx-14, sy-2); ctx.lineTo(sx+14, sy-2); ctx.fill();
+  ctx.fillStyle = '#6a4a20';
+  ctx.beginPath(); ctx.moveTo(sx, sy-10); ctx.lineTo(sx-10, sy); ctx.lineTo(sx+10, sy); ctx.fill();
+  // Door
+  ctx.fillStyle = '#2a1008'; ctx.fillRect(sx-3, sy-2, 6, 8);
+}
+
 // ── TAHITIAN TREE SPECIES ──────────────────────────────────
 
 function drawBreadfruitTree(ctx, sx, sy) {
@@ -1511,23 +1621,46 @@ function drawHutuTree(ctx, sx, sy) {
 // ── SEA CREATURE DRAWINGS ─────────────────────────────────
 
 function drawWhale(ctx, sx, sy) {
-  // Humpback whale — large elongated navy body
-  px(ctx, '#1a2a4a', sx-30, sy-8, 62, 16);     // main body
-  px(ctx, '#0a1a3a', sx-30, sy-6, 62, 10);     // darker back
-  px(ctx, '#c8d4d8', sx-24, sy-2, 40, 6);      // lighter belly
+  // Humpback whale — large 80x28px body
+  // Main body
+  px(ctx, '#1a2a4a', sx-40, sy-12, 80, 24);    // main body
+  px(ctx, '#0a1a3a', sx-40, sy-10, 80, 14);    // darker back
+  // Cream/white belly (clearly defined)
+  px(ctx, '#e8e4d0', sx-30, sy+2, 54, 8);      // belly underside
+  px(ctx, '#f0ece0', sx-22, sy+4, 36, 5);      // lighter belly center
   // Head taper
-  px(ctx, '#1a2a4a', sx+28, sy-6, 8, 10);
-  px(ctx, '#1a2a4a', sx+34, sy-4, 6, 6);
+  px(ctx, '#1a2a4a', sx+36, sy-8, 10, 14);
+  px(ctx, '#1a2a4a', sx+44, sy-4, 8, 8);
+  px(ctx, '#1a2a4a', sx+50, sy-2, 6, 5);
   // Pectoral fin
-  px(ctx, '#0a1a3a', sx-10, sy+6, 16, 8);
-  px(ctx, '#0a1a3a', sx-14, sy+12, 10, 4);
-  // Tail flukes (two triangles)
-  px(ctx, '#1a2a4a', sx-36, sy-10, 8, 6);
-  px(ctx, '#1a2a4a', sx-36, sy+4, 8, 6);
-  px(ctx, '#0a1a3a', sx-34, sy-6, 4, 12);
+  px(ctx, '#0a1a3a', sx-12, sy+10, 20, 10);
+  px(ctx, '#0a1a3a', sx-18, sy+18, 14, 5);
+  // Tail flukes (two distinct lobes)
+  ctx.fillStyle = '#1a2a4a';
+  ctx.beginPath(); ctx.moveTo(sx-40, sy-2); ctx.lineTo(sx-56, sy-14); ctx.lineTo(sx-48, sy-2); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(sx-40, sy+2); ctx.lineTo(sx-56, sy+14); ctx.lineTo(sx-48, sy+2); ctx.fill();
+  px(ctx, '#0a1a3a', sx-46, sy-3, 6, 6); // fluke join
+  // Dorsal fin (small hump)
+  px(ctx, '#0a1a3a', sx-4, sy-16, 10, 6);
+  px(ctx, '#0a1a3a', sx-2, sy-20, 6, 5);
+  px(ctx, '#0a1a3a', sx+0, sy-22, 3, 3);
   // Eye
-  px(ctx, '#ffffff', sx+22, sy-4, 3, 3);
-  px(ctx, '#1a1a2a', sx+23, sy-3, 2, 2);
+  px(ctx, '#ffffff', sx+28, sy-6, 4, 4);
+  px(ctx, '#1a1a2a', sx+29, sy-5, 2, 2);
+  // Barnacle spots
+  px(ctx, '#0a1a2a', sx-10, sy-8, 2, 2);
+  px(ctx, '#0a1a2a', sx+2, sy-10, 2, 2);
+  px(ctx, '#0a1a2a', sx+14, sy-8, 2, 2);
+  px(ctx, '#0a1a2a', sx-24, sy-6, 2, 2);
+  px(ctx, '#0a1a2a', sx+6, sy-6, 2, 2);
+  // Blowhole spray (every 200 frames)
+  if (state && state.frameCount % 200 < 12) {
+    const sprayA = 1 - (state.frameCount % 200) / 12;
+    ctx.fillStyle = `rgba(255,255,255,${sprayA})`;
+    ctx.fillRect(Math.round(sx+20), Math.round(sy - 14 - (state.frameCount%200)*0.8), 3, 3);
+    ctx.fillRect(Math.round(sx+18), Math.round(sy - 18 - (state.frameCount%200)*0.6), 2, 2);
+    ctx.fillRect(Math.round(sx+22), Math.round(sy - 16 - (state.frameCount%200)*0.7), 2, 2);
+  }
 }
 
 function drawDolphin(ctx, sx, sy) {
@@ -3579,24 +3712,20 @@ function drawTile(ctx, type, sx, sy) {
     const tx = Math.round(sx/TSIZE), ty = Math.round(sy/TSIZE);
     const v = (tx * 7 + ty * 13) % 5;
     if (v === 0) { ctx.fillStyle = 'rgba(0,0,0,0.06)'; ctx.fillRect(sx, sy, TSIZE, TSIZE); }
-    // Beach crab — every 20th tile by position hash (purely decorative)
-    const crabHash = (tx * 11 + ty * 17) % 20;
-    if (crabHash === 0) {
-      const cx2 = sx + 2, cy2 = sy + 3;
-      ctx.fillStyle = '#cc5522';
-      ctx.fillRect(cx2, cy2, 8, 4);      // body
-      ctx.fillStyle = '#ee7744';
-      ctx.fillRect(cx2+1, cy2, 6, 3);   // lighter top
-      // Claws
-      ctx.fillStyle = '#cc5522';
-      ctx.fillRect(cx2-3, cy2, 3, 2);   // left claw
-      ctx.fillRect(cx2+8, cy2, 3, 2);   // right claw
-      ctx.fillRect(cx2-4, cy2-1, 2, 2); // left claw tip
-      ctx.fillRect(cx2+10, cy2-1, 2, 2);// right claw tip
-      // Eyes (tiny)
-      ctx.fillStyle = '#1a0a00';
-      ctx.fillRect(cx2+1, cy2-1, 1, 1);
-      ctx.fillRect(cx2+5, cy2-1, 1, 1);
+  }
+  // Coral reef texture directly on SHALLOW_WATER tiles
+  if (type === T.SHALLOW_WATER) {
+    const tx2 = Math.round(sx/TSIZE), ty2 = Math.round(sy/TSIZE);
+    const ch = (tx2*7 + ty2*11) % 8;
+    if (ch < 3) {
+      const cCol = [['#ff8822','#ffaa44'],['#ff55aa','#ff88cc'],['#8833cc','#aa55ee']][(tx2*3+ty2*5)%3];
+      const cox = sx + (tx2*3)%5, coy = sy + (ty2*5)%4;
+      ctx.fillStyle = cCol[0];
+      ctx.fillRect(cox, coy+2, 2, 4);      // stem
+      ctx.fillRect(cox-2, coy, 2, 2);      // left branch
+      ctx.fillRect(cox+2, coy, 2, 2);      // right branch
+      ctx.fillStyle = cCol[1];
+      ctx.fillRect(cox-1, coy-1, 4, 2);   // top spread
     }
   }
 }
@@ -3923,6 +4052,12 @@ function render(ctx, minimapCtx) {
           ctx.save(); ctx.fillStyle='#8B6020'; ctx.fillRect(ssx-6,ssy-8,12,14); ctx.fillStyle='#c8a060'; ctx.fillRect(ssx-5,ssy-7,10,12); ctx.fillStyle='#5c3010'; ctx.fillRect(ssx-5,ssy-7,2,12); ctx.fillStyle='#f0d890'; ctx.fillRect(ssx-2,ssy-5,7,1); ctx.fillRect(ssx-2,ssy-3,7,1); ctx.fillRect(ssx-2,ssy-1,5,1);
           const jGlow=0.3+Math.sin(state.frameCount*0.08)*0.2; ctx.fillStyle=`rgba(255,220,100,${jGlow})`; ctx.beginPath(); ctx.arc(ssx,ssy-2,10,0,Math.PI*2); ctx.fill(); ctx.restore(); break;
         }
+        case 'jungle_bird': drawJungleBird(ctx,ssx,ssy,capturedObj.colorIdx||0); break;
+        case 'jungle_flower': drawJungleFlower(ctx,ssx,ssy,capturedObj.colorIdx||0); break;
+        case 'jungle_floor': drawJungleFloor(ctx,ssx,ssy); break;
+        case 'crab': drawCrab(ctx,ssx,ssy,capturedObj.dir||1); break;
+        case 'hut': drawHut(ctx,ssx,ssy); break;
+        case 'tribal_fire': { const tf=Math.sin(state.frameCount*0.2)*2; px(ctx,'#5c3d1e',ssx-6,ssy,12,8); px(ctx,'#ff6600',ssx-4,ssy-8+tf,8,8); px(ctx,'#ffcc00',ssx-2,ssy-12+tf,4,6); break; }
         case 'driftwood': px(ctx,'#8B6914',ssx-10,ssy-2,20,4); px(ctx,'#7a5514',ssx-6,ssy-4,6,2); break;
         case 'reed': drawReed(ctx,ssx,ssy); break;
         case 'jungle_chest': if(!capturedObj.opened){px(ctx,'#7a5c2e',ssx-8,ssy-6,16,12);px(ctx,'#c8a060',ssx-8,ssy-8,16,4);} break;
@@ -4001,15 +4136,6 @@ function render(ctx, minimapCtx) {
   drawList.push({y: p.y, draw: () => {
     const tile = getTile(p.x, p.y);
     drawPlayer(ctx, canvas.width/2, canvas.height/2 + (p.jumpOffset||0), p);
-    // Swimming depth: draw water-colored rect over lower half when in shallow water
-    if (tile === T.SHALLOW_WATER) {
-      ctx.save();
-      ctx.globalAlpha = 0.45;
-      ctx.fillStyle = '#4aa8d8';
-      ctx.fillRect(canvas.width/2 - 6, canvas.height/2 + 4, 12, 8);
-      ctx.globalAlpha = 1;
-      ctx.restore();
-    }
   }});
 
   // Sort by y and draw
@@ -4708,6 +4834,11 @@ window.addEventListener('DOMContentLoaded', () => {
   state.running = true;
   showMsg('YOU WASHED ASHORE. FIND THE OTHER SURVIVORS.', '#c8f135');
   requestAnimationFrame(gameLoopWithUI);
+  // Nuclear option: hide all possible overlay elements
+  ['char-creator','overlay','start-screen'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.style.cssText = 'display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;'; }
+  });
 });
 
 function gameLoopWithUI() {
@@ -4738,6 +4869,7 @@ function gameLoopWithUI() {
 
 (function() {
   const joyCanvas = document.getElementById('joystick-canvas');
+  if (!joyCanvas) return;
   const jCtx = joyCanvas.getContext('2d');
 
   // Joystick canvas is fixed small size — no full-screen needed
