@@ -1959,6 +1959,56 @@ function drawKona(ctx, sx, sy) {
   px(ctx, '#8a5a3a', sx+5, sy+1, 4, 4); // hand
 }
 
+
+function drawNPCShelter(ctx, sx, sy, npcId) {
+  // Different shelter per NPC
+  if (npcId === 'oonga') {
+    // Simple lean-to made of palm leaves - tribal style
+    px(ctx, '#5c3d1e', sx-20, sy-8, 40, 14);  // base
+    px(ctx, '#2d6e2d', sx-22, sy-20, 44, 4);  // roof left
+    px(ctx, '#3a8a2a', sx-18, sy-26, 36, 4);  // roof mid
+    px(ctx, '#2d6e2d', sx-14, sy-30, 28, 4);  // roof top
+    px(ctx, '#1a3a10', sx-10, sy-34, 20, 4);  // peak
+    px(ctx, '#5c3d1e', sx-22, sy-20, 4, 28);  // left pole
+    px(ctx, '#5c3d1e', sx+18, sy-20, 4, 28);  // right pole
+    // Palm leaf decorations
+    px(ctx, '#4a8a2a', sx-26, sy-22, 8, 3);
+    px(ctx, '#4a8a2a', sx+18, sy-22, 8, 3);
+  } else if (npcId === 'felix') {
+    // Makeshift workshop - planks and tools
+    px(ctx, '#7a5c2e', sx-24, sy-6, 48, 12);  // work table
+    px(ctx, '#5c3d1e', sx-24, sy-6, 4, 12);   // leg
+    px(ctx, '#5c3d1e', sx+20, sy-6, 4, 12);   // leg
+    px(ctx, '#888', sx-10, sy-10, 20, 4);      // metal sheet
+    px(ctx, '#aaa', sx-8, sy-12, 16, 3);       // highlight
+    // Tools scattered
+    px(ctx, '#888', sx-20, sy-8, 8, 2);        // wrench
+    px(ctx, '#5c3d1e', sx+12, sy-8, 6, 2);     // plank
+  } else if (npcId === 'mara') {
+    // Small tent from sail cloth
+    px(ctx, '#c8c0a0', sx-18, sy-24, 36, 4);  // roof
+    px(ctx, '#d4cca8', sx-14, sy-20, 28, 4);  // roof 2
+    px(ctx, '#c8c0a0', sx-10, sy-16, 20, 4);  // roof 3
+    px(ctx, '#c8c0a0', sx-18, sy-20, 4, 24);  // side
+    px(ctx, '#c8c0a0', sx+14, sy-20, 4, 24);  // side
+    px(ctx, '#a8a080', sx-18, sy+2, 36, 2);   // base
+    px(ctx, '#5c3d1e', sx-20, sy-22, 3, 26);  // pole left
+    px(ctx, '#5c3d1e', sx+17, sy-22, 3, 26);  // pole right
+  } else if (npcId === 'kona') {
+    // Ancient stone marker / meditation spot
+    px(ctx, '#555566', sx-16, sy+2, 32, 8);   // stone base
+    px(ctx, '#666677', sx-12, sy-6, 24, 10);  // stone mid
+    px(ctx, '#777788', sx-8, sy-12, 16, 8);   // stone top
+    px(ctx, '#888899', sx-4, sy-16, 8, 6);    // peak
+    // Rune markings
+    px(ctx, '#c8f135', sx-6, sy-10, 2, 6);
+    px(ctx, '#c8f135', sx-3, sy-8, 6, 2);
+    px(ctx, '#c8f135', sx+2, sy-10, 2, 6);
+    // Offerings at base
+    px(ctx, '#ff6600', sx-14, sy+4, 4, 4);    // fire
+    px(ctx, '#ff8800', sx-12, sy+2, 2, 3);
+  }
+}
 function drawNPC(ctx, sx, sy, npc) {
   const bob = Math.sin(npc.bobTimer * 0.04) * 2;
   const ay = sy + bob;
