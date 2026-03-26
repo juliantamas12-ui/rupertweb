@@ -308,13 +308,15 @@ const state = {
   collapseDeathY: 0,
 
   journalShown: false,
+
+  tutorials: { woodHint: false, stoneHint: false, craftHint: false },
 };
 
 // NPC definitions
 const NPC_DATA = [
   {
     id: 'mara', name: 'MARA', color: '#e8a87c',
-    x: 150*TSIZE, y: 36*TSIZE,
+    x: 127*TSIZE, y: 172*TSIZE,
     desc: "Ship's cook. Survived on coconuts for three days.",
     lines: [
       ["I've been here since the wreck. Three days. I found water but the jungle... something's out there.", null],
@@ -498,7 +500,13 @@ function genObjects() {
         else if (r < 0.014) state.objects.push({type:'fish_spot', x:wx, y:wy, shimmer:Math.random()*100});
         // Coastal Tahitian trees on beach
         else if (r < 0.018) state.objects.push({type:selectTree(t,nearWater), x:wx, y:wy, hp:4, maxHp:4});
-        else if (r < 0.026) state.objects.push({type:'crab', x:wx, y:wy, decor:true, dir:Math.random()<0.5?1:-1, walkTimer:0});
+        // Crabs: only on beach, not near spawn zone
+        if (t === T.BEACH && Math.random() < 0.008) {
+          const distFromStart = Math.hypot(x - 125, y - 170);
+          if (distFromStart > 30) {
+            state.objects.push({type:'crab', x:wx, y:wy, decor:false, dir:1, walkTimer:0, moveTimer:0, dx:0.2, dy:0.1});
+          }
+        }
       } else if (t === T.SHALLOW_WATER) {
         if (r < 0.004) state.objects.push({type:'fish_spot', x:wx, y:wy, shimmer:Math.random()*100});
         else if (r < 0.006) state.creatures.push({type:'shark', x:wx, y:wy, hp:50, maxHp:50, spd:0.9, attackTimer:0, walkTimer:0});      } else if (t === T.VOLCANIC) {
@@ -673,6 +681,16 @@ function genObjects() {
     const pos = rndDeepTile();
     state.seaCreatures.push({type:'manta', x:pos.x, y:pos.y, dir:Math.random()*Math.PI*2, timer:0, speed:0.22, orbitAngle:Math.random()*Math.PI*2});
   }
+
+  // ── SAFE STARTER BEACH — resources near spawn ──
+  // Driftwood pieces near spawn
+  [[122,167],[126,169],[130,166],[119,171],[124,173]].forEach(([sx,sy]) => {
+    state.objects.push({type:'driftwood', x:sx*TSIZE, y:sy*TSIZE, collected:false});
+  });
+  // Rocks near spawn
+  [[117,170],[128,175],[134,169],[121,178]].forEach(([sx,sy]) => {
+    state.objects.push({type:'rock', x:sx*TSIZE, y:sy*TSIZE, hp:4, maxHp:4});
+  });
 }
 
 // ============================================================
@@ -1896,8 +1914,9 @@ function spawnEnemies(n, type) {
     const hp = (t==='shadow'?25:20) + state.day * 3;
     const ex = cx + Math.cos(angle)*r;
     const ey = cy + Math.sin(angle)*r;
-    // Don't spawn within 30 tiles of lagoon
+    // Don't spawn within 30 tiles of lagoon or 40 tiles of spawn
     if (Math.hypot(ex-lagoonCx, ey-lagoonCy) < 30*TSIZE) continue;
+    if (Math.hypot(ex - 125*TSIZE, ey - 175*TSIZE) < 40*TSIZE) continue;
     state.enemies.push({
       x: ex,
       y: ey,
@@ -1927,6 +1946,7 @@ function spawnChief() {
 
 function updateEnemies() {
   const p = state.player;
+  const inSafeZone = Math.hypot(p.x - 125*TSIZE, p.y - 175*TSIZE) < 35*TSIZE;
   const allE = [...state.enemies];
   if (state.chief) allE.push(state.chief);
 
@@ -1974,7 +1994,7 @@ function updateEnemies() {
     const nearCampfire = campfires.some(cf => Math.hypot(p.x-cf.x, p.y-cf.y) < 80);
     const shadowBlockedByCampfire = e.type === 'shadow' && nearCampfire && dist < 60;
 
-    if ((dist < detect || e.fleeing || e.scatterTimer > 0) && !shadowBlockedByCampfire) {
+    if ((dist < detect || e.fleeing || e.scatterTimer > 0) && !shadowBlockedByCampfire && !inSafeZone) {
       let moveX, moveY;
       if (e.fleeing || e.scatterTimer > 0) {
         // Run away from player
@@ -2024,8 +2044,8 @@ function updateEnemies() {
       else { e.x += pdx/pd*0.4; e.y += pdy/pd*0.4; }
     }
 
-    // Attack player (shadow warriors blocked by campfire)
-    if (!shadowBlockedByCampfire) {
+    // Attack player (shadow warriors blocked by campfire, safe zone protection)
+    if (!shadowBlockedByCampfire && !inSafeZone) {
       e.attackTimer++;
       const attackR = e.type==='chief' ? 40 : 28;
       if (dist < attackR && e.attackTimer > 80 && !e.fleeing && e.scatterTimer <= 0 && !state.invincible) {
@@ -2137,6 +2157,7 @@ function updateProjectiles() {
 
 function updateCreatures() {
   const p = state.player;
+  const inSafeZone = Math.hypot(p.x - 125*TSIZE, p.y - 175*TSIZE) < 35*TSIZE;
   state.creatures = state.creatures.filter(c => c.hp > 0);
 
   state.creatures.forEach(c => {
@@ -2156,7 +2177,7 @@ function updateCreatures() {
         return;
       }
       const detect = 150;
-      if (dist < detect) {
+      if (dist < detect && !inSafeZone) {
         const nx = c.x + dx/dist * c.spd;
         const ny = c.y + dy/dist * c.spd;
         const tt = getTile(nx, ny);
@@ -2164,7 +2185,7 @@ function updateCreatures() {
         if (tt === T.JUNGLE_DARK || tt === T.JUNGLE_LIGHT) { c.x = nx; c.y = ny; }
       }
       c.attackTimer++;
-      if (dist < 20 && c.attackTimer > 90) {
+      if (dist < 20 && c.attackTimer > 90 && !inSafeZone) {
         c.attackTimer = 0;
         p.hp = Math.max(0, p.hp - 8);
         p.poison = 180;
@@ -2207,7 +2228,7 @@ function updateCreatures() {
     }
 
     if (c.type === 'bat') {
-      if (state.isNight && dist < 250) {
+      if (state.isNight && dist < 250 && !inSafeZone) {
         const nx = c.x + dx/dist * c.spd;
         const ny = c.y + dy/dist * c.spd;
         const tt = getTile(nx, ny);
@@ -2579,9 +2600,15 @@ function handleMineClick(wx, wy) {
     if (mg.currentZone >= mg.zones.length) {
       const perfect = mg.zones.every(z2=>z2.hit);
       const yield_ = perfect ? 3 : 2;
+      const wasZeroStone = (state.player.inv.stone||0) === 0;
       state.player.inv.stone += yield_;
       showMsg(`+${yield_} STONE${perfect?' (PERFECT!)':''}`, '#888899');
       SFX.pickup();
+      // Tutorial hint: first stone pickup
+      if (wasZeroStone && !state.tutorials.stoneHint) {
+        state.tutorials.stoneHint = true;
+        setTimeout(() => showMsg('Craft tools at the WORKBENCH (C key)', '#c8f135'), 1500);
+      }
       state.objects = state.objects.filter(o => o !== mg.target);
       state.minigame = null;
     }
@@ -3203,9 +3230,15 @@ function handleClick(sx, sy) {
     }
     if (obj.type === 'driftwood' && !obj.collected) {
       obj.collected = true;
+      const wasZeroWood = (p.inv.wood||0) === 0;
       p.inv.wood++;
       showMsg('+DRIFTWOOD', '#8B6914');
       SFX.pickup();
+      // Tutorial hint: first wood pickup
+      if (wasZeroWood && !state.tutorials.woodHint) {
+        state.tutorials.woodHint = true;
+        setTimeout(() => showMsg('GOOD! Now press C to craft a Stone Axe (2 wood + 2 stone)', '#c8f135'), 1500);
+      }
       state.objects.splice(i,1);
       return;
     }
@@ -3387,7 +3420,14 @@ function openCraftMenu() {
   const panel = document.getElementById('craft-panel');
   if (!panel) return;
   panel.style.display = panel.style.display==='block'?'none':'block';
-  if (panel.style.display==='block') renderCraftMenu();
+  if (panel.style.display==='block') {
+    renderCraftMenu();
+    // Tutorial hint: first time opening craft menu
+    if (!state.tutorials.craftHint) {
+      state.tutorials.craftHint = true;
+      setTimeout(() => showMsg('TIP: Craft a STONE AXE first to chop trees faster', '#c8f135'), 800);
+    }
+  }
 }
 
 function renderCraftMenu() {
@@ -4050,7 +4090,9 @@ function render(ctx, minimapCtx) {
     const osx = obj.x - camX, osy = obj.y - camY;
     if (osx < -40 || osx > canvas.width+40 || osy < -40 || osy > canvas.height+40) return;
     const capturedObj = obj, capturedOsx = osx, capturedOsy = osy;
-    drawList.push({y: obj.y, draw: () => {
+    // Crabs draw below player (ground creatures) — use y+8 so player sorts on top
+    const sortY = obj.type === 'crab' ? obj.y + 8 : obj.y;
+    drawList.push({y: sortY, draw: () => {
       const ssx = capturedObj.x - camX, ssy = capturedObj.y - camY;
       // Shadow ellipse
       if (['tree','palm','rock','vol_rock','jungle_chest','vol_chest','treasure_chest','step_stone','ancient_statue','skull_stake','dead_tree','mossy_log','breadfruit','mape','purau','pandanus','filao','hutu'].includes(capturedObj.type)) {
@@ -4447,10 +4489,14 @@ function updateDayNight() {
     for (let i = 0; i < batCount; i++) {
       const angle = Math.random() * Math.PI * 2;
       const r = (45 + Math.random() * 20) * TSIZE;
+      const bx2 = cx + Math.cos(angle) * r;
+      const by2 = cy + Math.sin(angle) * r;
+      // Don't spawn near start position
+      if (Math.hypot(bx2 - 125*TSIZE, by2 - 175*TSIZE) < 40*TSIZE) continue;
       state.creatures.push({
         type: 'bat',
-        x: cx + Math.cos(angle) * r,
-        y: cy + Math.sin(angle) * r,
+        x: bx2,
+        y: by2,
         hp: 15, maxHp: 15,
         spd: 1.26,
         attackTimer: 0,
@@ -4572,6 +4618,26 @@ function updateBirdsAndFootprints() {
     if (state.footprints.length > 80) state.footprints.shift();
   }
   state.footprints = state.footprints.filter(fp => { fp.life--; return fp.life > 0; });
+}
+
+function updateCrabs() {
+  state.objects.forEach(obj => {
+    if (obj.type !== 'crab') return;
+    obj.walkTimer = (obj.walkTimer||0) + 1;
+    obj.moveTimer = (obj.moveTimer||0) + 1;
+    // Change direction every 3 seconds
+    if (obj.moveTimer % 180 === 0) {
+      const a = Math.random() * Math.PI * 2;
+      obj.dx = Math.cos(a) * 0.3;
+      obj.dy = Math.sin(a) * 0.15;
+    }
+    // Only move on beach tiles
+    const newX = obj.x + (obj.dx||0);
+    const newY = obj.y + (obj.dy||0);
+    const tile = getTile(newX, newY);
+    if (tile === T.BEACH) { obj.x = newX; obj.y = newY; }
+    else { obj.dx = -(obj.dx||0); obj.dy = -(obj.dy||0); } // bounce
+  });
 }
 
 function updateSeaCreatures() {
@@ -4903,6 +4969,10 @@ window.addEventListener('DOMContentLoaded', () => {
   state.running = true;
   showMsg('YOU WASHED ASHORE. FIND THE OTHER SURVIVORS.', '#c8f135');
   requestAnimationFrame(gameLoopWithUI);
+  // Safe zone welcome message on day 1
+  setTimeout(() => {
+    if (state.day === 1) showMsg('SAFE BEACH — Gather resources and prepare before venturing into the jungle', '#c8f135');
+  }, 2000);
   // Nuclear option: hide all possible overlay elements
   ['char-creator','overlay','start-screen'].forEach(id => {
     const el = document.getElementById(id);
@@ -4924,6 +4994,7 @@ function gameLoopWithUI() {
   updateDialogue();
   updateNPCCompanions();
   updateBirdsAndFootprints();
+  updateCrabs();
   updateSeaCreatures();
   updateUI();
   render(ctx, minimapCtx);
