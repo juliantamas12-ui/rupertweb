@@ -3353,6 +3353,10 @@ function placeBuildItem(sx, sy) {
   const item = BUILD_ITEMS.find(b=>b.id===state.buildItem);
   if (!item) return;
 
+  // Check can afford
+  for (const [k,v] of Object.entries(item.cost)) {
+    if ((p.inv[k]||0) < v) { showMsg(`NEED MORE ${k.toUpperCase()}`, '#e74c3c'); return; }
+  }
   for (const [k,v] of Object.entries(item.cost)) p.inv[k] -= v;
 
   state.objects.push({
@@ -3764,20 +3768,7 @@ function drawTile(ctx, type, sx, sy) {
     if (v === 0) { ctx.fillStyle = 'rgba(0,0,0,0.06)'; ctx.fillRect(sx, sy, TSIZE, TSIZE); }
   }
   
-  if (type === T.SHALLOW_WATER) {
-    const tx2 = Math.round(sx/TSIZE), ty2 = Math.round(sy/TSIZE);
-    const ch = (tx2*7 + ty2*11) % 8;
-    if (ch < 3) {
-      const cCol = [['#ff8822','#ffaa44'],['#ff55aa','#ff88cc'],['#8833cc','#aa55ee']][(tx2*3+ty2*5)%3];
-      const cox = sx + (tx2*3)%5, coy = sy + (ty2*5)%4;
-      ctx.fillStyle = cCol[0];
-      ctx.fillRect(cox, coy+2, 2, 4);      // stem
-      ctx.fillRect(cox-2, coy, 2, 2);      // left branch
-      ctx.fillRect(cox+2, coy, 2, 2);      // right branch
-      ctx.fillStyle = cCol[1];
-      ctx.fillRect(cox-1, coy-1, 4, 2);   // top spread
-    }
-  }
+  // Shallow water - clean turquoise, no extra texture
 }
 
 function drawPlacedObject(ctx, obj, sx, sy) {
