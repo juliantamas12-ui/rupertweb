@@ -1987,8 +1987,8 @@ function updateEnemies() {
         }
       } else {
         // Move toward player + flank offset
-        const targetX = p.x + e.flankOffset.x;
-        const targetY = p.y + e.flankOffset.y;
+        const targetX = p.x + (e.flankOffset ? e.flankOffset.x : 0);
+        const targetY = p.y + (e.flankOffset ? e.flankOffset.y : 0);
         const tdx = targetX - e.x, tdy = targetY - e.y;
         const td = Math.sqrt(tdx*tdx+tdy*tdy);
         const spd = e.spd * (e.type==='shadow' && state.isNight ? 1.3 : 1);
@@ -2781,7 +2781,7 @@ function updatePlayer() {
 
   // Tile collision (lava, deep ocean, impassable volcanic walls)
   const newTile = getTile(nx, ny);
-  if (newTile === T.LAVA) {
+  if (newTile === T.LAVA || newTile === T.VOLCANIC) {
     p.hp = Math.max(0, p.hp - 5);
     
     showMsg('LAVA! GET BACK!', '#ff4400');
@@ -3762,7 +3762,7 @@ function drawTile(ctx, type, sx, sy) {
     const v = (tx * 7 + ty * 13) % 5;
     if (v === 0) { ctx.fillStyle = 'rgba(0,0,0,0.06)'; ctx.fillRect(sx, sy, TSIZE, TSIZE); }
   }
-  // Coral reef texture directly on SHALLOW_WATER tiles
+  
   if (type === T.SHALLOW_WATER) {
     const tx2 = Math.round(sx/TSIZE), ty2 = Math.round(sy/TSIZE);
     const ch = (tx2*7 + ty2*11) % 8;
