@@ -170,64 +170,6 @@ canvas#c{pointer-events:none}
   <div id="craft-list"></div>
 </div>
 
-<style>
-/* Start screen animations */
-@keyframes palmSway{0%,100%{transform:rotate(-4deg) translateY(0)}50%{transform:rotate(4deg) translateY(-3px)}}
-@keyframes titleGlow{0%,100%{text-shadow:0 0 20px #4a7a1a,0 0 40px #2a5a0a}50%{text-shadow:0 0 30px #c8f135,0 0 60px #4a7a1a,0 0 90px #2a5a0a}}
-@keyframes waveMove{0%{transform:translateX(-100%)}100%{transform:translateX(0%)}}
-@keyframes waveMove2{0%{transform:translateX(0%)}100%{transform:translateX(-100%)}}
-@keyframes ssFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
-</style>
-
-      <!-- Palm leaves -->
-      <div style="position:relative;top:0;left:-30px;width:0">
-        <div style="position:absolute;width:70px;height:14px;background:#2d6a10;border-radius:0 50% 50% 0;top:-10px;left:-5px;transform:rotate(-40deg)"></div>
-        <div style="position:absolute;width:70px;height:12px;background:#3a7a18;border-radius:0 50% 50% 0;top:-6px;left:5px;transform:rotate(10deg)"></div>
-        <div style="position:absolute;width:60px;height:12px;background:#2d6a10;border-radius:0 50% 50% 0;top:-18px;left:0px;transform:rotate(-20deg)"></div>
-        <div style="position:absolute;width:55px;height:11px;background:#4a8a20;border-radius:0 50% 50% 0;top:-22px;left:10px;transform:rotate(35deg)"></div>
-        <div style="position:absolute;width:50px;height:11px;background:#2d6a10;border-radius:0 50% 50% 0;top:-4px;left:-10px;transform:rotate(-65deg)"></div>
-      </div>
-    </div>
-  </div>
-
-  <div style="position:absolute;top:0;right:0;bottom:80px;display:flex;align-items:flex-end;padding-right:40px;pointer-events:none;z-index:1">
-    <div style="animation:palmSway 3.5s ease-in-out infinite 0.8s;transform-origin:bottom center">
-      <div style="width:12px;height:140px;background:linear-gradient(to top,#5a3a10,#7a5a20);margin:0 auto;border-radius:4px 4px 2px 2px"></div>
-      <div style="position:relative;top:0;left:-30px;width:0">
-        <div style="position:absolute;width:70px;height:14px;background:#3a7a18;border-radius:0 50% 50% 0;top:-10px;left:-5px;transform:rotate(-35deg) scaleX(-1)"></div>
-        <div style="position:absolute;width:65px;height:12px;background:#2d6a10;border-radius:0 50% 50% 0;top:-6px;left:5px;transform:rotate(15deg) scaleX(-1)"></div>
-        <div style="position:absolute;width:60px;height:12px;background:#4a8a20;border-radius:0 50% 50% 0;top:-20px;left:0px;transform:rotate(-18deg) scaleX(-1)"></div>
-        <div style="position:absolute;width:55px;height:11px;background:#2d6a10;border-radius:0 50% 50% 0;top:-24px;left:10px;transform:rotate(40deg) scaleX(-1)"></div>
-        <div style="position:absolute;width:50px;height:11px;background:#3a7a18;border-radius:0 50% 50% 0;top:-4px;left:-10px;transform:rotate(-60deg) scaleX(-1)"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Main content -->
-  <div style="position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;animation:ssFloat 4s ease-in-out infinite">
-    <div style="font-family:'Press Start 2P',monospace;font-size:9px;letter-spacing:6px;color:#8aa060;margin-bottom:16px">&#9670; TAHITIAN ISLAND &#9670;</div>
-    <div style="font-family:'Press Start 2P',monospace;font-size:30px;letter-spacing:6px;color:#c8f135;animation:titleGlow 3s ease-in-out infinite;margin-bottom:6px">ISLAND</div>
-    <div style="font-family:'Press Start 2P',monospace;font-size:30px;letter-spacing:6px;color:#c8f135;animation:titleGlow 3s ease-in-out infinite 0.5s;margin-bottom:20px">SURVIVAL</div>
-    <div style="font-family:'Press Start 2P',monospace;font-size:7px;letter-spacing:3px;color:#8aa060;margin-bottom:36px">A TAHITIAN SURVIVAL STORY</div>
-
-    <div id="ss-phase" style="margin-bottom:32px;text-align:center;max-width:520px">
-      <!-- Phase content injected by JS -->
-    </div>
-
-    <button id="ss-btn" onclick="startScreenClick();event.stopPropagation();" ontouchend="startScreenClick();event.stopPropagation();event.preventDefault();" style="font-family:'Press Start 2P',monospace;font-size:10px;letter-spacing:3px;color:#c8f135;border:2px solid #4a7a1a;padding:14px 48px;background:#1a2e0a;margin-bottom:14px;cursor:pointer;border-radius:8px;transition:background 0.2s,border-color 0.2s;box-shadow:0 0 20px rgba(200,241,53,0.15);touch-action:manipulation">&#9658; CLICK / TAP TO BEGIN</button>
-    <script>function startScreenClick(){var cc=document.getElementById('char-creator');if(cc)cc.style.setProperty('display','none','important');var o=document.getElementById('overlay');if(o)o.style.setProperty('display','none','important');}</script>
-    <div style="font-family:'Press Start 2P',monospace;font-size:7px;letter-spacing:2px;color:#4a7a1a">OR PRESS ANY KEY</div>
-  </div>
-
-  <!-- Wave animation at bottom -->
-  <div style="position:absolute;bottom:0;left:0;right:0;height:80px;overflow:hidden;pointer-events:none;z-index:1">
-    <div style="position:absolute;bottom:0;left:-100%;right:-100%;height:50px;background:#1a4a2a;border-radius:60% 60% 0 0;animation:waveMove 6s linear infinite"></div>
-    <div style="position:absolute;bottom:0;left:-100%;right:-100%;height:40px;background:#1a3a20;border-radius:60% 60% 0 0;animation:waveMove2 8s linear infinite;opacity:0.7"></div>
-    <div style="position:absolute;bottom:0;left:0;right:0;height:25px;background:#0a2010"></div>
-  </div>
-</div>
-
-
 <div id="touch-controls">
   <div id="joystick-zone"></div>
   <div id="btn-zone">
@@ -1991,6 +1933,7 @@ function updateEnemies() {
   const doFlankUpdate = state.frameCount % 180 === 0;
 
   allE.forEach((e, idx) => {
+    if (!e || e.x === undefined || e.y === undefined) return; // guard against corrupt entries
     const dx = p.x - e.x, dy = p.y - e.y;
     const dist = Math.sqrt(dx*dx+dy*dy);
     // Skip distant enemies (performance)
