@@ -49,7 +49,7 @@ canvas#c{pointer-events:none}
 .inv-slot-themed .count{color:#e8f0b0;font-size:14px;font-weight:bold}
 
 /* ── OVERLAY (start/death) ── */
-#overlay{position:fixed;inset:0;background:rgba(4,10,2,0.97);z-index:200;display:none;flex-direction:column;align-items:center;justify-content:center;color:#e8f0b0;pointer-events:all;touch-action:manipulation}
+#overlay{position:fixed;inset:0;background:rgba(4,10,2,0.97);z-index:200;display:none!important;flex-direction:column;align-items:center;justify-content:center;color:#e8f0b0;pointer-events:all;touch-action:manipulation}
 #overlay h1{color:#c8f135;font-size:28px;letter-spacing:6px;margin-bottom:8px;text-shadow:0 0 30px #4a7a1a;font-family:'Press Start 2P',monospace}
 #overlay .subtitle{color:#8aa060;font-size:10px;letter-spacing:4px;margin-bottom:30px;font-family:'Press Start 2P',monospace}
 .slide-box{max-width:560px;text-align:center;padding:20px 30px;background:#1a2e0a;border:2px solid #4a7a1a;box-shadow:inset 0 0 0 1px #2a4a08;margin-bottom:24px;line-height:1.9;font-size:12px;color:#e8f0b0;letter-spacing:0.5px;border-radius:8px}
@@ -74,7 +74,7 @@ canvas#c{pointer-events:none}
 @media(min-width:768px){#touch-controls,#joystick-zone,#btn-zone,#joystick-canvas{display:none !important}}
 
 /* ── CHARACTER CREATOR ── */
-#char-creator{position:fixed;inset:0;background:rgba(4,10,2,0.98);z-index:250;display:none;flex-direction:column;align-items:center;justify-content:center;color:#e8f0b0;font-family:'Courier New',monospace;pointer-events:all;touch-action:manipulation;overflow:hidden}
+#char-creator{position:fixed;inset:0;background:rgba(4,10,2,0.98);z-index:250;display:none!important;flex-direction:column;align-items:center;justify-content:center;color:#e8f0b0;font-family:'Courier New',monospace;pointer-events:all;touch-action:manipulation;overflow:hidden}
 #char-creator h1{color:#c8f135;font-family:'Press Start 2P',monospace;font-size:20px;letter-spacing:6px;margin-bottom:4px;text-shadow:0 0 20px #4a7a1a}
 #char-creator .cc-sub{color:#8aa060;font-family:'Press Start 2P',monospace;font-size:8px;letter-spacing:4px;margin-bottom:28px}
 .cc-card{background:#1a2e0a;border:2px solid #4a7a1a;box-shadow:inset 0 0 0 1px #2a4a08;padding:20px 28px;display:flex;gap:32px;align-items:flex-start;max-width:640px;width:100%;border-radius:10px;background-image:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.06) 3px,rgba(0,0,0,0.06) 4px),repeating-linear-gradient(90deg,transparent,transparent 8px,rgba(255,255,255,0.015) 8px,rgba(255,255,255,0.015) 9px)}
@@ -116,6 +116,7 @@ canvas#c{pointer-events:none}
 .bar-critical-red{background:#ff2222 !important}
 .bar-critical-blue{background:#2244ff !important}
 .bar-critical-orange{background:#ff6600 !important}
+@media (min-width: 768px) { #touch-controls, #btn-zone, #joystick-zone, #joystick-canvas { display: none !important; } }
 </style>
 </head>
 <body>
