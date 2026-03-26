@@ -195,9 +195,9 @@ canvas#c{pointer-events:none}
 </div>
 
 <div id="win-screen">
-  <h1>YOU ESCAPED</h1>
+  <h1 id="win-title">YOU ESCAPED</h1>
   <canvas id="yacht-canvas" width="400" height="200"></canvas>
-  <p>You survived. You escaped. The island fades behind the horizon.</p>
+  <p id="win-text">You survived. You escaped. The island fades behind the horizon.</p>
 </div>
 
 <script>
@@ -254,7 +254,8 @@ const state = {
       pickaxe:0, sword:0,
       bed:0, chest:0, wall:0, watchtower:0,
       gate:0, forge:0, water_barrel:0, smoker:0, raft:0,
-      vessel:0, chiefs_mask:0
+      vessel:0, chiefs_mask:0,
+      tribal_child:0
     },
     chiefDefeated: false,
     settlementLevel: 0, // 0=survivor,1=settlement,2=fortified,3=village
@@ -311,52 +312,69 @@ const state = {
   journalShown: false,
 
   tutorials: { woodHint: false, stoneHint: false, craftHint: false },
+
+  // Story & progression
+  storyChoices: { returnedChild: false, learnedTruth: false, konaHelping: false, felixDone: false },
+  zoneUnlocked: 0,
+  // zone gate message cooldown (avoid spam)
+  _gateMsg: 0,
 };
 
 // NPC definitions
 const NPC_DATA = [
   {
-    id: 'mara', name: 'MARA', color: '#e8a87c',
-    x: 127*TSIZE, y: 172*TSIZE,
-    desc: "Ship's cook. Survived on coconuts for three days.",
+    id: 'oonga', name: 'OONGA', color: '#6a3010',
+    x: 128*TSIZE, y: 174*TSIZE,
+    desc: "Tribe outcast. Your first guide on the island.",
     lines: [
-      ["I've been here since the wreck. Three days. I found water but the jungle... something's out there.", null],
-      ["You found berries? Don't eat them raw — I learned that the hard way. Cook everything.", null],
-      ["I can come with you if you want. Two people are harder to ambush.", ['companion']],
+      { text: "You... from ship. Yes. I saw it sink. The volcano stone — it called the storm. I am Oonga. My people... they are not all bad. I was one of them.", options: ["What happened?", "Who are you?"], optionNext: [1, 1] },
+      { text: "The chief — he uses the old stone to protect us. Many ships came. They wanted to take everything. So now... no ships come. But you survived. This is strange.", options: ["I need to escape", "I want to understand"], optionNext: [2, 2] },
+      { text: "If you want to live... learn this island. The jungle will test you. The volcano holds answers. Find Elder Kona — he knows the stone's secret. But beware the village.", options: null, questTrigger: 'find_kona' },
     ],
-    quest: { id:'mara_q1', text:"Find 5 coconuts", needs:{coconut:5}, reward:{water_barrel:1}, done:false },
-    quest2: { id:'mara_q2', text:"Find my journal in the dark jungle", needs:{journal:1}, reward:{fruit_cooked:5,fishing_rod:1}, done:false,
-              triggerLine:"I lost my journal somewhere in the dark jungle. It has important survival notes. Find it for me?",
-              rewardLine:"You found it! The notes in here could save your life." },
+    quest: { id:'oonga_q1', text:"Find Elder Kona", needs:{}, reward:{coconut:3}, done:false, questTrigger:'find_kona' },
     companion: false,
+    _lineIdx: 0,
+  },
+  {
+    id: 'mara', name: 'MARA', color: '#cc4422',
+    x: 85*TSIZE, y: 155*TSIZE,
+    desc: "Ship's cook. Has been watching the tribe's patrols.",
+    lines: [
+      { text: "Thank god. I thought I was alone. Three days in this jungle — I've mapped every patrol route those warriors take. They're not random. They're organized.", options: ["What did you find?", "Are you hurt?"], optionNext: [1, 1] },
+      { text: "There was a child. Separated from the village. I've been... looking after her. She's frightened. I don't know what to do with her. What do you think?", options: ["Return her to the village", "Keep her safe here"], optionNext: [2, 3] },
+      { text: "The chief was... he looked at me differently when I returned the child. Maybe not all doors are closed.", options: null, choiceSet: { key:'returnedChild', val:true } },
+      { text: "She won't stop crying. I think I made a mistake keeping her here.", options: null, choiceSet: { key:'returnedChild', val:false } },
+    ],
+    quest: { id:'mara_q1', text:"Find the tribal child and bring her to Mara", needs:{tribal_child:1}, reward:{fishing_rod:1}, done:false },
+    companion: false,
+    _lineIdx: 0,
   },
   {
     id: 'felix', name: 'FELIX', color: '#7ca0b0',
-    x: 72*TSIZE, y: 144*TSIZE,
-    desc: "Ship's engineer. Sarcastic. Builds things.",
+    x: 45*TSIZE, y: 168*TSIZE,
+    desc: "Ship's engineer. Repairing the lifeboat.",
     lines: [
-      ["Finally, another person. I've been talking to rocks. The rocks aren't great conversationalists.", null],
-      ["That tribe has been watching us. Their scouts patrol the eastern ridge every dawn.", null],
-      ["Bring me 10 wood and 5 stone and I'll show you how to make a forge. Proper one, not your campfire nonsense.", ['forge_quest']],
+      { text: "Right. You're alive. Good. I've got the lifeboat 60% fixed. Need volcanic metal from near the summit — the hull has a crack only that heat-tempered ore can seal. Everything else, I don't care about.", options: ["What about the tribe?", "I'll get the metal"], optionNext: [1, 1] },
+      { text: "I've looked at the ship's manifest. We were a survey vessel for Meridian Colonial Corp. You know what that means? We were mapping this island for extraction. Oil, rare earth, the lot. These people... they were right to sink us.", options: ["That changes things", "We still need to escape"], optionNext: [2, 2], choiceSet: { key:'learnedTruth', val:true } },
+      { text: "I'm not proud of it. But the lifeboat only fits two. You, me, and the truth. Make your choice.", options: null },
     ],
-    quest: { id:'felix_q1', text:"Bring 10 wood + 5 stone", needs:{wood:10,stone:5}, reward:{forge:1}, done:false },
-    quest2: { id:'felix_q2', text:"Bring 3 volcanic stone", needs:{volcanic_stone:3}, reward:{fire_axe:1}, done:false,
-              triggerLine:"Bring me 3 volcanic stone and I'll build you something special.",
-              rewardLine:"Magnificent. Here, I made this from the stone. Should help against those warriors." },
+    quest: { id:'felix_q1', text:"Bring 5 volcanic stone for lifeboat repair", needs:{volcanic_stone:5}, reward:{fire_axe:1}, done:false },
     companion: false,
+    _lineIdx: 0,
   },
   {
     id: 'kona', name: 'ELDER KONA', color: '#c87050',
-    x: 154*TSIZE, y: 108*TSIZE,
-    desc: "Escaped tribe member. Knows the truth.",
+    x: 195*TSIZE, y: 108*TSIZE,
+    desc: "Former elder. Knows the artifact's secret.",
     lines: [
-      ["You no enemy. Chief... my brother. He protect old stone. Your ship come too close — stone angry.", null],
-      ["Volcano has artifact. Very old. Chief use it to sink ships that come near. He afraid of outside world.", null],
-      ["You defeat chief, take stone. Or... you speak to him. I show you how. Which you choose?", ['peace','conquest']],
+      { text: "I wondered when the sea would send a survivor. The artifact... it is like fire. Useful, then consuming. My brother learned this too late.", options: ["Your brother?", "What is the artifact?"], optionNext: [1, 1] },
+      { text: "The chief is my brother. He watched outsiders take everything from islands to the north. He swore it would not happen here. He is not wrong about the danger. Only about the method.", options: ["Can you stop him?", "What happened to you?"], optionNext: [2, 2] },
+      { text: "There is a ritual. At the summit. If the artifact is offered back to the volcano willingly — the stone's protection ends. But the chief must agree. Or be defeated first. I cannot force his hand.", options: ["I'll convince him", "I'll fight him"], optionNext: [3, 3], choiceSet: { key:'konaHelping', val:true } },
+      { text: "The artifact chamber is near the summit, past the lava fields. Take these stones as proof of your intent. The volcano will remember.", options: null, questTrigger: 'reach_summit' },
     ],
-    quest: null,
+    quest: { id:'kona_q1', text:"Reach the volcano summit", needs:{}, reward:{volcanic_stone:3}, done:false, questTrigger:'reach_summit' },
     companion: false,
-    volcanic_stone: 3,
+    _lineIdx: 0,
   },
 ];
 
@@ -598,6 +616,9 @@ function genObjects() {
   // Journal item in dark jungle for Mara's second quest (scaled)
   state.objects.push({type:'journal', x:66*TSIZE, y:69*TSIZE, decor:false});
 
+  // Tribal child — near inner jungle edge, safe area between zones 1 and 2
+  state.objects.push({type:'tribal_child', x:102*TSIZE, y:132*TSIZE, collected:false, decor:false});
+
   // PARKOUR COURSE to volcano summit (scaled for 300-tile world)
   const parkourCourse = [
     [150,186],[150,183],[150,180],
@@ -651,7 +672,7 @@ function genObjects() {
   }
 
   // Place NPCs
-  state.npcs = NPC_DATA.map(d => ({...d, dialogueIdx:0, bobTimer:0, questGiven:false}));
+  state.npcs = NPC_DATA.map(d => ({...d, _lineIdx:0, bobTimer:0, questGiven:false}));
 
   // Deep sea creatures (decorative only)
   const deepTiles = [];
@@ -1796,36 +1817,181 @@ function drawVolcano(ctx, vcx, vcy) {
   }
 }
 
+function drawOonga(ctx, sx, sy) {
+  // Taller figure — dark brown skin, tribal markings, shell necklace, no headdress (exile)
+  px(ctx, 'rgba(0,0,0,0.2)', sx-9, sy+13, 18, 4); // shadow
+  // Legs (grass skirt remnants)
+  px(ctx, '#3a1800', sx-5, sy+4, 4, 10);
+  px(ctx, '#3a1800', sx+1, sy+4, 4, 10);
+  px(ctx, '#5a3010', sx-6, sy+4, 2, 8);
+  px(ctx, '#5a3010', sx+4, sy+4, 2, 8);
+  // Body
+  px(ctx, '#6a3010', sx-5, sy-8, 10, 12);
+  // Tribal markings (white lines)
+  px(ctx, '#ffffff', sx-4, sy-6, 2, 1);
+  px(ctx, '#ffffff', sx+2, sy-6, 2, 1);
+  px(ctx, '#ffffff', sx-3, sy-3, 6, 1);
+  px(ctx, '#ffffff', sx-4, sy+1, 2, 1);
+  px(ctx, '#ffffff', sx+2, sy+1, 2, 1);
+  // Shell necklace
+  px(ctx, '#e8d090', sx-3, sy-9, 2, 2);
+  px(ctx, '#e8d090', sx+1, sy-9, 2, 2);
+  px(ctx, '#e8d090', sx-1, sy-8, 2, 2);
+  // Head (taller, no headdress)
+  px(ctx, '#6a3010', sx-4, sy-18, 8, 10);
+  // Eyes
+  px(ctx, '#ffffff', sx-3, sy-15, 2, 2);
+  px(ctx, '#ffffff', sx+1, sy-15, 2, 2);
+  px(ctx, '#111', sx-2, sy-15, 1, 1);
+  px(ctx, '#111', sx+2, sy-15, 1, 1);
+  // Hair (short, exile — no feathers)
+  px(ctx, '#1a0800', sx-4, sy-18, 8, 3);
+  // Arms
+  px(ctx, '#6a3010', sx-9, sy-6, 4, 8);
+  px(ctx, '#6a3010', sx+5, sy-6, 4, 8);
+  // Arm markings
+  px(ctx, '#ffffff', sx-8, sy-4, 1, 3);
+  px(ctx, '#ffffff', sx+7, sy-4, 1, 3);
+}
+
+function drawMara(ctx, sx, sy) {
+  // Stocky Irish woman, red hair, apron remnants
+  px(ctx, 'rgba(0,0,0,0.2)', sx-9, sy+11, 18, 4); // shadow
+  // Legs
+  px(ctx, '#4a3020', sx-5, sy+2, 4, 9);
+  px(ctx, '#4a3020', sx+1, sy+2, 4, 9);
+  // Body (wider build)
+  px(ctx, '#8a8a8a', sx-6, sy-8, 12, 10); // grey shirt
+  // Apron remnant
+  px(ctx, '#c8c0a0', sx-4, sy-6, 8, 8);
+  px(ctx, '#a0a080', sx-4, sy-6, 8, 2); // apron ties
+  // Oil/grease stains
+  px(ctx, '#444', sx-2, sy-4, 2, 2);
+  px(ctx, '#444', sx+2, sy-2, 1, 2);
+  // Head
+  px(ctx, '#c8a07a', sx-4, sy-17, 8, 9);
+  // Eyes
+  px(ctx, '#4a2800', sx-3, sy-14, 2, 2);
+  px(ctx, '#4a2800', sx+1, sy-14, 2, 2);
+  // Red hair (bright)
+  px(ctx, '#cc4422', sx-5, sy-18, 10, 4);
+  px(ctx, '#cc4422', sx-4, sy-17, 2, 3); // side curl left
+  px(ctx, '#cc4422', sx+2, sy-17, 2, 3); // side curl right
+  px(ctx, '#aa3318', sx-3, sy-16, 6, 2); // hair shadow
+  // Arms (wider)
+  px(ctx, '#c8a07a', sx-10, sy-6, 4, 7);
+  px(ctx, '#c8a07a', sx+6, sy-6, 4, 7);
+}
+
+function drawFelix(ctx, sx, sy) {
+  // British engineer, grey hair, grease-stained, tool belt
+  px(ctx, 'rgba(0,0,0,0.2)', sx-8, sy+11, 16, 4); // shadow
+  // Legs (dark trousers)
+  px(ctx, '#2a2a3a', sx-5, sy+2, 4, 9);
+  px(ctx, '#2a2a3a', sx+1, sy+2, 4, 9);
+  // Body
+  px(ctx, '#5a6070', sx-5, sy-8, 10, 10); // blue-grey work shirt
+  // Tool belt
+  px(ctx, '#5a3818', sx-5, sy-1, 10, 3);
+  px(ctx, '#8a6030', sx-1, sy-1, 4, 3); // belt buckle
+  // Grease stains on shirt
+  px(ctx, '#1a1a1a', sx-3, sy-5, 2, 2);
+  px(ctx, '#1a1a1a', sx+2, sy-3, 2, 1);
+  px(ctx, '#1a1a1a', sx-1, sy-6, 1, 1);
+  // Head
+  px(ctx, '#c8a07a', sx-4, sy-17, 8, 9);
+  // Eyes (squinting, cynical)
+  px(ctx, '#4a4a3a', sx-3, sy-14, 2, 1);
+  px(ctx, '#4a4a3a', sx+1, sy-14, 2, 1);
+  // Grey hair (short)
+  px(ctx, '#aaaaaa', sx-4, sy-18, 8, 4);
+  px(ctx, '#888888', sx-4, sy-17, 8, 2);
+  // Arms
+  px(ctx, '#5a6070', sx-9, sy-6, 4, 8);
+  px(ctx, '#5a6070', sx+5, sy-6, 4, 8);
+  // Wrench in hand (right)
+  px(ctx, '#888', sx+6, sy+1, 2, 6);
+  px(ctx, '#888', sx+5, sy+1, 4, 2);
+}
+
+function drawKona(ctx, sx, sy) {
+  // Ancient elder, white hair, elaborate robe, wooden staff
+  px(ctx, 'rgba(0,0,0,0.2)', sx-9, sy+11, 18, 4); // shadow
+  // Staff (left side)
+  px(ctx, '#5a3010', sx-12, sy-20, 3, 32);
+  px(ctx, '#7a4020', sx-13, sy-22, 5, 4); // staff top ornament
+  px(ctx, '#c87050', sx-12, sy-20, 3, 2); // gem
+  // Robe (elaborate, layered)
+  px(ctx, '#8a4a20', sx-5, sy-8, 10, 12); // outer robe
+  px(ctx, '#c87050', sx-4, sy-6, 8, 10); // inner robe
+  px(ctx, '#e8a060', sx-3, sy-4, 6, 6);  // inner panel
+  // Robe detail lines
+  px(ctx, '#6a3010', sx-5, sy-8, 1, 12);
+  px(ctx, '#6a3010', sx+4, sy-8, 1, 12);
+  px(ctx, '#6a3010', sx-4, sy-2, 8, 1);
+  // Robe edge markings (tribal pattern)
+  px(ctx, '#f0d890', sx-4, sy-7, 2, 1);
+  px(ctx, '#f0d890', sx+2, sy-7, 2, 1);
+  px(ctx, '#f0d890', sx-4, sy+2, 2, 1);
+  px(ctx, '#f0d890', sx+2, sy+2, 2, 1);
+  // Head
+  px(ctx, '#8a5a3a', sx-4, sy-17, 8, 9);
+  // Eyes (wise, calm)
+  px(ctx, '#f0d890', sx-3, sy-13, 2, 2);
+  px(ctx, '#f0d890', sx+1, sy-13, 2, 2);
+  px(ctx, '#4a2800', sx-2, sy-13, 1, 1);
+  px(ctx, '#4a2800', sx+2, sy-13, 1, 1);
+  // Wrinkles
+  px(ctx, '#6a3a20', sx-2, sy-11, 4, 1);
+  // White hair (dots pattern)
+  px(ctx, '#ffffff', sx-4, sy-18, 8, 4);
+  px(ctx, '#dddddd', sx-5, sy-17, 2, 3);
+  px(ctx, '#dddddd', sx+3, sy-17, 2, 3);
+  px(ctx, '#eeeeee', sx-3, sy-16, 6, 2);
+  // Arms (holding staff left, gesturing right)
+  px(ctx, '#8a5a3a', sx-9, sy-6, 4, 9);
+  px(ctx, '#c87050', sx+5, sy-6, 4, 7); // robe sleeve right
+  px(ctx, '#8a5a3a', sx+5, sy+1, 4, 4); // hand
+}
+
 function drawNPC(ctx, sx, sy, npc) {
   const bob = Math.sin(npc.bobTimer * 0.04) * 2;
   const ay = sy + bob;
-  // Shadow
-  px(ctx, 'rgba(0,0,0,0.2)', sx-8, ay+10, 16, 4);
-  // Body color based on NPC
-  px(ctx, npc.color || '#c8a07a', sx-5, ay-12, 10, 10);
-  px(ctx, '#4a4a6a', sx-6, ay-4, 12, 10);
-  px(ctx, npc.color || '#c8a07a', sx-4, ay-2, 4, 8);
-  px(ctx, npc.color || '#c8a07a', sx+0, ay-2, 4, 8);
-  px(ctx, npc.color || '#c8a07a', sx-7, ay-2, 4, 8);
-  px(ctx, npc.color || '#c8a07a', sx+3, ay-2, 4, 8);
-  // Name tag only when close - check proximity via screen position (player is always at canvas center)
+
+  // Route to individual draw functions
+  if (npc.id === 'oonga') { drawOonga(ctx, sx, ay); }
+  else if (npc.id === 'mara') { drawMara(ctx, sx, ay); }
+  else if (npc.id === 'felix') { drawFelix(ctx, sx, ay); }
+  else if (npc.id === 'kona') { drawKona(ctx, sx, ay); }
+  else {
+    // Generic fallback
+    px(ctx, 'rgba(0,0,0,0.2)', sx-8, ay+10, 16, 4);
+    px(ctx, npc.color || '#c8a07a', sx-5, ay-12, 10, 10);
+    px(ctx, '#4a4a6a', sx-6, ay-4, 12, 10);
+    px(ctx, npc.color || '#c8a07a', sx-4, ay-2, 4, 8);
+    px(ctx, npc.color || '#c8a07a', sx+0, ay-2, 4, 8);
+    px(ctx, npc.color || '#c8a07a', sx-7, ay-2, 4, 8);
+    px(ctx, npc.color || '#c8a07a', sx+3, ay-2, 4, 8);
+  }
+
+  // Name tag only when close
   const distToPlayer = Math.hypot(sx - canvas.width/2, sy - canvas.height/2);
   if (distToPlayer < 80) {
     ctx.font = 'bold 11px "Courier New"';
     ctx.textAlign = 'center';
     const nameW = ctx.measureText(npc.name).width;
     ctx.fillStyle = 'rgba(0,0,0,0.85)';
-    ctx.fillRect(sx - nameW/2 - 4, ay - 36, nameW + 8, 15);
+    ctx.fillRect(sx - nameW/2 - 4, ay - 40, nameW + 8, 15);
     ctx.fillStyle = '#c8f135';
-    ctx.fillText(npc.name, sx, ay - 24);
+    ctx.fillText(npc.name, sx, ay - 28);
   }
   ctx.textAlign = 'left';
   // Talk bubble
-  px(ctx, '#c8f135', sx-3, ay-26, 6, 6);
+  px(ctx, '#c8f135', sx-3, ay-30, 6, 6);
   ctx.fillStyle = '#000';
   ctx.font = '8px Courier New';
   ctx.textAlign = 'center';
-  ctx.fillText('E', sx, ay-21);
+  ctx.fillText('E', sx, ay-25);
   ctx.textAlign = 'left';
 }
 
@@ -1949,6 +2115,15 @@ function spawnChief() {
 function updateEnemies() {
   const p = state.player;
   const inSafeZone = Math.hypot(p.x - 125*TSIZE, p.y - 175*TSIZE) < 35*TSIZE;
+
+  // Zone boundary: enemies from zone 2+ cannot enter zone 0/1 (y > 145 tiles)
+  state.enemies.forEach(e => {
+    const ety = Math.floor(e.y / TSIZE);
+    if (ety > 145 && state.zoneUnlocked < 2) {
+      // Push them back north
+      e.y = 144 * TSIZE;
+    }
+  });
   const allE = [...state.enemies];
   if (state.chief) allE.push(state.chief);
 
@@ -2831,6 +3006,43 @@ function updatePlayer() {
     }
   }
 
+  // ── ZONE GATES ──
+  const ptx = Math.floor(p.x / TSIZE);
+  const pty = Math.floor(p.y / TSIZE);
+  const gateMsg = (state._gateMsg || 0);
+  const canShowGateMsg = gateMsg <= 0;
+
+  // Gate 1: Jungle (y < 145) requires zone 1 (unlocked by Oonga)
+  if (pty < 145 && state.zoneUnlocked < 1) {
+    p.y = 145 * TSIZE;
+    if (canShowGateMsg) { showMsg("OONGA: 'The jungle is dangerous. Talk to me first.'", '#c8a060'); state._gateMsg = 180; }
+  }
+  // Gate 2: Inner jungle (y < 120) requires zone 2 (unlocked by Mara quest)
+  else if (pty < 120 && state.zoneUnlocked < 2) {
+    p.y = 120 * TSIZE;
+    if (canShowGateMsg) { showMsg("The deep jungle blocks your path. Complete Mara's quest first.", '#888'); state._gateMsg = 180; }
+  }
+  // Gate 3: Volcanic approach (within 60 tiles of volcano centre at ~150,78) requires zone 3
+  else {
+    const volcX = 150, volcY = 78;
+    const distFromVolcano = Math.hypot(ptx - volcX, pty - volcY);
+    if (distFromVolcano < 60 && state.zoneUnlocked < 3) {
+      const angle = Math.atan2(pty - volcY, ptx - volcX);
+      p.x = (volcX + Math.cos(angle) * 62) * TSIZE;
+      p.y = (volcY + Math.sin(angle) * 62) * TSIZE;
+      if (canShowGateMsg) { showMsg("FELIX: 'I wouldn't go near that mountain without proper preparation.'", '#7ca0b0'); state._gateMsg = 180; }
+    }
+    // Gate 4: Village area (within 20 tiles of ~150,94) requires zone 4
+    const distFromVillage = Math.hypot(ptx - 150, pty - 94);
+    if (distFromVillage < 20 && state.zoneUnlocked < 4) {
+      const ang = Math.atan2(pty - 94, ptx - 150);
+      p.x = (150 + Math.cos(ang) * 22) * TSIZE;
+      p.y = (94 + Math.sin(ang) * 22) * TSIZE;
+      if (canShowGateMsg) { showMsg("KONA: 'You are not ready to face my brother. Find me first.'", '#c87050'); state._gateMsg = 180; }
+    }
+  }
+  if (state._gateMsg > 0) state._gateMsg--;
+
   // Creature soft push (animals nudge the player)
   state.creatures.forEach(c => {
     const cdx = p.x - c.x, cdy = p.y - c.y;
@@ -3134,6 +3346,19 @@ function handleClick(sx, sy) {
 
   // Dialogue click
   if (state.dialogue) {
+    const d = state.dialogue;
+    // Check if clicking an option button
+    if (d.charIdx >= d.text.length && d.options && d.options.length > 0 && d._optRects) {
+      for (let i = 0; i < d._optRects.length; i++) {
+        const r = d._optRects[i];
+        if (sx >= r.x && sx <= r.x+r.w && sy >= r.y && sy <= r.y+r.h) {
+          selectDialogueOption(i);
+          return;
+        }
+      }
+      // Clicked outside options — do nothing (wait for choice)
+      return;
+    }
     advanceDialogue();
     return;
   }
@@ -3248,6 +3473,15 @@ function handleClick(sx, sy) {
       p.inv.journal = (p.inv.journal||0) + 1;
       showMsg("MARA'S JOURNAL FOUND. RETURN IT TO HER.", '#c8a060');
       spawnParticles(obj.x, obj.y, '#c8a060', 8);
+      SFX.pickup();
+      state.objects.splice(i,1);
+      return;
+    }
+    if (obj.type === 'tribal_child' && !obj.collected) {
+      obj.collected = true;
+      p.inv.tribal_child = (p.inv.tribal_child||0) + 1;
+      showMsg("YOU FOUND THE TRIBAL CHILD. BRING HER TO MARA.", '#c8a060');
+      spawnParticles(obj.x, obj.y, '#f0d890', 10);
       SFX.pickup();
       state.objects.splice(i,1);
       return;
@@ -3478,39 +3712,105 @@ function tryCraft(id) {
 }
 
 // DIALOGUE
+function _applyLineEffects(npc, line) {
+  // Apply storyChoice if this line has one
+  if (line.choiceSet) {
+    state.storyChoices[line.choiceSet.key] = line.choiceSet.val;
+  }
+  // Quest triggers
+  if (line.questTrigger === 'find_kona') {
+    // Oonga finished — unlock Zone 1
+    state.zoneUnlocked = Math.max(1, state.zoneUnlocked);
+    showMsg("ZONE UNLOCKED: The jungle opens to you.", '#c8f135');
+    showMsg("QUEST: Find Elder Kona (marked on minimap)", '#c8a060');
+  }
+  if (line.questTrigger === 'reach_summit') {
+    // Kona finished — unlock Zone 4
+    state.zoneUnlocked = Math.max(4, state.zoneUnlocked);
+    showMsg("ZONE UNLOCKED: The village. The chief awaits.", '#ff4444');
+    // Give reward
+    const q = npc.quest;
+    if (q && !q.done) {
+      for (const [k,v] of Object.entries(q.reward)) state.player.inv[k] = (state.player.inv[k]||0)+v;
+      q.done = true;
+      showMsg(`QUEST COMPLETE: ${q.text}`, '#c8f135');
+    }
+  }
+  // Felix truth — learnedTruth already set via choiceSet on line 1, now check quest
+  if (npc.id === 'felix' && line.choiceSet && line.choiceSet.key === 'learnedTruth') {
+    // Don't complete quest yet — needs items
+  }
+}
+
 function startDialogue(npc) {
   if (!npc.lines || !npc.lines.length) return;
 
-  // Check second quest trigger: first quest done, second quest not yet started/done
-  if (npc.quest && npc.quest.done && npc.quest2 && !npc.quest2.done) {
-    // Check if player can complete the second quest
-    const q2 = npc.quest2;
-    const canComplete = Object.entries(q2.needs).every(([k,v])=>(state.player.inv[k]||0)>=v);
+  // Check quest completion
+  if (npc.quest && !npc.quest.done && Object.keys(npc.quest.needs).length > 0) {
+    const q = npc.quest;
+    const canComplete = Object.entries(q.needs).every(([k,v])=>(state.player.inv[k]||0)>=v);
     if (canComplete) {
-      // Reward
-      for (const [k,v] of Object.entries(q2.needs)) state.player.inv[k] = Math.max(0,(state.player.inv[k]||0)-v);
-      for (const [k,v] of Object.entries(q2.reward)) state.player.inv[k] = (state.player.inv[k]||0)+v;
-      q2.done = true;
-      showMsg(`QUEST COMPLETE: ${q2.text}`, '#c8f135');
-      state.dialogue = { type:'npc', npc:npc, text:q2.rewardLine, options:null, displayed:'', timer:0, charIdx:0 };
-      return;
-    } else if (!npc._quest2Offered) {
-      npc._quest2Offered = true;
-      state.dialogue = { type:'npc', npc:npc, text:q2.triggerLine, options:null, displayed:'', timer:0, charIdx:0 };
-      return;
+      for (const [k,v] of Object.entries(q.needs)) state.player.inv[k] = Math.max(0,(state.player.inv[k]||0)-v);
+      for (const [k,v] of Object.entries(q.reward)) state.player.inv[k] = (state.player.inv[k]||0)+v;
+      q.done = true;
+      showMsg(`QUEST COMPLETE: ${q.text}`, '#c8f135');
+      // Zone unlock on Mara quest complete
+      if (npc.id === 'mara') {
+        state.zoneUnlocked = Math.max(2, state.zoneUnlocked);
+        showMsg("ZONE UNLOCKED: The deep jungle awaits.", '#c8f135');
+      }
+      // Zone unlock on Felix quest complete
+      if (npc.id === 'felix') {
+        state.storyChoices.felixDone = true;
+        state.zoneUnlocked = Math.max(3, state.zoneUnlocked);
+        showMsg("ZONE UNLOCKED: The volcanic path is passable.", '#c8f135');
+      }
     }
   }
 
-  const idx = Math.min(npc.dialogueIdx, npc.lines.length-1);
-  const line = npc.lines[idx];
+  const idx = npc._lineIdx || 0;
+  const line = npc.lines[Math.min(idx, npc.lines.length-1)];
   state.dialogue = {
     type: 'npc',
     npc: npc,
-    text: line[0],
-    options: line[1],
+    text: line.text,
+    options: line.options || null,
+    optionNext: line.optionNext || null,
     displayed: '',
     timer: 0,
-    charIdx: 0
+    charIdx: 0,
+    _lineRef: line,
+  };
+}
+
+function selectDialogueOption(optIdx) {
+  const d = state.dialogue;
+  if (!d || !d.npc) return;
+  const npc = d.npc;
+  const nextIdx = d.optionNext ? d.optionNext[optIdx] : (npc._lineIdx||0) + 1;
+
+  // Apply effects for the current line before moving on
+  _applyLineEffects(npc, d._lineRef);
+
+  // For Mara's child choice (line 1 -> 2 or 3), track the option
+  if (npc.id === 'mara' && (npc._lineIdx||0) === 1) {
+    state.storyChoices.returnedChild = (optIdx === 0);
+  }
+
+  npc._lineIdx = nextIdx;
+  const newLine = npc.lines[Math.min(nextIdx, npc.lines.length-1)];
+  _applyLineEffects(npc, newLine);
+
+  state.dialogue = {
+    type: 'npc',
+    npc: npc,
+    text: newLine.text,
+    options: newLine.options || null,
+    optionNext: newLine.optionNext || null,
+    displayed: '',
+    timer: 0,
+    charIdx: 0,
+    _lineRef: newLine,
   };
 }
 
@@ -3525,29 +3825,34 @@ function advanceDialogue() {
     return;
   }
 
+  // If there are options, wait for option click — don't auto-advance
+  if (d.options && d.options.length > 0) return;
+
   if (d.type === 'lore') {
     state.dialogue = null;
     return;
   }
 
-  // Advance NPC dialogue
-  if (d.npc && d.npc.dialogueIdx < d.npc.lines.length-1) {
-    d.npc.dialogueIdx++;
-    const newLine = d.npc.lines[d.npc.dialogueIdx];
-    d.text = newLine[0];
-    d.options = newLine[1];
-    d.displayed = '';
-    d.charIdx = 0;
-    // Give quest reward
-    if (d.npc.quest && !d.npc.quest.done) {
-      const q = d.npc.quest;
-      const canComplete = Object.entries(q.needs).every(([k,v])=>(state.player.inv[k]||0)>=v);
-      if (canComplete) {
-        for (const [k,v] of Object.entries(q.needs)) state.player.inv[k] -= v;
-        for (const [k,v] of Object.entries(q.reward)) state.player.inv[k] = (state.player.inv[k]||0)+v;
-        q.done = true;
-        showMsg(`QUEST COMPLETE: ${q.text}`, '#c8f135');
-      }
+  if (d.npc) {
+    const npc = d.npc;
+    _applyLineEffects(npc, d._lineRef || {});
+    const nextIdx = (npc._lineIdx||0) + 1;
+    if (nextIdx < npc.lines.length) {
+      npc._lineIdx = nextIdx;
+      const newLine = npc.lines[nextIdx];
+      state.dialogue = {
+        type: 'npc',
+        npc: npc,
+        text: newLine.text,
+        options: newLine.options || null,
+        optionNext: newLine.optionNext || null,
+        displayed: '',
+        timer: 0,
+        charIdx: 0,
+        _lineRef: newLine,
+      };
+    } else {
+      state.dialogue = null;
     }
   } else {
     state.dialogue = null;
@@ -3567,7 +3872,9 @@ function drawDialogue(ctx) {
   const d = state.dialogue;
   if (!d) return;
   const cw = ctx.canvas.width, ch = ctx.canvas.height;
-  const bx = 40, by = ch-160, bw = cw-80, bh = 130;
+  const hasOptions = d.charIdx >= d.text.length && d.options && d.options.length > 0;
+  const bh = hasOptions ? 160 : 130;
+  const bx = 40, by = ch - bh - 10, bw = cw - 80;
 
   ctx.fillStyle = 'rgba(61,32,16,0.97)';
   ctx.fillRect(bx, by, bw, bh);
@@ -3603,11 +3910,38 @@ function drawDialogue(ctx) {
   });
   ctx.fillText(line, bx+14, lineY);
 
-  // Prompt
   if (d.charIdx >= d.text.length) {
-    ctx.fillStyle = '#a08040';
-    ctx.font = '10px "Courier New"';
-    ctx.fillText('[CLICK TO CONTINUE]', bx+bw-160, by+bh-10);
+    if (hasOptions) {
+      // Draw option buttons
+      const optY = by + bh - 38;
+      const optW = Math.floor((bw - 40) / d.options.length) - 8;
+      d.options.forEach((opt, i) => {
+        const ox = bx + 14 + i * (optW + 8);
+        // Highlight on hover (store rects for click detection)
+        if (!d._optRects) d._optRects = [];
+        d._optRects[i] = { x: ox, y: optY, w: optW, h: 26 };
+        ctx.fillStyle = 'rgba(80,40,10,0.95)';
+        ctx.fillRect(ox, optY, optW, 26);
+        ctx.strokeStyle = '#c8a040';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(ox, optY, optW, 26);
+        ctx.fillStyle = '#f0d890';
+        ctx.font = '10px "Courier New"';
+        ctx.textAlign = 'left';
+        // Truncate if needed
+        let label = opt;
+        while (ctx.measureText(label).width > optW - 10 && label.length > 4) label = label.slice(0,-1);
+        ctx.fillText(label, ox + 6, optY + 17);
+      });
+      ctx.fillStyle = '#6a4020';
+      ctx.font = '9px "Courier New"';
+      ctx.textAlign = 'left';
+      ctx.fillText('[CLICK AN OPTION]', bx+14, by+bh-44);
+    } else {
+      ctx.fillStyle = '#a08040';
+      ctx.font = '10px "Courier New"';
+      ctx.fillText('[CLICK TO CONTINUE]', bx+bw-160, by+bh-10);
+    }
   }
 }
 
@@ -4144,6 +4478,31 @@ function render(ctx, minimapCtx) {
         case 'hut': drawHut(ctx,ssx,ssy); break;
         case 'tribal_fire': { const tf=Math.sin(state.frameCount*0.2)*2; px(ctx,'#5c3d1e',ssx-6,ssy,12,8); px(ctx,'#ff6600',ssx-4,ssy-8+tf,8,8); px(ctx,'#ffcc00',ssx-2,ssy-12+tf,4,6); break; }
         case 'driftwood': px(ctx,'#8B6914',ssx-10,ssy-2,20,4); px(ctx,'#7a5514',ssx-6,ssy-4,6,2); break;
+        case 'tribal_child': {
+          // Small child figure — crouching, frightened
+          if (!capturedObj.collected) {
+            const cbob = Math.sin(state.frameCount*0.06)*1;
+            px(ctx,'rgba(0,0,0,0.15)',ssx-5,ssy+9+cbob,10,3);
+            // Legs
+            px(ctx,'#6a3010',ssx-3,ssy+2+cbob,3,7);
+            px(ctx,'#6a3010',ssx,ssy+2+cbob,3,7);
+            // Body
+            px(ctx,'#8a5030',ssx-4,ssy-4+cbob,8,6);
+            // Head
+            px(ctx,'#8a5030',ssx-3,ssy-11+cbob,6,7);
+            // Eyes (scared wide)
+            px(ctx,'#fff',ssx-2,ssy-9+cbob,2,2);
+            px(ctx,'#fff',ssx+1,ssy-9+cbob,2,2);
+            px(ctx,'#111',ssx-2,ssy-9+cbob,1,1);
+            px(ctx,'#111',ssx+2,ssy-9+cbob,1,1);
+            // Hair
+            px(ctx,'#1a0800',ssx-3,ssy-12+cbob,6,3);
+            // Glow pulse
+            const cg=0.2+Math.sin(state.frameCount*0.1)*0.15;
+            ctx.fillStyle=`rgba(240,210,100,${cg})`; ctx.beginPath(); ctx.arc(ssx,ssy,14,0,Math.PI*2); ctx.fill();
+          }
+          break;
+        }
         case 'reed': drawReed(ctx,ssx,ssy); break;
         case 'jungle_chest': if(!capturedObj.opened){px(ctx,'#7a5c2e',ssx-8,ssy-6,16,12);px(ctx,'#c8a060',ssx-8,ssy-8,16,4);} break;
         case 'vol_chest': if(!capturedObj.opened){px(ctx,'#7a3020',ssx-10,ssy-8,20,16);px(ctx,'#ff6600',ssx-10,ssy-10,20,4);} break;
@@ -4316,6 +4675,42 @@ function render(ctx, minimapCtx) {
   if (state.volcanoTint > 0.25) {
     ctx.fillStyle = `rgba(255,80,0,0.08)`;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+
+  // Zone gate visual hints — draw a subtle dark band at locked boundaries
+  {
+    const camY = state.cam.y;
+    const camX = state.cam.x;
+    // Gate 1 (y=145): darker tree-line band if not yet unlocked
+    if (state.zoneUnlocked < 1) {
+      const gateScreenY = 145 * TSIZE - camY;
+      if (gateScreenY > -20 && gateScreenY < canvas.height + 20) {
+        ctx.fillStyle = 'rgba(0,0,0,0.35)';
+        ctx.fillRect(0, gateScreenY - 8, canvas.width, 18);
+        ctx.fillStyle = 'rgba(10,30,5,0.6)';
+        ctx.fillRect(0, gateScreenY - 4, canvas.width, 10);
+        ctx.fillStyle = '#2a4a08';
+        ctx.font = '9px "Courier New"';
+        ctx.textAlign = 'center';
+        ctx.fillText('- JUNGLE AHEAD: SPEAK TO OONGA -', canvas.width/2, gateScreenY + 5);
+        ctx.textAlign = 'left';
+      }
+    }
+    // Gate 2 (y=120): deep jungle barrier
+    if (state.zoneUnlocked < 2) {
+      const gateScreenY = 120 * TSIZE - camY;
+      if (gateScreenY > -20 && gateScreenY < canvas.height + 20) {
+        ctx.fillStyle = 'rgba(0,0,0,0.45)';
+        ctx.fillRect(0, gateScreenY - 8, canvas.width, 20);
+        ctx.fillStyle = 'rgba(5,15,0,0.7)';
+        ctx.fillRect(0, gateScreenY - 4, canvas.width, 12);
+        ctx.fillStyle = '#3a2808';
+        ctx.font = '9px "Courier New"';
+        ctx.textAlign = 'center';
+        ctx.fillText('- DEEP JUNGLE: COMPLETE MARA\'S QUEST -', canvas.width/2, gateScreenY + 5);
+        ctx.textAlign = 'left';
+      }
+    }
   }
 
   // Rain
@@ -4753,6 +5148,21 @@ function updateNPCCompanions() {
 }
 
 function triggerWin() {
+  // Determine ending based on storyChoices
+  const sc = state.storyChoices;
+  let title, text;
+  if (sc.learnedTruth && sc.returnedChild && sc.konaHelping) {
+    title = 'PEACE';
+    text = 'You returned the child. You learned the truth. Kona spoke to his brother. The artifact was offered back willingly. The volcano is quiet. The tribe watches you leave — not as an enemy. The Meridian will never come back.';
+  } else if (sc.learnedTruth && sc.felixDone) {
+    title = 'ESCAPE';
+    text = 'The lifeboat cuts through the waves. Felix stares at the horizon. You both know what the Meridian was. You both know you\'re the only ones who got off that island with the truth. Neither of you speaks. The island fades. The silence stays.';
+  } else {
+    title = 'CONQUEST';
+    text = 'The chief is defeated. The artifact is yours. The tribe scatters into the jungle. You board the lifeboat with everything you came for. The island watches you leave. It will remember.';
+  }
+  document.getElementById('win-title').textContent = title;
+  document.getElementById('win-text').textContent = text;
   document.getElementById('win-screen').style.display = 'flex';
   state.running = false;
   SFX.victory();
@@ -4953,7 +5363,7 @@ const slides = [
   { t:'SURVIVAL', b:'You have <b>Health</b>, <b>Water</b>, <b>Food</b>, and <b>Stamina</b> bars.<br><b>Water</b> depletes every 4 seconds. <b>Food</b> every 6 seconds.<br>If either hits zero, your health will drain slowly.<br><b>Raw food</b> has a 20% chance of making you sick.<br>Cook food on a Campfire (press E near it) for full nutrition.' },
   { t:'THE JUNGLE', b:'The outer jungle is passable but slow.<br>The <b>dark jungle</b> has hidden <b>pit traps</b> — fall in and you die.<br>Craft a <b>Torch</b> (2 wood + 1 stone) to reveal the pits.<br>The jungle holds <b>berry bushes</b>, <b>jungle chests</b>, and <b>lore stones</b>.<br>The correct path leads to the volcano.' },
   { t:'RESOURCES', b:'<b>Palm trees</b> on the beach → Coconuts (restores water)<br><b>Fruit trees / berry bushes</b> in jungle → Food (cook first!)<br><b>Fishing spots</b> in shallow water → Fish (need Fishing Rod)<br><b>Trees</b> → Wood &nbsp; <b>Rocks</b> → Stone &nbsp; <b>Volcanic rocks</b> → Volcanic Stone<br>Build a <b>Storage Chest</b> and <b>Bed</b> to establish your camp.' },
-  { t:'ENEMIES & STORY', b:'You are the survivor of the Meridian shipwreck.<br><b>Mara</b> (north beach), <b>Felix</b> (west jungle), and <b>Elder Kona</b> (near volcano) also survived.<br><b>Tribal warriors</b> patrol the jungle from Day 3. Raids at night.<br><b>The Tribal Chief</b> appears on Day 15.<br>Defeat him — or listen to Kona. There are <b>multiple endings</b>.<br>Your goal: survive, build, and <b>escape on a superyacht</b>.' },
+  { t:'ENEMIES & STORY', b:'You are the navigator of the Meridian — a colonial survey ship sunk by an ancient tribal artifact.<br><b>Oonga</b> (south beach) is your first guide. <b>Mara</b> (west jungle edge) knows the patrols. <b>Felix</b> (near wreck) is fixing the lifeboat. <b>Elder Kona</b> (inner jungle) holds the truth.<br><b>The island is gated</b> — unlock zones by completing quests.<br>There are <b>3 endings</b>: Peace, Escape, or Conquest.<br>Your goal: learn the truth, then decide.' },
 ];
 let slideIdx = 0;
 // ============================================================
