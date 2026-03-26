@@ -570,6 +570,20 @@ function genObjects() {
   // Volcano loot chest at top (scaled for 300-tile world)
   state.objects.push({type:'vol_chest', x:150*TSIZE, y:80*TSIZE, opened:false});
 
+  // ── HIDDEN TREASURE CHESTS ──
+  // 1. Deep jungle - northeast (requires torch to find safely, dangerous)
+  state.objects.push({type:'treasure_chest', x:170*TSIZE, y:105*TSIZE, opened:false, lootTier:'uncommon'});
+  // 2. Deep jungle - southwest (another dark jungle cache)
+  state.objects.push({type:'treasure_chest', x:90*TSIZE, y:125*TSIZE, opened:false, lootTier:'common'});
+  // 3. Near volcano base (dangerous to reach, rare loot, glows orange)
+  state.objects.push({type:'treasure_chest', x:148*TSIZE, y:108*TSIZE, opened:false, lootTier:'rare', glowOrange:true});
+  // 4. Inside / beside the tidal cave (rewarded for exploring it)
+  state.objects.push({type:'treasure_chest', x:26*TSIZE, y:96*TSIZE, opened:false, lootTier:'uncommon'});
+  // 5. Hidden lagoon - on its beach shore
+  state.objects.push({type:'treasure_chest', x:150*TSIZE, y:31*TSIZE, opened:false, lootTier:'common'});
+  // 6. Buried on south beach (slightly sand-covered look)
+  state.objects.push({type:'treasure_chest', x:155*TSIZE, y:215*TSIZE, opened:false, lootTier:'common', buried:true});
+
   // Waterfall (interactable)
   // removed waterfall decor // , x:200*TSIZE, y:140*TSIZE, decor:false});
 
@@ -1209,6 +1223,55 @@ function drawInteractableWaterfall(ctx, sx, sy) {
   px(ctx, 'rgba(255,255,255,0.8)', sx-10, sy+10, 20, 3);
   // Pool at base
   px(ctx, '#5cc8d0', sx-10, sy+12, 20, 12);
+}
+
+function drawTreasureChest(ctx, sx, sy, opened, glowOrange) {
+  // Optional orange volcanic glow
+  if (glowOrange) {
+    const g = 0.3 + Math.sin(state.frameCount * 0.07) * 0.15;
+    ctx.save(); ctx.globalAlpha = g;
+    ctx.fillStyle = '#ff6600';
+    ctx.beginPath(); ctx.ellipse(sx, sy + 2, 18, 8, 0, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+  if (!opened) {
+    // Sparkle indicator (4 white dots in star pattern)
+    const spk = [{ox:-5,oy:-20},{ox:5,oy:-22},{ox:0,oy:-18},{ox:-2,oy:-24}];
+    spk.forEach((s, i) => {
+      ctx.fillStyle = i % 2 === 0 ? '#ffffff' : '#ffffaa';
+      ctx.fillRect(Math.round(sx + s.ox), Math.round(sy + s.oy), 2, 2);
+    });
+    // Base (dark wood)
+    px(ctx, '#3d1e0a', sx - 10, sy - 6, 20, 14);
+    // Gold bands horizontal
+    px(ctx, '#c8a020', sx - 10, sy - 6, 20, 2);
+    px(ctx, '#c8a020', sx - 10, sy + 4, 20, 2);
+    // Vertical gold band center
+    px(ctx, '#c8a020', sx - 1, sy - 6, 2, 14);
+    // Lock (golden square center)
+    px(ctx, '#e8c040', sx - 2, sy - 2, 4, 4);
+    // Lid (slightly lighter wood, curved top implied by offset)
+    px(ctx, '#5a3010', sx - 10, sy - 12, 20, 8);
+    px(ctx, '#7a4a20', sx - 9, sy - 14, 18, 4);
+    px(ctx, '#c8a020', sx - 10, sy - 12, 20, 2); // lid band
+  } else {
+    // Base open
+    px(ctx, '#3d1e0a', sx - 10, sy - 2, 20, 10);
+    px(ctx, '#c8a020', sx - 10, sy - 2, 20, 2);
+    px(ctx, '#c8a020', sx - 10, sy + 6, 20, 2);
+    px(ctx, '#c8a020', sx - 1, sy - 2, 2, 10);
+    px(ctx, '#e8c040', sx - 2, sy, 4, 4);
+    // Golden glow interior
+    const gi = 0.4 + Math.sin(state.frameCount * 0.1) * 0.1;
+    ctx.save(); ctx.globalAlpha = gi;
+    ctx.fillStyle = '#ffcc00';
+    ctx.fillRect(sx - 8, sy - 1, 16, 8);
+    ctx.restore();
+    // Lid open at angle (leaning back)
+    px(ctx, '#5a3010', sx - 10, sy - 16, 20, 6);
+    px(ctx, '#7a4a20', sx - 8, sy - 18, 16, 4);
+    px(ctx, '#c8a020', sx - 10, sy - 16, 20, 2);
+  }
 }
 
 function drawCave(ctx, sx, sy) {
@@ -3227,6 +3290,46 @@ function handleClick(sx, sy) {
       SFX.victory();
       return;
     }
+    if (obj.type === 'treasure_chest' && !obj.opened) {
+      obj.opened = true;
+      // Always give food/water bonus
+      p.food = Math.min(p.maxFood, p.food + 15);
+      p.water = Math.min(p.maxWater, p.water + 10);
+      let foundItem = '';
+      const tier = obj.lootTier || 'common';
+      const rareRoll = Math.random() < 0.30;
+      if (tier === 'rare' || (tier === 'uncommon' && rareRoll)) {
+        // Rare loot
+        const rareItems = ['fire_spear','fire_axe','chiefs_mask'];
+        const ri = rareItems[Math.floor(Math.random()*rareItems.length)];
+        p.inv[ri] = (p.inv[ri]||0) + 1;
+        foundItem = ri.replace(/_/g,' ').toUpperCase();
+        showMsg('TREASURE FOUND! ' + foundItem, '#ffcc00');
+        spawnParticles(obj.x, obj.y, '#ffcc00', 20);
+        SFX.victory();
+      } else if (tier === 'uncommon' || (tier === 'common' && rareRoll)) {
+        // Uncommon loot
+        const uncItems = [
+          () => { p.inv.volcanic_stone=(p.inv.volcanic_stone||0)+2; return '+2 VOLCANIC STONE'; },
+          () => { p.inv.fishing_rod=1; return 'FISHING ROD'; },
+          () => { p.inv.torch=(p.inv.torch||0)+2; return '+2 TORCHES'; },
+        ];
+        foundItem = uncItems[Math.floor(Math.random()*uncItems.length)]();
+        showMsg('TREASURE FOUND! ' + foundItem, '#ffcc00');
+        spawnParticles(obj.x, obj.y, '#ffcc00', 14);
+        SFX.craft();
+      } else {
+        // Common loot
+        p.inv.wood = (p.inv.wood||0) + 5;
+        p.inv.stone = (p.inv.stone||0) + 3;
+        p.inv.coconut = (p.inv.coconut||0) + 2;
+        foundItem = 'WOOD x5, STONE x3, COCONUT x2';
+        showMsg('TREASURE FOUND! ' + foundItem, '#ffcc00');
+        spawnParticles(obj.x, obj.y, '#ffcc00', 10);
+        SFX.craft();
+      }
+      return;
+    }
   }
 }
 
@@ -4012,7 +4115,7 @@ function render(ctx, minimapCtx) {
     drawList.push({y: obj.y, draw: () => {
       const ssx = capturedObj.x - camX, ssy = capturedObj.y - camY;
       // Shadow ellipse
-      if (['tree','palm','rock','vol_rock','jungle_chest','vol_chest','step_stone','ancient_statue','skull_stake','dead_tree','mossy_log','breadfruit','mape','purau','pandanus','filao','hutu'].includes(capturedObj.type)) {
+      if (['tree','palm','rock','vol_rock','jungle_chest','vol_chest','treasure_chest','step_stone','ancient_statue','skull_stake','dead_tree','mossy_log','breadfruit','mape','purau','pandanus','filao','hutu'].includes(capturedObj.type)) {
         ctx.save(); ctx.fillStyle = 'rgba(0,0,0,0.22)';
         const shadowW = capturedObj.type === 'tree' || capturedObj.type === 'palm' ? 18 : capturedObj.type === 'rock' || capturedObj.type === 'vol_rock' ? 12 : 10;
         ctx.beginPath(); ctx.ellipse(ssx + 4, ssy + 12, shadowW, shadowW * 0.3, 0, 0, Math.PI*2); ctx.fill(); ctx.restore();
@@ -4062,6 +4165,14 @@ function render(ctx, minimapCtx) {
         case 'reed': drawReed(ctx,ssx,ssy); break;
         case 'jungle_chest': if(!capturedObj.opened){px(ctx,'#7a5c2e',ssx-8,ssy-6,16,12);px(ctx,'#c8a060',ssx-8,ssy-8,16,4);} break;
         case 'vol_chest': if(!capturedObj.opened){px(ctx,'#7a3020',ssx-10,ssy-8,20,16);px(ctx,'#ff6600',ssx-10,ssy-10,20,4);} break;
+        case 'treasure_chest': {
+          // Sand-buried variant: draw sand mound underneath
+          if (capturedObj.buried && !capturedObj.opened) {
+            ctx.fillStyle = 'rgba(232,212,154,0.7)'; ctx.beginPath(); ctx.ellipse(ssx, ssy+8, 14, 6, 0, 0, Math.PI*2); ctx.fill();
+          }
+          drawTreasureChest(ctx, ssx, ssy, capturedObj.opened, capturedObj.glowOrange);
+          break;
+        }
       }
       // Respawn sparkle indicator — green dots when palm/berry ready
       if ((capturedObj.type==='palm'||capturedObj.type==='berry') && capturedObj.respawn===0) {
