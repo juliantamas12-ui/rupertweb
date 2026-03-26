@@ -5164,7 +5164,7 @@ function render(ctx, minimapCtx) {
   if (state.invincible > 0) { state.invincible--; p.hp = Math.max(1, p.hp); }
 
   // Death / collapse mechanic
-  if (p.hp <= 0 && !state.collapsing && !state.collapsed && !state.invincible) {
+  if (p.hp <= 0 && !state.collapsing && !state.collapsed && !(state.invincible > 0)) {
     state.collapsing = true;
     state.collapseTimer = 0;
     state.collapseDeathX = p.x;
@@ -6734,7 +6734,7 @@ window.addEventListener('DOMContentLoaded', () => {
   state.skinColor = '#c8a07a';
   state.playerName = 'SURVIVOR';
   genMap(); genObjects();
-  state.player.x = 150*TSIZE; state.player.y = 200*TSIZE;
+  state.player.x = 150*TSIZE; state.player.y = 200*TSIZE; state.invincible = 600; state.player.hp = 100;
   state.cam.x = state.player.x - canvas.width/2;
   state.cam.y = state.player.y - canvas.height/2;
   state.running = true;
