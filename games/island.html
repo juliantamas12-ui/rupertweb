@@ -2368,14 +2368,15 @@ function updateProjectiles() {
     proj.life--;
 
     if (proj.type === 'coconut_throw') {
-      // Check hit on enemies
       let hit = false;
-      const allE = [...state.enemies, ...(state.chief ? [state.chief] : [])];
-      for (const e of allE) {
-        if (Math.hypot(proj.x-e.x, proj.y-e.y) < 18) {
-          e.hp -= proj.damage;
-          e.hitFlash = 4;
-          spawnParticles(e.x, e.y, '#5c3d1e', 4);
+      const allTargets = [...state.enemies, ...(state.chief ? [state.chief] : []), ...state.creatures.filter(c=>c.type!=='crab')];
+      for (const e of allTargets) {
+        if (!e || e.x === undefined) continue;
+        if (Math.hypot(proj.x-e.x, proj.y-e.y) < 24) {
+          e.hp -= 15; // coconuts hit hard
+          if (e.hitFlash !== undefined) e.hitFlash = 4;
+          spawnParticles(e.x, e.y, '#8B6914', 8);
+          SFX.hit();
           hit = true;
           break;
         }
@@ -2519,14 +2520,15 @@ function drawProjectiles(ctx, camX, camY) {
       ctx.fillStyle = '#666';
       ctx.fillRect(sx+5, sy-2, 4, 4);
     } else if (proj.type === 'coconut_throw') {
+      // Bigger, more visible coconut
       ctx.fillStyle = '#5c3d1e';
-      ctx.beginPath();
-      ctx.arc(sx, sy, 4, 0, Math.PI*2);
-      ctx.fill();
+      ctx.fillRect(sx-7, sy-7, 14, 14);
+      ctx.fillStyle = '#7a5c2e';
+      ctx.fillRect(sx-5, sy-5, 10, 10);
       ctx.fillStyle = '#3a2010';
-      ctx.beginPath();
-      ctx.arc(sx, sy, 2, 0, Math.PI*2);
-      ctx.fill();
+      ctx.fillRect(sx-3, sy-3, 6, 6);
+      ctx.fillStyle = '#c8a060';
+      ctx.fillRect(sx-1, sy-3, 2, 2); // highlight
     } else {
       ctx.fillStyle = '#888';
       ctx.fillRect(sx-4, sy-4, 8, 8);
@@ -3234,13 +3236,13 @@ function throwCoconut() {
   const wx = mx + camX, wy = my + camY;
   const dx = wx - p.x, dy = wy - p.y;
   const dist = Math.sqrt(dx*dx+dy*dy);
-  const speed = 6;
+  const speed = 8;
   state.projectiles.push({
     type: 'coconut_throw',
     x: p.x, y: p.y,
     vx: dist>0 ? dx/dist*speed : speed,
     vy: dist>0 ? dy/dist*speed : 0,
-    life: 40, damage: 8
+    life: 60, damage: 15
   });
   showMsg('COCONUT THROWN!', '#5c3d1e');
 }
