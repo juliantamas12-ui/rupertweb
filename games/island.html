@@ -3456,9 +3456,10 @@ function handleClick(sx, sy) {
   const combatDmg = p.inv.fire_spear>0 ? 30 : p.inv.fire_axe>0 ? 22 : p.inv.spear>0 ? 18 : p.inv.sword>0 ? 15 : 4;
   const combatColor = p.inv.fire_spear>0||p.inv.fire_axe>0 ? '#ff6600' : '#e74c3c';
   SFX.swing(); // always play swing on attack click
+  const attackReach = 56; // pixels, about 7 tiles
   [...state.enemies, ...(state.chief?[state.chief]:[])].forEach(e => {
-    const d = Math.hypot(wx-e.x, wy-e.y);
-    if (d < reach+20) {
+    const dToPlayer = Math.hypot(p.x-e.x, p.y-e.y); // distance from PLAYER to enemy
+    if (dToPlayer < attackReach) {
       e.hp -= combatDmg;
       e.hitFlash = 6;
       spawnParticles(e.x, e.y, combatColor, 6);
@@ -3472,8 +3473,8 @@ function handleClick(sx, sy) {
   // Attack creatures
   for (let i = state.creatures.length-1; i >= 0; i--) {
     const c = state.creatures[i];
-    const d = Math.hypot(wx-c.x, wy-c.y);
-    if (d < reach+20) {
+    const dToPlayer = Math.hypot(p.x-c.x, p.y-c.y);
+    if (dToPlayer < attackReach) {
       c.hp -= combatDmg;
       c.hitFlash = 6;
       spawnParticles(c.x, c.y, '#22cc44', 4);
@@ -3781,6 +3782,7 @@ function tryCraft(id) {
   p.inv[id] = (p.inv[id]||0) + 1;
   showMsg(`CRAFTED: ${item.label}`, '#c8f135');
   SFX.craft();
+  updateUI(); // refresh hotbar immediately
 
   if (id === 'water_barrel') p.maxWater += 50;
   if (id === 'torch') p.torch = true;
