@@ -303,6 +303,10 @@ const state = {
   buildMode: false,
   buildItem: null,
 
+  cutscenesSeen: new Set(),
+  cutscenePlaying: false,
+  cutscene: null,
+
   collapsing: false,
   collapsed: false,
   collapseTimer: 0,
@@ -3333,6 +3337,7 @@ function handleInteract() {
 }
 
 function handleClick(sx, sy) {
+  if (state.cutscenePlaying) { advanceCutscene(); return; }
   if (!state.running) return;
   const p = state.player;
 
@@ -3728,6 +3733,7 @@ function _applyLineEffects(npc, line) {
     // Kona finished — unlock Zone 4
     state.zoneUnlocked = Math.max(4, state.zoneUnlocked);
     showMsg("ZONE UNLOCKED: The village. The chief awaits.", '#ff4444');
+    setTimeout(() => { playCutscene('village_approach'); }, 400);
     // Give reward
     const q = npc.quest;
     if (q && !q.done) {
@@ -3739,6 +3745,8 @@ function _applyLineEffects(npc, line) {
   // Felix truth — learnedTruth already set via choiceSet on line 1, now check quest
   if (npc.id === 'felix' && line.choiceSet && line.choiceSet.key === 'learnedTruth') {
     // Don't complete quest yet — needs items
+    // Trigger cutscene after a short delay (let dialogue close first)
+    setTimeout(() => { playCutscene('meet_felix_truth'); }, 300);
   }
 }
 
@@ -5147,26 +5155,921 @@ function updateNPCCompanions() {
   });
 }
 
+// ============================================================
+// CUTSCENE SYSTEM
+// ============================================================
+
+const CUTSCENES = {
+  intro: {
+    frames: [
+      {
+        speaker: null,
+        text: "The Meridian. Survey vessel. Route: unmarked island, South Pacific. Mission: geological survey for Meridian Colonial Corporation.",
+        draw: (ctx, px, py, pw, ph) => {
+          // Sky
+          ctx.fillStyle = '#0a0a1a'; ctx.fillRect(px, py, pw, ph);
+          // Stars
+          ctx.fillStyle = '#ffffff';
+          for (let i = 0; i < 40; i++) {
+            ctx.fillRect(px + (Math.sin(i*37.3)*0.5+0.5)*pw, py + (Math.sin(i*13.7)*0.5+0.5)*ph*0.45, 1, 1);
+          }
+          // Storm clouds
+          ctx.fillStyle = '#1a1a2e';
+          ctx.fillRect(px, py, pw, ph*0.45);
+          ctx.fillStyle = '#111122';
+          ctx.fillRect(px, py+ph*0.05, pw*0.5, ph*0.15);
+          ctx.fillRect(px+pw*0.3, py, pw*0.5, ph*0.2);
+          ctx.fillRect(px+pw*0.6, py+ph*0.02, pw*0.4, ph*0.18);
+          // Lightning
+          ctx.fillStyle = '#eeeeff';
+          ctx.fillRect(px+pw*0.6, py+ph*0.05, 3, ph*0.3);
+          ctx.fillRect(px+pw*0.62, py+ph*0.2, 3, ph*0.15);
+          ctx.fillStyle = 'rgba(180,180,255,0.15)';
+          ctx.fillRect(px+pw*0.5, py, pw*0.3, ph*0.5);
+          // Waves
+          for (let i = 0; i < 8; i++) {
+            ctx.fillStyle = i%2===0?'#1a2a4a':'#0d1a33';
+            ctx.fillRect(px, py+ph*0.5+i*ph*0.06, pw, ph*0.06+2);
+          }
+          // Wave crests
+          ctx.fillStyle = '#2a3a6a';
+          for (let i = 0; i < 6; i++) {
+            ctx.fillRect(px+i*pw*0.18, py+ph*0.52, pw*0.1, 3);
+          }
+          // Ship silhouette (tilted)
+          ctx.save();
+          ctx.translate(px+pw*0.4, py+ph*0.45);
+          ctx.rotate(-0.15);
+          ctx.fillStyle = '#1a1208';
+          ctx.fillRect(-pw*0.12, -ph*0.08, pw*0.24, ph*0.1);
+          ctx.fillRect(-4, -ph*0.25, 8, ph*0.2);
+          ctx.fillRect(-pw*0.06, -ph*0.22, pw*0.08, ph*0.18);
+          ctx.restore();
+        }
+      },
+      {
+        speaker: null,
+        text: "A storm came from nowhere. The island — it called it. The ship broke apart in minutes. I held onto wreckage until morning.",
+        draw: (ctx, px, py, pw, ph) => {
+          // Dark water
+          ctx.fillStyle = '#05101e'; ctx.fillRect(px, py, pw, ph);
+          // Stars clearing
+          ctx.fillStyle = 'rgba(255,255,255,0.7)';
+          for (let i = 0; i < 30; i++) {
+            ctx.fillRect(px+(Math.sin(i*19.1)*0.5+0.5)*pw, py+(Math.sin(i*7.3)*0.5+0.5)*ph*0.35, 1, 1);
+          }
+          // Faint moon
+          ctx.fillStyle = 'rgba(200,200,220,0.4)';
+          ctx.fillRect(px+pw*0.75, py+ph*0.08, 18, 18);
+          ctx.fillStyle = '#05101e';
+          ctx.fillRect(px+pw*0.75+4, py+ph*0.08-2, 18, 18);
+          // Dark water surface
+          for (let i = 0; i < 6; i++) {
+            ctx.fillStyle = i%2===0?'#0d1a33':'#0a1220';
+            ctx.fillRect(px, py+ph*0.35+i*ph*0.11, pw, ph*0.11+1);
+          }
+          // Debris pieces
+          ctx.fillStyle = '#3a2808';
+          ctx.fillRect(px+pw*0.2, py+ph*0.38, pw*0.22, ph*0.05);
+          ctx.fillRect(px+pw*0.55, py+ph*0.42, pw*0.15, ph*0.04);
+          ctx.fillRect(px+pw*0.1, py+ph*0.44, pw*0.1, ph*0.03);
+          // Person clinging to debris (center)
+          ctx.fillStyle = '#2a1a08';
+          ctx.fillRect(px+pw*0.37, py+ph*0.3, pw*0.26, ph*0.12);
+          // Person body
+          ctx.fillStyle = '#c8a07a'; // skin
+          ctx.fillRect(px+pw*0.46, py+ph*0.23, pw*0.06, ph*0.07);
+          ctx.fillStyle = '#2d7a2d'; // shirt
+          ctx.fillRect(px+pw*0.44, py+ph*0.29, pw*0.12, ph*0.08);
+          // Arms spread on debris
+          ctx.fillStyle = '#c8a07a';
+          ctx.fillRect(px+pw*0.36, py+ph*0.31, pw*0.09, ph*0.03);
+          ctx.fillRect(px+pw*0.55, py+ph*0.31, pw*0.09, ph*0.03);
+          // Ripples
+          ctx.fillStyle = 'rgba(40,60,100,0.5)';
+          ctx.fillRect(px+pw*0.3, py+ph*0.44, pw*0.4, 2);
+          ctx.fillRect(px+pw*0.2, py+ph*0.5, pw*0.6, 2);
+        }
+      },
+      {
+        speaker: null,
+        text: "I woke up on sand. Alive. The jungle stretched ahead. Smoke — distant, from further up the island. Someone else was out there.",
+        draw: (ctx, px, py, pw, ph) => {
+          // Dawn sky gradient
+          ctx.fillStyle = '#1a0a00'; ctx.fillRect(px, py, pw, ph*0.3);
+          ctx.fillStyle = '#7a2a00'; ctx.fillRect(px, py+ph*0.1, pw, ph*0.15);
+          ctx.fillStyle = '#e06020'; ctx.fillRect(px, py+ph*0.2, pw, ph*0.1);
+          ctx.fillStyle = '#f0a030'; ctx.fillRect(px, py+ph*0.25, pw, ph*0.08);
+          ctx.fillStyle = '#ffd080'; ctx.fillRect(px, py+ph*0.3, pw, ph*0.05);
+          // Sun
+          ctx.fillStyle = '#ffcc44';
+          ctx.fillRect(px+pw*0.5-15, py+ph*0.28, 30, 8);
+          ctx.fillRect(px+pw*0.5-10, py+ph*0.25, 20, 14);
+          // Ocean
+          ctx.fillStyle = '#1a6a8a'; ctx.fillRect(px, py+ph*0.35, pw, ph*0.12);
+          ctx.fillStyle = '#20a0c0'; ctx.fillRect(px, py+ph*0.37, pw, ph*0.06);
+          ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.fillRect(px, py+ph*0.38, pw, 2);
+          // Beach
+          ctx.fillStyle = '#e8d080'; ctx.fillRect(px, py+ph*0.47, pw, ph*0.53);
+          ctx.fillStyle = '#d0b860'; ctx.fillRect(px, py+ph*0.5, pw, ph*0.5);
+          // Wet sand line
+          ctx.fillStyle = '#c0a050'; ctx.fillRect(px, py+ph*0.47, pw, 4);
+          // Player lying face down
+          ctx.fillStyle = '#c8a07a';
+          ctx.fillRect(px+pw*0.35, py+ph*0.5, pw*0.04, ph*0.05);
+          ctx.fillStyle = '#2d7a2d';
+          ctx.fillRect(px+pw*0.38, py+ph*0.51, pw*0.18, ph*0.05);
+          ctx.fillStyle = '#c8a07a';
+          ctx.fillRect(px+pw*0.29, py+ph*0.52, pw*0.09, ph*0.03);
+          ctx.fillRect(px+pw*0.56, py+ph*0.52, pw*0.08, ph*0.03);
+          // Dark green trousers
+          ctx.fillStyle = '#1a4a1a';
+          ctx.fillRect(px+pw*0.46, py+ph*0.52, pw*0.1, ph*0.05);
+          // Palm tree (right side)
+          ctx.fillStyle = '#5a3010'; ctx.fillRect(px+pw*0.82, py+ph*0.3, pw*0.025, ph*0.22);
+          ctx.fillStyle = '#3a7a10';
+          ctx.fillRect(px+pw*0.72, py+ph*0.24, pw*0.08, ph*0.07);
+          ctx.fillRect(px+pw*0.82, py+ph*0.22, pw*0.08, ph*0.06);
+          ctx.fillRect(px+pw*0.76, py+ph*0.27, pw*0.1, ph*0.05);
+          // Jungle background
+          ctx.fillStyle = '#0d3010'; ctx.fillRect(px, py+ph*0.35, pw*0.28, ph*0.18);
+          ctx.fillStyle = '#0a2508'; ctx.fillRect(px+pw*0.65, py+ph*0.35, pw*0.35, ph*0.15);
+          // Smoke in jungle
+          ctx.fillStyle = 'rgba(150,150,140,0.5)';
+          ctx.fillRect(px+pw*0.55, py+ph*0.2, 6, ph*0.18);
+          ctx.fillRect(px+pw*0.54, py+ph*0.15, 10, ph*0.08);
+          ctx.fillStyle = 'rgba(150,150,140,0.3)';
+          ctx.fillRect(px+pw*0.52, py+ph*0.1, 16, ph*0.08);
+        }
+      }
+    ]
+  },
+
+  meet_felix_truth: {
+    frames: [
+      {
+        speaker: "FELIX",
+        text: "I found this in the wreckage. The ship's manifest. Read the mission brief.",
+        draw: (ctx, px, py, pw, ph) => {
+          // Dark room bg
+          ctx.fillStyle = '#0a0804'; ctx.fillRect(px, py, pw, ph);
+          // Lamplight glow
+          ctx.fillStyle = 'rgba(200,140,40,0.2)';
+          ctx.fillRect(px+pw*0.25, py, pw*0.5, ph);
+          // Table surface
+          ctx.fillStyle = '#2a1a08'; ctx.fillRect(px+pw*0.1, py+ph*0.45, pw*0.8, ph*0.45);
+          ctx.fillStyle = '#1a1005'; ctx.fillRect(px+pw*0.1, py+ph*0.43, pw*0.8, ph*0.04);
+          // Paper / manifest
+          ctx.fillStyle = '#d4c89a'; ctx.fillRect(px+pw*0.22, py+ph*0.18, pw*0.56, ph*0.4);
+          ctx.fillStyle = '#c8ba88'; ctx.fillRect(px+pw*0.24, py+ph*0.2, pw*0.52, ph*0.36);
+          // Paper texture/aging
+          ctx.fillStyle = '#a09070';
+          ctx.fillRect(px+pw*0.26, py+ph*0.22, pw*0.48, 2);
+          ctx.fillRect(px+pw*0.26, py+ph*0.28, pw*0.36, 2);
+          ctx.fillRect(px+pw*0.26, py+ph*0.34, pw*0.42, 2);
+          ctx.fillRect(px+pw*0.26, py+ph*0.4, pw*0.3, 2);
+          ctx.fillRect(px+pw*0.26, py+ph*0.46, pw*0.44, 2);
+          // Text "MERIDIAN COLONIAL" on paper
+          ctx.fillStyle = '#4a3a20';
+          ctx.font = `bold ${Math.round(ph*0.04)}px "Courier New"`;
+          ctx.fillText('MERIDIAN COLONIAL CORP', px+pw*0.26, py+ph*0.265);
+          ctx.font = `${Math.round(ph*0.03)}px "Courier New"`;
+          ctx.fillText('SURVEY MANIFEST - CLASSIFIED', px+pw*0.26, py+ph*0.31);
+          ctx.fillText('MISSION: EXTRACTION SURVEY', px+pw*0.26, py+ph*0.36);
+          ctx.fillText('TARGET: UNCHARTED ISLAND S-7', px+pw*0.26, py+ph*0.41);
+          // Lamp top of screen
+          ctx.fillStyle = '#c87820'; ctx.fillRect(px+pw*0.44, py, pw*0.12, ph*0.12);
+          ctx.fillStyle = '#e09020'; ctx.fillRect(px+pw*0.46, py, pw*0.08, ph*0.1);
+          // Lamp glow
+          ctx.fillStyle = 'rgba(255,200,80,0.3)';
+          ctx.fillRect(px+pw*0.3, py, pw*0.4, ph*0.3);
+        }
+      },
+      {
+        speaker: "FELIX",
+        text: "Meridian Colonial. Oil survey. Rare earth mapping. We weren't lost. We were sent here to take everything these people have.",
+        draw: (ctx, px, py, pw, ph) => {
+          // Split screen bg
+          ctx.fillStyle = '#0a0808'; ctx.fillRect(px, py, pw, ph);
+          // Divider
+          ctx.fillStyle = '#3a1a08'; ctx.fillRect(px+pw*0.49, py, pw*0.02, ph);
+          // LEFT: Corporate logo (dark geometric)
+          ctx.fillStyle = '#0d0a08'; ctx.fillRect(px, py, pw*0.49, ph);
+          // Hexagon / corporate symbol
+          const cx2 = px+pw*0.245, cy2 = py+ph*0.4, r2 = ph*0.2;
+          ctx.fillStyle = '#1a1005';
+          // Simple geometric shape using rects
+          ctx.fillRect(cx2-r2*0.6, cy2-r2, r2*1.2, r2*2);
+          ctx.fillRect(cx2-r2, cy2-r2*0.6, r2*2, r2*1.2);
+          // Circle overlay
+          ctx.fillStyle = '#2a1808';
+          ctx.fillRect(cx2-r2*0.8, cy2-r2*0.8, r2*1.6, r2*1.6);
+          // Inner diamond
+          ctx.fillStyle = '#c87000';
+          ctx.fillRect(cx2-r2*0.25, cy2-r2*0.5, r2*0.5, r2);
+          ctx.fillRect(cx2-r2*0.5, cy2-r2*0.25, r2, r2*0.5);
+          // Company name
+          ctx.fillStyle = '#c87000';
+          ctx.font = `bold ${Math.round(ph*0.04)}px "Courier New"`;
+          ctx.fillText('MERIDIAN', px+pw*0.06, py+ph*0.72);
+          ctx.fillText('COLONIAL', px+pw*0.06, py+ph*0.78);
+          ctx.font = `${Math.round(ph*0.025)}px "Courier New"`;
+          ctx.fillStyle = '#7a5020';
+          ctx.fillText('CORP.', px+pw*0.06, py+ph*0.83);
+          // RIGHT: Island from above (minimap style)
+          ctx.fillStyle = '#001833'; ctx.fillRect(px+pw*0.51, py, pw*0.49, ph);
+          // Ocean
+          ctx.fillStyle = '#1a5a8a'; ctx.fillRect(px+pw*0.53, py+ph*0.05, pw*0.45, ph*0.9);
+          // Island shape
+          ctx.fillStyle = '#2a6a10';
+          ctx.fillRect(px+pw*0.65, py+ph*0.2, pw*0.18, ph*0.55);
+          ctx.fillRect(px+pw*0.61, py+ph*0.3, pw*0.26, ph*0.4);
+          ctx.fillRect(px+pw*0.63, py+ph*0.25, pw*0.22, ph*0.48);
+          // Volcano peak
+          ctx.fillStyle = '#8a3010'; ctx.fillRect(px+pw*0.7, py+ph*0.24, pw*0.08, ph*0.15);
+          ctx.fillStyle = '#ff4400'; ctx.fillRect(px+pw*0.72, py+ph*0.2, pw*0.04, ph*0.06);
+          // Beach ring
+          ctx.fillStyle = '#c8b870'; ctx.fillRect(px+pw*0.62, py+ph*0.62, pw*0.24, ph*0.06);
+          // Grid lines (survey)
+          ctx.fillStyle = 'rgba(255,150,0,0.2)';
+          for (let i = 0; i < 5; i++) {
+            ctx.fillRect(px+pw*0.53, py+ph*0.05+i*ph*0.19, pw*0.45, 1);
+            ctx.fillRect(px+pw*0.53+i*pw*0.09, py+ph*0.05, 1, ph*0.9);
+          }
+        }
+      },
+      {
+        speaker: "YOU",
+        text: "...",
+        draw: (ctx, px, py, pw, ph) => {
+          // Sunset sky
+          ctx.fillStyle = '#0a0510'; ctx.fillRect(px, py, pw, ph);
+          ctx.fillStyle = '#4a1a00'; ctx.fillRect(px, py+ph*0.1, pw, ph*0.25);
+          ctx.fillStyle = '#8a3a00'; ctx.fillRect(px, py+ph*0.2, pw, ph*0.15);
+          ctx.fillStyle = '#c86020'; ctx.fillRect(px, py+ph*0.3, pw, ph*0.1);
+          ctx.fillStyle = '#e08030'; ctx.fillRect(px, py+ph*0.35, pw, ph*0.08);
+          // Sun on horizon
+          ctx.fillStyle = '#ff8800';
+          ctx.fillRect(px+pw*0.45, py+ph*0.4, pw*0.1, ph*0.03);
+          // Ocean
+          ctx.fillStyle = '#1a3a5a'; ctx.fillRect(px, py+ph*0.4, pw, ph*0.6);
+          ctx.fillStyle = '#224466'; ctx.fillRect(px, py+ph*0.42, pw, ph*0.4);
+          // Sun reflection on water
+          ctx.fillStyle = 'rgba(255,140,0,0.4)';
+          ctx.fillRect(px+pw*0.4, py+ph*0.43, pw*0.2, ph*0.08);
+          ctx.fillStyle = 'rgba(255,140,0,0.2)';
+          ctx.fillRect(px+pw*0.35, py+ph*0.5, pw*0.3, ph*0.05);
+          // Beach ground
+          ctx.fillStyle = '#c8b060'; ctx.fillRect(px, py+ph*0.78, pw, ph*0.22);
+          // Felix silhouette (looking down, left of center)
+          ctx.fillStyle = '#1a1008';
+          ctx.fillRect(px+pw*0.32, py+ph*0.52, pw*0.06, ph*0.08); // head
+          ctx.fillRect(px+pw*0.3, py+ph*0.59, pw*0.1, ph*0.19); // body
+          ctx.fillRect(px+pw*0.3, py+ph*0.75, pw*0.04, ph*0.06); // left leg
+          ctx.fillRect(px+pw*0.35, py+ph*0.76, pw*0.04, ph*0.05); // right leg
+          // Felix arms down
+          ctx.fillRect(px+pw*0.28, py+ph*0.6, pw*0.03, ph*0.12);
+          ctx.fillRect(px+pw*0.39, py+ph*0.6, pw*0.03, ph*0.11);
+          // Head tilted down
+          ctx.fillRect(px+pw*0.33, py+ph*0.5, pw*0.05, ph*0.09);
+          // Player silhouette (looking out to sea, right of center)
+          ctx.fillStyle = '#0a0806';
+          ctx.fillRect(px+pw*0.62, py+ph*0.5, pw*0.07, ph*0.09); // head
+          ctx.fillRect(px+pw*0.6, py+ph*0.58, pw*0.11, ph*0.2); // body
+          ctx.fillRect(px+pw*0.6, py+ph*0.76, pw*0.04, ph*0.06); // left leg
+          ctx.fillRect(px+pw*0.67, py+ph*0.77, pw*0.04, ph*0.05); // right leg
+          // Player arms at sides
+          ctx.fillRect(px+pw*0.58, py+ph*0.59, pw*0.03, ph*0.1);
+          ctx.fillRect(px+pw*0.71, py+ph*0.59, pw*0.03, ph*0.1);
+        }
+      }
+    ]
+  },
+
+  village_approach: {
+    frames: [
+      {
+        speaker: null,
+        text: "The village. Larger than I imagined. Torches everywhere. Warriors patrolling the perimeter. In the center — a glow. The artifact.",
+        draw: (ctx, px, py, pw, ph) => {
+          // Night sky
+          ctx.fillStyle = '#020408'; ctx.fillRect(px, py, pw, ph);
+          // Stars
+          ctx.fillStyle = '#ffffff';
+          for (let i = 0; i < 60; i++) {
+            const sx = px + (Math.sin(i*31.7)*0.5+0.5)*pw;
+            const sy = py + (Math.sin(i*17.3)*0.5+0.5)*ph*0.5;
+            ctx.fillRect(sx, sy, i%5===0?2:1, i%5===0?2:1);
+          }
+          // Dense jungle sides (dark)
+          ctx.fillStyle = '#040c04'; ctx.fillRect(px, py+ph*0.25, pw*0.25, ph*0.75);
+          ctx.fillStyle = '#030a03'; ctx.fillRect(px+pw*0.75, py+ph*0.25, pw*0.25, ph*0.75);
+          // Tree silhouettes left
+          for (let i = 0; i < 5; i++) {
+            ctx.fillStyle = '#040e04';
+            ctx.fillRect(px+i*pw*0.055, py+ph*0.1+Math.sin(i*2.3)*ph*0.08, pw*0.04, ph*0.45);
+            ctx.fillRect(px+i*pw*0.055-pw*0.015, py+ph*0.08+Math.sin(i*2.3)*ph*0.08, pw*0.07, ph*0.12);
+          }
+          // Tree silhouettes right
+          for (let i = 0; i < 5; i++) {
+            ctx.fillStyle = '#040e04';
+            ctx.fillRect(px+pw*0.75+i*pw*0.055, py+ph*0.12+Math.sin(i*1.7)*ph*0.08, pw*0.04, ph*0.43);
+            ctx.fillRect(px+pw*0.75+i*pw*0.055-pw*0.01, py+ph*0.1+Math.sin(i*1.7)*ph*0.08, pw*0.06, ph*0.12);
+          }
+          // Ground path
+          ctx.fillStyle = '#1a1a10'; ctx.fillRect(px+pw*0.25, py+ph*0.5, pw*0.5, ph*0.5);
+          ctx.fillStyle = '#222218'; ctx.fillRect(px+pw*0.3, py+ph*0.55, pw*0.4, ph*0.45);
+          // Skull stakes
+          ctx.fillStyle = '#5a5040';
+          ctx.fillRect(px+pw*0.24, py+ph*0.38, pw*0.015, ph*0.22);
+          ctx.fillRect(px+pw*0.74, py+ph*0.38, pw*0.015, ph*0.22);
+          // Skull shapes
+          ctx.fillStyle = '#c8c0a8';
+          ctx.fillRect(px+pw*0.23, py+ph*0.33, pw*0.035, ph*0.06);
+          ctx.fillStyle = '#000'; ctx.fillRect(px+pw*0.238, py+ph*0.35, pw*0.008, ph*0.015);
+          ctx.fillRect(px+pw*0.252, py+ph*0.35, pw*0.008, ph*0.015);
+          ctx.fillStyle = '#c8c0a8';
+          ctx.fillRect(px+pw*0.73, py+ph*0.33, pw*0.035, ph*0.06);
+          ctx.fillStyle = '#000'; ctx.fillRect(px+pw*0.738, py+ph*0.35, pw*0.008, ph*0.015);
+          ctx.fillRect(px+pw*0.752, py+ph*0.35, pw*0.008, ph*0.015);
+          // Village huts in distance
+          ctx.fillStyle = '#1a1008';
+          ctx.fillRect(px+pw*0.32, py+ph*0.35, pw*0.1, ph*0.2);
+          ctx.fillRect(px+pw*0.44, py+ph*0.3, pw*0.12, ph*0.25);
+          ctx.fillRect(px+pw*0.58, py+ph*0.36, pw*0.1, ph*0.19);
+          // Hut roofs
+          ctx.fillStyle = '#0a0804';
+          ctx.fillRect(px+pw*0.3, py+ph*0.32, pw*0.14, ph*0.05);
+          ctx.fillRect(px+pw*0.42, py+ph*0.27, pw*0.16, ph*0.05);
+          ctx.fillRect(px+pw*0.56, py+ph*0.33, pw*0.14, ph*0.05);
+          // Torch lights (orange glows)
+          const torchPositions = [0.28, 0.38, 0.48, 0.58, 0.68];
+          torchPositions.forEach(tx => {
+            ctx.fillStyle = 'rgba(255,120,0,0.25)';
+            ctx.fillRect(px+pw*(tx-0.04), py+ph*0.28, pw*0.08, ph*0.25);
+            ctx.fillStyle = '#ff8800';
+            ctx.fillRect(px+pw*tx, py+ph*0.3, 3, ph*0.04);
+            ctx.fillStyle = '#ffcc44';
+            ctx.fillRect(px+pw*tx-1, py+ph*0.29, 5, ph*0.02);
+          });
+          // Warriors (dark silhouettes)
+          for (let i = 0; i < 3; i++) {
+            const wx = px+pw*(0.32+i*0.18);
+            const wy = py+ph*0.6;
+            ctx.fillStyle = '#0d0a05';
+            ctx.fillRect(wx, wy, pw*0.025, ph*0.04); // head
+            ctx.fillRect(wx-pw*0.005, wy+ph*0.04, pw*0.035, ph*0.1); // body
+            ctx.fillRect(wx-pw*0.012, wy+ph*0.05, pw*0.01, ph*0.07); // spear
+          }
+          // Artifact glow center
+          ctx.fillStyle = 'rgba(255,160,0,0.3)';
+          ctx.fillRect(px+pw*0.4, py+ph*0.2, pw*0.2, ph*0.35);
+          ctx.fillStyle = 'rgba(255,200,60,0.15)';
+          ctx.fillRect(px+pw*0.35, py+ph*0.15, pw*0.3, ph*0.45);
+          ctx.fillStyle = '#ffcc44';
+          ctx.fillRect(px+pw*0.49, py+ph*0.32, pw*0.02, ph*0.04);
+        }
+      },
+      {
+        speaker: "THE CHIEF",
+        text: "You come to our home. You are brave. Or foolish. Perhaps both. My brother sent you, yes? He always believed in outsiders.",
+        draw: (ctx, px, py, pw, ph) => {
+          // Night bg
+          ctx.fillStyle = '#020408'; ctx.fillRect(px, py, pw, ph);
+          // Village warriors background
+          ctx.fillStyle = '#0a0806';
+          for (let i = 0; i < 5; i++) {
+            const bx = px+pw*(0.05+i*0.19);
+            ctx.fillRect(bx, py+ph*0.45, pw*0.025, ph*0.04);
+            ctx.fillRect(bx-pw*0.005, py+ph*0.49, pw*0.035, ph*0.1);
+          }
+          // Torch lights behind chief
+          ctx.fillStyle = 'rgba(255,100,0,0.2)';
+          ctx.fillRect(px+pw*0.1, py+ph*0.1, pw*0.8, ph*0.6);
+          // Village huts background
+          ctx.fillStyle = '#0d0a05';
+          ctx.fillRect(px, py+ph*0.4, pw*0.35, ph*0.6);
+          ctx.fillRect(px+pw*0.65, py+ph*0.4, pw*0.35, ph*0.6);
+          // Artifact glow (center behind chief)
+          ctx.fillStyle = 'rgba(255,160,30,0.4)';
+          ctx.fillRect(px+pw*0.35, py, pw*0.3, ph);
+          ctx.fillStyle = '#ff9900';
+          ctx.fillRect(px+pw*0.48, py+ph*0.55, pw*0.04, ph*0.06);
+          ctx.fillStyle = '#ffcc44';
+          ctx.fillRect(px+pw*0.49, py+ph*0.54, pw*0.02, ph*0.04);
+          // Chief silhouette (large, foreground)
+          ctx.fillStyle = '#0f0c06';
+          // Headdress
+          ctx.fillRect(px+pw*0.36, py+ph*0.03, pw*0.28, ph*0.08); // base
+          // Feathers
+          for (let i = 0; i < 7; i++) {
+            ctx.fillRect(px+pw*0.37+i*pw*0.037, py+ph*0.0, pw*0.02, ph*0.06);
+          }
+          ctx.fillStyle = '#3a1a00';
+          ctx.fillRect(px+pw*0.38, py+ph*0.02, pw*0.04, ph*0.04);
+          ctx.fillRect(px+pw*0.46, py+ph*0.01, pw*0.04, ph*0.05);
+          ctx.fillRect(px+pw*0.54, py+ph*0.02, pw*0.04, ph*0.04);
+          ctx.fillStyle = '#c87000';
+          ctx.fillRect(px+pw*0.39, py+ph*0.015, pw*0.02, ph*0.025);
+          ctx.fillRect(px+pw*0.47, py+ph*0.005, pw*0.02, ph*0.03);
+          ctx.fillRect(px+pw*0.55, py+ph*0.015, pw*0.02, ph*0.025);
+          // Head
+          ctx.fillStyle = '#0f0c06';
+          ctx.fillRect(px+pw*0.4, py+ph*0.1, pw*0.2, ph*0.14);
+          // Eyes (lit by artifact)
+          ctx.fillStyle = '#ff8800';
+          ctx.fillRect(px+pw*0.44, py+ph*0.14, pw*0.025, ph*0.02);
+          ctx.fillRect(px+pw*0.535, py+ph*0.14, pw*0.025, ph*0.02);
+          // Shoulders/body (massive)
+          ctx.fillStyle = '#0d0a05';
+          ctx.fillRect(px+pw*0.32, py+ph*0.23, pw*0.36, ph*0.55);
+          ctx.fillRect(px+pw*0.28, py+ph*0.24, pw*0.44, ph*0.08); // wide shoulders
+          // Arms
+          ctx.fillRect(px+pw*0.28, py+ph*0.3, pw*0.07, ph*0.3);
+          ctx.fillRect(px+pw*0.65, py+ph*0.3, pw*0.07, ph*0.3);
+          // Tribal markings
+          ctx.fillStyle = '#c87000';
+          ctx.fillRect(px+pw*0.37, py+ph*0.28, pw*0.04, ph*0.03);
+          ctx.fillRect(px+pw*0.59, py+ph*0.28, pw*0.04, ph*0.03);
+          ctx.fillRect(px+pw*0.45, py+ph*0.32, pw*0.1, ph*0.02);
+        }
+      }
+    ]
+  },
+
+  ending_peace: {
+    frames: [
+      {
+        speaker: "ELDER KONA",
+        text: "Brother. This one knows the truth. Their ship was sent to take from us — but they chose not to. That is... different.",
+        draw: (ctx, px, py, pw, ph) => {
+          // Sunset sky
+          ctx.fillStyle = '#1a0800'; ctx.fillRect(px, py, pw, ph);
+          ctx.fillStyle = '#5a2000'; ctx.fillRect(px, py+ph*0.1, pw, ph*0.2);
+          ctx.fillStyle = '#aa4400'; ctx.fillRect(px, py+ph*0.22, pw, ph*0.12);
+          ctx.fillStyle = '#d06020'; ctx.fillRect(px, py+ph*0.3, pw, ph*0.1);
+          ctx.fillStyle = '#e08040'; ctx.fillRect(px, py+ph*0.36, pw, ph*0.08);
+          // Village buildings sunset silhouette
+          ctx.fillStyle = '#0a0804';
+          ctx.fillRect(px, py+ph*0.4, pw*0.2, ph*0.6);
+          ctx.fillRect(px+pw*0.8, py+ph*0.4, pw*0.2, ph*0.6);
+          ctx.fillRect(px+pw*0.08, py+ph*0.35, pw*0.12, ph*0.65);
+          ctx.fillRect(px+pw*0.76, py+ph*0.38, pw*0.14, ph*0.62);
+          // Ground
+          ctx.fillStyle = '#2a1a08'; ctx.fillRect(px, py+ph*0.72, pw, ph*0.28);
+          ctx.fillStyle = '#1a1005'; ctx.fillRect(px, py+ph*0.78, pw, ph*0.22);
+          // Kona (left, facing right)
+          ctx.fillStyle = '#6a3010';
+          ctx.fillRect(px+pw*0.25, py+ph*0.44, pw*0.07, ph*0.1); // head
+          ctx.fillRect(px+pw*0.23, py+ph*0.53, pw*0.11, ph*0.22); // body
+          ctx.fillRect(px+pw*0.23, py+ph*0.73, pw*0.04, ph*0.08); // left leg
+          ctx.fillRect(px+pw*0.29, py+ph*0.73, pw*0.04, ph*0.08); // right leg
+          ctx.fillStyle = '#c87a50';
+          ctx.fillRect(px+pw*0.26, py+ph*0.46, pw*0.05, ph*0.09); // face skin
+          // Kona staff
+          ctx.fillStyle = '#5a3010'; ctx.fillRect(px+pw*0.22, py+ph*0.45, pw*0.015, ph*0.38);
+          // Chief (right, facing left)
+          ctx.fillStyle = '#2a1a08';
+          ctx.fillRect(px+pw*0.65, py+ph*0.4, pw*0.09, ph*0.12); // head
+          // Headdress
+          ctx.fillRect(px+pw*0.64, py+ph*0.33, pw*0.11, ph*0.08);
+          for (let i = 0; i < 5; i++) ctx.fillRect(px+pw*0.65+i*pw*0.02, py+ph*0.28, pw*0.015, ph*0.06);
+          ctx.fillRect(px+pw*0.63, py+ph*0.51, pw*0.13, ph*0.25); // body
+          ctx.fillRect(px+pw*0.63, py+ph*0.73, pw*0.05, ph*0.08);
+          ctx.fillRect(px+pw*0.71, py+ph*0.73, pw*0.05, ph*0.08);
+          // Artifact between them (dim glow)
+          ctx.fillStyle = 'rgba(100,200,100,0.3)';
+          ctx.fillRect(px+pw*0.43, py+ph*0.5, pw*0.14, ph*0.2);
+          ctx.fillStyle = '#40c060';
+          ctx.fillRect(px+pw*0.48, py+ph*0.56, pw*0.04, ph*0.08);
+          ctx.fillStyle = '#80ff80';
+          ctx.fillRect(px+pw*0.495, py+ph*0.55, pw*0.01, ph*0.04);
+        }
+      },
+      {
+        speaker: "THE CHIEF",
+        text: "The stone has protected us long enough. Perhaps... it has also imprisoned us.",
+        draw: (ctx, px, py, pw, ph) => {
+          // Dark volcanic setting
+          ctx.fillStyle = '#080505'; ctx.fillRect(px, py, pw, ph);
+          // Lava glow from below
+          ctx.fillStyle = 'rgba(255,60,0,0.2)'; ctx.fillRect(px, py+ph*0.6, pw, ph*0.4);
+          ctx.fillStyle = 'rgba(255,100,0,0.15)'; ctx.fillRect(px, py+ph*0.5, pw, ph*0.5);
+          // Volcanic rock platform
+          ctx.fillStyle = '#1a0a05'; ctx.fillRect(px+pw*0.2, py+ph*0.6, pw*0.6, ph*0.35);
+          ctx.fillStyle = '#2a0f08'; ctx.fillRect(px+pw*0.25, py+ph*0.58, pw*0.5, ph*0.06);
+          // Lava cracks
+          ctx.fillStyle = '#ff4400';
+          ctx.fillRect(px+pw*0.3, py+ph*0.68, pw*0.12, ph*0.02);
+          ctx.fillRect(px+pw*0.5, py+ph*0.72, pw*0.18, ph*0.02);
+          ctx.fillRect(px+pw*0.38, py+ph*0.78, pw*0.08, ph*0.015);
+          // Chief standing, placing artifact
+          ctx.fillStyle = '#1a1005';
+          ctx.fillRect(px+pw*0.43, py+ph*0.32, pw*0.09, ph*0.12); // head
+          ctx.fillRect(px+pw*0.41, py+ph*0.43, pw*0.13, ph*0.23); // body
+          ctx.fillRect(px+pw*0.41, py+ph*0.64, pw*0.05, ph*0.08);
+          ctx.fillRect(px+pw*0.49, py+ph*0.64, pw*0.05, ph*0.08);
+          // Chief headdress
+          ctx.fillRect(px+pw*0.42, py+ph*0.26, pw*0.11, ph*0.07);
+          for (let i = 0; i < 5; i++) ctx.fillRect(px+pw*0.43+i*pw*0.022, py+ph*0.21, pw*0.015, ph*0.06);
+          // Arms extended holding artifact
+          ctx.fillRect(px+pw*0.32, py+ph*0.44, pw*0.1, ph*0.04); // left arm
+          ctx.fillRect(px+pw*0.53, py+ph*0.44, pw*0.1, ph*0.04); // right arm
+          // Artifact on the rock (being placed)
+          ctx.fillStyle = 'rgba(100,180,100,0.5)'; ctx.fillRect(px+pw*0.44, py+ph*0.55, pw*0.12, ph*0.06);
+          ctx.fillStyle = '#60c060'; ctx.fillRect(px+pw*0.47, py+ph*0.54, pw*0.06, ph*0.08);
+          ctx.fillStyle = 'rgba(150,255,150,0.4)'; ctx.fillRect(px+pw*0.4, py+ph*0.48, pw*0.2, ph*0.18);
+          // Tribe watching (row of silhouettes)
+          ctx.fillStyle = '#0a0806';
+          for (let i = 0; i < 6; i++) {
+            const tx = px+pw*(0.08+i*0.15);
+            ctx.fillRect(tx, py+ph*0.44, pw*0.035, ph*0.05);
+            ctx.fillRect(tx-pw*0.005, py+ph*0.49, pw*0.045, ph*0.16);
+          }
+        }
+      },
+      {
+        speaker: null,
+        text: "The artifact went dark. The volcano rumbled once — and was still. They helped us build a raft. We left with the truth, and no one to tell it to.",
+        draw: (ctx, px, py, pw, ph) => {
+          // Sunset ocean
+          ctx.fillStyle = '#0a0510'; ctx.fillRect(px, py, pw, ph);
+          ctx.fillStyle = '#3a1a00'; ctx.fillRect(px, py+ph*0.05, pw, ph*0.25);
+          ctx.fillStyle = '#7a3a00'; ctx.fillRect(px, py+ph*0.18, pw, ph*0.16);
+          ctx.fillStyle = '#c06020'; ctx.fillRect(px, py+ph*0.28, pw, ph*0.1);
+          ctx.fillStyle = '#e08030'; ctx.fillRect(px, py+ph*0.35, pw, ph*0.07);
+          // Sun
+          ctx.fillStyle = '#ff9900'; ctx.fillRect(px+pw*0.45, py+ph*0.37, pw*0.1, ph*0.04);
+          ctx.fillStyle = '#ffcc44'; ctx.fillRect(px+pw*0.47, py+ph*0.35, pw*0.06, ph*0.04);
+          // Ocean
+          ctx.fillStyle = '#1a3a5a'; ctx.fillRect(px, py+ph*0.4, pw, ph*0.6);
+          ctx.fillStyle = '#1e4466'; ctx.fillRect(px, py+ph*0.43, pw, ph*0.57);
+          // Reflection
+          ctx.fillStyle = 'rgba(255,120,0,0.3)'; ctx.fillRect(px+pw*0.38, py+ph*0.42, pw*0.24, ph*0.08);
+          ctx.fillStyle = 'rgba(255,100,0,0.15)'; ctx.fillRect(px+pw*0.3, py+ph*0.5, pw*0.4, ph*0.06);
+          // Island silhouette (behind)
+          ctx.fillStyle = '#0a0806';
+          ctx.fillRect(px+pw*0.35, py+ph*0.34, pw*0.3, ph*0.1);
+          ctx.fillRect(px+pw*0.38, py+ph*0.28, pw*0.24, ph*0.08);
+          ctx.fillRect(px+pw*0.43, py+ph*0.22, pw*0.14, ph*0.08);
+          ctx.fillRect(px+pw*0.46, py+ph*0.16, pw*0.08, ph*0.08);
+          // Tribe on shore watching
+          ctx.fillStyle = '#0d0a05';
+          for (let i = 0; i < 5; i++) {
+            const tx = px+pw*(0.33+i*0.08);
+            ctx.fillRect(tx, py+ph*0.38, pw*0.02, ph*0.03);
+            ctx.fillRect(tx-pw*0.003, py+ph*0.41, pw*0.026, ph*0.05);
+          }
+          // Small raft in ocean (sailing away)
+          ctx.fillStyle = '#5a3010'; ctx.fillRect(px+pw*0.15, py+ph*0.52, pw*0.14, ph*0.04);
+          ctx.fillStyle = '#7a4820'; ctx.fillRect(px+pw*0.17, py+ph*0.5, pw*0.1, ph*0.025);
+          // Mast
+          ctx.fillStyle = '#4a2808'; ctx.fillRect(px+pw*0.215, py+ph*0.38, pw*0.01, ph*0.14);
+          // Sail
+          ctx.fillStyle = 'rgba(200,180,140,0.8)'; ctx.fillRect(px+pw*0.22, py+ph*0.39, pw*0.055, ph*0.1);
+          // Figures on raft (2)
+          ctx.fillStyle = '#1a1208';
+          ctx.fillRect(px+pw*0.175, py+ph*0.49, pw*0.025, ph*0.04);
+          ctx.fillRect(px+pw*0.205, py+ph*0.49, pw*0.025, ph*0.04);
+        }
+      }
+    ]
+  },
+
+  ending_escape: {
+    frames: [
+      {
+        speaker: "FELIX",
+        text: "Ready. Get in.",
+        draw: (ctx, px, py, pw, ph) => {
+          // Night beach
+          ctx.fillStyle = '#010208'; ctx.fillRect(px, py, pw, ph);
+          // Stars
+          ctx.fillStyle = '#ffffff';
+          for (let i = 0; i < 50; i++) {
+            ctx.fillRect(px+(Math.sin(i*23.1)*0.5+0.5)*pw, py+(Math.sin(i*11.7)*0.5+0.5)*ph*0.5, 1, 1);
+          }
+          // Moon
+          ctx.fillStyle = '#e0e0cc'; ctx.fillRect(px+pw*0.82, py+ph*0.06, 20, 20);
+          ctx.fillStyle = '#010208'; ctx.fillRect(px+pw*0.82+4, py+ph*0.06-3, 20, 20);
+          // Jungle dark bg
+          ctx.fillStyle = '#020804'; ctx.fillRect(px, py+ph*0.25, pw, ph*0.45);
+          ctx.fillStyle = '#010603';
+          for (let i = 0; i < 8; i++) {
+            ctx.fillRect(px+i*pw*0.14, py+ph*0.1+Math.sin(i*3.1)*ph*0.08, pw*0.1, ph*0.4);
+          }
+          // Ocean moonlit
+          ctx.fillStyle = '#0a1a2a'; ctx.fillRect(px, py+ph*0.68, pw, ph*0.32);
+          ctx.fillStyle = 'rgba(220,220,180,0.1)'; ctx.fillRect(px+pw*0.7, py+ph*0.7, pw*0.3, ph*0.05);
+          // Beach
+          ctx.fillStyle = '#18140a'; ctx.fillRect(px, py+ph*0.62, pw, ph*0.1);
+          ctx.fillStyle = '#1e1a0e'; ctx.fillRect(px, py+ph*0.65, pw, ph*0.06);
+          // Lifeboat (white/grey)
+          ctx.fillStyle = '#d0d0c0'; ctx.fillRect(px+pw*0.35, py+ph*0.6, pw*0.3, ph*0.1);
+          ctx.fillStyle = '#b0b0a0'; ctx.fillRect(px+pw*0.36, py+ph*0.62, pw*0.28, ph*0.07);
+          ctx.fillStyle = '#c0c0b0'; ctx.fillRect(px+pw*0.37, py+ph*0.59, pw*0.26, ph*0.04);
+          // Felix (left of boat, facing right)
+          ctx.fillStyle = '#7ca0b0';
+          ctx.fillRect(px+pw*0.28, py+ph*0.48, pw*0.06, ph*0.08);
+          ctx.fillRect(px+pw*0.26, py+ph*0.55, pw*0.1, ph*0.18);
+          ctx.fillRect(px+pw*0.27, py+ph*0.71, pw*0.04, ph*0.06);
+          ctx.fillRect(px+pw*0.32, py+ph*0.71, pw*0.04, ph*0.06);
+          // Felix arm pointing at boat
+          ctx.fillStyle = '#c8a07a'; ctx.fillRect(px+pw*0.35, py+ph*0.57, pw*0.06, ph*0.03);
+          // Player (right)
+          ctx.fillStyle = '#2d7a2d'; ctx.fillRect(px+pw*0.65, py+ph*0.49, pw*0.07, ph*0.18);
+          ctx.fillStyle = '#c8a07a'; ctx.fillRect(px+pw*0.66, py+ph*0.44, pw*0.05, ph*0.07);
+          ctx.fillStyle = '#1a4a1a'; ctx.fillRect(px+pw*0.65, py+ph*0.64, pw*0.03, ph*0.09);
+          ctx.fillRect(px+pw*0.69, py+ph*0.64, pw*0.03, ph*0.09);
+        }
+      },
+      {
+        speaker: null,
+        text: "We didn't speak for two days at sea. We both knew what the ship had been. What we had almost helped do. The island kept its secrets.",
+        draw: (ctx, px, py, pw, ph) => {
+          // Open ocean at night
+          ctx.fillStyle = '#010510'; ctx.fillRect(px, py, pw, ph);
+          // Stars (many)
+          ctx.fillStyle = '#ffffff';
+          for (let i = 0; i < 80; i++) {
+            const sx = px+(Math.sin(i*17.3)*0.5+0.5)*pw;
+            const sy = py+(Math.sin(i*29.7)*0.5+0.5)*ph*0.55;
+            ctx.fillRect(sx, sy, i%7===0?2:1, i%7===0?2:1);
+          }
+          // Milky way-ish
+          ctx.fillStyle = 'rgba(150,160,200,0.06)';
+          ctx.fillRect(px, py+ph*0.05, pw, ph*0.4);
+          // Ocean
+          ctx.fillStyle = '#050d1a'; ctx.fillRect(px, py+ph*0.55, pw, ph*0.45);
+          ctx.fillStyle = '#07121f'; ctx.fillRect(px, py+ph*0.6, pw, ph*0.4);
+          // Ocean reflection of stars
+          ctx.fillStyle = 'rgba(100,120,180,0.15)'; ctx.fillRect(px, py+ph*0.56, pw, ph*0.06);
+          // Small waves
+          ctx.fillStyle = 'rgba(40,60,100,0.4)';
+          for (let i = 0; i < 5; i++) ctx.fillRect(px+i*pw*0.22, py+ph*0.64+Math.sin(i*2.3)*ph*0.02, pw*0.15, 2);
+          // Island just visible on horizon (tiny silhouette)
+          ctx.fillStyle = '#0a0806';
+          ctx.fillRect(px+pw*0.7, py+ph*0.55, pw*0.2, ph*0.04);
+          ctx.fillRect(px+pw*0.75, py+ph*0.52, pw*0.1, ph*0.04);
+          // Small boat center
+          ctx.fillStyle = '#c8c0b0'; ctx.fillRect(px+pw*0.38, py+ph*0.64, pw*0.24, ph*0.06);
+          ctx.fillStyle = '#b0a898'; ctx.fillRect(px+pw*0.39, py+ph*0.66, pw*0.22, ph*0.04);
+          // Mast
+          ctx.fillStyle = '#5a4020'; ctx.fillRect(px+pw*0.49, py+ph*0.48, pw*0.008, ph*0.18);
+          // Sail (furled at night)
+          ctx.fillStyle = '#888070'; ctx.fillRect(px+pw*0.492, py+ph*0.49, pw*0.03, ph*0.06);
+          // Two figures (dark, heads down)
+          ctx.fillStyle = '#1a1808';
+          ctx.fillRect(px+pw*0.42, py+ph*0.58, pw*0.04, ph*0.07);
+          ctx.fillRect(px+pw*0.42, py+ph*0.55, pw*0.03, ph*0.04);
+          ctx.fillRect(px+pw*0.55, py+ph*0.58, pw*0.04, ph*0.07);
+          ctx.fillRect(px+pw*0.56, py+ph*0.55, pw*0.03, ph*0.04);
+        }
+      }
+    ]
+  },
+
+  ending_conquest: {
+    frames: [
+      {
+        speaker: "THE CHIEF (dying)",
+        text: "You fight well... outsider. But tell me. Why? What did you want here? The stone? The island? ...Why do you always want everything?",
+        draw: (ctx, px, py, pw, ph) => {
+          // Dark dramatic scene
+          ctx.fillStyle = '#050302'; ctx.fillRect(px, py, pw, ph);
+          // Village burning in bg
+          ctx.fillStyle = 'rgba(200,60,0,0.15)'; ctx.fillRect(px, py, pw, ph);
+          ctx.fillStyle = '#1a0500'; ctx.fillRect(px, py+ph*0.4, pw, ph*0.6);
+          // Fire glow bg
+          ctx.fillStyle = 'rgba(255,80,0,0.12)'; ctx.fillRect(px, py, pw, ph);
+          // Ground
+          ctx.fillStyle = '#180e06'; ctx.fillRect(px, py+ph*0.7, pw, ph*0.3);
+          // Warriors watching (defeated, kneeling)
+          ctx.fillStyle = '#0a0806';
+          for (let i = 0; i < 4; i++) {
+            const bx = px+pw*(0.05+i*0.24);
+            ctx.fillRect(bx, py+ph*0.55, pw*0.035, ph*0.05); // head
+            ctx.fillRect(bx-pw*0.01, py+ph*0.59, pw*0.05, ph*0.12); // body (kneeling)
+          }
+          // Chief fallen (foreground center-left)
+          ctx.fillStyle = '#1a1005';
+          ctx.fillRect(px+pw*0.25, py+ph*0.58, pw*0.2, ph*0.07); // body lying
+          ctx.fillRect(px+pw*0.23, py+ph*0.55, pw*0.07, ph*0.06); // head
+          // Headdress fallen
+          ctx.fillStyle = '#2a1808'; ctx.fillRect(px+pw*0.18, py+ph*0.53, pw*0.12, ph*0.04);
+          for (let i = 0; i < 4; i++) ctx.fillRect(px+pw*0.19+i*pw*0.03, py+ph*0.5, pw*0.015, ph*0.04);
+          // Chief hand reaching up
+          ctx.fillStyle = '#6a3010'; ctx.fillRect(px+pw*0.27, py+ph*0.52, pw*0.025, ph*0.07);
+          // Artifact nearby (dim)
+          ctx.fillStyle = 'rgba(50,80,50,0.4)'; ctx.fillRect(px+pw*0.38, py+ph*0.6, pw*0.08, ph*0.08);
+          ctx.fillStyle = '#336633'; ctx.fillRect(px+pw*0.4, py+ph*0.62, pw*0.04, ph*0.05);
+          // Player standing (right side, triumphant pose)
+          ctx.fillStyle = '#2d7a2d';
+          ctx.fillRect(px+pw*0.62, py+ph*0.38, pw*0.07, ph*0.18); // body
+          ctx.fillStyle = '#c8a07a';
+          ctx.fillRect(px+pw*0.63, py+ph*0.32, pw*0.05, ph*0.08); // head
+          ctx.fillStyle = '#1a4a1a';
+          ctx.fillRect(px+pw*0.62, py+ph*0.54, pw*0.03, ph*0.1);
+          ctx.fillRect(px+pw*0.67, py+ph*0.54, pw*0.03, ph*0.1);
+          // Weapon raised
+          ctx.fillStyle = '#8a6020';
+          ctx.fillRect(px+pw*0.69, py+ph*0.26, pw*0.015, ph*0.18); // spear/axe
+          ctx.fillRect(px+pw*0.685, py+ph*0.26, pw*0.04, ph*0.04); // weapon head
+          // Arm holding weapon
+          ctx.fillStyle = '#c8a07a'; ctx.fillRect(px+pw*0.68, py+ph*0.4, pw*0.03, ph*0.1);
+        }
+      },
+      {
+        speaker: null,
+        text: "I left on the yacht alone. The artifact in my bag. What I would do with it, I didn't know. What the tribe would do without it — I didn't want to know.",
+        draw: (ctx, px, py, pw, ph) => {
+          // Sunrise ocean
+          ctx.fillStyle = '#05050f'; ctx.fillRect(px, py, pw, ph);
+          ctx.fillStyle = '#0a0520'; ctx.fillRect(px, py, pw, ph*0.25);
+          ctx.fillStyle = '#2a0a00'; ctx.fillRect(px, py+ph*0.12, pw, ph*0.2);
+          ctx.fillStyle = '#7a3000'; ctx.fillRect(px, py+ph*0.22, pw, ph*0.12);
+          ctx.fillStyle = '#cc5500'; ctx.fillRect(px, py+ph*0.3, pw, ph*0.08);
+          ctx.fillStyle = '#ee8020'; ctx.fillRect(px, py+ph*0.35, pw, ph*0.06);
+          ctx.fillStyle = '#ff9930'; ctx.fillRect(px, py+ph*0.38, pw, ph*0.04);
+          // Sun rising
+          ctx.fillStyle = '#ffaa00'; ctx.fillRect(px+pw*0.46, py+ph*0.37, pw*0.08, ph*0.05);
+          ctx.fillStyle = '#ffcc44'; ctx.fillRect(px+pw*0.48, py+ph*0.35, pw*0.04, ph*0.04);
+          // Ocean
+          ctx.fillStyle = '#0d1e30'; ctx.fillRect(px, py+ph*0.42, pw, ph*0.58);
+          ctx.fillStyle = '#102540'; ctx.fillRect(px, py+ph*0.46, pw, ph*0.54);
+          // Sun reflection
+          ctx.fillStyle = 'rgba(255,150,30,0.35)'; ctx.fillRect(px+pw*0.38, py+ph*0.44, pw*0.24, ph*0.1);
+          ctx.fillStyle = 'rgba(255,120,20,0.15)'; ctx.fillRect(px+pw*0.28, py+ph*0.54, pw*0.44, ph*0.08);
+          // Empty shore — no one waving (just dark land edge)
+          ctx.fillStyle = '#080604'; ctx.fillRect(px+pw*0.7, py+ph*0.39, pw*0.3, ph*0.08);
+          // Yacht (white, modern, larger than raft)
+          ctx.fillStyle = '#e8e8e8'; ctx.fillRect(px+pw*0.18, py+ph*0.55, pw*0.28, ph*0.06); // hull
+          ctx.fillStyle = '#cccccc'; ctx.fillRect(px+pw*0.19, py+ph*0.57, pw*0.26, ph*0.04);
+          ctx.fillStyle = '#f0f0f0'; ctx.fillRect(px+pw*0.2, py+ph*0.54, pw*0.22, ph*0.04); // deck
+          // Mast
+          ctx.fillStyle = '#8a8880'; ctx.fillRect(px+pw*0.31, py+ph*0.38, pw*0.008, ph*0.18);
+          // Sail (white)
+          ctx.fillStyle = 'rgba(240,240,230,0.9)'; ctx.fillRect(px+pw*0.315, py+ph*0.39, pw*0.065, ph*0.14);
+          // Corporate logo hint on sail
+          ctx.fillStyle = 'rgba(150,100,0,0.3)'; ctx.fillRect(px+pw*0.33, py+ph*0.41, pw*0.03, ph*0.07);
+          // Lone figure
+          ctx.fillStyle = '#1a1208';
+          ctx.fillRect(px+pw*0.245, py+ph*0.5, pw*0.03, ph*0.06);
+          ctx.fillRect(px+pw*0.25, py+ph*0.47, pw*0.025, ph*0.04);
+        }
+      }
+    ]
+  }
+};
+
+function playCutscene(id) {
+  const cs = CUTSCENES[id];
+  if (!cs || state.cutscenesSeen.has(id)) return;
+  state.cutscenePlaying = true;
+  state.cutscene = {
+    id,
+    frameIdx: 0,
+    frame: cs.frames[0],
+    textIdx: 0,
+    textDisplayed: '',
+    textTimer: 0,
+    waitForInput: false,
+    done: false
+  };
+  state.cutscenesSeen.add(id);
+}
+
+function advanceCutscene() {
+  const cs = state.cutscene;
+  if (!cs) return;
+  if (!cs.waitForInput && cs.textDisplayed.length < cs.frame.text.length) {
+    // Skip typewriter
+    cs.textDisplayed = cs.frame.text;
+    return;
+  }
+  // Next frame
+  const csDef = CUTSCENES[cs.id];
+  cs.frameIdx++;
+  if (cs.frameIdx >= csDef.frames.length) {
+    // End cutscene
+    state.cutscenePlaying = false;
+    state.cutscene = null;
+    if (csDef.onComplete) csDef.onComplete();
+  } else {
+    cs.frame = csDef.frames[cs.frameIdx];
+    cs.textDisplayed = '';
+    cs.textTimer = 0;
+    cs.waitForInput = false;
+  }
+}
+
+function renderCutscene(ctx) {
+  const cs = state.cutscene;
+  if (!cs) return;
+  const cw = canvas.width, ch = canvas.height;
+
+  // Black letterbox background
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, cw, ch);
+
+  // Pixel art scene (16:9 centered panel, 65% of height)
+  const panelH = Math.round(ch * 0.65);
+  const panelW = Math.round(panelH * 16/9);
+  const panelX = (cw - panelW) / 2;
+  const panelY = Math.round(ch * 0.05);
+
+  // Draw the scene
+  if (cs.frame && cs.frame.draw) {
+    cs.frame.draw(ctx, panelX, panelY, panelW, panelH);
+  }
+
+  // Text box at bottom
+  const tbY = panelY + panelH + 10;
+  const tbH = Math.round(ch * 0.22);
+  ctx.fillStyle = 'rgba(10,20,10,0.95)';
+  ctx.fillRect(panelX, tbY, panelW, tbH);
+  ctx.strokeStyle = '#4a7a1a';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(panelX, tbY, panelW, tbH);
+
+  // Speaker name
+  if (cs.frame.speaker) {
+    ctx.font = 'bold 13px "Courier New"';
+    ctx.fillStyle = '#c8f135';
+    ctx.fillText(cs.frame.speaker, panelX + 14, tbY + 18);
+  }
+
+  // Typewriter text
+  ctx.font = '11px "Courier New"';
+  ctx.fillStyle = '#e8f0c0';
+  const words = cs.textDisplayed.split(' ');
+  let line = '', lineY = tbY + (cs.frame.speaker ? 34 : 18);
+  words.forEach(word => {
+    const test = line + word + ' ';
+    if (ctx.measureText(test).width > panelW - 28) {
+      ctx.fillText(line, panelX + 14, lineY);
+      line = word + ' '; lineY += 16;
+    } else { line = test; }
+  });
+  ctx.fillText(line, panelX + 14, lineY);
+
+  // Continue prompt
+  if (cs.waitForInput) {
+    ctx.fillStyle = '#c8f135';
+    ctx.font = '10px "Courier New"';
+    ctx.fillText('[ CLICK OR SPACE TO CONTINUE ]', panelX + panelW/2 - 100, tbY + tbH - 8);
+  }
+
+  // Update typewriter
+  cs.textTimer++;
+  if (cs.textTimer % 2 === 0 && cs.textDisplayed.length < cs.frame.text.length) {
+    cs.textDisplayed += cs.frame.text[cs.textDisplayed.length];
+  } else if (cs.textDisplayed.length >= cs.frame.text.length) {
+    cs.waitForInput = true;
+  }
+}
+
 function triggerWin() {
   // Determine ending based on storyChoices
   const sc = state.storyChoices;
-  let title, text;
+  let title, text, cutsceneId;
   if (sc.learnedTruth && sc.returnedChild && sc.konaHelping) {
     title = 'PEACE';
     text = 'You returned the child. You learned the truth. Kona spoke to his brother. The artifact was offered back willingly. The volcano is quiet. The tribe watches you leave — not as an enemy. The Meridian will never come back.';
+    cutsceneId = 'ending_peace';
   } else if (sc.learnedTruth && sc.felixDone) {
     title = 'ESCAPE';
     text = 'The lifeboat cuts through the waves. Felix stares at the horizon. You both know what the Meridian was. You both know you\'re the only ones who got off that island with the truth. Neither of you speaks. The island fades. The silence stays.';
+    cutsceneId = 'ending_escape';
   } else {
     title = 'CONQUEST';
     text = 'The chief is defeated. The artifact is yours. The tribe scatters into the jungle. You board the lifeboat with everything you came for. The island watches you leave. It will remember.';
+    cutsceneId = 'ending_conquest';
   }
-  document.getElementById('win-title').textContent = title;
-  document.getElementById('win-text').textContent = text;
-  document.getElementById('win-screen').style.display = 'flex';
-  state.running = false;
-  SFX.victory();
-  animateYacht();
+  // Play ending cutscene first, then show win screen on complete
+  if (cutsceneId) {
+    // Force cutscene even if seen before (endings should always play)
+    state.cutscenesSeen.delete(cutsceneId);
+    const csDef = CUTSCENES[cutsceneId];
+    if (csDef) {
+      csDef.onComplete = () => {
+        document.getElementById('win-title').textContent = title;
+        document.getElementById('win-text').textContent = text;
+        document.getElementById('win-screen').style.display = 'flex';
+        state.running = false;
+        SFX.victory();
+        animateYacht();
+      };
+    }
+    playCutscene(cutsceneId);
+  } else {
+    document.getElementById('win-title').textContent = title;
+    document.getElementById('win-text').textContent = text;
+    document.getElementById('win-screen').style.display = 'flex';
+    state.running = false;
+    SFX.victory();
+    animateYacht();
+  }
 }
 
 function animateYacht() {
@@ -5215,6 +6118,11 @@ minimapCtx.imageSmoothingEnabled = false;
 window.addEventListener('keydown', e => {
   SFX.unlock();
   keys[e.key.toLowerCase()] = true;
+  // Cutscene advance
+  if (state.cutscenePlaying) {
+    if (e.key === ' ' || e.key === 'Enter') { advanceCutscene(); e.preventDefault(); }
+    return;
+  }
   // If start screen is visible, any key advances it
   // start screen removed
   if (!state.running) return;
@@ -5384,6 +6292,8 @@ window.addEventListener('DOMContentLoaded', () => {
   state.running = true;
   showMsg('YOU WASHED ASHORE. FIND THE OTHER SURVIVORS.', '#c8f135');
   requestAnimationFrame(gameLoopWithUI);
+  // Intro cutscene with delay
+  setTimeout(() => { playCutscene('intro'); }, 500);
   // Safe zone welcome message on day 1
   setTimeout(() => {
     if (state.day === 1) showMsg('SAFE BEACH — Gather resources and prepare before venturing into the jungle', '#c8f135');
@@ -5396,8 +6306,12 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 function gameLoopWithUI() {
-  if (!state.running) return;
+  if (!state.running && !state.cutscenePlaying) return;
   requestAnimationFrame(gameLoopWithUI);
+  if (state.cutscenePlaying) {
+    renderCutscene(ctx);
+    return;
+  }
   updatePlayer();
   updateEnemies();
   updateProjectiles();
