@@ -2186,6 +2186,7 @@ function spawnParticles(x, y, color, n) {
 
 // Floating text system
 function addFloatingText(x, y, text, color) {
+  if (state.floatingTexts.length >= 15) return;
   state.floatingTexts.push({x, y, text, color: color||'#ffffff', life: 45, vy: -1.5});
 }
 
@@ -4181,10 +4182,7 @@ function handleClick(sx, sy) {
       showMsg('You need an AXE — craft one (C menu: 2 wood + 2 stone)', '#e74c3c');
       return;
     }
-    if ((obj.type==='rock'||obj.type==='vol_rock') && Math.hypot(wx-obj.x, wy-obj.y) < 80) {
-      showMsg('You need a PICKAXE — craft one (C menu: 3 wood + 4 stone)', '#e74c3c');
-      return;
-    }
+
   }
 
   // Unarmed attacks (very weak)
@@ -4212,15 +4210,16 @@ function handleClick(sx, sy) {
     const d = Math.hypot(wx-obj.x, wy-obj.y);
     if (d > reach) continue;
 
-    // Trees: require axe tool (handled above)
     if (['tree','breadfruit','mape','purau','pandanus','filao','hutu'].includes(obj.type)) {
-      showMsg('You need an AXE — craft one (C menu: 2 wood + 2 stone)', '#e74c3c');
-      return;
+      const at = getActiveTool ? getActiveTool() : null;
+      if (!at || (!at.includes('axe') && at !== 'fire_axe')) {
+        showMsg('Equip an AXE first (press its hotbar number)', '#c8a060');
+        return;
+      }
+      startChopMinigame(obj); return;
     }
-    // Rocks: require pickaxe tool (handled above)
     if (obj.type === 'rock' || obj.type === 'vol_rock') {
-      showMsg('You need a PICKAXE — craft one (C menu: 3 wood + 4 stone)', '#e74c3c');
-      return;
+      startMineMinigame(obj); return;
     }
     if (obj.type === 'palm' && obj.respawn<=0) {
       obj.respawn = 1800;
