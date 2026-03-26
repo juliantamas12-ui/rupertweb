@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Lights Go Out: The Bronze Age Collapse and What It Teaches About Systemic Fragility",
+    date: "2026-03-26",
+    category: "History",
+    excerpt: "Around 1200 BC, within the span of roughly fifty years, almost every major civilization in the Eastern Mediterranean ceased to exist. The Hittite Empire — which had fought Egypt to a standstill at Kadesh and negotiated the oldest known peace treaty i...",
+    url: "essays/2026-03-26-the-lights-go-out-the-bronze-age-collapse-and-what-it-teache.html"
+  },
+  {
     title: "The Ransom of Haiti: How a Nation Paid for Its Own Freedom",
     date: "2026-03-25",
     category: "History",
@@ -64,20 +71,28 @@ const ESSAYS = [
    Fields: subject, title, due (YYYY-MM-DD), status ('pending'|'done')
    ══════════════════════════════════════════════════════════════ */
 const SCHOOL_TASKS = [
-  // Last updated: 2026-03-24 via ManageBac scraper
-  // --- Today (Tue Mar 24) ---
-  { subject: "Italian", title: "Test di GRAMMATICA (Futuro)", due: "2026-03-24", time: "All Day", status: "pending", type: "Test" },
+  // Last updated: 2026-03-25 via ManageBac scraper
+  // --- Past (Mon Mar 23) ---
+  { subject: "Math 8", title: "Math 8: Apothem Exercises", due: "2026-03-23", time: "8:30 AM", status: "done", type: "Homework" },
+  { subject: "English 7", title: "Eng 7 hw", due: "2026-03-23", time: "9:00 AM", status: "done", type: "Homework" },
+  { subject: "Science 7", title: "Classwork Science 7", due: "2026-03-23", time: "10:30 AM", status: "done", type: "Class work" },
+  { subject: "Science 7", title: "HW Science 7", due: "2026-03-23", time: "11:35 AM", status: "done", type: "Homework" },
+  { subject: "History 7", title: "Classical period worksheet", due: "2026-03-23", time: "12:45 PM", status: "done", type: "Homework" },
+  // --- Past (Tue Mar 24) ---
+  { subject: "Italian", title: "Test di GRAMMATICA (Futuro)", due: "2026-03-24", time: "All Day", status: "done", type: "Test" },
   { subject: "Ed. Technology 7", title: "Ed. Tech 7 - Locally sourced building materials", due: "2026-03-24", time: "8:30 AM", status: "done", type: "Homework" },
-  { subject: "Science 7", title: "Classwork Science 7", due: "2026-03-24", time: "11:10 AM", status: "pending", type: "Class work" },
-  { subject: "Rel Ed 7", title: "Jesus at the Temple and Passover Meal", due: "2026-03-24", time: "12:25 PM", status: "pending", type: "Homework" },
-  { subject: "General Music 7", title: "Ukulele Assessment", due: "2026-03-24", time: "1:35 PM", status: "pending", type: "Performance/Assessment" },
-  // --- Wed Mar 25 ---
+  { subject: "Science 7", title: "Classwork Science 7", due: "2026-03-24", time: "11:10 AM", status: "done", type: "Class work" },
+  { subject: "Rel Ed 7", title: "Jesus at the Temple and Passover Meal", due: "2026-03-24", time: "12:25 PM", status: "done", type: "Homework" },
+  { subject: "German 7", title: "Cover Work - Dative Case Practice", due: "2026-03-24", time: "12:35 PM", status: "done", type: "Homework" },
+  // --- Today (Wed Mar 25) ---
   { subject: "Math 8", title: "Math 8: Surface Area of Prisms", due: "2026-03-25", time: "12:30 PM", status: "pending", type: "Homework" },
   { subject: "Math 7", title: "Math 7 (Formative)", due: "2026-03-25", time: "12:35 PM", status: "pending", type: "Quiz" },
   { subject: "Math 7", title: "Math 7 (HW)", due: "2026-03-25", time: "12:35 PM", status: "pending", type: "Homework" },
+  { subject: "Ed. Technology 7", title: "Ed. Tech 7 - Classroom Pods", due: "2026-03-25", time: "1:35 PM", status: "pending", type: "Presentations/Classwork" },
   { subject: "Art 7", title: "RENAISSANCE PRESENTATIONS FIRST GROUPS", due: "2026-03-25", time: "2:30 PM", status: "pending", type: "Paper" },
   // --- Thu Mar 26 ---
   { subject: "English 7", title: "Eng 7 hw", due: "2026-03-26", time: "9:00 AM", status: "pending", type: "Homework" },
+  { subject: "General Music 7", title: "Ukulele Assessment", due: "2026-03-26", time: "12:35 PM", status: "pending", type: "Performance/Assessment" },
   // --- Fri Mar 27 ---
   { subject: "History 7", title: "Age of Exploration Summative Assessment", due: "2026-03-27", time: "11:20 AM", status: "pending", type: "Summative" },
   { subject: "Art 7", title: "RENAISSANCE PRESENTATIONS SECOND GROUPS", due: "2026-03-27", time: "2:30 PM", status: "pending", type: "Presentation" },
