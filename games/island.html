@@ -6227,11 +6227,11 @@ function updateUI() {
   const labels=['SURVIVOR','SETTLEMENT','FORTIFIED','VILLAGE'];
   document.getElementById('settle-badge').textContent = labels[p.settlementLevel]||'';
   document.getElementById('weather-icon').textContent = state.weatherRain ? '(STORM)' : '';
-  document.getElementById('hw').textContent = p.inv.wood||0;
-  document.getElementById('hs').textContent = p.inv.stone||0;
+  const hwEl = document.getElementById('hw'); if(hwEl) hwEl.textContent = p.inv.wood||0;
+  const hsEl = document.getElementById('hs'); if(hsEl) hsEl.textContent = p.inv.stone||0;
   const totalFood=(p.inv.fish||0)+(p.inv.fruit||0)+(p.inv.fish_cooked||0)+(p.inv.fruit_cooked||0)+(p.inv.coconut||0);
-  document.getElementById('hf').textContent = totalFood;
-  document.getElementById('hwt').textContent = Math.round(p.water);
+  const hfEl = document.getElementById('hf'); if(hfEl) hfEl.textContent = totalFood;
+  const hwtEl = document.getElementById('hwt'); if(hwtEl) hwtEl.textContent = Math.round(p.water);
   const tool = p.inv.fire_spear>0?'FSPEAR':p.inv.spear>0?'SPEAR':p.inv.fire_axe>0?'FAXE':p.inv.sword>0?'SWORD':p.inv.axe>0?'AXE':p.inv.pickaxe>0?'PICK':'-';
   document.getElementById('ht').textContent = tool;
   document.getElementById('hd').textContent = state.day;
