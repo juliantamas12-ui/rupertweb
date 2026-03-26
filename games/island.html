@@ -6211,12 +6211,7 @@ window.addEventListener('keydown', e => {
   const numKey = parseInt(e.key);
   if (numKey >= 1 && numKey <= 6) { state.activeSlot = numKey; }
   if (e.key.toLowerCase() === 'f') { handleMinigameKey('f'); if(!state.minigame && state.running) { if(state.player.inv.fishing_rod>0){ const tile=getTile(state.player.x,state.player.y); if([1,2].includes(tile))startFishMinigame(); } } }
-  // Quick-consume hotkeys 1-5
-  if (e.key === '1') { const pl=state.player; if(pl.inv.coconut>0){pl.inv.coconut--;pl.water=Math.min(pl.maxWater,pl.water+35);showMsg('+35 WATER (COCONUT)','#3498db');updateUI();} }
-  if (e.key === '2') { const pl=state.player; if(pl.inv.fruit>0){pl.inv.fruit--;if(Math.random()<0.2){pl.sick=200;showMsg('SICK FROM RAW FRUIT!','#e74c3c');}else{pl.food=Math.min(pl.maxFood,pl.food+20);showMsg('+20 FOOD (FRUIT)','#e67e22');}updateUI();} else if(pl.inv.fruit_cooked>0){pl.inv.fruit_cooked--;pl.food=Math.min(pl.maxFood,pl.food+40);showMsg('+40 FOOD (COOKED FRUIT)','#e67e22');updateUI();} }
-  if (e.key === '3') { const pl=state.player; if(pl.inv.fish_cooked>0){pl.inv.fish_cooked--;pl.food=Math.min(pl.maxFood,pl.food+50);showMsg('+50 FOOD (COOKED FISH)','#e67e22');updateUI();} else if(pl.inv.fish>0){pl.inv.fish--;if(Math.random()<0.2){pl.sick=200;showMsg('SICK FROM RAW FISH!','#e74c3c');}else{pl.food=Math.min(pl.maxFood,pl.food+25);showMsg('+25 FOOD (RAW FISH)','#e67e22');}updateUI();} }
-  if (e.key === '4') { const pl=state.player; if(pl.inv.torch>0){pl.torch=!pl.torch;showMsg(pl.torch?'TORCH ON':'TORCH OFF','#ff8800');} }
-  if (e.key === '5') { const pl=state.player; if(pl.inv.spear>0||pl.inv.fire_spear>0){showMsg(pl.inv.fire_spear>0?'FIRE SPEAR READY':'SPEAR READY','#aaaaaa');} }
+  // Quick-consume hotkeys 1-5 }else{pl.food=Math.min(pl.maxFood,pl.food+20);showMsg('+20 FOOD (FRUIT)','#e67e22');}updateUI();} else if(pl.inv.fruit_cooked>0){pl.inv.fruit_cooked--;pl.food=Math.min(pl.maxFood,pl.food+40);showMsg('+40 FOOD (COOKED FRUIT)','#e67e22');updateUI();} } else if(pl.inv.fish>0){pl.inv.fish--;if(Math.random()<0.2){pl.sick=200;showMsg('SICK FROM RAW FISH!','#e74c3c');}else{pl.food=Math.min(pl.maxFood,pl.food+25);showMsg('+25 FOOD (RAW FISH)','#e67e22');}updateUI();} } } }
   if (e.key === 'Escape') {
     state.buildMode=false; state.buildItem=null; document.getElementById('build-menu').style.display='none'; state.minigame=null; state.dialogue=null;
     const anyOpen = ['inv-panel','craft-panel','build-menu'].some(id => { const el=document.getElementById(id); return el && el.style.display==='block'; });
@@ -6349,6 +6344,22 @@ function updateUI() {
     timeEl.style.letterSpacing = '2px';
     timeEl.style.fontFamily = "'Lato', sans-serif";
   }
+
+  // Hotbar - tools only
+  const toolSlots2 = [
+    {id:'axe',label:'AXE'},{id:'pickaxe',label:'PICK'},{id:'sword',label:'SWORD'},
+    {id:'spear',label:'SPEAR'},{id:'fire_axe',label:'F.AXE'},{id:'fire_spear',label:'F.SPEAR'},
+    {id:'fishing_rod',label:'ROD'},{id:'torch',label:'TORCH'}
+  ].filter(t => (p.inv[t.id]||0) > 0);
+  for (let i = 1; i <= 6; i++) {
+    const sl = toolSlots2[i-1];
+    const el = document.getElementById('h'+i+'name');
+    const hs = document.getElementById('hslot'+i);
+    if (!el) continue;
+    el.textContent = sl ? sl.label : '-';
+    if (hs) { hs.style.borderColor = (state.activeSlot===i && sl) ? '#c8f135' : ''; hs.style.boxShadow = (state.activeSlot===i && sl) ? '0 0 10px rgba(200,241,53,0.5)' : ''; }
+  }
+
 }
 
 function renderBuildMenu() {
