@@ -269,6 +269,17 @@ const state = {
     poison: 0, // frames of poison (spider bite)
     attackCooldown: 0, // frames until next weapon swing
     attackFlash: 0,    // brief flash on player sprite when attacking
+    hitFlash: 0,       // red flash when player takes damage
+    swordComboCount: 0, // hits in last 3 seconds
+    swordComboTimer: 0, // frames since combo reset (180 frames = 3s)
+    swordComboReady: false, // next hit does 2x
+    spearVisTimer: 0,  // frames to draw spear thrust visual
+    slashVisTimer: 0,  // frames to draw sword slash visual
+    slashAngle: 0,     // angle of last sword swing
+    bowCharge: 0,      // 0-30 frames bow charge
+    bowCharging: false,
+    toolDurability: {axe:20, pickaxe:15, sword:25, spear:20, fire_axe:20, fire_spear:15, stone_knife:10, bow:30},
+    knifeThrows: 3,    // throws remaining before knife breaks
     inv: {
       wood:0, stone:0, coconut:0, fruit:0, fish:0,
       fish_cooked:0, fruit_cooked:0,
@@ -279,7 +290,8 @@ const state = {
       bed:0, chest:0, wall:0, watchtower:0,
       gate:0, forge:0, water_barrel:0, smoker:0, raft:0,
       vessel:0, chiefs_mask:0,
-      tribal_child:0
+      tribal_child:0,
+      vine:0, stone_knife:0, bow:0, arrows:0, fire_bottle:0
     },
     chiefDefeated: false,
     settlementLevel: 0, // 0=survivor,1=settlement,2=fortified,3=village
@@ -296,6 +308,8 @@ const state = {
   npcs: [],
   particles: [],
   projectiles: [],
+  floatingTexts: [],
+  fireTiles: [], // {x, y, timer} active fire areas
   loreStones: [],
   weatherRain: false,
   weatherTimer: 0,
@@ -533,6 +547,7 @@ function genObjects() {
         else if (r < 0.030) state.objects.push({type:'berry', x:wx, y:wy, hp:1, maxHp:1, respawn:0});
         else if (r < 0.033) state.objects.push({type:'jungle_bird', x:wx, y:wy, decor:true, colorIdx:Math.floor(Math.random()*3)});
         else if (r < 0.048) state.objects.push({type:'jungle_flower', x:wx, y:wy, decor:true, colorIdx:Math.floor(Math.random()*3)});
+        else if (r < 0.052) state.objects.push({type:'vine_pickup', x:wx, y:wy, collected:false});
       } else if (t === T.JUNGLE_DARK) {
         if (r < 0.045) state.objects.push({type:selectTree(t,nearWater), x:wx, y:wy, hp:5, maxHp:5});
         else if (r < 0.049) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4});
@@ -874,6 +889,56 @@ function drawPlayer(ctx, sx, sy, p) {
     ctx.fillRect(sx-12, ay-20, 24, 40);
   }
 
+  // Hit flash — red overlay when player takes damage
+  if (p.hitFlash > 0) {
+    ctx.fillStyle = `rgba(255,0,0,${p.hitFlash/8 * 0.55})`;
+    ctx.fillRect(sx-12, ay-20, 24, 40);
+  }
+
+  // Sword slash arc — 3 white lines radiating toward click direction
+  if (p.slashVisTimer > 0 && p.inv && (p.inv.sword > 0 || p.inv.stone_knife > 0)) {
+    const angle = p.slashAngle || 0;
+    ctx.save();
+    ctx.strokeStyle = `rgba(255,255,255,${p.slashVisTimer/8 * 0.9})`;
+    ctx.lineWidth = 2;
+    for (let li = -1; li <= 1; li++) {
+      const a = angle + li * 0.35;
+      ctx.beginPath();
+      ctx.moveTo(sx + Math.cos(a)*8, ay + Math.sin(a)*8);
+      ctx.lineTo(sx + Math.cos(a)*36, ay + Math.sin(a)*36);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // Spear thrust visual — line extending toward cursor
+  if (p.spearVisTimer > 0 && p.inv && (p.inv.spear > 0 || p.inv.fire_spear > 0)) {
+    const angle = p.slashAngle || 0;
+    ctx.save();
+    const spearColor = (p.inv.fire_spear > 0) ? `rgba(255,140,0,${p.spearVisTimer/5*0.9})` : `rgba(220,220,180,${p.spearVisTimer/5*0.9})`;
+    ctx.strokeStyle = spearColor;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(sx, ay);
+    ctx.lineTo(sx + Math.cos(angle)*80, ay + Math.sin(angle)*80);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Bow charge visual
+  if (p.bowCharging && p.bowCharge > 0) {
+    const chargeRatio = (p.bowCharge||0) / 30;
+    ctx.save();
+    ctx.strokeStyle = `rgba(200,180,100,${0.4 + chargeRatio*0.6})`;
+    ctx.lineWidth = 2;
+    const angle = Math.atan2((my + state.cam.y) - p.y, (mx + state.cam.x) - p.x);
+    ctx.beginPath();
+    ctx.moveTo(sx, ay);
+    ctx.lineTo(sx + Math.cos(angle)*(20+chargeRatio*60), ay + Math.sin(angle)*(20+chargeRatio*60));
+    ctx.stroke();
+    ctx.restore();
+  }
+
   // Sick tint
   if (p.sick > 0) {
     ctx.fillStyle = `rgba(100,200,100,${Math.min(0.3, p.sick/200)})`;
@@ -882,6 +947,14 @@ function drawPlayer(ctx, sx, sy, p) {
 }
 
 function drawEnemy(ctx, sx, sy, e) {
+  // Dying animation — fade out
+  if (e.dying) {
+    const opacity = (e.dyingTimer || 1) / 15;
+    ctx.save();
+    ctx.globalAlpha = opacity;
+    // Fall effect: offset downward
+    sy += (15 - (e.dyingTimer||1)) * 1.5;
+  }
   const isChief = e.type === 'chief';
   const isShadow = e.type === 'shadow';
   const isArcher = e.type === 'archer';
@@ -940,14 +1013,26 @@ function drawEnemy(ctx, sx, sy, e) {
 
   // HP bar above
   const bw = Math.round(30*sc);
-  px(ctx, '#333', sx - bw/2, ay - Math.round(32*sc), bw, 4);
-  px(ctx, isChief?'#f39c12':'#e74c3c', sx - bw/2, ay - Math.round(32*sc), Math.round(bw * e.hp/e.maxHp), 4);
+  if (!e.dying) {
+    px(ctx, '#333', sx - bw/2, ay - Math.round(32*sc), bw, 4);
+    px(ctx, isChief?'#f39c12':'#e74c3c', sx - bw/2, ay - Math.round(32*sc), Math.round(bw * Math.max(0,e.hp)/e.maxHp), 4);
+  }
 
   // Hit flash
-  if (false) {
-    // hitFlash removed
-    ctx.fillStyle = 'rgba(255,255,255,0)';
+  if (e.hitFlash > 0) {
+    e.hitFlash--;
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
     ctx.fillRect(sx - Math.round(8*sc), ay - Math.round(14*sc), Math.round(16*sc), Math.round(26*sc));
+  }
+
+  // Burning overlay — orange tint
+  if (e.burning > 0) {
+    ctx.fillStyle = `rgba(255,100,0,${Math.min(0.45, e.burning/180*0.45)})`;
+    ctx.fillRect(sx - Math.round(8*sc), ay - Math.round(14*sc), Math.round(16*sc), Math.round(26*sc));
+  }
+
+  if (e.dying) {
+    ctx.restore();
   }
 }
 
@@ -2099,6 +2184,61 @@ function spawnParticles(x, y, color, n) {
   }
 }
 
+// Floating text system
+function addFloatingText(x, y, text, color) {
+  state.floatingTexts.push({x, y, text, color: color||'#ffffff', life: 45, vy: -1.5});
+}
+
+function updateFloatingTexts() {
+  state.floatingTexts = state.floatingTexts.filter(ft => {
+    ft.y += ft.vy;
+    ft.life--;
+    return ft.life > 0;
+  });
+}
+
+function drawFloatingTexts(ctx, camX, camY) {
+  ctx.save();
+  state.floatingTexts.forEach(ft => {
+    const a = ft.life / 45;
+    ctx.globalAlpha = a;
+    ctx.font = 'bold 14px "Courier New"';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = ft.color;
+    ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+    ctx.lineWidth = 2;
+    const sx = ft.x - camX, sy = ft.y - camY;
+    ctx.strokeText(ft.text, sx, sy);
+    ctx.fillText(ft.text, sx, sy);
+  });
+  ctx.globalAlpha = 1;
+  ctx.textAlign = 'left';
+  ctx.restore();
+}
+
+// Draw vine resource pickup
+function drawVine(ctx, sx, sy) {
+  // thin green curved lines, 3-4 tendrils hanging from above
+  ctx.strokeStyle = '#2a8a18';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 4; i++) {
+    const ox = sx - 6 + i * 4;
+    ctx.beginPath();
+    ctx.moveTo(ox, sy - 14);
+    ctx.quadraticCurveTo(ox + (i%2===0?-4:4), sy - 7, ox + (i%2===0?2:-2), sy + 2);
+    ctx.stroke();
+    // leaf
+    ctx.fillStyle = '#3a9a20';
+    ctx.fillRect(ox + (i%2===0?-3:1), sy - 8 + i, 4, 3);
+  }
+  // Glow to show it's collectible
+  const g = 0.2 + Math.sin(state.frameCount * 0.1 + sx * 0.01) * 0.1;
+  ctx.fillStyle = `rgba(100,255,80,${g})`;
+  ctx.beginPath();
+  ctx.arc(sx, sy - 6, 8, 0, Math.PI*2);
+  ctx.fill();
+}
+
 function updateParticles() {
   state.particles = state.particles.filter(p => {
     p.x += p.vx; p.y += p.vy;
@@ -2224,8 +2364,17 @@ function updateEnemies() {
 
   allE.forEach((e, idx) => {
     if (!e || e.x === undefined || e.y === undefined) return; // guard against corrupt entries
+    if (e.dying) return; // skip AI for dying enemies
     const dx = p.x - e.x, dy = p.y - e.y;
     const dist = Math.sqrt(dx*dx+dy*dy);
+    // Burn tick — fire spear burn effect
+    if (e.burning > 0) {
+      e.burning--;
+      if (state.frameCount % 6 === 0) {
+        e.hp -= 1;
+        spawnParticle(e.x + (Math.random()-0.5)*12, e.y - 4, (Math.random()-0.5)*0.8, -1.2, Math.random()<0.5?'#ff6600':'#ff4400', 20);
+      }
+    }
     // Skip distant enemies (performance)
     if (dist > 800 && e.type !== 'chief') return;
     e.walkTimer++;
@@ -2321,8 +2470,11 @@ function updateEnemies() {
         e.attackTimer = 0;
         const dmg = e.type==='chief' ? 20 : (e.type==='shadow'?12:8);
         p.hp = Math.max(0, p.hp - dmg);
+        p.hitFlash = 8;
         spawnParticles(p.x, p.y, '#e74c3c', 8);
+        addFloatingText(p.x, p.y - 20, '-'+dmg, '#ff4444');
         SFX.hurt();
+        if (navigator.vibrate) navigator.vibrate([50,20,50]);
       }
     }
 
@@ -2365,17 +2517,23 @@ function updateEnemies() {
     }
   });
 
-  // Remove dead enemies — trigger group scatter on kill
+  // Remove dead enemies — trigger group scatter on kill, show dying animation
   const prevCount = state.enemies.length;
   state.enemies = state.enemies.filter(e => {
-    if (e.hp <= 0) {
+    if (e.hp <= 0 && !e.dying) {
+      // Start dying animation
+      e.dying = true;
+      e.dyingTimer = 15;
       // Scatter nearby enemies
       state.enemies.forEach(other => {
         if (other !== e && Math.hypot(other.x-e.x, other.y-e.y) < 150) {
           other.scatterTimer = 120; // 2 seconds
         }
       });
-      return false;
+    }
+    if (e.dying) {
+      e.dyingTimer--;
+      return e.dyingTimer > 0;
     }
     return true;
   });
@@ -2395,6 +2553,81 @@ function updateProjectiles() {
   state.projectiles = state.projectiles.filter(proj => {
     proj.x += proj.vx; proj.y += proj.vy;
     proj.life--;
+    // Arrow gravity
+    if (proj.type === 'player_arrow') {
+      proj.vy += 0.1;
+    }
+
+    if (proj.type === 'fire_bottle') {
+      // Explode on hitting an enemy or running out of life
+      let exploded = false;
+      const allTargets = [...state.enemies, ...(state.chief?[state.chief]:[])];
+      for (const e of allTargets) {
+        if (Math.hypot(proj.x-e.x, proj.y-e.y) < 20) { exploded = true; break; }
+      }
+      if (exploded || proj.life <= 0) {
+        // Explosion
+        SFX.fireExplode();
+        spawnParticles(proj.x, proj.y, '#ff6600', 16);
+        spawnParticles(proj.x, proj.y, '#ffcc00', 8);
+        addFloatingText(proj.x, proj.y - 20, 'BOOM!', '#ff6600');
+        // Damage nearby enemies
+        for (const e of allTargets) {
+          if (Math.hypot(proj.x-e.x, proj.y-e.y) < 60) {
+            e.hp -= 20;
+            e.burning = 90;
+            addFloatingText(e.x, e.y-20, '-20', '#ff6600');
+          }
+        }
+        // Create fire tiles (3x3 grid around impact)
+        const ftx = Math.floor(proj.x / TSIZE);
+        const fty = Math.floor(proj.y / TSIZE);
+        if (!state.fireTiles) state.fireTiles = [];
+        for (let fy = -1; fy <= 1; fy++) {
+          for (let fx2 = -1; fx2 <= 1; fx2++) {
+            state.fireTiles.push({x:(ftx+fx2)*TSIZE+TSIZE/2, y:(fty+fy)*TSIZE+TSIZE/2, timer:300});
+          }
+        }
+        return false;
+      }
+      return true;
+    }
+
+    if (proj.type === 'knife_throw') {
+      let hit = false;
+      const allTargets2 = [...state.enemies, ...(state.chief?[state.chief]:[]), ...state.creatures.filter(c=>c.type!=='crab')];
+      for (const e of allTargets2) {
+        if (Math.hypot(proj.x-e.x, proj.y-e.y) < 18) {
+          e.hp -= 10;
+          e.hitFlash = 4;
+          addFloatingText(e.x, e.y-20, '-10', '#aaaacc');
+          spawnParticles(e.x, e.y, '#aaaacc', 4);
+          SFX.hit();
+          hit = true;
+          break;
+        }
+      }
+      if (hit) return false;
+      return proj.life > 0;
+    }
+
+    if (proj.type === 'player_arrow') {
+      let hit = false;
+      const allTargets2 = [...state.enemies, ...(state.chief?[state.chief]:[]), ...state.creatures.filter(c=>c.type!=='crab')];
+      for (const e of allTargets2) {
+        if (Math.hypot(proj.x-e.x, proj.y-e.y) < 16) {
+          e.hp -= 12;
+          e.hitFlash = 4;
+          addFloatingText(e.x, e.y-20, '-12', '#c8a060');
+          spawnParticles(e.x, e.y, '#c8a060', 5);
+          SFX.hit();
+          hit = true;
+          break;
+        }
+      }
+      if (hit) return false;
+      return proj.life > 0;
+    }
 
     if (proj.type === 'coconut_throw') {
       let hit = false;
@@ -2543,7 +2776,43 @@ function drawCreatures(ctx, camX, camY) {
 function drawProjectiles(ctx, camX, camY) {
   state.projectiles.forEach(proj => {
     const sx = proj.x - camX, sy = proj.y - camY;
-    if (proj.type === 'arrow') {
+    if (proj.type === 'player_arrow') {
+      // Thin 16px line in direction of travel
+      const angle = Math.atan2(proj.vy, proj.vx);
+      ctx.save();
+      ctx.strokeStyle = '#c8a060';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(sx - Math.cos(angle)*8, sy - Math.sin(angle)*8);
+      ctx.lineTo(sx + Math.cos(angle)*8, sy + Math.sin(angle)*8);
+      ctx.stroke();
+      // Arrowhead
+      ctx.fillStyle = '#888899';
+      ctx.fillRect(Math.round(sx + Math.cos(angle)*6)-2, Math.round(sy + Math.sin(angle)*6)-2, 4, 4);
+      ctx.restore();
+    } else if (proj.type === 'knife_throw') {
+      // Small grey blade spinning
+      ctx.save();
+      ctx.translate(sx, sy);
+      ctx.rotate(state.frameCount * 0.4);
+      ctx.fillStyle = '#aaaacc';
+      ctx.fillRect(-5, -2, 10, 4);
+      ctx.fillStyle = '#888899';
+      ctx.fillRect(-5, -2, 4, 4);
+      ctx.restore();
+    } else if (proj.type === 'fire_bottle') {
+      // Orange/red bottle in flight
+      ctx.fillStyle = '#ff6600';
+      ctx.beginPath();
+      ctx.arc(sx, sy, 6, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = '#ffcc00';
+      ctx.beginPath();
+      ctx.arc(sx-2, sy-2, 3, 0, Math.PI*2);
+      ctx.fill();
+      // Trail
+      spawnParticle(proj.x, proj.y, (Math.random()-0.5)*0.5, 0.3, '#ff8800', 8);
+    } else if (proj.type === 'arrow') {
       ctx.fillStyle = '#8B6914';
       ctx.fillRect(sx-6, sy-1, 12, 2);
       ctx.fillStyle = '#666';
@@ -2834,18 +3103,34 @@ function handleMinigameKey(key) {
     }
 
     if (mg.progress >= mg.maxProgress) {
-      const yield_ = 2 + (Math.random() < 0.4 ? 1 : 0); // 2 or 3 wood
-      state.player.inv.wood += yield_;
+      const yield_ = 3; // always 3 wood (improved feel)
+      const p2 = state.player;
+      p2.inv.wood += yield_;
+      const tx = mg.target.x, ty = mg.target.y;
+      // Axe durability
+      if (p2.toolDurability && p2.toolDurability.axe > 0) {
+        p2.toolDurability.axe--;
+        if (p2.toolDurability.axe <= 0) { p2.inv.axe = 0; showMsg('AXE BROKE — craft a new one', '#e74c3c'); updateUI(); }
+      }
+      // Big floating "+3 WOOD"
+      addFloatingText(tx, ty - 30, '+3 WOOD', '#c8a060');
       showMsg(`+${yield_} WOOD`, '#8B6914');
       SFX.pickup();
-      // Floating "+N WOOD" particle
-      const tx = mg.target.x, ty = mg.target.y;
-      spawnParticle(tx, ty-20, 0, -1.5, '#c8f135', 80);
-      spawnParticle(tx-8, ty-10, -0.5, -0.8, '#8B6914', 50);
-      spawnParticle(tx+8, ty-10, 0.5, -0.8, '#8B6914', 50);
+      // Wood fly-out particles (brown rectangles scatter)
+      for (let wi = 0; wi < 4; wi++) {
+        state.particles.push({x:tx, y:ty, vx:(Math.random()-0.5)*5, vy:-2-Math.random()*3, color:'#8B6914', life:40, maxLife:40, size:5});
+      }
       spawnParticles(tx, ty, '#5c3d1e', 8);
-      // Remove tree
-      state.objects = state.objects.filter(o => o !== mg.target);
+      // Tree shake: store shake target, replace with fallen log decor, then remove
+      mg.target._shaking = true; mg.target._shakeTimer = 9;
+      const capTarget = mg.target;
+      setTimeout(() => {
+        // Replace with fallen log decor for 10 seconds
+        const logObj = {type:'fallen_log', x:capTarget.x, y:capTarget.y, decor:true, _lifeTimer:600};
+        state.objects.push(logObj);
+        state.objects = state.objects.filter(o => o !== capTarget);
+        setTimeout(() => { state.objects = state.objects.filter(o => o !== logObj); }, 10000);
+      }, 150);
       state.minigame = null;
     }
   }
@@ -2869,18 +3154,34 @@ function handleMineClick(wx, wy) {
   const zy = by + 28 + z.y - 60;
   if (wx >= zx && wx <= zx+24 && wy >= zy && wy <= zy+24) {
     z.hit = true;
-    spawnParticles(mg.target.x, mg.target.y, '#666677', 4);
+    // Spark particles on each hit
+    const numSparks = 4 + Math.floor(Math.random()*3);
+    for (let si = 0; si < numSparks; si++) {
+      const sColor = Math.random() < 0.5 ? '#ffff88' : '#ffffff';
+      state.particles.push({x:mg.target.x, y:mg.target.y, vx:(Math.random()-0.5)*5, vy:-2-Math.random()*3, color:sColor, life:12+Math.floor(Math.random()*8), maxLife:20, size:2});
+    }
+    spawnParticles(mg.target.x, mg.target.y, '#666677', 3);
     SFX.chop();
     mg.currentZone++;
     mg.zoneTimer = 180;
     if (mg.currentZone >= mg.zones.length) {
       const perfect = mg.zones.every(z2=>z2.hit);
-      const yield_ = perfect ? 3 : (2 + (Math.random() < 0.3 ? 1 : 0)); // 2-3 stone
+      const yield_ = perfect ? 3 : 2;
       const wasZeroStone = (state.player.inv.stone||0) === 0;
       state.player.inv.stone += yield_;
+      // Pickaxe durability
+      const p3 = state.player;
+      if (p3.toolDurability && p3.toolDurability.pickaxe > 0) {
+        p3.toolDurability.pickaxe--;
+        if (p3.toolDurability.pickaxe <= 0) { p3.inv.pickaxe = 0; showMsg('PICKAXE BROKE — craft a new one', '#e74c3c'); updateUI(); }
+      }
+      // Grey scatter particles
+      for (let gi = 0; gi < 5; gi++) {
+        state.particles.push({x:mg.target.x, y:mg.target.y, vx:(Math.random()-0.5)*4, vy:-1.5-Math.random()*2, color:'#888899', life:30, maxLife:30, size:4});
+      }
+      addFloatingText(mg.target.x, mg.target.y - 30, '+'+yield_+' STONE', '#888899');
       showMsg(`+${yield_} STONE${perfect?' (PERFECT!)':''}`, '#888899');
       SFX.pickup();
-      // Tutorial hint: first stone pickup
       if (wasZeroStone && !state.tutorials.stoneHint) {
         state.tutorials.stoneHint = true;
         setTimeout(() => showMsg('Craft tools at the WORKBENCH (C key)', '#c8f135'), 1500);
@@ -3020,6 +3321,24 @@ const SFX = (() => {
       [523, 659, 784, 1047].forEach((f, i) => {
         setTimeout(() => _osc('sine', f, 0.1, 0.3), i * 100);
       });
+    },
+
+    // Metal sword clang
+    swordClang() {
+      _osc('square', 440, 0.1, 0.08, 220);
+      _noise(0.15, 0.05, 4000);
+    },
+
+    // Bow release whoosh
+    bowRelease() {
+      _noise(0.12, 0.08, 3000);
+      _osc('sawtooth', 600, 0.06, 0.07, 150);
+    },
+
+    // Fire crackle (bottle explode)
+    fireExplode() {
+      _noise(0.3, 0.2, 800);
+      _osc('sawtooth', 200, 0.15, 0.25, 40);
     }
   };
 })();
@@ -3031,6 +3350,34 @@ const SFX = (() => {
 let keys = {};
 let mx = 0, my = 0;
 let mouseDown = false;
+
+// Bow fire on mouseup
+document.addEventListener('mousedown', () => { mouseDown = true; });
+document.addEventListener('mouseup', () => {
+  mouseDown = false;
+  const p = state.player;
+  if (p && p.bowCharging && (p.bowCharge||0) >= 15) {
+    // Fire arrow
+    const camX2 = state.cam.x, camY2 = state.cam.y;
+    const wx2 = mx + camX2, wy2 = my + camY2;
+    const dx2 = wx2 - p.x, dy2 = wy2 - p.y;
+    const dist2 = Math.sqrt(dx2*dx2+dy2*dy2);
+    const speed = 10 + (p.bowCharge/30) * 4;
+    if ((p.inv.arrows||0) > 0) {
+      p.inv.arrows--;
+      state.projectiles.push({
+        type:'player_arrow', x:p.x, y:p.y,
+        vx:dist2>0?dx2/dist2*speed:speed, vy:dist2>0?dy2/dist2*speed:0,
+        life:80, damage:12
+      });
+      SFX.bowRelease();
+      addFloatingText(p.x, p.y-24, 'ARROW!', '#c8a060');
+    } else {
+      showMsg('NO ARROWS — craft more', '#888');
+    }
+  }
+  if (p) { p.bowCharging = false; p.bowCharge = 0; }
+});
 
 function getTile(x, y) {
   const tx = Math.floor(x/TSIZE), ty = Math.floor(y/TSIZE);
@@ -3145,6 +3492,45 @@ function updatePlayer() {
   // Attack cooldown tick
   if (p.attackCooldown > 0) p.attackCooldown--;
   if (p.attackFlash > 0) p.attackFlash--;
+  if (p.hitFlash > 0) p.hitFlash--;
+  if (p.spearVisTimer > 0) p.spearVisTimer--;
+  if (p.slashVisTimer > 0) p.slashVisTimer--;
+  // Sword combo timer
+  if (p.swordComboTimer > 0) {
+    p.swordComboTimer--;
+    if (p.swordComboTimer <= 0) { p.swordComboCount = 0; p.swordComboReady = false; }
+  }
+  // Bow charge
+  if (p.bowCharging && mouseDown) {
+    p.bowCharge = Math.min(30, (p.bowCharge||0) + 1);
+  }
+  // Fire tiles update
+  if (state.fireTiles) {
+    state.fireTiles = state.fireTiles.filter(ft => {
+      ft.timer--;
+      // Damage player if standing in fire
+      const ftx = Math.floor(ft.x / TSIZE), fty = Math.floor(ft.y / TSIZE);
+      const px2 = Math.floor(p.x / TSIZE), py2 = Math.floor(p.y / TSIZE);
+      if (Math.abs(px2 - ftx) <= 1 && Math.abs(py2 - fty) <= 1) {
+        if (state.frameCount % 60 === 0) {
+          p.hp = Math.max(0, p.hp - 5);
+          addFloatingText(p.x, p.y - 20, '-5', '#ff6600');
+          if (navigator.vibrate) navigator.vibrate([50,20,50]);
+        }
+      }
+      // Damage enemies in fire
+      [...state.enemies, ...(state.chief?[state.chief]:[])].forEach(e => {
+        const ex = Math.floor(e.x / TSIZE), ey = Math.floor(e.y / TSIZE);
+        if (Math.abs(ex - ftx) <= 1 && Math.abs(ey - fty) <= 1) {
+          if (state.frameCount % 60 === 0) {
+            e.hp -= 5;
+            addFloatingText(e.x, e.y - 20, '-5', '#ff6600');
+          }
+        }
+      });
+      return ft.timer > 0;
+    });
+  }
 
   // Creature soft push (animals nudge the player)
   state.creatures.forEach(c => {
@@ -3267,6 +3653,23 @@ function updatePlayer() {
 
 function throwCoconut() {
   const p = state.player;
+  // Q key: throw stone knife if equipped, else coconut
+  const tool = getActiveTool ? getActiveTool() : null;
+  if (tool === 'stone_knife' && (p.inv.stone_knife||0) > 0) {
+    if ((p.knifeThrows||0) <= 0) { showMsg('KNIFE WORN OUT — craft a new one', '#888'); p.inv.stone_knife = 0; updateUI(); return; }
+    const camX = state.cam.x, camY = state.cam.y;
+    const wx = mx + camX, wy = my + camY;
+    const dx = wx - p.x, dy = wy - p.y;
+    const dist = Math.sqrt(dx*dx+dy*dy);
+    state.projectiles.push({
+      type:'knife_throw', x:p.x, y:p.y,
+      vx:dist>0?dx/dist*9:9, vy:dist>0?dy/dist*9:0,
+      life:50, damage:10
+    });
+    p.knifeThrows = (p.knifeThrows||3) - 1;
+    if (p.knifeThrows <= 0) { p.inv.stone_knife = 0; showMsg('KNIFE BROKE!', '#888'); updateUI(); }
+    return;
+  }
   if ((p.inv.coconut||0) <= 0) { showMsg('NO COCONUT TO THROW', '#888'); return; }
   p.inv.coconut--;
   // Velocity toward mouse (in world coords)
@@ -3328,6 +3731,27 @@ function handleInteract() {
         displayed: '',
       };
       return;
+    }
+  }
+
+  // Forge — repair all tools with 1 stone
+  for (let fobj of state.objects) {
+    if (fobj.placed && fobj.type === 'forge') {
+      const fd = Math.hypot(p.x-fobj.x, p.y-fobj.y);
+      if (fd < reach) {
+        if ((p.inv.stone||0) >= 1) {
+          p.inv.stone--;
+          const maxDur = {axe:20,pickaxe:15,sword:25,spear:20,fire_axe:20,fire_spear:15,stone_knife:10,bow:30};
+          if (!p.toolDurability) p.toolDurability = {};
+          Object.keys(maxDur).forEach(k => { if ((p.inv[k]||0) > 0) p.toolDurability[k] = maxDur[k]; });
+          p.knifeThrows = 3;
+          showMsg('TOOLS REPAIRED! (used 1 stone)', '#c8f135');
+          spawnParticles(fobj.x, fobj.y, '#ffaa00', 8);
+        } else {
+          showMsg('NEED 1 STONE to repair tools at Forge', '#888');
+        }
+        return;
+      }
     }
   }
 
@@ -3439,10 +3863,11 @@ function handleInteract() {
 // Get currently equipped tool from hotbar
 function getActiveTool() {
   const p = state.player;
-  // Build tool list: same order as hotbar (excluding fishing_rod from hotbar per spec)
+  // Build tool list: same order as hotbar (excluding fishing_rod from hotbar — use F key)
   const tools = [
     {id:'axe'}, {id:'fire_axe'}, {id:'pickaxe'}, {id:'sword'},
-    {id:'spear'}, {id:'fire_spear'}, {id:'torch'}, {id:'coconut'}
+    {id:'spear'}, {id:'fire_spear'}, {id:'stone_knife'}, {id:'bow'},
+    {id:'fire_bottle'}, {id:'torch'}, {id:'coconut'}
   ].filter(t => (p.inv[t.id]||0) > 0);
   if (!state.activeSlot) state.activeSlot = 1;
   const slot = tools[state.activeSlot - 1];
@@ -3491,50 +3916,170 @@ function handleClick(sx, sy) {
 
   const tool = getActiveTool();
 
-  // ── WEAPON TOOLS: attack nearest enemy within 56px of PLAYER ──
-  const isWeapon = tool === 'sword' || tool === 'spear' || tool === 'fire_spear' || tool === 'fire_axe';
+  // ── WEAPON TOOLS: attack nearest enemy ──
+  const isWeapon = tool === 'sword' || tool === 'spear' || tool === 'fire_spear' || tool === 'fire_axe' || tool === 'stone_knife';
   if (isWeapon) {
     if (p.attackCooldown > 0) {
       showMsg('WEAPON COOLING DOWN...', '#888');
       return;
     }
-    const dmgMap = {sword:15, spear:18, fire_spear:30, fire_axe:22};
-    const combatDmg = dmgMap[tool] || 8;
+    // Cooldown and range per weapon
+    const cooldownMap = {sword:20, spear:30, fire_spear:45, fire_axe:25, stone_knife:15};
+    const dmgMap = {sword:15, spear:18, fire_spear:30, fire_axe:22, stone_knife:8};
+    const rangeMap = {sword:48, spear:80, fire_spear:64, fire_axe:56, stone_knife:36};
     const combatColor = (tool==='fire_spear'||tool==='fire_axe') ? '#ff6600' : '#e74c3c';
-    const attackReach = 56;
-    SFX.swing();
-    p.attackCooldown = 30; // 0.5s at 60fps
+    const attackReach = rangeMap[tool] || 56;
+    let combatDmg = dmgMap[tool] || 8;
+    p.attackCooldown = cooldownMap[tool] || 30;
     p.attackFlash = 6;
-    let hit = false;
-    [...state.enemies, ...(state.chief?[state.chief]:[])].forEach(e => {
-      if (Math.hypot(p.x-e.x, p.y-e.y) < attackReach) {
-        e.hp -= combatDmg;
-        e.hitFlash = 6;
-        spawnParticles(e.x, e.y, combatColor, 6);
-        SFX.hit();
-        if (e.hp <= 0) SFX.enemyDie();
-        hit = true;
+
+    // Sword combo system
+    if (tool === 'sword') {
+      if (p.swordComboReady) {
+        combatDmg *= 2;
+        p.swordComboReady = false;
+        p.swordComboCount = 0;
+        addFloatingText(p.x, p.y - 30, 'COMBO x2!', '#ffff00');
       }
-    });
+      SFX.swordClang();
+      // Slash visual
+      p.slashVisTimer = 8;
+      const camX2 = state.cam.x, camY2 = state.cam.y;
+      p.slashAngle = Math.atan2((my + camY2) - p.y, (mx + camX2) - p.x);
+    } else {
+      SFX.swing();
+    }
+
+    // Spear visual
+    if (tool === 'spear' || tool === 'fire_spear') {
+      p.spearVisTimer = 5;
+      const camX2 = state.cam.x, camY2 = state.cam.y;
+      p.slashAngle = Math.atan2((my + camY2) - p.y, (mx + camX2) - p.x);
+    }
+
+    // Durability check
+    if (p.toolDurability && p.toolDurability[tool] !== undefined) {
+      p.toolDurability[tool]--;
+      if (p.toolDurability[tool] <= 0) {
+        p.inv[tool] = 0;
+        p.toolDurability[tool] = 0;
+        showMsg(tool.toUpperCase().replace('_',' ') + ' BROKE — craft a new one', '#e74c3c');
+        updateUI();
+        return;
+      }
+    }
+
+    let hit = false;
+    const allTargets = [...state.enemies, ...(state.chief?[state.chief]:[])];
+
+    if (tool === 'spear' || tool === 'fire_spear') {
+      // Spear: hit up to 2 enemies in a line (sorted by distance)
+      let hitCount = 0;
+      const maxSpearHits = 2;
+      allTargets.sort((a,b) => Math.hypot(p.x-a.x,p.y-a.y) - Math.hypot(p.x-b.x,p.y-b.y));
+      for (const e of allTargets) {
+        if (hitCount >= maxSpearHits) break;
+        if (Math.hypot(p.x-e.x, p.y-e.y) < attackReach) {
+          e.hp -= combatDmg;
+          e.hitFlash = 6;
+          // Knockback
+          const knockAngle = Math.atan2(e.y - p.y, e.x - p.x);
+          e.x += Math.cos(knockAngle) * 20;
+          e.y += Math.sin(knockAngle) * 20;
+          addFloatingText(e.x, e.y - 20, '-'+combatDmg, combatColor);
+          spawnParticles(e.x, e.y, combatColor, 6);
+          // Fire spear burn
+          if (tool === 'fire_spear') {
+            e.burning = 90;
+            spawnParticles(e.x, e.y, '#ff6600', 8);
+          }
+          SFX.hit();
+          if (e.hp <= 0) SFX.enemyDie();
+          hit = true; hitCount++;
+          if (navigator.vibrate) navigator.vibrate(30);
+        }
+      }
+    } else {
+      // Sword / fire_axe / stone_knife: hit enemies in range
+      for (const e of allTargets) {
+        if (Math.hypot(p.x-e.x, p.y-e.y) < attackReach) {
+          e.hp -= combatDmg;
+          e.hitFlash = 6;
+          // Knockback
+          const knockAngle = Math.atan2(e.y - p.y, e.x - p.x);
+          e.x += Math.cos(knockAngle) * 20;
+          e.y += Math.sin(knockAngle) * 20;
+          addFloatingText(e.x, e.y - 20, '-'+combatDmg, combatColor);
+          spawnParticles(e.x, e.y, combatColor, 6);
+          SFX.hit();
+          if (e.hp <= 0) SFX.enemyDie();
+          hit = true;
+          if (navigator.vibrate) navigator.vibrate(30);
+        }
+      }
+      // Sword combo tracking
+      if (tool === 'sword' && hit) {
+        p.swordComboCount = (p.swordComboCount||0) + 1;
+        p.swordComboTimer = 180; // reset 3s window
+        if (p.swordComboCount >= 3) {
+          p.swordComboReady = true;
+          p.swordComboCount = 0;
+          addFloatingText(p.x, p.y - 40, 'COMBO READY!', '#ffcc00');
+        }
+      }
+    }
+
+    // Also hit creatures
     for (let i = state.creatures.length-1; i >= 0; i--) {
       const c = state.creatures[i];
       if (c.type === 'crab') continue;
       if (Math.hypot(p.x-c.x, p.y-c.y) < attackReach) {
         c.hp -= combatDmg;
         c.hitFlash = 6;
+        const knockAngle = Math.atan2(c.y - p.y, c.x - p.x);
+        c.x += Math.cos(knockAngle) * 20;
+        c.y += Math.sin(knockAngle) * 20;
+        addFloatingText(c.x, c.y - 20, '-'+combatDmg, combatColor);
         spawnParticles(c.x, c.y, '#22cc44', 4);
         SFX.hit();
         if (c.hp <= 0) {
           SFX.enemyDie();
-          if (c.type === 'spider') { p.inv.wood++; showMsg('+1 WOOD (SPIDER WEB)', '#8B6914'); }
-          if (c.type === 'shark') { p.inv.fish = (p.inv.fish||0)+2; showMsg('+2 FISH (SHARK)', '#e67e22'); }
+          if (c.type === 'spider') { p.inv.wood++; addFloatingText(c.x, c.y-20, '+1 WOOD', '#8B6914'); showMsg('+1 WOOD (SPIDER WEB)', '#8B6914'); }
+          if (c.type === 'shark') { p.inv.fish = (p.inv.fish||0)+2; addFloatingText(c.x, c.y-20, '+2 FISH', '#3dd6d0'); showMsg('+2 FISH (SHARK)', '#e67e22'); }
           state.creatures.splice(i, 1);
         }
         hit = true;
         break;
       }
     }
-    if (!hit) showMsg('NO ENEMIES IN RANGE (need within 56px)', '#888');
+    if (!hit) showMsg('NO ENEMIES IN RANGE', '#888');
+    return;
+  }
+
+  // ── BOW: hold to charge, release fires ──
+  if (tool === 'bow') {
+    if ((p.inv.arrows||0) <= 0) { showMsg('NO ARROWS — craft more (1 stone + 1 wood = 5)', '#888'); return; }
+    // On click: start charging
+    p.bowCharging = true;
+    p.bowCharge = 0;
+    return;
+  }
+
+  // ── FIRE BOTTLE: thrown on click ──
+  if (tool === 'fire_bottle') {
+    if ((p.inv.fire_bottle||0) <= 0) return;
+    p.inv.fire_bottle--;
+    const camX2 = state.cam.x, camY2 = state.cam.y;
+    const wx2 = sx + camX2, wy2 = sy + camY2;
+    const dx2 = wx2 - p.x, dy2 = wy2 - p.y;
+    const dist2 = Math.sqrt(dx2*dx2+dy2*dy2);
+    state.projectiles.push({
+      type:'fire_bottle', x:p.x, y:p.y,
+      vx:dist2>0?dx2/dist2*7:7, vy:dist2>0?dy2/dist2*7:0,
+      life:60, damage:20
+    });
+    SFX.swing();
+    updateUI();
     return;
   }
 
@@ -3709,6 +4254,7 @@ function handleClick(sx, sy) {
       obj.collected = true;
       const wasZeroWood = (p.inv.wood||0) === 0;
       p.inv.wood++;
+      addFloatingText(obj.x, obj.y - 20, '+1 WOOD', '#c8a060');
       showMsg('+DRIFTWOOD', '#8B6914');
       SFX.pickup();
       // Tutorial hint: first wood pickup
@@ -3732,6 +4278,15 @@ function handleClick(sx, sy) {
       p.inv.tribal_child = (p.inv.tribal_child||0) + 1;
       showMsg("YOU FOUND THE TRIBAL CHILD. BRING HER TO MARA.", '#c8a060');
       spawnParticles(obj.x, obj.y, '#f0d890', 10);
+      SFX.pickup();
+      state.objects.splice(i,1);
+      return;
+    }
+    if (obj.type === 'vine_pickup' && !obj.collected) {
+      obj.collected = true;
+      p.inv.vine = (p.inv.vine||0) + 1;
+      addFloatingText(obj.x, obj.y - 20, '+1 VINE', '#2a8a18');
+      showMsg('+1 VINE (can craft bow)', '#2a8a18');
       SFX.pickup();
       state.objects.splice(i,1);
       return;
@@ -3836,13 +4391,18 @@ const CRAFT_ITEMS = [
   {id:'torch',       label:'TORCH',        cost:{wood:2,stone:1},              desc:'Reveals jungle pits, night light'},
   {id:'axe',         label:'STONE AXE',    cost:{wood:2,stone:2},              desc:'Required to chop trees'},
   {id:'pickaxe',     label:'PICKAXE',      cost:{wood:3,stone:4},              desc:'Required to mine rocks'},
-  {id:'sword',       label:'SWORD',        cost:{stone:2,wood:3},              desc:'15 damage melee weapon'},
-  {id:'spear',       label:'STONE SPEAR',  cost:{wood:4,stone:2},              desc:'18 damage thrown weapon'},
+  {id:'sword',       label:'SWORD',        cost:{stone:2,wood:3},              desc:'15 dmg — combo: 3 kills = 2x next hit'},
+  {id:'spear',       label:'STONE SPEAR',  cost:{wood:4,stone:2},              desc:'18 dmg, long range, hits 2 enemies'},
+  {id:'stone_knife', label:'STONE KNIFE',  cost:{stone:1,wood:1},              desc:'8 dmg fast, Q to throw (3 throws)'},
+  {id:'bow',         label:'BOW',          cost:{wood:4,vine:2},               desc:'Ranged: hold click to charge, release to fire'},
+  {id:'arrows',      label:'ARROWS (x5)',  cost:{stone:1,wood:1},              desc:'Ammo for bow, 12 dmg each'},
+  {id:'fire_bottle', label:'FIRE BOTTLE',  cost:{coconut:1,volcanic_stone:1},  desc:'Thrown: 20 dmg + 3-tile fire zone 5s'},
+  {id:'vine',        label:'VINE (x2)',    cost:{coconut:3},                   desc:'Craft 2 vine from 3 coconut leaves'},
   {id:'fishing_rod', label:'FISHING ROD',  cost:{wood:3,stone:1},              desc:'Required to fish'},
   {id:'water_barrel',label:'WATER BARREL', cost:{wood:5,stone:2},              desc:'+50 max water'},
   {id:'raft',        label:'RAFT',         cost:{wood:10},                     desc:'Needed for yacht'},
   {id:'fire_axe',    label:'FIRE AXE',     cost:{volcanic_stone:3,wood:2},     desc:'Instant chop, needs forge', needsForge:true},
-  {id:'fire_spear',  label:'FIRE SPEAR',   cost:{volcanic_stone:3,wood:4},     desc:'30 damage + fire', needsForge:true},
+  {id:'fire_spear',  label:'FIRE SPEAR',   cost:{volcanic_stone:3,wood:4},     desc:'30 damage + burns enemy', needsForge:true},
   {id:'superyacht',  label:'SUPERYACHT',   cost:{wood:25,stone:10,raft:1},     desc:'ESCAPE THE ISLAND', needsChief:true},
   {id:'vessel',      label:'VESSEL',       cost:{wood:2,stone:2},              desc:'Collects rain water'},
 ];
@@ -3950,7 +4510,28 @@ function tryCraft(id) {
 
   if (id === 'superyacht') { triggerWin(); return; }
 
+  // Special multi-item crafts
+  if (id === 'arrows') {
+    p.inv.arrows = (p.inv.arrows||0) + 5;
+    showMsg('CRAFTED: ARROWS x5', '#c8f135');
+    SFX.craft();
+    renderCraftMenu(); renderInvMenu(); updateUI();
+    return;
+  }
+  if (id === 'vine') {
+    p.inv.vine = (p.inv.vine||0) + 2;
+    showMsg('CRAFTED: VINE x2', '#c8f135');
+    SFX.craft();
+    renderCraftMenu(); renderInvMenu(); updateUI();
+    return;
+  }
+
   p.inv[id] = (p.inv[id]||0) + 1;
+  // Initialize durability for new crafted tools
+  if (p.toolDurability && p.toolDurability[id] !== undefined) {
+    // Only set if not already tracking (don't reset on duplicate craft)
+    // Just keep existing durability or set fresh
+  }
   showMsg(`CRAFTED: ${item.label}`, '#c8f135');
   SFX.craft();
   updateUI(); // refresh hotbar immediately
@@ -4436,6 +5017,27 @@ function drawToolIcon(ctx, toolId, x, y, size) {
       ctx.beginPath(); ctx.moveTo(x+s/2-4, y+s/2-4); ctx.lineTo(x+s/2+4, y+s/2+4); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(x+s/2+4, y+s/2-4); ctx.lineTo(x+s/2-4, y+s/2+4); ctx.stroke();
       break;
+    case 'stone_knife':
+      // Small grey blade shape
+      ctx.fillStyle = '#888899';
+      ctx.beginPath(); ctx.moveTo(x+4, y+s-4); ctx.lineTo(x+s-4, y+4); ctx.lineTo(x+s-4, y+s-4); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#aaaacc';
+      ctx.beginPath(); ctx.moveTo(x+5, y+s-5); ctx.lineTo(x+s-5, y+5); ctx.lineTo(x+s-8, y+s-5); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#7a5c2e'; ctx.fillRect(x+2, y+s-8, 5, 8); // handle
+      break;
+    case 'bow':
+      // Curved bow shape
+      ctx.strokeStyle = '#7a5c2e'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(x+s/2, y+s/2, s*0.4, -Math.PI*0.7, Math.PI*0.7); ctx.stroke();
+      ctx.strokeStyle = '#c8c8a0'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x+s/2-s*0.28, y+s/2-s*0.32); ctx.lineTo(x+s/2-s*0.28, y+s/2+s*0.32); ctx.stroke();
+      break;
+    case 'fire_bottle':
+      // Orange bottle
+      ctx.fillStyle = '#ff8800'; ctx.beginPath(); ctx.ellipse(x+s/2, y+s/2+2, s*0.3, s*0.38, 0, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#ff4400'; ctx.beginPath(); ctx.ellipse(x+s/2, y+4, 4, 5, 0, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#ffcc00'; ctx.beginPath(); ctx.arc(x+s/2, y+2, 3, 0, Math.PI*2); ctx.fill();
+      break;
     default:
       ctx.fillStyle = '#a08040'; ctx.font = `${Math.round(s*0.35)}px Courier New`; ctx.textAlign = 'center';
       ctx.fillText(toolId.substring(0,3).toUpperCase(), x+s/2, y+s/2+4); ctx.textAlign = 'left';
@@ -4448,7 +5050,8 @@ function drawHotbarIcons(ctx) {
   // Same tool order as updateUI hotbar
   const toolSlots = [
     {id:'axe'},{id:'fire_axe'},{id:'pickaxe'},{id:'sword'},
-    {id:'spear'},{id:'fire_spear'},{id:'torch'},{id:'coconut'},
+    {id:'spear'},{id:'fire_spear'},{id:'stone_knife'},{id:'bow'},
+    {id:'fire_bottle'},{id:'torch'},{id:'coconut'},
   ].filter(t => (p.inv[t.id]||0) > 0).slice(0, 6);
 
   if (toolSlots.length === 0) return;
@@ -4908,6 +5511,8 @@ function render(ctx, minimapCtx) {
           break;
         }
         case 'reed': drawReed(ctx,ssx,ssy); break;
+        case 'vine_pickup': if(!capturedObj.collected){drawVine(ctx,ssx,ssy);} break;
+        case 'fallen_log': drawMossyLog(ctx,ssx,ssy); break;
         case 'jungle_chest': if(!capturedObj.opened){px(ctx,'#7a5c2e',ssx-8,ssy-6,16,12);px(ctx,'#c8a060',ssx-8,ssy-8,16,4);} break;
         case 'vol_chest': if(!capturedObj.opened){px(ctx,'#7a3020',ssx-10,ssy-8,20,16);px(ctx,'#ff6600',ssx-10,ssy-10,20,4);} break;
         case 'treasure_chest': {
@@ -5034,6 +5639,18 @@ function render(ctx, minimapCtx) {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
 
+  // Fire tiles from fire bottle
+  if (state.fireTiles && state.fireTiles.length > 0) {
+    state.fireTiles.forEach(ft => {
+      const fsx = ft.x - camX, fsy = ft.y - camY;
+      const alpha = Math.min(0.7, ft.timer / 300) * (0.5 + Math.sin(state.frameCount*0.3+fsx*0.05)*0.3);
+      ctx.fillStyle = `rgba(255,80,0,${alpha})`;
+      ctx.fillRect(fsx - TSIZE, fsy - TSIZE, TSIZE*2, TSIZE*2);
+      ctx.fillStyle = `rgba(255,200,0,${alpha*0.5})`;
+      ctx.fillRect(fsx - TSIZE/2, fsy - TSIZE/2, TSIZE, TSIZE);
+    });
+  }
+
   // Particles
   drawParticles(ctx, camX, camY);
 
@@ -5154,6 +5771,10 @@ function render(ctx, minimapCtx) {
     ctx.fillRect(0,0,20,canvas.height);
     ctx.fillRect(canvas.width-20,0,20,canvas.height);
   }
+
+  // Floating damage numbers
+  updateFloatingTexts();
+  drawFloatingTexts(ctx, camX, camY);
 
   // Minigame + dialogue
   drawMinigame(ctx);
@@ -6547,6 +7168,9 @@ window.addEventListener('keydown', e => {
       state.player.torch = !state.player.torch;
       showMsg(state.player.torch ? 'TORCH ON — reveals pit traps in dark jungle' : 'TORCH OFF', state.player.torch ? '#ffaa00' : '#888');
     }
+    else if (activeT === 'stone_knife') showMsg('KNIFE [8 dmg fast] — click to strike, Q to throw (3 throws)', '#aaaacc');
+    else if (activeT === 'bow') showMsg('BOW — hold click to charge, release to fire (need arrows)', '#c8a060');
+    else if (activeT === 'fire_bottle') showMsg('FIRE BOTTLE — click to throw, explodes on impact', '#ff8800');
     else if (activeT === 'coconut') showMsg('COCONUT — click to throw toward cursor (Q key also works)', '#c8a870');
     else if (!activeT) showMsg('Empty slot', '#888');
   }
@@ -6663,6 +7287,9 @@ function updateUI() {
     {id:'sword', label:'SWORD'},
     {id:'spear', label:'SPEAR'},
     {id:'fire_spear', label:'F.SPEAR'},
+    {id:'stone_knife', label:'KNIFE'},
+    {id:'bow', label:'BOW'},
+    {id:'fire_bottle', label:'F.BOTTLE'},
     {id:'torch', label:'TORCH'},
     {id:'coconut', label:'COCONUT'},
   ].filter(t => (p.inv[t.id]||0) > 0);
@@ -6679,10 +7306,22 @@ function updateUI() {
       if (ec) {
         if (slot.id === 'coconut') ec.textContent = 'x'+(p.inv.coconut||0);
         else if (slot.id === 'torch') ec.textContent = p.torch ? 'ON' : '';
+        else if (slot.id === 'bow') ec.textContent = 'x'+(p.inv.arrows||0);
+        else if (slot.id === 'fire_bottle') ec.textContent = 'x'+(p.inv.fire_bottle||0);
+        else if (slot.id === 'stone_knife') ec.textContent = (p.knifeThrows||3)+' left';
         else ec.textContent = '';
       }
+      // Durability color
       if (hs) {
-        hs.style.borderColor = isActive ? '#d4a020' : '';
+        const dur = p.toolDurability ? p.toolDurability[slot.id] : undefined;
+        const maxDur = {axe:20,pickaxe:15,sword:25,spear:20,fire_axe:20,fire_spear:15,stone_knife:10,bow:30};
+        let durColor = '';
+        if (dur !== undefined && maxDur[slot.id]) {
+          const pct = dur / maxDur[slot.id];
+          if (pct <= 0.2) durColor = '#cc2222';
+          else if (pct <= 0.5) durColor = '#ccaa00';
+        }
+        hs.style.borderColor = isActive ? '#d4a020' : (durColor || '');
         hs.style.background = isActive ? 'rgba(212,160,32,0.18)' : '';
         hs.style.boxShadow = isActive ? '0 0 14px rgba(212,160,32,0.6),inset 0 0 6px rgba(212,160,32,0.25)' : '';
       }
