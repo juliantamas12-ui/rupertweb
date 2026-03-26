@@ -127,6 +127,9 @@ canvas#c{pointer-events:none}
 @media (min-width: 768px) { #touch-controls, #btn-zone, #joystick-zone, #joystick-canvas { display: none !important; } }
 @media (min-width: 769px) { #touch-controls, #btn-zone, #joystick-zone, #joystick-canvas { display: none !important; } }
 @media (max-width: 768px) { #touch-controls { display: block !important; } #btn-zone { display: flex !important; } }
+
+#touch-controls { display: none !important; }
+#joystick-canvas { display: none !important; }
 </style>
 </head>
 <body>
@@ -175,7 +178,7 @@ canvas#c{pointer-events:none}
   <div id="craft-list"></div>
 </div>
 
-<div id="touch-controls" style="display:none">
+<div id="touch-controls" style="display:none!important" style="display:none">
   <div id="joystick-zone"></div>
   <div id="btn-zone">
     <div class="touch-btn" id="btn-use" style="background:rgba(80,200,80,0.6)" ontouchstart="touchBtnStart(event,'use')" ontouchend="touchBtnEnd(event,'use')">USE</div>
