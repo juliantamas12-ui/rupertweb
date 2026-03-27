@@ -5661,7 +5661,21 @@ function handleClick(sx, sy) {
       startChopMinigame(obj); return;
     }
     if (obj.type === 'rock' || obj.type === 'vol_rock') {
-      startMineMinigame(obj); return;
+      // Instant mining - no minigame (minigame causes rendering issues)
+      obj.hp--;
+      spawnParticles(obj.x, obj.y, '#888899', 2);
+      if (typeof SFX !== 'undefined' && SFX.mine) SFX.mine();
+      if (obj.hp <= 0) {
+        const bonus = (state.skills && state.skills.mining >= 25) ? 3 : (state.skills && state.skills.mining >= 10) ? 2 : 1;
+        const yield_ = (state.player.inv.pickaxe > 0 ? 2 : 1) + bonus - 1;
+        state.player.inv.stone = (state.player.inv.stone||0) + yield_;
+        if (typeof addFloatingText === 'function') addFloatingText(obj.x, obj.y-20, '+'+yield_+' STONE', '#888899');
+        if (typeof gainSkill === 'function') gainSkill('mining');
+        state.objects = state.objects.filter(o => o !== obj);
+        if (typeof SFX !== 'undefined' && SFX.pickup) SFX.pickup();
+        if (typeof updateUI === 'function') updateUI();
+      }
+      return;
     }
     if (obj.type === 'palm' && obj.respawn<=0) {
       obj.respawn = 1800;
