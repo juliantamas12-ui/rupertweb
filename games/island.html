@@ -4484,6 +4484,11 @@ function handleClick(sx, sy) {
     if (d > interactReach) continue;
 
     if (['tree','breadfruit','mape','purau','pandanus','filao','hutu'].includes(obj.type)) {
+      const activeTool = getActiveTool ? getActiveTool() : null;
+      if (!activeTool || (activeTool !== 'axe' && activeTool !== 'fire_axe')) {
+        showMsg('Equip an AXE to chop trees (press its slot number)', '#c8a060');
+        return;
+      }
       startChopMinigame(obj); return;
     }
     if (obj.type === 'rock' || obj.type === 'vol_rock') {
@@ -5541,6 +5546,37 @@ function drawGuide(ctx) {
   ctx.fillStyle = '#a08040';
   ctx.fillText(msg[2], bx+10, by+48);
   ctx.textAlign = 'left';
+}
+
+// Hover highlight
+function drawHoverHighlight(ctx, camX, camY) {
+  if (!state.running || state.cutscenePlaying) return;
+  const mouseWX = mx + camX, mouseWY = my + camY;
+  let hoverObj = null, hoverDist = 80;
+  state.objects.forEach(obj => {
+    if (obj.placed || obj.type === 'death_pack' || obj.decor) return;
+    const d = Math.hypot(mouseWX-obj.x, mouseWY-obj.y);
+    if (d < hoverDist) { hoverDist = d; hoverObj = obj; }
+  });
+  if (!hoverObj) return;
+  const hsx = Math.floor(hoverObj.x - camX);
+  const hsy = Math.floor(hoverObj.y - camY);
+  // Check player is within reach
+  const playerDist = Math.hypot(state.player.x - hoverObj.x, state.player.y - hoverObj.y);
+  const inRange = playerDist < 90;
+  ctx.save();
+  ctx.strokeStyle = inRange ? '#ffdd44' : 'rgba(255,255,255,0.4)';
+  ctx.lineWidth = inRange ? 2 : 1;
+  ctx.strokeRect(hsx-14, hsy-22, 28, 30);
+  if (inRange) {
+    ctx.fillStyle = 'rgba(255,220,0,0.85)';
+    ctx.font = 'bold 9px Lato, sans-serif';
+    ctx.textAlign = 'center';
+    const label = hoverObj.type.replace(/_/g,' ').replace(/\w/g,l=>l.toUpperCase());
+    ctx.fillText(label, hsx, hsy-26);
+    ctx.textAlign = 'left';
+  }
+  ctx.restore();
 }
 function render(ctx, minimapCtx) {
   const p = state.player;
@@ -7668,6 +7704,11 @@ window.addEventListener('touchend', e => {
     handleClick(t.clientX, t.clientY);
   }
 }, {passive: true});
+canvas.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  state.zoom = Math.max(0.5, Math.min(2.5, state.zoom - e.deltaY * 0.001));
+}, {passive: false});
+
 window.addEventListener('resize', () => {
   if (window.innerWidth < 768) {
     canvas.width = Math.round(window.innerWidth * 0.7);
