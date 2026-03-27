@@ -732,16 +732,16 @@ function genObjects() {
         if (r < 0.022) state.objects.push({type:selectTree(t,nearWater), x:wx, y:wy, hp:5, maxHp:5});
         else if (r < 0.015) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4});
         else if (r < 0.030) state.objects.push({type:'berry', x:wx, y:wy, hp:1, maxHp:1, respawn:0});
-        else if (r < 0.033) state.objects.push({type:'jungle_bird', x:wx, y:wy, decor:true, colorIdx:Math.floor(Math.random()*3)});
-        else if (r < 0.048) state.objects.push({type:'jungle_flower', x:wx, y:wy, decor:true, colorIdx:Math.floor(Math.random()*3)});
+        // removed: else if (r < 0.033) state.objects.push({type:'jungle_bird', x:wx, y:wy, decor:true, colorIdx:Math.floor(Math.random()*3)});
+        // removed: else if (r < 0.048) state.objects.push({type:'jungle_flower', x:wx, y:wy, decor:true, colorIdx:Math.floor(Math.random()*3)});
         else if (r < 0.052) state.objects.push({type:'vine_pickup', x:wx, y:wy, collected:false});
       } else if (t === T.JUNGLE_DARK) {
         if (r < 0.045) state.objects.push({type:selectTree(t,nearWater), x:wx, y:wy, hp:5, maxHp:5});
         else if (r < 0.049) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4});
         else if (r < 0.051) state.objects.push({type:'jungle_chest', x:wx, y:wy, opened:false});
         else if (r < 0.053) state.creatures.push({type:'spider', x:wx, y:wy, hp:25, maxHp:25, spd:1.05, attackTimer:0, walkTimer:0});
-        else if (r < 0.056) state.objects.push({type:'jungle_bird', x:wx, y:wy, decor:true, colorIdx:Math.floor(Math.random()*3)});
-        else if (r < 0.071) state.objects.push({type:'jungle_flower', x:wx, y:wy, decor:true, colorIdx:Math.floor(Math.random()*3)});
+        // removed: else if (r < 0.056) state.objects.push({type:'jungle_bird', x:wx, y:wy, decor:true, colorIdx:Math.floor(Math.random()*3)});
+        // removed: else if (r < 0.071) state.objects.push({type:'jungle_flower', x:wx, y:wy, decor:true, colorIdx:Math.floor(Math.random()*3)});
         else if (r < 0.077) state.objects.push({type:'jungle_floor', x:wx, y:wy, decor:true});
       } else if (t === T.BEACH) {
         if (r < 0.006) state.objects.push({type:'palm', x:wx, y:wy, hp:4, maxHp:4, respawn:0});
@@ -4472,13 +4472,27 @@ function handleClick(sx, sy) {
   });
   if (hit) return;
 
-  // Harvest objects - check player proximity (not click position)
-  const interactReach = 80; // 10 tiles
+  // Harvest objects - find nearest to CLICK POSITION, then check player is in reach
+  // First find nearest object to where player clicked
+  let nearestObj = null, nearestClickDist = 64; // 8 tiles click radius
   for (let i = state.objects.length-1; i >= 0; i--) {
     const obj = state.objects[i];
+    if (obj.placed || obj.type === 'death_pack' || obj.type === 'shipwreck') continue;
+    const clickDist = Math.hypot(wx-obj.x, wy-obj.y); // click proximity
+    const playerDist = Math.hypot(p.x-obj.x, p.y-obj.y); // player proximity
+    if (clickDist < nearestClickDist && playerDist < 100) {
+      nearestClickDist = clickDist;
+      nearestObj = obj;
+    }
+  }
+  // Process only the nearest clicked object
+  const interactReach = 100;
+  for (let i = state.objects.length-1; i >= 0; i--) {
+    const obj = state.objects[i];
+    if (obj !== nearestObj) continue; // only process the nearest clicked object
     if (obj.placed) continue;
     if (obj.type === 'death_pack' || obj.type === 'shipwreck') continue;
-    const d = Math.hypot(p.x-obj.x, p.y-obj.y); // distance from PLAYER not click
+    const d = Math.hypot(p.x-obj.x, p.y-obj.y);
     if (d > interactReach) continue;
 
     if (['tree','breadfruit','mape','purau','pandanus','filao','hutu'].includes(obj.type)) {
@@ -5550,7 +5564,7 @@ function drawGuide(ctx) {
 function drawHoverHighlight(ctx, camX, camY) {
   if (!state.running || state.cutscenePlaying) return;
   const mouseWX = mx + camX, mouseWY = my + camY;
-  let hoverObj = null, hoverDist = 80;
+  let hoverObj = null, hoverDist = 64;
   state.objects.forEach(obj => {
     if (obj.placed || obj.type === 'death_pack' || obj.decor) return;
     const d = Math.hypot(mouseWX-obj.x, mouseWY-obj.y);
