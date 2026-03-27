@@ -5563,18 +5563,32 @@ function drawHoverHighlight(ctx, camX, camY) {
   const playerDist = Math.hypot(state.player.x - hoverObj.x, state.player.y - hoverObj.y);
   const inRange = playerDist < 90;
   ctx.save();
-  if (!inRange) return; // only show highlight when in reach
-  ctx.strokeStyle = '#ffdd44';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(hsx-14, hsy-22, 28, 30);
-  if (inRange) {
-    ctx.fillStyle = 'rgba(255,220,0,0.85)';
-    ctx.font = 'bold 9px Lato, sans-serif';
-    ctx.textAlign = 'center';
-    const label = hoverObj.type.replace(/_/g,' ').replace(/\w/g,l=>l.toUpperCase());
-    ctx.fillText(label, hsx, hsy-26);
-    ctx.textAlign = 'left';
-  }
+  if (!inRange) return;
+  // Pixel-style white outline - draw each edge as thick white pixels
+  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+  ctx.fillRect(hsx-16, hsy-24, 32, 34); // dark shadow
+  ctx.fillStyle = '#ffffff';
+  // Top edge
+  ctx.fillRect(hsx-14, hsy-22, 28, 3);
+  // Bottom edge  
+  ctx.fillRect(hsx-14, hsy+8, 28, 3);
+  // Left edge
+  ctx.fillRect(hsx-14, hsy-22, 3, 30);
+  // Right edge
+  ctx.fillRect(hsx+11, hsy-22, 3, 30);
+  // Label
+  ctx.fillStyle = '#ffff00';
+  ctx.font = 'bold 10px "Courier New"';
+  ctx.textAlign = 'center';
+  const rawLabel = hoverObj.type.replace(/_/g,' ');
+  const label = rawLabel.charAt(0).toUpperCase() + rawLabel.slice(1);
+  // Label background
+  const lw = ctx.measureText(label).width;
+  ctx.fillStyle = 'rgba(0,0,0,0.8)';
+  ctx.fillRect(hsx - lw/2 - 3, hsy-38, lw+6, 14);
+  ctx.fillStyle = '#ffff00';
+  ctx.fillText(label, hsx, hsy-27);
+  ctx.textAlign = 'left';
   ctx.restore();
 }
 function render(ctx, minimapCtx) {
@@ -7705,7 +7719,7 @@ window.addEventListener('touchend', e => {
 }, {passive: true});
 canvas.addEventListener('wheel', (e) => {
   e.preventDefault();
-  state.zoom = Math.max(0.5, Math.min(2.5, state.zoom - e.deltaY * 0.001));
+  state.zoom = Math.max(0.8, Math.min(3.5, state.zoom - e.deltaY * 0.001));
 }, {passive: false});
 
 window.addEventListener('resize', () => {
