@@ -398,12 +398,14 @@ canvas#c{pointer-events:none}
     </div>
     <button class="pm-btn" onclick="saveAndQuit()">SAVE &amp; QUIT</button>
     <button class="pm-btn" onclick="void(0)">MUSIC: OFF</button>
+    <div id="pause-leaderboard" style="margin-top:14px;border-top:1px solid rgba(120,80,20,0.4);padding-top:10px"></div>
   </div>
 </div>
 
 <div id="win-screen">
   <h1 id="win-title">YOU ESCAPED</h1>
   <canvas id="yacht-canvas" width="400" height="200"></canvas>
+  <div id="win-score"></div>
   <p id="win-text">You survived. You escaped. The island fades behind the horizon.</p>
 </div>
 
@@ -477,7 +479,11 @@ const state = {
       vessel:0, chiefs_mask:0,
       tribal_child:0,
       vine:0, stone_knife:0, bow:0, arrows:0, fire_bottle:0,
-      signal_flare:0
+      signal_flare:0,
+      basket:0, signal_mirror:0,
+      lava_blade:0, volcanic_armor:0, obsidian_pickaxe:0, lava_bomb:0,
+      depth_spear:0, pressure_suit:0, ancient_artifact:0,
+      hearty_meal:0, healing_potion:0, tribal_brew:0, antidote:0
     },
     chiefDefeated: false,
     settlementLevel: 0, // 0=survivor,1=settlement,2=fortified,3=village
@@ -547,6 +553,12 @@ const state = {
   birdTimer: 0,
   footprints: [], // fading beach footprints
 
+  // Crafting tech tiers
+  craftingTier: 0, // 0=Stone Age, 1=Volcanic Age, 2=Deep Sea Age
+
+  // Campfire crafting buffs
+  _tribalBrewTimer: 0, // frames remaining for tribal brew strength boost
+
   // New features
   altarUsed: false,
   inCave: false,
@@ -588,6 +600,23 @@ const state = {
   peaceAchieved: false,
   enemyNames: ['Tama', 'Vai', 'Hiro', 'Poe', 'Reva'],
   npcRelations: { tribe: 0 },
+
+  // === MULTIPLAYER FOUNDATION ===
+  deathGhosts: [], // loaded from localStorage on start
+  lastDamageCause: 'unknown',
+  runStats: {
+    startTime: Date.now(),
+    enemiesKilled: 0,
+    treesChopped: 0,
+    fishCaught: 0,
+    distanceTraveled: 0,
+    itemsCollected: 0,
+    damageTaken: 0,
+    highestDayReached: 1
+  },
+  unlockedAchievements: new Set(),
+  endScore: 0,
+  isNewHighScore: false,
 };
 
 // NPC definitions
@@ -2766,6 +2795,70 @@ function _getNotifContainer() {
   return _notifContainer;
 }
 
+// === MULTIPLAYER FOUNDATION: ACHIEVEMENTS ===
+const ACHIEVEMENTS = [
+  {id:'first_blood', name:'First Blood', desc:'Kill your first enemy', icon:'\u2694', check:s=>s.runStats.enemiesKilled >= 1},
+  {id:'lumberjack', name:'Lumberjack', desc:'Chop 10 trees', icon:'\uD83E\uFA93', check:s=>s.runStats.treesChopped >= 10},
+  {id:'fisherman', name:'Fisherman', desc:'Catch 5 fish', icon:'\uD83C\uDFA3', check:s=>s.runStats.fishCaught >= 5},
+  {id:'survivor', name:'Survivor', desc:'Survive 10 days', icon:'\uD83C\uDF05', check:s=>s.day >= 10},
+  {id:'explorer', name:'Explorer', desc:'Travel 5000 tiles', icon:'\uD83D\uDDFA', check:s=>s.runStats.distanceTraveled >= 5000*8},
+  {id:'diplomat', name:'Diplomat', desc:'Achieve the peace ending', icon:'\uD83D\uDD4A', check:s=>s.storyChoices&&s.storyChoices.konaHelping&&s.player.chiefDefeated},
+  {id:'diver', name:'Deep Diver', desc:'Explore the wreck', icon:'\uD83E\uDD3F', check:s=>s.inWreck||!!(s.player.inv.captains_log)},
+  {id:'untouchable', name:'Untouchable', desc:'Take less than 50 total damage in a run', icon:'\uD83D\uDEE1', check:s=>s.runStats.damageTaken < 50 && s.day >= 5},
+];
+
+// Load persisted achievements into state
+(function() {
+  try {
+    state.unlockedAchievements = new Set(JSON.parse(localStorage.getItem('island_achievements')||'[]'));
+    state.deathGhosts = JSON.parse(localStorage.getItem('island_deaths')||'[]').slice(0,5);
+  } catch(e) {}
+})();
+
+function calculateScore() {
+  const rs = state.runStats;
+  const sc = state.storyChoices;
+  let score = 1000;
+  score += rs.enemiesKilled * 100;
+  score += rs.treesChopped * 50;
+  score += rs.fishCaught * 30;
+  if (sc && sc.konaHelping && state.player.chiefDefeated) score += 500; // peace
+  else if (sc && sc.learnedTruth && sc.felixDone) score += 300; // rescue/escape
+  score -= rs.damageTaken * 10;
+  score = Math.max(0, score);
+  score = Math.round(score * (1 + state.day * 0.01));
+  return score;
+}
+
+function saveRunToLeaderboard(score, endingType) {
+  try {
+    const runs = JSON.parse(localStorage.getItem('island_runs')||'[]');
+    runs.push({ score, ending: endingType, days: state.day, ts: Date.now() });
+    runs.sort((a,b) => b.score - a.score);
+    localStorage.setItem('island_runs', JSON.stringify(runs.slice(0,5)));
+  } catch(e) {}
+}
+
+function renderLeaderboard() {
+  try {
+    const runs = JSON.parse(localStorage.getItem('island_runs')||'[]');
+    if (!runs.length) return '<div style="color:#8a6830;font-size:11px;text-align:center;margin:8px 0">No runs yet</div>';
+    let html = '<div style="color:#c8a060;font-family:Cinzel,serif;font-size:11px;letter-spacing:2px;margin:10px 0 6px">YOUR BEST RUNS</div>';
+    html += '<table style="width:100%;border-collapse:collapse;font-size:10px;color:#d8c880">';
+    html += '<tr style="color:#8a6830;letter-spacing:1px"><th style="text-align:left">SCORE</th><th>ENDING</th><th>DAYS</th></tr>';
+    runs.forEach((r,i) => {
+      const date = new Date(r.ts).toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
+      html += `<tr style="border-top:1px solid rgba(120,80,20,0.3)">
+        <td style="color:${i===0?'#c8f135':'#d8c880'};padding:3px 0">${i===0?'* ':''}${r.score}</td>
+        <td style="color:#a08040;text-align:center">${r.ending||'?'}</td>
+        <td style="color:#a08040;text-align:center">${r.days} (${date})</td>
+      </tr>`;
+    });
+    html += '</table>';
+    return html;
+  } catch(e) { return ''; }
+}
+
 function showMsg(text, color) {
   const container = _getNotifContainer();
   const pill = document.createElement('div');
@@ -2947,6 +3040,10 @@ function updateEnemies() {
     e.walkTimer++;
     // Init smart AI fields if missing
     if (e.fleeing === undefined) { e.fleeing = false; e.fleeTimer = 0; e.scatterTimer = 0; e.flankOffset = {x:0,y:0}; }
+
+    // Signal mirror stun
+    if (e.stunTimer > 0) { e.stunTimer--; return; }
+
     const detect = e.type==='shadow' ? 300 : 200;
 
     // Flee behavior: if HP < 30% and not chief, 40% chance to flee
@@ -3057,13 +3154,16 @@ function updateEnemies() {
       const attackR = e.type==='chief' ? 40 : 28;
       if (dist < attackR && e.attackTimer > 80 && !e.fleeing && e.scatterTimer <= 0 && !state.invincible) {
         e.attackTimer = 0;
-        const dmg = e.type==='chief' ? 20 : (e.type==='shadow'?12:8);
+        let dmg = e.type==='chief' ? 20 : (e.type==='shadow'?12:8);
+        if (state._volcanicArmorActive) dmg = Math.round(dmg * 0.7);
         p.hp = Math.max(0, p.hp - dmg);
         p.hitFlash = 8;
         spawnParticles(p.x, p.y, '#e74c3c',4);
         addFloatingText(p.x, p.y - 20, '-'+dmg, '#ff4444');
         SFX.hurt();
         if (navigator.vibrate) navigator.vibrate([50,20,50]);
+        state.lastDamageCause = e.type === 'chief' ? 'tribal chief' : 'enemy warrior';
+        if (state.runStats) state.runStats.damageTaken += dmg;
       }
     }
 
@@ -3122,6 +3222,7 @@ function updateEnemies() {
     }
     if (e.dying) {
       e.dyingTimer--;
+      if (e.dyingTimer <= 0 && state.runStats) state.runStats.enemiesKilled++;
       return e.dyingTimer > 0;
     }
     return true;
@@ -3183,6 +3284,38 @@ function updateProjectiles() {
         for (let fy = -1; fy <= 1; fy++) {
           for (let fx2 = -1; fx2 <= 1; fx2++) {
             state.fireTiles.push({x:(ftx+fx2)*TSIZE+TSIZE/2, y:(fty+fy)*TSIZE+TSIZE/2, timer:300});
+          }
+        }
+        return false;
+      }
+      return true;
+    }
+
+    if (proj.type === 'lava_bomb') {
+      // AoE explosion on enemy contact or life end
+      let exploded = false;
+      const allTargetsLB = [...state.enemies, ...(state.chief?[state.chief]:[])];
+      for (const e of allTargetsLB) {
+        if (Math.hypot(proj.x-e.x, proj.y-e.y) < 22) { exploded = true; break; }
+      }
+      if (exploded || proj.life <= 0) {
+        SFX.fireExplode ? SFX.fireExplode() : SFX.swing();
+        spawnParticles(proj.x, proj.y, '#ff4400', 6);
+        spawnParticles(proj.x, proj.y, '#ffaa00', 4);
+        addFloatingText(proj.x, proj.y - 20, 'LAVA BLAST!', '#ff4400');
+        for (const e of allTargetsLB) {
+          if (Math.hypot(proj.x-e.x, proj.y-e.y) < 80) {
+            e.hp -= 40;
+            e.burning = 120;
+            addFloatingText(e.x, e.y-20, '-40', '#ff4400');
+          }
+        }
+        const ftxLB = Math.floor(proj.x / TSIZE);
+        const ftyLB = Math.floor(proj.y / TSIZE);
+        if (!state.fireTiles) state.fireTiles = [];
+        for (let fy = -1; fy <= 1; fy++) {
+          for (let fx2 = -1; fx2 <= 1; fx2++) {
+            state.fireTiles.push({x:(ftxLB+fx2)*TSIZE+TSIZE/2, y:(ftyLB+fy)*TSIZE+TSIZE/2, timer:360});
           }
         }
         return false;
@@ -3289,7 +3422,8 @@ function updateCreatures() {
         c.attackTimer = 0;
         p.hp = Math.max(0, p.hp - 8);
         p.poison = 180;
-        
+        state.lastDamageCause = 'spider bite';
+        if (state.runStats) state.runStats.damageTaken += 8;
         spawnParticles(p.x, p.y, '#22cc44',4);
         showMsg('POISONED BY SPIDER!', '#22cc44');
       }
@@ -3317,6 +3451,8 @@ function updateCreatures() {
         if (dist < 20 && c.attackTimer > 80) {
           c.attackTimer = 0;
           p.hp = Math.max(0, p.hp - 20);
+          state.lastDamageCause = 'shark attack';
+          if (state.runStats) state.runStats.damageTaken += 20;
           spawnParticles(p.x, p.y, '#3498db',4);
           showMsg('SHARK ATTACK! GET OUT OF THE WATER!', '#3498db');
         }
@@ -3409,6 +3545,21 @@ function drawProjectiles(ctx, camX, camY) {
       ctx.fill();
       // Trail
       spawnParticle(proj.x, proj.y, (Math.random()-0.5)*0.5, 0.3, '#ff8800', 8);
+    } else if (proj.type === 'lava_bomb') {
+      // Glowing lava orb
+      ctx.fillStyle = '#cc2200';
+      ctx.beginPath();
+      ctx.arc(sx, sy, 8, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = '#ff6600';
+      ctx.beginPath();
+      ctx.arc(sx-2, sy-2, 5, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = '#ffaa00';
+      ctx.beginPath();
+      ctx.arc(sx-1, sy-3, 2, 0, Math.PI*2);
+      ctx.fill();
+      spawnParticle(proj.x, proj.y, (Math.random()-0.5)*0.8, 0.5, '#ff4400', 10);
     } else if (proj.type === 'arrow') {
       ctx.fillStyle = '#8B6914';
       ctx.fillRect(sx-6, sy-1, 12, 2);
@@ -3552,6 +3703,7 @@ function updateMinigame(canvas) {
         state.player.inv.fish += 1 + bonusFish;
         showMsg(bonusFish ? 'FISH CAUGHT! (High tide bonus +1)' : 'FISH CAUGHT!', '#4a9ab4');
         spawnParticles(state.player.x, state.player.y, '#4a9ab4',4);
+        if (state.runStats) { state.runStats.fishCaught += 1 + bonusFish; }
         state.minigame = null;
         state.fishing = null;
       }
@@ -3719,6 +3871,8 @@ function handleMinigameKey(key) {
         state.particles.push({x:tx, y:ty, vx:(Math.random()-0.5)*5, vy:-2-Math.random()*3, color:'#8B6914', life:40, maxLife:40, size:5});
       }
       spawnParticles(tx, ty, '#5c3d1e',4);
+      // Track tree chop stat
+      if (state.runStats) state.runStats.treesChopped++;
       // Tree shake: store shake target, replace with fallen log decor, then remove
       mg.target._shaking = true; mg.target._shakeTimer = 9;
       const capTarget = mg.target;
@@ -3764,12 +3918,14 @@ function handleMineClick(wx, wy) {
     mg.zoneTimer = 180;
     if (mg.currentZone >= mg.zones.length) {
       const perfect = mg.zones.every(z2=>z2.hit);
-      const yield_ = perfect ? 3 : 2;
+      const p3 = state.player;
+      // Obsidian pickaxe: 5 stone per hit, indestructible
+      const hasObsidian = (p3.inv.obsidian_pickaxe || 0) > 0;
+      const yield_ = hasObsidian ? 5 : (perfect ? 3 : 2);
       const wasZeroStone = (state.player.inv.stone||0) === 0;
       state.player.inv.stone += yield_;
-      // Pickaxe durability
-      const p3 = state.player;
-      if (p3.toolDurability && p3.toolDurability.pickaxe > 0) {
+      // Pickaxe durability (obsidian doesn't lose durability)
+      if (!hasObsidian && p3.toolDurability && p3.toolDurability.pickaxe > 0) {
         p3.toolDurability.pickaxe--;
         if (p3.toolDurability.pickaxe <= 0) { p3.inv.pickaxe = 0; showMsg('PICKAXE BROKE — craft a new one', '#e74c3c'); updateUI(); }
       }
@@ -4044,11 +4200,20 @@ function updatePlayer() {
   nx = Math.max(TSIZE, Math.min(WORLD_W-TSIZE, nx));
   ny = Math.max(TSIZE, Math.min(WORLD_H-TSIZE, ny));
 
+  // Track distance traveled
+  if (state.runStats && moving) {
+    const _mvdx = nx - p.x, _mvdy = ny - p.y;
+    if (_mvdx !== 0 || _mvdy !== 0) state.runStats.distanceTraveled += Math.hypot(_mvdx, _mvdy);
+  }
+  // Track highest day
+  if (state.runStats) state.runStats.highestDayReached = Math.max(state.runStats.highestDayReached, state.day);
+
   // Tile collision (lava, deep ocean, impassable volcanic walls)
   const newTile = getTile(nx, ny);
   if (newTile === T.LAVA || newTile === T.VOLCANIC) {
     p.hp = Math.max(0, p.hp - 5);
-    
+    state.lastDamageCause = 'lava';
+    if (state.runStats) state.runStats.damageTaken += 5;
     showMsg('LAVA! GET BACK!', '#ff4400');
     nx = p.x; ny = p.y;
   } else if (newTile === T.DEEP_OCEAN) {
@@ -4163,7 +4328,8 @@ function updatePlayer() {
   const tx = Math.floor(p.x/TSIZE), ty2 = Math.floor(p.y/TSIZE);
   if (state.pits.has(ty2*MSIZE+tx) && !p.torch && !p.inv.torch) {
     p.hp = 0;
-    showMsg('YOU FELL INTO A PIT!', '#e74c3c');
+    state.lastDamageCause = 'pit trap';
+  showMsg('YOU FELL INTO A PIT!', '#e74c3c');
   }
 
   // Spike trap check
@@ -4175,7 +4341,8 @@ function updatePlayer() {
         trap.triggered = true;
         state.traps.splice(i, 1);
         p.hp = Math.max(0, p.hp - 15);
-        
+        state.lastDamageCause = 'spike trap';
+        if (state.runStats) state.runStats.damageTaken += 15;
         state.trapFlash = 2; // brief red flash frames
         showMsg('SPIKE TRAP!', '#e74c3c');
         spawnParticles(p.x, p.y, '#e74c3c',4);
@@ -4287,6 +4454,49 @@ function updatePlayer() {
     }
   } else {
     p.jumpOffset = 0;
+  }
+
+  // Sync survey_data from wreckItems to inventory (for craft cost checks)
+  if (state.wreckItems.survey_data && !(p.inv.survey_data)) {
+    p.inv.survey_data = 5; // grant 5 copies for deep-sea crafting
+  }
+
+  // Tech tier unlocks
+  if (state.craftingTier === 0 && (p.inv.volcanic_stone || 0) >= 5) {
+    state.craftingTier = 1;
+    showMsg('VOLCANIC AGE UNLOCKED — new recipes available', '#ff6600');
+  }
+  if (state.craftingTier === 1 && state.wreckItems.survey_data) {
+    state.craftingTier = 2;
+    showMsg('DEEP SEA AGE UNLOCKED — advanced crafting available', '#3dd6d0');
+  }
+
+  // Tribal brew timer tick
+  if (state._tribalBrewTimer > 0) state._tribalBrewTimer--;
+
+  // Volcanic armor: boost maxHp when first equipped
+  if ((p.inv.volcanic_armor || 0) > 0 && !state._volcanicArmorActive) {
+    state._volcanicArmorActive = true;
+    p.maxHp = Math.min(p.maxHp + 50, 350);
+    p.hp = Math.min(p.maxHp, p.hp + 50);
+    showMsg('VOLCANIC ARMOR equipped — max HP +50, damage reduced 30%', '#ff6600');
+  }
+  if ((p.inv.volcanic_armor || 0) === 0 && state._volcanicArmorActive) {
+    state._volcanicArmorActive = false;
+    p.maxHp = Math.max(100, p.maxHp - 50);
+    p.hp = Math.min(p.maxHp, p.hp);
+  }
+
+  // Pressure suit: triple air capacity when equipped
+  if ((p.inv.pressure_suit || 0) > 0 && !state._pressureSuitActive) {
+    state._pressureSuitActive = true;
+    p.maxAir = Math.min(p.maxAir * 3, 900);
+    showMsg('PRESSURE SUIT equipped — underwater time tripled', '#3dd6d0');
+  }
+  if ((p.inv.pressure_suit || 0) === 0 && state._pressureSuitActive) {
+    state._pressureSuitActive = false;
+    p.maxAir = Math.max(100, Math.round(p.maxAir / 3));
+    p.air = Math.min(p.maxAir, p.air);
   }
 }
 
@@ -4590,9 +4800,10 @@ function getActiveTool() {
   const p = state.player;
   // Build tool list: same order as hotbar (excluding fishing_rod from hotbar — use F key)
   const tools = [
-    {id:'axe'}, {id:'fire_axe'}, {id:'pickaxe'}, {id:'sword'},
-    {id:'spear'}, {id:'fire_spear'}, {id:'stone_knife'}, {id:'bow'},
-    {id:'fire_bottle'}, {id:'torch'}, {id:'coconut'}
+    {id:'axe'}, {id:'fire_axe'}, {id:'obsidian_pickaxe'}, {id:'pickaxe'}, {id:'sword'},
+    {id:'spear'}, {id:'fire_spear'}, {id:'lava_blade'}, {id:'depth_spear'},
+    {id:'stone_knife'}, {id:'bow'},
+    {id:'fire_bottle'}, {id:'lava_bomb'}, {id:'signal_mirror'}, {id:'torch'}, {id:'coconut'}
   ].filter(t => (p.inv[t.id]||0) > 0);
   if (!state.activeSlot) state.activeSlot = 1;
   const slot = tools[state.activeSlot - 1];
@@ -4642,19 +4853,22 @@ function handleClick(sx, sy) {
   const tool = getActiveTool();
 
   // ── WEAPON TOOLS: attack nearest enemy ──
-  const isWeapon = tool === 'sword' || tool === 'spear' || tool === 'fire_spear' || tool === 'fire_axe' || tool === 'stone_knife';
+  const isWeapon = tool === 'sword' || tool === 'spear' || tool === 'fire_spear' || tool === 'fire_axe' || tool === 'stone_knife' || tool === 'lava_blade' || tool === 'depth_spear';
   if (isWeapon) {
     if (p.attackCooldown > 0) {
       showMsg('WEAPON COOLING DOWN...', '#888');
       return;
     }
     // Cooldown and range per weapon
-    const cooldownMap = {sword:20, spear:30, fire_spear:45, fire_axe:25, stone_knife:15};
-    const dmgMap = {sword:15, spear:18, fire_spear:30, fire_axe:22, stone_knife:8};
-    const rangeMap = {sword:48, spear:80, fire_spear:64, fire_axe:56, stone_knife:36};
-    const combatColor = (tool==='fire_spear'||tool==='fire_axe') ? '#ff6600' : '#e74c3c';
+    const cooldownMap = {sword:20, spear:30, fire_spear:45, fire_axe:25, stone_knife:15, lava_blade:22, depth_spear:28};
+    const dmgMap = {sword:15, spear:18, fire_spear:30, fire_axe:22, stone_knife:8, lava_blade:35, depth_spear:50};
+    const rangeMap = {sword:48, spear:80, fire_spear:64, fire_axe:56, stone_knife:36, lava_blade:52, depth_spear:72};
+    const combatColor = (tool==='fire_spear'||tool==='fire_axe'||tool==='lava_blade') ? '#ff6600' : (tool==='depth_spear' ? '#3dd6d0' : '#e74c3c');
     const attackReach = rangeMap[tool] || 56;
     let combatDmg = dmgMap[tool] || 8;
+    // Tribal brew strength boost
+    if (state._tribalBrewTimer > 0) combatDmg *= 2;
+    // Volcanic armor damage reduction applied when taking damage (handled below)
     p.attackCooldown = cooldownMap[tool] || 30;
     p.attackFlash = 6;
 
@@ -4697,7 +4911,7 @@ function handleClick(sx, sy) {
     let hit = false;
     const allTargets = [...state.enemies, ...(state.chief?[state.chief]:[])];
 
-    if (tool === 'spear' || tool === 'fire_spear') {
+    if (tool === 'spear' || tool === 'fire_spear' || tool === 'depth_spear') {
       // Spear: hit up to 2 enemies in a line (sorted by distance)
       let hitCount = 0;
       const maxSpearHits = 2;
@@ -4725,7 +4939,7 @@ function handleClick(sx, sy) {
         }
       }
     } else {
-      // Sword / fire_axe / stone_knife: hit enemies in range
+      // Sword / fire_axe / stone_knife / lava_blade: hit enemies in range
       for (const e of allTargets) {
         if (Math.hypot(p.x-e.x, p.y-e.y) < attackReach) {
           e.hp -= combatDmg;
@@ -4736,6 +4950,11 @@ function handleClick(sx, sy) {
           e.y += Math.sin(knockAngle) * 20;
           addFloatingText(e.x, e.y - 20, '-'+combatDmg, combatColor);
           spawnParticles(e.x, e.y, combatColor,4);
+          // Lava blade ignite
+          if (tool === 'lava_blade') {
+            e.burning = 120;
+            spawnParticles(e.x, e.y, '#ff4400',4);
+          }
           SFX.hit();
           if (e.hp <= 0) SFX.enemyDie();
           hit = true;
@@ -4804,6 +5023,56 @@ function handleClick(sx, sy) {
       life:60, damage:20
     });
     SFX.swing();
+    updateUI();
+    return;
+  }
+
+  // ── LAVA BOMB: thrown on click, AoE 40 dmg ──
+  if (tool === 'lava_bomb') {
+    if ((p.inv.lava_bomb||0) <= 0) return;
+    p.inv.lava_bomb--;
+    const camLB = state.cam.x, camLBY = state.cam.y;
+    const wxLB = sx + camLB, wyLB = sy + camLBY;
+    const dxLB = wxLB - p.x, dyLB = wyLB - p.y;
+    const distLB = Math.sqrt(dxLB*dxLB+dyLB*dyLB);
+    state.projectiles.push({
+      type:'lava_bomb', x:p.x, y:p.y,
+      vx:distLB>0?dxLB/distLB*6:6, vy:distLB>0?dyLB/distLB*6:0,
+      life:60, damage:40, aoe:true
+    });
+    SFX.swing();
+    updateUI();
+    return;
+  }
+
+  // ── SIGNAL MIRROR: stuns nearest enemy for 3s ──
+  if (tool === 'signal_mirror') {
+    if ((p.inv.signal_mirror||0) <= 0) return;
+    const allEnems = [...state.enemies, ...(state.chief?[state.chief]:[])];
+    const nearest = allEnems.reduce((best, e) => {
+      const d = Math.hypot(p.x-e.x, p.y-e.y);
+      return (!best || d < best.d) ? {e, d} : best;
+    }, null);
+    if (nearest && nearest.d < 200) {
+      nearest.e.stunTimer = 180; // 3 seconds at 60fps
+      nearest.e.hitFlash = 10;
+      addFloatingText(nearest.e.x, nearest.e.y - 20, 'BLINDED!', '#ffffaa');
+      spawnParticles(nearest.e.x, nearest.e.y, '#ffffaa', 6);
+      showMsg('SIGNAL MIRROR — enemy blinded!', '#ffffaa');
+    } else {
+      showMsg('No enemy in range (need <200px)', '#888');
+    }
+    return;
+  }
+
+  // ── HEARTY MEAL: use from hotbar ──
+  if (tool === 'hearty_meal') {
+    if ((p.inv.hearty_meal||0) <= 0) return;
+    p.inv.hearty_meal--;
+    p.food = Math.min(p.maxFood, p.food + 40);
+    p.hp = Math.min(p.maxHp, p.hp + 20);
+    addFloatingText(p.x, p.y-30, '+40 FOOD +20 HP', '#ffcc80');
+    showMsg('HEARTY MEAL — well fed and healing', '#ffcc80');
     updateUI();
     return;
   }
@@ -5083,13 +5352,18 @@ function handleClick(sx, sy) {
 }
 
 function sleepToMorning() {
+  const p = state.player;
+  if (p.food < 20) {
+    showMsg('Too hungry to sleep — find food first', '#e74c3c');
+    return;
+  }
+  p.food = Math.max(0, p.food - 20);
   state.frameCount = Math.ceil(state.frameCount / state.DAY_FRAMES) * state.DAY_FRAMES;
-  state.player.hp = Math.min(state.player.maxHp, state.player.hp + 40);
-  state.player.water = Math.min(state.player.maxWater, state.player.water + 30);
-  state.player.food = Math.min(state.player.maxFood, state.player.food + 30);
+  p.hp = Math.min(p.maxHp, p.hp + 100);
+  p.water = Math.min(p.maxWater, p.water + 80);
   state.enemies = [];
   state.day++;
-  showMsg('YOU SLEPT. A NEW DAY BEGINS.', '#c8f135');
+  showMsg('You slept deeply. Dawn breaks refreshed.', '#c8f135');
   spawnDayEnemies();
 }
 
@@ -5116,23 +5390,36 @@ const BUILD_ITEMS = [
 ];
 
 const CRAFT_ITEMS = [
-  {id:'torch',       label:'TORCH',        cost:{wood:2,stone:1},              desc:'Reveals jungle pits, night light'},
-  {id:'axe',         label:'STONE AXE',    cost:{wood:2,stone:2},              desc:'Required to chop trees'},
-  {id:'pickaxe',     label:'PICKAXE',      cost:{wood:3,stone:4},              desc:'Required to mine rocks'},
-  {id:'sword',       label:'SWORD',        cost:{stone:2,wood:3},              desc:'15 dmg — combo: 3 kills = 2x next hit'},
-  {id:'spear',       label:'STONE SPEAR',  cost:{wood:4,stone:2},              desc:'18 dmg, long range, hits 2 enemies'},
-  {id:'stone_knife', label:'STONE KNIFE',  cost:{stone:1,wood:1},              desc:'8 dmg fast, Q to throw (3 throws)'},
-  {id:'bow',         label:'BOW',          cost:{wood:4,vine:2},               desc:'Ranged: hold click to charge, release to fire'},
-  {id:'arrows',      label:'ARROWS (x5)',  cost:{stone:1,wood:1},              desc:'Ammo for bow, 12 dmg each'},
-  {id:'fire_bottle', label:'FIRE BOTTLE',  cost:{coconut:1,volcanic_stone:1},  desc:'Thrown: 20 dmg + 3-tile fire zone 5s'},
-  {id:'vine',        label:'VINE (x2)',    cost:{coconut:3},                   desc:'Craft 2 vine from 3 coconut leaves'},
-  {id:'fishing_rod', label:'FISHING ROD',  cost:{wood:3,stone:1},              desc:'Required to fish'},
-  {id:'water_barrel',label:'WATER BARREL', cost:{wood:5,stone:2},              desc:'+50 max water'},
-  {id:'raft',        label:'RAFT',         cost:{wood:10},                     desc:'Needed for yacht'},
-  {id:'fire_axe',    label:'FIRE AXE',     cost:{volcanic_stone:3,wood:2},     desc:'Instant chop, needs forge', needsForge:true},
-  {id:'fire_spear',  label:'FIRE SPEAR',   cost:{volcanic_stone:3,wood:4},     desc:'30 damage + burns enemy', needsForge:true},
-  {id:'superyacht',  label:'SUPERYACHT',   cost:{wood:25,stone:10,raft:1},     desc:'ESCAPE THE ISLAND', needsChief:true},
-  {id:'vessel',      label:'VESSEL',       cost:{wood:2,stone:2},              desc:'Collects rain water'},
+  // STONE AGE (tier 0)
+  {id:'torch',       label:'TORCH',        cost:{wood:2,stone:1},              desc:'Reveals jungle pits, night light', requiredTier:0},
+  {id:'axe',         label:'STONE AXE',    cost:{wood:2,stone:2},              desc:'Required to chop trees', requiredTier:0},
+  {id:'pickaxe',     label:'PICKAXE',      cost:{wood:3,stone:4},              desc:'Required to mine rocks', requiredTier:0},
+  {id:'sword',       label:'SWORD',        cost:{stone:2,wood:3},              desc:'15 dmg — combo: 3 kills = 2x next hit', requiredTier:0},
+  {id:'spear',       label:'STONE SPEAR',  cost:{wood:4,stone:2},              desc:'18 dmg, long range, hits 2 enemies', requiredTier:0},
+  {id:'stone_knife', label:'STONE KNIFE',  cost:{stone:1,wood:1},              desc:'8 dmg fast, Q to throw (3 throws)', requiredTier:0},
+  {id:'bow',         label:'BOW',          cost:{wood:4,vine:2},               desc:'Ranged: hold click to charge, release to fire', requiredTier:0},
+  {id:'arrows',      label:'ARROWS (x5)',  cost:{stone:1,wood:1},              desc:'Ammo for bow, 12 dmg each', requiredTier:0},
+  {id:'fire_bottle', label:'FIRE BOTTLE',  cost:{coconut:1,volcanic_stone:1},  desc:'Thrown: 20 dmg + 3-tile fire zone 5s', requiredTier:0},
+  {id:'vine',        label:'VINE (x2)',    cost:{coconut:3},                   desc:'Craft 2 vine from 3 coconut leaves', requiredTier:0},
+  {id:'fishing_rod', label:'FISHING ROD',  cost:{wood:3,stone:1},              desc:'Required to fish', requiredTier:0},
+  {id:'water_barrel',label:'WATER BARREL', cost:{wood:5,stone:2},              desc:'+50 max water', requiredTier:0},
+  {id:'raft',        label:'RAFT',         cost:{wood:10},                     desc:'Needed for yacht', requiredTier:0},
+  {id:'basket',      label:'BASKET',       cost:{wood:2},                      desc:'+20 carry capacity (visual + weight UI)', requiredTier:0},
+  {id:'signal_mirror',label:'SIGNAL MIRROR',cost:{stone:3},                   desc:'Use from inventory: stuns 1 nearby enemy for 3s', requiredTier:0},
+  // VOLCANIC AGE (tier 1)
+  {id:'fire_axe',    label:'FIRE AXE',     cost:{volcanic_stone:3,wood:2},     desc:'Instant chop, needs forge', needsForge:true, requiredTier:1},
+  {id:'fire_spear',  label:'FIRE SPEAR',   cost:{volcanic_stone:3,wood:4},     desc:'30 damage + burns enemy', needsForge:true, requiredTier:1},
+  {id:'lava_blade',  label:'LAVA BLADE',   cost:{volcanic_stone:3,wood:2},     desc:'35 dmg — ignites enemies on hit', requiredTier:1},
+  {id:'volcanic_armor',label:'VOLCANIC ARMOR',cost:{volcanic_stone:5},        desc:'-30% damage taken, +50 max HP', requiredTier:1},
+  {id:'obsidian_pickaxe',label:'OBSIDIAN PICKAXE',cost:{volcanic_stone:4,wood:1},desc:'Mines 5 stone per hit, indestructible', requiredTier:1},
+  {id:'lava_bomb',   label:'LAVA BOMB',    cost:{volcanic_stone:2,coconut:1},  desc:'Thrown: 40 dmg AoE blast', requiredTier:1},
+  // DEEP SEA AGE (tier 2)
+  {id:'depth_spear', label:'DEPTH SPEAR',  cost:{volcanic_stone:2,survey_data:1},desc:'50 dmg — works underwater', requiredTier:2},
+  {id:'pressure_suit',label:'PRESSURE SUIT',cost:{survey_data:3,volcanic_stone:5},desc:'Triples air capacity underwater', requiredTier:2},
+  {id:'ancient_artifact',label:'ANCIENT ARTIFACT',cost:{survey_data:5},       desc:'Activates the peaceful island ending', requiredTier:2},
+  // Always available (no tier gate)
+  {id:'superyacht',  label:'SUPERYACHT',   cost:{wood:25,stone:10,raft:1},     desc:'ESCAPE THE ISLAND', needsChief:true, requiredTier:0},
+  {id:'vessel',      label:'VESSEL',       cost:{wood:2,stone:2},              desc:'Collects rain water', requiredTier:0},
 ];
 
 function openBuildMenu() {
@@ -5190,6 +5477,66 @@ function openChest(chestObj) {
   }
 }
 
+const CAMPFIRE_RECIPES = [
+  { id:'hearty_meal',    label:'HEARTY MEAL',    cost:{fish_cooked:1,fruit_cooked:1}, desc:'+40 food, +20 HP' },
+  { id:'healing_potion', label:'HEALING POTION', cost:{coconut:2,fruit:2},            desc:'Instantly heals 30 HP' },
+  { id:'tribal_brew',    label:'TRIBAL BREW',    cost:{volcanic_stone:1,coconut:1},   desc:'2x damage for 60 seconds' },
+  { id:'antidote',       label:'ANTIDOTE',       cost:{coconut:1,fruit:1},            desc:'Cures poison instantly' },
+];
+
+function renderCampfireMenu(list) {
+  const p = state.player;
+  const hdr = document.createElement('div');
+  hdr.style.cssText = 'padding:4px 6px;margin:0 0 4px;font-family:"Cinzel",serif;font-size:10px;letter-spacing:2px;color:#ff8800;border-bottom:1px solid #ff880044;';
+  hdr.textContent = 'CAMPFIRE COOKING';
+  list.appendChild(hdr);
+
+  CAMPFIRE_RECIPES.forEach(item => {
+    const costStr = Object.entries(item.cost).map(([k,v])=>`${v} ${k.replace(/_/g,' ').toUpperCase()}`).join(', ');
+    const canAfford = Object.entries(item.cost).every(([k,v])=>(p.inv[k]||0)>=v);
+    const div = document.createElement('div');
+    div.style.cssText = `padding:8px 10px;background:rgba(60,20,0,0.5);border:1px solid ${canAfford?'#cc6600':'rgba(61,30,10,0.5)'};border-radius:6px;margin-bottom:5px;cursor:${canAfford?'pointer':'default'};font-family:'Lato',sans-serif;${canAfford?'box-shadow:0 0 6px rgba(255,136,0,0.15)':''}`;
+    div.innerHTML = `<span style="color:${canAfford?'#ffcc80':'#5c3a20'};font-weight:600;font-size:12px">${item.label}</span> <span style="color:#a08040;font-size:10px">— ${costStr}</span><br><span style="color:${canAfford?'#c8a870':'#4a2a10'};font-size:10px">${item.desc}</span>`;
+    if (canAfford) div.onclick = () => tryCampfireCraft(item.id);
+    list.appendChild(div);
+  });
+
+  const sep = document.createElement('div');
+  sep.style.cssText = 'padding:4px 6px;margin:8px 0 4px;font-family:"Cinzel",serif;font-size:10px;letter-spacing:2px;color:#c8a870;border-bottom:1px solid #c8a87044;';
+  sep.textContent = 'WORKBENCH';
+  list.appendChild(sep);
+}
+
+function tryCampfireCraft(id) {
+  const p = state.player;
+  const item = CAMPFIRE_RECIPES.find(r=>r.id===id);
+  if (!item) return;
+  for (const [k,v] of Object.entries(item.cost)) {
+    if ((p.inv[k]||0) < v) { showMsg('NOT ENOUGH RESOURCES', '#e74c3c'); return; }
+  }
+  for (const [k,v] of Object.entries(item.cost)) p.inv[k] -= v;
+
+  if (id === 'hearty_meal') {
+    p.inv.hearty_meal = (p.inv.hearty_meal||0) + 1;
+    showMsg('CRAFTED: HEARTY MEAL', '#ffcc80');
+  } else if (id === 'healing_potion') {
+    p.hp = Math.min(p.maxHp, p.hp + 30);
+    showMsg('HEALING POTION — +30 HP', '#40ff88');
+    addFloatingText(p.x, p.y-30, '+30 HP', '#40ff88');
+  } else if (id === 'tribal_brew') {
+    state._tribalBrewTimer = 60 * 60; // 60 seconds at 60fps
+    showMsg('TRIBAL BREW — 2x damage for 60 seconds!', '#ff8800');
+    addFloatingText(p.x, p.y-30, 'STRENGTH x2', '#ff8800');
+  } else if (id === 'antidote') {
+    p.poison = 0;
+    showMsg('ANTIDOTE — poison cured!', '#40ff88');
+  }
+  SFX.craft();
+  renderCraftMenu();
+  renderInvMenu();
+  updateUI();
+}
+
 function openCraftMenu() {
   const panel = document.getElementById('craft-panel');
   if (!panel) return;
@@ -5211,11 +5558,30 @@ function renderCraftMenu() {
   const p = state.player;
   const hasForge = state.objects.some(o=>o.placed&&o.type==='forge');
 
+  // Campfire crafting section if near campfire
+  const nearCampfire = state.objects.some(o => o.placed && o.type === 'campfire' && Math.hypot(p.x-o.x, p.y-o.y) < 100);
+  if (nearCampfire) renderCampfireMenu(list);
+
+  const tierNames = ['STONE AGE', 'VOLCANIC AGE', 'DEEP SEA AGE'];
+  const tierColors = ['#c8a870', '#ff6600', '#3dd6d0'];
+  let lastTierShown = -1;
+
   CRAFT_ITEMS.forEach(item => {
     if (item.needsForge && !hasForge) return;
     if (item.needsChief && !p.chiefDefeated) return;
+    const tier = item.requiredTier || 0;
+    if (tier > state.craftingTier) return;
 
-    const costStr = Object.entries(item.cost).map(([k,v])=>`${v} ${k.replace('_',' ').toUpperCase()}`).join(', ');
+    // Tier header
+    if (tier !== lastTierShown) {
+      lastTierShown = tier;
+      const hdr = document.createElement('div');
+      hdr.style.cssText = `padding:4px 6px;margin:6px 0 3px;font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;color:${tierColors[tier]};border-bottom:1px solid ${tierColors[tier]}44;`;
+      hdr.textContent = tierNames[tier] || '';
+      list.appendChild(hdr);
+    }
+
+    const costStr = Object.entries(item.cost).map(([k,v])=>`${v} ${k.replace(/_/g,' ').toUpperCase()}`).join(', ');
     const canAfford = Object.entries(item.cost).every(([k,v])=>(p.inv[k]||0)>=v);
 
     const div = document.createElement('div');
@@ -5266,6 +5632,12 @@ function tryCraft(id) {
 
   if (id === 'water_barrel') p.maxWater += 50;
   if (id === 'torch') p.torch = true;
+  if (id === 'basket') { state._basketBonus = (state._basketBonus||0) + 20; showMsg('BASKET crafted — carry capacity +20', '#c8f135'); }
+  if (id === 'ancient_artifact') { showMsg('ANCIENT ARTIFACT — the island knows you. A new ending awaits.', '#3dd6d0'); state.ancientArtifactHeld = true; }
+
+  // Add new weapon durability tracking
+  if (id === 'lava_blade') { if (!p.toolDurability) p.toolDurability = {}; p.toolDurability.lava_blade = 30; }
+  if (id === 'depth_spear') { if (!p.toolDurability) p.toolDurability = {}; p.toolDurability.depth_spear = 25; }
 
   renderCraftMenu();
   renderInvMenu();
@@ -5707,6 +6079,9 @@ function renderInvMenu() {
       if (k==='fish_cooked'&&p.inv.fish_cooked>0){p.inv.fish_cooked--;p.food=Math.min(p.maxFood,p.food+50);showMsg('+50 FOOD (COOKED)','#e67e22');}
       if (k==='fruit'&&p.inv.fruit>0){p.inv.fruit--;if(Math.random()<0.2){p.sick=200;showMsg('SICK FROM RAW FRUIT!','#e74c3c');}else{p.food=Math.min(p.maxFood,p.food+20);showMsg('+20 FOOD (RAW)','#e67e22');}}
       if (k==='fruit_cooked'&&p.inv.fruit_cooked>0){p.inv.fruit_cooked--;p.food=Math.min(p.maxFood,p.food+40);showMsg('+40 FOOD (COOKED)','#e67e22');}
+      if (k==='hearty_meal'&&p.inv.hearty_meal>0){p.inv.hearty_meal--;p.food=Math.min(p.maxFood,p.food+40);p.hp=Math.min(p.maxHp,p.hp+20);showMsg('+40 FOOD +20 HP (HEARTY MEAL)','#ffcc80');}
+      if (k==='healing_potion'&&p.inv.healing_potion>0){p.inv.healing_potion--;p.hp=Math.min(p.maxHp,p.hp+30);showMsg('+30 HP (HEALING POTION)','#40ff88');}
+      if (k==='antidote'&&p.inv.antidote>0){p.inv.antidote--;p.poison=0;showMsg('POISON CURED (ANTIDOTE)','#40ff88');}
       renderInvMenu();
     };
     grid.appendChild(div);
@@ -5815,9 +6190,10 @@ function drawHotbarIcons(ctx) {
   const p = state.player;
   // Same tool order as updateUI hotbar
   const toolSlots = [
-    {id:'axe'},{id:'fire_axe'},{id:'pickaxe'},{id:'sword'},
-    {id:'spear'},{id:'fire_spear'},{id:'stone_knife'},{id:'bow'},
-    {id:'fire_bottle'},{id:'torch'},{id:'coconut'},
+    {id:'axe'},{id:'fire_axe'},{id:'obsidian_pickaxe'},{id:'pickaxe'},{id:'sword'},
+    {id:'spear'},{id:'fire_spear'},{id:'lava_blade'},{id:'depth_spear'},
+    {id:'stone_knife'},{id:'bow'},
+    {id:'fire_bottle'},{id:'lava_bomb'},{id:'signal_mirror'},{id:'torch'},{id:'coconut'},
   ].filter(t => (p.inv[t.id]||0) > 0).slice(0, 6);
 
   if (toolSlots.length === 0) return;
@@ -5826,6 +6202,8 @@ function drawHotbarIcons(ctx) {
   const totalW = toolSlots.length * slotSize + (toolSlots.length-1) * gap;
   const startX = (ctx.canvas.width - totalW) / 2;
   const slotY = ctx.canvas.height - 52;
+
+  const durabilityMax = {axe:20, pickaxe:15, sword:25, spear:20, fire_axe:20, fire_spear:15, stone_knife:10, bow:30, lava_blade:30, depth_spear:25};
 
   for (let i = 0; i < toolSlots.length; i++) {
     const sl = toolSlots[i];
@@ -5836,6 +6214,22 @@ function drawHotbarIcons(ctx) {
     const iconX = x + (slotSize - iconSize) / 2;
     const iconY = slotY + (slotSize - iconSize) / 2 - 2;
     drawToolIcon(ctx, sl.id, iconX, iconY, iconSize);
+
+    // Durability bar
+    const maxDur = durabilityMax[sl.id];
+    if (maxDur !== undefined && p.toolDurability && p.toolDurability[sl.id] !== undefined) {
+      const pct = Math.max(0, Math.min(1, p.toolDurability[sl.id] / maxDur));
+      const barW = slotSize - 4;
+      const barX = x + 2;
+      const barY = slotY + slotSize - 5;
+      // Background
+      ctx.fillStyle = 'rgba(0,0,0,0.6)';
+      ctx.fillRect(barX, barY, barW, 3);
+      // Fill
+      const color = pct > 0.6 ? '#44cc44' : pct > 0.3 ? '#cccc00' : '#cc2222';
+      ctx.fillStyle = color;
+      ctx.fillRect(barX, barY, Math.round(barW * pct), 3);
+    }
   }
 }
 
@@ -6868,6 +7262,14 @@ function render(ctx, minimapCtx) {
     state.collapseInvCopy = Object.assign({}, p.inv);
     // Place death pack
     state.objects.push({type:'death_pack', x:p.x, y:p.y, inv:Object.assign({},p.inv)});
+    // === DEATH GHOST: save to localStorage and state ===
+    const _deathData = { x: p.x, y: p.y, cause: state.lastDamageCause || 'unknown', day: state.day, timestamp: Date.now() };
+    try {
+      const _existing = JSON.parse(localStorage.getItem('island_deaths') || '[]');
+      _existing.unshift(_deathData);
+      localStorage.setItem('island_deaths', JSON.stringify(_existing.slice(0, 5)));
+    } catch(e2) {}
+    state.deathGhosts = [_deathData, ...(state.deathGhosts||[])].slice(0,5);
     // Clear inventory (keep equipped tools by zeroing consumables)
     const keepKeys = ['axe','pickaxe','sword','spear','fire_axe','fire_spear','torch','fishing_rod'];
     for (const k of Object.keys(p.inv)) {
@@ -6926,6 +7328,46 @@ function render(ctx, minimapCtx) {
     ctx.fillRect(dpsx-2, dpsy-4, 4, 8);
     ctx.restore();
   });
+
+  // === DEATH GHOSTS ===
+  if (state.deathGhosts && state.deathGhosts.length > 0) {
+    state.deathGhosts.forEach(ghost => {
+      const gsx = ghost.x - camX, gsy = ghost.y - camY;
+      if (gsx < -40 || gsx > canvas.width+40 || gsy < -40 || gsy > canvas.height+40) return;
+      ctx.save();
+      ctx.globalAlpha = 0.4;
+      // Simple ghost player sprite (grey silhouette)
+      ctx.fillStyle = '#888888';
+      // Body
+      ctx.fillRect(gsx-5, gsy-14, 10, 14);
+      // Head
+      ctx.beginPath();
+      ctx.arc(gsx, gsy-20, 6, 0, Math.PI*2);
+      ctx.fill();
+      // Skull icon above
+      ctx.globalAlpha = 0.7;
+      ctx.font = '12px serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('\uD83D\uDC80', gsx, gsy-30);
+      ctx.restore();
+      // Hover tooltip
+      const hoverDist = Math.hypot(mx - gsx, my - gsy);
+      if (hoverDist < 24) {
+        ctx.save();
+        ctx.globalAlpha = 0.9;
+        ctx.fillStyle = 'rgba(30,10,5,0.88)';
+        ctx.fillRect(gsx-60, gsy-56, 120, 26);
+        ctx.strokeStyle = '#9a5020';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(gsx-60, gsy-56, 120, 26);
+        ctx.fillStyle = '#e8a060';
+        ctx.font = '10px Lato, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('DIED: ' + (ghost.cause||'unknown') + ' Day ' + (ghost.day||'?'), gsx, gsy-40);
+        ctx.restore();
+      }
+    });
+  }
 
   // Sea creatures in deep ocean
   if (state.seaCreatures) {
@@ -8432,20 +8874,36 @@ function renderCutscene(ctx) {
 function triggerWin() {
   // Determine ending based on storyChoices
   const sc = state.storyChoices;
-  let title, text, cutsceneId;
-  if (sc.learnedTruth && sc.returnedChild && sc.konaHelping) {
+  let title, text, cutsceneId, endingType;
+  if (state.ancientArtifactHeld && sc.learnedTruth) {
+    title = 'THE ISLAND REMEMBERS';
+    endingType = 'ARTIFACT';
+    text = 'The Ancient Artifact pulses with a deep light. You have gathered what the island left behind — the records of those who came before, the knowledge of the deep water, the memory of the volcano. You place it at the altar. The tribe emerges from the jungle, silent. Kona bows. The island does not let you leave — but you no longer want to go.';
+    cutsceneId = 'ending_peace';
+  } else if (sc.learnedTruth && sc.returnedChild && sc.konaHelping) {
     title = 'PEACE';
+    endingType = 'PEACE';
     text = 'You returned the child. You learned the truth. Kona spoke to his brother. The artifact was offered back willingly. The volcano is quiet. The tribe watches you leave — not as an enemy. The Meridian will never come back.';
     cutsceneId = 'ending_peace';
   } else if (sc.learnedTruth && sc.felixDone) {
     title = 'ESCAPE';
+    endingType = 'ESCAPE';
     text = 'The lifeboat cuts through the waves. Felix stares at the horizon. You both know what the Meridian was. You both know you\'re the only ones who got off that island with the truth. Neither of you speaks. The island fades. The silence stays.';
     cutsceneId = 'ending_escape';
   } else {
     title = 'CONQUEST';
+    endingType = 'CONQUEST';
     text = 'The chief is defeated. The artifact is yours. The tribe scatters into the jungle. You board the lifeboat with everything you came for. The island watches you leave. It will remember.';
     cutsceneId = 'ending_conquest';
   }
+
+  // === SCORE CALCULATION ===
+  const _score = calculateScore();
+  const _prevBest = parseInt(localStorage.getItem('island_highscore')||'0');
+  if (_score > _prevBest) localStorage.setItem('island_highscore', _score);
+  state.endScore = _score;
+  state.isNewHighScore = _score > _prevBest;
+  saveRunToLeaderboard(_score, endingType);
   // Play ending cutscene first, then show win screen on complete
   if (cutsceneId) {
     // Force cutscene even if seen before (endings should always play)
@@ -8455,6 +8913,8 @@ function triggerWin() {
       csDef.onComplete = () => {
         document.getElementById('win-title').textContent = title;
         document.getElementById('win-text').textContent = text;
+        const scoreEl = document.getElementById('win-score');
+        if (scoreEl) scoreEl.innerHTML = _buildScoreHTML();
         document.getElementById('win-screen').style.display = 'flex';
         state.running = false;
         SFX.victory();
@@ -8465,11 +8925,34 @@ function triggerWin() {
   } else {
     document.getElementById('win-title').textContent = title;
     document.getElementById('win-text').textContent = text;
+    const scoreEl2 = document.getElementById('win-score');
+    if (scoreEl2) scoreEl2.innerHTML = _buildScoreHTML();
     document.getElementById('win-screen').style.display = 'flex';
     state.running = false;
     SFX.victory();
     animateYacht();
   }
+}
+
+function _buildScoreHTML() {
+  const rs = state.runStats;
+  const sc = state.storyChoices;
+  const isPeace = sc && sc.konaHelping && state.player.chiefDefeated;
+  const isEscape = sc && sc.learnedTruth && sc.felixDone;
+  let html = '<div style="font-family:Lato,sans-serif;font-size:12px;color:#d8c880;margin:12px 0;text-align:center">';
+  html += '<div style="color:#c8a060;font-family:Cinzel,serif;letter-spacing:2px;margin-bottom:8px">RUN SCORE</div>';
+  html += '<div>Base: 1000</div>';
+  html += '<div>Enemies killed: +' + (rs.enemiesKilled * 100) + ' (' + rs.enemiesKilled + ' x 100)</div>';
+  html += '<div>Trees chopped: +' + (rs.treesChopped * 50) + ' (' + rs.treesChopped + ' x 50)</div>';
+  html += '<div>Fish caught: +' + (rs.fishCaught * 30) + ' (' + rs.fishCaught + ' x 30)</div>';
+  if (isPeace) html += '<div style="color:#c8f135">Peace ending: +500</div>';
+  else if (isEscape) html += '<div style="color:#c8f135">Rescue ending: +300</div>';
+  html += '<div style="color:#e05030">Damage taken: -' + (rs.damageTaken * 10) + ' (' + rs.damageTaken + ' x 10)</div>';
+  html += '<div>Day multiplier: x' + (1 + state.day * 0.01).toFixed(2) + ' (Day ' + state.day + ')</div>';
+  html += '<div style="color:' + (state.isNewHighScore ? '#c8f135' : '#e8d49a') + ';font-size:16px;margin-top:8px;font-family:Cinzel,serif">';
+  html += 'TOTAL: ' + state.endScore + (state.isNewHighScore ? ' NEW BEST!' : '') + '</div>';
+  html += '</div>';
+  return html;
 }
 
 function animateYacht() {
@@ -8610,7 +9093,12 @@ window.addEventListener('keydown', e => {
     const anyOpen = ['inv-panel','craft-panel','build-menu'].some(id => { const el=document.getElementById(id); return el && el.style.display==='block'; });
     if (!anyOpen && state.running) {
       const pm = document.getElementById('pause-menu');
-      pm.style.display = pm.style.display === 'flex' ? 'none' : 'flex';
+      const pmOpening = pm.style.display !== 'flex';
+      pm.style.display = pmOpening ? 'flex' : 'none';
+      if (pmOpening) {
+        const lbEl = document.getElementById('pause-leaderboard');
+        if (lbEl) lbEl.innerHTML = renderLeaderboard();
+      }
       return;
     }
   }
@@ -8834,6 +9322,10 @@ window.addEventListener('DOMContentLoaded', () => {
   state.shirtColor = '#2d7a2d';
   state.skinColor = '#c8a07a';
   state.playerName = 'SURVIVOR';
+  // Init run stats and load death ghosts
+  state.runStats = { startTime: Date.now(), enemiesKilled: 0, treesChopped: 0, fishCaught: 0, distanceTraveled: 0, itemsCollected: 0, damageTaken: 0, highestDayReached: 1 };
+  try { state.deathGhosts = JSON.parse(localStorage.getItem('island_deaths')||'[]').slice(0,5); } catch(e) { state.deathGhosts = []; }
+  try { state.unlockedAchievements = new Set(JSON.parse(localStorage.getItem('island_achievements')||'[]')); } catch(e) {}
   genMap(); genObjects();
   state.player.x = 150*TSIZE; state.player.y = 200*TSIZE; state.invincible = 600; state.player.hp = 100;
   state.cam.x = state.player.x - canvas.width/2;
@@ -8883,6 +9375,16 @@ function gameLoopWithUI() {
   if (state.frameCount % 3 === 0) updateSeaCreatures();
   updateLivingIsland();
   updateUI();
+  // === ACHIEVEMENT CHECKS (every 5 seconds) ===
+  if (state.frameCount % 300 === 0 && state.running) {
+    ACHIEVEMENTS.forEach(ach => {
+      if (!state.unlockedAchievements.has(ach.id) && ach.check(state)) {
+        state.unlockedAchievements.add(ach.id);
+        try { localStorage.setItem('island_achievements', JSON.stringify([...state.unlockedAchievements])); } catch(e) {}
+        showMsg('ACHIEVEMENT: ' + ach.name + ' \u2014 ' + ach.desc, '#c8f135');
+      }
+    });
+  }
   render(ctx, minimapCtx);
 }
 
