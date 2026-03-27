@@ -875,14 +875,14 @@ function genObjects() {
 
       if (t === T.JUNGLE_LIGHT) {
         if (r < 0.022) state.objects.push({type:selectTree(t,nearWater), x:wx, y:wy, hp:5, maxHp:5});
-        else if (r < 0.015) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4});
+        else if (r < 0.008) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4});
         else if (r < 0.030) state.objects.push({type:'berry', x:wx, y:wy, hp:1, maxHp:1, respawn:0});
         // REMOVED NOISY: // removed: else if (r < 0.033) state.objects.push({type:'jungle_bird', x:wx, y:wy, decor:true, colorIdx:Math.floor(Math.random()*3)});
         // REMOVED NOISY: // removed: else if (r < 0.048) state.objects.push({type:'jungle_flower', x:wx, y:wy, decor:true, colorIdx:Math.floor(Math.random()*3)});
         else if (r < 0.052) state.objects.push({type:'vine_pickup', x:wx, y:wy, collected:false});
       } else if (t === T.JUNGLE_DARK) {
         if (r < 0.045) state.objects.push({type:selectTree(t,nearWater), x:wx, y:wy, hp:5, maxHp:5});
-        else if (r < 0.049) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4});
+        else if (r < 0.008) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4});
         else if (r < 0.051) state.objects.push({type:'jungle_chest', x:wx, y:wy, opened:false});
         else if (r < 0.053) state.creatures.push({type:'spider', x:wx, y:wy, hp:25, maxHp:25, spd:1.05, attackTimer:0, walkTimer:0});
         // REMOVED NOISY: // removed: else if (r < 0.056) state.objects.push({type:'jungle_bird', x:wx, y:wy, decor:true, colorIdx:Math.floor(Math.random()*3)});
@@ -993,7 +993,7 @@ function genObjects() {
     const swx = 80, swy = 185;
     let swPlaced = false;
     if (state.map[swy] && (state.map[swy][swx] === T.BEACH || state.map[swy][swx] === T.JUNGLE_LIGHT)) {
-      state.objects.push({type:'shipwreck', x:85*TSIZE, y:182*TSIZE, decor:true});
+      state.objects.push({type:'shipwreck', x:160*TSIZE, y:330*TSIZE, decor:true});
       swPlaced = true;
     }
     if (!swPlaced) {
@@ -1001,14 +1001,14 @@ function genObjects() {
         for (let dx = -8; dx <= 8; dx++) {
           const t2 = state.map[swy+dy] && state.map[swy+dy][swx+dx];
           if (t2 === T.BEACH || t2 === T.JUNGLE_LIGHT) {
-            state.objects.push({type:'shipwreck', x:85*TSIZE, y:182*TSIZE, decor:true});
+            state.objects.push({type:'shipwreck', x:160*TSIZE, y:330*TSIZE, decor:true});
             swPlaced = true;
             break outerSW;
           }
         }
       }
     }
-    if (!swPlaced) state.objects.push({type:'shipwreck', x:85*TSIZE, y:182*TSIZE, decor:true});
+    if (!swPlaced) state.objects.push({type:'shipwreck', x:160*TSIZE, y:330*TSIZE, decor:true});
   }
 
   // Underwater wreck — explorable, in deep water southwest ~[25,175]
@@ -1028,7 +1028,7 @@ function genObjects() {
   state.objects.push({type:'tribal_fire', x:209*TSIZE, y:114*TSIZE, decor:true});
   // Skull stakes around village perimeter
   [{x:203,y:109},{x:216,y:109},{x:203,y:120},{x:216,y:120}].forEach(s => {
-    state.objects.push({type:'skull_stake', x:s.x*TSIZE, y:s.y*TSIZE, decor:true});
+    // skull_stake removed from random spawning
   });
   // Village warriors (stronger, always present)
   const villageSpawns = [{x:206,y:113},{x:212,y:111},{x:214,y:116},{x:208,y:117}];
@@ -6807,7 +6807,7 @@ function drawTile(ctx, type, sx, sy) {
   } else {
     ctx.fillStyle = TILE_COLORS[type];
   }
-  ctx.fillRect(sx, sy, TSIZE, TSIZE);
+  ctx.fillRect(sx, sy, TSIZE+1, TSIZE+1);
 
   // Micro-variation: slight brightness offset per tile based on position hash
   // No per-frame tile overlays
@@ -6816,7 +6816,7 @@ function drawTile(ctx, type, sx, sy) {
   if (type === T.BEACH) {
     const tx = Math.round(sx/TSIZE), ty = Math.round(sy/TSIZE);
     const v = (tx * 7 + ty * 13) % 5;
-    if (v === 0) { ctx.fillStyle = 'rgba(0,0,0,0.06)'; ctx.fillRect(sx, sy, TSIZE, TSIZE); }
+    if (v === 0) { ctx.fillStyle = 'rgba(0,0,0,0.06)'; ctx.fillRect(sx, sy, TSIZE+1, TSIZE+1); }
   }
 
   // Shallow water tide visual: at low tide, near-beach shallow water draws as wet sand
@@ -6832,7 +6832,7 @@ function drawTile(ctx, type, sx, sy) {
     if (nearBeach) {
       // Draw as darker wet sand
       ctx.fillStyle = '#b8a272';
-      ctx.fillRect(sx, sy, TSIZE, TSIZE);
+      ctx.fillRect(sx, sy, TSIZE+1, TSIZE+1);
     }
   }
 }
@@ -7141,7 +7141,8 @@ function render(ctx, minimapCtx) {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
 
-  // Draw drifting clouds when cloudy
+  // Clouds disabled for performance // Draw drifting clouds when cloudy
+  if (false) {
   if ((currentForecast === 'cloudy' || currentForecast === 'storm') && !state.isNight && state.clouds) {
     ctx.save();
     state.clouds.forEach(cloud => {
