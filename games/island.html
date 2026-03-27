@@ -834,16 +834,16 @@ function genObjects() {
         if (r < 0.022) state.objects.push({type:selectTree(t,nearWater), x:wx, y:wy, hp:5, maxHp:5});
         else if (r < 0.015) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4});
         else if (r < 0.030) state.objects.push({type:'berry', x:wx, y:wy, hp:1, maxHp:1, respawn:0});
-        // removed: else if (r < 0.033) state.objects.push({type:'jungle_bird', x:wx, y:wy, decor:true, colorIdx:Math.floor(Math.random()*3)});
-        // removed: else if (r < 0.048) state.objects.push({type:'jungle_flower', x:wx, y:wy, decor:true, colorIdx:Math.floor(Math.random()*3)});
+        // REMOVED NOISY: // removed: else if (r < 0.033) state.objects.push({type:'jungle_bird', x:wx, y:wy, decor:true, colorIdx:Math.floor(Math.random()*3)});
+        // REMOVED NOISY: // removed: else if (r < 0.048) state.objects.push({type:'jungle_flower', x:wx, y:wy, decor:true, colorIdx:Math.floor(Math.random()*3)});
         else if (r < 0.052) state.objects.push({type:'vine_pickup', x:wx, y:wy, collected:false});
       } else if (t === T.JUNGLE_DARK) {
         if (r < 0.045) state.objects.push({type:selectTree(t,nearWater), x:wx, y:wy, hp:5, maxHp:5});
         else if (r < 0.049) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4});
         else if (r < 0.051) state.objects.push({type:'jungle_chest', x:wx, y:wy, opened:false});
         else if (r < 0.053) state.creatures.push({type:'spider', x:wx, y:wy, hp:25, maxHp:25, spd:1.05, attackTimer:0, walkTimer:0});
-        // removed: else if (r < 0.056) state.objects.push({type:'jungle_bird', x:wx, y:wy, decor:true, colorIdx:Math.floor(Math.random()*3)});
-        // removed: else if (r < 0.071) state.objects.push({type:'jungle_flower', x:wx, y:wy, decor:true, colorIdx:Math.floor(Math.random()*3)});
+        // REMOVED NOISY: // removed: else if (r < 0.056) state.objects.push({type:'jungle_bird', x:wx, y:wy, decor:true, colorIdx:Math.floor(Math.random()*3)});
+        // REMOVED NOISY: // removed: else if (r < 0.071) state.objects.push({type:'jungle_flower', x:wx, y:wy, decor:true, colorIdx:Math.floor(Math.random()*3)});
         else if (r < 0.077) state.objects.push({type:'jungle_floor', x:wx, y:wy, decor:true});
       } else if (t === T.BEACH) {
         if (r < 0.006) state.objects.push({type:'palm', x:wx, y:wy, hp:4, maxHp:4, respawn:0});
@@ -891,14 +891,14 @@ function genObjects() {
     const caveX = 55, caveY = 170;
     let cavePlaced = false;
     if (state.map[caveY] && state.map[caveY][caveX] === T.BEACH) {
-      state.objects.push({type:'cave', x:caveX*TSIZE, y:caveY*TSIZE, decor:false, opened:false});
+      state.objects.push({type:'cave', x:90*TSIZE, y:148*TSIZE, decor:false});
       cavePlaced = true;
     }
     if (!cavePlaced) {
       outerCave: for (let dy = -5; dy <= 5; dy++) {
         for (let dx = -5; dx <= 5; dx++) {
           if (state.map[caveY+dy] && state.map[caveY+dy][caveX+dx] === T.BEACH) {
-            state.objects.push({type:'cave', x:(caveX+dx)*TSIZE, y:(caveY+dy)*TSIZE, decor:false, opened:false});
+            state.objects.push({type:'cave', x:90*TSIZE, y:148*TSIZE, decor:false});
             cavePlaced = true;
             break outerCave;
           }
@@ -906,7 +906,7 @@ function genObjects() {
       }
     }
     if (!cavePlaced) {
-      state.objects.push({type:'cave', x:55*TSIZE, y:170*TSIZE, decor:false, opened:false});
+      state.objects.push({type:'cave', x:90*TSIZE, y:148*TSIZE, decor:false});
     }
   }
 
@@ -950,7 +950,7 @@ function genObjects() {
     const swx = 80, swy = 185;
     let swPlaced = false;
     if (state.map[swy] && (state.map[swy][swx] === T.BEACH || state.map[swy][swx] === T.JUNGLE_LIGHT)) {
-      state.objects.push({type:'shipwreck', x:swx*TSIZE, y:swy*TSIZE, decor:true});
+      state.objects.push({type:'shipwreck', x:85*TSIZE, y:182*TSIZE, decor:true});
       swPlaced = true;
     }
     if (!swPlaced) {
@@ -958,14 +958,14 @@ function genObjects() {
         for (let dx = -8; dx <= 8; dx++) {
           const t2 = state.map[swy+dy] && state.map[swy+dy][swx+dx];
           if (t2 === T.BEACH || t2 === T.JUNGLE_LIGHT) {
-            state.objects.push({type:'shipwreck', x:(swx+dx)*TSIZE, y:(swy+dy)*TSIZE, decor:true});
+            state.objects.push({type:'shipwreck', x:85*TSIZE, y:182*TSIZE, decor:true});
             swPlaced = true;
             break outerSW;
           }
         }
       }
     }
-    if (!swPlaced) state.objects.push({type:'shipwreck', x:80*TSIZE, y:185*TSIZE, decor:true});
+    if (!swPlaced) state.objects.push({type:'shipwreck', x:85*TSIZE, y:182*TSIZE, decor:true});
   }
 
   // Underwater wreck — explorable, in deep water southwest ~[25,175]
@@ -3112,7 +3112,7 @@ function updateEnemies() {
         if (e.attackTimer > 60) {
           e.attackTimer = 0;
           wallHere.hp = (wallHere.hp||20) - 5;
-          spawnParticles(wallHere.x, wallHere.y, '#888',4);
+          spawnParticles(wallHere.x, wallHere.y, '#888',3);
           if (wallHere.hp <= 0) {
             state.objects = state.objects.filter(o => o !== wallHere);
             showMsg('A WALL WAS DESTROYED!', '#e74c3c');
@@ -3159,7 +3159,7 @@ function updateEnemies() {
         if (state._volcanicArmorActive) dmg = Math.round(dmg * 0.7);
         p.hp = Math.max(0, p.hp - dmg);
         p.hitFlash = 8;
-        spawnParticles(p.x, p.y, '#e74c3c',4);
+        spawnParticles(p.x, p.y, '#e73c3c',3);
         addFloatingText(p.x, p.y - 20, '-'+dmg, '#ff4444');
         SFX.hurt();
         if (navigator.vibrate) navigator.vibrate([50,20,50]);
@@ -3234,7 +3234,7 @@ function updateEnemies() {
     p.chiefDefeated = true;
     p.inv.chiefs_mask = 1;
     showMsg("TRIBAL CHIEF DEFEATED! CHIEF'S MASK ACQUIRED!", '#c8f135');
-    spawnParticles(p.x, p.y, '#c8f135',4);
+    spawnParticles(p.x, p.y, '#c8f135',3);
     // Peace ending: if Kona is helping, tribe lowers weapons
     if (state.storyChoices.konaHelping && !state.peaceAchieved) {
       state.peaceAchieved = true;
@@ -3267,8 +3267,8 @@ function updateProjectiles() {
       if (exploded || proj.life <= 0) {
         // Explosion
         SFX.fireExplode();
-        spawnParticles(proj.x, proj.y, '#ff6600',4);
-        spawnParticles(proj.x, proj.y, '#ffcc00',4);
+        spawnParticles(proj.x, proj.y, '#ff6600',3);
+        spawnParticles(proj.x, proj.y, '#ffcc00',3);
         addFloatingText(proj.x, proj.y - 20, 'BOOM!', '#ff6600');
         // Damage nearby enemies
         for (const e of allTargets) {
@@ -3301,8 +3301,8 @@ function updateProjectiles() {
       }
       if (exploded || proj.life <= 0) {
         SFX.fireExplode ? SFX.fireExplode() : SFX.swing();
-        spawnParticles(proj.x, proj.y, '#ff4400', 6);
-        spawnParticles(proj.x, proj.y, '#ffaa00', 4);
+        spawnParticles(proj.x, proj.y, '#ff4400', 3);
+        spawnParticles(proj.x, proj.y, '#ffaa00', 3);
         addFloatingText(proj.x, proj.y - 20, 'LAVA BLAST!', '#ff4400');
         for (const e of allTargetsLB) {
           if (Math.hypot(proj.x-e.x, proj.y-e.y) < 80) {
@@ -3332,7 +3332,7 @@ function updateProjectiles() {
           e.hp -= 10;
           e.hitFlash = 4;
           addFloatingText(e.x, e.y-20, '-10', '#aaaacc');
-          spawnParticles(e.x, e.y, '#aaaacc',4);
+          spawnParticles(e.x, e.y, '#aaaacc',3);
           SFX.hit();
           hit = true;
           break;
@@ -3350,7 +3350,7 @@ function updateProjectiles() {
           e.hp -= 12;
           e.hitFlash = 4;
           addFloatingText(e.x, e.y-20, '-12', '#c8a060');
-          spawnParticles(e.x, e.y, '#c8a060',4);
+          spawnParticles(e.x, e.y, '#c8a060',3);
           SFX.hit();
           hit = true;
           break;
@@ -3368,7 +3368,7 @@ function updateProjectiles() {
         if (Math.hypot(proj.x-e.x, proj.y-e.y) < 24) {
           e.hp -= 15; // coconuts hit hard
           if (e.hitFlash !== undefined) e.hitFlash = 4;
-          spawnParticles(e.x, e.y, '#8B6914',4);
+          spawnParticles(e.x, e.y, '#8B6913',3);
           SFX.hit();
           hit = true;
           break;
@@ -3382,7 +3382,7 @@ function updateProjectiles() {
     if (Math.sqrt(dx*dx+dy*dy) < 20) {
       p.hp = Math.max(0, p.hp - proj.damage);
       
-      spawnParticles(p.x, p.y, proj.type==='axe'?'#888':'#c8a060',4);
+      spawnParticles(p.x, p.y, proj.type==='axe'?'#888':'#c8a060',3);
       return false;
     }
     return proj.life > 0;
@@ -3425,7 +3425,7 @@ function updateCreatures() {
         p.poison = 180;
         state.lastDamageCause = 'spider bite';
         if (state.runStats) state.runStats.damageTaken += 8;
-        spawnParticles(p.x, p.y, '#22cc44',4);
+        spawnParticles(p.x, p.y, '#22cc33',3);
         showMsg('POISONED BY SPIDER!', '#22cc44');
       }
     }
@@ -3454,7 +3454,7 @@ function updateCreatures() {
           p.hp = Math.max(0, p.hp - 20);
           state.lastDamageCause = 'shark attack';
           if (state.runStats) state.runStats.damageTaken += 20;
-          spawnParticles(p.x, p.y, '#3498db',4);
+          spawnParticles(p.x, p.y, '#3398db',3);
           showMsg('SHARK ATTACK! GET OUT OF THE WATER!', '#3498db');
         }
       } else {
@@ -3475,7 +3475,7 @@ function updateCreatures() {
           c.attackTimer = 0;
           p.hp = Math.max(0, p.hp - 5);
           
-          spawnParticles(p.x, p.y, '#2a1040',4);
+          spawnParticles(p.x, p.y, '#2a1030',3);
         }
       }
     }
@@ -3703,7 +3703,7 @@ function updateMinigame(canvas) {
         const bonusFish = state.tideLevel > 0.7 ? 1 : 0;
         state.player.inv.fish += 1 + bonusFish;
         showMsg(bonusFish ? 'FISH CAUGHT! (High tide bonus +1)' : 'FISH CAUGHT!', '#4a9ab4');
-        spawnParticles(state.player.x, state.player.y, '#4a9ab4',4);
+        spawnParticles(state.player.x, state.player.y, '#3a9ab3',3);
         if (state.runStats) { state.runStats.fishCaught += 1 + bonusFish; }
         state.minigame = null;
         state.fishing = null;
@@ -3849,7 +3849,7 @@ function handleMinigameKey(key) {
     const prog = result === 'green' ? 2 : result === 'yellow' ? 1 : 0;
     mg.progress += prog;
     if (result !== 'miss') {
-      spawnParticles(mg.target.x, mg.target.y, '#5c3d1e',4);
+      spawnParticles(mg.target.x, mg.target.y, '#5c3d1e',3);
       SFX.chop();
     }
 
@@ -3871,7 +3871,7 @@ function handleMinigameKey(key) {
       for (let wi = 0; wi < 4; wi++) {
         state.particles.push({x:tx, y:ty, vx:(Math.random()-0.5)*5, vy:-2-Math.random()*3, color:'#8B6914', life:40, maxLife:40, size:5});
       }
-      spawnParticles(tx, ty, '#5c3d1e',4);
+      spawnParticles(tx, ty, '#5c3d1e',3);
       // Track tree chop stat
       if (state.runStats) state.runStats.treesChopped++;
       // Tree shake: store shake target, replace with fallen log decor, then remove
@@ -4346,7 +4346,7 @@ function updatePlayer() {
         if (state.runStats) state.runStats.damageTaken += 15;
         state.trapFlash = 2; // brief red flash frames
         showMsg('SPIKE TRAP!', '#e74c3c');
-        spawnParticles(p.x, p.y, '#e74c3c',4);
+        spawnParticles(p.x, p.y, '#e73c3c',3);
       }
     }
   }
@@ -4554,7 +4554,7 @@ function handleInteract() {
         }
         state.objects.splice(i, 1);
         showMsg('PACK RECOVERED! YOUR ITEMS ARE BACK.', '#c8f135');
-        spawnParticles(obj.x, obj.y, '#ffffff',4);
+        spawnParticles(obj.x, obj.y, '#ffffff',3);
         return;
       }
     }
@@ -4596,7 +4596,7 @@ function handleInteract() {
           Object.keys(maxDur).forEach(k => { if ((p.inv[k]||0) > 0) p.toolDurability[k] = maxDur[k]; });
           p.knifeThrows = 3;
           showMsg('TOOLS REPAIRED! (used 1 stone)', '#c8f135');
-          spawnParticles(fobj.x, fobj.y, '#ffaa00',4);
+          spawnParticles(fobj.x, fobj.y, '#ffaa00',3);
         } else {
           showMsg('NEED 1 STONE to repair tools at Forge', '#888');
         }
@@ -4652,7 +4652,7 @@ function handleInteract() {
         p.maxHp = Math.min(200, p.maxHp + 50);
         p.hp = Math.min(p.maxHp, p.hp + 50);
         showMsg('MEDICINE CHEST: +50 MAX HEALTH', '#40ff88');
-        spawnParticles(p.x, p.y-20, '#40ff88', 5);
+        spawnParticles(p.x, p.y-20, '#40ff88', 3);
       } else if (key === 'signal_flare') {
         p.inv.signal_flare = 1;
         showMsg('SIGNAL FLARE collected — use it on the beach to call for rescue', '#ff8840');
@@ -4727,7 +4727,7 @@ function handleInteract() {
       if (d < 50) {
         p.water = Math.min(p.maxWater, p.water + 50);
         showMsg('DRANK FROM WATERFALL', '#3dd6d0');
-        spawnParticles(obj.x, obj.y, '#55aaee',4);
+        spawnParticles(obj.x, obj.y, '#55aaee',3);
         return;
       }
     }
@@ -4746,7 +4746,7 @@ function handleInteract() {
         p.inv.fish = (p.inv.fish||0) + 2;
         p.inv.coconut = (p.inv.coconut||0) + 2;
         showMsg('TIDAL CAVE: STONE x3, WOOD x3, VOLCANIC STONE x1, FISH x2, COCONUT x2', '#c8a060');
-        spawnParticles(obj.x, obj.y, '#c8f135',4);
+        spawnParticles(obj.x, obj.y, '#c8f135',3);
         return;
       }
     }
@@ -4761,7 +4761,7 @@ function handleInteract() {
         p.maxHp += 20;
         p.hp = Math.min(p.maxHp, p.hp + 20);
         showMsg('THE ISLAND BLESSES YOU. +20 MAX HEALTH', '#ffee44');
-        spawnParticles(obj.x, obj.y, '#ffaa00',4);
+        spawnParticles(obj.x, obj.y, '#ffaa00',3);
         return;
       }
     }
@@ -4927,11 +4927,11 @@ function handleClick(sx, sy) {
           e.x += Math.cos(knockAngle) * 20;
           e.y += Math.sin(knockAngle) * 20;
           addFloatingText(e.x, e.y - 20, '-'+combatDmg, combatColor);
-          spawnParticles(e.x, e.y, combatColor,4);
+          spawnParticles(e.x, e.y, combatColor,3);
           // Fire spear burn
           if (tool === 'fire_spear') {
             e.burning = 90;
-            spawnParticles(e.x, e.y, '#ff6600',4);
+            spawnParticles(e.x, e.y, '#ff6600',3);
           }
           SFX.hit();
           if (e.hp <= 0) SFX.enemyDie();
@@ -4950,11 +4950,11 @@ function handleClick(sx, sy) {
           e.x += Math.cos(knockAngle) * 20;
           e.y += Math.sin(knockAngle) * 20;
           addFloatingText(e.x, e.y - 20, '-'+combatDmg, combatColor);
-          spawnParticles(e.x, e.y, combatColor,4);
+          spawnParticles(e.x, e.y, combatColor,3);
           // Lava blade ignite
           if (tool === 'lava_blade') {
             e.burning = 120;
-            spawnParticles(e.x, e.y, '#ff4400',4);
+            spawnParticles(e.x, e.y, '#ff3300',3);
           }
           SFX.hit();
           if (e.hp <= 0) SFX.enemyDie();
@@ -4985,7 +4985,7 @@ function handleClick(sx, sy) {
         c.x += Math.cos(knockAngle) * 20;
         c.y += Math.sin(knockAngle) * 20;
         addFloatingText(c.x, c.y - 20, '-'+combatDmg, combatColor);
-        spawnParticles(c.x, c.y, '#22cc44',4);
+        spawnParticles(c.x, c.y, '#22cc33',3);
         SFX.hit();
         if (c.hp <= 0) {
           SFX.enemyDie();
@@ -5058,7 +5058,7 @@ function handleClick(sx, sy) {
       nearest.e.stunTimer = 180; // 3 seconds at 60fps
       nearest.e.hitFlash = 10;
       addFloatingText(nearest.e.x, nearest.e.y - 20, 'BLINDED!', '#ffffaa');
-      spawnParticles(nearest.e.x, nearest.e.y, '#ffffaa', 6);
+      spawnParticles(nearest.e.x, nearest.e.y, '#ffffaa', 3);
       showMsg('SIGNAL MIRROR — enemy blinded!', '#ffffaa');
     } else {
       showMsg('No enemy in range (need <200px)', '#888');
@@ -5115,7 +5115,7 @@ function handleClick(sx, sy) {
       p.inv.wood = (p.inv.wood||0) + yield_;
       state.objects = state.objects.filter(o => o !== nearest);
       showMsg(`+${yield_} WOOD (FIRE AXE)`, '#ff6600');
-      spawnParticles(nearest.x, nearest.y, '#ff6600',4);
+      spawnParticles(nearest.x, nearest.y, '#ff6600',3);
       // +WOOD floating particle
       spawnParticle(nearest.x, nearest.y-20, 0, -1.2, '#c8f135', 60);
       SFX.chop(); SFX.pickup();
@@ -5178,7 +5178,7 @@ function handleClick(sx, sy) {
     if (Math.hypot(p.x-e.x, p.y-e.y) < attackReach) {
       e.hp -= combatDmg;
       e.hitFlash = 6;
-      spawnParticles(e.x, e.y, '#e74c3c',4);
+      spawnParticles(e.x, e.y, '#e73c3c',3);
       SFX.hit();
       if (e.hp <= 0) SFX.enemyDie();
       hit = true;
@@ -5238,7 +5238,7 @@ function handleClick(sx, sy) {
     if (obj.type === 'fruit') {
       if (Math.random() < 0.2) { p.sick = 200; showMsg('SICK FROM RAW FRUIT!', '#e74c3c'); SFX.hurt(); }
       else { p.food = Math.min(p.maxFood, p.food+20); showMsg('+FRUIT (RAW)', '#e67e22'); SFX.pickup(); }
-      spawnParticles(obj.x, obj.y, '#2ecc71',4);
+      spawnParticles(obj.x, obj.y, '#2ecc71',3);
       state.objects.splice(i,1);
       return;
     }
@@ -5266,7 +5266,7 @@ function handleClick(sx, sy) {
     if (obj.type === 'journal') {
       p.inv.journal = (p.inv.journal||0) + 1;
       showMsg("MARA'S JOURNAL FOUND. RETURN IT TO HER.", '#c8a060');
-      spawnParticles(obj.x, obj.y, '#c8a060',4);
+      spawnParticles(obj.x, obj.y, '#c8a060',3);
       SFX.pickup();
       state.objects.splice(i,1);
       return;
@@ -5275,7 +5275,7 @@ function handleClick(sx, sy) {
       obj.collected = true;
       p.inv.tribal_child = (p.inv.tribal_child||0) + 1;
       showMsg("YOU FOUND THE TRIBAL CHILD. BRING HER TO MARA.", '#c8a060');
-      spawnParticles(obj.x, obj.y, '#f0d890',4);
+      spawnParticles(obj.x, obj.y, '#f0d890',3);
       SFX.pickup();
       state.objects.splice(i,1);
       return;
@@ -5295,7 +5295,7 @@ function handleClick(sx, sy) {
       const item = items[Math.floor(Math.random()*items.length)];
       if (item==='stone') { p.inv.stone+=3; showMsg('+3 STONE (JUNGLE CHEST)', '#888'); }
       else if (item==='volcanic_stone') { p.inv.volcanic_stone+=2; showMsg('+2 VOLCANIC STONE!', '#ff6600'); }
-      spawnParticles(obj.x, obj.y, '#c8f135',4);
+      spawnParticles(obj.x, obj.y, '#c8f135',3);
       SFX.craft(); // chest open = satisfying ding
       return;
     }
@@ -5305,7 +5305,7 @@ function handleClick(sx, sy) {
       p.inv.fire_spear = 1;
       p.inv.volcanic_stone += 5;
       showMsg('FIRE AXE + FIRE SPEAR FOUND!', '#ff6600');
-      spawnParticles(obj.x, obj.y, '#ff6600',4);
+      spawnParticles(obj.x, obj.y, '#ff6600',3);
       SFX.victory();
       return;
     }
@@ -5324,7 +5324,7 @@ function handleClick(sx, sy) {
         p.inv[ri] = (p.inv[ri]||0) + 1;
         foundItem = ri.replace(/_/g,' ').toUpperCase();
         showMsg('TREASURE FOUND! ' + foundItem, '#ffcc00');
-        spawnParticles(obj.x, obj.y, '#ffcc00',4);
+        spawnParticles(obj.x, obj.y, '#ffcc00',3);
         SFX.victory();
       } else if (tier === 'uncommon' || (tier === 'common' && rareRoll)) {
         // Uncommon loot
@@ -5335,7 +5335,7 @@ function handleClick(sx, sy) {
         ];
         foundItem = uncItems[Math.floor(Math.random()*uncItems.length)]();
         showMsg('TREASURE FOUND! ' + foundItem, '#ffcc00');
-        spawnParticles(obj.x, obj.y, '#ffcc00',4);
+        spawnParticles(obj.x, obj.y, '#ffcc00',3);
         SFX.craft();
       } else {
         // Common loot
@@ -5344,7 +5344,7 @@ function handleClick(sx, sy) {
         p.inv.coconut = (p.inv.coconut||0) + 2;
         foundItem = 'WOOD x5, STONE x3, COCONUT x2';
         showMsg('TREASURE FOUND! ' + foundItem, '#ffcc00');
-        spawnParticles(obj.x, obj.y, '#ffcc00',4);
+        spawnParticles(obj.x, obj.y, '#ffcc00',3);
         SFX.craft();
       }
       return;
@@ -5463,7 +5463,7 @@ function placeBuildItem(sx, sy) {
   });
 
   showMsg(`${item.label} PLACED`, '#c8f135');
-  spawnParticles(wx, wy, '#c8f135',4);
+  spawnParticles(wx, wy, '#c8f135',3);
   checkSettlement();
 
   if (state.buildItem==='water_barrel') { p.maxWater += 50; showMsg('MAX WATER +50', '#3498db'); }
@@ -6542,11 +6542,21 @@ function render(ctx, minimapCtx) {
     state.seasonOverlay--;
   }
 
-  // Visible tile range
-  const sx0 = Math.max(0, Math.floor(camX/TSIZE));
-  const sy0 = Math.max(0, Math.floor(camY/TSIZE));
-  const sx1 = Math.min(MSIZE, sx0 + Math.ceil(canvas.width/TSIZE) + 2);
-  const sy1 = Math.min(MSIZE, sy0 + Math.ceil(canvas.height/TSIZE) + 2);
+  // Apply zoom transform
+  const zoom = state.zoom || 2.0;
+  ctx.save();
+  ctx.translate(canvas.width/2, canvas.height/2);
+  ctx.scale(zoom, zoom);
+  ctx.translate(-canvas.width/2, -canvas.height/2);
+
+  // Visible tile range (adjusted for zoom)
+  const visW = canvas.width / zoom, visH = canvas.height / zoom;
+  const zCamX = camX + (canvas.width - visW) / 2;
+  const zCamY = camY + (canvas.height - visH) / 2;
+  const sx0 = Math.max(0, Math.floor(zCamX/TSIZE));
+  const sy0 = Math.max(0, Math.floor(zCamY/TSIZE));
+  const sx1 = Math.min(MSIZE, sx0 + Math.ceil(visW/TSIZE) + 3);
+  const sy1 = Math.min(MSIZE, sy0 + Math.ceil(visH/TSIZE) + 3);
 
   // Draw tiles
   for (let ty = sy0; ty < sy1; ty++) {
@@ -7378,6 +7388,8 @@ function render(ctx, minimapCtx) {
   }
 
   // Minimap
+  drawHoverHighlight(ctx, camX, camY);
+  ctx.restore(); // end zoom
   drawMinimap(minimapCtx);
 
   // HUD hotbar icons overlay (draw pixel icons on canvas)
@@ -9142,7 +9154,7 @@ function handleJump() {
     state.player.jumping = true;
     state.player.jumpTimer = 20;
     state.player.jumpOffset = 0;
-    spawnParticles(state.player.x, state.player.y+16, '#aaa',4);
+    spawnParticles(state.player.x, state.player.y+16, '#aaa',3);
     SFX.jump();
   }
 }
