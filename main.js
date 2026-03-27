@@ -78,7 +78,7 @@ const ESSAYS = [
    Fields: subject, title, due (YYYY-MM-DD), status ('pending'|'done')
    ══════════════════════════════════════════════════════════════ */
 const SCHOOL_TASKS = [
-  // Last updated: 2026-03-26 via ManageBac scraper
+  // Last updated: 2026-03-27 via ManageBac scraper
   // --- Past (Mon Mar 23) ---
   { subject: "Math 8", title: "Math 8: Apothem Exercises", due: "2026-03-23", time: "8:30 AM", status: "done", type: "Homework" },
   { subject: "English 7", title: "Eng 7 hw", due: "2026-03-23", time: "9:00 AM", status: "done", type: "Homework" },
@@ -97,10 +97,10 @@ const SCHOOL_TASKS = [
   { subject: "Math 7", title: "Math 7 (HW)", due: "2026-03-25", time: "12:35 PM", status: "done", type: "Homework" },
   { subject: "Ed. Technology 7", title: "Ed. Tech 7 - Classroom Pods", due: "2026-03-25", time: "1:35 PM", status: "done", type: "Presentations/Classwork" },
   { subject: "Art 7", title: "RENAISSANCE PRESENTATIONS FIRST GROUPS", due: "2026-03-25", time: "2:30 PM", status: "done", type: "Paper" },
-  // --- Today (Thu Mar 26) ---
-  { subject: "English 7", title: "Eng 7 hw", due: "2026-03-26", time: "9:00 AM", status: "pending", type: "Homework" },
-  { subject: "General Music 7", title: "Ukulele Assessment", due: "2026-03-26", time: "12:35 PM", status: "pending", type: "Performance/Assessment" },
-  // --- Fri Mar 27 ---
+  // --- Past (Thu Mar 26) ---
+  { subject: "English 7", title: "Eng 7 hw", due: "2026-03-26", time: "9:00 AM", status: "done", type: "Homework" },
+  { subject: "General Music 7", title: "Ukulele Assessment", due: "2026-03-26", time: "12:35 PM", status: "done", type: "Performance/Assessment" },
+  // --- Today (Fri Mar 27) ---
   { subject: "History 7", title: "Age of Exploration Summative Assessment", due: "2026-03-27", time: "11:20 AM", status: "pending", type: "Summative" },
   { subject: "Art 7", title: "RENAISSANCE PRESENTATIONS SECOND GROUPS", due: "2026-03-27", time: "2:30 PM", status: "pending", type: "Presentation" },
 ];
