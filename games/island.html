@@ -484,7 +484,16 @@ const state = {
       basket:0, signal_mirror:0,
       lava_blade:0, volcanic_armor:0, obsidian_pickaxe:0, lava_bomb:0,
       depth_spear:0, pressure_suit:0, ancient_artifact:0,
-      hearty_meal:0, healing_potion:0, tribal_brew:0, antidote:0
+      hearty_meal:0, healing_potion:0, tribal_brew:0, antidote:0,
+      tribal_shield:0,
+      // Cave resources
+      crystal:0, ancient_bone:0,
+      // Cave crafted items
+      bone_spear:0, crystal_blade:0, crystal_torch:0,
+      // Tribal loot
+      tribal_weapon:0,
+      // Underground artifacts
+      artifact_shard:0
     },
     chiefDefeated: false,
     settlementLevel: 0, // 0=survivor,1=settlement,2=fortified,3=village
@@ -544,7 +553,24 @@ const state = {
   eruptionDuration: 0,     // frames remaining in active eruption
   lavaBombs: [],           // [{x, y, vx, vy, life, maxLife, landed, landTimer}]
 
+  // === WORLD EVENTS ===
+  raidTimer: 60*60*(3 + Math.random()*2), // frames until next tribal raid
+  raidActive: false,
+  raid: [],            // active raid warriors [{x,y,hp,maxHp,vx,vy,hitFlash,id}]
+  survivorTimer: 60*60*(4 + Math.random()*3), // frames until next shipwreck survivor
+  survivors: [],       // [{x,y,type,timer,used,soldierTimer}]
+  bonusFishing: 0,     // bonus fish per catch (fisherman survivor)
+  scoutActive: 0,      // frames remaining for scout minimap reveal
+  damageReduction: 0,  // fraction 0-0.2 from tribal shield
+
   creatures: [], // jungle mobs: spiders, crocs, bats
+
+  // === SKILLS ===
+  skills: {chopping:0, mining:0, combat:0, fishing:0, building:0},
+
+  // === CRAFTING JOURNAL ===
+  discoveredRecipes: new Set(),
+  hasOpenedCrafting: false,
 
   minigame: null, // current minigame state
   dialogue: null, // current dialogue state
@@ -618,6 +644,20 @@ const state = {
   unlockedAchievements: new Set(),
   endScore: 0,
   isNewHighScore: false,
+
+  // === SHIP COMBAT ===
+  canoes: [], // tribal canoes patrolling shallow water
+
+  // === UNDERGROUND SYSTEM ===
+  underground: false,
+  caveMap: [], // 30x30 underground tile map
+  caveMapGenerated: false,
+  cavedoorX: 0, cavedoorY: 0, // surface world position of cave entrance
+  crystalVeins: [], // {cx, cy} cave map coords
+  bonePiles: [],    // {cx, cy}
+  ancientChamberPos: {cx:15, cy:15},
+  ancientChamberUsed: false,
+  boardingTarget: null, // canoe being boarded
 };
 
 // NPC definitions
@@ -2902,6 +2942,64 @@ function updateMsgs() { /* DOM-based; no per-frame updates needed */ }
 function drawMsgs(ctx) { /* DOM-based; nothing to draw on canvas */ }
 
 // ============================================================
+// SKILL SYSTEM
+// ============================================================
+
+const SKILL_THRESHOLDS = [10, 25, 50];
+const SKILL_MSGS = {
+  chopping: { 10: 'CHOPPING SKILL UP \u2014 trees fall faster', 25: 'CHOPPING MASTERY \u2014 2 hits to fell', 50: 'CHOPPING LEGEND' },
+  mining:   { 10: 'MINING SKILL UP \u2014 extra stone per vein', 25: 'MINING MASTERY \u2014 even more stone', 50: 'MINING LEGEND' },
+  combat:   { 10: 'COMBAT SKILL UP \u2014 attack range increased', 25: 'COMBAT MASTERY \u2014 range further', 50: 'COMBAT LEGEND \u2014 faster attacks' },
+  fishing:  { 10: 'FISHING SKILL UP', 5: 'FISHING SKILL UP \u2014 rare fish chance 20%', 15: 'FISHING MASTERY \u2014 rare fish 40%', 50: 'FISHING LEGEND' },
+  building: { 5: 'BUILDING SKILL UP \u2014 walls are sturdier', 10: 'BUILDING MASTERY \u2014 buildings last longer', 50: 'BUILDING LEGEND' },
+};
+
+function gainSkill(skill, amount) {
+  amount = amount || 1;
+  if (!state.skills) state.skills = {chopping:0, mining:0, combat:0, fishing:0, building:0};
+  const prev = state.skills[skill] || 0;
+  state.skills[skill] = prev + amount;
+  const now = state.skills[skill];
+  // Check thresholds
+  const checkPoints = skill === 'fishing' ? [5,15,50] : skill === 'building' ? [5,10,50] : [10,25,50];
+  for (const t of checkPoints) {
+    if (prev < t && now >= t) {
+      const msgs = SKILL_MSGS[skill] || {};
+      const msg = msgs[t] || (skill.toUpperCase() + ' SKILL UP');
+      showMsg(msg, '#c8f135');
+      SFX.levelUp && SFX.levelUp();
+      break;
+    }
+  }
+}
+
+function getSkillCombatRange(base) {
+  const sk = (state.skills && state.skills.combat) || 0;
+  if (sk >= 25) return base + 24;
+  if (sk >= 10) return base + 16;
+  return base;
+}
+
+function getSkillAttackCooldown(base) {
+  const sk = (state.skills && state.skills.combat) || 0;
+  if (sk >= 50) return Math.max(5, base - 5);
+  return base;
+}
+
+function checkRecipeDiscovery() {
+  if (typeof CRAFT_ITEMS === 'undefined') return;
+  const p = state.player;
+  CRAFT_ITEMS.forEach(item => {
+    if (state.discoveredRecipes.has(item.id)) return;
+    const hasAny = Object.keys(item.cost).some(k => (p.inv[k]||0) > 0);
+    if (hasAny) {
+      state.discoveredRecipes.add(item.id);
+      showMsg('NEW RECIPE: ' + item.label, '#c8f135');
+    }
+  });
+}
+
+// ============================================================
 // ENEMY SPAWNING & AI
 // ============================================================
 
@@ -3225,7 +3323,10 @@ function updateEnemies() {
     }
     if (e.dying) {
       e.dyingTimer--;
-      if (e.dyingTimer <= 0 && state.runStats) state.runStats.enemiesKilled++;
+      if (e.dyingTimer <= 0 && state.runStats) {
+        state.runStats.enemiesKilled++;
+        gainSkill('combat');
+      }
       return e.dyingTimer > 0;
     }
     return true;
@@ -3368,7 +3469,7 @@ function updateProjectiles() {
       for (const e of allTargets) {
         if (!e || e.x === undefined) continue;
         if (Math.hypot(proj.x-e.x, proj.y-e.y) < 24) {
-          e.hp -= 15; // coconuts hit hard
+          e.hp -= 15;
           if (e.hitFlash !== undefined) e.hitFlash = 4;
           spawnParticles(e.x, e.y, '#8B6913',3);
           SFX.hit();
@@ -3380,10 +3481,29 @@ function updateProjectiles() {
       return proj.life > 0;
     }
 
+    if (proj.type === 'companion_spear') {
+      let hit = false;
+      const spearTargets = [...state.enemies, ...(state.chief?[state.chief]:[]), ...(state.raid||[])];
+      for (const e of spearTargets) {
+        if (!e || e.x === undefined) continue;
+        if (Math.hypot(proj.x-e.x, proj.y-e.y) < 18) {
+          e.hp -= proj.dmg || 18;
+          if (e.hitFlash !== undefined) e.hitFlash = 5;
+          addFloatingText(e.x, e.y-20, '-'+(proj.dmg||18), '#e8a060');
+          spawnParticles(e.x, e.y, '#c8a060', 2);
+          SFX.hit && SFX.hit();
+          hit = true;
+          break;
+        }
+      }
+      if (hit) return false;
+      return proj.life > 0;
+    }
+
     const dx = p.x - proj.x, dy = p.y - proj.y;
     if (Math.sqrt(dx*dx+dy*dy) < 20) {
-      p.hp = Math.max(0, p.hp - proj.damage);
-      
+      const reducedDmg = Math.floor((proj.damage||0) * (1 - (state.damageReduction||0)));
+      p.hp = Math.max(0, p.hp - reducedDmg);
       spawnParticles(p.x, p.y, proj.type==='axe'?'#888':'#c8a060',3);
       return false;
     }
@@ -3611,10 +3731,12 @@ function checkSettlement() {
 // ============================================================
 
 function startChopMinigame(obj) {
+  const sk = (state.skills && state.skills.chopping) || 0;
+  const maxProg = sk >= 25 ? 2 : sk >= 10 ? 3 : 4;
   state.minigame = {
     type: 'chop', target: obj,
     indicatorPos: 0, indicatorDir: 1,
-    progress: 0, maxProgress: 2, // 2 hits to fell tree
+    progress: 0, maxProgress: maxProg,
     result: null, timer: 0,
     speed: 0.018
   };
@@ -3703,10 +3825,18 @@ function updateMinigame(canvas) {
       if (mg.inZone > 60) {
         // Caught! High tide gives bonus fish
         const bonusFish = state.tideLevel > 0.7 ? 1 : 0;
-        state.player.inv.fish += 1 + bonusFish;
-        showMsg(bonusFish ? 'FISH CAUGHT! (High tide bonus +1)' : 'FISH CAUGHT!', '#4a9ab4');
+        // Fishing skill: rare fish chance
+        const fishingSkill = (state.skills && state.skills.fishing) || 0;
+        const rareFishChance = fishingSkill >= 15 ? 0.4 : fishingSkill >= 5 ? 0.2 : 0;
+        const isRare = rareFishChance > 0 && Math.random() < rareFishChance;
+        const fishGained = (isRare ? 2 : 1) + bonusFish;
+        state.player.inv.fish += fishGained;
+        const catchMsg = isRare ? 'RARE FISH CAUGHT! (x2 food value)' : (bonusFish ? 'FISH CAUGHT! (High tide bonus +1)' : 'FISH CAUGHT!');
+        showMsg(catchMsg, '#4a9ab4');
         spawnParticles(state.player.x, state.player.y, '#3a9ab3',3);
-        if (state.runStats) { state.runStats.fishCaught += 1 + bonusFish; }
+        if (state.runStats) { state.runStats.fishCaught += fishGained; }
+        gainSkill('fishing');
+        checkRecipeDiscovery();
         state.minigame = null;
         state.fishing = null;
       }
@@ -3876,6 +4006,7 @@ function handleMinigameKey(key) {
       spawnParticles(tx, ty, '#5c3d1e',3);
       // Track tree chop stat
       if (state.runStats) state.runStats.treesChopped++;
+      gainSkill('chopping');
       // Tree shake: store shake target, replace with fallen log decor, then remove
       mg.target._shaking = true; mg.target._shakeTimer = 9;
       const capTarget = mg.target;
@@ -3943,6 +4074,12 @@ function handleMineClick(wx, wy) {
         state.tutorials.stoneHint = true;
         setTimeout(() => showMsg('Craft tools at the WORKBENCH (C key)', '#c8f135'), 1500);
       }
+      gainSkill('mining');
+      // Mining skill bonus stone
+      const miningSkill = (state.skills && state.skills.mining) || 0;
+      if (miningSkill >= 25 && !hasObsidian) { p3.inv.stone += 2; addFloatingText(mg.target.x, mg.target.y - 42, '+2 BONUS', '#c8c060'); }
+      else if (miningSkill >= 10 && !hasObsidian) { p3.inv.stone += 1; addFloatingText(mg.target.x, mg.target.y - 42, '+1 BONUS', '#c8c060'); }
+      checkRecipeDiscovery();
       state.objects = state.objects.filter(o => o !== mg.target);
       state.minigame = null;
     }
@@ -4186,7 +4323,8 @@ function updatePlayer() {
 
   let spd = 2.0;
   if (sprinting) spd = 2.8;
-  if (inWater) spd *= 0.5;
+  if (inWater && !((p.inv.raft||0) > 0)) spd *= 0.5; // raft negates water slow
+  if (inWater && (p.inv.raft||0) > 0) spd *= 1.0; // raft: normal speed
   if (inDeepOcean) spd *= 0.6;
   if (inDense) spd *= 0.6;
   if (p.stamina <= 0) spd *= 0.8;
@@ -4562,6 +4700,44 @@ function handleInteract() {
     }
   }
 
+  // Shipwreck survivor interaction
+  if (state.survivors) {
+    for (let i = 0; i < state.survivors.length; i++) {
+      const sv = state.survivors[i];
+      const sd = Math.hypot(p.x-sv.x, p.y-sv.y);
+      if (sd < reach && !sv.used) {
+        sv.used = true;
+        if (sv.type === 'doctor') {
+          p.hp = p.maxHp;
+          state.dialogue = { type:'lore', text:'DOCTOR: "Here, let me patch you up." — Healed to full HP.', displayed:'', timer:0, charIdx:0 };
+        } else if (sv.type === 'soldier') {
+          sv.soldierActive = true;
+          sv.soldierTimer = 60 * 120;
+          showMsg('SOLDIER joins your side for 2 minutes!', '#c8f135');
+          state.dialogue = { type:'lore', text:'SOLDIER: "I\'ll watch your back. Stay close."', displayed:'', timer:0, charIdx:0 };
+        } else if (sv.type === 'merchant') {
+          if ((p.inv.food||0) >= 5) {
+            p.inv.food = (p.inv.food||0) - 5;
+            p.inv.volcanic_stone = (p.inv.volcanic_stone||0) + 2;
+            state.dialogue = { type:'lore', text:'MERCHANT: "A fair trade — 5 food for 2 volcanic stone." Deal done.', displayed:'', timer:0, charIdx:0 };
+          } else {
+            sv.used = false;
+            state.dialogue = { type:'lore', text:'MERCHANT: "Bring me 5 food and I\'ll give you rare volcanic stone."', displayed:'', timer:0, charIdx:0 };
+          }
+        } else if (sv.type === 'fisherman') {
+          p.inv.fish = (p.inv.fish||0) + 3;
+          state.bonusFishing = (state.bonusFishing||0) + 1;
+          state.dialogue = { type:'lore', text:'FISHERMAN: "Let me show you the good spots. Take these fish. And here\'s a trick or two..." +3 fish, +1 bonus catch permanently.', displayed:'', timer:0, charIdx:0 };
+        } else if (sv.type === 'scout') {
+          state.scoutActive = 60 * 60 * 3 * (1/state.DAY_FRAMES * 60 * 240); // 3 in-game days in frames
+          state.scoutActive = 60 * 240 * 3; // 3 days = 3 * DAY_FRAMES
+          state.dialogue = { type:'lore', text:'SCOUT: "I mapped the locals. All NPC positions shown on minimap for 3 days."', displayed:'', timer:0, charIdx:0 };
+        }
+        return;
+      }
+    }
+  }
+
   // NPC interaction
   for (let npc of state.npcs) {
     const d = Math.hypot(p.x-npc.x, p.y-npc.y);
@@ -4735,20 +4911,77 @@ function handleInteract() {
     }
   }
 
-  // Cave interaction
+  // === UNDERGROUND: exit cave (press E near entrance) ===
+  if (state.underground) {
+    const caveTileX = Math.floor(p.x / TSIZE), caveTileY = Math.floor(p.y / TSIZE);
+    if (Math.abs(caveTileX - 15) < 3 && Math.abs(caveTileY - 28) < 3) {
+      exitCave();
+      return;
+    }
+    // Cave altar / ancient chamber
+    const ac = state.ancientChamberPos;
+    if (Math.abs(caveTileX - ac.cx) < 3 && Math.abs(caveTileY - ac.cy) < 3 && !state.ancientChamberUsed) {
+      state.ancientChamberUsed = true;
+      p.inv.artifact_shard = (p.inv.artifact_shard||0) + 1;
+      state.dialogue = { type:'lore', text:"This stone was placed here by the first people. The volcano's heart speaks through it.", displayed:'', timer:0, charIdx:0 };
+      addFloatingText(p.x, p.y-30, '+ARTIFACT SHARD', '#aa44ff');
+      updateUI();
+      return;
+    }
+    // Blind fish catch
+    for (let i = state.creatures.length-1; i >= 0; i--) {
+      const c = state.creatures[i];
+      if (c.type === 'blind_fish') {
+        const caveSX = c.x * TSIZE, caveSY = c.y * TSIZE;
+        if (Math.hypot(p.x - caveSX, p.y - caveSY) < 32) {
+          p.inv.fish = (p.inv.fish||0) + 1;
+          state.creatures.splice(i, 1);
+          showMsg('+1 FISH (BLIND FISH)', '#3dd6d0');
+          updateUI();
+          return;
+        }
+      }
+    }
+    // Crystal vein mining
+    const hitVein = state.crystalVeins.find(v => Math.abs(caveTileX - v.cx) < 2 && Math.abs(caveTileY - v.cy) < 2);
+    if (hitVein) {
+      const gain = 1 + Math.floor(Math.random()*2);
+      p.inv.crystal = (p.inv.crystal||0) + gain;
+      addFloatingText(p.x, p.y-20, '+'+gain+' CRYSTAL', '#aa44ff');
+      showMsg('+CRYSTAL (CAVE VEIN)', '#aa44ff');
+      updateUI();
+      return;
+    }
+    // Bone pile
+    const hitBone = state.bonePiles.find(b => Math.abs(caveTileX - b.cx) < 2 && Math.abs(caveTileY - b.cy) < 2 && !b.collected);
+    if (hitBone) {
+      hitBone.collected = true;
+      const gain = 1 + Math.floor(Math.random()*2);
+      p.inv.ancient_bone = (p.inv.ancient_bone||0) + gain;
+      addFloatingText(p.x, p.y-20, '+'+gain+' ANCIENT BONE', '#ccbbaa');
+      showMsg('+ANCIENT BONES', '#ccbbaa');
+      updateUI();
+      return;
+    }
+    showMsg('Underground: E to exit near entrance [15,28]', '#888');
+    return;
+  }
+
+  // === SHIP COMBAT: board canoe (press E when within 30px) ===
+  if ((p.inv.raft||0) > 0) {
+    const nearCanoe = state.canoes.find(c => Math.hypot(p.x-c.x, p.y-c.y) < 40);
+    if (nearCanoe) {
+      boardCanoe(nearCanoe);
+      return;
+    }
+  }
+
+  // Cave interaction — enter underground system
   for (let obj of state.objects) {
-    if (obj.type === 'cave' && !obj.opened) {
+    if (obj.type === 'cave') {
       const d = Math.hypot(p.x-obj.x, p.y-obj.y);
       if (d < 40) {
-        obj.opened = true;
-        // Give random loot
-        p.inv.stone = (p.inv.stone||0) + 3;
-        p.inv.wood = (p.inv.wood||0) + 3;
-        p.inv.volcanic_stone = (p.inv.volcanic_stone||0) + 1;
-        p.inv.fish = (p.inv.fish||0) + 2;
-        p.inv.coconut = (p.inv.coconut||0) + 2;
-        showMsg('TIDAL CAVE: STONE x3, WOOD x3, VOLCANIC STONE x1, FISH x2, COCONUT x2', '#c8a060');
-        spawnParticles(obj.x, obj.y, '#c8f135',3);
+        enterCave(obj);
         return;
       }
     }
@@ -4805,8 +5038,9 @@ function getActiveTool() {
   const tools = [
     {id:'axe'}, {id:'fire_axe'}, {id:'obsidian_pickaxe'}, {id:'pickaxe'}, {id:'sword'},
     {id:'spear'}, {id:'fire_spear'}, {id:'lava_blade'}, {id:'depth_spear'},
+    {id:'bone_spear'}, {id:'crystal_blade'}, {id:'tribal_weapon'},
     {id:'stone_knife'}, {id:'bow'},
-    {id:'fire_bottle'}, {id:'lava_bomb'}, {id:'signal_mirror'}, {id:'torch'}, {id:'coconut'}
+    {id:'fire_bottle'}, {id:'lava_bomb'}, {id:'signal_mirror'}, {id:'torch'}, {id:'crystal_torch'}, {id:'coconut'}
   ].filter(t => (p.inv[t.id]||0) > 0);
   if (!state.activeSlot) state.activeSlot = 1;
   const slot = tools[state.activeSlot - 1];
@@ -4856,19 +5090,58 @@ function handleClick(sx, sy) {
   const tool = getActiveTool();
 
   // ── WEAPON TOOLS: attack nearest enemy ──
-  const isWeapon = tool === 'sword' || tool === 'spear' || tool === 'fire_spear' || tool === 'fire_axe' || tool === 'stone_knife' || tool === 'lava_blade' || tool === 'depth_spear';
+  const isWeapon = tool === 'sword' || tool === 'spear' || tool === 'fire_spear' || tool === 'fire_axe' || tool === 'stone_knife' || tool === 'lava_blade' || tool === 'depth_spear' || tool === 'bone_spear' || tool === 'crystal_blade' || tool === 'tribal_weapon';
+
+  // Water combat restriction: melee weapons don't work in water
+  const playerTileW = getTile(p.x, p.y);
+  const onWater = playerTileW === T.SHALLOW_WATER || playerTileW === T.DEEP_OCEAN;
+  const isMelee = tool === 'sword' || tool === 'lava_blade' || tool === 'fire_axe' || tool === 'stone_knife' || tool === 'crystal_blade' || tool === 'tribal_weapon';
+  const isThrownInWater = tool === 'coconut' || tool === 'stone_knife' || tool === 'bow';
+  if (onWater && isMelee) {
+    showMsg('Too far to reach from water — use thrown weapons', '#888');
+    // Check if near a canoe to board instead
+    const nearCanoe = state.canoes.find(c => Math.hypot(p.x-c.x, p.y-c.y) < 40);
+    if (nearCanoe) showMsg('BOARD: press E to board this canoe', '#c8f135');
+    return;
+  }
+  // Click near canoe on water: throw weapon at it
+  if (onWater && isWeapon && !isMelee) {
+    const wc = sx + state.cam.x, wyc = sy + state.cam.y;
+    const clickedCanoe = state.canoes.find(c => Math.hypot(wc-c.x, wyc-c.y) < 50);
+    if (clickedCanoe) {
+      const projTool = tool;
+      let projDmg = 10;
+      if (projTool === 'bow') {
+        if ((p.inv.arrows||0) <= 0) { showMsg('NO ARROWS', '#888'); return; }
+        p.inv.arrows--;
+        projDmg = 12;
+      } else if (projTool === 'stone_knife') {
+        if ((p.knifeThrows||0) <= 0) { showMsg('KNIFE WORN OUT', '#888'); return; }
+        p.knifeThrows--;
+        projDmg = 10;
+      }
+      const ddx = clickedCanoe.x - p.x, ddy = clickedCanoe.y - p.y;
+      const dd = Math.sqrt(ddx*ddx+ddy*ddy)||1;
+      state.projectiles.push({type:'canoe_attack', x:p.x, y:p.y, vx:ddx/dd*8, vy:ddy/dd*8, life:80, damage:projDmg, targetCanoe:clickedCanoe});
+      showMsg('WEAPON THROWN AT CANOE!', '#cc4422');
+      updateUI();
+      return;
+    }
+  }
+
   if (isWeapon) {
     if (p.attackCooldown > 0) {
       showMsg('WEAPON COOLING DOWN...', '#888');
       return;
     }
     // Cooldown and range per weapon
-    const cooldownMap = {sword:20, spear:30, fire_spear:45, fire_axe:25, stone_knife:15, lava_blade:22, depth_spear:28};
-    const dmgMap = {sword:15, spear:18, fire_spear:30, fire_axe:22, stone_knife:8, lava_blade:35, depth_spear:50};
-    const rangeMap = {sword:48, spear:80, fire_spear:64, fire_axe:56, stone_knife:36, lava_blade:52, depth_spear:72};
-    const combatColor = (tool==='fire_spear'||tool==='fire_axe'||tool==='lava_blade') ? '#ff6600' : (tool==='depth_spear' ? '#3dd6d0' : '#e74c3c');
+    const cooldownMap = {sword:20, spear:30, fire_spear:45, fire_axe:25, stone_knife:15, lava_blade:22, depth_spear:28, bone_spear:28, crystal_blade:20, tribal_weapon:25};
+    const dmgMap = {sword:15, spear:18, fire_spear:30, fire_axe:22, stone_knife:8, lava_blade:35, depth_spear:50, bone_spear:25, crystal_blade:40, tribal_weapon:22};
+    const rangeMap = {sword:48, spear:80, fire_spear:64, fire_axe:56, stone_knife:36, lava_blade:52, depth_spear:72, bone_spear:80, crystal_blade:52, tribal_weapon:56};
+    const combatColor = (tool==='fire_spear'||tool==='fire_axe'||tool==='lava_blade') ? '#ff6600' : (tool==='depth_spear' ? '#3dd6d0' : tool==='crystal_blade' ? '#aa44ff' : '#e74c3c');
     const attackReach = rangeMap[tool] || 56;
     let combatDmg = dmgMap[tool] || 8;
+    const ignoresArmor = tool === 'crystal_blade'; // crystal blade pierces armor
     // Tribal brew strength boost
     if (state._tribalBrewTimer > 0) combatDmg *= 2;
     // Volcanic armor damage reduction applied when taking damage (handled below)
@@ -4912,7 +5185,7 @@ function handleClick(sx, sy) {
     }
 
     let hit = false;
-    const allTargets = [...state.enemies, ...(state.chief?[state.chief]:[])];
+    const allTargets = [...state.enemies, ...(state.chief?[state.chief]:[]), ...(state.raid||[])];
 
     if (tool === 'spear' || tool === 'fire_spear' || tool === 'depth_spear') {
       // Spear: hit up to 2 enemies in a line (sorted by distance)
@@ -5423,6 +5696,10 @@ const CRAFT_ITEMS = [
   // Always available (no tier gate)
   {id:'superyacht',  label:'SUPERYACHT',   cost:{wood:25,stone:10,raft:1},     desc:'ESCAPE THE ISLAND', needsChief:true, requiredTier:0},
   {id:'vessel',      label:'VESSEL',       cost:{wood:2,stone:2},              desc:'Collects rain water', requiredTier:0},
+  // CAVE AGE items (no tier gate — require cave resources)
+  {id:'bone_spear',      label:'BONE SPEAR',    cost:{ancient_bone:3,wood:2},           desc:'25 dmg — crafted from ancient bones', requiredTier:0},
+  {id:'crystal_blade',   label:'CRYSTAL BLADE', cost:{crystal:3,ancient_bone:2},        desc:'40 dmg — ignores armor, crystal-forged', requiredTier:0},
+  {id:'crystal_torch',   label:'CRYSTAL TORCH', cost:{crystal:1},                       desc:'Permanent underground light, no darkness penalty', requiredTier:0},
 ];
 
 function openBuildMenu() {
@@ -5704,6 +5981,58 @@ function startDialogue(npc) {
         showMsg("ZONE UNLOCKED: The volcanic path is passable.", '#c8f135');
       }
     }
+  }
+
+  // Companion offer for Oonga (quest done, zone >= 1, not yet companion)
+  if (npc.id === 'oonga' && state.zoneUnlocked >= 1 && !npc.companion) {
+    const dist = Math.hypot(state.player.x - npc.x, state.player.y - npc.y);
+    if (dist < 60) {
+      state.dialogue = {
+        type: 'choice',
+        text: 'Oonga stands ready. "You have proven yourself. I will fight with you if you wish it."',
+        options: ['Will you come with me?', 'Maybe later'],
+        displayed: '', timer: 0, charIdx: 0,
+        onChoice: (i) => {
+          if (i === 0) {
+            npc.companion = true;
+            npc.hp = 60; npc.maxHp = 60;
+            npc.downTimer = 0; npc.attackTimer = 0;
+            showMsg('OONGA JOINS YOU as combat companion.', '#c8f135');
+          }
+        }
+      };
+      return;
+    }
+  }
+  // Companion offer for Mara (quest done, not yet companion)
+  if (npc.id === 'mara' && npc.quest && npc.quest.done && !npc.companion) {
+    const dist = Math.hypot(state.player.x - npc.x, state.player.y - npc.y);
+    if (dist < 60) {
+      state.dialogue = {
+        type: 'choice',
+        text: 'Mara nods. "I know these plants. I can gather while we move — if you want company."',
+        options: ['Travel together', 'Not now'],
+        displayed: '', timer: 0, charIdx: 0,
+        onChoice: (i) => {
+          if (i === 0) {
+            npc.companion = true;
+            npc.hp = 40; npc.maxHp = 40;
+            npc.gatherTimer = 0; npc.itemsGathered = 0;
+            showMsg('MARA JOINS YOU as gatherer companion.', '#c8f135');
+          }
+        }
+      };
+      return;
+    }
+  }
+  // Companion Mara stats on interaction
+  if (npc.id === 'mara' && npc.companion) {
+    state.dialogue = {
+      type: 'lore',
+      text: `MARA — Gatherer Companion\nHP: ${Math.ceil(npc.hp||0)}/${npc.maxHp||40}\nItems gathered: ${npc.itemsGathered||0}`,
+      displayed: '', timer: 0, charIdx: 0,
+    };
+    return;
   }
 
   const idx = npc._lineIdx || 0;
@@ -6372,9 +6701,23 @@ function drawMinimap(minimapCtx) {
   state.enemies.forEach(e => mc.fillRect(e.x/TSIZE*scale-1, e.y/TSIZE*scale-1, 3, 3));
   if (state.chief) mc.fillRect(state.chief.x/TSIZE*scale-2, state.chief.y/TSIZE*scale-2, 5, 5);
 
-  // NPCs
+  // NPCs (always show companions; show all when scout active)
   mc.fillStyle = '#4a9ab4';
-  state.npcs.forEach(n => mc.fillRect(n.x/TSIZE*scale-1, n.y/TSIZE*scale-1, 3, 3));
+  state.npcs.forEach(n => {
+    if (n.companion || (state.scoutActive && state.scoutActive > 0)) {
+      mc.fillRect(n.x/TSIZE*scale-1, n.y/TSIZE*scale-1, 3, 3);
+    }
+  });
+  // Raid warriors on minimap
+  if (state.raidActive && state.raid) {
+    mc.fillStyle = '#ff2200';
+    state.raid.forEach(r => mc.fillRect(r.x/TSIZE*scale-1, r.y/TSIZE*scale-1, 3, 3));
+  }
+  // Survivors on minimap
+  if (state.survivors) {
+    mc.fillStyle = '#3498db';
+    state.survivors.forEach(sv => mc.fillRect(sv.x/TSIZE*scale-1, sv.y/TSIZE*scale-1, 3, 3));
+  }
 
   // Player
   mc.fillStyle = '#ffffff';
@@ -6915,7 +7258,7 @@ function render(ctx, minimapCtx) {
     }});
   });
 
-  // NPCs
+  // NPCs (non-companion)
   state.npcs.forEach(npc => {
     if (!npc || npc.companion) return;
     const nsx = npc.x - camX, nsy = npc.y - camY;
@@ -6926,6 +7269,101 @@ function render(ctx, minimapCtx) {
       drawNPC(ctx, capturedNpc.x - camX, capturedNpc.y - camY, capturedNpc);
     }});
   });
+
+  // Companion NPCs drawn sorted with player
+  state.npcs.forEach(npc => {
+    if (!npc || !npc.companion) return;
+    const csx = npc.x - camX, csy = npc.y - camY;
+    if (csx < -60 || csx > canvas.width+60) return;
+    const capturedC2 = npc;
+    drawList.push({y: npc.y, draw: () => {
+      const csx2 = capturedC2.x - camX, csy2 = capturedC2.y - camY;
+      // Draw downed overlay if hp <= 0
+      if ((capturedC2.hp||1) <= 0) {
+        ctx.save(); ctx.globalAlpha = 0.5;
+        if (capturedC2.id === 'oonga') drawOonga(ctx, csx2, csy2);
+        else if (capturedC2.id === 'mara') drawMara(ctx, csx2, csy2);
+        // Draw X over sprite
+        ctx.strokeStyle = '#ff4444'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(csx2-8,csy2-8); ctx.lineTo(csx2+8,csy2+8); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(csx2+8,csy2-8); ctx.lineTo(csx2-8,csy2+8); ctx.stroke();
+        ctx.restore();
+        return;
+      }
+      if (capturedC2.id === 'oonga') drawOonga(ctx, csx2, csy2);
+      else if (capturedC2.id === 'mara') drawMara(ctx, csx2, csy2);
+      // Hit flash
+      if ((capturedC2.hitFlash||0) > 0) {
+        ctx.save(); ctx.globalAlpha = 0.6; ctx.fillStyle = '#ff4444';
+        ctx.fillRect(csx2-12, csy2-22, 24, 24); ctx.restore();
+      }
+    }});
+  });
+
+  // Raid warriors
+  if (state.raid && state.raid.length > 0) {
+    state.raid.forEach(r => {
+      const rsx = r.x - camX, rsy = r.y - camY;
+      if (rsx < -40 || rsx > canvas.width+40) return;
+      const capR = r;
+      drawList.push({y: r.y, draw: () => {
+        const rsx2 = capR.x - camX, rsy2 = capR.y - camY;
+        // Draw as a darker, stronger enemy
+        ctx.save();
+        // Body — dark tribal colors
+        ctx.fillStyle = '#3a1808';
+        ctx.fillRect(rsx2-7, rsy2-14, 14, 14);
+        ctx.fillStyle = '#8b2a0a';
+        ctx.fillRect(rsx2-5, rsy2-22, 10, 10); // head
+        // War paint
+        ctx.fillStyle = '#cc4400';
+        ctx.fillRect(rsx2-5, rsy2-19, 10, 3);
+        // Spear
+        ctx.fillStyle = '#5a3010';
+        ctx.fillRect(rsx2+8, rsy2-26, 3, 22);
+        // HP bar
+        ctx.fillStyle = '#333'; ctx.fillRect(rsx2-12, rsy2-30, 24, 3);
+        ctx.fillStyle = '#cc2200'; ctx.fillRect(rsx2-12, rsy2-30, Math.round(24*capR.hp/capR.maxHp), 3);
+        // Hit flash
+        if ((capR.hitFlash||0) > 0) {
+          ctx.globalAlpha = 0.6; ctx.fillStyle = '#ffffff';
+          ctx.fillRect(rsx2-7, rsy2-22, 14, 22);
+        }
+        ctx.restore();
+      }});
+    });
+  }
+
+  // Shipwreck survivors
+  if (state.survivors && state.survivors.length > 0) {
+    const survColors = {doctor:'#ffffff',soldier:'#4a7a3a',merchant:'#c8a060',fisherman:'#3a6ab0',scout:'#8a6a2a'};
+    state.survivors.forEach(sv => {
+      const ssx = sv.x - camX, ssy = sv.y - camY;
+      if (ssx < -40 || ssx > canvas.width+40) return;
+      const capSv = sv;
+      drawList.push({y: sv.y, draw: () => {
+        const sx2 = capSv.x - camX, sy2 = capSv.y - camY;
+        const col = survColors[capSv.type] || '#aaaaaa';
+        ctx.save();
+        // Body
+        ctx.fillStyle = col; ctx.fillRect(sx2-5,sy2-14,10,14);
+        // Head
+        ctx.fillStyle = '#c8a07a'; ctx.fillRect(sx2-5,sy2-22,10,10);
+        // Label
+        ctx.fillStyle = '#ffe0a0'; ctx.font = '8px Lato,sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(capSv.type.toUpperCase(), sx2, sy2-26);
+        ctx.textAlign = 'left';
+        // Soldier companion drawing
+        if (capSv.soldierActive) {
+          ctx.fillStyle = '#4a7a3a'; ctx.fillRect(sx2-6,sy2-14,12,14);
+          ctx.fillStyle = '#c8f135'; ctx.font='7px Lato,sans-serif'; ctx.textAlign='center';
+          ctx.fillText('ALLY', sx2, sy2-27); ctx.textAlign='left';
+        }
+        ctx.restore();
+      }});
+    });
+  }
 
   // Player
   drawList.push({y: p.y, draw: () => {
@@ -7450,6 +7888,61 @@ function render(ctx, minimapCtx) {
 
   // HUD hotbar icons overlay (draw pixel icons on canvas)
   drawHotbarIcons(ctx);
+
+  // === COMPANION PORTRAITS (bottom-left) ===
+  drawCompanionPortraits(ctx);
+}
+
+function drawCompanionPortraits(ctx) {
+  const companions = state.npcs.filter(n => n && n.companion);
+  if (companions.length === 0) return;
+  const portW = 32, portH = 32, barH = 4, pad = 6, margin = 8;
+  let bx = margin, by = canvas.height - margin - (portW + barH + pad + 14) * companions.length;
+  companions.forEach((npc, idx) => {
+    const py2 = by + idx * (portH + barH + pad + 14);
+    // Portrait background
+    ctx.save();
+    const downed = (npc.hp||1) <= 0;
+    // Flash red if recently hit
+    const flashRed = (npc.hitFlash||0) > 0;
+    ctx.fillStyle = flashRed ? 'rgba(180,20,20,0.85)' : 'rgba(30,12,4,0.88)';
+    ctx.fillRect(bx-2, py2-2, portW+4, portH+barH+pad+14);
+    ctx.strokeStyle = flashRed ? '#ff4444' : '#9a6828';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(bx-2, py2-2, portW+4, portH+barH+pad+14);
+
+    // Draw mini sprite
+    ctx.save();
+    if (downed) ctx.globalAlpha = 0.4;
+    if (npc.id === 'oonga') {
+      // Mini Oonga portrait (dark skin, tribal outfit)
+      ctx.fillStyle = '#5a2808'; ctx.fillRect(bx+8, py2+10, 16, 14);
+      ctx.fillStyle = '#7a4020'; ctx.fillRect(bx+10, py2+2, 12, 10);
+      ctx.fillStyle = '#cc4400'; ctx.fillRect(bx+9, py2+5, 14, 3); // war paint
+    } else if (npc.id === 'mara') {
+      // Mini Mara portrait
+      ctx.fillStyle = '#cc4422'; ctx.fillRect(bx+8, py2+10, 16, 14);
+      ctx.fillStyle = '#c8a07a'; ctx.fillRect(bx+10, py2+2, 12, 10);
+      ctx.fillStyle = '#884422'; ctx.fillRect(bx+7, py2+2, 4, 12); // hair
+    }
+    ctx.restore();
+
+    // Name label
+    ctx.fillStyle = '#e8d49a'; ctx.font = 'bold 8px Lato,sans-serif';
+    ctx.fillText(npc.name || npc.id.toUpperCase(), bx, py2 + portH + 10);
+
+    // HP bar
+    const hpFrac = Math.max(0, Math.min(1, (npc.hp||0)/(npc.maxHp||1)));
+    ctx.fillStyle = '#333'; ctx.fillRect(bx, py2+portH+13, portW, barH);
+    ctx.fillStyle = hpFrac > 0.5 ? '#44cc44' : hpFrac > 0.25 ? '#cc8800' : '#cc2222';
+    ctx.fillRect(bx, py2+portH+13, Math.round(portW*hpFrac), barH);
+
+    if (downed) {
+      ctx.fillStyle = '#ff4444'; ctx.font = '7px Lato,sans-serif';
+      ctx.fillText('DOWNED', bx, py2+portH+22);
+    }
+    ctx.restore();
+  });
 }
 
 // ============================================================
@@ -7948,7 +8441,6 @@ function updateNPCCompanions() {
     npc.bobTimer = (npc.bobTimer || 0) + 1;
     // Non-companion NPCs wander slowly
     if (!npc.companion) {
-      // Store home position on first update
       if (!npc.homeX) { npc.homeX = npc.x; npc.homeY = npc.y; }
       if (!npc.wanderTimer) { npc.wanderTimer = 0; npc.wanderDx = 0; npc.wanderDy = 0; }
       npc.wanderTimer++;
@@ -7960,38 +8452,303 @@ function updateNPCCompanions() {
       }
       const distToPlayer = Math.hypot(p.x - npc.x, p.y - npc.y);
       const distFromHome = Math.hypot(npc.homeX - npc.x, npc.homeY - npc.y);
-      // Only wander within 40px of home position
       if (distToPlayer > 60 && distFromHome < 40) {
         npc.x += npc.wanderDx;
         npc.y += npc.wanderDy;
       } else if (distFromHome >= 40) {
-        // Return toward home
         const homeAngle = Math.atan2(npc.homeY - npc.y, npc.homeX - npc.x);
         npc.x += Math.cos(homeAngle) * 0.4;
         npc.y += Math.sin(homeAngle) * 0.4;
       }
       return;
     }
-    // Follow player
-    const dx = p.x - npc.x, dy = p.y - npc.y;
-    const d = Math.sqrt(dx*dx+dy*dy);
-    if (d > 60) {
-      npc.x += dx/d * 1.8;
-      npc.y += dy/d * 1.8;
-    }
-    // Auto harvest nearby resources
-    if (Math.random() < 0.002) {
-      const nearby = state.objects.find(o =>
-        !o.placed && o.type === 'driftwood' && !o.collected &&
-        Math.hypot(o.x-npc.x, o.y-npc.y) < 80
-      );
-      if (nearby) {
-        nearby.collected = true;
-        p.inv.wood++;
-        state.objects = state.objects.filter(o => o !== nearby);
+
+    // === OONGA — Combat Companion ===
+    if (npc.id === 'oonga') {
+      if (!npc.hp) { npc.hp = 60; npc.maxHp = 60; }
+      // Handle downed state
+      if (npc.hp <= 0) {
+        npc.downTimer = (npc.downTimer || 0) + 1;
+        if (npc.downTimer >= 60 * 60) { // 60 seconds
+          npc.hp = 10; npc.downTimer = 0;
+          showMsg('OONGA recovers — back on her feet.', '#c8f135');
+        }
+        return; // don't move/attack while downed
       }
+      npc.downTimer = 0;
+      // Slow heal over time (1hp every 5s)
+      if (state.frameCount % 300 === 0 && npc.hp < npc.maxHp) npc.hp = Math.min(npc.maxHp, npc.hp + 1);
+      // hitFlash countdown
+      if (npc.hitFlash > 0) npc.hitFlash--;
+
+      // Follow player at 1.5-tile distance (24px)
+      const fdx = p.x - npc.x, fdy = p.y - npc.y;
+      const fd = Math.sqrt(fdx*fdx+fdy*fdy);
+      if (fd > TSIZE * 1.5) {
+        const spd = 2.0;
+        npc.x += fdx/fd * spd;
+        npc.y += fdy/fd * spd;
+      }
+
+      // Attack nearest enemy within 200px every 90 frames
+      npc.attackTimer = (npc.attackTimer || 0) + 1;
+      if (npc.attackTimer >= 90) {
+        let nearest = null, nearDist = 200;
+        state.enemies.forEach(e => {
+          const ed = Math.hypot(e.x-npc.x, e.y-npc.y);
+          if (ed < nearDist) { nearest = e; nearDist = ed; }
+        });
+        // Also check raid warriors
+        if (state.raid) state.raid.forEach(e => {
+          const ed = Math.hypot(e.x-npc.x, e.y-npc.y);
+          if (ed < nearDist) { nearest = e; nearDist = ed; }
+        });
+        if (nearest) {
+          npc.attackTimer = 0;
+          const adx = nearest.x - npc.x, ady = nearest.y - npc.y;
+          const ad = Math.sqrt(adx*adx+ady*ady);
+          state.projectiles.push({
+            type: 'companion_spear', dmg: 18,
+            x: npc.x, y: npc.y,
+            vx: adx/ad * 6, vy: ady/ad * 6,
+            life: 40, owner: 'oonga'
+          });
+          npc.faceDir = Math.atan2(ady, adx);
+        }
+      }
+
+      // Take damage from nearby enemies
+      state.enemies.forEach(e => {
+        if (Math.hypot(e.x-npc.x, e.y-npc.y) < 20 && state.frameCount % 60 === 0) {
+          const dmg = 5 + Math.floor(Math.random()*5);
+          npc.hp = Math.max(0, npc.hp - dmg);
+          npc.hitFlash = 8;
+          addFloatingText(npc.x, npc.y-20, '-'+dmg, '#ff4444');
+        }
+      });
+      if (state.raid) state.raid.forEach(e => {
+        if (Math.hypot(e.x-npc.x, e.y-npc.y) < 20 && state.frameCount % 60 === 0) {
+          const dmg = 8 + Math.floor(Math.random()*5);
+          npc.hp = Math.max(0, npc.hp - dmg);
+          npc.hitFlash = 8;
+          addFloatingText(npc.x, npc.y-20, '-'+dmg, '#ff4444');
+        }
+      });
+    }
+
+    // === MARA — Gatherer Companion ===
+    if (npc.id === 'mara') {
+      if (!npc.hp) { npc.hp = 40; npc.maxHp = 40; }
+      if (npc.hitFlash > 0) npc.hitFlash--;
+
+      // Follow player at 2-tile distance (32px)
+      const mdx = p.x - npc.x, mdy = p.y - npc.y;
+      const md = Math.sqrt(mdx*mdx+mdy*mdy);
+      if (md > TSIZE * 2) {
+        npc.x += mdx/md * 1.5;
+        npc.y += mdy/md * 1.5;
+      }
+
+      // Every 300 frames: auto-collect nearby palm/berry/driftwood
+      npc.gatherTimer = (npc.gatherTimer||0) + 1;
+      if (npc.gatherTimer >= 300) {
+        npc.gatherTimer = 0;
+        const gatherTargets = ['palm', 'berry', 'driftwood', 'coconut_palm'];
+        const nearby = state.objects.find(o =>
+          !o.placed && !o.collected && gatherTargets.includes(o.type) &&
+          Math.hypot(o.x-npc.x, o.y-npc.y) < 120 && (o.respawn||0) <= 0
+        );
+        if (nearby) {
+          nearby.collected = true;
+          if (nearby.type === 'driftwood') {
+            p.inv.wood = (p.inv.wood||0) + 1;
+            addFloatingText(npc.x, npc.y-20, '+WOOD', '#8b5e3c');
+          } else if (nearby.type === 'berry') {
+            p.inv.fruit = (p.inv.fruit||0) + 1;
+            addFloatingText(npc.x, npc.y-20, '+FRUIT', '#cc4422');
+          } else {
+            p.inv.coconut = (p.inv.coconut||0) + 1;
+            addFloatingText(npc.x, npc.y-20, '+COCONUT', '#c8a060');
+          }
+          npc.itemsGathered = (npc.itemsGathered||0) + 1;
+          state.objects = state.objects.filter(o => o !== nearby);
+        }
+      }
+
+      // Take damage from enemies
+      state.enemies.forEach(e => {
+        if (Math.hypot(e.x-npc.x, e.y-npc.y) < 20 && state.frameCount % 90 === 0) {
+          const dmg = 4 + Math.floor(Math.random()*4);
+          npc.hp = Math.max(0, npc.hp - dmg);
+          npc.hitFlash = 8;
+          addFloatingText(npc.x, npc.y-20, '-'+dmg, '#ff4444');
+        }
+      });
     }
   });
+
+  // === Update raid warrior soldiers from survivor (temporary soldiers) ===
+  if (state.survivors) {
+    state.survivors.forEach(sv => {
+      if (!sv.soldierActive) return;
+      sv.soldierTimer--;
+      if (sv.soldierTimer <= 0) {
+        sv.soldierActive = false;
+        showMsg('The soldier has left.', '#888');
+        return;
+      }
+      // Move toward nearest enemy
+      let target = null, td = 200;
+      state.enemies.forEach(e => { const d = Math.hypot(e.x-sv.x,e.y-sv.y); if(d<td){target=e;td=d;} });
+      if (state.raid) state.raid.forEach(e => { const d = Math.hypot(e.x-sv.x,e.y-sv.y); if(d<td){target=e;td=d;} });
+      if (target) {
+        const da = Math.atan2(target.y-sv.y, target.x-sv.x);
+        sv.x += Math.cos(da)*2; sv.y += Math.sin(da)*2;
+        if (td < 18 && state.frameCount % 60 === 0) {
+          target.hp -= 12;
+          if (target.hp <= 0) {
+            state.enemies = state.enemies.filter(e=>e!==target);
+            if (state.raid) state.raid = state.raid.filter(e=>e!==target);
+          }
+        }
+      } else {
+        // Follow player
+        const pdx = p.x-sv.x, pdy = p.y-sv.y;
+        const pd = Math.sqrt(pdx*pdx+pdy*pdy);
+        if (pd > 40) { sv.x += pdx/pd*1.8; sv.y += pdy/pd*1.8; }
+      }
+    });
+  }
+}
+
+// ============================================================
+// WORLD EVENTS: TRIBAL RAIDS + SHIPWRECK SURVIVORS
+// ============================================================
+function updateWorldEvents() {
+  const p = state.player;
+
+  // === TRIBAL RAID ===
+  if (!state.raidActive) {
+    state.raidTimer = (state.raidTimer||0) - 1;
+    if (state.raidTimer <= 0) {
+      // Trigger a raid
+      state.raidActive = true;
+      state.raidTimer = state.DAY_FRAMES * (3 + Math.random()*2); // next raid in 3-5 days
+      state.raid = [];
+      const count = 4 + Math.floor(Math.random()*3);
+      for (let i = 0; i < count; i++) {
+        const angle = (i/count)*Math.PI*2;
+        state.raid.push({
+          x: 152*TSIZE + Math.cos(angle)*80,
+          y: 172*TSIZE + Math.sin(angle)*60,
+          hp: 45, maxHp: 45, // +15 vs normal 30
+          speed: 1.4,
+          hitFlash: 0, attackTimer: 0,
+          id: 'raider_'+i
+        });
+      }
+      showMsg('TRIBAL RAID — Warriors approach your camp!', '#ff2200');
+    }
+  } else {
+    // Update raid warriors
+    const campX = 150*TSIZE, campY = 170*TSIZE;
+    state.raid = state.raid.filter(r => r.hp > 0);
+
+    if (state.raid.length === 0) {
+      // All defeated — reward
+      state.raidActive = false;
+      p.inv.tribal_shield = 1;
+      state.damageReduction = 0.2;
+      showMsg('RAID DEFEATED! You earn the Tribal Shield — damage reduced by 20%.', '#c8f135');
+      return;
+    }
+
+    // Check if player retreated 200px from camp
+    const playerDistFromCamp = Math.hypot(p.x - campX, p.y - campY);
+    if (playerDistFromCamp > 200) {
+      state.raidActive = false;
+      state.raid = [];
+      showMsg('You retreated. The raiders pillage your camp and leave.', '#e67e22');
+      return;
+    }
+
+    state.raid.forEach(r => {
+      if (r.hitFlash > 0) r.hitFlash--;
+      // Move toward camp (or player if close)
+      const pDist = Math.hypot(p.x-r.x, p.y-r.y);
+      let tx = campX, ty = campY;
+      if (pDist < 120) { tx = p.x; ty = p.y; }
+      // Check for walls to attack first
+      const nearWall = state.objects.find(o => o.placed && o.type === 'wall' && Math.hypot(o.x-r.x,o.y-r.y) < 50);
+      if (nearWall) { tx = nearWall.x; ty = nearWall.y; }
+
+      const da = Math.atan2(ty-r.y, tx-r.x);
+      const distToTarget = Math.hypot(tx-r.x, ty-r.y);
+      if (distToTarget > 16) {
+        r.x += Math.cos(da)*r.speed;
+        r.y += Math.sin(da)*r.speed;
+      } else if (nearWall && distToTarget <= 16) {
+        r.attackTimer = (r.attackTimer||0)+1;
+        if (r.attackTimer % 60 === 0) {
+          // Damage wall (remove it after hits)
+          if (!nearWall.wallHp) nearWall.wallHp = 3;
+          nearWall.wallHp--;
+          if (nearWall.wallHp <= 0) {
+            state.objects = state.objects.filter(o=>o!==nearWall);
+            showMsg('A WALL WAS DESTROYED by raiders!', '#ff4444');
+          }
+        }
+      }
+
+      // Attack player on contact
+      if (pDist < 20) {
+        r.attackTimer = (r.attackTimer||0)+1;
+        if (r.attackTimer % 60 === 0) {
+          const rawDmg = 12 + Math.floor(Math.random()*8);
+          const dmg = Math.floor(rawDmg * (1 - (state.damageReduction||0)));
+          p.hp = Math.max(0, p.hp - dmg);
+          p.hitFlash = 8;
+          addFloatingText(p.x, p.y-20, '-'+dmg+' RAIDER', '#ff4422');
+          SFX.hurt && SFX.hurt();
+        }
+      }
+
+      // Take damage from player projectiles (handled in updateProjectiles)
+      // Also take damage from Oonga spears (handled in updateProjectiles)
+    });
+  }
+
+  // === SHIPWRECK SURVIVORS ===
+  state.survivorTimer = (state.survivorTimer||0) - 1;
+  if (state.survivorTimer <= 0 && state.survivors.length < 3) {
+    state.survivorTimer = state.DAY_FRAMES * (4 + Math.random()*3);
+    const types = ['doctor','soldier','merchant','fisherman','scout'];
+    const t = types[Math.floor(Math.random()*types.length)];
+    // Spawn on south beach (near bottom of island)
+    const sx = (130 + Math.floor(Math.random()*40)) * TSIZE;
+    const sy = 235 * TSIZE;
+    state.survivors.push({
+      x: sx, y: sy,
+      type: t,
+      timer: state.DAY_FRAMES * 2, // 2 in-game days
+      used: false,
+      soldierActive: false, soldierTimer: 0
+    });
+    showMsg('A SHIPWRECK SURVIVOR washed ashore on the south beach!', '#3498db');
+  }
+  // Age out survivors
+  if (!state.survivors) state.survivors = [];
+  state.survivors = state.survivors.filter(sv => {
+    sv.timer--;
+    if (sv.timer <= 0) {
+      showMsg('A survivor has left the island.', '#888');
+      return false;
+    }
+    return true;
+  });
+
+  // === Scout active: decrement ===
+  if (state.scoutActive > 0) state.scoutActive--;
 }
 
 // ============================================================
@@ -9394,6 +10151,11 @@ window.addEventListener('DOMContentLoaded', () => {
   try { state.deathGhosts = JSON.parse(localStorage.getItem('island_deaths')||'[]').slice(0,5); } catch(e) { state.deathGhosts = []; }
   try { state.unlockedAchievements = new Set(JSON.parse(localStorage.getItem('island_achievements')||'[]')); } catch(e) {}
   genMap(); genObjects();
+  state.underground = false;
+  state.caveMapGenerated = false;
+  state.ancientChamberUsed = false;
+  state.boardingTarget = null;
+  initCanoes();
   state.player.x = 150*TSIZE; state.player.y = 200*TSIZE; state.invincible = 600; state.player.hp = 100;
   state.cam.x = state.player.x - canvas.width/2;
   state.cam.y = state.player.y - canvas.height/2;
@@ -9420,6 +10182,530 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+// ============================================================
+// SHIP COMBAT SYSTEM
+// ============================================================
+
+function initCanoes() {
+  state.canoes = [];
+  // Find shallow water tiles around the island and place 2-3 canoes
+  const shallowTiles = [];
+  for (let ty = 50; ty < MSIZE-50; ty++) {
+    for (let tx = 50; tx < MSIZE-50; tx++) {
+      if (state.map[ty] && state.map[ty][tx] === T.SHALLOW_WATER) {
+        // Only perimeter tiles (near beach)
+        const hasBeach = [[-1,0],[1,0],[0,-1],[0,1]].some(([dy,dx]) => state.map[ty+dy]?.[tx+dx] === T.BEACH);
+        if (hasBeach && Math.random() < 0.0015) shallowTiles.push([tx, ty]);
+      }
+    }
+  }
+  // Pick 2-3 well-spaced canoe positions
+  const canoePlacements = [];
+  for (const [tx, ty] of shallowTiles) {
+    if (canoePlacements.length >= 3) break;
+    if (canoePlacements.every(c => Math.hypot(c[0]-tx, c[1]-ty) > 30)) {
+      canoePlacements.push([tx, ty]);
+    }
+  }
+  canoePlacements.forEach(([tx, ty]) => {
+    state.canoes.push({
+      x: tx * TSIZE, y: ty * TSIZE,
+      angle: Math.random() * Math.PI * 2,
+      speed: 0.5,
+      hp: 30, maxHp: 30,
+      warriors: 2,
+      orbitAngle: Math.random() * Math.PI * 2,
+      orbitSpeed: 0.002 + Math.random() * 0.001,
+      orbitR: (30 + Math.random() * 20) * TSIZE,
+      loot: []
+    });
+  });
+}
+
+function updateCanoes() {
+  if (!state.canoes || !state.canoes.length) return;
+  const p = state.player;
+  const islandCX = 150 * TSIZE, islandCY = 150 * TSIZE;
+
+  for (let i = state.canoes.length - 1; i >= 0; i--) {
+    const c = state.canoes[i];
+    if (c.hp <= 0) {
+      // Sink: spawn loot chest
+      state.objects.push({
+        type: 'canoe_loot', x: c.x, y: c.y,
+        lootItems: { volcanic_stone:2, food:3, tribal_weapon:1 },
+        decor: false
+      });
+      spawnParticles(c.x, c.y, '#8B6914', 5);
+      showMsg('CANOE SINKS! LOOT DROPPED', '#c8f135');
+      state.canoes.splice(i, 1);
+      continue;
+    }
+    // Orbit island slowly
+    c.orbitAngle += c.orbitSpeed;
+    c.x = islandCX + Math.cos(c.orbitAngle) * c.orbitR;
+    c.y = islandCY + Math.sin(c.orbitAngle) * c.orbitR;
+    c.angle = c.orbitAngle + Math.PI / 2;
+
+    // Show BOARD prompt if player has raft and is nearby
+    if ((p.inv.raft||0) > 0 && Math.hypot(p.x - c.x, p.y - c.y) < 40) {
+      addFloatingText(c.x, c.y - 24, 'E: BOARD', '#c8f135');
+    }
+  }
+}
+
+function boardCanoe(canoe) {
+  const p = state.player;
+  // Teleport player to canoe
+  p.x = canoe.x;
+  p.y = canoe.y;
+  // Spawn 2 warrior enemies
+  for (let i = 0; i < canoe.warriors; i++) {
+    const angle = (i / canoe.warriors) * Math.PI * 2;
+    state.enemies.push({
+      type: 'scout', x: canoe.x + Math.cos(angle)*20, y: canoe.y + Math.sin(angle)*20,
+      hp: 30, maxHp: 30, spd: 1.1,
+      attackTimer: 0, walkTimer: 0,
+      patrolTarget: {x: canoe.x, y: canoe.y},
+      fleeing: false, fleeTimer: 0, scatterTimer: 0, flankOffset: {x:0,y:0},
+      respawnTimer: 0,
+      name: 'Canoe Warrior',
+      _boardingCanoe: canoe
+    });
+  }
+  state.boardingTarget = canoe;
+  showMsg('BOARDING CANOE — defeat the warriors!', '#cc4422');
+}
+
+function drawCanoe(ctx, sx, sy, angle) {
+  ctx.save();
+  ctx.translate(sx, sy);
+  ctx.rotate(angle);
+  // Hull: long narrow brown boat
+  ctx.fillStyle = '#5a3010';
+  ctx.fillRect(-20, -5, 40, 10);
+  // Lighter wood planks
+  ctx.fillStyle = '#7a4818';
+  ctx.fillRect(-18, -3, 36, 2);
+  ctx.fillRect(-18, 1, 36, 2);
+  // Prow/stern pointed ends
+  ctx.fillStyle = '#3a1a08';
+  ctx.beginPath(); ctx.moveTo(20, -5); ctx.lineTo(25, 0); ctx.lineTo(20, 5); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(-20, -5); ctx.lineTo(-25, 0); ctx.lineTo(-20, 5); ctx.closePath(); ctx.fill();
+  // 2 warrior figures
+  for (let i = 0; i < 2; i++) {
+    const wx = -8 + i * 16;
+    ctx.fillStyle = '#5a2a0a'; // body
+    ctx.fillRect(wx - 2, -7, 4, 6);
+    ctx.fillStyle = '#c8a070'; // head
+    ctx.fillRect(wx - 2, -11, 4, 4);
+    // paddle
+    ctx.fillStyle = '#4a2808';
+    ctx.fillRect(wx + 2, -4, 1, 10);
+  }
+  ctx.restore();
+}
+
+// Handle canoe loot pickup in handleClick
+function tryPickupCanoeLoot(wx, wy) {
+  const p = state.player;
+  for (let i = state.objects.length-1; i >= 0; i--) {
+    const obj = state.objects[i];
+    if (obj.type !== 'canoe_loot') continue;
+    if (Math.hypot(p.x-obj.x, p.y-obj.y) < 60) {
+      const items = obj.lootItems;
+      if (items.volcanic_stone) { p.inv.volcanic_stone = (p.inv.volcanic_stone||0) + items.volcanic_stone; }
+      if (items.food) { p.inv.fish = (p.inv.fish||0) + items.food; }
+      if (items.tribal_weapon) { p.inv.tribal_weapon = (p.inv.tribal_weapon||0) + items.tribal_weapon; showMsg('TRIBAL WEAPON (bone spear, 22 dmg) FOUND', '#c8f135'); }
+      state.objects.splice(i, 1);
+      showMsg('CANOE LOOT: VOLCANIC STONE x2, FOOD x3, TRIBAL WEAPON!', '#c8f135');
+      spawnParticles(obj.x, obj.y, '#c8f135', 3);
+      updateUI();
+      return true;
+    }
+  }
+  return false;
+}
+
+// Handle projectile hitting canoe
+function updateCanoeProjectiles() {
+  for (let i = state.projectiles.length-1; i >= 0; i--) {
+    const proj = state.projectiles[i];
+    if (proj.type !== 'canoe_attack') continue;
+    proj.x += proj.vx; proj.y += proj.vy; proj.life--;
+    if (proj.life <= 0) { state.projectiles.splice(i, 1); continue; }
+    if (proj.targetCanoe) {
+      const c = proj.targetCanoe;
+      if (Math.hypot(proj.x - c.x, proj.y - c.y) < 20) {
+        c.hp -= proj.damage;
+        addFloatingText(c.x, c.y-16, '-'+proj.damage, '#cc4422');
+        spawnParticles(c.x, c.y, '#cc4422', 2);
+        state.projectiles.splice(i, 1);
+      }
+    }
+  }
+}
+
+// ============================================================
+// UNDERGROUND / CAVE SYSTEM
+// ============================================================
+
+// Cave tile types for underground
+const CT = { CAVE_WALL:0, CAVE_FLOOR:1, CRYSTAL_VEIN:2, CAVE_POOL:3, ANCIENT_CHAMBER:4 };
+const CAVE_SIZE = 30;
+
+function generateCaveMap() {
+  const cmap = [];
+  for (let y = 0; y < CAVE_SIZE; y++) {
+    cmap[y] = [];
+    for (let x = 0; x < CAVE_SIZE; x++) {
+      cmap[y][x] = CT.CAVE_WALL;
+    }
+  }
+  // Carve passages using drunkard's walk
+  function carve(cx, cy, steps) {
+    const dirs = [[0,1],[0,-1],[1,0],[-1,0]];
+    let x = cx, y = cy;
+    for (let i = 0; i < steps; i++) {
+      x = Math.max(1, Math.min(CAVE_SIZE-2, x));
+      y = Math.max(1, Math.min(CAVE_SIZE-2, y));
+      cmap[y][x] = CT.CAVE_FLOOR;
+      const d = dirs[Math.floor(Math.random()*4)];
+      x += d[0]; y += d[1];
+    }
+  }
+  // Main passage from entrance (15,28) up to center (15,15) and branches
+  carve(15, 28, 40);
+  carve(15, 15, 60);
+  carve(8, 10, 30);
+  carve(22, 10, 30);
+  // Ancient chamber at center — clear a room
+  for (let dy = -3; dy <= 3; dy++) {
+    for (let dx = -3; dx <= 3; dx++) {
+      cmap[15+dy][15+dx] = CT.CAVE_FLOOR;
+    }
+  }
+  cmap[15][15] = CT.ANCIENT_CHAMBER;
+
+  // Entrance always open
+  for (let y = 25; y < 30; y++) cmap[y][15] = CT.CAVE_FLOOR;
+
+  // Place crystal veins
+  state.crystalVeins = [];
+  for (let i = 0; i < 4; i++) {
+    let vx, vy, attempts = 0;
+    do { vx = 2 + Math.floor(Math.random()*(CAVE_SIZE-4)); vy = 2 + Math.floor(Math.random()*(CAVE_SIZE-4)); attempts++; }
+    while (cmap[vy][vx] !== CT.CAVE_WALL && attempts < 50);
+    if (attempts < 50) { cmap[vy][vx] = CT.CRYSTAL_VEIN; state.crystalVeins.push({cx:vx, cy:vy}); }
+  }
+
+  // Place bone piles on floor
+  state.bonePiles = [];
+  for (let i = 0; i < 2; i++) {
+    let bx, by, attempts = 0;
+    do { bx = 2 + Math.floor(Math.random()*(CAVE_SIZE-4)); by = 2 + Math.floor(Math.random()*(CAVE_SIZE-4)); attempts++; }
+    while (cmap[by][bx] !== CT.CAVE_FLOOR && attempts < 50);
+    if (attempts < 50) { state.bonePiles.push({cx:bx, cy:by, collected:false}); }
+  }
+
+  // Underground pools
+  const poolSpots = [[5,5],[24,5],[5,20],[24,20]];
+  poolSpots.slice(0,2).forEach(([px2,py2]) => {
+    if (cmap[py2] && cmap[py2][px2] !== undefined) cmap[py2][px2] = CT.CAVE_POOL;
+  });
+
+  state.caveMap = cmap;
+  state.caveMapGenerated = true;
+
+  // Spawn cave creatures
+  spawnCaveCreatures();
+}
+
+function spawnCaveCreatures() {
+  // Remove old cave creatures
+  state.creatures = state.creatures.filter(c => c.type !== 'cave_spider' && c.type !== 'blind_fish' && c.type !== 'cave_guardian');
+
+  const cmap = state.caveMap;
+  // Cave spiders
+  for (let i = 0; i < 5; i++) {
+    let sx, sy, attempts = 0;
+    do { sx = 2 + Math.floor(Math.random()*(CAVE_SIZE-4)); sy = 2 + Math.floor(Math.random()*(CAVE_SIZE-4)); attempts++; }
+    while ((!cmap[sy] || cmap[sy][sx] !== CT.CAVE_FLOOR) && attempts < 40);
+    if (attempts < 40) {
+      state.creatures.push({type:'cave_spider', x:sx, y:sy, hp:20, maxHp:20, spd:1.6, attackTimer:0, walkTimer:0, inCave:true});
+    }
+  }
+  // Blind fish in pools
+  const cmap2 = state.caveMap;
+  for (let y = 0; y < CAVE_SIZE; y++) {
+    for (let x = 0; x < CAVE_SIZE; x++) {
+      if (cmap2[y] && cmap2[y][x] === CT.CAVE_POOL) {
+        state.creatures.push({type:'blind_fish', x:x, y:y, hp:5, maxHp:5, spd:0.3, attackTimer:0, walkTimer:0, inCave:true});
+      }
+    }
+  }
+  // Cave guardian at ancient chamber
+  state.creatures.push({
+    type:'cave_guardian', x:15, y:14, hp:100, maxHp:100, spd:1.2, attackTimer:0, walkTimer:0,
+    inCave:true, chargeTimer:0, chargeCooldown:180
+  });
+}
+
+function enterCave(caveObj) {
+  const p = state.player;
+  if (!state.caveMapGenerated) generateCaveMap();
+  state.cavedoorX = caveObj.x;
+  state.cavedoorY = caveObj.y;
+  state.underground = true;
+  // Position player at cave entrance in cave map (tile 15,28 = bottom entrance)
+  p.x = 15 * TSIZE;
+  p.y = 27 * TSIZE;
+  showMsg('ENTERING THE CAVE — dark and deep. E to exit near entrance.', '#aa44ff');
+  spawnParticles(caveObj.x, caveObj.y, '#aa44ff', 3);
+}
+
+function exitCave() {
+  const p = state.player;
+  state.underground = false;
+  p.x = state.cavedoorX || 90 * TSIZE;
+  p.y = state.cavedoorY || 148 * TSIZE;
+  showMsg('RETURNED TO SURFACE', '#c8f135');
+  spawnParticles(p.x, p.y, '#c8f135', 3);
+}
+
+function updateCaveCreatures() {
+  if (!state.underground) return;
+  const p = state.player;
+  const cmap = state.caveMap;
+
+  for (let i = state.creatures.length - 1; i >= 0; i--) {
+    const c = state.creatures[i];
+    if (!c.inCave) continue;
+
+    if (c.type === 'blind_fish') continue; // passive, handled in interact
+
+    // Cave guardian charge attack
+    if (c.type === 'cave_guardian') {
+      c.chargeCooldown = (c.chargeCooldown||180) - 1;
+      if (c.chargeCooldown <= 0) {
+        // Charge toward player
+        const dx = p.x/TSIZE - c.x, dy = p.y/TSIZE - c.y;
+        const dist = Math.sqrt(dx*dx+dy*dy)||1;
+        c.x += dx/dist * 4;
+        c.y += dy/dist * 4;
+        c.chargeCooldown = 180;
+      }
+    }
+
+    // Move toward player
+    const px2 = p.x / TSIZE, py2 = p.y / TSIZE;
+    const dist = Math.hypot(px2 - c.x, py2 - c.y);
+    if (dist < 25 && dist > 1) {
+      const ddx = (px2 - c.x) / dist, ddy = (py2 - c.y) / dist;
+      const nx = c.x + ddx * c.spd * 0.1;
+      const ny = c.y + ddy * c.spd * 0.1;
+      // Check cave floor
+      const ntx = Math.floor(nx), nty = Math.floor(ny);
+      if (ntx >= 0 && ntx < CAVE_SIZE && nty >= 0 && nty < CAVE_SIZE && cmap[nty] && cmap[nty][ntx] !== CT.CAVE_WALL) {
+        c.x = nx; c.y = ny;
+      }
+    }
+    // Attack player
+    c.attackTimer = (c.attackTimer||0) + 1;
+    const atkDist = c.type === 'cave_guardian' ? 4 : 2;
+    if (dist < atkDist && c.attackTimer > 60) {
+      c.attackTimer = 0;
+      const dmg = c.type === 'cave_guardian' ? 15 : 8;
+      p.hp -= dmg;
+      p.hitFlash = 8;
+      if (c.type === 'cave_spider') p.poison = (p.poison||0) + 120;
+      addFloatingText(p.x, p.y-20, '-'+dmg, '#cc4422');
+      if (p.hp <= 0) { showMsg('KILLED BY CAVE CREATURE', '#cc4422'); }
+    }
+  }
+}
+
+function drawCaveScene(ctx, camX, camY) {
+  const canvas = ctx.canvas;
+  const p = state.player;
+  const cmap = state.caveMap;
+  if (!cmap || !cmap.length) return;
+
+  // Black background
+  ctx.fillStyle = '#000000';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Cool blue ambient tint
+  ctx.fillStyle = 'rgba(0,20,50,0.6)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Draw cave tiles (using TSIZE for cave tiles too)
+  const CTILE = TSIZE; // same tile size
+  const sx0 = Math.max(0, Math.floor(camX / CTILE));
+  const sy0 = Math.max(0, Math.floor(camY / CTILE));
+  const sx1 = Math.min(CAVE_SIZE, sx0 + Math.ceil(canvas.width / CTILE) + 3);
+  const sy1 = Math.min(CAVE_SIZE, sy0 + Math.ceil(canvas.height / CTILE) + 3);
+
+  for (let ty2 = sy0; ty2 < sy1; ty2++) {
+    for (let tx2 = sx0; tx2 < sx1; tx2++) {
+      const ct = cmap[ty2] ? cmap[ty2][tx2] : CT.CAVE_WALL;
+      const tsx = tx2 * CTILE - camX, tsy = ty2 * CTILE - camY;
+      switch(ct) {
+        case CT.CAVE_WALL:
+          ctx.fillStyle = '#0a0a0a';
+          ctx.fillRect(tsx, tsy, CTILE, CTILE);
+          ctx.fillStyle = '#1a1a1a';
+          ctx.fillRect(tsx+1, tsy+1, CTILE-2, CTILE-2);
+          break;
+        case CT.CAVE_FLOOR:
+          ctx.fillStyle = '#2a2a2a';
+          ctx.fillRect(tsx, tsy, CTILE, CTILE);
+          ctx.fillStyle = '#1e1e1e';
+          ctx.fillRect(tsx+1, tsy+1, 2, 2);
+          break;
+        case CT.CRYSTAL_VEIN:
+          drawCrystalVein(ctx, tsx, tsy, CTILE);
+          break;
+        case CT.CAVE_POOL:
+          ctx.fillStyle = '#0a1a2a';
+          ctx.fillRect(tsx, tsy, CTILE, CTILE);
+          ctx.fillStyle = '#103050';
+          ctx.fillRect(tsx+1, tsy+1, CTILE-2, CTILE-2);
+          break;
+        case CT.ANCIENT_CHAMBER:
+          ctx.fillStyle = '#1a1020';
+          ctx.fillRect(tsx, tsy, CTILE, CTILE);
+          // Stone altar
+          ctx.fillStyle = '#4a3060';
+          ctx.fillRect(tsx+2, tsy+2, CTILE-4, CTILE-4);
+          ctx.fillStyle = '#7a50a0';
+          ctx.fillRect(tsx+3, tsy+3, CTILE-6, 3);
+          if (!state.ancientChamberUsed) {
+            ctx.fillStyle = '#aa44ff';
+            ctx.font = '8px Courier New';
+            ctx.textAlign = 'center';
+            ctx.fillText('?', tsx+CTILE/2, tsy-2);
+            ctx.textAlign = 'left';
+          }
+          break;
+      }
+    }
+  }
+
+  // Draw bone piles
+  state.bonePiles.forEach(bp => {
+    if (bp.collected) return;
+    const bsx = bp.cx * CTILE - camX, bsy = bp.cy * CTILE - camY;
+    drawBonePile(ctx, bsx, bsy, CTILE);
+  });
+
+  // Draw cave creatures
+  state.creatures.forEach(c => {
+    if (!c.inCave) return;
+    const csx = c.x * CTILE - camX, csy = c.y * CTILE - camY;
+    if (csx < -20 || csx > canvas.width+20 || csy < -20 || csy > canvas.height+20) return;
+    if (c.type === 'cave_spider') {
+      ctx.fillStyle = c.hitFlash ? '#fff' : '#333';
+      ctx.fillRect(csx-4, csy-4, 8, 8);
+      // legs
+      ctx.fillStyle = '#222';
+      for (let i = 0; i < 4; i++) {
+        const la = (i/4)*Math.PI*2;
+        ctx.fillRect(csx + Math.cos(la)*5 - 1, csy + Math.sin(la)*5 - 1, 2, 2);
+      }
+    } else if (c.type === 'blind_fish') {
+      ctx.fillStyle = '#204060';
+      ctx.beginPath(); ctx.ellipse(csx, csy, 5, 3, 0, 0, Math.PI*2); ctx.fill();
+    } else if (c.type === 'cave_guardian') {
+      // Big boss creature
+      ctx.fillStyle = c.hitFlash ? '#ffffff' : '#502060';
+      ctx.fillRect(csx-10, csy-14, 20, 18);
+      ctx.fillStyle = '#3a1040';
+      ctx.fillRect(csx-8, csy-12, 16, 14);
+      // Eyes — glowing red
+      ctx.fillStyle = '#ff2020';
+      ctx.fillRect(csx-5, csy-10, 3, 3);
+      ctx.fillRect(csx+2, csy-10, 3, 3);
+      // HP bar
+      ctx.fillStyle = '#330000'; ctx.fillRect(csx-15, csy-20, 30, 4);
+      ctx.fillStyle = '#cc2222'; ctx.fillRect(csx-15, csy-20, 30*(c.hp/c.maxHp), 4);
+    }
+    if (c.hitFlash) c.hitFlash--;
+  });
+
+  // Draw player
+  const psx = p.x - camX, psy = p.y - camY;
+  drawPlayer(ctx, psx, psy, p);
+
+  // Torch/crystal torch light radius
+  const hasTorch = (p.inv.torch||0) > 0 && p.torch;
+  const hasCrystalTorch = (p.inv.crystal_torch||0) > 0;
+  if (hasTorch || hasCrystalTorch) {
+    const lightR = hasCrystalTorch ? 120 : 80;
+    const grad = ctx.createRadialGradient(psx, psy, 0, psx, psy, lightR);
+    grad.addColorStop(0, 'rgba(0,0,0,0)');
+    grad.addColorStop(0.6, 'rgba(0,0,0,0)');
+    grad.addColorStop(1, 'rgba(0,0,0,0.95)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(psx - lightR, psy - lightR, lightR*2, lightR*2);
+  } else {
+    // No torch: very dark, only tiny circle
+    const lightR = 30;
+    const grad = ctx.createRadialGradient(psx, psy, 0, psx, psy, lightR);
+    grad.addColorStop(0, 'rgba(0,0,0,0)');
+    grad.addColorStop(0.5, 'rgba(0,0,0,0.5)');
+    grad.addColorStop(1, 'rgba(0,0,0,0.98)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = grad;
+    ctx.fillRect(psx - lightR, psy - lightR, lightR*2, lightR*2);
+  }
+
+  // Underground HUD label
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.7)';
+  ctx.fillRect(canvas.width/2-80, canvas.height-32, 160, 22);
+  ctx.fillStyle = '#aa44ff';
+  ctx.font = '11px Lato, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('UNDERGROUND — E near [15,28] to exit', canvas.width/2, canvas.height-16);
+  ctx.textAlign = 'left';
+  ctx.restore();
+}
+
+function drawCrystalVein(ctx, tsx, tsy, size) {
+  ctx.fillStyle = '#1a0a2a';
+  ctx.fillRect(tsx, tsy, size, size);
+  // Crystal clusters
+  const colors = ['#aa44ff', '#7722cc', '#cc88ff', '#5500aa'];
+  for (let i = 0; i < 4; i++) {
+    const cx2 = tsx + 1 + (i%2)*3, cy2 = tsy + 1 + Math.floor(i/2)*3;
+    ctx.fillStyle = colors[i];
+    ctx.fillRect(cx2, cy2, 2, 3);
+    ctx.fillRect(cx2+1, cy2-1, 1, 2);
+  }
+  // Subtle glow (radial gradient)
+  const glow = ctx.createRadialGradient(tsx+size/2, tsy+size/2, 0, tsx+size/2, tsy+size/2, size);
+  glow.addColorStop(0, 'rgba(150,50,255,0.3)');
+  glow.addColorStop(1, 'rgba(150,50,255,0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(tsx-size, tsy-size, size*3, size*3);
+}
+
+function drawBonePile(ctx, tsx, tsy, size) {
+  ctx.fillStyle = '#aaaaaa';
+  // Scattered bone rectangles
+  const bones = [[1,4,4,1],[2,1,2,3],[4,2,3,1],[0,5,5,1],[3,3,2,2]];
+  bones.forEach(([bx,by,bw,bh]) => {
+    ctx.fillStyle = ['#bbbbbb','#999999','#cccccc'][Math.floor((bx+by)%3)];
+    ctx.fillRect(tsx+bx, tsy+by, bw, bh);
+  });
+}
+
+// ============================================================
+// END SHIP/CAVE SYSTEMS
+// ============================================================
+
 function gameLoopWithUI() {
   if (!state.running && !state.cutscenePlaying) return;
   requestAnimationFrame(gameLoopWithUI);
@@ -9438,10 +10724,24 @@ function gameLoopWithUI() {
   updateMinigame(canvas);
   updateDialogue();
   if (state.frameCount % 3 === 0) updateNPCCompanions();
+  if (state.frameCount % 2 === 0) updateWorldEvents();
   updateBirdsAndFootprints();
   if (state.frameCount % 4 === 0) updateCrabs();
   if (state.frameCount % 10 === 0 && typeof updateSeaCreatures === "function") updateSeaCreatures();
   updateLivingIsland();
+  if (state.frameCount % 2 === 0) updateCanoes();
+  updateCaveCreatures();
+  // Handle canoe-targeted projectiles
+  updateCanoeProjectiles();
+  // Check boarding completion
+  if (state.boardingTarget) {
+    const boardingWarriors = state.enemies.filter(e => e._boardingCanoe === state.boardingTarget);
+    if (boardingWarriors.length === 0 && state.boardingTarget.hp > 0) {
+      // All defeated — sink the canoe
+      state.boardingTarget.hp = 0;
+      state.boardingTarget = null;
+    }
+  }
   updateUI();
   // === ACHIEVEMENT CHECKS (every 5 seconds) ===
   if (state.frameCount % 300 === 0 && state.running) {
