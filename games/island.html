@@ -2045,19 +2045,20 @@ function drawUnderwaterWreck(ctx, sx, sy) {
 
 function drawDiveSpot(ctx, sx, sy) {
   ctx.save();
-  // Circular ripple rings
-  for (let r = 1; r <= 3; r++) {
-    const a = 0.5 - r * 0.13 + Math.sin(state.frameCount * 0.06 + r) * 0.1;
-    ctx.globalAlpha = Math.max(0, a);
-    ctx.strokeStyle = '#60e8e0';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.arc(sx, sy, r * 8 + Math.sin(state.frameCount*0.05+r)*2, 0, Math.PI*2); ctx.stroke();
-  }
-  ctx.globalAlpha = 0.8;
-  ctx.fillStyle = '#40d8d0';
-  ctx.font = 'bold 8px "Lato", sans-serif';
+  // Static ripple rings
+  [8,16,24].forEach((r,i) => {
+    ctx.globalAlpha = 0.5 - i * 0.12;
+    ctx.strokeStyle = '#3dd6d0';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI*2); ctx.stroke();
+  });
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = '#3dd6d0';
+  ctx.font = 'bold 9px Courier New';
   ctx.textAlign = 'center';
-  ctx.fillText('DIVE [F]', sx, sy - 16);
+  ctx.fillRect(sx-18, sy-26, 36, 12);
+  ctx.fillStyle = '#000';
+  ctx.fillText('DIVE F', sx, sy-17);
   ctx.textAlign = 'left';
   ctx.restore();
 }
@@ -10251,6 +10252,10 @@ function updateUI() {
   else hpBar.classList.remove('bar-critical-red');
 
   // Water bar
+  // Show/hide air bar based on water status
+  const airBarWrap = document.getElementById('air-bar-wrap');
+  const isUnderwater2 = [1,0].includes(getTile ? getTile(state.player.x, state.player.y) : -1);
+  if (airBarWrap) airBarWrap.style.display = (state.player.air < 100 || state.underground) ? 'flex' : 'none';
   const waterBar = document.getElementById('water-bar');
   waterBar.style.width = (p.water/p.maxWater*100)+'%';
   if (p.water < 20) waterBar.classList.add('bar-critical-blue');
@@ -10423,7 +10428,7 @@ window.addEventListener('DOMContentLoaded', () => {
   state.ancientChamberUsed = false;
   state.boardingTarget = null;
   initCanoes();
-  state.player.x = 150*TSIZE; state.player.y = 200*TSIZE; state.invincible = 600; state.player.hp = 100;
+  state.player.x = 250*TSIZE; state.player.y = 340*TSIZE; // South beach center state.invincible = 600; state.player.hp = 100;
   state.cam.x = state.player.x - canvas.width/2;
   state.cam.y = state.player.y - canvas.height/2;
   state.running = true;
