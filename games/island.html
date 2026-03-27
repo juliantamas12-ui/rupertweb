@@ -8449,6 +8449,11 @@ window.addEventListener('keydown', e => {
   if (e.key.toLowerCase() === 'c') openCraftMenu();
   if (e.key.toLowerCase() === 'b') { openBuildMenu(); const bm=document.getElementById('build-menu'); bm.style.display=state.buildMode?'block':'none'; renderBuildMenu(); }
   if (e.key.toLowerCase() === 'e') handleInteract();
+  // Wreck interior navigation
+  if (state.inWreck) {
+    if (e.key === 'w' || e.key === 'W' || e.key === 'ArrowUp') { state.wreckCursor = (state.wreckCursor + 4) % 5; e.preventDefault(); }
+    if (e.key === 's' || e.key === 'S' || e.key === 'ArrowDown') { state.wreckCursor = (state.wreckCursor + 1) % 5; e.preventDefault(); }
+  }
   if (e.key.toLowerCase() === 'q') throwCoconut();
   if (e.key === ' ') { handleMinigameKey(' '); handleJump(); e.preventDefault(); }
   // Hotbar number keys
@@ -8505,6 +8510,7 @@ window.addEventListener('keydown', e => {
   }
   // Quick-consume hotkeys 1-5 }else{pl.food=Math.min(pl.maxFood,pl.food+20);showMsg('+20 FOOD (FRUIT)','#e67e22');}updateUI();} else if(pl.inv.fruit_cooked>0){pl.inv.fruit_cooked--;pl.food=Math.min(pl.maxFood,pl.food+40);showMsg('+40 FOOD (COOKED FRUIT)','#e67e22');updateUI();} } else if(pl.inv.fish>0){pl.inv.fish--;if(Math.random()<0.2){pl.sick=200;showMsg('SICK FROM RAW FISH!','#e74c3c');}else{pl.food=Math.min(pl.maxFood,pl.food+25);showMsg('+25 FOOD (RAW FISH)','#e67e22');}updateUI();} } } }
   if (e.key === 'Escape') {
+    if (state.inWreck) { state.inWreck = false; showMsg('Left the wreck.', '#888'); return; }
     state.buildMode=false; state.buildItem=null; document.getElementById('build-menu').style.display='none'; state.minigame=null; state.dialogue=null;
     const anyOpen = ['inv-panel','craft-panel','build-menu'].some(id => { const el=document.getElementById(id); return el && el.style.display==='block'; });
     if (!anyOpen && state.running) {
