@@ -315,12 +315,6 @@ const state = {
   weatherTimer: 0,
   weatherNext: 60 * 60 * (3 + Math.random()*4), // 3-7 days
 
-  // Volcano eruption event
-  eruptionPhase: 0,        // 0=dormant, 1=rumbling warning, 2=erupting
-  eruptionTimer: 60*60*(8+Math.random()*6), // first eruption in 8-14 in-game minutes
-  eruptionDuration: 0,     // frames remaining in active eruption
-  lavaBombs: [],           // [{x, y, vx, vy, life, maxLife, landed, landTimer}]
-
   creatures: [], // jungle mobs: spiders, crocs, bats
 
   minigame: null, // current minigame state
@@ -3346,20 +3340,6 @@ const SFX = (() => {
     fireExplode() {
       _noise(0.3, 0.2, 800);
       _osc('sawtooth', 200, 0.15, 0.25, 40);
-    },
-
-    // Volcano deep rumble — low sub-bass throb
-    rumble() {
-      _noise(0.4, 1.8, 60);
-      _osc('sine', 38, 0.22, 1.8, 25);
-      _osc('sine', 52, 0.12, 1.4, 35);
-    },
-
-    // Lava bomb impact — heavy thud + sizzle
-    lavaBoom() {
-      _noise(0.35, 0.35, 150);
-      _osc('sine', 75, 0.28, 0.4, 20);
-      _osc('sawtooth', 320, 0.1, 0.15, 60);
     }
   };
 })();
@@ -5745,82 +5725,6 @@ function render(ctx, minimapCtx) {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
 
-  // === ERUPTION SCREEN OVERLAY ===
-  if (state.eruptionPhase === 1) {
-    // Warning: subtle orange pulse on edges
-    const pulse = 0.06 + 0.04 * Math.sin(state.frameCount * 0.15);
-    ctx.fillStyle = `rgba(220,80,0,${pulse})`;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-  } else if (state.eruptionPhase === 2) {
-    // Active eruption: stronger red-orange screen tint
-    const flicker = 0.08 + 0.06 * Math.sin(state.frameCount * 0.3);
-    ctx.fillStyle = `rgba(200,50,0,${flicker})`;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-  }
-
-  // === DRAW LAVA BOMBS ===
-  if (state.lavaBombs.length > 0) {
-    const camX = state.cam.x, camY = state.cam.y;
-    const VCENTER_X2 = 150 * TSIZE, VCENTER_Y2 = 78 * TSIZE;
-    state.lavaBombs.forEach(bomb => {
-      if (bomb.landed) {
-        // Splat ring fading out
-        const alpha = 1 - bomb.landTimer / 60;
-        const r = bomb.size + bomb.landTimer * 0.5;
-        ctx.save();
-        ctx.globalAlpha = alpha * 0.8;
-        ctx.fillStyle = '#cc3300';
-        ctx.beginPath();
-        ctx.arc(bomb.landX - camX, bomb.landY - camY, r, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#ff6600';
-        ctx.beginPath();
-        ctx.arc(bomb.landX - camX, bomb.landY - camY, r * 0.5, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      } else {
-        // Parabolic arc: t goes 0->1 as life counts down
-        const t = 1 - bomb.life / bomb.maxLife;
-        const arcX = bomb.startX + (bomb.landX - bomb.startX) * t;
-        // Y follows parabola: rises then falls
-        const arcHeight = 120 + bomb.size * 20; // world-pixel peak height above start
-        const arcY = bomb.startY + (bomb.landY - bomb.startY) * t - arcHeight * (1 - (2*t-1)*(2*t-1));
-        // Shadow on ground grows as bomb approaches
-        const shadowAlpha = t * 0.4;
-        ctx.save();
-        ctx.globalAlpha = shadowAlpha;
-        ctx.fillStyle = 'rgba(0,0,0,0.5)';
-        ctx.beginPath();
-        ctx.ellipse(bomb.landX - camX, bomb.landY - camY, bomb.size*3*t+2, bomb.size*t+1, 0, 0, Math.PI*2);
-        ctx.fill();
-        ctx.restore();
-        // Fireball
-        const screenX = arcX - camX, screenY = arcY - camY;
-        if (screenX > -20 && screenX < canvas.width+20 && screenY > -20 && screenY < canvas.height+20) {
-          const flicker2 = 0.8 + 0.2 * Math.sin(state.frameCount * 0.8 + bomb.startX);
-          ctx.save();
-          // Glow
-          ctx.globalAlpha = 0.4 * flicker2;
-          ctx.fillStyle = '#ff9900';
-          ctx.beginPath();
-          ctx.arc(screenX, screenY, bomb.size * 3, 0, Math.PI * 2);
-          ctx.fill();
-          // Core
-          ctx.globalAlpha = 1.0;
-          ctx.fillStyle = `rgb(${Math.round(255*flicker2)},${Math.round(100*flicker2)},0)`;
-          ctx.beginPath();
-          ctx.arc(screenX, screenY, bomb.size, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.fillStyle = '#ffff88';
-          ctx.beginPath();
-          ctx.arc(screenX - bomb.size*0.3, screenY - bomb.size*0.3, bomb.size*0.4, 0, Math.PI*2);
-          ctx.fill();
-          ctx.restore();
-        }
-      }
-    });
-  }
-
   // Sick screen tint
   if (p.sick > 0) {
     ctx.fillStyle = `rgba(50,200,50,${Math.min(0.2, p.sick/300)})`;
@@ -6082,84 +5986,6 @@ function updateDayNight() {
   // Occasional thunder during storms (roughly every 8-20 seconds)
   if (state.weatherRain && state.frameCount % 30 === 0 && Math.random() < 0.025) {
     SFX.thunder();
-  }
-
-  // === VOLCANO ERUPTION EVENT ===
-  const VCENTER_X = 150 * TSIZE, VCENTER_Y = 78 * TSIZE; // volcano world coords
-  if (state.eruptionPhase === 0) {
-    // Dormant: countdown to next eruption
-    state.eruptionTimer--;
-    if (state.eruptionTimer <= 0) {
-      state.eruptionPhase = 1;
-      state.eruptionTimer = 60 * 8; // 8-second warning rumble
-      showMsg('THE VOLCANO IS RUMBLING...', '#ff6622');
-      SFX.rumble();
-    }
-  } else if (state.eruptionPhase === 1) {
-    // Warning phase: periodic screen shudder & rumbles
-    state.eruptionTimer--;
-    if (state.frameCount % 90 === 0) SFX.rumble();
-    if (state.eruptionTimer <= 0) {
-      state.eruptionPhase = 2;
-      state.eruptionDuration = 60 * 18; // eruption lasts ~18 seconds
-      showMsg('ERUPTION! RUN!', '#ff2200');
-      SFX.rumble();
-    }
-  } else if (state.eruptionPhase === 2) {
-    // Active eruption: spawn lava bombs, apply screen shake, deal damage
-    state.eruptionDuration--;
-
-    // Spawn lava bombs every 20-35 frames from volcano center
-    if (state.frameCount % (20 + Math.floor(Math.random() * 15)) === 0 && state.lavaBombs.length < 14) {
-      const spread = 180; // how far from volcano bombs can land (world px)
-      const landX = VCENTER_X + (Math.random() - 0.5) * spread * 2;
-      const landY = VCENTER_Y + (Math.random() - 0.5) * spread * 2 + 60;
-      const bombLife = 55 + Math.floor(Math.random() * 25);
-      // Initial position: at volcano summit, parabolic arc toward landing spot
-      state.lavaBombs.push({
-        startX: VCENTER_X + (Math.random()-0.5)*16,
-        startY: VCENTER_Y,
-        landX, landY,
-        life: bombLife, maxLife: bombLife,
-        landed: false, landTimer: 0,
-        size: 3 + Math.floor(Math.random() * 3)
-      });
-    }
-
-    if (state.eruptionDuration <= 0) {
-      state.eruptionPhase = 0;
-      state.eruptionTimer = 60 * 60 * (10 + Math.random() * 8); // 10-18 min until next
-      showMsg('THE ERUPTION SUBSIDES.', '#c8a060');
-    }
-  }
-
-  // Update lava bombs
-  if (state.lavaBombs.length > 0) {
-    const p2 = state.player;
-    state.lavaBombs = state.lavaBombs.filter(bomb => {
-      if (bomb.landed) {
-        bomb.landTimer++;
-        return bomb.landTimer < 60; // fade out after landing
-      }
-      const t = 1 - bomb.life / bomb.maxLife; // 0 = just launched, 1 = landed
-      bomb.life--;
-      if (bomb.life <= 0) {
-        // Impact!
-        bomb.landed = true;
-        SFX.lavaBoom();
-        // Damage player if close to impact point
-        const dx = p2.x - bomb.landX, dy = p2.y - bomb.landY;
-        const dist = Math.sqrt(dx*dx + dy*dy);
-        if (dist < 28 && !state.invincible) {
-          const dmg = 18 + Math.floor(Math.random() * 12);
-          p2.hp = Math.max(0, p2.hp - dmg);
-          p2.hitFlash = 8;
-          addFloatingText(p2.x, p2.y - 20, '-'+dmg+' LAVA!', '#ff4400');
-          SFX.hurt();
-        }
-      }
-      return true;
-    });
   }
 
   // Respawn timers
