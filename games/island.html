@@ -335,6 +335,10 @@ canvas#c{pointer-events:none}
       <span class="bar-icon" title="Stamina" style="color:#b8b820;">STM</span>
       <div class="bar-outer"><div class="bar-inner" id="stam-bar" style="width:100%"></div></div>
     </div>
+    <div class="bar-wrap" id="air-bar-wrap" style="display:none">
+      <span class="bar-icon" title="Air" style="color:#40e8e8;">AIR</span>
+      <div class="bar-outer"><div class="bar-inner" id="air-bar" style="width:100%;background:linear-gradient(90deg,#0a6a8a,#20d8e8);"></div></div>
+    </div>
   </div>
   <div id="day-panel">
     <span id="day-display">DAY 1</span>
@@ -472,14 +476,21 @@ const state = {
       gate:0, forge:0, water_barrel:0, smoker:0, raft:0,
       vessel:0, chiefs_mask:0,
       tribal_child:0,
-      vine:0, stone_knife:0, bow:0, arrows:0, fire_bottle:0
+      vine:0, stone_knife:0, bow:0, arrows:0, fire_bottle:0,
+      signal_flare:0
     },
     chiefDefeated: false,
     settlementLevel: 0, // 0=survivor,1=settlement,2=fortified,3=village
     artifacts: [],
     quests: {},
     npcTalked: {},
+    air: 100, maxAir: 100,
   },
+
+  // Wreck state
+  inWreck: false,
+  wreckItems: { captains_log:false, crew_manifest:false, survey_data:false, medicine_chest:false, signal_flare:false },
+  wreckCursor: 0, // which item selected in wreck interior
 
   map: [],
   pits: new Set(),
@@ -495,6 +506,30 @@ const state = {
   weatherRain: false,
   weatherTimer: 0,
   weatherNext: 60 * 60 * (3 + Math.random()*4), // 3-7 days
+
+  // === LIVING ISLAND ===
+  // Tides
+  tideLevel: 0,         // 0=low tide, 1=high tide
+  lastTideMsg: 0,       // frame of last tide message (0=low, 1=high)
+
+  // Weather forecast system
+  weatherForecast: [], // next N weather states e.g. ['clear','cloudy','rain','storm']
+  weatherForecastDays: [], // how many in-game days each state lasts
+  weatherForecastIdx: 0,   // current index into forecast
+  weatherForecastDayCount: 0, // days elapsed in current forecast state
+  forecastWarningShown: false,
+
+  // Cloud rendering
+  clouds: [],          // [{wx, speed, y, w}] drifting clouds
+
+  // Seasons
+  season: 0,           // 0=dry, 1=wet, 2=storm (cycles every 10 in-game days)
+  seasonTimer: 0,      // frame of last season transition overlay start
+  seasonOverlay: 0,    // frames remaining for season overlay (3s = 180 frames)
+
+  // Dawn/dusk events
+  dawnFired: false,    // has dawn event fired this day cycle
+  duskFired: false,    // has dusk event fired this day cycle
 
   // Volcano eruption event
   eruptionPhase: 0,        // 0=dormant, 1=rumbling warning, 2=erupting
@@ -547,6 +582,12 @@ const state = {
   zoneUnlocked: 0,
   // zone gate message cooldown (avoid spam)
   _gateMsg: 0,
+
+  // Tribe deep-dive features
+  ritual: { active: false, phase: 'none', timer: 0 }, // 'none', 'dawn', 'dusk'
+  peaceAchieved: false,
+  enemyNames: ['Tama', 'Vai', 'Hiro', 'Poe', 'Reva'],
+  npcRelations: { tribe: 0 },
 };
 
 // NPC definitions
@@ -702,6 +743,37 @@ function genObjects() {
   state.seaCreatures = [];
   state.traps = [];
   state.altarUsed = false;
+
+  // === LIVING ISLAND INIT ===
+  // Weather forecast: generate 8 upcoming weather states
+  state.weatherForecast = [];
+  state.weatherForecastDays = [];
+  const WF_STATES = ['clear', 'cloudy', 'rain', 'clear', 'cloudy', 'storm', 'clear', 'cloudy'];
+  for (let i = 0; i < 8; i++) {
+    const wfOptions = ['clear', 'clear', 'cloudy', 'rain', 'storm'];
+    state.weatherForecast.push(wfOptions[Math.floor(Math.random() * wfOptions.length)]);
+    state.weatherForecastDays.push(2 + Math.floor(Math.random() * 3)); // 2-4 days
+  }
+  state.weatherForecastIdx = 0;
+  state.weatherForecastDayCount = 0;
+  state.forecastWarningShown = false;
+  state.tideLevel = 0.5;
+  state.lastTideMsg = -1;
+  state.season = 0;
+  state.seasonOverlay = 0;
+  state.dawnFired = false;
+  state.duskFired = false;
+  // Clouds for cloudy weather
+  state.clouds = [];
+  for (let i = 0; i < 5; i++) {
+    state.clouds.push({
+      wx: Math.random() * WORLD_W,
+      wy: 30 + Math.random() * 80,
+      speed: 0.2 + Math.random() * 0.3,
+      w: 60 + Math.floor(Math.random() * 80),
+      h: 18 + Math.floor(Math.random() * 16)
+    });
+  }
 
   // Tahitian tree selection by habitat
   function selectTree(tileType, nearWater) {
@@ -866,6 +938,14 @@ function genObjects() {
     if (!swPlaced) state.objects.push({type:'shipwreck', x:80*TSIZE, y:185*TSIZE, decor:true});
   }
 
+  // Underwater wreck — explorable, in deep water southwest ~[25,175]
+  state.objects.push({type:'underwater_wreck', x:25*TSIZE, y:175*TSIZE, decor:false});
+
+  // Dive spots in shallow water near southwest beach
+  [[50,185],[45,180],[55,178]].forEach(([dx,dy]) => {
+    state.objects.push({type:'dive_spot', x:dx*TSIZE, y:dy*TSIZE, decor:false});
+  });
+
   // Tribal village — deep jungle interior, well away from any water
   const villageHuts = [{x:205,y:112},{x:209,y:115},{x:213,y:111},{x:207,y:118},{x:211,y:115}];
   villageHuts.forEach(h => {
@@ -879,8 +959,26 @@ function genObjects() {
   });
   // Village warriors (stronger, always present)
   const villageSpawns = [{x:206,y:113},{x:212,y:111},{x:214,y:116},{x:208,y:117}];
-  villageSpawns.forEach(vs => {
-    state.enemies.push({type:'shadow', x:vs.x*TSIZE, y:vs.y*TSIZE, hp:37, maxHp:37, spd:1.1, attackTimer:0, walkTimer:0, patrolTarget:{x:vs.x*TSIZE,y:vs.y*TSIZE}, fleeing:false, scatterTimer:0, villageGuard:true, respawnTimer:0});
+  villageSpawns.forEach((vs, idx) => {
+    state.enemies.push({
+      type:'shadow', x:vs.x*TSIZE, y:vs.y*TSIZE, hp:37, maxHp:37, spd:1.1,
+      attackTimer:0, walkTimer:0, patrolTarget:{x:vs.x*TSIZE,y:vs.y*TSIZE},
+      fleeing:false, fleeTimer:0, scatterTimer:0, flankOffset:{x:0,y:0},
+      villageGuard:true, respawnTimer:0,
+      name: state.enemyNames[idx % state.enemyNames.length],
+      bribable: idx === 0 // first guard is bribable
+    });
+  });
+  // Priest: heals nearby warriors, doesn't attack player
+  state.enemies.push({
+    type: 'priest', x: 208*TSIZE, y: 114*TSIZE,
+    hp: 40, maxHp: 40, spd: 0.3,
+    attackTimer: 0, walkTimer: 0,
+    patrolTarget: {x:208*TSIZE, y:114*TSIZE},
+    fleeing: false, fleeTimer: 0, scatterTimer: 0,
+    flankOffset: {x:0,y:0}, villageGuard: true, respawnTimer: 0,
+    healTimer: 0,
+    name: 'Kahu'
   });
 
   // Journal item in dark jungle for Mara's second quest (scaled)
@@ -1173,7 +1271,74 @@ function drawPlayer(ctx, sx, sy, p) {
   }
 }
 
+function drawPriest(ctx, sx, sy, e) {
+  if (e.dying) {
+    const opacity = (e.dyingTimer || 1) / 15;
+    ctx.save(); ctx.globalAlpha = opacity;
+    sy += (15 - (e.dyingTimer||1)) * 1.5;
+  }
+  const bob = Math.sin(e.walkTimer * 0.4) * 1.5;
+  const ay = sy + bob;
+  // Robe (white/cream)
+  px(ctx, '#e8e0c8', sx-7, ay-2, 14, 13);
+  // Robe bottom (wider)
+  px(ctx, '#ddd4b8', sx-9, ay+8, 18, 5);
+  // Head covering (cream cloth)
+  px(ctx, '#f0e8d0', sx-6, ay-16, 12, 6);
+  // Face
+  px(ctx, '#c8a070', sx-5, ay-14, 10, 10);
+  // Eyes
+  px(ctx, '#3a2010', sx-3, ay-11, 2, 2);
+  px(ctx, '#3a2010', sx+1, ay-11, 2, 2);
+  // Staff
+  px(ctx, '#6b3d1e', sx+10, ay-26, 3, 32);
+  // Staff top orb (glowing green)
+  const glow = 0.5 + Math.sin(state.frameCount * 0.08) * 0.5;
+  ctx.fillStyle = `rgba(80,200,120,${0.6 + glow * 0.4})`;
+  ctx.beginPath(); ctx.arc(Math.round(sx+11), Math.round(ay-28), 5, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = `rgba(160,255,180,${0.4 + glow * 0.4})`;
+  ctx.beginPath(); ctx.arc(Math.round(sx+11), Math.round(ay-28), 3, 0, Math.PI*2); ctx.fill();
+  // Glowing hands (healing effect)
+  if (e.healTimer && e.healTimer > 0) {
+    ctx.fillStyle = `rgba(100,255,140,${0.5 + Math.sin(state.frameCount*0.15)*0.3})`;
+    ctx.beginPath(); ctx.arc(Math.round(sx-6), Math.round(ay+2), 6, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(Math.round(sx+6), Math.round(ay+2), 6, 0, Math.PI*2); ctx.fill();
+  }
+  // HP bar
+  if (!e.dying) {
+    px(ctx, '#333', sx-15, ay-34, 30, 4);
+    px(ctx, '#50c878', sx-15, ay-34, Math.round(30 * Math.max(0,e.hp)/e.maxHp), 4);
+  }
+  if (e.hitFlash > 0) { e.hitFlash--; ctx.fillStyle='rgba(255,255,255,0.7)'; ctx.fillRect(sx-7,ay-16,14,26); }
+  if (e.dying) { ctx.restore(); }
+  // Name display
+  _drawEnemyName(ctx, sx, ay, e);
+}
+
+function _drawEnemyName(ctx, sx, ay, e) {
+  if (!e.name) return;
+  const p = state.player;
+  const camX = state.cam.x, camY = state.cam.y;
+  const wx = e.x, wy = e.y;
+  const dist = Math.hypot(wx - p.x, wy - p.y);
+  if (dist > 60) return;
+  // Check if enemy is roughly facing player (or just always show within range for simplicity)
+  ctx.save();
+  const label = e.name;
+  ctx.font = 'bold 9px Lato, sans-serif';
+  const tw = ctx.measureText(label).width;
+  const tx = sx - tw/2 - 3;
+  const ty = ay - 38;
+  ctx.fillStyle = 'rgba(0,0,0,0.55)';
+  ctx.fillRect(Math.round(tx), Math.round(ty), Math.round(tw+6), 12);
+  ctx.fillStyle = '#f0e0b0';
+  ctx.fillText(label, Math.round(sx - tw/2), Math.round(ty + 9));
+  ctx.restore();
+}
+
 function drawEnemy(ctx, sx, sy, e) {
+  // Route priest to dedicated draw function
+  if (e.type === 'priest') { drawPriest(ctx, sx, sy, e); return; }
   // Dying animation — fade out
   if (e.dying) {
     const opacity = (e.dyingTimer || 1) / 15;
@@ -1261,6 +1426,8 @@ function drawEnemy(ctx, sx, sy, e) {
   if (e.dying) {
     ctx.restore();
   }
+  // Name display
+  _drawEnemyName(ctx, sx, ay, e);
 }
 
 function drawTree(ctx, sx, sy) {
@@ -1749,6 +1916,77 @@ function drawShipwreck(ctx, sx, sy) {
   ctx.moveTo(sx+20, sy-22);
   ctx.quadraticCurveTo(sx+30, sy, sx+14, sy+12);
   ctx.stroke();
+}
+
+function drawUnderwaterWreck(ctx, sx, sy) {
+  // Dark barnacle-covered hull
+  ctx.save();
+  ctx.globalAlpha = 0.85;
+  // Main hull body (dark, angled)
+  ctx.fillStyle = '#2a2218';
+  ctx.save(); ctx.translate(sx, sy+8); ctx.rotate(-0.18);
+  ctx.fillRect(-38, -10, 76, 18); ctx.restore();
+  ctx.fillStyle = '#1a1a10';
+  ctx.save(); ctx.translate(sx-12, sy+2); ctx.rotate(0.12);
+  ctx.fillRect(-32, -6, 64, 12); ctx.restore();
+  // Side board sticking up
+  ctx.fillStyle = '#2e2214';
+  ctx.save(); ctx.translate(sx-20, sy-2); ctx.rotate(0.45);
+  ctx.fillRect(-5, 0, 9, 32); ctx.restore();
+  // Broken mast stub
+  ctx.strokeStyle = '#1e1810';
+  ctx.lineWidth = 5;
+  ctx.beginPath(); ctx.moveTo(sx-2, sy+4); ctx.lineTo(sx+14, sy-18); ctx.stroke();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = '#2a2020';
+  ctx.beginPath(); ctx.moveTo(sx+14, sy-18); ctx.lineTo(sx+22, sy-10); ctx.stroke();
+  // Scattered debris
+  ctx.fillStyle = '#2a1e10';
+  ctx.fillRect(sx-46, sy+14, 10, 3);
+  ctx.fillRect(sx+30, sy+16, 8, 3);
+  ctx.fillRect(sx-36, sy+18, 6, 2);
+  // Coral growths
+  const barnacleColors = ['#1a5a58','#0e4a48','#1e6a66','#105050'];
+  const corals = [{x:sx-28,y:sy+10},{x:sx+18,y:sy+8},{x:sx-10,y:sy+16},{x:sx+32,y:sy+12},{x:sx-42,y:sy+12},{x:sx+6,y:sy+4}];
+  corals.forEach((c,i) => {
+    ctx.fillStyle = barnacleColors[i%barnacleColors.length];
+    ctx.beginPath(); ctx.arc(c.x, c.y, 3+i%2, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#2a7a78';
+    ctx.beginPath(); ctx.arc(c.x+2, c.y-2, 2, 0, Math.PI*2); ctx.fill();
+  });
+  // Barnacle spots on hull
+  ctx.fillStyle = '#204040';
+  for (let i=0;i<8;i++) {
+    ctx.beginPath(); ctx.arc(sx-30+i*9, sy+6+Math.sin(i*1.3)*4, 2, 0, Math.PI*2); ctx.fill();
+  }
+  // Explore prompt
+  const pulse = 0.6 + Math.sin(state.frameCount * 0.07) * 0.3;
+  ctx.globalAlpha = pulse;
+  ctx.fillStyle = '#40d8d0';
+  ctx.font = '9px "Lato", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('WRECK [E]', sx, sy - 28);
+  ctx.textAlign = 'left';
+  ctx.restore();
+}
+
+function drawDiveSpot(ctx, sx, sy) {
+  ctx.save();
+  // Circular ripple rings
+  for (let r = 1; r <= 3; r++) {
+    const a = 0.5 - r * 0.13 + Math.sin(state.frameCount * 0.06 + r) * 0.1;
+    ctx.globalAlpha = Math.max(0, a);
+    ctx.strokeStyle = '#60e8e0';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(sx, sy, r * 8 + Math.sin(state.frameCount*0.05+r)*2, 0, Math.PI*2); ctx.stroke();
+  }
+  ctx.globalAlpha = 0.8;
+  ctx.fillStyle = '#40d8d0';
+  ctx.font = 'bold 8px "Lato", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('DIVE [F]', sx, sy - 16);
+  ctx.textAlign = 'left';
+  ctx.restore();
 }
 
 function drawTidePool(ctx, sx, sy) {
@@ -2623,6 +2861,45 @@ function updateEnemies() {
       e.y = 144 * TSIZE;
     }
   });
+
+  // Ritual timer update
+  if (state.ritual && state.ritual.active) {
+    state.ritual.timer--;
+    if (state.ritual.timer <= 0) {
+      state.ritual.active = false;
+      state.ritual.phase = 'none';
+    }
+  }
+
+  // Priest healing logic: heal nearby villageGuard warriors every 10s (600 frames)
+  state.enemies.forEach(priest => {
+    if (priest.type !== 'priest' || priest.dying) return;
+    priest.healTimer = (priest.healTimer || 0) + 1;
+    if (priest.healTimer >= 600) {
+      priest.healTimer = 0;
+      state.enemies.forEach(w => {
+        if (w === priest || w.type === 'priest' || w.dying) return;
+        if (!w.villageGuard) return;
+        const hd = Math.hypot(w.x - priest.x, w.y - priest.y);
+        if (hd < 80) {
+          w.hp = Math.min(w.maxHp, w.hp + 5);
+          spawnParticle(w.x, w.y - 8, 0, -0.8, '#50c878', 30);
+        }
+      });
+    }
+  });
+
+  // Bribable warrior: show hint when player is close with 3+ coconuts
+  if (!state.peaceAchieved) {
+    const bribable = state.enemies.find(e => e.bribable && !e.dying && !e.fleeing);
+    if (bribable) {
+      const bd = Math.hypot(p.x - bribable.x, p.y - bribable.y);
+      if (bd < 60 && p.inv.coconut >= 3) {
+        if (state.frameCount % 90 === 0) showMsg("Hold F to offer coconuts to the warrior", '#c8a060');
+      }
+    }
+  }
+
   const allE = [...state.enemies];
   if (state.chief) allE.push(state.chief);
 
@@ -2634,6 +2911,29 @@ function updateEnemies() {
     if (e.dying) return; // skip AI for dying enemies
     const dx = p.x - e.x, dy = p.y - e.y;
     const dist = Math.sqrt(dx*dx+dy*dy);
+
+    // Priest: no attack AI, just stay near village fire
+    if (e.type === 'priest') {
+      e.walkTimer++;
+      if (e.fleeing) {
+        e.fleeTimer--;
+        if (e.fleeTimer <= 0) e.fleeing = false;
+        if (dist > 0) { e.x -= dx/dist * e.spd * 1.5; e.y -= dy/dist * e.spd * 1.5; }
+      } else {
+        // Wander slowly near fire
+        const firePt = e.patrolTarget;
+        const fpd = Math.hypot(firePt.x - e.x, firePt.y - e.y);
+        if (fpd > 60) {
+          e.x += (firePt.x - e.x) / fpd * e.spd;
+          e.y += (firePt.y - e.y) / fpd * e.spd;
+        } else if (state.frameCount % 240 === 0) {
+          e.patrolTarget = {x: 209*TSIZE + (Math.random()-0.5)*60, y: 114*TSIZE + (Math.random()-0.5)*60};
+        }
+      }
+      // HP flee
+      if (e.hp < e.maxHp * 0.3 && !e.fleeing) { e.fleeing = true; e.fleeTimer = 400; }
+      return; // no attack logic for priest
+    }
     // Burn tick — fire spear burn effect
     if (e.burning > 0) {
       e.burning--;
@@ -2697,7 +2997,8 @@ function updateEnemies() {
         const targetY = p.y + (e.flankOffset ? e.flankOffset.y : 0);
         const tdx = targetX - e.x, tdy = targetY - e.y;
         const td = Math.sqrt(tdx*tdx+tdy*tdy);
-        const spd = e.spd * (e.type==='shadow' && state.isNight ? 1.3 : 1);
+        const stormBoost = (state.season === 2 && state.isNight) ? 1.25 : 1;
+        const spd = e.spd * (e.type==='shadow' && state.isNight ? 1.3 : 1) * stormBoost;
         moveX = td > 0 ? e.x + tdx/td * spd : e.x;
         moveY = td > 0 ? e.y + tdy/td * spd : e.y;
       }
@@ -2721,12 +3022,33 @@ function updateEnemies() {
         }
       }
     } else if (dist < 400) {
-      // Patrol
-      const pt = e.patrolTarget;
-      const pdx = pt.x - e.x, pdy = pt.y - e.y;
-      const pd = Math.sqrt(pdx*pdx+pdy*pdy);
-      if (pd < 20) e.patrolTarget = {x:e.x+(Math.random()-0.5)*300, y:e.y+(Math.random()-0.5)*300};
-      else { e.x += pdx/pd*0.4; e.y += pdy/pd*0.4; }
+      // Patrol — ritual overrides for villageGuard enemies
+      if (state.ritual && state.ritual.active && e.villageGuard && !e.fleeing && e.scatterTimer <= 0) {
+        // Move toward village fire instead of patrolling outward
+        const firePt = {x: 209*TSIZE, y: 114*TSIZE};
+        const fpd = Math.hypot(firePt.x - e.x, firePt.y - e.y);
+        if (fpd > 30) { e.x += (firePt.x-e.x)/fpd*0.5; e.y += (firePt.y-e.y)/fpd*0.5; }
+      } else {
+        // Normal patrol
+        const pt = e.patrolTarget;
+        const pdx = pt.x - e.x, pdy = pt.y - e.y;
+        const pd = Math.sqrt(pdx*pdx+pdy*pdy);
+        if (pd < 20) e.patrolTarget = {x:e.x+(Math.random()-0.5)*300, y:e.y+(Math.random()-0.5)*300};
+        else { e.x += pdx/pd*0.4; e.y += pdy/pd*0.4; }
+      }
+    }
+
+    // Peace behavior: village guards stop attacking, watch player approach
+    if (state.peaceAchieved && e.villageGuard && e.type !== 'chief') {
+      if (dist < 80 && dist > 0) {
+        // Face toward player but don't attack — gentle slow drift away if too close
+        if (dist < 24) { e.x -= dx/dist * 0.5; e.y -= dy/dist * 0.5; }
+      }
+      // Ritual rather than patrol when peaceful
+      if (state.frameCount % 300 === 0) {
+        e.patrolTarget = {x: 209*TSIZE + (Math.random()-0.5)*80, y: 114*TSIZE + (Math.random()-0.5)*80};
+      }
+      return; // skip attack logic
     }
 
     // Attack player (shadow warriors blocked by campfire, safe zone protection)
@@ -2811,6 +3133,14 @@ function updateEnemies() {
     p.inv.chiefs_mask = 1;
     showMsg("TRIBAL CHIEF DEFEATED! CHIEF'S MASK ACQUIRED!", '#c8f135');
     spawnParticles(p.x, p.y, '#c8f135',4);
+    // Peace ending: if Kona is helping, tribe lowers weapons
+    if (state.storyChoices.konaHelping && !state.peaceAchieved) {
+      state.peaceAchieved = true;
+      state.ritual.active = true;
+      state.ritual.phase = 'peace';
+      state.ritual.timer = 99999; // permanent
+      setTimeout(() => showMsg("The tribe lowers their weapons. You are no longer an enemy.", '#c8f135'), 2000);
+    }
     checkSettlement();
   }
 }
@@ -3217,9 +3547,10 @@ function updateMinigame(canvas) {
     if (mg.tension >= 0.6 && mg.tension <= 0.85) {
       mg.inZone = (mg.inZone||0) + 1;
       if (mg.inZone > 60) {
-        // Caught!
-        state.player.inv.fish++;
-        showMsg('FISH CAUGHT!', '#4a9ab4');
+        // Caught! High tide gives bonus fish
+        const bonusFish = state.tideLevel > 0.7 ? 1 : 0;
+        state.player.inv.fish += 1 + bonusFish;
+        showMsg(bonusFish ? 'FISH CAUGHT! (High tide bonus +1)' : 'FISH CAUGHT!', '#4a9ab4');
         spawnParticles(state.player.x, state.player.y, '#4a9ab4',4);
         state.minigame = null;
         state.fishing = null;
@@ -3690,12 +4021,14 @@ function updatePlayer() {
   const sprinting = keys['shift'] && p.stamina > 0;
   const tile = getTile(p.x, p.y);
   const inWater = tile === T.SHALLOW_WATER;
+  const inDeepOcean = tile === T.DEEP_OCEAN;
   const inDarkJungle = tile === T.JUNGLE_DARK;
   const inDense = inDarkJungle; // slowed in dark jungle
 
   let spd = 2.0;
   if (sprinting) spd = 2.8;
   if (inWater) spd *= 0.5;
+  if (inDeepOcean) spd *= 0.6;
   if (inDense) spd *= 0.6;
   if (p.stamina <= 0) spd *= 0.8;
 
@@ -3719,10 +4052,13 @@ function updatePlayer() {
     showMsg('LAVA! GET BACK!', '#ff4400');
     nx = p.x; ny = p.y;
   } else if (newTile === T.DEEP_OCEAN) {
-    p.hp = Math.max(0, p.hp - 1);
-    
-    showMsg('TOO DEEP — TURN BACK!', '#3498db');
-    nx = p.x; ny = p.y;
+    // Allow movement underwater; air system handles danger
+    if (p.jumping || !checkCollisions(nx, ny)) {
+      p.x = nx; p.y = ny;
+    } else {
+      if (p.jumping || !checkCollisions(nx, p.y)) { p.x = nx; }
+      else if (p.jumping || !checkCollisions(p.x, ny)) { p.y = ny; }
+    }
   } else {
     // Object collision with sliding — skip when jumping
     if (p.jumping || !checkCollisions(nx, ny)) {
@@ -3850,6 +4186,28 @@ function updatePlayer() {
   // Water effects
   if (inWater && moving) {
     if (Math.random() < 0.2) spawnParticle(p.x+(Math.random()-0.5)*20, p.y+8, (Math.random()-0.5)*1.5, -1, '#aaddff', 20);
+  }
+
+  // Air / underwater mechanics
+  if (inDeepOcean) {
+    // Deplete air ~1 per second (60fps)
+    state._airTimer = (state._airTimer||0) + 1;
+    if (state._airTimer >= 60) { state._airTimer = 0; p.air = Math.max(0, p.air - 1); }
+    // Bubble particles occasionally
+    if (Math.random() < 0.05) spawnParticle(p.x+(Math.random()-0.5)*8, p.y-4, (Math.random()-0.5)*0.3, -0.8, 'rgba(160,230,255,0.7)', 40);
+    if (p.air <= 0) {
+      // Drowning: drain health fast
+      if (state.frameCount % 12 === 0) {
+        p.hp = Math.max(0, p.hp - 5);
+        addFloatingText(p.x, p.y-20, '-5', '#0088cc');
+      }
+    } else if (p.air <= 20) {
+      if (state.frameCount % 120 === 0) showMsg('LOW AIR!', '#40d8f0');
+    }
+  } else if (tile === T.BEACH || tile === T.SHALLOW_WATER) {
+    state._airTimer = 0;
+    p.air = Math.min(p.maxAir, p.air + 3);
+    if (p.air > p.maxAir) p.air = p.maxAir;
   }
 
   // Stamina
@@ -4062,6 +4420,88 @@ function handleInteract() {
     if (obj.placed && obj.type === 'chest') {
       const d = Math.hypot(p.x-obj.x, p.y-obj.y);
       if (d < reach) { openChest(obj); return; }
+    }
+  }
+
+  // Wreck interior navigation
+  if (state.inWreck) {
+    const wreckItemDefs = ['captains_log','crew_manifest','survey_data','medicine_chest','signal_flare'];
+    const idx = state.wreckCursor;
+    const key = wreckItemDefs[idx];
+    if (!state.wreckItems[key]) {
+      state.wreckItems[key] = true;
+      if (key === 'captains_log') {
+        state.dialogue = { type:'lore', text:"CAPTAIN'S LOG: 'We sail under false charts. The Colonial Trading Company paid our voyage. True mission: survey this island for mineral rights, timber, and subjugation potential. The crew does not know. God forgive me.'", displayed:'', timer:0, charIdx:0 };
+        state.storyChoices.learnedTruth = true;
+      } else if (key === 'crew_manifest') {
+        state.dialogue = { type:'lore', text:"CREW MANIFEST: Aldric Voss, Bo Chen, Piet Janssen, Samuel Grey, Yusuf al-Rashid, Noa Kaleo, Elara Vance, [your name]. Seven names are struck through in dark ink. One remains.", displayed:'', timer:0, charIdx:0 };
+      } else if (key === 'survey_data') {
+        state.dialogue = { type:'lore', text:"SURVEY DATA: Detailed charts. Timber estimates. A note reads: 'Tribe population manageable. Recommend pacification in Phase 2. Island designation: Colony Site 7-A.'", displayed:'', timer:0, charIdx:0 };
+      } else if (key === 'medicine_chest') {
+        p.maxHp = Math.min(200, p.maxHp + 50);
+        p.hp = Math.min(p.maxHp, p.hp + 50);
+        showMsg('MEDICINE CHEST: +50 MAX HEALTH', '#40ff88');
+        spawnParticles(p.x, p.y-20, '#40ff88', 5);
+      } else if (key === 'signal_flare') {
+        p.inv.signal_flare = 1;
+        showMsg('SIGNAL FLARE collected — use it on the beach to call for rescue', '#ff8840');
+      }
+    } else {
+      showMsg('Already taken.', '#888');
+    }
+    return;
+  }
+
+  // Underwater wreck — enter interior
+  for (let obj of state.objects) {
+    if (obj.type === 'underwater_wreck') {
+      const d = Math.hypot(p.x-obj.x, p.y-obj.y);
+      if (d < 60) {
+        state.inWreck = true;
+        state.wreckCursor = 0;
+        showMsg("ENTERING THE WRECK — W/S to navigate, E to take, ESC to exit", '#40d8d0');
+        return;
+      }
+    }
+  }
+
+  // Signal flare on beach
+  if ((p.inv.signal_flare||0) > 0) {
+    const flTile = getTile(p.x, p.y);
+    if (flTile === T.BEACH) {
+      p.inv.signal_flare = 0;
+      updateUI();
+      // Trigger rescue ending
+      state.cutscenesSeen.delete('ending_rescue');
+      const csDef = CUTSCENES['ending_rescue'];
+      if (csDef) {
+        csDef.onComplete = () => {
+          // Choice: warn tribe or stay silent
+          state.dialogue = {
+            type: 'choice',
+            text: "A rescue ship approaches. You carry the truth about the Colonial Trading Company's plans for this island. Do you warn the tribe before you leave?",
+            options: ['WARN THE TRIBE', 'STAY SILENT'],
+            onChoice: (choiceIdx) => {
+              const warned = choiceIdx === 0;
+              const title = warned ? 'RESCUE — TRUTH TOLD' : 'RESCUE — SILENCE';
+              const text = warned
+                ? 'You sent runners to the village. Kona\'s eyes met yours as the ship departed. He understood. The Colonial Trading Company\'s plans died with the Meridian\'s manifest. The island endures.'
+                : 'The ship took you home. You said nothing. Somewhere behind you, surveyors were already being dispatched. You live with what you knew. The island will not.';
+              document.getElementById('win-title').textContent = title;
+              document.getElementById('win-text').textContent = text;
+              document.getElementById('win-screen').style.display = 'flex';
+              state.running = false;
+              SFX.victory();
+              animateYacht();
+            }
+          };
+        };
+      }
+      playCutscene('ending_rescue');
+      return;
+    } else {
+      showMsg('Use the flare on the BEACH to signal rescue', '#ff8840');
+      return;
     }
   }
 
@@ -5418,8 +5858,23 @@ function drawTile(ctx, type, sx, sy) {
     const v = (tx * 7 + ty * 13) % 5;
     if (v === 0) { ctx.fillStyle = 'rgba(0,0,0,0.06)'; ctx.fillRect(sx, sy, TSIZE, TSIZE); }
   }
-  
-  // Shallow water - clean turquoise, no extra texture
+
+  // Shallow water tide visual: at low tide, near-beach shallow water draws as wet sand
+  if (type === T.SHALLOW_WATER && state.tideLevel < 0.3) {
+    const tx2 = Math.round(sx/TSIZE) + Math.floor(state.cam.x/TSIZE);
+    const ty2 = Math.round(sy/TSIZE) + Math.floor(state.cam.y/TSIZE);
+    let nearBeach = false;
+    for (let ddy = -1; ddy <= 1 && !nearBeach; ddy++) {
+      for (let ddx = -1; ddx <= 1 && !nearBeach; ddx++) {
+        if (state.map[ty2+ddy]?.[tx2+ddx] === T.BEACH) nearBeach = true;
+      }
+    }
+    if (nearBeach) {
+      // Draw as darker wet sand
+      ctx.fillStyle = '#b8a272';
+      ctx.fillRect(sx, sy, TSIZE, TSIZE);
+    }
+  }
 }
 
 function drawPlacedObject(ctx, obj, sx, sy) {
@@ -5633,8 +6088,57 @@ function render(ctx, minimapCtx) {
     sky = `rgb(${Math.round(135-t*80)},${Math.round(206-t*180)},${Math.round(235-t*200)})`;
   }
   else sky = '#0a0a1e';                              // night
+
+  const currentForecast = state.weatherForecast[state.weatherForecastIdx] || 'clear';
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
+  // Cloudy weather: darker sky overlay
+  if (currentForecast === 'cloudy' && !state.isNight) {
+    ctx.fillStyle = 'rgba(60,60,80,0.22)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+
+  // Draw drifting clouds when cloudy
+  if ((currentForecast === 'cloudy' || currentForecast === 'storm') && !state.isNight && state.clouds) {
+    ctx.save();
+    state.clouds.forEach(cloud => {
+      const csx = cloud.wx - camX;
+      const csy = cloud.wy - camY;
+      if (csx < -cloud.w - 20 || csx > canvas.width + cloud.w + 20) return;
+      ctx.fillStyle = currentForecast === 'storm' ? 'rgba(90,90,100,0.55)' : 'rgba(200,200,210,0.45)';
+      ctx.beginPath();
+      ctx.ellipse(csx, csy, cloud.w, cloud.h, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(csx - cloud.w*0.3, csy + cloud.h*0.1, cloud.w*0.55, cloud.h*0.8, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(csx + cloud.w*0.3, csy + cloud.h*0.1, cloud.w*0.5, cloud.h*0.75, 0, 0, Math.PI*2);
+      ctx.fill();
+    });
+    ctx.restore();
+  }
+
+  // Season overlay (full-screen text for 3 seconds = 180 frames)
+  if (state.seasonOverlay > 0) {
+    const alpha = Math.min(1, state.seasonOverlay / 30) * Math.min(1, state.seasonOverlay / (state.seasonOverlay > 150 ? 180 : 1));
+    const seasonNames = ['DRY SEASON', 'WET SEASON', 'STORM SEASON'];
+    const seasonColors = ['#e8c060', '#3498db', '#cc4422'];
+    ctx.save();
+    ctx.fillStyle = `rgba(0,0,0,${alpha * 0.6})`;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.font = `bold 32px "Cinzel", serif`;
+    ctx.fillStyle = `rgba(${seasonColors[state.season].slice(1).match(/../g).map(h=>parseInt(h,16)).join(',')},${alpha})`;
+    ctx.textAlign = 'center';
+    ctx.fillText(seasonNames[state.season], canvas.width/2, canvas.height/2);
+    ctx.font = '14px "Lato", sans-serif';
+    ctx.fillStyle = `rgba(240,220,160,${alpha * 0.8})`;
+    const seasonDescs = ['Calm and dry. Wide beaches.', 'Rain falls. Plants grow faster.', 'Storms rage. Stay vigilant.'];
+    ctx.fillText(seasonDescs[state.season], canvas.width/2, canvas.height/2 + 32);
+    ctx.textAlign = 'left';
+    ctx.restore();
+    state.seasonOverlay--;
+  }
 
   // Visible tile range
   const sx0 = Math.max(0, Math.floor(camX/TSIZE));
@@ -5834,6 +6338,8 @@ function render(ctx, minimapCtx) {
         case 'campfire_remains': drawCampfireRemains(ctx,ssx,ssy); break;
         case 'tide_pool': drawTidePool(ctx,ssx,ssy); break;
         case 'shipwreck': drawShipwreck(ctx,ssx,ssy); break;
+        case 'underwater_wreck': drawUnderwaterWreck(ctx,ssx,ssy); break;
+        case 'dive_spot': drawDiveSpot(ctx,ssx,ssy); break;
         case 'journal': {
           ctx.save(); ctx.fillStyle='#8B6020'; ctx.fillRect(ssx-6,ssy-8,12,14); ctx.fillStyle='#c8a060'; ctx.fillRect(ssx-5,ssy-7,10,12); ctx.fillStyle='#5c3010'; ctx.fillRect(ssx-5,ssy-7,2,12); ctx.fillStyle='#f0d890'; ctx.fillRect(ssx-2,ssy-5,7,1); ctx.fillRect(ssx-2,ssy-3,7,1); ctx.fillRect(ssx-2,ssy-1,5,1);
           const jGlow=0.3+Math.sin(state.frameCount*0.08)*0.2; ctx.fillStyle=`rgba(255,220,100,${jGlow})`; ctx.beginPath(); ctx.arc(ssx,ssy-2,10,0,Math.PI*2); ctx.fill(); ctx.restore(); break;
@@ -6056,6 +6562,121 @@ function render(ctx, minimapCtx) {
   if (state.volcanoTint > 0.25) {
     ctx.fillStyle = `rgba(255,80,0,0.08)`;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+
+  // === UNDERWATER VISUAL EFFECTS ===
+  const _uwTile = getTile(p.x, p.y);
+  if (_uwTile === T.SHALLOW_WATER || _uwTile === T.DEEP_OCEAN) {
+    const _uwDepth = _uwTile === T.DEEP_OCEAN ? 0.38 : 0.18;
+    // Dark blue tint overlay
+    ctx.fillStyle = `rgba(0,30,80,${_uwDepth})`;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Caustic light ripples (lighter moving diamonds on screen)
+    ctx.save();
+    ctx.globalAlpha = 0.07;
+    ctx.fillStyle = '#80e8ff';
+    const causticOffset = state.frameCount * 0.4;
+    for (let ci = 0; ci < 18; ci++) {
+      const cx2 = (ci * 73 + causticOffset * (ci%3===0?1:-0.5)) % canvas.width;
+      const cy2 = (ci * 57 + causticOffset * 0.3) % canvas.height;
+      ctx.save();
+      ctx.translate(cx2, cy2);
+      ctx.rotate(Math.PI/4);
+      ctx.fillRect(-5, -5, 10, 10);
+      ctx.restore();
+    }
+    ctx.restore();
+    // Drowning overlay when air = 0
+    if (p.air <= 0) {
+      const drown = 0.3 + 0.15 * Math.sin(state.frameCount * 0.12);
+      ctx.fillStyle = `rgba(0,10,60,${drown})`;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+  }
+
+  // === WRECK INTERIOR OVERLAY ===
+  if (state.inWreck) {
+    // Dark interior background
+    ctx.fillStyle = 'rgba(8,5,2,0.88)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const ww = Math.min(520, canvas.width - 40);
+    const wh = Math.min(380, canvas.height - 60);
+    const wx2 = (canvas.width - ww) / 2;
+    const wy2 = (canvas.height - wh) / 2;
+
+    // Wooden hull interior
+    ctx.fillStyle = '#1a0e05';
+    ctx.fillRect(wx2, wy2, ww, wh);
+    ctx.strokeStyle = '#5a3a18';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(wx2, wy2, ww, wh);
+    // Plank lines
+    ctx.strokeStyle = '#2e1a08';
+    ctx.lineWidth = 1;
+    for (let pl = 0; pl < 10; pl++) {
+      ctx.beginPath(); ctx.moveTo(wx2, wy2 + pl*(wh/10)); ctx.lineTo(wx2+ww, wy2+pl*(wh/10)); ctx.stroke();
+    }
+    // Lantern glow (top centre)
+    const lgx = wx2 + ww/2, lgy = wy2 + 40;
+    const lgR = ctx.createRadialGradient(lgx, lgy, 2, lgx, lgy, 100);
+    const lgFlick = 0.7 + 0.15*Math.sin(state.frameCount*0.17);
+    lgR.addColorStop(0, `rgba(255,200,80,${lgFlick})`);
+    lgR.addColorStop(0.4, `rgba(200,140,40,${lgFlick*0.4})`);
+    lgR.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = lgR;
+    ctx.fillRect(wx2, wy2, ww, wh);
+    // Lantern shape
+    ctx.fillStyle = '#c8a030';
+    ctx.fillRect(lgx-4, lgy-12, 8, 16);
+    ctx.fillStyle = '#ffdd80';
+    ctx.fillRect(lgx-3, lgy-10, 6, 10);
+
+    // Title
+    ctx.fillStyle = '#e8c060';
+    ctx.font = 'bold 13px "Cinzel", serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('THE WRECK — INTERIOR', wx2+ww/2, wy2+22);
+
+    // Items list
+    const wreckItemDefs = [
+      { key:'captains_log',   label: "CAPTAIN'S LOG",    desc: "The true mission: survey the island for the Colonial Trading Co." },
+      { key:'crew_manifest',  label: "CREW MANIFEST",    desc: "8 names. 7 crossed out. Only you remain." },
+      { key:'survey_data',    label: "SURVEY DATA",      desc: "Maps, mineral deposits. The company wanted everything." },
+      { key:'medicine_chest', label: "MEDICINE CHEST",   desc: "+50 MAX HEALTH (one time)" },
+      { key:'signal_flare',   label: "SIGNAL FLARE",     desc: "Summon rescue — but then what?" },
+    ];
+    const itemStartY = wy2 + 55;
+    const itemH = 44;
+    ctx.font = '10px "Lato", sans-serif';
+    wreckItemDefs.forEach((item, idx) => {
+      const iy = itemStartY + idx * itemH;
+      const collected = state.wreckItems[item.key];
+      const isSelected = state.wreckCursor === idx;
+      // Row bg
+      ctx.fillStyle = isSelected ? 'rgba(200,160,60,0.18)' : 'rgba(0,0,0,0.2)';
+      ctx.fillRect(wx2+16, iy, ww-32, itemH-4);
+      if (isSelected) {
+        ctx.strokeStyle = 'rgba(200,160,60,0.6)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(wx2+16, iy, ww-32, itemH-4);
+      }
+      // Label
+      ctx.fillStyle = collected ? '#5a5a4a' : (isSelected ? '#f0d880' : '#c8a060');
+      ctx.font = 'bold 11px "Lato", sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText((collected ? '[TAKEN] ' : '') + item.label, wx2+26, iy+16);
+      // Desc
+      ctx.fillStyle = collected ? '#3a3a30' : '#8a7850';
+      ctx.font = '9px "Lato", sans-serif';
+      ctx.fillText(item.desc, wx2+26, iy+30);
+    });
+    // Instructions
+    ctx.fillStyle = '#6a5830';
+    ctx.font = '9px "Lato", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('W/S or arrows to select  |  E to take  |  ESC to exit', wx2+ww/2, wy2+wh-10);
+    ctx.textAlign = 'left';
   }
 
   // Zone gate visual hints — subtle vignette at locked boundaries (no harsh lines)
@@ -6370,6 +6991,13 @@ function updateDayNight() {
       });
     }
 
+    // Dusk ritual — warriors perform patrol ceremony
+    if (!state.peaceAchieved) {
+      state.ritual.active = true;
+      state.ritual.phase = 'dusk';
+      state.ritual.timer = 1800; // 30 seconds
+    }
+
     // Nightfall
     spawnEnemies(Math.min(3 + state.day, 12), 'shadow');
     if (state.day >= 5) spawnEnemies(1, 'archer');
@@ -6398,6 +7026,27 @@ function updateDayNight() {
 
     state.day++;
     document.getElementById('day-display').textContent = `DAY ${state.day}`;
+
+    // === LIVING ISLAND: advance weather forecast per day ===
+    state.weatherForecastDayCount = (state.weatherForecastDayCount || 0) + 1;
+    const currentFcDays = state.weatherForecastDays[state.weatherForecastIdx] || 3;
+    if (state.weatherForecastDayCount >= currentFcDays) {
+      state.weatherForecastDayCount = 0;
+      state.weatherForecastIdx = (state.weatherForecastIdx + 1) % state.weatherForecast.length;
+      state.forecastWarningShown = false;
+    }
+    // Warning 1 day before rain/storm
+    const nextFcIdx = (state.weatherForecastIdx + 1) % state.weatherForecast.length;
+    const daysLeft = currentFcDays - state.weatherForecastDayCount;
+    const nextState = state.weatherForecast[nextFcIdx];
+    if (daysLeft === 1 && (nextState === 'rain' || nextState === 'storm') && !state.forecastWarningShown) {
+      state.forecastWarningShown = true;
+      showMsg('Storm approaching from the east', '#3498db');
+    }
+    // Wet season: drinking water refills slightly
+    if (state.season === 1) {
+      state.player.water = Math.min(state.player.maxWater, state.player.water + 5);
+    }
   }
 
   if (prevNight && !state.isNight) {
@@ -6405,6 +7054,12 @@ function updateDayNight() {
     state.creatures = state.creatures.filter(c => c.type !== 'bat');
     // Dawn — spawn day enemies
     spawnDayEnemies();
+    // Dawn ritual — warriors gather at fire
+    if (!state.peaceAchieved) {
+      state.ritual.active = true;
+      state.ritual.phase = 'dawn';
+      state.ritual.timer = 1800; // 30 seconds
+    }
   }
 
   // Weather
@@ -6517,7 +7172,116 @@ function updateDayNight() {
   // Respawn timers
   state.objects.forEach(o => {
     if (o.respawn > 0) o.respawn--;
+    // Wet season: fruit respawns faster
+    if (state.season === 1 && o.respawn > 0 && (o.type === 'berry' || o.type === 'fruit')) {
+      o.respawn = Math.max(0, o.respawn - 1); // double respawn speed
+    }
   });
+}
+
+// ============================================================
+// LIVING ISLAND UPDATE
+// ============================================================
+function updateLivingIsland() {
+  // === TIDES ===
+  state.tideLevel = (Math.sin(state.frameCount * 0.0002) + 1) / 2;
+  const prevTideHigh = state.lastTideMsg === 1;
+  const prevTideLow  = state.lastTideMsg === 0;
+  if (state.tideLevel > 0.7 && !prevTideHigh) {
+    state.lastTideMsg = 1;
+    showMsg('Tide coming in...', '#3498db');
+  } else if (state.tideLevel < 0.3 && !prevTideLow && state.lastTideMsg !== -1) {
+    state.lastTideMsg = 0;
+    showMsg('Tide going out...', '#8ad4c8');
+  }
+
+  // === WEATHER FORECAST ADVANCEMENT ===
+  // Each forecast state lasts N in-game days tracked per-day-tick
+  // We just check day changes in updateDayNight; here we drive cloud drift
+  if (state.clouds) {
+    state.clouds.forEach(cloud => {
+      cloud.wx += cloud.speed;
+      if (cloud.wx > state.cam.x + window.innerWidth + cloud.w + 100) {
+        cloud.wx = state.cam.x - cloud.w - 50;
+        cloud.wy = 30 + Math.random() * 80;
+      }
+    });
+  }
+
+  // === SEASONS ===
+  const currentSeason = Math.floor((state.day - 1) / 10) % 3;
+  if (currentSeason !== state.season) {
+    state.season = currentSeason;
+    state.seasonOverlay = 180; // 3 second overlay at 60fps
+  }
+
+  // === DAWN EVENTS (dayTime 0.1-0.15) ===
+  const dt = state.dayTime;
+  if (dt >= 0.1 && dt < 0.15 && !state.dawnFired) {
+    state.dawnFired = true;
+    showMsg('Dawn breaks over the island', '#e8c060');
+    // Restore 5 hp and 5 water
+    const p = state.player;
+    p.hp = Math.min(p.maxHp, p.hp + 5);
+    p.water = Math.min(p.maxWater, p.water + 5);
+    addFloatingText(p.x, p.y - 20, '+5 HP +5 WATER (Dawn)', '#e8c060');
+    // Spawn 5-6 dawn birds across the sky
+    const camX = state.cam.x, camY = state.cam.y;
+    const dawnBirdCount = 5 + Math.floor(Math.random() * 2);
+    for (let i = 0; i < dawnBirdCount; i++) {
+      state.birds.push({
+        wx: camX - 20,
+        wy: camY + 20 + Math.random() * (window.innerHeight * 0.35),
+        vx: 1.8 + Math.random() * 0.8,
+        vy: (Math.random() - 0.5) * 0.2,
+        life: 700 + Math.floor(Math.random() * 300),
+        flapFrame: Math.floor(Math.random() * 16),
+        color: '#f5c842'
+      });
+    }
+  }
+  if (dt >= 0.15 || dt < 0.1) state.dawnFired = false;
+
+  // === DUSK EVENTS (dayTime 0.62-0.67) ===
+  if (dt >= 0.62 && dt < 0.67 && !state.duskFired) {
+    state.duskFired = true;
+    showMsg('Night falls. Find shelter.', '#8060b0');
+  }
+  if (dt < 0.62 || dt >= 0.67) state.duskFired = false;
+
+  // === SHARK SPAWNING (more active at night + high tide) ===
+  if (state.frameCount % 1800 === 900) { // check every 30s
+    const shouldSpawnExtra = state.isNight && state.tideLevel > 0.7;
+    const shouldDespawnExtra = state.tideLevel < 0.3 && !state.isNight;
+    if (shouldSpawnExtra) {
+      // Spawn up to 2 extra sharks in shallow water
+      const shallowTiles = [];
+      const cx2 = Math.floor(state.player.x / TSIZE), cy2 = Math.floor(state.player.y / TSIZE);
+      for (let dy = -30; dy <= 30; dy++) {
+        for (let dx = -30; dx <= 30; dx++) {
+          const ty = cy2 + dy, tx = cx2 + dx;
+          if (ty >= 0 && ty < MSIZE && tx >= 0 && tx < MSIZE && state.map[ty]?.[tx] === T.SHALLOW_WATER) {
+            if (Math.random() < 0.001) shallowTiles.push([tx, ty]);
+          }
+        }
+      }
+      const spawnCount = Math.min(2, shallowTiles.length);
+      for (let i = 0; i < spawnCount; i++) {
+        const [stx, sty] = shallowTiles[i];
+        state.creatures.push({type:'shark', x:stx*TSIZE, y:sty*TSIZE, hp:50, maxHp:50, spd:0.9, attackTimer:0, walkTimer:0, tideSpawned:true});
+      }
+    }
+    if (shouldDespawnExtra) {
+      state.creatures = state.creatures.filter(c => !(c.type === 'shark' && c.tideSpawned));
+    }
+  }
+
+  // === WEATHER FORECAST: advance per day (triggered by day increment in updateDayNight) ===
+  // Birds: fewer at night, more at dawn handled above
+  if (state.isNight && state.birds.length > 2) {
+    // Remove excess birds at night (keep at most 1)
+    state.birds = state.birds.filter((b, i) => i < 1);
+  }
 }
 
 function updateBirdsAndFootprints() {
@@ -6569,11 +7333,21 @@ function updateCrabs() {
     if (obj.type !== 'crab') return;
     obj.walkTimer = (obj.walkTimer||0) + 1;
     obj.moveTimer = (obj.moveTimer||0) + 1;
-    // Change direction every 3 seconds
+    // Change direction every 3 seconds, with tide bias
     if (obj.moveTimer % 180 === 0) {
       const a = Math.random() * Math.PI * 2;
       obj.dx = Math.cos(a) * 0.3;
       obj.dy = Math.sin(a) * 0.15;
+      // Tide-based bias: at low tide move toward water (south/east in map coords)
+      // at high tide move inland (away from water)
+      if (state.tideLevel < 0.3) {
+        // Find nearest water direction (simplified: bias toward positive y = toward ocean)
+        obj.dy += 0.12;
+      } else if (state.tideLevel > 0.7) {
+        // Move inland: bias away from water
+        obj.dy -= 0.1;
+        obj.dx += (Math.random() > 0.5 ? 0.08 : -0.08);
+      }
     }
     // Only move on beach tiles
     const newX = obj.x + (obj.dx||0);
@@ -7699,7 +8473,36 @@ window.addEventListener('keydown', e => {
     else if (activeT === 'coconut') showMsg('COCONUT — click to throw toward cursor (Q key also works)', '#c8a870');
     else if (!activeT) showMsg('Empty slot', '#888');
   }
-  if (e.key.toLowerCase() === 'f') { handleMinigameKey('f'); if(!state.minigame && state.running) { if(state.player.inv.fishing_rod>0){ const tile=getTile(state.player.x,state.player.y); if([1,2].includes(tile))startFishMinigame(); } } }
+  if (e.key.toLowerCase() === 'f') {
+    handleMinigameKey('f');
+    if (!state.minigame && state.running) {
+      // Bribable warrior interaction
+      if (!state.peaceAchieved) {
+        const bribable = state.enemies.find(w => w.bribable && !w.dying && !w.fleeing);
+        if (bribable) {
+          const bd = Math.hypot(state.player.x - bribable.x, state.player.y - bribable.y);
+          if (bd < 60) {
+            if (state.player.inv.coconut >= 3) {
+              state.player.inv.coconut -= 3;
+              bribable.fleeing = true;
+              bribable.fleeTimer = 600;
+              bribable.bribable = false;
+              state.npcRelations.tribe = (state.npcRelations.tribe || 0) + 1;
+              showMsg("The warrior accepts your offering and steps aside", '#c8f135');
+            } else {
+              showMsg("You need 3 coconuts to bribe the warrior", '#c8a060');
+            }
+            return;
+          }
+        }
+      }
+      // Fishing
+      if (state.player.inv.fishing_rod > 0) {
+        const tile = getTile(state.player.x, state.player.y);
+        if ([1,2].includes(tile)) startFishMinigame();
+      }
+    }
+  }
   // Quick-consume hotkeys 1-5 }else{pl.food=Math.min(pl.maxFood,pl.food+20);showMsg('+20 FOOD (FRUIT)','#e67e22');}updateUI();} else if(pl.inv.fruit_cooked>0){pl.inv.fruit_cooked--;pl.food=Math.min(pl.maxFood,pl.food+40);showMsg('+40 FOOD (COOKED FRUIT)','#e67e22');updateUI();} } else if(pl.inv.fish>0){pl.inv.fish--;if(Math.random()<0.2){pl.sick=200;showMsg('SICK FROM RAW FISH!','#e74c3c');}else{pl.food=Math.min(pl.maxFood,pl.food+25);showMsg('+25 FOOD (RAW FISH)','#e67e22');}updateUI();} } } }
   if (e.key === 'Escape') {
     state.buildMode=false; state.buildItem=null; document.getElementById('build-menu').style.display='none'; state.minigame=null; state.dialogue=null;
@@ -7782,8 +8585,16 @@ function updateUI() {
   else foodBar.classList.remove('bar-critical-orange');
 
   document.getElementById('stam-bar').style.width = (p.stamina/p.maxStamina*100)+'%';
+  // Air bar — only visible in water
+  const curTile = getTile(p.x, p.y);
+  const isUnderwater = curTile === T.DEEP_OCEAN || curTile === T.SHALLOW_WATER;
+  const airWrap = document.getElementById('air-bar-wrap');
+  if (airWrap) airWrap.style.display = isUnderwater ? 'flex' : 'none';
+  const airBar = document.getElementById('air-bar');
+  if (airBar) airBar.style.width = ((p.air/p.maxAir)*100)+'%';
   const dayEl = document.getElementById('day-display');
-  dayEl.textContent = `DAY ${state.day}`;
+  const seasonNames = ['DRY', 'WET', 'STORM'];
+  dayEl.textContent = `DAY ${state.day} · ${seasonNames[state.season]||'DRY'}`;
   // Day counter glow: flash for 120 frames after day changes
   if (!state._lastDay) state._lastDay = state.day;
   if (state.day !== state._lastDay) {
@@ -7800,7 +8611,17 @@ function updateUI() {
   }
   const labels=['SURVIVOR','SETTLEMENT','FORTIFIED','VILLAGE'];
   const sbEl=document.getElementById('settle-badge'); if(sbEl) sbEl.textContent=labels[p.settlementLevel]||'';
-  const wiEl=document.getElementById('weather-icon'); if(wiEl) wiEl.textContent=state.weatherRain?'STORM':(state.player.torch?'TORCH':'');
+  // Weather forecast icons: show next 3 states
+  const fcIcons = {'clear':'SUN','cloudy':'CLOUD','rain':'RAIN','storm':'STORM'};
+  let fcStr = '';
+  if (state.weatherForecast && state.weatherForecast.length > 0) {
+    for (let fi = 0; fi < 3; fi++) {
+      const idx = (state.weatherForecastIdx + fi) % state.weatherForecast.length;
+      fcStr += (fi > 0 ? ' > ' : '') + (fcIcons[state.weatherForecast[idx]] || '?');
+    }
+  }
+  const wiEl=document.getElementById('weather-icon');
+  if(wiEl) wiEl.textContent=state.weatherRain?'STORM':(state.player.torch?'TORCH':'') + (fcStr ? ' ['+fcStr+']' : '');
   const hwEl = document.getElementById('hw'); if(hwEl) hwEl.textContent = p.inv.wood||0;
   const hsEl = document.getElementById('hs'); if(hsEl) hsEl.textContent = p.inv.stone||0;
   const totalFood=(p.inv.fish||0)+(p.inv.fruit||0)+(p.inv.fish_cooked||0)+(p.inv.fruit_cooked||0)+(p.inv.coconut||0);
@@ -7959,6 +8780,7 @@ function gameLoopWithUI() {
   updateBirdsAndFootprints();
   if (state.frameCount % 4 === 0) updateCrabs();
   if (state.frameCount % 3 === 0) updateSeaCreatures();
+  updateLivingIsland();
   updateUI();
   render(ctx, minimapCtx);
 }
