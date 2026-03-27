@@ -6424,45 +6424,40 @@ function drawGuide(ctx) {
 // Hover highlight
 function drawHoverHighlight(ctx, camX, camY) {
   if (!state.running || state.cutscenePlaying) return;
-  const mouseWX = mx + camX, mouseWY = my + camY;
-  let hoverObj = null, hoverDist = 64;
+  const zoom = state.zoom || 1.0;
+  const screenCX = canvas.width / 2, screenCY = canvas.height / 2;
+  const mouseWX = (mx - screenCX) / zoom + screenCX + camX;
+  const mouseWY = (my - screenCY) / zoom + screenCY + camY;
+  let hoverObj = null, hoverDist = 80;
   state.objects.forEach(obj => {
     if (obj.placed || obj.type === 'death_pack' || obj.decor) return;
-    const d = Math.hypot(mouseWX-obj.x, mouseWY-obj.y);
+    const d = Math.hypot(mouseWX - obj.x, mouseWY - obj.y);
     if (d < hoverDist) { hoverDist = d; hoverObj = obj; }
   });
   if (!hoverObj) return;
+  const playerDist = Math.hypot(state.player.x - hoverObj.x, state.player.y - hoverObj.y);
+  if (playerDist > 100) return;
   const hsx = Math.floor(hoverObj.x - camX);
   const hsy = Math.floor(hoverObj.y - camY);
-  // Check player is within reach
-  const playerDist = Math.hypot(state.player.x - hoverObj.x, state.player.y - hoverObj.y);
-  const inRange = playerDist < 90;
   ctx.save();
-  if (!inRange) return;
-  // Pixel-style white outline - draw each edge as thick white pixels
-  ctx.fillStyle = 'rgba(0,0,0,0.6)';
-  ctx.fillRect(hsx-16, hsy-24, 32, 34); // dark shadow
-  ctx.fillStyle = '#ffffff';
-  // Top edge
-  ctx.fillRect(hsx-14, hsy-22, 28, 3);
-  // Bottom edge  
-  ctx.fillRect(hsx-14, hsy+8, 28, 3);
-  // Left edge
-  ctx.fillRect(hsx-14, hsy-22, 3, 30);
-  // Right edge
-  ctx.fillRect(hsx+11, hsy-22, 3, 30);
-  // Label
-  ctx.fillStyle = '#ffff00';
-  ctx.font = 'bold 10px "Courier New"';
+  ctx.strokeStyle = '#ffff00';
+  ctx.lineWidth = 4;
+  ctx.shadowColor = '#ffff00';
+  ctx.shadowBlur = 10;
+  ctx.strokeRect(hsx - 16, hsy - 24, 32, 36);
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(hsx - 13, hsy - 21, 26, 30);
+  ctx.font = 'bold 11px "Courier New"';
   ctx.textAlign = 'center';
-  const rawLabel = hoverObj.type.replace(/_/g,' ');
+  const rawLabel = hoverObj.type.replace(/_/g, ' ');
   const label = rawLabel.charAt(0).toUpperCase() + rawLabel.slice(1);
-  // Label background
   const lw = ctx.measureText(label).width;
-  ctx.fillStyle = 'rgba(0,0,0,0.8)';
-  ctx.fillRect(hsx - lw/2 - 3, hsy-38, lw+6, 14);
+  ctx.fillStyle = 'rgba(0,0,0,0.9)';
+  ctx.fillRect(hsx - lw/2 - 5, hsy - 44, lw + 10, 16);
   ctx.fillStyle = '#ffff00';
-  ctx.fillText(label, hsx, hsy-27);
+  ctx.fillText(label, hsx, hsy - 32);
   ctx.textAlign = 'left';
   ctx.restore();
 }
