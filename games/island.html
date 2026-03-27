@@ -1771,12 +1771,10 @@ function drawTidePool(ctx, sx, sy) {
 }
 
 function drawFishSpot(ctx, sx, sy) {
-  // Static fish spot marker — just a small ripple icon, no animation
-  ctx.fillStyle = 'rgba(100,180,255,0.5)';
-  ctx.fillRect(sx-8, sy-3, 16, 6);
-  ctx.fillStyle = 'rgba(200,240,255,0.8)';
-  ctx.fillRect(sx-4, sy-1, 3, 3);
-  ctx.fillRect(sx+1, sy-1, 3, 3);
+  // Very subtle fish spot - just a few ripple dots
+  ctx.fillStyle = 'rgba(100,200,220,0.35)';
+  ctx.fillRect(sx-5, sy-1, 4, 2);
+  ctx.fillRect(sx+1, sy-1, 4, 2);
 }
 
 function drawReed(ctx, sx, sy) {
@@ -5565,8 +5563,9 @@ function drawHoverHighlight(ctx, camX, camY) {
   const playerDist = Math.hypot(state.player.x - hoverObj.x, state.player.y - hoverObj.y);
   const inRange = playerDist < 90;
   ctx.save();
-  ctx.strokeStyle = inRange ? '#ffdd44' : 'rgba(255,255,255,0.4)';
-  ctx.lineWidth = inRange ? 2 : 1;
+  if (!inRange) return; // only show highlight when in reach
+  ctx.strokeStyle = '#ffdd44';
+  ctx.lineWidth = 2;
   ctx.strokeRect(hsx-14, hsy-22, 28, 30);
   if (inRange) {
     ctx.fillStyle = 'rgba(255,220,0,0.85)';
