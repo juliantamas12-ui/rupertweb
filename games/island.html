@@ -398,7 +398,7 @@ canvas#c{pointer-events:none}
       <input type="range" id="brightness-slider" min="30" max="100" value="100" oninput="setBrightness(this.value)" onclick="event.stopPropagation()">
     </div>
     <button class="pm-btn" onclick="saveAndQuit()">SAVE &amp; QUIT</button>
-    <button class="pm-btn" onclick="void(0)">MUSIC: OFF</button>
+    <button class="pm-btn" id="music-btn" onclick="toggleMusic()" style="cursor:pointer">MUSIC: ON</button>
     <div id="pause-leaderboard" style="margin-top:14px;border-top:1px solid rgba(120,80,20,0.4);padding-top:10px"></div>
   </div>
 </div>
