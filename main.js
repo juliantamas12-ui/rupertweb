@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Iron Law of the Ruling Class: Pareto, Mosca, and Why Democracies Don't Rule Themselves",
+    date: "2026-03-27",
+    category: "History",
+    excerpt: "Every few years, somewhere in the Western world, a politician rises on a wave of anti-establishment fury. They promise to give power back to the people. They win. And within a term or two, they are the establishment — governing much as their predeces...",
+    url: "essays/2026-03-27-the-iron-law-of-the-ruling-class-pareto-mosca-and-why-democr.html"
+  },
+  {
     title: "The Lights Go Out: The Bronze Age Collapse and What It Teaches About Systemic Fragility",
     date: "2026-03-26",
     category: "History",
@@ -71,7 +78,7 @@ const ESSAYS = [
    Fields: subject, title, due (YYYY-MM-DD), status ('pending'|'done')
    ══════════════════════════════════════════════════════════════ */
 const SCHOOL_TASKS = [
-  // Last updated: 2026-03-25 via ManageBac scraper
+  // Last updated: 2026-03-26 via ManageBac scraper
   // --- Past (Mon Mar 23) ---
   { subject: "Math 8", title: "Math 8: Apothem Exercises", due: "2026-03-23", time: "8:30 AM", status: "done", type: "Homework" },
   { subject: "English 7", title: "Eng 7 hw", due: "2026-03-23", time: "9:00 AM", status: "done", type: "Homework" },
@@ -84,13 +91,13 @@ const SCHOOL_TASKS = [
   { subject: "Science 7", title: "Classwork Science 7", due: "2026-03-24", time: "11:10 AM", status: "done", type: "Class work" },
   { subject: "Rel Ed 7", title: "Jesus at the Temple and Passover Meal", due: "2026-03-24", time: "12:25 PM", status: "done", type: "Homework" },
   { subject: "German 7", title: "Cover Work - Dative Case Practice", due: "2026-03-24", time: "12:35 PM", status: "done", type: "Homework" },
-  // --- Today (Wed Mar 25) ---
-  { subject: "Math 8", title: "Math 8: Surface Area of Prisms", due: "2026-03-25", time: "12:30 PM", status: "pending", type: "Homework" },
-  { subject: "Math 7", title: "Math 7 (Formative)", due: "2026-03-25", time: "12:35 PM", status: "pending", type: "Quiz" },
-  { subject: "Math 7", title: "Math 7 (HW)", due: "2026-03-25", time: "12:35 PM", status: "pending", type: "Homework" },
-  { subject: "Ed. Technology 7", title: "Ed. Tech 7 - Classroom Pods", due: "2026-03-25", time: "1:35 PM", status: "pending", type: "Presentations/Classwork" },
-  { subject: "Art 7", title: "RENAISSANCE PRESENTATIONS FIRST GROUPS", due: "2026-03-25", time: "2:30 PM", status: "pending", type: "Paper" },
-  // --- Thu Mar 26 ---
+  // --- Past (Wed Mar 25) ---
+  { subject: "Math 8", title: "Math 8: Surface Area of Prisms", due: "2026-03-25", time: "12:30 PM", status: "done", type: "Homework" },
+  { subject: "Math 7", title: "Math 7 (Formative)", due: "2026-03-25", time: "12:35 PM", status: "done", type: "Quiz" },
+  { subject: "Math 7", title: "Math 7 (HW)", due: "2026-03-25", time: "12:35 PM", status: "done", type: "Homework" },
+  { subject: "Ed. Technology 7", title: "Ed. Tech 7 - Classroom Pods", due: "2026-03-25", time: "1:35 PM", status: "done", type: "Presentations/Classwork" },
+  { subject: "Art 7", title: "RENAISSANCE PRESENTATIONS FIRST GROUPS", due: "2026-03-25", time: "2:30 PM", status: "done", type: "Paper" },
+  // --- Today (Thu Mar 26) ---
   { subject: "English 7", title: "Eng 7 hw", due: "2026-03-26", time: "9:00 AM", status: "pending", type: "Homework" },
   { subject: "General Music 7", title: "Ukulele Assessment", due: "2026-03-26", time: "12:35 PM", status: "pending", type: "Performance/Assessment" },
   // --- Fri Mar 27 ---
