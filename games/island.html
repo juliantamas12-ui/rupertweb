@@ -6464,6 +6464,60 @@ function drawHoverHighlight(ctx, camX, camY) {
   ctx.textAlign = 'left';
   ctx.restore();
 }
+
+function drawWorldMap(ctx) {
+  if (!state.showMap) return;
+  const cw = canvas.width, ch = canvas.height;
+  const scale = Math.min(cw, ch) * 0.85 / (MSIZE * TSIZE);
+  const mapW = Math.round(MSIZE * TSIZE * scale);
+  const mapH = Math.round(MSIZE * TSIZE * scale);
+  const mapX = (cw - mapW) / 2, mapY = (ch - mapH) / 2;
+  
+  // Background
+  ctx.fillStyle = 'rgba(0,0,0,0.85)';
+  ctx.fillRect(0, 0, cw, ch);
+  
+  // Draw miniature map
+  const tileW = mapW / MSIZE, tileH = mapH / MSIZE;
+  for (let y = 0; y < MSIZE; y += 2) {
+    for (let x = 0; x < MSIZE; x += 2) {
+      const t = state.map[y][x];
+      const colors = ['#0d1f33','#2a7a7a','#d4b870','#1a5020','#0a2810','#3a2020','#cc3300'];
+      ctx.fillStyle = colors[t] || '#333';
+      ctx.fillRect(mapX + x * tileW, mapY + y * tileH, tileW * 2 + 1, tileH * 2 + 1);
+    }
+  }
+  
+  // Player position
+  const px = mapX + (state.player.x / TSIZE) * tileW;
+  const py = mapY + (state.player.y / TSIZE) * tileH;
+  ctx.fillStyle = '#c8f135';
+  ctx.beginPath();
+  ctx.arc(px, py, 4, 0, Math.PI*2);
+  ctx.fill();
+  
+  // NPC positions
+  state.npcs.forEach(npc => {
+    const nx = mapX + (npc.x / TSIZE) * tileW;
+    const ny = mapY + (npc.y / TSIZE) * tileH;
+    ctx.fillStyle = npc.color || '#4a9ab4';
+    ctx.beginPath();
+    ctx.arc(nx, ny, 3, 0, Math.PI*2);
+    ctx.fill();
+  });
+  
+  // Title
+  ctx.fillStyle = '#e8d49a';
+  ctx.font = 'bold 14px Cinzel, serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('ISLAND MAP — press M to close', cw/2, mapY - 12);
+  ctx.textAlign = 'left';
+  
+  // Legend
+  ctx.font = '10px Lato, sans-serif';
+  ctx.fillStyle = '#c8f135'; ctx.fillText('■ You', mapX, mapY + mapH + 18);
+  ctx.fillStyle = '#4a9ab4'; ctx.fillText('■ NPCs', mapX + 50, mapY + mapH + 18);
+}
 function render(ctx, minimapCtx) {
   const p = state.player;
   const canvas = ctx.canvas;
@@ -9054,6 +9108,7 @@ window.addEventListener('keydown', e => {
     else if (activeT === 'coconut') showMsg('COCONUT — click to throw toward cursor (Q key also works)', '#c8a870');
     else if (!activeT) showMsg('Empty slot', '#888');
   }
+  if (e.key.toLowerCase() === 'm') { state.showMap = !state.showMap; }
   if (e.key.toLowerCase() === 'f') {
     handleMinigameKey('f');
     if (!state.minigame && state.running) {
