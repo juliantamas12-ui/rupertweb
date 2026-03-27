@@ -419,8 +419,8 @@ canvas#c{pointer-events:none}
 // Global overlay dismiss - called by HTML onclick attributes
 function startScreenClick(){['char-creator','overlay','start-screen'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.cssText='display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;';});}
 
-const TSIZE = 8;
-const MSIZE = 300;
+const TSIZE = 16;
+const MSIZE = 150;
 const WORLD_W = MSIZE * TSIZE;
 const WORLD_H = MSIZE * TSIZE;
 
@@ -434,7 +434,7 @@ const TILE_COLORS = {
 
 // Game state
 const state = {
-  running: false, paused: false,
+  running: false, paused: false, showControls: false, lastDamageCause: '',
   playerName: 'SURVIVOR',
   shirtColor: '#2d7a2d',
   skinColor: '#c8a07a',
@@ -443,9 +443,9 @@ const state = {
   DAY_FRAMES: 60 * 240, // 4 min/day
 
   player: {
-    x: 150*TSIZE, y: 200*TSIZE,
+    x: 75*TSIZE, y: 100*TSIZE,
     vx: 0, vy: 0,
-    hp: 100, maxHp: 100,
+    hp: 200, maxHp: 200,
     water: 100, maxWater: 100,
     food: 100, maxFood: 100,
     stamina: 100, maxStamina: 100,
@@ -665,7 +665,8 @@ const state = {
 const NPC_DATA = [
   {
     id: 'oonga', name: 'OONGA', color: '#6a3010',
-    x: 128*TSIZE, y: 165*TSIZE,
+    x: 75*TSIZE, y: 112*TSIZE,
+    homeX: 75*TSIZE, homeY: 112*TSIZE,
     desc: "Tribe outcast. Your first guide on the island.",
     lines: [
       { text: "You wake on the sand. Your ship \u2014 gone. I am Oonga. These are my old people\u2019s lands. Look \u2014 wood washed up with you. You will need it.", options: ["Tell me more", "What happened to my ship?"], optionNext: [1, 1], _onShow: 'spawnTutorialWood' },
@@ -680,7 +681,7 @@ const NPC_DATA = [
   },
   {
     id: 'mara', name: 'MARA', color: '#cc4422',
-    x: 85*TSIZE, y: 155*TSIZE,
+    x: 42*TSIZE, y: 77*TSIZE,
     desc: "Ship's cook. Has been watching the tribe's patrols.",
     lines: [
       { text: "Thank god. I thought I was alone. Three days in this jungle — I've mapped every patrol route those warriors take. They're not random. They're organized.", options: ["What did you find?", "Are you hurt?"], optionNext: [1, 1] },
@@ -694,7 +695,7 @@ const NPC_DATA = [
   },
   {
     id: 'felix', name: 'FELIX', color: '#7ca0b0',
-    x: 80*TSIZE, y: 185*TSIZE,
+    x: 40*TSIZE, y: 92*TSIZE,
     desc: "Ship's engineer. Repairing the lifeboat.",
     lines: [
       { text: "Right. You're alive. Good. I've got the lifeboat 60% fixed. Need volcanic metal from near the summit — the hull has a crack only that heat-tempered ore can seal. Everything else, I don't care about.", options: ["What about the tribe?", "I'll get the metal"], optionNext: [1, 1] },
@@ -707,7 +708,7 @@ const NPC_DATA = [
   },
   {
     id: 'kona', name: 'ELDER KONA', color: '#c87050',
-    x: 195*TSIZE, y: 108*TSIZE,
+    x: 97*TSIZE, y: 54*TSIZE,
     desc: "Former elder. Knows the artifact's secret.",
     lines: [
       { text: "I wondered when the sea would send a survivor. The artifact... it is like fire. Useful, then consuming. My brother learned this too late.", options: ["Your brother?", "What is the artifact?"], optionNext: [1, 1] },
@@ -738,7 +739,7 @@ function genMap() {
   state.map = [];
   state.pits = new Set();
   const cx = MSIZE/2, cy = MSIZE/2;
-  const vcx = cx, vcy = cy - 72; // volcano center offset scaled
+  const vcx = cx, vcy = cy - 36; // volcano center offset scaled
 
   for (let y = 0; y < MSIZE; y++) {
     state.map[y] = new Uint8Array(MSIZE);
@@ -746,27 +747,27 @@ function genMap() {
       const dx = x - cx, dy = y - cy;
       const angle = Math.atan2(dy, dx);
       const noise = Math.sin(angle*3)*6 + Math.sin(angle*7)*3 + Math.cos(angle*5)*4 + Math.sin(angle*11)*2;
-      const islandR = 86 + noise; // scaled from 144 for 300-tile world
+      const islandR = 43 + noise/2; // scaled for 150-tile world
       const dist = Math.sqrt(dx*dx + dy*dy);
       const dvx = x - vcx, dvy = y - vcy;
       const vdist = Math.sqrt(dvx*dvx + dvy*dvy);
 
-      if (dist > islandR + 18) state.map[y][x] = T.DEEP_OCEAN;
-      else if (dist > islandR + 6) state.map[y][x] = T.SHALLOW_WATER;
+      if (dist > islandR + 9) state.map[y][x] = T.DEEP_OCEAN;
+      else if (dist > islandR + 3) state.map[y][x] = T.SHALLOW_WATER;
       else if (dist > islandR) state.map[y][x] = T.BEACH;
-      // Volcano: lava only inner 10 tiles, volcanic 10-25, then jungle resumes
-      else if (vdist < 10) state.map[y][x] = T.LAVA;
-      else if (vdist < 25) state.map[y][x] = T.VOLCANIC;
-      else if (dist < islandR - 24) state.map[y][x] = T.JUNGLE_DARK;
-      else if (dist < islandR - 7) state.map[y][x] = T.JUNGLE_LIGHT;
+      // Volcano: lava only inner 5 tiles, volcanic 5-12, then jungle resumes
+      else if (vdist < 5) state.map[y][x] = T.LAVA;
+      else if (vdist < 12) state.map[y][x] = T.VOLCANIC;
+      else if (dist < islandR - 12) state.map[y][x] = T.JUNGLE_DARK;
+      else if (dist < islandR - 4) state.map[y][x] = T.JUNGLE_LIGHT;
       else state.map[y][x] = T.BEACH;
     }
   }
 
   // Jungle maze walls — add impassable rock wall tiles in dark jungle
-  for (let i = 0; i < 80; i++) {
-    const wx = 90 + Math.floor(Math.random() * 120);
-    const wy = 90 + Math.floor(Math.random() * 120);
+  for (let i = 0; i < 40; i++) {
+    const wx = 45 + Math.floor(Math.random() * 60);
+    const wy = 45 + Math.floor(Math.random() * 60);
     if (state.map[wy] && state.map[wy][wx] === T.JUNGLE_DARK) {
       const len = 3 + Math.floor(Math.random() * 6);
       const horiz = Math.random() > 0.5;
@@ -779,11 +780,11 @@ function genMap() {
     }
   }
 
-  // Hidden lagoon on north side (scaled for 300-tile world)
-  for (let ly = 16; ly <= 30; ly++) {
-    for (let lx = 142; lx <= 158; lx++) {
+  // Hidden lagoon on north side (scaled for 150-tile world)
+  for (let ly = 8; ly <= 15; ly++) {
+    for (let lx = 71; lx <= 79; lx++) {
       if (ly < 0 || ly >= MSIZE || lx < 0 || lx >= MSIZE) continue;
-      const ldy = ly - 24, ldx = lx - 150;
+      const ldy = ly - 12, ldx = lx - 75;
       const lr = Math.sqrt(ldx*ldx + ldy*ldy);
       if (lr <= 6) {
         state.map[ly][lx] = T.SHALLOW_WATER;
@@ -794,7 +795,7 @@ function genMap() {
   }
 
   // Hidden pits in dark jungle (not near volcano)
-  const vPitCx = 150, vPitCy = 78;
+  const vPitCx = 75, vPitCy = 39;
   for (let y = 0; y < MSIZE; y++) {
     for (let x = 0; x < MSIZE; x++) {
       const dvPit = Math.sqrt((x-vPitCx)**2 + (y-vPitCy)**2);
@@ -874,74 +875,70 @@ function genObjects() {
       }
 
       if (t === T.JUNGLE_LIGHT) {
-        if (r < 0.022) state.objects.push({type:selectTree(t,nearWater), x:wx, y:wy, hp:5, maxHp:5});
-        else if (r < 0.008) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4});
-        else if (r < 0.030) state.objects.push({type:'berry', x:wx, y:wy, hp:1, maxHp:1, respawn:0});
-        // REMOVED NOISY: // removed: else if (r < 0.033) state.objects.push({type:'jungle_bird', x:wx, y:wy, decor:true, colorIdx:Math.floor(Math.random()*3)});
-        // REMOVED NOISY: // removed: else if (r < 0.048) state.objects.push({type:'jungle_flower', x:wx, y:wy, decor:true, colorIdx:Math.floor(Math.random()*3)});
-        else if (r < 0.052) state.objects.push({type:'vine_pickup', x:wx, y:wy, collected:false});
+        if (r < 0.012) state.objects.push({type:selectTree(t,nearWater), x:wx, y:wy, hp:5, maxHp:5});
+        else if (r < 0.016) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4});
+        else if (r < 0.022) state.objects.push({type:'berry', x:wx, y:wy, hp:1, maxHp:1, respawn:0});
+        else if (r < 0.026) state.objects.push({type:'vine_pickup', x:wx, y:wy, collected:false});
       } else if (t === T.JUNGLE_DARK) {
-        if (r < 0.045) state.objects.push({type:selectTree(t,nearWater), x:wx, y:wy, hp:5, maxHp:5});
-        else if (r < 0.008) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4});
-        else if (r < 0.051) state.objects.push({type:'jungle_chest', x:wx, y:wy, opened:false});
-        else if (r < 0.053) state.creatures.push({type:'spider', x:wx, y:wy, hp:25, maxHp:25, spd:1.05, attackTimer:0, walkTimer:0});
-        // REMOVED NOISY: // removed: else if (r < 0.056) state.objects.push({type:'jungle_bird', x:wx, y:wy, decor:true, colorIdx:Math.floor(Math.random()*3)});
-        // REMOVED NOISY: // removed: else if (r < 0.071) state.objects.push({type:'jungle_flower', x:wx, y:wy, decor:true, colorIdx:Math.floor(Math.random()*3)});
-        else if (r < 0.077) state.objects.push({type:'jungle_floor', x:wx, y:wy, decor:true});
+        if (r < 0.012) state.objects.push({type:selectTree(t,nearWater), x:wx, y:wy, hp:5, maxHp:5});
+        else if (r < 0.016) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4});
+        else if (r < 0.019) state.objects.push({type:'jungle_chest', x:wx, y:wy, opened:false});
+        else if (r < 0.021) state.creatures.push({type:'spider', x:wx, y:wy, hp:25, maxHp:25, spd:1.05, attackTimer:0, walkTimer:0});
+        // jungle_floor removed entirely
       } else if (t === T.BEACH) {
-        if (r < 0.006) state.objects.push({type:'palm', x:wx, y:wy, hp:4, maxHp:4, respawn:0});
-        else if (r < 0.010) state.objects.push({type:'driftwood', x:wx, y:wy, collected:false});
-        else if (r < 0.014) state.objects.push({type:'fish_spot', x:wx, y:wy, shimmer:Math.random()*100});
-        // Coastal Tahitian trees on beach
-        else if (r < 0.018) state.objects.push({type:selectTree(t,nearWater), x:wx, y:wy, hp:4, maxHp:4});
-        // Crabs: only on beach, not near spawn zone
-        if (t === T.BEACH && Math.random() < 0.008) {
-          const distFromStart = Math.hypot(x - 125, y - 170);
-          if (distFromStart > 30) {
+        if (r < 0.004) state.objects.push({type:'palm', x:wx, y:wy, hp:4, maxHp:4, respawn:0});
+        else if (r < 0.009) state.objects.push({type:'driftwood', x:wx, y:wy, collected:false});
+        else if (r < 0.011) state.objects.push({type:'fish_spot', x:wx, y:wy, shimmer:Math.random()*100});
+        else if (r < 0.015) state.objects.push({type:selectTree(t,nearWater), x:wx, y:wy, hp:4, maxHp:4});
+        // Crabs: very rare, only on beach far from spawn
+        if (t === T.BEACH && Math.random() < 0.0005) {
+          const distFromStart = Math.hypot(x - 62, y - 85);
+          if (distFromStart > 15) {
             state.objects.push({type:'crab', x:wx, y:wy, decor:false, dir:1, walkTimer:0, moveTimer:0, dx:0.2, dy:0.1});
           }
         }
       } else if (t === T.SHALLOW_WATER) {
-        if (r < 0.004) state.objects.push({type:'fish_spot', x:wx, y:wy, shimmer:Math.random()*100});
-        else if (r < 0.006) state.creatures.push({type:'shark', x:wx, y:wy, hp:50, maxHp:50, spd:0.9, attackTimer:0, walkTimer:0});      } else if (t === T.VOLCANIC) {
+        if (r < 0.002) state.objects.push({type:'fish_spot', x:wx, y:wy, shimmer:Math.random()*100});
+        else if (r < 0.003) state.creatures.push({type:'shark', x:wx, y:wy, hp:50, maxHp:50, spd:0.9, attackTimer:0, walkTimer:0});
+      } else if (t === T.VOLCANIC) {
         if (r < 0.04) state.objects.push({type:'vol_rock', x:wx, y:wy, hp:3, maxHp:3});
       }
     }
   }
 
-  // Volcano loot chest at top (scaled for 300-tile world)
-  state.objects.push({type:'vol_chest', x:150*TSIZE, y:80*TSIZE, opened:false});
+  // Volcano loot chest at top (scaled for 150-tile world)
+  state.objects.push({type:'vol_chest', x:75*TSIZE, y:40*TSIZE, opened:false});
 
   // ── HIDDEN TREASURE CHESTS ──
-  // 1. Deep jungle - northeast (requires torch to find safely, dangerous)
-  state.objects.push({type:'treasure_chest', x:170*TSIZE, y:105*TSIZE, opened:false, lootTier:'uncommon'});
-  // 2. Deep jungle - southwest (another dark jungle cache)
-  state.objects.push({type:'treasure_chest', x:90*TSIZE, y:125*TSIZE, opened:false, lootTier:'common'});
-  // 3. Near volcano base (dangerous to reach, rare loot, glows orange)
-  state.objects.push({type:'treasure_chest', x:148*TSIZE, y:108*TSIZE, opened:false, lootTier:'rare', glowOrange:true});
-  // 4. Inside / beside the tidal cave (rewarded for exploring it)
-  state.objects.push({type:'treasure_chest', x:26*TSIZE, y:96*TSIZE, opened:false, lootTier:'uncommon'});
+  // 1. Deep jungle - northeast
+  state.objects.push({type:'treasure_chest', x:85*TSIZE, y:52*TSIZE, opened:false, lootTier:'uncommon'});
+  // 2. Deep jungle - southwest
+  state.objects.push({type:'treasure_chest', x:45*TSIZE, y:62*TSIZE, opened:false, lootTier:'common'});
+  // 3. Near volcano base
+  state.objects.push({type:'treasure_chest', x:74*TSIZE, y:54*TSIZE, opened:false, lootTier:'rare', glowOrange:true});
+  // 4. Inside / beside the tidal cave
+  state.objects.push({type:'treasure_chest', x:13*TSIZE, y:48*TSIZE, opened:false, lootTier:'uncommon'});
   // 5. Hidden lagoon - on its beach shore
-  state.objects.push({type:'treasure_chest', x:150*TSIZE, y:31*TSIZE, opened:false, lootTier:'common'});
-  // 6. Buried on south beach (slightly sand-covered look)
-  state.objects.push({type:'treasure_chest', x:155*TSIZE, y:215*TSIZE, opened:false, lootTier:'common', buried:true});
+  state.objects.push({type:'treasure_chest', x:75*TSIZE, y:15*TSIZE, opened:false, lootTier:'common'});
+  // 6. Buried on south beach
+  state.objects.push({type:'treasure_chest', x:77*TSIZE, y:107*TSIZE, opened:false, lootTier:'common', buried:true});
 
   // Waterfall (interactable)
   // removed waterfall decor // , x:200*TSIZE, y:140*TSIZE, decor:false});
 
   // Tidal cave — force onto southwest beach/jungle-edge tile
   {
-    const caveX = 55, caveY = 170;
+    const caveX = 27, caveY = 85;
     let cavePlaced = false;
     if (state.map[caveY] && state.map[caveY][caveX] === T.BEACH) {
-      state.objects.push({type:'cave', x:90*TSIZE, y:148*TSIZE, decor:false});
+      state.objects.push({type:'cave', x:45*TSIZE, y:74*TSIZE, decor:false});
       cavePlaced = true;
     }
     if (!cavePlaced) {
       outerCave: for (let dy = -5; dy <= 5; dy++) {
         for (let dx = -5; dx <= 5; dx++) {
           if (state.map[caveY+dy] && state.map[caveY+dy][caveX+dx] === T.BEACH) {
-            state.objects.push({type:'cave', x:90*TSIZE, y:148*TSIZE, decor:false});
+            state.objects.push({type:'cave', x:45*TSIZE, y:74*TSIZE, decor:false});
             cavePlaced = true;
             break outerCave;
           }
@@ -949,12 +946,12 @@ function genObjects() {
       }
     }
     if (!cavePlaced) {
-      state.objects.push({type:'cave', x:90*TSIZE, y:148*TSIZE, decor:false});
+      state.objects.push({type:'cave', x:45*TSIZE, y:74*TSIZE, decor:false});
     }
   }
 
   // Ancient altar
-  state.objects.push({type:'altar', x:138*TSIZE, y:51*TSIZE, decor:false});
+  state.objects.push({type:'altar', x:69*TSIZE, y:25*TSIZE, decor:false});
 
   // Messages in bottles on south beaches
   const bottleMessages = [
@@ -962,15 +959,15 @@ function genObjects() {
     "The tribe fears nothing except the mask of their ancestors. Find it on their chief.",
     "There is a lagoon to the north. The warriors never go there. I know not why."
   ];
-  [[162,222],[138,234],[186,216]].forEach(([bx,by],i) => {
+  [[81,111],[69,117],[93,108]].forEach(([bx,by],i) => {
     state.objects.push({type:'bottle', x:bx*TSIZE, y:by*TSIZE, decor:false, read:false, msgIdx:i});
   });
 
   // Hidden lagoon: decorative palms around it + fish spots inside (scaled)
-  const lagoonCx = 150, lagoonCy = 24;
+  const lagoonCx = 75, lagoonCy = 12;
   for (let i = 0; i < 8; i++) {
     const angle = (i/8)*Math.PI*2;
-    const pr = 8 + Math.random()*2;
+    const pr = 4 + Math.random()*2;
     const px3 = Math.round(lagoonCx + Math.cos(angle)*pr);
     const py3 = Math.round(lagoonCy + Math.sin(angle)*pr);
     if (py3>=0&&py3<MSIZE&&px3>=0&&px3<MSIZE&&state.map[py3][px3]===T.BEACH) {
@@ -980,7 +977,7 @@ function genObjects() {
   // Fish spots inside lagoon
   for (let i = 0; i < 4; i++) {
     const angle = (i/4)*Math.PI*2;
-    const fr = 2 + Math.random()*3;
+    const fr = 1 + Math.random()*2;
     const fx = Math.round(lagoonCx + Math.cos(angle)*fr);
     const fy = Math.round(lagoonCy + Math.sin(angle)*fr);
     if (fy>=0&&fy<MSIZE&&fx>=0&&fx<MSIZE) {
@@ -988,12 +985,12 @@ function genObjects() {
     }
   }
 
-  // Shipwreck landmark — force onto beach tile near southwest shore
+  // Shipwreck landmark — force onto beach tile near south shore
   {
-    const swx = 80, swy = 185;
+    const swx = 40, swy = 92;
     let swPlaced = false;
     if (state.map[swy] && (state.map[swy][swx] === T.BEACH || state.map[swy][swx] === T.JUNGLE_LIGHT)) {
-      state.objects.push({type:'shipwreck', x:160*TSIZE, y:330*TSIZE, decor:true});
+      state.objects.push({type:'shipwreck', x:82*TSIZE, y:130*TSIZE, decor:true});
       swPlaced = true;
     }
     if (!swPlaced) {
@@ -1001,37 +998,37 @@ function genObjects() {
         for (let dx = -8; dx <= 8; dx++) {
           const t2 = state.map[swy+dy] && state.map[swy+dy][swx+dx];
           if (t2 === T.BEACH || t2 === T.JUNGLE_LIGHT) {
-            state.objects.push({type:'shipwreck', x:160*TSIZE, y:330*TSIZE, decor:true});
+            state.objects.push({type:'shipwreck', x:82*TSIZE, y:130*TSIZE, decor:true});
             swPlaced = true;
             break outerSW;
           }
         }
       }
     }
-    if (!swPlaced) state.objects.push({type:'shipwreck', x:160*TSIZE, y:330*TSIZE, decor:true});
+    if (!swPlaced) state.objects.push({type:'shipwreck', x:82*TSIZE, y:130*TSIZE, decor:true});
   }
 
-  // Underwater wreck — explorable, in deep water southwest ~[25,175]
-  state.objects.push({type:'underwater_wreck', x:25*TSIZE, y:175*TSIZE, decor:false});
+  // Underwater wreck — explorable, in deep water southwest ~[12,87]
+  state.objects.push({type:'underwater_wreck', x:12*TSIZE, y:87*TSIZE, decor:false});
 
   // Dive spots in shallow water near southwest beach
-  [[50,185],[45,180],[55,178]].forEach(([dx,dy]) => {
+  [[25,92],[22,90],[27,89]].forEach(([dx,dy]) => {
     state.objects.push({type:'dive_spot', x:dx*TSIZE, y:dy*TSIZE, decor:false});
   });
 
   // Tribal village — deep jungle interior, well away from any water
-  const villageHuts = [{x:205,y:112},{x:209,y:115},{x:213,y:111},{x:207,y:118},{x:211,y:115}];
+  const villageHuts = [{x:102,y:56},{x:104,y:57},{x:106,y:55},{x:103,y:59},{x:105,y:57}];
   villageHuts.forEach(h => {
     state.objects.push({type:'hut', x:h.x*TSIZE, y:h.y*TSIZE, decor:false});
   });
   // Central fire
-  state.objects.push({type:'tribal_fire', x:209*TSIZE, y:114*TSIZE, decor:true});
-  // Skull stakes around village perimeter
-  [{x:203,y:109},{x:216,y:109},{x:203,y:120},{x:216,y:120}].forEach(s => {
+  state.objects.push({type:'tribal_fire', x:104*TSIZE, y:57*TSIZE, decor:true});
+  // Skull stakes around village perimeter (removed from random spawning)
+  [{x:101,y:54},{x:108,y:54},{x:101,y:60},{x:108,y:60}].forEach(s => {
     // skull_stake removed from random spawning
   });
   // Village warriors (stronger, always present)
-  const villageSpawns = [{x:206,y:113},{x:212,y:111},{x:214,y:116},{x:208,y:117}];
+  const villageSpawns = [{x:103,y:56},{x:106,y:55},{x:107,y:58},{x:104,y:58}];
   villageSpawns.forEach((vs, idx) => {
     state.enemies.push({
       type:'shadow', x:vs.x*TSIZE, y:vs.y*TSIZE, hp:37, maxHp:37, spd:1.1,
@@ -1044,10 +1041,10 @@ function genObjects() {
   });
   // Priest: heals nearby warriors, doesn't attack player
   state.enemies.push({
-    type: 'priest', x: 208*TSIZE, y: 114*TSIZE,
+    type: 'priest', x: 104*TSIZE, y: 57*TSIZE,
     hp: 40, maxHp: 40, spd: 0.3,
     attackTimer: 0, walkTimer: 0,
-    patrolTarget: {x:208*TSIZE, y:114*TSIZE},
+    patrolTarget: {x:104*TSIZE, y:57*TSIZE},
     fleeing: false, fleeTimer: 0, scatterTimer: 0,
     flankOffset: {x:0,y:0}, villageGuard: true, respawnTimer: 0,
     healTimer: 0,
@@ -1055,26 +1052,26 @@ function genObjects() {
   });
 
   // Journal item in dark jungle for Mara's second quest (scaled)
-  state.objects.push({type:'journal', x:66*TSIZE, y:69*TSIZE, decor:false});
+  state.objects.push({type:'journal', x:33*TSIZE, y:34*TSIZE, decor:false});
 
   // Tribal child — near inner jungle edge, safe area between zones 1 and 2
-  state.objects.push({type:'tribal_child', x:102*TSIZE, y:132*TSIZE, collected:false, decor:false});
+  state.objects.push({type:'tribal_child', x:51*TSIZE, y:66*TSIZE, collected:false, decor:false});
 
-  // PARKOUR COURSE to volcano summit (scaled for 300-tile world)
+  // PARKOUR COURSE to volcano summit (scaled for 150-tile world)
   const parkourCourse = [
-    [150,186],[150,183],[150,180],
-    [148,177],[146,174],
-    [145,171],[144,168],
-    [141,165],[138,163],[136,162],
-    [134,160],[132,158],
-    [130,156],[130,154],[130,152],
-    [130,149],[132,146],
-    [134,144],[137,143],[140,142],
-    [142,140],[144,139],
-    [146,137],[147,135],
-    [148,132],[150,130],
-    [150,128],[150,126],[150,124],[150,122],[150,120],
-    [150,118],[150,116],[150,114],[150,82]
+    [75,93],[75,91],[75,90],
+    [74,88],[73,87],
+    [72,85],[72,84],
+    [70,82],[69,81],[68,81],
+    [67,80],[66,79],
+    [65,78],[65,77],[65,76],
+    [65,74],[66,73],
+    [67,72],[68,71],[70,71],
+    [71,70],[72,69],
+    [73,68],[73,67],
+    [74,66],[75,65],
+    [75,64],[75,63],[75,62],[75,61],[75,60],
+    [75,59],[75,58],[75,57],[75,41]
   ];
 
   parkourCourse.forEach(([px2, py2]) => {
@@ -1087,7 +1084,7 @@ function genObjects() {
 
   // Lore stones hidden in jungle (scaled)
   const lorePositions = [
-    [114,132],[96,150],[126,114],[138,126],[105,120]
+    [57,66],[48,75],[63,57],[69,63],[52,60]
   ];
   lorePositions.forEach((pos, i) => {
     state.loreStones.push({x:pos[0]*TSIZE, y:pos[1]*TSIZE, text:LORE_TEXTS[i], read:false});
@@ -1127,32 +1124,22 @@ function genObjects() {
     const [dx2,dy2] = deepTiles[idx];
     return {x:dx2*TSIZE+TSIZE/2, y:dy2*TSIZE+TSIZE/2};
   }
-  // Whales
+  // 1 whale + 1 pod of 3 dolphins = 4 total sea creatures (capped for perf)
+  const _wPos = rndDeepTile();
+  state.seaCreatures.push({type:'whale', x:_wPos.x, y:_wPos.y, dir:Math.random()*Math.PI*2, timer:0, speed:0.18});
+  const _dpPos = rndDeepTile();
+  const _podDir = Math.random()*Math.PI*2;
   for (let i = 0; i < 3; i++) {
-    const pos = rndDeepTile();
-    state.seaCreatures.push({type:'whale', x:pos.x, y:pos.y, dir:Math.random()*Math.PI*2, timer:0, speed:0.18});
-  }
-  // Dolphin pods (3 pods of 3)
-  for (let pod = 0; pod < 3; pod++) {
-    const pos = rndDeepTile();
-    const podDir = Math.random()*Math.PI*2;
-    for (let i = 0; i < 3; i++) {
-      state.seaCreatures.push({type:'dolphin', x:pos.x+(i-1)*30, y:pos.y+(i-1)*15, dir:podDir, timer:Math.random()*300, speed:0.55, podId:pod, jumpOffset:0, jumpTimer:0});
-    }
-  }
-  // Manta rays
-  for (let i = 0; i < 2; i++) {
-    const pos = rndDeepTile();
-    state.seaCreatures.push({type:'manta', x:pos.x, y:pos.y, dir:Math.random()*Math.PI*2, timer:0, speed:0.22, orbitAngle:Math.random()*Math.PI*2});
+    state.seaCreatures.push({type:'dolphin', x:_dpPos.x+(i-1)*30, y:_dpPos.y+(i-1)*15, dir:_podDir, timer:Math.random()*300, speed:0.55, podId:0, jumpOffset:0, jumpTimer:0});
   }
 
   // ── SAFE STARTER BEACH — resources near spawn ──
   // Driftwood pieces near spawn
-  [[122,167],[126,169],[130,166],[119,171],[124,173]].forEach(([sx,sy]) => {
+  [[61,83],[63,84],[65,83],[59,85],[62,86]].forEach(([sx,sy]) => {
     state.objects.push({type:'driftwood', x:sx*TSIZE, y:sy*TSIZE, collected:false});
   });
   // Rocks near spawn
-  [[117,170],[128,175],[134,169],[121,178]].forEach(([sx,sy]) => {
+  [[58,85],[64,87],[67,84],[60,88]].forEach(([sx,sy]) => {
     state.objects.push({type:'rock', x:sx*TSIZE, y:sy*TSIZE, hp:4, maxHp:4});
   });
 }
@@ -1648,11 +1635,12 @@ function drawPalm(ctx, sx, sy) {
 }
 
 function drawRock(ctx, sx, sy) {
-  ctx.save(); ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(sx, sy+14, 8, 3, 0, 0, Math.PI*2); ctx.fill(); ctx.restore();
-  px(ctx, '#444455', sx-8, sy, 16, 10);
-  px(ctx, '#666677', sx-6, sy-6, 12, 8);
-  px(ctx, '#888899', sx-4, sy-8, 8, 4);
-  px(ctx, '#555566', sx-8, sy+8, 8, 4);
+  ctx.save(); ctx.fillStyle = 'rgba(0,0,0,0.28)'; ctx.beginPath(); ctx.ellipse(sx, sy+14, 10, 3, 0, 0, Math.PI*2); ctx.fill(); ctx.restore();
+  px(ctx, '#4a4a5a', sx-9, sy+2, 18, 10);   // shadow base
+  px(ctx, '#6a6a7a', sx-8, sy-2, 16, 10);   // mid body
+  px(ctx, '#8a8a9a', sx-6, sy-8, 12, 8);    // highlight top
+  px(ctx, '#9a9aaa', sx-4, sy-10, 8, 4);    // bright top edge
+  px(ctx, '#5a5a6a', sx-8, sy+8, 8, 4);     // lower shadow
 }
 
 function drawVolRock(ctx, sx, sy) {
@@ -2162,20 +2150,20 @@ function drawJungleFloor(ctx, sx, sy) {
 
 function drawCrab(ctx, sx, sy, dir) {
   const flip = dir < 0 ? -1 : 1;
-  // Body (orange-red, 12x8px)
-  ctx.fillStyle = '#cc4400'; ctx.fillRect(Math.round(sx-6), Math.round(sy-4), 12, 8);
-  ctx.fillStyle = '#dd5511'; ctx.fillRect(Math.round(sx-5), Math.round(sy-4), 10, 5); // top lighter
+  // Body (sandy brown)
+  ctx.fillStyle = '#7a5810'; ctx.fillRect(Math.round(sx-6), Math.round(sy-4), 12, 8);
+  ctx.fillStyle = '#8B6914'; ctx.fillRect(Math.round(sx-5), Math.round(sy-4), 10, 5); // top lighter
   // Eyes (white 2x2 each)
   ctx.fillStyle = '#ffffff'; ctx.fillRect(Math.round(sx-4), Math.round(sy-6), 2, 2); ctx.fillRect(Math.round(sx+2), Math.round(sy-6), 2, 2);
   ctx.fillStyle = '#111'; ctx.fillRect(Math.round(sx-4), Math.round(sy-5), 1, 1); ctx.fillRect(Math.round(sx+2), Math.round(sy-5), 1, 1);
   // Front claws
-  ctx.fillStyle = '#cc4400';
+  ctx.fillStyle = '#8B6914';
   ctx.fillRect(Math.round(sx - 6*flip - 4*flip), Math.round(sy-5), 4, 3);
   ctx.fillRect(Math.round(sx - 6*flip - 5*flip), Math.round(sy-7), 3, 3);
   // Legs (4 tiny)
   for (let i = 0; i < 4; i++) {
     const lx = sx - 4 + i*3, ly = sy + 3;
-    ctx.fillStyle = '#bb3300'; ctx.fillRect(Math.round(lx), Math.round(ly), 2, 4);
+    ctx.fillStyle = '#7a5010'; ctx.fillRect(Math.round(lx), Math.round(ly), 2, 4);
   }
 }
 
@@ -2752,7 +2740,7 @@ function spawnParticles(x, y, color, n) {
 
 // Floating text system
 function addFloatingText(x, y, text, color) {
-  if (state.floatingTexts.length >= 8) return;
+  if (state.floatingTexts.length >= 5) return;
   state.floatingTexts.push({x, y, text, color: color||'#ffffff', life: 45, vy: -1.5});
 }
 
@@ -2808,22 +2796,21 @@ function drawVine(ctx, sx, sy) {
 
 function updateParticles() {
   // Hard cap on particles
-  while (state.particles.length > 30) state.particles.shift();
+  while (state.particles.length > 20) state.particles.shift();
   state.particles = state.particles.filter(p => {
     p.x += p.vx; p.y += p.vy;
     p.vy += 0.05;
     p.life--;
     return p.life > 0;
   });
-  // Cap particle count for performance
-  if (state.particles.length > 50) state.particles.splice(0, state.particles.length - 50);
+  if (state.particles.length > 20) state.particles.splice(0, state.particles.length - 20);
 }
 
 function drawCampVisuals(ctx, camX, camY) {
   const sl = state.player.settlementLevel;
   if (sl < 1) return;
   // Camp signpost area — near [150*TSIZE, 170*TSIZE]
-  const cx = 150*8, cy = 170*8;
+  const cx = 75*TSIZE, cy = 85*TSIZE;
   const sx = cx - camX, sy = cy - camY;
   // Cull if off screen
   if (sx < -100 || sx > ctx.canvas.width+100 || sy < -100 || sy > ctx.canvas.height+100) return;
@@ -3086,18 +3073,18 @@ function checkRecipeDiscovery() {
 // ============================================================
 
 function spawnEnemies(n, type) {
-  const lagoonCx = 150*TSIZE, lagoonCy = 24*TSIZE;
+  const lagoonCx = 75*TSIZE, lagoonCy = 12*TSIZE;
   for (let i = 0; i < n; i++) {
     const angle = Math.random() * Math.PI * 2;
     const r = (30 + Math.random() * 24) * TSIZE;
-    const cx = 150 * TSIZE, cy = 150 * TSIZE;
+    const cx = 75 * TSIZE, cy = 75 * TSIZE;
     const t = type || (state.isNight ? 'shadow' : 'scout');
     const hp = (t==='shadow'?25:20) + state.day * 3;
     const ex = cx + Math.cos(angle)*r;
     const ey = cy + Math.sin(angle)*r;
     // Don't spawn within 30 tiles of lagoon or 40 tiles of spawn
-    if (Math.hypot(ex-lagoonCx, ey-lagoonCy) < 30*TSIZE) continue;
-    if (Math.hypot(ex - 125*TSIZE, ey - 175*TSIZE) < 40*TSIZE) continue;
+    if (Math.hypot(ex-lagoonCx, ey-lagoonCy) < 15*TSIZE) continue;
+    if (Math.hypot(ex - 62*TSIZE, ey - 87*TSIZE) < 20*TSIZE) continue;
     state.enemies.push({
       x: ex,
       y: ey,
@@ -3113,7 +3100,7 @@ function spawnEnemies(n, type) {
 }
 
 function spawnChief() {
-  const cx = 152*TSIZE, cy = 96*TSIZE;
+  const cx = 76*TSIZE, cy = 48*TSIZE;
   state.chief = {
     x: cx, y: cy,
     hp: 300, maxHp: 300,
@@ -3127,7 +3114,7 @@ function spawnChief() {
 
 function updateEnemies() {
   const p = state.player;
-  const inSafeZone = Math.hypot(p.x - 125*TSIZE, p.y - 175*TSIZE) < 35*TSIZE;
+  const inSafeZone = Math.hypot(p.x - 62*TSIZE, p.y - 87*TSIZE) < 18*TSIZE;
 
   // Zone boundary: enemies from zone 2+ cannot enter zone 0/1 (y > 145 tiles)
   state.enemies.forEach(e => {
@@ -3203,7 +3190,7 @@ function updateEnemies() {
           e.x += (firePt.x - e.x) / fpd * e.spd;
           e.y += (firePt.y - e.y) / fpd * e.spd;
         } else if (state.frameCount % 240 === 0) {
-          e.patrolTarget = {x: 209*TSIZE + (Math.random()-0.5)*60, y: 114*TSIZE + (Math.random()-0.5)*60};
+          e.patrolTarget = {x: 104*TSIZE + (Math.random()-0.5)*60, y: 57*TSIZE + (Math.random()-0.5)*60};
         }
       }
       // HP flee
@@ -3305,7 +3292,7 @@ function updateEnemies() {
       // Patrol — ritual overrides for villageGuard enemies
       if (state.ritual && state.ritual.active && e.villageGuard && !e.fleeing && e.scatterTimer <= 0) {
         // Move toward village fire instead of patrolling outward
-        const firePt = {x: 209*TSIZE, y: 114*TSIZE};
+        const firePt = {x: 104*TSIZE, y: 57*TSIZE};
         const fpd = Math.hypot(firePt.x - e.x, firePt.y - e.y);
         if (fpd > 30) { e.x += (firePt.x-e.x)/fpd*0.5; e.y += (firePt.y-e.y)/fpd*0.5; }
       } else {
@@ -3326,7 +3313,7 @@ function updateEnemies() {
       }
       // Ritual rather than patrol when peaceful
       if (state.frameCount % 300 === 0) {
-        e.patrolTarget = {x: 209*TSIZE + (Math.random()-0.5)*80, y: 114*TSIZE + (Math.random()-0.5)*80};
+        e.patrolTarget = {x: 104*TSIZE + (Math.random()-0.5)*80, y: 57*TSIZE + (Math.random()-0.5)*80};
       }
       return; // skip attack logic
     }
@@ -3337,13 +3324,13 @@ function updateEnemies() {
       const attackR = e.type==='chief' ? 40 : 28;
       if (dist < attackR && e.attackTimer > 80 && !e.fleeing && e.scatterTimer <= 0 && !state.invincible) {
         e.attackTimer = 0;
-        let dmg = e.type==='chief' ? 20 : (e.type==='shadow'?12:8);
+        let dmg = e.type==='chief' ? 8 : (e.type==='shadow'?3:3);
         if (state._volcanicArmorActive) dmg = Math.round(dmg * 0.7);
         p.hp = Math.max(0, p.hp - dmg);
         p.hitFlash = 8;
         spawnParticles(p.x, p.y, '#e73c3c',3);
         addFloatingText(p.x, p.y - 20, '-'+dmg, '#ff4444');
-        SFX.hurt();
+        SFX.hurt && SFX.hurt();
         if (navigator.vibrate) navigator.vibrate([50,20,50]);
         state.lastDamageCause = e.type === 'chief' ? 'tribal chief' : 'enemy warrior';
         if (state.runStats) state.runStats.damageTaken += dmg;
@@ -3595,7 +3582,7 @@ function updateProjectiles() {
 
 function updateCreatures() {
   const p = state.player;
-  const inSafeZone = Math.hypot(p.x - 125*TSIZE, p.y - 175*TSIZE) < 35*TSIZE;
+  const inSafeZone = Math.hypot(p.x - 62*TSIZE, p.y - 87*TSIZE) < 18*TSIZE;
   state.creatures = state.creatures.filter(c => c.hp > 0);
 
   state.creatures.forEach(c => {
@@ -3614,8 +3601,8 @@ function updateCreatures() {
       const spiderTile = getTile(c.x, c.y);
       if (spiderTile === T.BEACH || spiderTile === T.SHALLOW_WATER) {
         // Push spider back toward jungle
-        c.x += (150*TSIZE - c.x) * 0.01;
-        c.y += (150*TSIZE - c.y) * 0.01;
+        c.x += (75*TSIZE - c.x) * 0.01;
+        c.y += (75*TSIZE - c.y) * 0.01;
         return;
       }
       const detect = 150;
@@ -3629,10 +3616,10 @@ function updateCreatures() {
       c.attackTimer++;
       if (dist < 20 && c.attackTimer > 90 && !inSafeZone) {
         c.attackTimer = 0;
-        p.hp = Math.max(0, p.hp - 8);
-        p.poison = 180;
+        p.hp = Math.max(0, p.hp - 1);
+        p.poison = 60; // short poison, near harmless
         state.lastDamageCause = 'spider bite';
-        if (state.runStats) state.runStats.damageTaken += 8;
+        if (state.runStats) state.runStats.damageTaken += 1;
         spawnParticles(p.x, p.y, '#22cc33',3);
         showMsg('POISONED BY SPIDER!', '#22cc44');
       }
@@ -3659,9 +3646,9 @@ function updateCreatures() {
         c.attackTimer++;
         if (dist < 20 && c.attackTimer > 80) {
           c.attackTimer = 0;
-          p.hp = Math.max(0, p.hp - 20);
+          p.hp = Math.max(0, p.hp - 4);
           state.lastDamageCause = 'shark attack';
-          if (state.runStats) state.runStats.damageTaken += 20;
+          if (state.runStats) state.runStats.damageTaken += 4;
           spawnParticles(p.x, p.y, '#3398db',3);
           showMsg('SHARK ATTACK! GET OUT OF THE WATER!', '#3498db');
         }
@@ -4380,6 +4367,7 @@ function playSynth({type='sine', freq=440, decay=0.3, pitchDrop, pitchRise, vol=
 // Add synthesized sounds to SFX
 SFX.mine = () => playSynth({type:'square', freq:120, decay:0.2, pitchDrop:0.4, vol:0.2});
 SFX.splash = () => playSynth({type:'sine', freq:600, decay:0.15, pitchRise:0.2, vol:0.1});
+SFX.hurt = () => playSynth({type:'sine', freq:180, decay:0.2, pitchDrop:0.3, vol:0.3});
 SFX.achievement = () => {
   [523,659,784,1047].forEach((f,i) => {
     setTimeout(() => playSynth({type:'sine', freq:f, decay:0.3, vol:0.15}), i*100);
@@ -4476,11 +4464,17 @@ function updatePlayer() {
 
   const moving = keys['w']||keys['s']||keys['a']||keys['d']||keys['arrowup']||keys['arrowdown']||keys['arrowleft']||keys['arrowright'];
 
-  let nx = p.x, ny = p.y;
-  if (keys['w']||keys['arrowup']) ny -= spd;
-  if (keys['s']||keys['arrowdown']) ny += spd;
-  if (keys['a']||keys['arrowleft']) nx -= spd;
-  if (keys['d']||keys['arrowright']) nx += spd;
+  let targetVx = 0, targetVy = 0;
+  if (keys['w']||keys['arrowup']) targetVy -= spd;
+  if (keys['s']||keys['arrowdown']) targetVy += spd;
+  if (keys['a']||keys['arrowleft']) targetVx -= spd;
+  if (keys['d']||keys['arrowright']) targetVx += spd;
+  p.vx = (p.vx || 0) * 0.75 + targetVx * 0.25;
+  p.vy = (p.vy || 0) * 0.75 + targetVy * 0.25;
+  // Snap to zero to avoid drift
+  if (Math.abs(p.vx) < 0.05) p.vx = 0;
+  if (Math.abs(p.vy) < 0.05) p.vy = 0;
+  let nx = p.x + p.vx, ny = p.y + p.vy;
 
   // Clamp to world
   nx = Math.max(TSIZE, Math.min(WORLD_W-TSIZE, nx));
@@ -4497,8 +4491,8 @@ function updatePlayer() {
   // Tile collision (lava, deep ocean, impassable volcanic walls)
   const newTile = getTile(nx, ny);
   if (newTile === T.LAVA || newTile === T.VOLCANIC) {
-    p.hp = Math.max(0, p.hp - 5);
-    state.lastDamageCause = 'lava';
+    p.hp = Math.max(0, p.hp - 3);
+    state.lastDamageCause = 'LAVA';
     if (state.runStats) state.runStats.damageTaken += 5;
     showMsg('LAVA! GET BACK!', '#ff4400');
     nx = p.x; ny = p.y;
@@ -4527,31 +4521,31 @@ function updatePlayer() {
   const canShowGateMsg = gateMsg <= 0;
 
   // Gate 1: Jungle wall - can't enter until Oonga quest done
-  if (pty < 145 && state.zoneUnlocked < 1) {
-    p.y = 145 * TSIZE;
+  if (pty < 72 && state.zoneUnlocked < 1) {
+    p.y = 72 * TSIZE;
     if (canShowGateMsg) { showMsg("Talk to OONGA first — press E near him on the beach", '#c8a060'); state._gateMsg = 180; }
   }
-  // Gate 2: Inner jungle (y < 120) requires zone 2 (unlocked by Mara quest)
-  else if (pty < 120 && state.zoneUnlocked < 2) {
-    p.y = 120 * TSIZE;
+  // Gate 2: Inner jungle (y < 60) requires zone 2 (unlocked by Mara quest)
+  else if (pty < 60 && state.zoneUnlocked < 2) {
+    p.y = 60 * TSIZE;
     if (canShowGateMsg) { showMsg("The deep jungle blocks your path. Complete Mara's quest first.", '#888'); state._gateMsg = 180; }
   }
-  // Gate 3: Volcanic approach (within 60 tiles of volcano centre at ~150,78) requires zone 3
+  // Gate 3: Volcanic approach (within 30 tiles of volcano centre at ~75,39) requires zone 3
   else {
-    const volcX = 150, volcY = 78;
+    const volcX = 75, volcY = 39;
     const distFromVolcano = Math.hypot(ptx - volcX, pty - volcY);
-    if (distFromVolcano < 60 && state.zoneUnlocked < 3) {
+    if (distFromVolcano < 30 && state.zoneUnlocked < 3) {
       const angle = Math.atan2(pty - volcY, ptx - volcX);
-      p.x = (volcX + Math.cos(angle) * 62) * TSIZE;
-      p.y = (volcY + Math.sin(angle) * 62) * TSIZE;
+      p.x = (volcX + Math.cos(angle) * 31) * TSIZE;
+      p.y = (volcY + Math.sin(angle) * 31) * TSIZE;
       if (canShowGateMsg) { showMsg("FELIX: 'I wouldn't go near that mountain without proper preparation.'", '#7ca0b0'); state._gateMsg = 180; }
     }
-    // Gate 4: Village area (within 20 tiles of ~209,114) requires zone 4
-    const distFromVillage = Math.hypot(ptx - 209, pty - 114);
-    if (distFromVillage < 20 && state.zoneUnlocked < 4) {
-      const ang = Math.atan2(pty - 114, ptx - 209);
-      p.x = (209 + Math.cos(ang) * 22) * TSIZE;
-      p.y = (114 + Math.sin(ang) * 22) * TSIZE;
+    // Gate 4: Village area (within 10 tiles of ~104,57) requires zone 4
+    const distFromVillage = Math.hypot(ptx - 104, pty - 57);
+    if (distFromVillage < 10 && state.zoneUnlocked < 4) {
+      const ang = Math.atan2(pty - 57, ptx - 104);
+      p.x = (104 + Math.cos(ang) * 11) * TSIZE;
+      p.y = (57 + Math.sin(ang) * 11) * TSIZE;
       if (canShowGateMsg) { showMsg("KONA: 'You are not ready to face my brother. Find me first.'", '#c87050'); state._gateMsg = 180; }
     }
   }
@@ -4649,10 +4643,11 @@ function updatePlayer() {
     // Bubble particles occasionally
     if (Math.random() < 0.05) spawnParticle(p.x+(Math.random()-0.5)*8, p.y-4, (Math.random()-0.5)*0.3, -0.8, 'rgba(160,230,255,0.7)', 40);
     if (p.air <= 0) {
-      // Drowning: drain health fast
-      if (state.frameCount % 12 === 0) {
-        p.hp = Math.max(0, p.hp - 5);
-        addFloatingText(p.x, p.y-20, '-5', '#0088cc');
+      // Drowning: drain health slowly
+      state.lastDamageCause = 'DROWNING';
+      if (state.frameCount % 30 === 0) {
+        p.hp = Math.max(0, p.hp - 2);
+        addFloatingText(p.x, p.y-20, '-2', '#0088cc');
       }
     } else if (p.air <= 20) {
       if (state.frameCount % 120 === 0) showMsg('LOW AIR!', '#40d8f0');
@@ -4706,16 +4701,16 @@ function updatePlayer() {
   if (state.foodDecay > foodRate) { state.foodDecay=0; p.food=Math.max(0,p.food-1); }
   if (p.water <= 0) p.hp = Math.max(0, p.hp - 0.05);
   if (p.food <= 0) p.hp = Math.max(0, p.hp - 0.05);
-  if (p.sick > 0) { p.sick--; p.hp = Math.max(0, p.hp - 0.1); }
-  if (p.poison > 0) { p.poison--; p.hp = Math.max(0, p.hp - 0.5); }
+  if (p.sick > 0) { p.sick--; p.hp = Math.max(0, p.hp - 0.02); }
+  if (p.poison > 0) { p.poison--; p.hp = Math.max(0, p.hp - 0.008); } // ~0.5 total over 60 frames
 
   // Torch auto-equip
   // torch toggled manually via hotbar
 
   // Volcano proximity tint
-  const vcx2 = 150*TSIZE, vcy2 = 78*TSIZE;
+  const vcx2 = 75*TSIZE, vcy2 = 39*TSIZE;
   const vd = Math.sqrt((p.x-vcx2)**2 + (p.y-vcy2)**2);
-  state.volcanoTint = Math.max(0, Math.min(0.35, (120*TSIZE - vd) / (120*TSIZE)));
+  state.volcanoTint = Math.max(0, Math.min(0.35, (60*TSIZE - vd) / (60*TSIZE)));
 
   // Weather effects
   if (state.weatherRain) {
@@ -4769,7 +4764,7 @@ function updatePlayer() {
   }
   if ((p.inv.volcanic_armor || 0) === 0 && state._volcanicArmorActive) {
     state._volcanicArmorActive = false;
-    p.maxHp = Math.max(100, p.maxHp - 50);
+    p.maxHp = Math.max(200, p.maxHp - 50);
     p.hp = Math.min(p.maxHp, p.hp);
   }
 
@@ -5631,19 +5626,19 @@ function handleClick(sx, sy) {
 
   // Harvest objects - find nearest to CLICK POSITION, then check player is in reach
   // First find nearest object to where player clicked
-  let nearestObj = null, nearestClickDist = 64; // 8 tiles click radius
+  let nearestObj = null, nearestClickDist = 120; // generous click radius
   for (let i = state.objects.length-1; i >= 0; i--) {
     const obj = state.objects[i];
     if (obj.placed || obj.type === 'death_pack' || obj.type === 'shipwreck') continue;
     const clickDist = Math.hypot(wx-obj.x, wy-obj.y); // click proximity
     const playerDist = Math.hypot(p.x-obj.x, p.y-obj.y); // player proximity
-    if (clickDist < nearestClickDist && playerDist < 100) {
+    if (clickDist < nearestClickDist && playerDist < 160) {
       nearestClickDist = clickDist;
       nearestObj = obj;
     }
   }
   // Process only the nearest clicked object
-  const interactReach = 100;
+  const interactReach = 160;
   for (let i = state.objects.length-1; i >= 0; i--) {
     const obj = state.objects[i];
     if (obj !== nearestObj) continue; // only process the nearest clicked object
@@ -5651,6 +5646,40 @@ function handleClick(sx, sy) {
     if (obj.type === 'death_pack' || obj.type === 'shipwreck') continue;
     const d = Math.hypot(p.x-obj.x, p.y-obj.y);
     if (d > interactReach) continue;
+
+    // ROCKS: always interactable, no tool required
+    if (obj.type === 'rock' || obj.type === 'vol_rock') {
+      obj.hp--;
+      spawnParticles(obj.x, obj.y, '#888899', 2);
+      if (typeof SFX !== 'undefined' && SFX.mine) SFX.mine();
+      if (obj.hp <= 0) {
+        const bonus = (state.skills && state.skills.mining >= 25) ? 3 : (state.skills && state.skills.mining >= 10) ? 2 : 1;
+        const yield_ = (p.inv.pickaxe > 0 ? 2 : 1) + bonus - 1;
+        p.inv.stone = (p.inv.stone||0) + yield_;
+        if (typeof addFloatingText === 'function') addFloatingText(obj.x, obj.y-20, '+'+yield_+' STONE', '#888899');
+        if (typeof gainSkill === 'function') gainSkill('mining');
+        state.objects = state.objects.filter(o => o !== obj);
+        if (typeof SFX !== 'undefined' && SFX.pickup) SFX.pickup();
+        if (typeof updateUI === 'function') updateUI();
+      }
+      return;
+    }
+
+    // DRIFTWOOD: always collectable
+    if (obj.type === 'driftwood' && !obj.collected) {
+      obj.collected = true;
+      const wasZeroWood = (p.inv.wood||0) === 0;
+      p.inv.wood++;
+      addFloatingText(obj.x, obj.y - 20, '+1 WOOD', '#c8a060');
+      showMsg('+DRIFTWOOD', '#8B6914');
+      SFX.pickup && SFX.pickup();
+      if (wasZeroWood && !state.tutorials?.woodHint) {
+        if (state.tutorials) state.tutorials.woodHint = true;
+        setTimeout(() => showMsg('GOOD! Now press C to craft a Stone Axe (2 wood + 2 stone)', '#c8f135'), 1500);
+      }
+      state.objects.splice(i, 1);
+      return;
+    }
 
     if (['tree','breadfruit','mape','purau','pandanus','filao','hutu'].includes(obj.type)) {
       const activeTool = getActiveTool ? getActiveTool() : null;
@@ -5705,21 +5734,7 @@ function handleClick(sx, sy) {
       state.objects.splice(i,1);
       return;
     }
-    if (obj.type === 'driftwood' && !obj.collected) {
-      obj.collected = true;
-      const wasZeroWood = (p.inv.wood||0) === 0;
-      p.inv.wood++;
-      addFloatingText(obj.x, obj.y - 20, '+1 WOOD', '#c8a060');
-      showMsg('+DRIFTWOOD', '#8B6914');
-      SFX.pickup();
-      // Tutorial hint: first wood pickup
-      if (wasZeroWood && !state.tutorials.woodHint) {
-        state.tutorials.woodHint = true;
-        setTimeout(() => showMsg('GOOD! Now press C to craft a Stone Axe (2 wood + 2 stone)', '#c8f135'), 1500);
-      }
-      state.objects.splice(i,1);
-      return;
-    }
+    // driftwood handled above
     if (obj.type === 'journal') {
       p.inv.journal = (p.inv.journal||0) + 1;
       showMsg("MARA'S JOURNAL FOUND. RETURN IT TO HER.", '#c8a060');
@@ -6992,7 +7007,7 @@ function drawGuide(ctx) {
 // Hover highlight
 function drawHoverHighlight(ctx, camX, camY) {
   if (!state.running || state.cutscenePlaying) return;
-  const zoom = state.zoom || 1.0;
+  const zoom = state.zoom || 1.8;
   const screenCX = canvas.width / 2, screenCY = canvas.height / 2;
   const mouseWX = (mx - screenCX) / zoom + screenCX + camX;
   const mouseWY = (my - screenCY) / zoom + screenCY + camY;
@@ -7097,7 +7112,7 @@ function render(ctx, minimapCtx) {
 
   // === UNDERGROUND: use cave renderer ===
   if (state.underground) {
-    const zoom = state.zoom || 2.0;
+    const zoom = state.zoom || 1.8;
     ctx.save();
     ctx.translate(canvas.width/2, canvas.height/2);
     ctx.scale(zoom, zoom);
@@ -7185,7 +7200,7 @@ function render(ctx, minimapCtx) {
   }
 
   // Apply zoom transform
-  const zoom = state.zoom || 2.0;
+  const zoom = state.zoom || 1.8;
   ctx.save();
   ctx.translate(canvas.width/2, canvas.height/2);
   ctx.scale(zoom, zoom);
@@ -7298,7 +7313,7 @@ function render(ctx, minimapCtx) {
   }
 
   // Volcano (scaled for 300-tile world: center=150, volcano offset=-72)
-  const vcx = 150*TSIZE - camX, vcy = 78*TSIZE - camY;
+  const vcx = 75*TSIZE - camX, vcy = 39*TSIZE - camY;
   if (vcx > -350 && vcx < canvas.width+350) drawVolcano(ctx, vcx, vcy);
 
   // Lore stones
@@ -7834,9 +7849,9 @@ function render(ctx, minimapCtx) {
   // Zone gate visual hints — subtle vignette at locked boundaries (no harsh lines)
   {
     const camY2 = state.cam.y;
-    // Gate 1 (y=145): soft warning text only, no filled band
+    // Gate 1 (y=72): soft warning text only, no filled band
     if (state.zoneUnlocked < 1) {
-      const gateScreenY = 145 * TSIZE - camY2;
+      const gateScreenY = 72 * TSIZE - camY2;
       if (gateScreenY > 20 && gateScreenY < canvas.height - 20) {
         ctx.save();
         ctx.globalAlpha = 0.7;
@@ -7848,9 +7863,9 @@ function render(ctx, minimapCtx) {
         ctx.restore();
       }
     }
-    // Gate 2 (y=120): soft warning text only
+    // Gate 2 (y=60): soft warning text only
     if (state.zoneUnlocked < 2) {
-      const gateScreenY = 120 * TSIZE - camY2;
+      const gateScreenY = 60 * TSIZE - camY2;
       if (gateScreenY > 20 && gateScreenY < canvas.height - 20) {
         ctx.save();
         ctx.globalAlpha = 0.7;
@@ -7886,7 +7901,7 @@ function render(ctx, minimapCtx) {
   // === DRAW LAVA BOMBS ===
   if (state.lavaBombs.length > 0) {
     const camX = state.cam.x, camY = state.cam.y;
-    const VCENTER_X2 = 150 * TSIZE, VCENTER_Y2 = 78 * TSIZE;
+    const VCENTER_X2 = 75 * TSIZE, VCENTER_Y2 = 39 * TSIZE;
     state.lavaBombs.forEach(bomb => {
       if (bomb.landed) {
         // Splat ring fading out
@@ -7962,7 +7977,7 @@ function render(ctx, minimapCtx) {
   }
 
   // Low health indicator (static dark red border, no flashing)
-  if (p.hp < 30) {
+  if (p.hp < 60) {
     ctx.fillStyle = 'rgba(180,0,0,0.18)';
     ctx.fillRect(0, 0, canvas.width, 24);
     ctx.fillRect(0, canvas.height-24, canvas.width, 24);
@@ -7981,6 +7996,59 @@ function render(ctx, minimapCtx) {
   // Floating damage numbers
   updateFloatingTexts();
   drawFloatingTexts(ctx, camX, camY);
+
+  // Controls overlay
+  if (state.showControls) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.72)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    const cw = Math.min(420, canvas.width - 40), ch = 320;
+    const cx2 = canvas.width/2 - cw/2, cy2 = canvas.height/2 - ch/2;
+    // Parchment background
+    ctx.fillStyle = '#2a1508';
+    ctx.strokeStyle = '#9a6828';
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.roundRect(cx2, cy2, cw, ch, 12); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#e8d490';
+    ctx.font = 'bold 14px "Cinzel", serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('CONTROLS', canvas.width/2, cy2 + 28);
+    ctx.fillStyle = 'rgba(180,130,50,0.5)';
+    ctx.fillRect(cx2 + 16, cy2 + 36, cw - 32, 1);
+    const bindings = [
+      ['WASD / Arrows', 'Move'],
+      ['E', 'Interact / Talk'],
+      ['C', 'Craft menu'],
+      ['B', 'Build menu'],
+      ['I', 'Inventory'],
+      ['M', 'Toggle map'],
+      ['F', 'Fish / Dive'],
+      ['Q', 'Throw item'],
+      ['1 - 6', 'Equip tool slot'],
+      ['Scroll', 'Zoom in/out'],
+      ['Space', 'Jump'],
+      ['Shift', 'Sprint'],
+      ['? or /', 'This menu'],
+    ];
+    ctx.font = '11px "Lato", sans-serif';
+    const col1x = cx2 + 24, col2x = cx2 + cw/2 + 8;
+    bindings.forEach((b, i) => {
+      const row = Math.floor(i / 2);
+      const isRight = i % 2 === 1;
+      const bx = isRight ? col2x : col1x;
+      const by = cy2 + 58 + row * 22;
+      ctx.fillStyle = '#c8a060';
+      ctx.textAlign = 'left';
+      ctx.fillText(b[0], bx, by);
+      ctx.fillStyle = '#d8d0a0';
+      ctx.fillText('— ' + b[1], bx + 80, by);
+    });
+    ctx.fillStyle = '#6a5030';
+    ctx.font = '9px "Lato", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Press ? or / to close', canvas.width/2, cy2 + ch - 14);
+    ctx.restore();
+  }
 
   // Minigame + dialogue
   drawMinigame(ctx);
@@ -8030,20 +8098,26 @@ function render(ctx, minimapCtx) {
     // Dark overlay fades in
     ctx.fillStyle = `rgba(0,0,0,${t*0.85})`;
     ctx.fillRect(0,0,canvas.width,canvas.height);
-    // Collapsed text
+    // Collapsed text + death cause
     if (state.collapseTimer > 60) {
-      ctx.font = 'bold 36px "Courier New"';
-      ctx.fillStyle = `rgba(200,60,60,${Math.min(1,(state.collapseTimer-60)/40)})`;
+      const alpha = Math.min(1,(state.collapseTimer-60)/40);
       ctx.textAlign = 'center';
-      ctx.fillText('YOU COLLAPSED', canvas.width/2, canvas.height/2);
+      ctx.font = 'bold 36px "Courier New"';
+      ctx.fillStyle = `rgba(200,60,60,${alpha})`;
+      ctx.fillText('YOU DIED', canvas.width/2, canvas.height/2 - 20);
+      if (state.lastDamageCause) {
+        ctx.font = 'bold 22px "Courier New"';
+        ctx.fillStyle = `rgba(220,160,60,${alpha})`;
+        ctx.fillText('CAUSE: ' + (state.lastDamageCause || 'UNKNOWN').toUpperCase(), canvas.width/2, canvas.height/2 + 18);
+      }
       ctx.textAlign = 'left';
     }
     if (state.collapseTimer >= 180) {
       state.collapsing = false;
       state.collapsed = false;
       // Respawn — full reset, clear enemies, grant invincibility frames
-      p.hp = 100; p.water = 80; p.food = 80; p.stamina = 100;
-      p.x = 75*TSIZE; p.y = 102*TSIZE;
+      p.hp = 200; p.water = 80; p.food = 80; p.stamina = 100;
+      p.x = 75*TSIZE; p.y = 110*TSIZE;
       state.cam.x = p.x - canvas.width/2;
       state.cam.y = p.y - canvas.height/2;
       state.enemies = []; // clear all enemies
@@ -8244,8 +8318,8 @@ function updateDayNight() {
       const trapCount = 3 + Math.floor(Math.random()*3);
       for (let i = 0; i < trapCount; i++) {
         // Place in jungle dark area
-        const tx = 160 + Math.floor(Math.random()*180);
-        const ty = 160 + Math.floor(Math.random()*180);
+        const tx = 40 + Math.floor(Math.random()*70);
+        const ty = 40 + Math.floor(Math.random()*70);
         if (state.map[ty] && state.map[ty][tx] === T.JUNGLE_DARK) {
           state.traps.push({x: tx*TSIZE+TSIZE/2, y: ty*TSIZE+TSIZE/2, triggered:false});
         }
@@ -8254,14 +8328,14 @@ function updateDayNight() {
 
     // Nightfall — spawn bat swarms at jungle edge
     const batCount = 3 + Math.floor(Math.random() * 3);
-    const cx = 250*TSIZE, cy = 250*TSIZE;
+    const cx = 75*TSIZE, cy = 75*TSIZE;
     for (let i = 0; i < batCount; i++) {
       const angle = Math.random() * Math.PI * 2;
-      const r = (45 + Math.random() * 20) * TSIZE;
+      const r = (22 + Math.random() * 10) * TSIZE;
       const bx2 = cx + Math.cos(angle) * r;
       const by2 = cy + Math.sin(angle) * r;
       // Don't spawn near start position
-      if (Math.hypot(bx2 - 125*TSIZE, by2 - 175*TSIZE) < 40*TSIZE) continue;
+      if (Math.hypot(bx2 - 62*TSIZE, by2 - 87*TSIZE) < 20*TSIZE) continue;
       state.creatures.push({
         type: 'bat',
         x: bx2,
@@ -8374,7 +8448,7 @@ function updateDayNight() {
   }
 
   // === VOLCANO ERUPTION EVENT ===
-  const VCENTER_X = 150 * TSIZE, VCENTER_Y = 78 * TSIZE; // volcano world coords
+  const VCENTER_X = 75 * TSIZE, VCENTER_Y = 39 * TSIZE; // volcano world coords
   if (state.eruptionPhase === 0) {
     // Dormant: countdown to next eruption
     state.eruptionTimer--;
@@ -8908,8 +8982,8 @@ function updateWorldEvents() {
       for (let i = 0; i < count; i++) {
         const angle = (i/count)*Math.PI*2;
         state.raid.push({
-          x: 152*TSIZE + Math.cos(angle)*80,
-          y: 172*TSIZE + Math.sin(angle)*60,
+          x: 76*TSIZE + Math.cos(angle)*80,
+          y: 86*TSIZE + Math.sin(angle)*60,
           hp: 45, maxHp: 45, // +15 vs normal 30
           speed: 1.4,
           hitFlash: 0, attackTimer: 0,
@@ -8921,7 +8995,7 @@ function updateWorldEvents() {
     }
   } else {
     // Update raid warriors
-    const campX = 150*TSIZE, campY = 170*TSIZE;
+    const campX = 75*TSIZE, campY = 85*TSIZE;
     state.raid = state.raid.filter(r => r.hp > 0);
 
     if (state.raid.length === 0) {
@@ -10136,6 +10210,7 @@ window.addEventListener('keydown', e => {
     else if (!activeT) showMsg('Empty slot', '#888');
   }
   if (e.key.toLowerCase() === 'm') { state.showMap = !state.showMap; }
+  if (e.key === '?' || e.key === '/') { state.showControls = !state.showControls; e.preventDefault(); }
   if (e.key.toLowerCase() === 'f') {
     handleMinigameKey('f');
     if (!state.minigame && state.running) {
@@ -10230,7 +10305,7 @@ window.addEventListener('touchend', e => {
 }, {passive: true});
 canvas.addEventListener('wheel', (e) => {
   e.preventDefault();
-  state.zoom = Math.max(0.8, Math.min(3.5, state.zoom - e.deltaY * 0.001));
+  state.targetZoom = Math.max(0.8, Math.min(3.0, (state.targetZoom || state.zoom || 1.8) - e.deltaY * 0.002));
 }, {passive: false});
 
 window.addEventListener('resize', () => {
@@ -10443,7 +10518,8 @@ window.addEventListener('DOMContentLoaded', () => {
   state.ancientChamberUsed = false;
   state.boardingTarget = null;
   initCanoes();
-  state.player.x = 250*TSIZE; state.player.y = 340*TSIZE; // South beach center state.invincible = 600; state.player.hp = 100;
+  state.player.x = 75*TSIZE; state.player.y = 110*TSIZE; // South beach center
+  state.invincible = 600; state.player.hp = 200;
   state.cam.x = state.player.x - canvas.width/2;
   state.cam.y = state.player.y - canvas.height/2;
   state.running = true;
@@ -10512,7 +10588,7 @@ function initCanoes() {
 function updateCanoes() {
   if (!state.canoes || !state.canoes.length) return;
   const p = state.player;
-  const islandCX = 150 * TSIZE, islandCY = 150 * TSIZE;
+  const islandCX = 75 * TSIZE, islandCY = 75 * TSIZE;
 
   for (let i = state.canoes.length - 1; i >= 0; i--) {
     const c = state.canoes[i];
@@ -10996,7 +11072,11 @@ function drawBonePile(ctx, tsx, tsy, size) {
 function gameLoopWithUI() {
   if (!state.running && !state.cutscenePlaying) return;
   requestAnimationFrame(gameLoopWithUI);
-  if (document.hidden) return; // don't render when tab not visible
+  if (document.hidden) return;
+  // Smooth zoom lerp
+  if (!state.zoom) state.zoom = 1.8;
+  if (!state.targetZoom) state.targetZoom = 1.8;
+  state.zoom += (state.targetZoom - state.zoom) * 0.12; // don't render when tab not visible
   if (state.cutscenePlaying) {
     renderCutscene(ctx);
     return;
@@ -11010,11 +11090,11 @@ function gameLoopWithUI() {
   updateMsgs();
   updateMinigame(canvas);
   updateDialogue();
-  if (state.frameCount % 3 === 0) updateNPCCompanions();
+  if (state.frameCount % 5 === 0) updateNPCCompanions();
   if (state.frameCount % 2 === 0) updateWorldEvents();
   updateBirdsAndFootprints();
   if (state.frameCount % 4 === 0) updateCrabs();
-  if (state.frameCount % 10 === 0 && typeof updateSeaCreatures === "function") updateSeaCreatures();
+  if (state.frameCount % 30 === 0 && typeof updateSeaCreatures === "function") updateSeaCreatures();
   updateLivingIsland();
   if (state.frameCount % 2 === 0) updateCanoes();
   updateCaveCreatures();
