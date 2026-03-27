@@ -4015,7 +4015,7 @@ function checkCollisions(nx, ny) {
 
 function updatePlayer() {
   const p = state.player;
-  if (state.paused || state.minigame || state.dialogue || state.collapsing) return;
+  if (state.paused || state.minigame || state.dialogue || state.collapsing || state.inWreck) return;
 
   // Movement
   const sprinting = keys['shift'] && p.stamina > 0;
@@ -4480,7 +4480,11 @@ function handleInteract() {
           state.dialogue = {
             type: 'choice',
             text: "A rescue ship approaches. You carry the truth about the Colonial Trading Company's plans for this island. Do you warn the tribe before you leave?",
+            displayed: "A rescue ship approaches. You carry the truth about the Colonial Trading Company's plans for this island. Do you warn the tribe before you leave?",
+            charIdx: 999,
+            timer: 0,
             options: ['WARN THE TRIBE', 'STAY SILENT'],
+            optionNext: null,
             onChoice: (choiceIdx) => {
               const warned = choiceIdx === 0;
               const title = warned ? 'RESCUE — TRUTH TOLD' : 'RESCUE — SILENCE';
@@ -5344,7 +5348,15 @@ function startDialogue(npc) {
 
 function selectDialogueOption(optIdx) {
   const d = state.dialogue;
-  if (!d || !d.npc) return;
+  if (!d) return;
+  // Generic choice callback
+  if (d.type === 'choice' && d.onChoice) {
+    const cb = d.onChoice;
+    state.dialogue = null;
+    cb(optIdx);
+    return;
+  }
+  if (!d.npc) return;
   const npc = d.npc;
   const nextIdx = d.optionNext ? d.optionNext[optIdx] : (npc._lineIdx||0) + 1;
 
@@ -8239,6 +8251,75 @@ const CUTSCENES = {
       }
     ]
   }
+}; // end CUTSCENES
+
+CUTSCENES.ending_rescue = {
+  frames: [
+    {
+      speaker: null,
+      text: "You fired the flare from the south beach. The smoke rose high. Three hours later, a ship appeared on the horizon.",
+      draw: (ctx, px, py, pw, ph) => {
+        ctx.fillStyle = '#06101a'; ctx.fillRect(px, py, pw, ph);
+        // Sky gradient
+        ctx.fillStyle = '#0a1e32'; ctx.fillRect(px, py, pw, ph*0.45);
+        ctx.fillStyle = '#1a3850'; ctx.fillRect(px, py+ph*0.2, pw, ph*0.25);
+        // Ocean
+        ctx.fillStyle = '#0d2235'; ctx.fillRect(px, py+ph*0.42, pw, ph*0.58);
+        ctx.fillStyle = '#0a1c2e'; ctx.fillRect(px, py+ph*0.5, pw, ph*0.5);
+        // Flare smoke trail
+        ctx.fillStyle = 'rgba(255,80,0,0.7)'; ctx.fillRect(px+pw*0.48, py+ph*0.1, pw*0.015, ph*0.3);
+        ctx.fillStyle = 'rgba(255,130,0,0.5)'; ctx.fillRect(px+pw*0.46, py+ph*0.06, pw*0.05, ph*0.08);
+        ctx.fillStyle = 'rgba(255,80,0,0.3)'; ctx.beginPath(); ctx.arc(px+pw*0.49, py+ph*0.07, pw*0.04, 0, Math.PI*2); ctx.fill();
+        // Island silhouette
+        ctx.fillStyle = '#060a08';
+        ctx.fillRect(px+pw*0.65, py+ph*0.35, pw*0.35, ph*0.2);
+        ctx.fillRect(px+pw*0.7, py+ph*0.3, pw*0.2, ph*0.1);
+        // Rescue ship on horizon
+        ctx.fillStyle = '#e8e0d0'; ctx.fillRect(px+pw*0.1, py+ph*0.42, pw*0.22, ph*0.04);
+        ctx.fillStyle = '#d0c8c0'; ctx.fillRect(px+pw*0.12, py+ph*0.4, pw*0.18, ph*0.04);
+        ctx.fillStyle = '#888'; ctx.fillRect(px+pw*0.21, py+ph*0.3, pw*0.005, ph*0.12);
+        ctx.fillStyle = '#ccc'; ctx.fillRect(px+pw*0.16, py+ph*0.34, pw*0.1, ph*0.08);
+        // Player figure on beach
+        ctx.fillStyle = '#c8a07a'; ctx.fillRect(px+pw*0.47, py+ph*0.55, pw*0.025, ph*0.04);
+        ctx.fillStyle = '#2d7a2d'; ctx.fillRect(px+pw*0.465, py+ph*0.58, pw*0.035, ph*0.07);
+        ctx.fillStyle = '#1a4a1a'; ctx.fillRect(px+pw*0.465, py+ph*0.64, pw*0.015, ph*0.05);
+        ctx.fillStyle = '#1a4a1a'; ctx.fillRect(px+pw*0.48, py+ph*0.64, pw*0.015, ph*0.05);
+        // Arm raised
+        ctx.fillStyle = '#c8a07a'; ctx.fillRect(px+pw*0.49, py+ph*0.57, pw*0.03, ph*0.03);
+      }
+    },
+    {
+      speaker: "RESCUE OFFICER",
+      text: "We got your signal. Is anyone else alive? We saw the Meridian on our charts — company vessel. The Colonial Trading Company sent us to look for you.",
+      draw: (ctx, px, py, pw, ph) => {
+        ctx.fillStyle = '#08101a'; ctx.fillRect(px, py, pw, ph);
+        ctx.fillStyle = '#0e1c2a'; ctx.fillRect(px, py, pw, ph*0.4);
+        ctx.fillStyle = '#102030'; ctx.fillRect(px, py+ph*0.4, pw, ph*0.6);
+        // Ship deck scene
+        ctx.fillStyle = '#1e1810'; ctx.fillRect(px, py+ph*0.55, pw, ph*0.45);
+        ctx.fillStyle = '#2a2018'; ctx.fillRect(px, py+ph*0.6, pw, ph*0.4);
+        // Metal deck
+        ctx.fillStyle = '#303028'; ctx.fillRect(px, py+ph*0.62, pw, ph*0.38);
+        ctx.strokeStyle = '#252520'; ctx.lineWidth=1;
+        for(let i=0;i<6;i++){ctx.beginPath();ctx.moveTo(px,py+ph*(0.64+i*0.06));ctx.lineTo(px+pw,py+ph*(0.64+i*0.06));ctx.stroke();}
+        // Officer uniform (navy blue)
+        ctx.fillStyle = '#0a1830';
+        ctx.fillRect(px+pw*0.2, py+ph*0.25, pw*0.08, ph*0.1); // head
+        ctx.fillRect(px+pw*0.18, py+ph*0.34, pw*0.12, ph*0.3);
+        ctx.fillRect(px+pw*0.18, py+ph*0.62, pw*0.05, ph*0.1);
+        ctx.fillRect(px+pw*0.25, py+ph*0.62, pw*0.05, ph*0.1);
+        ctx.fillStyle = '#c8c0b0'; ctx.fillRect(px+pw*0.21, py+ph*0.27, pw*0.06, ph*0.09);
+        // Officer cap
+        ctx.fillStyle = '#0a1830'; ctx.fillRect(px+pw*0.19, py+ph*0.24, pw*0.1, ph*0.03);
+        ctx.fillRect(px+pw*0.21, py+ph*0.2, pw*0.06, ph*0.05);
+        // Company logo on uniform
+        ctx.fillStyle = '#c8a020'; ctx.fillRect(px+pw*0.2, py+ph*0.36, pw*0.04, pw*0.04);
+        // Clipboard
+        ctx.fillStyle = '#8a7a50'; ctx.fillRect(px+pw*0.29, py+ph*0.4, pw*0.04, ph*0.08);
+        ctx.fillStyle = '#f0e8d0'; ctx.fillRect(px+pw*0.295, py+ph*0.41, pw*0.025, ph*0.06);
+      }
+    }
+  ]
 };
 
 function playCutscene(id) {
@@ -8501,8 +8582,22 @@ window.addEventListener('keydown', e => {
           }
         }
       }
+      // Dive spot check
+      let nearDive = false;
+      for (const obj of state.objects) {
+        if (obj.type === 'dive_spot' && Math.hypot(state.player.x-obj.x, state.player.y-obj.y) < 50) {
+          const wreckObj = state.objects.find(o => o.type === 'underwater_wreck');
+          if (wreckObj) {
+            state.player.x = wreckObj.x + 8;
+            state.player.y = wreckObj.y + 8;
+            showMsg('DIVING — heading to the underwater wreck...', '#40d8d0');
+          }
+          nearDive = true;
+          break;
+        }
+      }
       // Fishing
-      if (state.player.inv.fishing_rod > 0) {
+      if (!nearDive && state.player.inv.fishing_rod > 0) {
         const tile = getTile(state.player.x, state.player.y);
         if ([1,2].includes(tile)) startFishMinigame();
       }
@@ -8725,7 +8820,7 @@ const slides = [
   { t:'SURVIVAL', b:'You have <b>Health</b>, <b>Water</b>, <b>Food</b>, and <b>Stamina</b> bars.<br><b>Water</b> depletes every 4 seconds. <b>Food</b> every 6 seconds.<br>If either hits zero, your health will drain slowly.<br><b>Raw food</b> has a 20% chance of making you sick.<br>Cook food on a Campfire (press E near it) for full nutrition.' },
   { t:'THE JUNGLE', b:'The outer jungle is passable but slow.<br>The <b>dark jungle</b> has hidden <b>pit traps</b> — fall in and you die.<br>Craft a <b>Torch</b> (2 wood + 1 stone) to reveal the pits.<br>The jungle holds <b>berry bushes</b>, <b>jungle chests</b>, and <b>lore stones</b>.<br>The correct path leads to the volcano.' },
   { t:'RESOURCES', b:'<b>Palm trees</b> on the beach → Coconuts (restores water)<br><b>Fruit trees / berry bushes</b> in jungle → Food (cook first!)<br><b>Fishing spots</b> in shallow water → Fish (need Fishing Rod)<br><b>Trees</b> → Wood &nbsp; <b>Rocks</b> → Stone &nbsp; <b>Volcanic rocks</b> → Volcanic Stone<br>Build a <b>Storage Chest</b> and <b>Bed</b> to establish your camp.' },
-  { t:'ENEMIES & STORY', b:'You are the navigator of the Meridian — a colonial survey ship sunk by an ancient tribal artifact.<br><b>Oonga</b> (south beach) is your first guide. <b>Mara</b> (west jungle edge) knows the patrols. <b>Felix</b> (near wreck) is fixing the lifeboat. <b>Elder Kona</b> (inner jungle) holds the truth.<br><b>The island is gated</b> — unlock zones by completing quests.<br>There are <b>3 endings</b>: Peace, Escape, or Conquest.<br>Your goal: learn the truth, then decide.' },
+  { t:'ENEMIES & STORY', b:'You are the navigator of the Meridian — a colonial survey ship sunk by an ancient tribal artifact.<br><b>Oonga</b> (south beach) is your first guide. <b>Mara</b> (west jungle edge) knows the patrols. <b>Felix</b> (near wreck) is fixing the lifeboat. <b>Elder Kona</b> (inner jungle) holds the truth.<br><b>The island is gated</b> — unlock zones by completing quests.<br>There are <b>4 endings</b>: Peace, Escape, Conquest, or Rescue.<br>Your goal: learn the truth, then decide. Search the <b>underwater wreck</b> (southwest deep water) for secrets — and a signal flare.' },
 ];
 let slideIdx = 0;
 // ============================================================
