@@ -3517,6 +3517,10 @@ function updateCreatures() {
   state.creatures = state.creatures.filter(c => c.hp > 0);
 
   state.creatures.forEach(c => {
+    // Cave creatures only active when underground; surface creatures skip when underground
+    if (c.inCave && !state.underground) return;
+    if (!c.inCave && state.underground) return;
+
     const dx = p.x - c.x, dy = p.y - c.y;
     const dist = Math.sqrt(dx*dx + dy*dy);
     // Skip distant creatures (performance)
@@ -4007,6 +4011,7 @@ function handleMinigameKey(key) {
       // Track tree chop stat
       if (state.runStats) state.runStats.treesChopped++;
       gainSkill('chopping');
+      checkRecipeDiscovery();
       // Tree shake: store shake target, replace with fallen log decor, then remove
       mg.target._shaking = true; mg.target._shakeTimer = 9;
       const capTarget = mg.target;
@@ -4047,7 +4052,7 @@ function handleMineClick(wx, wy) {
       state.particles.push({x:mg.target.x, y:mg.target.y, vx:(Math.random()-0.5)*5, vy:-2-Math.random()*3, color:sColor, life:12+Math.floor(Math.random()*8), maxLife:20, size:2});
     }
     spawnParticles(mg.target.x, mg.target.y, '#666677',3);
-    SFX.chop();
+    SFX.mine();
     mg.currentZone++;
     mg.zoneTimer = 180;
     if (mg.currentZone >= mg.zones.length) {
@@ -4250,6 +4255,53 @@ const SFX = (() => {
     }
   };
 })();
+
+// ============================================================
+// SYNTH ENGINE (expanded SFX)
+// ============================================================
+
+function playSynth({type='sine', freq=440, decay=0.3, pitchDrop, pitchRise, vol=0.2}) {
+  try {
+    const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtxClass) return;
+    const ac = new AudioCtxClass();
+    const osc = ac.createOscillator();
+    const gain = ac.createGain();
+    osc.connect(gain);
+    gain.connect(ac.destination);
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, ac.currentTime);
+    if (pitchDrop !== undefined) {
+      osc.frequency.exponentialRampToValueAtTime(Math.max(20, freq * pitchDrop), ac.currentTime + decay);
+    } else if (pitchRise !== undefined) {
+      osc.frequency.exponentialRampToValueAtTime(Math.max(20, freq * (1 + pitchRise)), ac.currentTime + decay);
+    }
+    gain.gain.setValueAtTime(vol, ac.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + decay);
+    osc.start(ac.currentTime);
+    osc.stop(ac.currentTime + decay + 0.05);
+    setTimeout(() => { try { ac.close(); } catch(e){} }, (decay + 0.1) * 1000);
+  } catch(e) {}
+}
+
+// Add synthesized sounds to SFX
+SFX.mine = () => playSynth({type:'square', freq:120, decay:0.2, pitchDrop:0.4, vol:0.2});
+SFX.splash = () => playSynth({type:'sine', freq:600, decay:0.15, pitchRise:0.2, vol:0.1});
+SFX.achievement = () => {
+  [523,659,784,1047].forEach((f,i) => {
+    setTimeout(() => playSynth({type:'sine', freq:f, decay:0.3, vol:0.15}), i*100);
+  });
+};
+SFX.levelUp = () => {
+  [392,494,587,784].forEach((f,i) => {
+    setTimeout(() => playSynth({type:'triangle', freq:f, decay:0.25, vol:0.12}), i*80);
+  });
+};
+SFX.raidAlert = () => {
+  [220,220,330].forEach((f,i) => {
+    setTimeout(() => playSynth({type:'sawtooth', freq:f, decay:0.4, vol:0.3}), i*200);
+  });
+};
 
 // ============================================================
 // PLAYER UPDATE, INPUT, INTERACTION
@@ -5083,6 +5135,9 @@ function handleClick(sx, sy) {
     return;
   }
 
+  // Pick up canoe loot
+  if (tryPickupCanoeLoot(sx + state.cam.x, sy + state.cam.y)) return;
+
   const camX = state.cam.x, camY = state.cam.y;
   const wx = sx + camX, wy = sy + camY;
   const reach = 80; // generous reach for tree/rock interaction
@@ -5134,12 +5189,14 @@ function handleClick(sx, sy) {
       showMsg('WEAPON COOLING DOWN...', '#888');
       return;
     }
-    // Cooldown and range per weapon
-    const cooldownMap = {sword:20, spear:30, fire_spear:45, fire_axe:25, stone_knife:15, lava_blade:22, depth_spear:28, bone_spear:28, crystal_blade:20, tribal_weapon:25};
+    // Cooldown and range per weapon (modified by combat skill)
+    const _baseCooldowns = {sword:20, spear:30, fire_spear:45, fire_axe:25, stone_knife:15, lava_blade:22, depth_spear:28, bone_spear:28, crystal_blade:20, tribal_weapon:25};
+    const _baseRanges    = {sword:48, spear:80, fire_spear:64, fire_axe:56, stone_knife:36, lava_blade:52, depth_spear:72, bone_spear:80, crystal_blade:52, tribal_weapon:56};
+    const cooldownMap = Object.fromEntries(Object.entries(_baseCooldowns).map(([k,v])=>[k, getSkillAttackCooldown(v)]));
     const dmgMap = {sword:15, spear:18, fire_spear:30, fire_axe:22, stone_knife:8, lava_blade:35, depth_spear:50, bone_spear:25, crystal_blade:40, tribal_weapon:22};
-    const rangeMap = {sword:48, spear:80, fire_spear:64, fire_axe:56, stone_knife:36, lava_blade:52, depth_spear:72, bone_spear:80, crystal_blade:52, tribal_weapon:56};
+    const rangeMap = Object.fromEntries(Object.entries(_baseRanges).map(([k,v])=>[k, getSkillCombatRange(v)]));
     const combatColor = (tool==='fire_spear'||tool==='fire_axe'||tool==='lava_blade') ? '#ff6600' : (tool==='depth_spear' ? '#3dd6d0' : tool==='crystal_blade' ? '#aa44ff' : '#e74c3c');
-    const attackReach = rangeMap[tool] || 56;
+    const attackReach = rangeMap[tool] || getSkillCombatRange(56);
     let combatDmg = dmgMap[tool] || 8;
     const ignoresArmor = tool === 'crystal_blade'; // crystal blade pierces armor
     // Tribal brew strength boost
@@ -5187,7 +5244,7 @@ function handleClick(sx, sy) {
     let hit = false;
     const allTargets = [...state.enemies, ...(state.chief?[state.chief]:[]), ...(state.raid||[])];
 
-    if (tool === 'spear' || tool === 'fire_spear' || tool === 'depth_spear') {
+    if (tool === 'spear' || tool === 'fire_spear' || tool === 'depth_spear' || tool === 'bone_spear') {
       // Spear: hit up to 2 enemies in a line (sorted by distance)
       let hitCount = 0;
       const maxSpearHits = 2;
@@ -5253,19 +5310,35 @@ function handleClick(sx, sy) {
     for (let i = state.creatures.length-1; i >= 0; i--) {
       const c = state.creatures[i];
       if (c.type === 'crab') continue;
-      if (Math.hypot(p.x-c.x, p.y-c.y) < attackReach) {
+      // Cave creatures use tile coords
+      const cx2 = c.inCave ? c.x * TSIZE : c.x;
+      const cy2 = c.inCave ? c.y * TSIZE : c.y;
+      if (!c.inCave && state.underground) continue;
+      if (c.inCave && !state.underground) continue;
+      if (Math.hypot(p.x-cx2, p.y-cy2) < attackReach) {
         c.hp -= combatDmg;
         c.hitFlash = 6;
-        const knockAngle = Math.atan2(c.y - p.y, c.x - p.x);
-        c.x += Math.cos(knockAngle) * 20;
-        c.y += Math.sin(knockAngle) * 20;
-        addFloatingText(c.x, c.y - 20, '-'+combatDmg, combatColor);
-        spawnParticles(c.x, c.y, '#22cc33',3);
+        if (c.inCave) {
+          // Cave tile coords — knockback in tile space
+          const knockAngle = Math.atan2(c.y - p.y/TSIZE, c.x - p.x/TSIZE);
+          c.x += Math.cos(knockAngle) * 1.5;
+          c.y += Math.sin(knockAngle) * 1.5;
+          addFloatingText(cx2, cy2 - 20, '-'+combatDmg, combatColor);
+          spawnParticles(cx2, cy2, '#cc44ff',3);
+        } else {
+          const knockAngle = Math.atan2(c.y - p.y, c.x - p.x);
+          c.x += Math.cos(knockAngle) * 20;
+          c.y += Math.sin(knockAngle) * 20;
+          addFloatingText(c.x, c.y - 20, '-'+combatDmg, combatColor);
+          spawnParticles(c.x, c.y, '#22cc33',3);
+        }
         SFX.hit();
         if (c.hp <= 0) {
           SFX.enemyDie();
-          if (c.type === 'spider') { p.inv.wood++; addFloatingText(c.x, c.y-20, '+1 WOOD', '#8B6914'); showMsg('+1 WOOD (SPIDER WEB)', '#8B6914'); }
-          if (c.type === 'shark') { p.inv.fish = (p.inv.fish||0)+2; addFloatingText(c.x, c.y-20, '+2 FISH', '#3dd6d0'); showMsg('+2 FISH (SHARK)', '#e67e22'); }
+          if (c.type === 'spider') { p.inv.wood++; addFloatingText(cx2, cy2-20, '+1 WOOD', '#8B6914'); }
+          if (c.type === 'shark') { p.inv.fish = (p.inv.fish||0)+2; addFloatingText(cx2, cy2-20, '+2 FISH', '#3dd6d0'); }
+          if (c.type === 'cave_guardian') { showMsg('CAVE GUARDIAN DEFEATED! The chamber is yours.', '#aa44ff'); spawnParticles(cx2, cy2, '#aa44ff', 5); }
+          if (c.type === 'cave_spider') { p.inv.ancient_bone = (p.inv.ancient_bone||0)+1; addFloatingText(cx2, cy2-20, '+1 BONE', '#ccbbaa'); }
           state.creatures.splice(i, 1);
         }
         hit = true;
@@ -5393,6 +5466,8 @@ function handleClick(sx, sy) {
       spawnParticles(nearest.x, nearest.y, '#ff6600',3);
       // +WOOD floating particle
       spawnParticle(nearest.x, nearest.y-20, 0, -1.2, '#c8f135', 60);
+      gainSkill('chopping');
+      checkRecipeDiscovery();
       SFX.chop(); SFX.pickup();
     } else {
       // No tree: treat as weapon attack (already handled above via isWeapon check)
@@ -5733,16 +5808,21 @@ function placeBuildItem(sx, sy) {
   }
   for (const [k,v] of Object.entries(item.cost)) p.inv[k] -= v;
 
+  const buildingSkill = (state.skills && state.skills.building) || 0;
+  const wallHp = state.buildItem === 'wall' ? (buildingSkill >= 5 ? 30 : 20) : undefined;
   state.objects.push({
     type: state.buildItem,
     x: Math.round(wx/TSIZE)*TSIZE + TSIZE/2,
     y: Math.round(wy/TSIZE)*TSIZE + TSIZE/2,
     placed: true,
-    hp: state.buildItem==='wall'?20:undefined
+    hp: wallHp,
+    _placedDay: state.day,
+    _extendedLife: buildingSkill >= 10,
   });
 
   showMsg(`${item.label} PLACED`, '#c8f135');
   spawnParticles(wx, wy, '#c8f135',3);
+  gainSkill('building');
   checkSettlement();
 
   if (state.buildItem==='water_barrel') { p.maxWater += 50; showMsg('MAX WATER +50', '#3498db'); }
@@ -5822,6 +5902,7 @@ function openCraftMenu() {
   if (!panel) return;
   panel.style.display = panel.style.display==='block'?'none':'block';
   if (panel.style.display==='block') {
+    state.hasOpenedCrafting = true;
     renderCraftMenu();
     // Tutorial hint: first time opening craft menu
     if (!state.tutorials.craftHint) {
@@ -5838,6 +5919,12 @@ function renderCraftMenu() {
   const p = state.player;
   const hasForge = state.objects.some(o=>o.placed&&o.type==='forge');
 
+  // Journal header (worn paper aesthetic)
+  const journalHdr = document.createElement('div');
+  journalHdr.style.cssText = 'padding:5px 8px;margin:0 0 6px;font-family:"Cinzel",serif;font-size:11px;letter-spacing:2px;color:#c8a060;border-bottom:2px solid #8B6020;font-style:italic;text-shadow:0 1px 2px rgba(0,0,0,0.5)';
+  journalHdr.textContent = 'CRAFTING JOURNAL';
+  list.appendChild(journalHdr);
+
   // Campfire crafting section if near campfire
   const nearCampfire = state.objects.some(o => o.placed && o.type === 'campfire' && Math.hypot(p.x-o.x, p.y-o.y) < 100);
   if (nearCampfire) renderCampfireMenu(list);
@@ -5852,6 +5939,8 @@ function renderCraftMenu() {
     const tier = item.requiredTier || 0;
     if (tier > state.craftingTier) return;
 
+    const discovered = state.discoveredRecipes && state.discoveredRecipes.has(item.id);
+
     // Tier header
     if (tier !== lastTierShown) {
       lastTierShown = tier;
@@ -5861,13 +5950,20 @@ function renderCraftMenu() {
       list.appendChild(hdr);
     }
 
-    const costStr = Object.entries(item.cost).map(([k,v])=>`${v} ${k.replace(/_/g,' ').toUpperCase()}`).join(', ');
-    const canAfford = Object.entries(item.cost).every(([k,v])=>(p.inv[k]||0)>=v);
-
     const div = document.createElement('div');
-    div.style.cssText = `padding:8px 10px;background:rgba(0,0,0,0.35);border:1px solid ${canAfford?'#8b6020':'rgba(61,30,10,0.5)'};border-radius:6px;margin-bottom:5px;cursor:${canAfford?'pointer':'default'};transition:background 0.15s,border-color 0.15s;font-family:'Lato',sans-serif;${canAfford?'box-shadow:0 0 6px rgba(200,241,53,0.08)':''}`;
-    div.innerHTML = `<span style="color:${canAfford?'#e8d49a':'#5c3a20'};font-weight:600;font-size:12px">${item.label}</span> <span style="color:#a08040;font-size:10px">— ${costStr}</span><br><span style="color:${canAfford?'#c8a870':'#4a2a10'};font-size:10px">${item.desc}</span>`;
-    if (canAfford) div.onclick = () => tryCraft(item.id);
+
+    if (!discovered) {
+      // Undiscovered: locked journal entry
+      const hintMat = Object.keys(item.cost)[0] || '?';
+      div.style.cssText = 'padding:7px 10px;background:rgba(20,10,5,0.6);border:1px solid rgba(80,50,20,0.3);border-radius:6px;margin-bottom:5px;font-family:"Lato",sans-serif;opacity:0.7;';
+      div.innerHTML = `<span style="color:#4a3520;font-weight:600;font-size:12px">?????</span><br><span style="color:#3a2510;font-size:10px;font-style:italic">Discover: collect ${hintMat.replace(/_/g,' ')}</span>`;
+    } else {
+      const costStr = Object.entries(item.cost).map(([k,v])=>`${v} ${k.replace(/_/g,' ').toUpperCase()}`).join(', ');
+      const canAfford = Object.entries(item.cost).every(([k,v])=>(p.inv[k]||0)>=v);
+      div.style.cssText = `padding:8px 10px;background:rgba(40,22,8,0.55);border:1px solid ${canAfford?'#8b6020':'rgba(61,30,10,0.5)'};border-radius:6px;margin-bottom:5px;cursor:${canAfford?'pointer':'default'};transition:background 0.15s,border-color 0.15s;font-family:'Lato',sans-serif;${canAfford?'box-shadow:0 0 6px rgba(200,241,53,0.08)':''}`;
+      div.innerHTML = `<span style="color:${canAfford?'#e8d49a':'#5c3a20'};font-weight:600;font-size:12px">${item.label}</span> <span style="color:#a08040;font-size:10px">— ${costStr}</span><br><span style="color:${canAfford?'#c8a870':'#4a2a10'};font-size:10px">${item.desc}</span>`;
+      if (canAfford) div.onclick = () => tryCraft(item.id);
+    }
     list.appendChild(div);
   });
 }
@@ -6871,9 +6967,29 @@ function render(ctx, minimapCtx) {
   state.cam.x = Math.floor(state.cam.x + (targetCamX - state.cam.x) * 0.12);
   state.cam.y = Math.floor(state.cam.y + (targetCamY - state.cam.y) * 0.12);
 
-  // screenShake removed
-
   const camX = state.cam.x, camY = state.cam.y;
+
+  // === UNDERGROUND: use cave renderer ===
+  if (state.underground) {
+    const zoom = state.zoom || 2.0;
+    ctx.save();
+    ctx.translate(canvas.width/2, canvas.height/2);
+    ctx.scale(zoom, zoom);
+    ctx.translate(-canvas.width/2, -canvas.height/2);
+    const zCamX2 = camX + (canvas.width - canvas.width/zoom)/2;
+    const zCamY2 = camY + (canvas.height - canvas.height/zoom)/2;
+    drawCaveScene(ctx, zCamX2, zCamY2);
+    ctx.restore();
+    // Still draw floating texts and UI elements
+    const oldCamX = state.cam.x, oldCamY = state.cam.y;
+    updateFloatingTexts();
+    drawFloatingTexts(ctx, oldCamX, oldCamY);
+    drawMinigame(ctx);
+    drawDialogue(ctx);
+    drawMsgs(ctx);
+    drawHotbarIcons(ctx);
+    return;
+  }
 
   // Sky — clean day/night cycle, no orange tint
   let sky;
@@ -7881,6 +7997,29 @@ function render(ctx, minimapCtx) {
     });
   }
 
+  // === DRAW CANOES (on surface only) ===
+  if (!state.underground && state.canoes && state.canoes.length > 0) {
+    state.canoes.forEach(canoe => {
+      const csx = canoe.x - camX, csy = canoe.y - camY;
+      if (csx < -60 || csx > canvas.width+60 || csy < -60 || csy > canvas.height+60) return;
+      drawCanoe(ctx, csx, csy, canoe.angle);
+      // HP bar
+      ctx.fillStyle = '#330000'; ctx.fillRect(csx-20, csy-22, 40, 4);
+      ctx.fillStyle = '#cc2222'; ctx.fillRect(csx-20, csy-22, 40*(canoe.hp/canoe.maxHp), 4);
+    });
+    // Canoe loot chests
+    state.objects.filter(o=>o.type==='canoe_loot').forEach(obj => {
+      const lsx = obj.x - camX, lsy = obj.y - camY;
+      if (lsx < -30 || lsx > canvas.width+30) return;
+      ctx.fillStyle = '#6a3810'; ctx.fillRect(lsx-8, lsy-6, 16, 12);
+      ctx.fillStyle = '#8a5830'; ctx.fillRect(lsx-7, lsy-5, 14, 5);
+      ctx.fillStyle = '#c8a060'; ctx.fillRect(lsx-2, lsy-2, 4, 2);
+      ctx.fillStyle = '#c8f135';
+      ctx.font = '8px Courier New'; ctx.textAlign = 'center';
+      ctx.fillText('LOOT', lsx, lsy-10); ctx.textAlign='left';
+    });
+  }
+
   // Minimap
   drawHoverHighlight(ctx, camX, camY);
   ctx.restore(); // end zoom
@@ -8648,6 +8787,7 @@ function updateWorldEvents() {
         });
       }
       showMsg('TRIBAL RAID — Warriors approach your camp!', '#ff2200');
+      SFX.raidAlert && SFX.raidAlert();
     }
   } else {
     // Update raid warriors
