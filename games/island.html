@@ -393,6 +393,7 @@ canvas#c{pointer-events:none}
   <div id="pause-menu-inner">
     <div class="pm-title">PAUSED</div>
     <button class="pm-btn" onclick="resumeGame()">&#9658; RESUME</button>
+    <div id="pause-skills" style="margin-top:10px;font-family:'Lato',sans-serif;font-size:10px;color:#a08040;letter-spacing:1px;border-top:1px solid rgba(120,80,20,0.3);padding-top:8px;line-height:1.8"></div>
     <div class="pm-brightness">
       <div class="pm-brightness-label">BRIGHTNESS</div>
       <input type="range" id="brightness-slider" min="30" max="100" value="100" oninput="setBrightness(this.value)" onclick="event.stopPropagation()">
@@ -667,9 +668,11 @@ const NPC_DATA = [
     x: 128*TSIZE, y: 165*TSIZE,
     desc: "Tribe outcast. Your first guide on the island.",
     lines: [
-      { text: "You... from ship. Yes. I saw it sink. The volcano stone — it called the storm. I am Oonga. My people... they are not all bad. I was one of them.", options: ["What happened?", "Who are you?"], optionNext: [1, 1] },
-      { text: "The chief — he uses the old stone to protect us. Many ships came. They wanted to take everything. So now... no ships come. But you survived. This is strange.", options: ["I need to escape", "I want to understand"], optionNext: [2, 2] },
-      { text: "If you want to live... learn this island. The jungle will test you. The volcano holds answers. Find Elder Kona — he knows the stone's secret. But beware the village.", options: null, questTrigger: 'find_kona' },
+      { text: "You wake on the sand. Your ship \u2014 gone. I am Oonga. These are my old people\u2019s lands. Look \u2014 wood washed up with you. You will need it.", options: ["Tell me more", "What happened to my ship?"], optionNext: [1, 1], _onShow: 'spawnTutorialWood' },
+      { text: "Stone too. The beach has many gifts for those who look.", options: ["How do I use them?", "I need to survive"], optionNext: [2, 2], _onShow: 'spawnTutorialRocks' },
+      { text: "From wood and stone, tools. Press C \u2014 I will show you what your hands can make.", options: null, _waitForCraft: true },
+      { text: "Good. An axe \u2014 the jungle will open to you now. But first... understand this island. The chief uses old stone to turn away ships. Many came to take everything. So now... no ships come. But you survived. This is strange.", options: ["I need to escape", "I want to understand"], optionNext: [4, 4] },
+      { text: "If you want to live... learn this island. The jungle will test you. The volcano holds answers. Find Elder Kona \u2014 he knows the stone\u2019s secret. But beware the village.", options: null, questTrigger: 'find_kona' },
     ],
     quest: { id:'oonga_q1', text:"Find Elder Kona", needs:{}, reward:{coconut:3}, done:false, questTrigger:'find_kona' },
     companion: false,
@@ -2815,6 +2818,84 @@ function updateParticles() {
   if (state.particles.length > 50) state.particles.splice(0, state.particles.length - 50);
 }
 
+function drawCampVisuals(ctx, camX, camY) {
+  const sl = state.player.settlementLevel;
+  if (sl < 1) return;
+  // Camp signpost area — near [150*TSIZE, 170*TSIZE]
+  const cx = 150*8, cy = 170*8;
+  const sx = cx - camX, sy = cy - camY;
+  // Cull if off screen
+  if (sx < -100 || sx > ctx.canvas.width+100 || sy < -100 || sy > ctx.canvas.height+100) return;
+
+  if (sl >= 1) {
+    // Level 1: wooden signpost with "CAMP"
+    ctx.save();
+    ctx.fillStyle = '#6b3d1e';
+    ctx.fillRect(sx-2, sy-28, 4, 28); // pole
+    ctx.fillStyle = '#8b5e3c';
+    ctx.fillRect(sx-16, sy-36, 32, 12); // sign board
+    ctx.fillStyle = '#5c2e0a';
+    ctx.fillRect(sx-15, sy-35, 30, 10);
+    ctx.fillStyle = '#e8d49a';
+    ctx.font = 'bold 7px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('CAMP', sx, sy-27);
+    ctx.restore();
+  }
+
+  if (sl >= 2) {
+    // Level 2: flag on a pole
+    const wave = Math.sin(state.frameCount * 0.08) * 3;
+    ctx.save();
+    ctx.fillStyle = '#5c3d1e';
+    ctx.fillRect(sx+20, sy-50, 3, 50); // flagpole
+    ctx.fillStyle = '#cc2222';
+    ctx.beginPath();
+    ctx.moveTo(sx+23, sy-50);
+    ctx.lineTo(sx+23+14+wave, sy-44);
+    ctx.lineTo(sx+23, sy-38);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  if (sl >= 3) {
+    // Level 3: second flag, bigger sign "RUPERT ISLAND CAMP", torch posts
+    const wave2 = Math.sin(state.frameCount * 0.08 + 1.5) * 3;
+    ctx.save();
+    ctx.fillStyle = '#5c3d1e';
+    ctx.fillRect(sx-22, sy-50, 3, 50);
+    ctx.fillStyle = '#2244cc';
+    ctx.beginPath();
+    ctx.moveTo(sx-19, sy-50);
+    ctx.lineTo(sx-19-14-wave2, sy-44);
+    ctx.lineTo(sx-19, sy-38);
+    ctx.closePath();
+    ctx.fill();
+    // Larger sign
+    ctx.fillStyle = '#8b5e3c';
+    ctx.fillRect(sx-36, sy-64, 72, 14);
+    ctx.fillStyle = '#5c2e0a';
+    ctx.fillRect(sx-35, sy-63, 70, 12);
+    ctx.fillStyle = '#f0d890';
+    ctx.font = 'bold 6px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('RUPERT ISLAND CAMP', sx, sy-54);
+    // Torch posts
+    [-44, 44].forEach(offx => {
+      const tx = sx + offx;
+      ctx.fillStyle = '#5c3d1e';
+      ctx.fillRect(tx-2, sy-20, 4, 20);
+      const flickerY = Math.sin(state.frameCount * 0.25 + offx) * 1.5;
+      ctx.fillStyle = '#ff6600';
+      ctx.fillRect(tx-3, sy-26+flickerY, 6, 6);
+      ctx.fillStyle = '#ffcc00';
+      ctx.fillRect(tx-2, sy-28+flickerY, 4, 4);
+    });
+    ctx.restore();
+  }
+}
+
 function drawParticles(ctx, camX, camY) {
   state.particles.forEach(p => {
     const a = p.life / p.maxLife;
@@ -3727,7 +3808,18 @@ function checkSettlement() {
   if (forges>=1 && chests>=1 && walls>=6) p.settlementLevel = Math.max(3, p.settlementLevel);
 
   const labels = ['SURVIVOR','SETTLEMENT','FORTIFIED CAMP','VILLAGE'];
-  if (p.settlementLevel > prev) showMsg(`STATUS: ${labels[p.settlementLevel]}`, '#c8f135');
+  if (p.settlementLevel > prev) {
+    showMsg(`STATUS: ${labels[p.settlementLevel]}`, '#c8f135');
+    SFX.achievement && SFX.achievement();
+    // NPC comments on settlement level
+    if (p.settlementLevel === 1) {
+      setTimeout(() => showMsg('OONGA: "You build well. The island accepts you."', '#c8a060'), 1500);
+    } else if (p.settlementLevel === 2) {
+      setTimeout(() => showMsg('MARA: "This is starting to look like somewhere we could actually survive."', '#cc4422'), 1500);
+    } else if (p.settlementLevel === 3) {
+      setTimeout(() => showMsg('FELIX: "I\'ll admit... you\'ve done something here."', '#7ca0b0'), 1500);
+    }
+  }
 }
 
 // ============================================================
@@ -6144,6 +6236,18 @@ function startDialogue(npc) {
     charIdx: 0,
     _lineRef: line,
   };
+  // Tutorial spawn triggers from Oonga lines
+  if (line._onShow === 'spawnTutorialWood') {
+    const p2 = state.player;
+    for (let ti = 0; ti < 3; ti++) {
+      state.objects.push({type:'driftwood', x:p2.x + (ti-1)*20 + Math.random()*10, y:p2.y + 30 + Math.random()*10, collected:false, _tutGlow:60});
+    }
+  } else if (line._onShow === 'spawnTutorialRocks') {
+    const p2 = state.player;
+    for (let ti = 0; ti < 2; ti++) {
+      state.objects.push({type:'rock', x:p2.x + (ti*24 - 12) + Math.random()*8, y:p2.y + 32 + Math.random()*8, hp:4, maxHp:4});
+    }
+  }
 }
 
 function selectDialogueOption(optIdx) {
@@ -6198,6 +6302,13 @@ function advanceDialogue() {
 
   // If there are options, wait for option click — don't auto-advance
   if (d.options && d.options.length > 0) return;
+
+  // Wait for crafting to be opened before advancing _waitForCraft lines
+  if (d._lineRef && d._lineRef._waitForCraft && !state.hasOpenedCrafting) {
+    // nudge player
+    if (state.frameCount % 180 === 0) showMsg('Press C to open your crafting journal', '#c8a060');
+    return;
+  }
 
   if (d.type === 'lore') {
     state.dialogue = null;
@@ -7538,6 +7649,9 @@ function render(ctx, minimapCtx) {
       ctx.fillRect(fsx - TSIZE/2, fsy - TSIZE/2, TSIZE, TSIZE);
     });
   }
+
+  // Camp visual upgrades
+  drawCampVisuals(ctx, camX, camY);
 
   // Particles
   drawParticles(ctx, camX, camY);
@@ -10062,6 +10176,17 @@ window.addEventListener('keydown', e => {
       if (pmOpening) {
         const lbEl = document.getElementById('pause-leaderboard');
         if (lbEl) lbEl.innerHTML = renderLeaderboard();
+        // Skills display
+        const skillsEl = document.getElementById('pause-skills');
+        if (skillsEl && state.skills) {
+          const sk = state.skills;
+          skillsEl.innerHTML = '<div style="color:#c8a060;font-family:Cinzel,serif;font-size:10px;letter-spacing:2px;margin-bottom:4px">SKILLS</div>' +
+            `<div>Chopping: ${sk.chopping||0} ${sk.chopping>=25?'(MASTER)':(sk.chopping>=10?'(ADV)':'')}</div>` +
+            `<div>Mining: ${sk.mining||0} ${sk.mining>=25?'(MASTER)':(sk.mining>=10?'(ADV)':'')}</div>` +
+            `<div>Combat: ${sk.combat||0} ${sk.combat>=50?'(LEGEND)':(sk.combat>=25?'(MASTER)':(sk.combat>=10?'(ADV)':''))}</div>` +
+            `<div>Fishing: ${sk.fishing||0} ${sk.fishing>=15?'(MASTER)':(sk.fishing>=5?'(ADV)':'')}</div>` +
+            `<div>Building: ${sk.building||0} ${sk.building>=10?'(MASTER)':(sk.building>=5?'(ADV)':'')}</div>`;
+        }
       }
       return;
     }
@@ -10290,6 +10415,8 @@ window.addEventListener('DOMContentLoaded', () => {
   state.runStats = { startTime: Date.now(), enemiesKilled: 0, treesChopped: 0, fishCaught: 0, distanceTraveled: 0, itemsCollected: 0, damageTaken: 0, highestDayReached: 1 };
   try { state.deathGhosts = JSON.parse(localStorage.getItem('island_deaths')||'[]').slice(0,5); } catch(e) { state.deathGhosts = []; }
   try { state.unlockedAchievements = new Set(JSON.parse(localStorage.getItem('island_achievements')||'[]')); } catch(e) {}
+  try { state.discoveredRecipes = new Set(JSON.parse(localStorage.getItem('island_recipes')||'[]')); } catch(e) { state.discoveredRecipes = new Set(); }
+  try { const sk = JSON.parse(localStorage.getItem('island_skills')||'null'); if(sk) state.skills = sk; } catch(e) {}
   genMap(); genObjects();
   state.underground = false;
   state.caveMapGenerated = false;
@@ -10890,8 +11017,14 @@ function gameLoopWithUI() {
         state.unlockedAchievements.add(ach.id);
         try { localStorage.setItem('island_achievements', JSON.stringify([...state.unlockedAchievements])); } catch(e) {}
         showMsg('ACHIEVEMENT: ' + ach.name + ' \u2014 ' + ach.desc, '#c8f135');
+        SFX.achievement && SFX.achievement();
       }
     });
+    // Save recipes and skills
+    try { localStorage.setItem('island_recipes', JSON.stringify([...(state.discoveredRecipes||[])])); } catch(e) {}
+    try { localStorage.setItem('island_skills', JSON.stringify(state.skills||{})); } catch(e) {}
+    // Run recipe discovery check periodically
+    checkRecipeDiscovery();
   }
   render(ctx, minimapCtx);
 }
