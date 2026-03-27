@@ -2763,6 +2763,8 @@ function drawVine(ctx, sx, sy) {
 }
 
 function updateParticles() {
+  // Hard cap on particles
+  while (state.particles.length > 30) state.particles.shift();
   state.particles = state.particles.filter(p => {
     p.x += p.vx; p.y += p.vy;
     p.vy += 0.05;
@@ -7401,6 +7403,8 @@ function render(ctx, minimapCtx) {
 // ============================================================
 
 function updateDayNight() {
+  // Skip expensive calculations on most frames
+  const doExpensive = state.frameCount % 10 === 0;
   state.frameCount++;
   state.dayTime = (state.frameCount % state.DAY_FRAMES) / state.DAY_FRAMES;
   const prevNight = state.isNight;
@@ -9364,6 +9368,7 @@ window.addEventListener('DOMContentLoaded', () => {
 function gameLoopWithUI() {
   if (!state.running && !state.cutscenePlaying) return;
   requestAnimationFrame(gameLoopWithUI);
+  if (document.hidden) return; // don't render when tab not visible
   if (state.cutscenePlaying) {
     renderCutscene(ctx);
     return;
@@ -9377,10 +9382,10 @@ function gameLoopWithUI() {
   updateMsgs();
   updateMinigame(canvas);
   updateDialogue();
-  updateNPCCompanions();
+  if (state.frameCount % 3 === 0) updateNPCCompanions();
   updateBirdsAndFootprints();
   if (state.frameCount % 4 === 0) updateCrabs();
-  if (state.frameCount % 3 === 0) updateSeaCreatures();
+  if (state.frameCount % 10 === 0 && typeof updateSeaCreatures === "function") updateSeaCreatures();
   updateLivingIsland();
   updateUI();
   // === ACHIEVEMENT CHECKS (every 5 seconds) ===
