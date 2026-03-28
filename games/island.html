@@ -7230,7 +7230,20 @@ function render(ctx, minimapCtx) {
   const sy1 = Math.min(MSIZE, sy0 + Math.ceil(visH/TSIZE) + 3);
 
   // Draw tiles
+  if (!state.map || !state.map.length) {
+    // Map not generated yet - show loading screen
+    ctx.fillStyle = '#1a3a5c';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#c8f135';
+    ctx.font = 'bold 20px Cinzel';
+    ctx.textAlign = 'center';
+    ctx.fillText('Loading island...', canvas.width/2, canvas.height/2);
+    ctx.textAlign = 'left';
+    ctx.restore();
+    return;
+  }
   for (let ty = sy0; ty < sy1; ty++) {
+    if (!state.map[ty]) continue;
     for (let tx = sx0; tx < sx1; tx++) {
       drawTile(ctx, state.map[ty][tx], Math.floor(tx*TSIZE - camX), Math.floor(ty*TSIZE - camY));
     }
