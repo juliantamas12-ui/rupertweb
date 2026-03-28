@@ -4178,7 +4178,7 @@ function handleMineClick(wx, wy) {
 // WEB AUDIO — PROCEDURAL SOUND EFFECTS
 // ============================================================
 
-const SFX = (() => {
+window.SFX = (() => {
   let ctx = null;
   let unlocked = false;
 
@@ -4391,7 +4391,7 @@ SFX.raidAlert = () => {
 // PLAYER UPDATE, INPUT, INTERACTION
 // ============================================================
 
-let keys = {};
+window.keys = {};
 let mx = 0, my = 0;
 let mouseDown = false;
 
@@ -10187,6 +10187,8 @@ function animateYacht() {
 </script>
 
 <script>
+const keys = window.keys || {}; const SFX = window.SFX || {};
+
 const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d');
 ctx.imageSmoothingEnabled = false;
