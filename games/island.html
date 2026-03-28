@@ -10187,7 +10187,8 @@ function animateYacht() {
 </script>
 
 <script>
-const keys = window.keys || {}; const SFX = window.SFX || {};
+const keys = window.keys || {};
+const SFX = new Proxy(window.SFX || {}, {get: (t,k) => t[k] || function(){}});
 
 const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d');
@@ -10199,7 +10200,6 @@ minimapCtx.imageSmoothingEnabled = false;
 
 // INPUT
 window.addEventListener('keydown', e => {
-  SFX.unlock();
   keys[e.key.toLowerCase()] = true;
   // Cutscene advance
   if (state.cutscenePlaying) {
@@ -10319,7 +10319,6 @@ window.addEventListener('keydown', e => {
 window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
 window.addEventListener('mousemove', e => { mx=e.clientX; my=e.clientY; });
 window.addEventListener('click', e => {
-  SFX.unlock();
   if (!state.running) return;
   // Don't intercept clicks on HTML UI elements
   const tag = e.target.tagName.toLowerCase();
