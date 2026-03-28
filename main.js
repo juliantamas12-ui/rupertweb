@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Revolution France Wanted to Forget: Haiti, 1804, and the Limits of Enlightenment",
+    date: "2026-03-28",
+    category: "History",
+    excerpt: "The French Revolution is taught as the great rupture of modernity — Liberty, Equality, Fraternity proclaimed from the barricades of Paris. Less discussed is what happened when the enslaved people of Saint-Domingue took those words seriously....",
+    url: "essays/2026-03-28-the-revolution-france-wanted-to-forget-haiti-1804-and-the-li.html"
+  },
+  {
     title: "The Iron Law of the Ruling Class: Pareto, Mosca, and Why Democracies Don't Rule Themselves",
     date: "2026-03-27",
     category: "History",
