@@ -3328,7 +3328,6 @@ function updateEnemies() {
         if (state._volcanicArmorActive) dmg = Math.round(dmg * 0.7);
         p.hp = Math.max(0, p.hp - dmg);
         p.hitFlash = 8;
-        state.screenShake = Math.max(state.screenShake, dmg * 0.8);
         spawnParticles(p.x, p.y, '#e73c3c',3);
         addFloatingText(p.x, p.y - 20, '-'+dmg, '#ff4444');
         SFX.hurt && SFX.hurt();
@@ -3440,7 +3439,6 @@ function updateProjectiles() {
       if (exploded || proj.life <= 0) {
         // Explosion
         SFX.fireExplode();
-        state.screenShake = Math.max(state.screenShake, 8);
         spawnParticles(proj.x, proj.y, '#ff6600',3);
         spawnParticles(proj.x, proj.y, '#ffcc00',3);
         addFloatingText(proj.x, proj.y - 20, 'BOOM!', '#ff6600');
@@ -3475,7 +3473,6 @@ function updateProjectiles() {
       }
       if (exploded || proj.life <= 0) {
         SFX.fireExplode ? SFX.fireExplode() : SFX.swing();
-        state.screenShake = Math.max(state.screenShake, 12);
         spawnParticles(proj.x, proj.y, '#ff4400', 3);
         spawnParticles(proj.x, proj.y, '#ffaa00', 3);
         addFloatingText(proj.x, proj.y - 20, 'LAVA BLAST!', '#ff4400');
@@ -5359,7 +5356,6 @@ function handleClick(sx, sy) {
           SFX.hit();
           if (e.hp <= 0) SFX.enemyDie();
           hit = true; hitCount++;
-          state.screenShake = Math.max(state.screenShake, 3);
           if (navigator.vibrate) navigator.vibrate(30);
         }
       }
@@ -5383,7 +5379,6 @@ function handleClick(sx, sy) {
           SFX.hit();
           if (e.hp <= 0) SFX.enemyDie();
           hit = true;
-          state.screenShake = Math.max(state.screenShake, 3);
           if (navigator.vibrate) navigator.vibrate(30);
         }
       }
@@ -7113,16 +7108,7 @@ function render(ctx, minimapCtx) {
   state.cam.x = Math.floor(state.cam.x + (targetCamX - state.cam.x) * 0.12);
   state.cam.y = Math.floor(state.cam.y + (targetCamY - state.cam.y) * 0.12);
 
-  // Screen shake: apply offset then decay
-  let shakeOffX = 0, shakeOffY = 0;
-  if (state.screenShake > 0) {
-    const mag = state.screenShake;
-    shakeOffX = (Math.random() - 0.5) * mag * 2;
-    shakeOffY = (Math.random() - 0.5) * mag * 2;
-    state.screenShake = Math.max(0, state.screenShake - 1.2);
-  }
-
-  const camX = state.cam.x + shakeOffX, camY = state.cam.y + shakeOffY;
+  const camX = state.cam.x, camY = state.cam.y;
 
   // === UNDERGROUND: use cave renderer ===
   if (state.underground) {
@@ -8475,18 +8461,16 @@ function updateDayNight() {
   } else if (state.eruptionPhase === 1) {
     // Warning phase: periodic screen shudder & rumbles
     state.eruptionTimer--;
-    if (state.frameCount % 90 === 0) { SFX.rumble(); state.screenShake = Math.max(state.screenShake, 4); }
+    if (state.frameCount % 90 === 0) SFX.rumble();
     if (state.eruptionTimer <= 0) {
       state.eruptionPhase = 2;
       state.eruptionDuration = 60 * 18; // eruption lasts ~18 seconds
       showMsg('ERUPTION! RUN!', '#ff2200');
       SFX.rumble();
-      state.screenShake = Math.max(state.screenShake, 12);
     }
   } else if (state.eruptionPhase === 2) {
     // Active eruption: spawn lava bombs, apply screen shake, deal damage
     state.eruptionDuration--;
-    if (state.frameCount % 60 === 0) state.screenShake = Math.max(state.screenShake, 5);
 
     // Spawn lava bombs every 20-35 frames from volcano center
     if (state.frameCount % (20 + Math.floor(Math.random() * 15)) === 0 && state.lavaBombs.length < 14) {
@@ -8526,7 +8510,6 @@ function updateDayNight() {
         // Impact!
         bomb.landed = true;
         SFX.lavaBoom();
-        state.screenShake = Math.max(state.screenShake, 10);
         // Damage player if close to impact point
         const dx = p2.x - bomb.landX, dy = p2.y - bomb.landY;
         const dist = Math.sqrt(dx*dx + dy*dy);
@@ -8534,7 +8517,6 @@ function updateDayNight() {
           const dmg = 18 + Math.floor(Math.random() * 12);
           p2.hp = Math.max(0, p2.hp - dmg);
           p2.hitFlash = 8;
-          state.screenShake = Math.max(state.screenShake, 14);
           addFloatingText(p2.x, p2.y - 20, '-'+dmg+' LAVA!', '#ff4400');
           SFX.hurt();
         }
