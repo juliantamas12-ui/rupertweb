@@ -554,6 +554,13 @@ const state = {
   eruptionDuration: 0,     // frames remaining in active eruption
   lavaBombs: [],           // [{x, y, vx, vy, life, maxLife, landed, landTimer}]
 
+  // === STORM SURGE EVENT ===
+  surgePhase: 0,           // 0=dormant, 1=warning, 2=active, 3=receding
+  surgeTimer: 60*60*(5 + Math.random()*4), // first surge in 5-9 in-game minutes
+  surgeDuration: 0,        // frames remaining in active surge
+  surgeWaveX: -200,        // screen-space X of the leading wave edge (sweeps left->right)
+  surgeWashLoot: false,    // whether flotsam has been spawned for this surge
+
   // === WORLD EVENTS ===
   raidTimer: 60*60*(3 + Math.random()*2), // frames until next tribal raid
   raidActive: false,
@@ -4387,6 +4394,19 @@ SFX.raidAlert = () => {
   });
 };
 
+// Storm surge sound: deep resonant crash layered with white-noise burst
+SFX.surgeCrash = () => {
+  // Low boom
+  playSynth({type:'sine', freq:55, decay:1.8, pitchDrop:0.2, vol:0.35});
+  // Mid roar
+  setTimeout(() => playSynth({type:'sine', freq:90, decay:1.2, pitchDrop:0.4, vol:0.25}), 80);
+  // High hiss (triangle approximates noise)
+  setTimeout(() => playSynth({type:'triangle', freq:1200, decay:0.8, pitchDrop:0.6, vol:0.12}), 60);
+};
+SFX.surgeWarning = () => {
+  playSynth({type:'sine', freq:70, decay:1.0, pitchRise:0.3, vol:0.2});
+};
+
 // ============================================================
 // PLAYER UPDATE, INPUT, INTERACTION
 // ============================================================
@@ -4824,6 +4844,25 @@ function throwCoconut() {
 function handleInteract() {
   const p = state.player;
   const reach = 80; // generous - 10 tiles
+
+  // Flotsam pickup (from storm surge)
+  for (let i = state.objects.length-1; i >= 0; i--) {
+    const obj = state.objects[i];
+    if (obj.type === 'flotsam') {
+      const d = Math.hypot(p.x-obj.x, p.y-obj.y);
+      if (d < reach) {
+        const res = obj.resource, qty = obj.qty||1;
+        p.inv[res] = (p.inv[res]||0) + qty;
+        state.objects.splice(i, 1);
+        showMsg(`FLOTSAM: +${qty} ${res.toUpperCase()}`, '#c8f135');
+        spawnParticles(obj.x, obj.y, '#3dd6d0', 4);
+        SFX.pickup && SFX.pickup();
+        gainSkill && gainSkill('building'); // small skill tick
+        updateUI();
+        return;
+      }
+    }
+  }
 
   // Death pack pickup
   for (let i = state.objects.length-1; i >= 0; i--) {
@@ -7912,6 +7951,96 @@ function render(ctx, minimapCtx) {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
 
+  // === STORM SURGE SCREEN OVERLAY ===
+  if (state.surgePhase === 1) {
+    // Warning: deep teal pulse at edges
+    const sp = 0.05 + 0.04 * Math.sin(state.frameCount * 0.18);
+    ctx.fillStyle = `rgba(20,140,160,${sp})`;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Warning text
+    ctx.save();
+    ctx.globalAlpha = 0.7 + 0.3*Math.sin(state.frameCount*0.2);
+    ctx.fillStyle = '#3dd6d0';
+    ctx.font = 'bold 11px Lato,sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('SEA PULLING BACK — SURGE INCOMING', canvas.width/2, canvas.height * 0.18);
+    ctx.textAlign = 'left';
+    ctx.restore();
+  } else if (state.surgePhase === 2) {
+    // Active surge: sweeping wave wall
+    const wx2 = state.surgeWaveX || 0;
+    const waveW = 80; // wave visual width
+    // Flood tint behind wave
+    if (wx2 > 0) {
+      const floodAlpha = Math.min(0.45, 0.02 * (wx2 / (canvas.width * 0.5)));
+      ctx.fillStyle = `rgba(10,100,160,${floodAlpha})`;
+      ctx.fillRect(0, 0, Math.min(canvas.width, wx2 - waveW * 0.3), canvas.height);
+    }
+    // Wave wall gradient
+    const grad = ctx.createLinearGradient(wx2 - waveW, 0, wx2 + waveW * 0.3, 0);
+    grad.addColorStop(0, 'rgba(10,80,140,0.0)');
+    grad.addColorStop(0.4, 'rgba(20,140,200,0.55)');
+    grad.addColorStop(0.7, 'rgba(60,200,230,0.85)');
+    grad.addColorStop(0.85, 'rgba(180,240,255,0.9)');
+    grad.addColorStop(1.0, 'rgba(255,255,255,0.6)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(wx2 - waveW, 0, waveW * 2, canvas.height);
+    // Foam streaks on the crest
+    ctx.save();
+    ctx.globalAlpha = 0.55;
+    ctx.fillStyle = '#e0f8ff';
+    for (let fi = 0; fi < 8; fi++) {
+      const fy = (fi / 8) * canvas.height + ((state.frameCount * 1.5 + fi * 40) % (canvas.height / 4));
+      const fw = 6 + Math.sin(state.frameCount * 0.3 + fi) * 3;
+      ctx.fillRect(wx2 - fw/2 + 4, fy % canvas.height, fw, 3);
+    }
+    ctx.restore();
+    // Danger flash text
+    const flashAlpha = 0.6 + 0.4 * Math.sin(state.frameCount * 0.4);
+    ctx.save();
+    ctx.globalAlpha = flashAlpha;
+    ctx.fillStyle = '#80eeff';
+    ctx.font = 'bold 11px Lato,sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('STORM SURGE — HIGH GROUND NOW', canvas.width/2, canvas.height * 0.15);
+    ctx.textAlign = 'left';
+    ctx.restore();
+  } else if (state.surgePhase === 3) {
+    // Receding: fading blue tint
+    const rAlpha = Math.max(0, 0.25 * (state.surgeTimer / (60*3)));
+    ctx.fillStyle = `rgba(10,80,140,${rAlpha})`;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+
+  // Flotsam: draw them on the overworld as glowing debris piles
+  if (!state.underground) {
+    const camXf = state.cam.x, camYf = state.cam.y;
+    for (const obj of state.objects) {
+      if (obj.type !== 'flotsam') continue;
+      const sx2 = obj.x - camXf, sy2 = obj.y - camYf;
+      if (sx2 < -30 || sx2 > canvas.width+30 || sy2 < -30 || sy2 > canvas.height+30) continue;
+      // Glowing pile of driftwood/supplies
+      const glow = 0.4 + 0.3 * Math.sin(state.frameCount * 0.15 + obj.x);
+      ctx.save();
+      ctx.globalAlpha = glow;
+      ctx.fillStyle = '#3dd6d0';
+      ctx.beginPath();
+      ctx.arc(sx2, sy2, 10, 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+      ctx.save();
+      ctx.globalAlpha = 0.9;
+      ctx.fillStyle = '#8b5e3c';
+      ctx.fillRect(sx2-5, sy2-3, 10, 6); // debris plank
+      ctx.fillStyle = '#c8a07a';
+      ctx.fillRect(sx2-3, sy2+2, 7, 4);
+      ctx.fillStyle = '#c8f135';
+      ctx.font = '8px Lato,sans-serif';
+      ctx.fillText(obj.resource && obj.resource.substring(0,3).toUpperCase() || 'LOG', sx2-5, sy2-6);
+      ctx.restore();
+    }
+  }
+
   // === ERUPTION SCREEN OVERLAY ===
   if (state.eruptionPhase === 1) {
     // Warning: subtle orange pulse on edges
@@ -9124,6 +9253,115 @@ function updateWorldEvents() {
 
   // === Scout active: decrement ===
   if (state.scoutActive > 0) state.scoutActive--;
+
+  // === STORM SURGE EVENT ===
+  // Only triggers during rainy/storm weather, not during eruption
+  if (state.surgePhase === 0 && state.eruptionPhase === 0) {
+    state.surgeTimer = (state.surgeTimer || 60*60*7) - 1;
+    if (state.surgeTimer <= 0) {
+      state.surgePhase = 1;
+      state.surgeTimer = 60 * 6; // 6-second warning
+      state.surgeWashLoot = false;
+      showMsg('THE SEA IS PULLING BACK... SURGE INCOMING!', '#3dd6d0');
+      SFX.surgeWarning && SFX.surgeWarning();
+      state.screenShake = Math.max(state.screenShake, 2);
+    }
+  } else if (state.surgePhase === 1) {
+    // Warning: water retreats — screen subtly shakes
+    state.surgeTimer--;
+    if (state.frameCount % 40 === 0) state.screenShake = Math.max(state.screenShake, 2);
+    if (state.surgeTimer <= 0) {
+      state.surgePhase = 2;
+      state.surgeDuration = 60 * 10; // 10-second active wave
+      state.surgeWaveX = -canvas.width; // start off left edge
+      showMsg('STORM SURGE! GET TO HIGH GROUND!', '#ff2244');
+      SFX.surgeCrash && SFX.surgeCrash();
+      state.screenShake = Math.max(state.screenShake, 10);
+      if (navigator.vibrate) navigator.vibrate([80, 40, 120]);
+    }
+  } else if (state.surgePhase === 2) {
+    // Active: wave sweeps across screen left->right
+    state.surgeDuration--;
+    const totalSweep = canvas.width * 1.5;
+    const sweepSpeed = totalSweep / (60 * 5); // crosses screen in ~5 seconds
+    state.surgeWaveX = (state.surgeWaveX || -canvas.width) + sweepSpeed;
+
+    // Screen shake while wave is crossing
+    if (state.frameCount % 4 === 0) state.screenShake = Math.max(state.screenShake, 6);
+
+    // Knockback player if they're on beach/shallow tiles when wave is near their screen position
+    const camX3 = state.cam.x;
+    const pScreenX = p.x - camX3;
+    const waveScreenX = state.surgeWaveX;
+    const playerTileSurge = getTile(p.x, p.y);
+    const isOnLowGround = playerTileSurge === T.BEACH || playerTileSurge === T.SHALLOW_WATER || playerTileSurge === T.DEEP_OCEAN;
+    if (isOnLowGround && waveScreenX > pScreenX - 60 && waveScreenX < pScreenX + 80) {
+      // Wave hits player — strong knockback inland (east/north)
+      const knockStrength = 120;
+      p.x = Math.min(WORLD_W - TSIZE, p.x + knockStrength * 0.7);
+      p.y = Math.min(WORLD_H - TSIZE, p.y + knockStrength * 0.3);
+      const surgeDmg = 15 + Math.floor(Math.random() * 10);
+      p.hp = Math.max(1, p.hp - surgeDmg);
+      p.hitFlash = 12;
+      addFloatingText(p.x, p.y - 30, 'SWEPT! -' + surgeDmg, '#3dd6d0');
+      state.screenShake = Math.max(state.screenShake, 14);
+      SFX.splash && SFX.splash();
+      if (navigator.vibrate) navigator.vibrate(150);
+    }
+
+    // Wash up random beach loot once when wave is at mid-screen
+    if (!state.surgeWashLoot && state.surgeWaveX > canvas.width * 0.5) {
+      state.surgeWashLoot = true;
+      // Spawn 3-6 pieces of flotsam as resource objects on beach tiles nearby
+      const flotsam = [
+        {type:'loot_wood',   id:'wood',    min:2, max:5},
+        {type:'loot_coconut',id:'coconut', min:1, max:3},
+        {type:'loot_stone',  id:'stone',   min:1, max:3},
+      ];
+      let spawned = 0;
+      const tries = 60;
+      for (let attempt = 0; attempt < tries && spawned < 5; attempt++) {
+        const bx = 45 + Math.floor(Math.random() * 60);
+        const by = 90 + Math.floor(Math.random() * 30);
+        if (state.map[by] && state.map[by][bx] === T.BEACH) {
+          const pick = flotsam[Math.floor(Math.random() * flotsam.length)];
+          const qty = pick.min + Math.floor(Math.random() * (pick.max - pick.min + 1));
+          state.objects.push({
+            type: 'flotsam', resource: pick.id, qty,
+            x: bx * TSIZE + TSIZE/2, y: by * TSIZE + TSIZE/2,
+            _surgeSpawned: true, timer: 60 * 60 * 3 // disappears after 3 min
+          });
+          spawned++;
+        }
+      }
+      if (spawned > 0) showMsg('FLOTSAM WASHED ASHORE — items on the beach!', '#c8f135');
+    }
+
+    if (state.surgeDuration <= 0) {
+      state.surgePhase = 3;
+      state.surgeTimer = 60 * 3; // 3-second recede
+      showMsg('THE SURGE RECEDES.', '#3498db');
+    }
+  } else if (state.surgePhase === 3) {
+    // Receding
+    state.surgeTimer--;
+    state.surgeWaveX = (state.surgeWaveX || 0) + 8; // wave exits right
+    if (state.surgeTimer <= 0) {
+      state.surgePhase = 0;
+      state.surgeTimer = 60 * 60 * (8 + Math.random() * 6); // 8-14 min until next surge
+    }
+  }
+
+  // Age flotsam
+  if (state.objects) {
+    state.objects = state.objects.filter(o => {
+      if (o.type === 'flotsam' && o._surgeSpawned) {
+        o.timer = (o.timer||0) - 1;
+        return o.timer > 0;
+      }
+      return true;
+    });
+  }
 }
 
 // ============================================================
