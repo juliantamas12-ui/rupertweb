@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Peace That Lasted: Metternich, the Concert of Europe, and the Art of Managed Multipolarity",
+    date: "2026-03-29",
+    category: "History",
+    excerpt: "Most peace settlements fail. The Treaty of Versailles lasted twenty years before the continent it supposedly pacified destroyed itself again. The Peace of Westphalia held better but still crumbled under Louis XIV's ambitions within a generation. The ...",
+    url: "essays/2026-03-29-the-peace-that-lasted-metternich-the-concert-of-europe-and-t.html"
+  },
+  {
     title: "The Revolution France Wanted to Forget: Haiti, 1804, and the Limits of Enlightenment",
     date: "2026-03-28",
     category: "History",
