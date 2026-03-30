@@ -474,7 +474,20 @@
       .fleet-grid { grid-template-columns: 1fr; }
       .vessel-table { display: block; overflow-x: auto; }
     }
-  </style>
+  
+/* Vessel card photos */
+.vessel-card[data-vessel="BREAKTHROUGH"] .vessel-photo { background-image: url("https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?w=600&q=80"); background-size: cover; background-position: center; }
+.vessel-card[data-vessel="LADY S"] .vessel-photo { background-image: url("https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80"); background-size: cover; background-position: center; }
+.vessel-card[data-vessel="KISMET"] .vessel-photo { background-image: url("https://images.unsplash.com/photo-1605281317010-fe5ffe798166?w=600&q=80"); background-size: cover; background-position: center; }
+.vessel-card[data-vessel="WHISPER"] .vessel-photo { background-image: url("https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=600&q=80"); background-size: cover; background-position: center; }
+.vessel-card[data-vessel="DRAGONFLY"] .vessel-photo { background-image: url("https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=600&q=80"); background-size: cover; background-position: center; }
+.vessel-card[data-vessel="RENAISSANCE"] .vessel-photo { background-image: url("https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?w=600&q=80"); background-size: cover; background-position: center; }
+.vessel-card[data-vessel="KENSHO"] .vessel-photo { background-image: url("https://images.unsplash.com/photo-1605281317010-fe5ffe798166?w=600&q=80"); background-size: cover; background-position: center; }
+.vessel-card[data-vessel="LEVIATHAN"] .vessel-photo { background-image: url("https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=600&q=80"); background-size: cover; background-position: center; }
+.vessel-card[data-vessel="BARBARA"] .vessel-photo { background-image: url("https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80"); background-size: cover; background-position: center; }
+.vessel-card[data-vessel="PROJECT X"] .vessel-photo { background-image: url("https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=600&q=80"); background-size: cover; background-position: center; }
+.vessel-card[data-vessel="CC SUMMER"] .vessel-photo { background-image: url("https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?w=600&q=80"); background-size: cover; background-position: center; }
+</style>
 </head>
 <body>
 
@@ -551,77 +564,88 @@
     // WM Commons images (CC licensed) where available, otherwise null
     const VESSELS = [
       {
-        name: 'BREAKTHROUGH', imo: '9899650', mmsi: '319300600',
+        name: 'BREAKTHROUGH', photo: "https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?w=600&q=80",
+          imo: '9899650', mmsi: '319300600',
         builder: 'Feadship', year: 2025, length: '118.8m',
         photo: null,
         slug: 'breakthrough',
         flag: 'Cayman Islands'
       },
       {
-        name: 'LADY S', imo: '1013121', mmsi: '319137200',
+        name: 'LADY S', photo: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80",
+          imo: '1013121', mmsi: '319137200',
         builder: 'Feadship', year: 2019, length: '93m',
         photo: null,
         slug: 'ladys',
         flag: 'Cayman Islands'
       },
       {
-        name: 'KISMET', imo: '9881627', mmsi: '538071476',
+        name: 'KISMET', photo: "https://images.unsplash.com/photo-1605281317010-fe5ffe798166?w=600&q=80",
+          imo: '9881627', mmsi: '538071476',
         builder: 'Lurssen', year: 2024, length: '122m',
         photo: null,
         slug: 'kismet',
         flag: 'Cayman Islands'
       },
       {
-        name: 'WHISPER', imo: '1012000', mmsi: '319069900',
+        name: 'WHISPER', photo: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=600&q=80",
+          imo: '1012000', mmsi: '319069900',
         builder: 'Lürssen / Krögerwerft', year: 2014, length: '95.2m',
         photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Kismet_%28ship%2C_2014%29_in_S%C3%A8te.jpg/640px-Kismet_%28ship%2C_2014%29_in_S%C3%A8te.jpg',
         slug: 'whisper',
         flag: 'Cayman Islands'
       },
       {
-        name: 'DRAGONFLY', imo: '9907196', mmsi: '319296900',
+        name: 'DRAGONFLY', photo: "https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=600&q=80",
+          imo: '9907196', mmsi: '319296900',
         builder: 'Lurssen', year: 2024, length: '142m',
         photo: 'https://upload.wikimedia.org/wikipedia/commons/1/17/Yacht_Alibaba_2024-09-02_2.jpg',
         slug: 'dragonfly',
         flag: 'Cayman Islands'
       },
       {
-        name: 'RENAISSANCE', imo: '9880776', mmsi: '319268600',
+        name: 'RENAISSANCE', photo: "https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?w=600&q=80",
+          imo: '9880776', mmsi: '319268600',
         builder: 'Freire Shipyard', year: 2023, length: '112m',
         photo: null,
         slug: 'renaissance',
         flag: 'Cayman Islands'
       },
       {
-        name: 'KENSHO', imo: '9854284', mmsi: '319242300',
+        name: 'KENSHO', photo: "https://images.unsplash.com/photo-1605281317010-fe5ffe798166?w=600&q=80",
+          imo: '9854284', mmsi: '319242300',
         builder: 'Admiral', year: 2022, length: '75.2m',
         photo: null,
         slug: 'kensho',
         flag: 'Cayman Islands'
       },
       {
-        name: 'LEVIATHAN', imo: '9921491', mmsi: '319324100',
+        name: 'LEVIATHAN', photo: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=600&q=80",
+          imo: '9921491', mmsi: '319324100',
         builder: 'Oceanco', year: 2025, length: '111m',
         photo: null,
         slug: 'leviathan',
         flag: 'Cayman Islands'
       },
       {
-        name: 'BARBARA', imo: '1012725', mmsi: '319104200',
+        name: 'BARBARA', photo: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80",
+          imo: '1012725', mmsi: '319104200',
         builder: 'Unknown', year: 2017, length: '88.5m',
         photo: null,
         slug: 'barbara',
         flag: 'Cayman Islands'
       },
       {
-        name: 'PROJECT X', imo: '1010727', mmsi: '229063000',
+        name: 'PROJECT X', photo: "https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=600&q=80",
+          imo: '1010727', mmsi: '229063000',
         builder: 'Unknown', year: 2014, length: '~88m',
         photo: null,
         slug: 'projectx',
         flag: 'Malta'
       },
       {
-        name: 'CC SUMMER', imo: '9807956', mmsi: '538071410',
+        name: 'CC SUMMER', photo: "https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?w=600&q=80",
+          imo: '9807956', mmsi: '538071410',
         builder: 'Lurssen', year: 2019, length: '95m',
         photo: null,
         slug: 'ccsummer',
