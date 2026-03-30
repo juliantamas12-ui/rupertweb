@@ -35,7 +35,6 @@
       min-height: 100vh;
     }
 
-    /* ─── HEADER ─── */
     .site-header {
       display: flex;
       align-items: center;
@@ -49,11 +48,7 @@
       z-index: 100;
     }
 
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
+    .header-left { display: flex; align-items: center; gap: 16px; }
 
     .back-link {
       color: var(--text-dim);
@@ -77,11 +72,7 @@
       text-transform: uppercase;
     }
 
-    .header-right {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-    }
+    .header-right { display: flex; flex-direction: column; align-items: flex-end; }
 
     .header-clock {
       font-family: 'Space Mono', monospace;
@@ -90,20 +81,14 @@
       letter-spacing: 0.1em;
     }
 
-    .header-updated {
-      font-size: 10px;
-      color: var(--text-dim);
-      letter-spacing: 0.06em;
-    }
+    .header-updated { font-size: 10px; color: var(--text-dim); letter-spacing: 0.06em; }
 
-    /* ─── MAIN ─── */
     main {
       max-width: 1400px;
       margin: 0 auto;
       padding: 40px 32px 80px;
     }
 
-    /* ─── HERO TITLE ─── */
     .page-hero {
       margin-bottom: 48px;
       border-left: 3px solid var(--gold);
@@ -157,7 +142,6 @@
       50% { opacity: 0.3; }
     }
 
-    /* ─── SECTION LABELS ─── */
     .section-label {
       display: flex;
       align-items: center;
@@ -181,7 +165,6 @@
       background: var(--navy-border);
     }
 
-    /* ─── FLEET GRID ─── */
     .fleet-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -193,7 +176,6 @@
       background: var(--navy-card);
       border: 1px solid var(--navy-border);
       border-radius: 4px;
-      padding: 20px;
       cursor: pointer;
       text-decoration: none;
       display: block;
@@ -212,6 +194,7 @@
       transform: scaleX(0);
       transform-origin: left;
       transition: transform 0.25s ease;
+      z-index: 2;
     }
 
     .vessel-card:hover {
@@ -222,30 +205,70 @@
 
     .vessel-card:hover::before { transform: scaleX(1); }
 
-    .vessel-card.tbd {
-      opacity: 0.55;
-      cursor: default;
+    /* Card photo area */
+    .card-photo {
+      width: 100%;
+      height: 180px;
+      overflow: hidden;
+      position: relative;
+      background: linear-gradient(135deg, #0d1e3d 0%, #142440 40%, #0a1628 100%);
     }
 
-    .vessel-card.tbd:hover {
-      transform: none;
-      border-color: var(--navy-border);
-      background: var(--navy-card);
+    .card-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.4s ease;
     }
 
-    .vessel-card.tbd::before { display: none; }
+    .vessel-card:hover .card-photo img {
+      transform: scale(1.04);
+    }
 
-    /* Card interior */
+    .card-photo-overlay {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 70px;
+      background: linear-gradient(to top, rgba(10,22,40,0.95) 0%, rgba(10,22,40,0.5) 60%, transparent 100%);
+      display: flex;
+      align-items: flex-end;
+      padding: 8px 14px;
+    }
+
+    .card-photo-name {
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      color: var(--gold);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .card-photo-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.18;
+    }
+
+    .card-body {
+      padding: 16px 20px 20px;
+    }
+
     .card-top {
       display: flex;
       align-items: flex-start;
       justify-content: space-between;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
 
     .vessel-name {
       font-family: 'Space Mono', monospace;
-      font-size: 15px;
+      font-size: 13px;
       font-weight: 700;
       letter-spacing: 0.1em;
       color: var(--gold);
@@ -257,7 +280,7 @@
       width: 8px;
       height: 8px;
       border-radius: 50%;
-      margin-top: 5px;
+      margin-top: 4px;
       flex-shrink: 0;
     }
 
@@ -269,17 +292,11 @@
 
     .status-dot.tbd { background: var(--grey); }
 
-    .card-silhouette {
-      margin-bottom: 14px;
-    }
-
     .card-meta {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 8px 12px;
     }
-
-    .meta-item {}
 
     .meta-label {
       font-size: 9px;
@@ -296,7 +313,7 @@
     }
 
     .card-footer {
-      margin-top: 16px;
+      margin-top: 14px;
       padding-top: 12px;
       border-top: 1px solid var(--navy-border);
       display: flex;
@@ -304,13 +321,9 @@
       align-items: center;
     }
 
-    .imo-label {
-      font-size: 10px;
-      color: var(--text-dim);
-      letter-spacing: 0.08em;
-    }
+    .imo-label { font-size: 10px; color: var(--text-dim); letter-spacing: 0.08em; }
 
-    .vf-link {
+    .detail-link {
       font-size: 10px;
       color: var(--gold-dim);
       letter-spacing: 0.1em;
@@ -321,17 +334,16 @@
       transition: color 0.2s;
     }
 
-    .vessel-card:hover .vf-link { color: var(--gold); }
+    .vessel-card:hover .detail-link { color: var(--gold); }
 
-    /* ─── SVG SILHOUETTE ─── */
     .yacht-svg {
       display: block;
-      width: 100%;
+      width: 120px;
       height: 40px;
-      opacity: 0.35;
+      opacity: 0.5;
     }
 
-    /* ─── MAP SECTION ─── */
+    /* MAP */
     .map-section { margin-bottom: 56px; }
 
     .map-container {
@@ -364,7 +376,7 @@
       pointer-events: none;
     }
 
-    /* ─── VESSEL DETAIL TABLE ─── */
+    /* TABLE */
     .detail-table-section { margin-bottom: 56px; }
 
     .vessel-table {
@@ -391,9 +403,7 @@
     }
 
     .vessel-table tr:last-child td { border-bottom: none; }
-
     .vessel-table tr:hover td { background: rgba(200, 160, 32, 0.04); }
-
     .vessel-table tr.tbd-row { opacity: 0.45; }
 
     .table-name {
@@ -404,11 +414,7 @@
       color: var(--gold);
     }
 
-    .table-status {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+    .table-status { display: flex; align-items: center; gap: 8px; }
 
     .table-status-text {
       font-size: 10px;
@@ -438,12 +444,8 @@
       background: rgba(200, 160, 32, 0.06);
     }
 
-    .table-link.disabled {
-      opacity: 0.3;
-      pointer-events: none;
-    }
+    .table-link.disabled { opacity: 0.3; pointer-events: none; }
 
-    /* ─── FOOTER ─── */
     .page-footer {
       margin-top: 80px;
       padding-top: 24px;
@@ -455,31 +457,16 @@
       gap: 12px;
     }
 
-    .footer-left {
-      font-size: 11px;
-      color: var(--text-dim);
-      letter-spacing: 0.06em;
-    }
-
-    .footer-right {
-      font-size: 11px;
-      color: var(--text-dim);
-    }
-
-    .footer-right a {
-      color: var(--gold-dim);
-      text-decoration: none;
-      transition: color 0.2s;
-    }
-
+    .footer-left { font-size: 11px; color: var(--text-dim); letter-spacing: 0.06em; }
+    .footer-right { font-size: 11px; color: var(--text-dim); }
+    .footer-right a { color: var(--gold-dim); text-decoration: none; transition: color 0.2s; }
     .footer-right a:hover { color: var(--gold); }
 
-    /* ─── RESPONSIVE ─── */
     @media (max-width: 768px) {
       main { padding: 24px 16px 60px; }
       .site-header { padding: 0 16px; }
       .fleet-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
-      .vessel-name { font-size: 12px; }
+      .vessel-name { font-size: 11px; }
       .map-container iframe { height: 400px; }
     }
 
@@ -491,7 +478,6 @@
 </head>
 <body>
 
-  <!-- HEADER -->
   <header class="site-header">
     <div class="header-left">
       <a href="/" class="back-link">rupertweb.com</a>
@@ -506,18 +492,15 @@
 
   <main>
 
-    <!-- HERO -->
     <div class="page-hero">
       <h1>Fleet Tracker</h1>
       <p>Live vessel positions &mdash; VesselFinder AIS data</p>
       <span class="ais-badge">AIS Live Feed</span>
     </div>
 
-    <!-- FLEET GRID -->
     <div class="section-label"><h2>Fleet Overview</h2></div>
     <div class="fleet-grid" id="fleet-grid"></div>
 
-    <!-- LIVE MAP -->
     <div class="map-section">
       <div class="section-label"><h2>Live Positions</h2></div>
       <div class="map-container">
@@ -532,7 +515,6 @@
       </div>
     </div>
 
-    <!-- VESSEL DETAIL TABLE -->
     <div class="detail-table-section">
       <div class="section-label"><h2>Vessel Registry</h2></div>
       <div style="background:var(--navy-card);border:1px solid var(--navy-border);border-radius:4px;overflow:hidden;">
@@ -566,117 +548,169 @@
   </footer>
 
   <script>
+    // WM Commons images (CC licensed) where available, otherwise null
     const VESSELS = [
-      {name: 'BREAKTHROUGH', imo: '9899650',  mmsi: '319300600', builder: 'Feadship', year: 2025, length: '118.8m'},
-      {name: 'LADY S',       imo: '1013121',  mmsi: '319137200', builder: 'Lurssen',  year: 2019, length: '93m'},
-      {name: 'KISMET',       imo: '9881627',  mmsi: '538071476', builder: 'Lurssen',  year: 2024, length: '95m'},
-      {name: 'WHISPER',      imo: '1012000',  mmsi: '319069900', builder: 'Unknown',  year: 2014, length: '95m'},
-      {name: 'DRAGONFLY',    imo: '9907196',  mmsi: '319296900', builder: 'Lurssen',  year: 2024, length: '142m'},
-      {name: 'RENAISSANCE',  imo: '9880776',  mmsi: '319268600', builder: 'Freire Shipyard',  year: 2023, length: '112m'},
-      {name: 'KENSHO',       imo: '9854284',  mmsi: '319242300', builder: 'Admiral',  year: 2022, length: '75m'},
-      {name: 'LEVIATHAN',    imo: '9921491',  mmsi: '319324100', builder: 'Oceanco',  year: 2025, length: '111m'},
-      {name: 'CC SUMMER',    imo: null,       mmsi: null,        builder: 'Unknown',  year: null, length: 'Unknown'},
-      {name: 'PROJECT X',    imo: null,       mmsi: null,        builder: 'Unknown',  year: null, length: 'Unknown'},
-      {name: 'BARBARA',      imo: null,       mmsi: null,        builder: 'Unknown',  year: null, length: 'Unknown'},
+      {
+        name: 'BREAKTHROUGH', imo: '9899650', mmsi: '319300600',
+        builder: 'Feadship', year: 2025, length: '118.8m',
+        photo: null,
+        slug: 'breakthrough',
+        flag: 'Cayman Islands'
+      },
+      {
+        name: 'LADY S', imo: '1013121', mmsi: '319137200',
+        builder: 'Feadship', year: 2019, length: '93m',
+        photo: null,
+        slug: 'ladys',
+        flag: 'Cayman Islands'
+      },
+      {
+        name: 'KISMET', imo: '9881627', mmsi: '538071476',
+        builder: 'Lurssen', year: 2024, length: '122m',
+        photo: null,
+        slug: 'kismet',
+        flag: 'Cayman Islands'
+      },
+      {
+        name: 'WHISPER', imo: '1012000', mmsi: '319069900',
+        builder: 'Lürssen / Krögerwerft', year: 2014, length: '95.2m',
+        photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Kismet_%28ship%2C_2014%29_in_S%C3%A8te.jpg/640px-Kismet_%28ship%2C_2014%29_in_S%C3%A8te.jpg',
+        slug: 'whisper',
+        flag: 'Cayman Islands'
+      },
+      {
+        name: 'DRAGONFLY', imo: '9907196', mmsi: '319296900',
+        builder: 'Lurssen', year: 2024, length: '142m',
+        photo: 'https://upload.wikimedia.org/wikipedia/commons/1/17/Yacht_Alibaba_2024-09-02_2.jpg',
+        slug: 'dragonfly',
+        flag: 'Cayman Islands'
+      },
+      {
+        name: 'RENAISSANCE', imo: '9880776', mmsi: '319268600',
+        builder: 'Freire Shipyard', year: 2023, length: '112m',
+        photo: null,
+        slug: 'renaissance',
+        flag: 'Cayman Islands'
+      },
+      {
+        name: 'KENSHO', imo: '9854284', mmsi: '319242300',
+        builder: 'Admiral', year: 2022, length: '75.2m',
+        photo: null,
+        slug: 'kensho',
+        flag: 'Cayman Islands'
+      },
+      {
+        name: 'LEVIATHAN', imo: '9921491', mmsi: '319324100',
+        builder: 'Oceanco', year: 2025, length: '111m',
+        photo: null,
+        slug: 'leviathan',
+        flag: 'Cayman Islands'
+      },
+      {
+        name: 'BARBARA', imo: '1012725', mmsi: '319104200',
+        builder: 'Unknown', year: 2017, length: '88.5m',
+        photo: null,
+        slug: 'barbara',
+        flag: 'Cayman Islands'
+      },
+      {
+        name: 'PROJECT X', imo: '1010727', mmsi: '229063000',
+        builder: 'Unknown', year: 2014, length: '~88m',
+        photo: null,
+        slug: 'projectx',
+        flag: 'Malta'
+      },
+      {
+        name: 'CC SUMMER', imo: '9807956', mmsi: '538071410',
+        builder: 'Lurssen', year: 2019, length: '95m',
+        photo: null,
+        slug: 'ccsummer',
+        flag: 'Marshall Islands'
+      },
     ];
 
-    // ─── SVG SILHOUETTE ───
-    function yachtSVG(length) {
-      // A schematic yacht profile, scaled loosely by length
-      const lx = length && !isNaN(parseInt(length)) ? Math.min(1, parseInt(length) / 145) : 0.7;
-      return `<svg class="yacht-svg" viewBox="0 0 240 40" xmlns="http://www.w3.org/2000/svg">
-        <!-- Hull -->
-        <path d="M20 28 Q${30 + lx*10} 20 ${60 + lx*80} 20 L${80 + lx*120} 28 Q${50 + lx*80} 34 20 34 Z"
-              fill="#c8a020" opacity="0.55"/>
-        <!-- Superstructure -->
-        <rect x="${35 + lx*20}" y="16" width="${lx*90}" height="8" rx="2" fill="#c8a020" opacity="0.7"/>
-        <!-- Bridge -->
-        <rect x="${40 + lx*30}" y="11" width="${lx*35}" height="7" rx="1" fill="#c8a020" opacity="0.55"/>
-        <!-- Mast -->
-        <line x1="${42 + lx*32}" y1="11" x2="${42 + lx*32}" y2="3" stroke="#c8a020" stroke-width="1" opacity="0.5"/>
-        <!-- Radar -->
-        <circle cx="${42 + lx*32}" cy="3" r="2" fill="none" stroke="#c8a020" stroke-width="0.8" opacity="0.5"/>
-        <!-- Bow wave -->
-        <path d="M${80 + lx*120} 29 Q${90 + lx*130} 33 ${100 + lx*138} 36"
-              fill="none" stroke="#1a3a6a" stroke-width="1.5" opacity="0.6"/>
+    function yachtSVG() {
+      return `<svg viewBox="0 0 180 40" xmlns="http://www.w3.org/2000/svg" style="width:140px;height:40px;opacity:0.5;">
+        <path d="M15 28 Q30 18 70 18 L140 22 Q150 26 155 30 Q100 34 15 34 Z" fill="#c8a020"/>
+        <rect x="30" y="12" width="80" height="8" rx="2" fill="#c8a020" opacity="0.8"/>
+        <rect x="40" y="7" width="40" height="7" rx="1" fill="#c8a020" opacity="0.6"/>
+        <line x1="45" y1="7" x2="45" y2="1" stroke="#c8a020" stroke-width="1.2"/>
+        <circle cx="45" cy="1" r="2" fill="none" stroke="#c8a020" stroke-width="0.8"/>
       </svg>`;
     }
 
-    // ─── BUILD FLEET CARDS ───
     const grid = document.getElementById('fleet-grid');
     VESSELS.forEach(v => {
-      const active = !!v.imo;
-      const href = active ? `https://www.vesselfinder.com/vessels/details/${v.imo}` : '#';
       const card = document.createElement('a');
-      card.className = 'vessel-card' + (active ? '' : ' tbd');
-      card.href = href;
-      if (active) {
-        card.target = '_blank';
-        card.rel = 'noopener noreferrer';
-      }
+      card.className = 'vessel-card';
+      card.href = `yacht-${v.slug}.html`;
+
+      const photoContent = v.photo
+        ? `<img src="${v.photo}" alt="${v.name}" loading="lazy" onerror="this.style.display='none'">`
+        : `<div class="card-photo-placeholder">${yachtSVG()}</div>`;
 
       card.innerHTML = `
-        <div class="card-top">
-          <div class="vessel-name">${v.name}</div>
-          <div class="status-dot ${active ? 'active' : 'tbd'}"></div>
-        </div>
-        <div class="card-silhouette">${yachtSVG(v.length)}</div>
-        <div class="card-meta">
-          <div class="meta-item">
-            <div class="meta-label">Builder</div>
-            <div class="meta-value">${v.builder}</div>
-          </div>
-          <div class="meta-item">
-            <div class="meta-label">Year</div>
-            <div class="meta-value">${v.year || '—'}</div>
-          </div>
-          <div class="meta-item">
-            <div class="meta-label">Length</div>
-            <div class="meta-value">${v.length}</div>
-          </div>
-          <div class="meta-item">
-            <div class="meta-label">MMSI</div>
-            <div class="meta-value" style="font-size:10px;word-break:break-all;">${v.mmsi || '—'}</div>
+        <div class="card-photo">
+          ${photoContent}
+          <div class="card-photo-overlay">
+            <span class="card-photo-name">${v.name}</span>
           </div>
         </div>
-        <div class="card-footer">
-          <span class="imo-label">IMO ${v.imo || 'TBD'}</span>
-          <span class="vf-link">${active ? 'VesselFinder →' : 'Pending'}</span>
+        <div class="card-body">
+          <div class="card-top">
+            <div class="vessel-name">${v.name}</div>
+            <div class="status-dot active"></div>
+          </div>
+          <div class="card-meta">
+            <div class="meta-item">
+              <div class="meta-label">Builder</div>
+              <div class="meta-value">${v.builder}</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-label">Year</div>
+              <div class="meta-value">${v.year}</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-label">Length</div>
+              <div class="meta-value">${v.length}</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-label">Flag</div>
+              <div class="meta-value" style="font-size:10px;">${v.flag}</div>
+            </div>
+          </div>
+          <div class="card-footer">
+            <span class="imo-label">IMO ${v.imo}</span>
+            <span class="detail-link">View Details →</span>
+          </div>
         </div>
       `;
       grid.appendChild(card);
     });
 
-    // ─── BUILD TABLE ───
     const tbody = document.getElementById('vessel-tbody');
     VESSELS.forEach(v => {
-      const active = !!v.imo;
       const tr = document.createElement('tr');
-      if (!active) tr.className = 'tbd-row';
       tr.innerHTML = `
-        <td><span class="table-name">${v.name}</span></td>
+        <td><a href="yacht-${v.slug}.html" style="text-decoration:none;"><span class="table-name">${v.name}</span></a></td>
         <td>
           <div class="table-status">
-            <div class="status-dot ${active ? 'active' : 'tbd'}" style="width:7px;height:7px;"></div>
-            <span class="table-status-text ${active ? 'active' : 'tbd'}">${active ? 'AIS Active' : 'TBD'}</span>
+            <div class="status-dot active" style="width:7px;height:7px;"></div>
+            <span class="table-status-text active">AIS Active</span>
           </div>
         </td>
         <td>${v.builder}</td>
-        <td>${v.year || '—'}</td>
+        <td>${v.year}</td>
         <td>${v.length}</td>
-        <td style="font-family:'Space Mono',monospace;font-size:11px;color:var(--text-dim);">${v.imo || '—'}</td>
-        <td style="font-family:'Space Mono',monospace;font-size:11px;color:var(--text-dim);">${v.mmsi || '—'}</td>
+        <td style="font-family:'Space Mono',monospace;font-size:11px;color:var(--text-dim);">${v.imo}</td>
+        <td style="font-family:'Space Mono',monospace;font-size:11px;color:var(--text-dim);">${v.mmsi}</td>
         <td>
-          ${active
-            ? `<a class="table-link" href="https://www.vesselfinder.com/vessels/details/${v.imo}" target="_blank" rel="noopener">Track</a>`
-            : `<span class="table-link disabled">Track</span>`
-          }
+          <a class="table-link" href="https://www.vesselfinder.com/vessels/details/${v.imo}" target="_blank" rel="noopener">Track</a>
         </td>
       `;
       tbody.appendChild(tr);
     });
 
-    // ─── CLOCK & TIMESTAMP ───
     function pad(n) { return String(n).padStart(2, '0'); }
 
     function updateClock() {
@@ -690,8 +724,7 @@
     updateClock();
     setInterval(updateClock, 1000);
 
-    // ─── AUTO-REFRESH MAP every 60s ───
-    let refreshInterval = setInterval(() => {
+    setInterval(() => {
       const iframe = document.getElementById('vf-map');
       const src = iframe.src;
       iframe.src = '';

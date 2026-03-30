@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KENSHO — Fleet Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="yacht-detail.css" />
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="header-left">
+      <a href="yachts.html" class="back-link">Fleet Tracker</a>
+      <span class="header-sep">/</span>
+      <span class="site-title">KENSHO</span>
+    </div>
+    <div class="header-right">
+      <span class="header-clock" id="header-clock"></span>
+    </div>
+  </header>
+
+  <div class="hero" style="background: linear-gradient(to bottom, rgba(10,22,40,0.4) 0%, rgba(10,22,40,0.9) 80%, rgba(10,22,40,1) 100%), linear-gradient(135deg, #0a1e3a 0%, #162d50 50%, #0a1628 100%);">
+    <div class="hero-content">
+      <div class="hero-badge">Admiral — The Italian Sea Group — 2022</div>
+      <h1 class="hero-name">KENSHO</h1>
+      <p class="hero-sub">75.2m &mdash; Admiral / The Italian Sea Group &mdash; 2022</p>
+    </div>
+  </div>
+
+  <main>
+    <div class="layout">
+
+      <div class="content-col">
+        <section class="card">
+          <h2 class="section-title">About This Vessel</h2>
+          <div class="article-body">
+            <p>KENSHO — the name derived from the Japanese concept of insight or spiritual awakening in Zen philosophy — is among the most celebrated superyachts to emerge from Italian yards in recent years. Built by Admiral, the flagship brand of The Italian Sea Group, and delivered in 2022, she represents an ambitious synthesis of environmental consciousness and luxury at the 75-metre scale, a project that attracted industry attention well before her launch and has since won multiple prestigious design awards.</p>
+
+            <p>The Italian Sea Group, headquartered in La Spezia, has established Admiral as one of Italy's most capable builders in the over-50-metre segment. KENSHO, at 75.18 metres, sits near the top of their build portfolio and demonstrates the yard's commitment to technical innovation alongside aesthetic excellence. Her hull design prioritises hydrodynamic efficiency, and her propulsion system incorporates hybrid elements that reduce fuel consumption and emissions during lower-speed operation — a reflection of the growing demand from owners for vessels that align luxury with environmental responsibility.</p>
+
+            <p>She is available for charter through Y.CO, one of the leading superyacht charter and management agencies in the global market. Charter clients seeking a vessel that combines genuine Italian craftsmanship with contemporary eco-conscious engineering will find KENSHO a compelling proposition. Her accommodation configuration, crew provision, and onboard amenities are designed to deliver the full charter experience at Mediterranean and Caribbean destinations during their respective seasons.</p>
+
+            <p>The vessel's award-winning status reflects widespread recognition from within the industry of her design and engineering achievements. Her exterior profile is sleek and purposeful, her superstructure characterised by clean horizontal lines and generous glazing that floods interior spaces with natural light — a design priority increasingly demanded by clients seeking connection to the marine environment rather than separation from it.</p>
+
+            <p>Currently sailing under the Cayman Islands flag with MMSI 319242300, KENSHO's AIS position was most recently reported in the North West Atlantic Ocean. Her active operational status and charter availability make her one of the more accessible vessels in this fleet for those seeking the superyacht experience at this scale. She represents the Italian school of yacht design at its current peak — technically sophisticated, aesthetically assured, and built to last.</p>
+          </div>
+        </section>
+
+        <section class="card gallery-section">
+          <h2 class="section-title">Gallery</h2>
+          <div class="gallery-grid">
+            <div class="gallery-item placeholder-gallery"><div class="gallery-placeholder-text">Exterior Profile — Placeholder</div></div>
+            <div class="gallery-item placeholder-gallery"><div class="gallery-placeholder-text">Main Salon — Placeholder</div></div>
+            <div class="gallery-item placeholder-gallery"><div class="gallery-placeholder-text">Sun Deck — Placeholder</div></div>
+          </div>
+          <p class="gallery-note">Photography by Admiral / The Italian Sea Group. All rights reserved.</p>
+        </section>
+      </div>
+
+      <div class="sidebar-col">
+        <section class="card">
+          <h2 class="section-title">Specifications</h2>
+          <table class="specs-table">
+            <tr><td class="spec-label">Length</td><td class="spec-value">75.18m (247ft)</td></tr>
+            <tr><td class="spec-label">Builder</td><td class="spec-value">Admiral / TISG</td></tr>
+            <tr><td class="spec-label">Year Delivered</td><td class="spec-value">2022</td></tr>
+            <tr><td class="spec-label">Flag</td><td class="spec-value">Cayman Islands</td></tr>
+            <tr><td class="spec-label">IMO</td><td class="spec-value">9854284</td></tr>
+            <tr><td class="spec-label">MMSI</td><td class="spec-value">319242300</td></tr>
+            <tr><td class="spec-label">Charter Broker</td><td class="spec-value">Y.CO</td></tr>
+          </table>
+        </section>
+
+        <section class="card">
+          <h2 class="section-title">Live Tracking</h2>
+          <p class="track-note">Real-time AIS position via VesselFinder</p>
+          <a class="btn-track" href="https://www.vesselfinder.com/vessels/details/9854284" target="_blank" rel="noopener">Track Live on VesselFinder</a>
+        </section>
+
+        <section class="card">
+          <h2 class="section-title">Key Facts</h2>
+          <ul class="facts-list">
+            <li>Built by Admiral (The Italian Sea Group)</li>
+            <li>Award-winning design and engineering</li>
+            <li>Hybrid propulsion system</li>
+            <li>Available for charter via Y.CO</li>
+            <li>Name: Japanese concept of awakening</li>
+            <li>AIS: North West Atlantic Ocean</li>
+          </ul>
+        </section>
+      </div>
+
+    </div>
+  </main>
+
+  <div class="page-footer">
+    <a href="yachts.html" class="btn-back">← Back to Fleet</a>
+    <span class="footer-note">Data sourced from VesselFinder, Admiral, Y.CO, Boat International</span>
+  </div>
+
+  <script>
+    function pad(n) { return String(n).padStart(2,'0'); }
+    function tick() {
+      const n = new Date();
+      document.getElementById('header-clock').textContent =
+        pad(n.getUTCHours())+':'+pad(n.getUTCMinutes())+':'+pad(n.getUTCSeconds())+' UTC';
+    }
+    tick(); setInterval(tick, 1000);
+  </script>
+</body>
+</html>
