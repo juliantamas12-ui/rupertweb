@@ -293,6 +293,21 @@ main {
   font-style: italic;
 }
 
+.gallery-figure {
+  display: flex;
+  flex-direction: column;
+}
+
+.gallery-caption {
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 0.05em;
+  padding: 4px 0 0 0;
+  margin: 0;
+  font-style: italic;
+  line-height: 1.4;
+}
+
 /* FOOTER */
 .page-footer {
   max-width: 1300px;
