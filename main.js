@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Revolution They Buried: Haiti and the Event That Remade the Atlantic World",
+    date: "2026-03-30",
+    category: "History",
+    excerpt: "The French Revolution gets the glory. 1776 gets the mythology. But neither of those revolutions did what the Haitian Revolution did: it destroyed the most profitable slave colony on earth from the inside, created the first Black republic in history, ...",
+    url: "essays/2026-03-30-the-revolution-they-buried-haiti-and-the-event-that-remade-t.html"
+  },
+  {
     title: "The Peace That Lasted: Metternich, the Concert of Europe, and the Art of Managed Multipolarity",
     date: "2026-03-29",
     category: "History",
@@ -92,7 +99,7 @@ const ESSAYS = [
    Fields: subject, title, due (YYYY-MM-DD), status ('pending'|'done')
    ══════════════════════════════════════════════════════════════ */
 const SCHOOL_TASKS = [
-  // Last updated: 2026-03-28 via ManageBac scraper
+  // Last updated: 2026-03-29 via ManageBac scraper
   // --- Past (Mon Mar 23) ---
   { subject: "Math 8", title: "Math 8: Apothem Exercises", due: "2026-03-23", time: "8:30 AM", status: "done", type: "Homework" },
   { subject: "English 7", title: "Eng 7 hw", due: "2026-03-23", time: "9:00 AM", status: "done", type: "Homework" },
@@ -119,6 +126,10 @@ const SCHOOL_TASKS = [
   // --- Past (Fri Mar 27) ---
   { subject: "History 7", title: "Age of Exploration Summative Assessment", due: "2026-03-27", time: "11:20 AM", status: "done", type: "Summative" },
   { subject: "Art 7", title: "RENAISSANCE PRESENTATIONS SECOND GROUPS", due: "2026-03-27", time: "2:30 PM", status: "done", type: "Presentation" },
+  // --- Upcoming (Mon Mar 30) ---
+  { subject: "Science 7", title: "HW Science 7", due: "2026-03-30", time: "10:00 AM", status: "pending", type: "Summative" },
+  { subject: "History/Geography 7", title: "Upload weeks 11 - 14 work", due: "2026-03-30", time: "12:10 PM", status: "pending", type: "Summative" },
+  { subject: "General Music 7", title: "Ukulele Assessment", due: "2026-03-30", time: "12:35 PM", status: "pending", type: "Performance/Assessment" },
 ];
 
 
