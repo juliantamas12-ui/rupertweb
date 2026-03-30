@@ -666,7 +666,6 @@ const state = {
   ancientChamberPos: {cx:15, cy:15},
   ancientChamberUsed: false,
   boardingTarget: null, // canoe being boarded
-  groundLoot: [],       // {x, y, item, qty, life, bobPhase}
 };
 
 // NPC definitions
@@ -3404,31 +3403,6 @@ function updateEnemies() {
       if (e.dyingTimer <= 0 && state.runStats) {
         state.runStats.enemiesKilled++;
         gainSkill('combat');
-        // === GROUND LOOT DROP ===
-        const dropTable = [
-          { item:'stone',          qty:1, weight:30 },
-          { item:'wood',           qty:1, weight:25 },
-          { item:'coconut',        qty:1, weight:15 },
-          { item:'fruit',          qty:1, weight:12 },
-          { item:'vine',           qty:1, weight:8  },
-          { item:'volcanic_stone', qty:1, weight:e.type==='shadow'?6:2 },
-          { item:'tribal_weapon',  qty:1, weight:e.type==='shadow'?4:1 },
-        ];
-        const totalW = dropTable.reduce((s,d)=>s+d.weight, 0);
-        const roll = Math.random() * totalW;
-        let acc = 0, chosen = null;
-        for (const d of dropTable) { acc += d.weight; if (roll < acc) { chosen = d; break; } }
-        if (chosen) {
-          if (!state.groundLoot) state.groundLoot = [];
-          state.groundLoot.push({
-            x: e.x + (Math.random()-0.5)*12,
-            y: e.y + (Math.random()-0.5)*12,
-            item: chosen.item,
-            qty: chosen.qty,
-            life: 900, // ~15 seconds at 60fps
-            bobPhase: Math.random() * Math.PI * 2,
-          });
-        }
       }
       return e.dyingTimer > 0;
     }
@@ -7168,74 +7142,6 @@ function drawWorldMap(ctx) {
   ctx.fillStyle = '#c8f135'; ctx.fillText('■ You', mapX, mapY + mapH + 18);
   ctx.fillStyle = '#4a9ab4'; ctx.fillText('■ NPCs', mapX + 50, mapY + mapH + 18);
 }
-// ============================================================
-// GROUND LOOT — enemy drops that auto-collect on touch
-// ============================================================
-const GROUND_LOOT_LABELS = {
-  stone:'STONE', wood:'WOOD', coconut:'COCONUT', fruit:'FRUIT',
-  vine:'VINE', volcanic_stone:'VOL STONE', tribal_weapon:'TRIBAL WPN'
-};
-const GROUND_LOOT_COLORS = {
-  stone:'#aaa', wood:'#c8a060', coconut:'#6a8a30', fruit:'#e8a040',
-  vine:'#3a8a20', volcanic_stone:'#ff6600', tribal_weapon:'#cc4422'
-};
-function updateGroundLoot() {
-  if (!state.groundLoot) { state.groundLoot = []; return; }
-  if (state.underground) return; // no surface loot while caving
-  const p = state.player;
-  const PICKUP_DIST = 28;
-  for (let i = state.groundLoot.length - 1; i >= 0; i--) {
-    const loot = state.groundLoot[i];
-    loot.life--;
-    loot.bobPhase += 0.06;
-    if (loot.life <= 0) { state.groundLoot.splice(i, 1); continue; }
-    // Auto-collect when player walks near
-    if (Math.hypot(p.x - loot.x, p.y - loot.y) < PICKUP_DIST) {
-      p.inv[loot.item] = (p.inv[loot.item] || 0) + loot.qty;
-      addFloatingText(loot.x, loot.y - 18, '+' + loot.qty + ' ' + (GROUND_LOOT_LABELS[loot.item] || loot.item), GROUND_LOOT_COLORS[loot.item] || '#c8f135');
-      SFX.pickup && SFX.pickup();
-      if (state.runStats) state.runStats.itemsCollected++;
-      checkRecipeDiscovery && checkRecipeDiscovery();
-      updateUI();
-      state.groundLoot.splice(i, 1);
-    }
-  }
-}
-function drawGroundLoot(ctx, camX, camY) {
-  if (!state.groundLoot || state.underground) return;
-  for (const loot of state.groundLoot) {
-    const sx = Math.round(loot.x - camX);
-    const sy = Math.round(loot.y - camY + Math.sin(loot.bobPhase) * 2.5);
-    if (sx < -20 || sx > ctx.canvas.width + 20) continue;
-    if (sy < -20 || sy > ctx.canvas.height + 20) continue;
-    // Fade out in last 3 seconds (180 frames) and blink
-    const fadeAlpha = loot.life < 180 ? (loot.life / 180) : 1;
-    if (loot.life < 180 && Math.floor(loot.life / 15) % 2 === 0) continue; // blink
-    ctx.save();
-    ctx.globalAlpha = fadeAlpha * 0.92;
-    // Shadow under item
-    ctx.fillStyle = 'rgba(0,0,0,0.25)';
-    ctx.beginPath();
-    ctx.ellipse(sx, sy + 7, 7, 3, 0, 0, Math.PI * 2);
-    ctx.fill();
-    // Item glyph: colored circle with icon letter
-    const col = GROUND_LOOT_COLORS[loot.item] || '#c8f135';
-    ctx.fillStyle = col;
-    ctx.beginPath();
-    ctx.arc(sx, sy, 6, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-    // Label above
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 7px Lato,sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText((GROUND_LOOT_LABELS[loot.item] || loot.item).slice(0,3).toUpperCase(), sx, sy - 9);
-    ctx.restore();
-  }
-}
-
 function render(ctx, minimapCtx) {
   const p = state.player;
   const canvas = ctx.canvas;
@@ -7846,9 +7752,6 @@ function render(ctx, minimapCtx) {
 
   // Particles
   drawParticles(ctx, camX, camY);
-
-  // Ground loot drops
-  drawGroundLoot(ctx, camX, camY);
 
   // Footprints on beach
   state.footprints.forEach(fp => {
@@ -11465,7 +11368,6 @@ function gameLoopWithUI() {
   updateLivingIsland();
   if (state.frameCount % 2 === 0) updateCanoes();
   updateCaveCreatures();
-  updateGroundLoot();
   // Handle canoe-targeted projectiles
   updateCanoeProjectiles();
   // Check boarding completion
