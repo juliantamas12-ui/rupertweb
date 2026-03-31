@@ -2803,15 +2803,15 @@ function drawVine(ctx, sx, sy) {
 }
 
 function updateParticles() {
-  // Hard cap on particles (raised from 20 → 60 for better combat feel)
-  const PARTICLE_CAP = 60;
+  // Hard cap on particles
+  while (state.particles.length > 20) state.particles.shift();
   state.particles = state.particles.filter(p => {
     p.x += p.vx; p.y += p.vy;
     p.vy += 0.05;
     p.life--;
     return p.life > 0;
   });
-  if (state.particles.length > PARTICLE_CAP) state.particles.splice(0, state.particles.length - PARTICLE_CAP);
+  if (state.particles.length > 20) state.particles.splice(0, state.particles.length - 20);
 }
 
 function drawCampVisuals(ctx, camX, camY) {
@@ -4373,150 +4373,6 @@ window.SFX = (() => {
 })();
 
 // ============================================================
-// AMBIENT AUDIO SYSTEM
-// Ocean waves, campfire crackle, and wind — proximity-based
-// ============================================================
-
-window.AMBIENT = (() => {
-  let _actx = null;
-  let _musicOn = true;
-  let _ambientOn = true;
-
-  // Nodes for each ambient layer
-  let _oceanGain = null, _oceanNoise = null;
-  let _fireGain = null, _fireNoise = null;
-  let _windGain = null, _windNoise = null;
-
-  function getCtx() {
-    if (!_actx) {
-      _actx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    if (_actx.state === 'suspended') _actx.resume();
-    return _actx;
-  }
-
-  // Create a filtered noise source looped indefinitely
-  function makeNoiseSource(ctx, filterType, freq, q) {
-    const bufSize = ctx.sampleRate * 4; // 4-second buffer, looped
-    const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
-    const data = buf.getChannelData(0);
-    for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
-    const src = ctx.createBufferSource();
-    src.buffer = buf;
-    src.loop = true;
-    const filter = ctx.createBiquadFilter();
-    filter.type = filterType;
-    filter.frequency.value = freq;
-    filter.Q.value = q;
-    src.connect(filter);
-    return { src, filter };
-  }
-
-  // LFO to slowly modulate gain for wave rhythm
-  function makeLFO(ctx, rate, gainNode, minVol, maxVol) {
-    const lfo = ctx.createOscillator();
-    const lfoGain = ctx.createGain();
-    lfo.type = 'sine';
-    lfo.frequency.value = rate; // Hz
-    lfoGain.gain.value = (maxVol - minVol) / 2;
-    lfo.connect(lfoGain);
-    lfoGain.connect(gainNode.gain);
-    lfo.start();
-    gainNode.gain.value = minVol + (maxVol - minVol) / 2;
-    return lfo;
-  }
-
-  function start() {
-    if (_oceanGain) return; // already running
-    try {
-      const ctx = getCtx();
-
-      // === OCEAN LAYER ===
-      // Low-frequency bandpass noise simulates wave wash
-      const { src: oSrc, filter: oFilt } = makeNoiseSource(ctx, 'bandpass', 320, 0.4);
-      _oceanGain = ctx.createGain();
-      _oceanGain.gain.value = 0;
-      oFilt.connect(_oceanGain);
-      _oceanGain.connect(ctx.destination);
-      oSrc.start();
-      _oceanNoise = oSrc;
-      // Gentle wave LFO: ~0.18 Hz = one "wave" every ~5.5 seconds
-      makeLFO(ctx, 0.18, _oceanGain, 0, 0.16);
-
-      // === CAMPFIRE LAYER ===
-      // Higher-frequency bandpass noise for crackle
-      const { src: fSrc, filter: fFilt } = makeNoiseSource(ctx, 'bandpass', 1200, 0.7);
-      _fireGain = ctx.createGain();
-      _fireGain.gain.value = 0;
-      fFilt.connect(_fireGain);
-      _fireGain.connect(ctx.destination);
-      fSrc.start();
-      _fireNoise = fSrc;
-      // Fast irregular crackle: subtle LFO
-      makeLFO(ctx, 3.8, _fireGain, 0, 0.06);
-
-      // === WIND LAYER ===
-      // Very low bandpass for jungle wind rustle
-      const { src: wSrc, filter: wFilt } = makeNoiseSource(ctx, 'lowpass', 180, 0.3);
-      _windGain = ctx.createGain();
-      _windGain.gain.value = 0;
-      wFilt.connect(_windGain);
-      _windGain.connect(ctx.destination);
-      wSrc.start();
-      _windNoise = wSrc;
-      makeLFO(ctx, 0.07, _windGain, 0, 0.08);
-
-    } catch(e) { /* AudioContext not available */ }
-  }
-
-  function _smoothGain(gainNode, target, duration) {
-    if (!gainNode) return;
-    try {
-      gainNode.gain.cancelScheduledValues(_actx.currentTime);
-      gainNode.gain.setTargetAtTime(target, _actx.currentTime, duration);
-    } catch(e) {}
-  }
-
-  // Call each frame from the game loop — pass proximity values 0..1
-  function update(oceanVol, fireVol, windVol) {
-    if (!_actx || !_ambientOn) return;
-    const t = 1.5; // fade time in seconds
-    _smoothGain(_oceanGain, oceanVol * 0.16, t);
-    _smoothGain(_fireGain,  fireVol  * 0.06, t);
-    _smoothGain(_windGain,  windVol  * 0.08, t);
-  }
-
-  function setMusicOn(on) {
-    _musicOn = on;
-    const bgm = document.getElementById('bgm');
-    if (bgm) {
-      if (on) { bgm.volume = 0.5; bgm.play().catch(()=>{}); }
-      else     { bgm.pause(); }
-    }
-  }
-
-  function setAmbientOn(on) {
-    _ambientOn = on;
-    if (!on) {
-      _smoothGain(_oceanGain, 0, 0.5);
-      _smoothGain(_fireGain,  0, 0.5);
-      _smoothGain(_windGain,  0, 0.5);
-    }
-  }
-
-  return { start, update, setMusicOn, setAmbientOn, get musicOn() { return _musicOn; } };
-})();
-
-// toggleMusic: called by the MUSIC button in the pause menu
-function toggleMusic() {
-  const on = !AMBIENT.musicOn;
-  AMBIENT.setMusicOn(on);
-  AMBIENT.setAmbientOn(on);
-  const btn = document.getElementById('music-btn');
-  if (btn) btn.textContent = (on ? 'MUSIC: ON' : 'MUSIC: OFF');
-}
-
-// ============================================================
 // SYNTH ENGINE (expanded SFX)
 // ============================================================
 
@@ -5559,11 +5415,11 @@ function handleClick(sx, sy) {
           e.x += Math.cos(knockAngle) * 20;
           e.y += Math.sin(knockAngle) * 20;
           addFloatingText(e.x, e.y - 20, '-'+combatDmg, combatColor);
-          spawnParticles(e.x, e.y, combatColor, 5);
+          spawnParticles(e.x, e.y, combatColor,3);
           // Fire spear burn
           if (tool === 'fire_spear') {
             e.burning = 90;
-            spawnParticles(e.x, e.y, '#ff6600', 5);
+            spawnParticles(e.x, e.y, '#ff6600',3);
           }
           SFX.hit();
           if (e.hp <= 0) SFX.enemyDie();
@@ -5583,11 +5439,11 @@ function handleClick(sx, sy) {
           e.x += Math.cos(knockAngle) * 20;
           e.y += Math.sin(knockAngle) * 20;
           addFloatingText(e.x, e.y - 20, '-'+combatDmg, combatColor);
-          spawnParticles(e.x, e.y, combatColor, 5);
+          spawnParticles(e.x, e.y, combatColor,3);
           // Lava blade ignite
           if (tool === 'lava_blade') {
             e.burning = 120;
-            spawnParticles(e.x, e.y, '#ff3300', 5);
+            spawnParticles(e.x, e.y, '#ff3300',3);
           }
           SFX.hit();
           if (e.hp <= 0) SFX.enemyDie();
@@ -11034,10 +10890,6 @@ window.addEventListener('DOMContentLoaded', () => {
   state.cam.x = state.player.x - canvas.width/2;
   state.cam.y = state.player.y - canvas.height/2;
   state.running = true;
-  AMBIENT.start();
-  // Start background music at half volume
-  const _bgmEl = document.getElementById('bgm');
-  if (_bgmEl) { _bgmEl.volume = 0.5; _bgmEl.play().catch(() => {}); }
   showMsg('YOU WASHED ASHORE. FIND THE OTHER SURVIVORS.', '#c8f135');
   requestAnimationFrame(gameLoopWithUI);
   // Intro cutscene with delay
@@ -11614,27 +11466,6 @@ function gameLoopWithUI() {
   if (state.frameCount % 2 === 0) updateCanoes();
   updateCaveCreatures();
   updateGroundLoot();
-  // === AMBIENT AUDIO UPDATE (every 6 frames to keep it cheap) ===
-  if (state.frameCount % 6 === 0) {
-    try {
-      const _ap = state.player;
-      const _tile = getTile(_ap.x, _ap.y);
-      // Ocean proximity: full on ocean/beach tiles, fades inland
-      const _isWater = _tile === T.DEEP_OCEAN || _tile === T.SHALLOW_WATER;
-      const _isBeach = _tile === T.BEACH;
-      const _oceanVol = _isWater ? 1.0 : (_isBeach ? 0.55 : 0.15);
-      // Fire proximity: 1.0 if very close to any placed campfire
-      const _campfires = state.objects.filter(o => o.placed && o.type === 'campfire');
-      const _minFireDist = _campfires.length > 0
-        ? Math.min(..._campfires.map(cf => Math.hypot(_ap.x - cf.x, _ap.y - cf.y)))
-        : Infinity;
-      const _fireVol = _minFireDist < 60 ? 1.0 : _minFireDist < 120 ? 0.4 : 0.0;
-      // Wind: louder in jungle/forest, quieter on open beach
-      const _isJungle = _tile === T.JUNGLE_LIGHT || _tile === T.JUNGLE_DARK;
-      const _windVol = _isJungle ? 1.0 : (_isBeach ? 0.2 : 0.5);
-      AMBIENT.update(_oceanVol, _fireVol, _windVol);
-    } catch(e) {}
-  }
   // Handle canoe-targeted projectiles
   updateCanoeProjectiles();
   // Check boarding completion
