@@ -106,17 +106,13 @@ const ESSAYS = [
    Fields: subject, title, due (YYYY-MM-DD), status ('pending'|'done')
    ══════════════════════════════════════════════════════════════ */
 const SCHOOL_TASKS = [
-  // Last updated: 2026-03-29 via ManageBac scraper
-  // --- Past (Mon Mar 23) ---
-  // --- Past (Tue Mar 24) ---
-  // --- Past (Wed Mar 25) ---
-  // --- Past (Thu Mar 26) ---
-  // --- Past (Fri Mar 27) ---
-  // --- Today (Mon Mar 30) — last updated 2026-03-30 via ManageBac scraper ---
-  { subject: "Science 7", title: "HW Science 7", due: "2026-03-30", time: "10:00 AM", status: "pending", type: "Summative" },
-  { subject: "General Music 7", title: "Ukulele Assessment", due: "2026-03-30", time: "12:35 PM", status: "pending", type: "Performance/Assessment" },
-  // --- Upcoming (Tue Mar 31) ---
+  // Last updated: 2026-03-31 via ManageBac scraper
+  // --- Today (Tue Mar 31) ---
   { subject: "Italian", title: "Compiti", due: "2026-03-31", time: "All Day", status: "pending", type: "Homework" },
+  { subject: "Science 7", title: "Classwork Science 7", due: "2026-03-31", time: "10:30 AM", status: "pending", type: "Summative" },
+  // --- Tomorrow (Wed Apr 1) ---
+  { subject: "Math 8", title: "Math 8: MathSpace Surface Area", due: "2026-04-01", time: "1:30 PM", status: "pending", type: "Formative" },
+  { subject: "Math 7", title: "Math 7 (HW)", due: "2026-04-01", time: "3:30 PM", status: "pending", type: "Formative" },
 ];
 
 
