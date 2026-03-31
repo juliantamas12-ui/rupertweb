@@ -249,15 +249,15 @@ main {
 /* GALLERY */
 .gallery-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin-bottom: 12px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
 }
 
 .gallery-item {
-  aspect-ratio: 16/9;
+  height: 380px;
   overflow: hidden;
-  border-radius: 3px;
+  border-radius: 6px;
   border: 1px solid var(--navy-border);
 }
 
