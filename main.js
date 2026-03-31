@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Ideology That Wasn't: Realpolitik and the Molotov-Ribbentrop Pact",
+    date: "2026-03-31",
+    category: "History",
+    excerpt: "In August 1939, the two most ideologically opposed regimes in modern history signed a non-aggression pact. Nazi Germany and the Soviet Union — one built on racial supremacism and violent anti-communism, the other on proletarian internationalism and v...",
+    url: "essays/2026-03-31-the-ideology-that-wasnt-realpolitik-and-the-molotov-ribbentr.html"
+  },
+  {
     title: "The Revolution They Buried: Haiti and the Event That Remade the Atlantic World",
     date: "2026-03-30",
     category: "History",
