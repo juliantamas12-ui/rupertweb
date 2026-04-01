@@ -5250,49 +5250,6 @@ function handleInteract() {
     }
   }
 
-  // Supply cache interaction
-  for (let obj of state.objects) {
-    if (obj.type === 'supply_cache' && !obj.opened) {
-      const d = Math.hypot(p.x-obj.x, p.y-obj.y);
-      if (d < 60) {
-        obj.opened = true;
-        SFX.craft && SFX.craft();
-        spawnParticles(obj.x, obj.y, '#c8f135', 6);
-        if (obj.tier === 'basic') {
-          p.inv.wood    = (p.inv.wood   ||0) + 5;
-          p.inv.stone   = (p.inv.stone  ||0) + 5;
-          p.inv.fish    = (p.inv.fish   ||0) + 3;
-          p.inv.coconut = (p.inv.coconut||0) + 3;
-          p.hp = Math.min(p.maxHp, p.hp + 20);
-          showMsg('CACHE: Wood x5, Stone x5, Fish x3, Coconut x3, +20 HP', '#c8f135');
-        } else if (obj.tier === 'mid') {
-          p.inv.wood          = (p.inv.wood         ||0) + 8;
-          p.inv.stone         = (p.inv.stone        ||0) + 6;
-          p.inv.fish_cooked   = (p.inv.fish_cooked  ||0) + 4;
-          p.inv.torch         = (p.inv.torch        ||0) + 2;
-          p.inv.volcanic_stone= (p.inv.volcanic_stone||0)+ 2;
-          p.hp = Math.min(p.maxHp, p.hp + 40);
-          p.water = Math.min(p.maxWater, p.water + 40);
-          showMsg('CACHE: Wood x8, Stone x6, Cooked Fish x4, Torch x2, Vol.Stone x2, +40 HP', '#c8f135');
-        } else if (obj.tier === 'rare') {
-          p.inv.fire_bottle   = (p.inv.fire_bottle  ||0) + 2;
-          p.inv.fish_cooked   = (p.inv.fish_cooked  ||0) + 5;
-          p.inv.volcanic_stone= (p.inv.volcanic_stone||0)+ 4;
-          p.inv.vine          = (p.inv.vine         ||0) + 3;
-          p.inv.arrows        = (p.inv.arrows       ||0) + 10;
-          p.hp = Math.min(p.maxHp, p.hp + 60);
-          p.water = Math.min(p.maxWater, p.water + 60);
-          p.food  = Math.min(p.maxFood,  p.food  + 40);
-          showMsg('CASTAWAY STASH: Fire Bottle x2, Cooked Fish x5, Vol.Stone x4, Vine x3, Arrows x10!', '#ffcc00');
-          SFX.victory && SFX.victory();
-        }
-        updateUI();
-        checkRecipeDiscovery && checkRecipeDiscovery();
-        return;
-      }
-    }
-  }
-
   // Waterfall interaction
   for (let obj of state.objects) {
     if (obj.type === 'waterfall' && !obj.decor) {
@@ -7766,27 +7723,6 @@ function render(ctx, minimapCtx) {
         case 'crab': drawCrab(ctx,ssx,ssy,capturedObj.dir||1); break;
         case 'hut': drawHut(ctx,ssx,ssy); break;
         case 'tribal_fire': { const tf=Math.sin(state.frameCount*0.2)*2; px(ctx,'#5c3d1e',ssx-6,ssy,12,8); px(ctx,'#ff6600',ssx-4,ssy-8+tf,8,8); px(ctx,'#ffcc00',ssx-2,ssy-12+tf,4,6); break; }
-        case 'supply_cache': {
-          if (!capturedObj.opened) {
-            // Glowing crate
-            const scg = 0.3 + Math.sin(state.frameCount * 0.08 + capturedObj.x) * 0.2;
-            ctx.save(); ctx.globalAlpha = scg;
-            ctx.fillStyle = capturedObj.tier === 'rare' ? '#cc8800' : '#c8f135';
-            ctx.beginPath(); ctx.arc(ssx, ssy, 16, 0, Math.PI*2); ctx.fill();
-            ctx.restore();
-            px(ctx,'#5a4010',ssx-10,ssy-8,20,16);
-            px(ctx,'#7a5820',ssx-9,ssy-7,18,7);
-            px(ctx,'#c8a020',ssx-10,ssy-8,20,3);
-            px(ctx,'#c8a020',ssx-10,ssy+2,20,3);
-            px(ctx,'#c8a020',ssx-1,ssy-8,2,16);
-            ctx.fillStyle = capturedObj.tier === 'rare' ? '#ffcc00' : '#c8f135';
-            ctx.font = '8px Courier New'; ctx.textAlign = 'center';
-            ctx.fillText('CACHE', ssx, ssy-14); ctx.textAlign = 'left';
-          } else {
-            px(ctx,'#3a2808',ssx-10,ssy-4,20,8);
-          }
-          break;
-        }
         case 'driftwood': px(ctx,'#8B6914',ssx-10,ssy-2,20,4); px(ctx,'#7a5514',ssx-6,ssy-4,6,2); break;
         case 'tribal_child': {
           // Small child figure — crouching, frightened
@@ -8750,60 +8686,6 @@ function drawCompanionPortraits(ctx) {
 }
 
 // ============================================================
-// DAY MILESTONE EVENTS
-// ============================================================
-
-const DAY_MILESTONE_DEFS = [
-  { day: 3,  msg: 'A supply cache washed ashore on the south beach.',              type: 'cache_basic'  },
-  { day: 7,  msg: 'The island provides. A richer cache appeared on the beach.',    type: 'cache_mid'    },
-  { day: 10, msg: 'Survival hardens you. Your body adapts to the island.',         type: 'stat_boost'   },
-  { day: 14, msg: "A stash from a long-dead castaway — hidden near the lagoon.",   type: 'cache_rare'   },
-  { day: 21, msg: 'Ancient power surges through you. Roaming enemies scatter.',    type: 'ancient_gift' },
-];
-
-function fireDayMilestone(day) {
-  if (!state.milestoneFired) state.milestoneFired = new Set();
-  const def = DAY_MILESTONE_DEFS.find(m => m.day === day);
-  if (!def || state.milestoneFired.has(day)) return;
-  state.milestoneFired.add(day);
-  const p = state.player;
-  setTimeout(() => {
-    showMsg('DAY ' + day + ': ' + def.msg, '#c8f135');
-    SFX.levelUp && SFX.levelUp();
-    state.screenShake = Math.max(state.screenShake, 3);
-    if (def.type === 'cache_basic') {
-      const cx = (118 + Math.floor(Math.random() * 25)) * TSIZE;
-      const cy = (104 + Math.floor(Math.random() * 6)) * TSIZE;
-      state.objects.push({type:'supply_cache', x:cx, y:cy, opened:false, tier:'basic'});
-      addFloatingText(p.x, p.y - 30, 'SUPPLY CACHE ASHORE!', '#c8f135');
-    } else if (def.type === 'cache_mid') {
-      const cx = (115 + Math.floor(Math.random() * 30)) * TSIZE;
-      const cy = (107 + Math.floor(Math.random() * 5)) * TSIZE;
-      state.objects.push({type:'supply_cache', x:cx, y:cy, opened:false, tier:'mid'});
-      addFloatingText(p.x, p.y - 30, 'CACHE ASHORE!', '#c8f135');
-    } else if (def.type === 'stat_boost') {
-      p.maxHp    = Math.min(350, p.maxHp    + 15);
-      p.hp       = Math.min(p.maxHp, p.hp   + 15);
-      p.maxFood  = Math.min(200, p.maxFood  + 10);
-      p.maxWater = Math.min(200, p.maxWater + 10);
-      addFloatingText(p.x, p.y - 30, '+15 MAX HP +10 FOOD +10 WATER', '#c8f135');
-      spawnParticles(p.x, p.y, '#c8f135', 8);
-    } else if (def.type === 'cache_rare') {
-      const cx = (72 + Math.floor(Math.random() * 6)) * TSIZE;
-      const cy = (16 + Math.floor(Math.random() * 4)) * TSIZE;
-      state.objects.push({type:'supply_cache', x:cx, y:cy, opened:false, tier:'rare'});
-      addFloatingText(p.x, p.y - 30, 'CASTAWAY STASH FOUND!', '#ffcc00');
-    } else if (def.type === 'ancient_gift') {
-      p.maxHp = Math.min(400, p.maxHp + 25);
-      p.hp    = Math.min(p.maxHp, p.hp + 25);
-      addFloatingText(p.x, p.y - 30, '+25 MAX HP', '#aa44ff');
-      spawnParticles(p.x, p.y, '#aa44ff', 10);
-      state.enemies = state.enemies.filter(e => e.villageGuard);
-    }
-  }, 2000);
-}
-
-// ============================================================
 // GAME LOOP, DAY/NIGHT, WEATHER
 // ============================================================
 
@@ -8897,7 +8779,6 @@ function updateDayNight() {
 
     state.day++;
     document.getElementById('day-display').textContent = `DAY ${state.day}`;
-    fireDayMilestone(state.day);
 
     // === LIVING ISLAND: advance weather forecast per day ===
     state.weatherForecastDayCount = (state.weatherForecastDayCount || 0) + 1;
