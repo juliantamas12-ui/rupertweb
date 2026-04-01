@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Myth of the Westphalian Order: Why the \"Rules-Based International System\" Never Actually Existed",
+    date: "2026-04-01",
+    category: "History",
+    excerpt: "The phrase \"rules-based international order\" gets invoked constantly — by Western diplomats, think-tank scholars, editorial boards. It is used to describe something worth defending, a structure of norms and institutions that constrains state behaviou...",
+    url: "essays/2026-04-01-the-myth-of-the-westphalian-order-why-the-rules-based-intern.html"
+  },
+  {
     title: "The Ideology That Wasn't: Realpolitik and the Molotov-Ribbentrop Pact",
     date: "2026-03-31",
     category: "History",
