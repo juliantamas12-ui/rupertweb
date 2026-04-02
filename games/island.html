@@ -4368,6 +4368,13 @@ window.SFX = (() => {
       _noise(0.35, 0.35, 150);
       _osc('sine', 75, 0.28, 0.4, 20);
       _osc('sawtooth', 320, 0.1, 0.15, 60);
+    },
+
+    // Critical hit — sharp crack + high bright ping
+    critHit() {
+      _noise(0.3, 0.05, 5000);
+      _osc('square', 880, 0.1, 0.06, 440);
+      setTimeout(() => _osc('sine', 1320, 0.08, 0.12, 1760), 40);
     }
   };
 })();
@@ -5544,6 +5551,15 @@ function handleClick(sx, sy) {
     const ignoresArmor = tool === 'crystal_blade'; // crystal blade pierces armor
     // Tribal brew strength boost
     if (state._tribalBrewTimer > 0) combatDmg *= 2;
+    // ── CRITICAL HIT SYSTEM ──
+    // Base 15% crit chance; +5% per 10 combat skill levels (up to +25% at skill 50)
+    const combatSk = (state.skills && state.skills.combat) || 0;
+    const critChance = 0.15 + Math.floor(combatSk / 10) * 0.05;
+    const isCrit = Math.random() < critChance;
+    if (isCrit) {
+      combatDmg = Math.round(combatDmg * 2);
+      state.critFlash = 4; // brief white screen tint (4 frames)
+    }
     // Volcanic armor damage reduction applied when taking damage (handled below)
     p.attackCooldown = cooldownMap[tool] || 30;
     p.attackFlash = 6;
@@ -5596,23 +5612,31 @@ function handleClick(sx, sy) {
         if (hitCount >= maxSpearHits) break;
         if (Math.hypot(p.x-e.x, p.y-e.y) < attackReach) {
           e.hp -= combatDmg;
-          e.hitFlash = 6;
-          // Knockback
+          e.hitFlash = isCrit ? 12 : 6;
+          // Knockback — crits knock back further
           const knockAngle = Math.atan2(e.y - p.y, e.x - p.x);
-          e.x += Math.cos(knockAngle) * 20;
-          e.y += Math.sin(knockAngle) * 20;
-          addFloatingText(e.x, e.y - 20, '-'+combatDmg, combatColor);
-          spawnParticles(e.x, e.y, combatColor, 5);
+          e.x += Math.cos(knockAngle) * (isCrit ? 36 : 20);
+          e.y += Math.sin(knockAngle) * (isCrit ? 36 : 20);
+          if (isCrit) {
+            addFloatingText(e.x, e.y - 30, 'CRIT! -'+combatDmg, '#ffe040');
+            spawnParticles(e.x, e.y, '#ffe040', 12);
+            SFX.critHit();
+            state.screenShake = Math.max(state.screenShake, 7);
+            if (navigator.vibrate) navigator.vibrate([20,10,40]);
+          } else {
+            addFloatingText(e.x, e.y - 20, '-'+combatDmg, combatColor);
+            spawnParticles(e.x, e.y, combatColor, 5);
+            SFX.hit();
+            state.screenShake = Math.max(state.screenShake, 3);
+            if (navigator.vibrate) navigator.vibrate(30);
+          }
           // Fire spear burn
           if (tool === 'fire_spear') {
             e.burning = 90;
             spawnParticles(e.x, e.y, '#ff6600', 5);
           }
-          SFX.hit();
           if (e.hp <= 0) SFX.enemyDie();
           hit = true; hitCount++;
-          state.screenShake = Math.max(state.screenShake, 3);
-          if (navigator.vibrate) navigator.vibrate(30);
         }
       }
     } else {
@@ -5620,23 +5644,34 @@ function handleClick(sx, sy) {
       for (const e of allTargets) {
         if (Math.hypot(p.x-e.x, p.y-e.y) < attackReach) {
           e.hp -= combatDmg;
-          e.hitFlash = 6;
-          // Knockback
+          e.hitFlash = isCrit ? 12 : 6;
+          // Knockback — crits knock back further
           const knockAngle = Math.atan2(e.y - p.y, e.x - p.x);
-          e.x += Math.cos(knockAngle) * 20;
-          e.y += Math.sin(knockAngle) * 20;
-          addFloatingText(e.x, e.y - 20, '-'+combatDmg, combatColor);
-          spawnParticles(e.x, e.y, combatColor, 5);
+          e.x += Math.cos(knockAngle) * (isCrit ? 36 : 20);
+          e.y += Math.sin(knockAngle) * (isCrit ? 36 : 20);
+          if (isCrit) {
+            addFloatingText(e.x, e.y - 30, 'CRIT! -'+combatDmg, '#ffe040');
+            spawnParticles(e.x, e.y, '#ffe040', 12);
+          } else {
+            addFloatingText(e.x, e.y - 20, '-'+combatDmg, combatColor);
+            spawnParticles(e.x, e.y, combatColor, 5);
+          }
           // Lava blade ignite
           if (tool === 'lava_blade') {
             e.burning = 120;
             spawnParticles(e.x, e.y, '#ff3300', 5);
           }
-          SFX.hit();
+          if (isCrit) {
+            SFX.critHit();
+            state.screenShake = Math.max(state.screenShake, 7);
+            if (navigator.vibrate) navigator.vibrate([20,10,40]);
+          } else {
+            SFX.hit();
+            state.screenShake = Math.max(state.screenShake, 3);
+            if (navigator.vibrate) navigator.vibrate(30);
+          }
           if (e.hp <= 0) SFX.enemyDie();
           hit = true;
-          state.screenShake = Math.max(state.screenShake, 3);
-          if (navigator.vibrate) navigator.vibrate(30);
         }
       }
       // Sword combo tracking
@@ -5662,22 +5697,23 @@ function handleClick(sx, sy) {
       if (c.inCave && !state.underground) continue;
       if (Math.hypot(p.x-cx2, p.y-cy2) < attackReach) {
         c.hp -= combatDmg;
-        c.hitFlash = 6;
+        c.hitFlash = isCrit ? 12 : 6;
         if (c.inCave) {
           // Cave tile coords — knockback in tile space
           const knockAngle = Math.atan2(c.y - p.y/TSIZE, c.x - p.x/TSIZE);
-          c.x += Math.cos(knockAngle) * 1.5;
-          c.y += Math.sin(knockAngle) * 1.5;
-          addFloatingText(cx2, cy2 - 20, '-'+combatDmg, combatColor);
-          spawnParticles(cx2, cy2, '#cc44ff',3);
+          c.x += Math.cos(knockAngle) * (isCrit ? 2.5 : 1.5);
+          c.y += Math.sin(knockAngle) * (isCrit ? 2.5 : 1.5);
+          if (isCrit) { addFloatingText(cx2, cy2 - 30, 'CRIT! -'+combatDmg, '#ffe040'); spawnParticles(cx2, cy2, '#ffe040', 10); }
+          else { addFloatingText(cx2, cy2 - 20, '-'+combatDmg, combatColor); spawnParticles(cx2, cy2, '#cc44ff',3); }
         } else {
           const knockAngle = Math.atan2(c.y - p.y, c.x - p.x);
-          c.x += Math.cos(knockAngle) * 20;
-          c.y += Math.sin(knockAngle) * 20;
-          addFloatingText(c.x, c.y - 20, '-'+combatDmg, combatColor);
-          spawnParticles(c.x, c.y, '#22cc33',3);
+          c.x += Math.cos(knockAngle) * (isCrit ? 36 : 20);
+          c.y += Math.sin(knockAngle) * (isCrit ? 36 : 20);
+          if (isCrit) { addFloatingText(c.x, c.y - 30, 'CRIT! -'+combatDmg, '#ffe040'); spawnParticles(c.x, c.y, '#ffe040', 10); }
+          else { addFloatingText(c.x, c.y - 20, '-'+combatDmg, combatColor); spawnParticles(c.x, c.y, '#22cc33',3); }
         }
-        SFX.hit();
+        if (isCrit) { SFX.critHit(); state.screenShake = Math.max(state.screenShake, 7); if (navigator.vibrate) navigator.vibrate([20,10,40]); }
+        else { SFX.hit(); state.screenShake = Math.max(state.screenShake, 3); }
         if (c.hp <= 0) {
           SFX.enemyDie();
           if (c.type === 'spider') { p.inv.wood++; addFloatingText(cx2, cy2-20, '+1 WOOD', '#8B6914'); }
@@ -8457,6 +8493,13 @@ function render(ctx, minimapCtx) {
   // Floating damage numbers
   updateFloatingTexts();
   drawFloatingTexts(ctx, camX, camY);
+
+  // ── CRIT FLASH OVERLAY ── brief golden screen flash on critical hit
+  if ((state.critFlash||0) > 0) {
+    ctx.fillStyle = `rgba(255,220,50,${(state.critFlash/4) * 0.22})`;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    state.critFlash--;
+  }
 
   // Controls overlay
   if (state.showControls) {
