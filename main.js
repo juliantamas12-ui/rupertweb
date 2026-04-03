@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "Haiti, 1804: The Revolution the Enlightenment Could Not Afford",
+    date: "2026-04-03",
+    category: "History",
+    excerpt: "The French Revolution is taught as the opening chapter of the modern world. Liberty, equality, fraternity — the universalist creed that would eventually expand across the globe. What is almost never taught in the same breath is what happened when a g...",
+    url: "essays/2026-04-03-haiti-1804-the-revolution-the-enlightenment-could-not-afford.html"
+  },
+  {
     title: "Asabiyyah: The Forgotten Theory That Explains Why Empires Die",
     date: "2026-04-02",
     category: "History",
@@ -120,10 +127,20 @@ const ESSAYS = [
    Fields: subject, title, due (YYYY-MM-DD), status ('pending'|'done')
    ══════════════════════════════════════════════════════════════ */
 const SCHOOL_TASKS = [
-  // Last updated: 2026-04-01 via ManageBac scraper
-  // --- Today (Wed Apr 1) ---
-  { subject: "Math 8", title: "Math 8: MathSpace Surface Area", due: "2026-04-01", time: "1:30 PM", status: "pending", type: "Formative" },
+  // Last updated: 2026-04-02 via ManageBac scraper
+  // --- Mon Mar 30 ---
+  { subject: "Science 7", title: "HW Science 7", due: "2026-03-30", time: "10:00 AM", status: "done", type: "Formative" },
+  { subject: "Science 7", title: "Classwork Science 7", due: "2026-03-30", time: "10:25 AM", status: "done", type: "Classwork" },
+  { subject: "Art", title: "Upload weeks 11 - 14 work", due: "2026-03-30", time: "12:10 PM", status: "done", type: "Summative" },
+  { subject: "Music", title: "Ukulele Assessment", due: "2026-03-30", time: "12:35 PM", status: "done", type: "Summative" },
+  // --- Tue Mar 31 ---
+  { subject: "Italian", title: "Compiti", due: "2026-03-31", time: "All Day", status: "done", type: "Formative" },
+  { subject: "Science 7", title: "Classwork Science 7", due: "2026-03-31", time: "10:30 AM", status: "done", type: "Classwork" },
+  { subject: "General", title: "Classwork", due: "2026-03-31", time: "10:45 AM", status: "done", type: "Classwork" },
+  // --- Wed Apr 1 ---
+  { subject: "Math 8", title: "Math 8: MathSpace Surface Area", due: "2026-04-01", time: "1:30 PM", status: "done", type: "Formative" },
   { subject: "Math 7", title: "Math 7 (HW)", due: "2026-04-01", time: "3:30 PM", status: "done", type: "Formative" },
+  // --- No upcoming tasks as of Apr 2 ---
 ];
 
 
