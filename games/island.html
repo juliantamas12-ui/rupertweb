@@ -573,6 +573,15 @@ const state = {
 
   creatures: [], // jungle mobs: spiders, crocs, bats
 
+  // === KILL STREAK / BLOODLUST SYSTEM ===
+  killStreak: 0,          // consecutive kills within the window
+  killStreakTimer: 0,      // frames since last kill (reset on each kill)
+  killStreakWindow: 300,   // frames allowed between kills to continue streak (5s @60fps)
+  frenzyActive: false,     // true when streak reaches 3+
+  frenzyTimer: 0,          // frames of frenzy remaining
+  frenzyDuration: 360,     // how long frenzy lasts (6 seconds)
+  frenzySpeedMult: 1.45,   // speed multiplier during frenzy
+
   // === SKILLS ===
   skills: {chopping:0, mining:0, combat:0, fishing:0, building:0},
 
@@ -3404,6 +3413,26 @@ function updateEnemies() {
       if (e.dyingTimer <= 0 && state.runStats) {
         state.runStats.enemiesKilled++;
         gainSkill('combat');
+        // === KILL STREAK TRACKING ===
+        state.killStreakTimer = state.killStreakWindow; // reset window
+        state.killStreak = (state.killStreak||0) + 1;
+        if (state.killStreak >= 2 && state.killStreak < 5) {
+          const labels = {2:'DOUBLE KILL!', 3:'TRIPLE KILL!', 4:'RAMPAGE!'};
+          const label = labels[state.killStreak] || (state.killStreak + 'x KILL!');
+          addFloatingText(state.player.x, state.player.y - 50, label, '#ffcc00');
+          SFX.killStreak && SFX.killStreak(state.killStreak);
+        }
+        if (state.killStreak >= 3 && !state.frenzyActive) {
+          state.frenzyActive = true;
+          state.frenzyTimer = state.frenzyDuration;
+          showMsg('BLOODLUST — movement speed boosted for 6 seconds!', '#ff3300');
+          SFX.frenzyActivate && SFX.frenzyActivate();
+        } else if (state.killStreak >= 5) {
+          // Each kill beyond 5 refreshes frenzy
+          state.frenzyTimer = Math.max(state.frenzyTimer||0, state.frenzyDuration);
+          addFloatingText(state.player.x, state.player.y - 50, state.killStreak + 'x KILLING SPREE!', '#ff4400');
+          SFX.killStreak && SFX.killStreak(Math.min(state.killStreak, 8));
+        }
         // === GROUND LOOT DROP ===
         const dropTable = [
           { item:'stone',          qty:1, weight:30 },
@@ -4584,6 +4613,21 @@ SFX.surgeWarning = () => {
   playSynth({type:'sine', freq:70, decay:1.0, pitchRise:0.3, vol:0.2});
 };
 
+// Kill streak stinger — ascending triple ping
+SFX.killStreak = (streakCount) => {
+  const baseFreq = 440 + (streakCount - 2) * 60;
+  [baseFreq, baseFreq * 1.25, baseFreq * 1.5].forEach((f, i) => {
+    setTimeout(() => playSynth({type:'sine', freq:f, decay:0.18, pitchRise:0.1, vol:0.16}), i * 60);
+  });
+};
+
+// Frenzy activation — dramatic rising howl
+SFX.frenzyActivate = () => {
+  playSynth({type:'sawtooth', freq:80, decay:0.6, pitchRise:3.0, vol:0.25});
+  setTimeout(() => playSynth({type:'square', freq:220, decay:0.4, pitchRise:1.5, vol:0.18}), 120);
+  setTimeout(() => playSynth({type:'sine', freq:880, decay:0.5, vol:0.12}), 300);
+};
+
 // ============================================================
 // PLAYER UPDATE, INPUT, INTERACTION
 // ============================================================
@@ -4656,6 +4700,8 @@ function updatePlayer() {
 
   let spd = 2.0;
   if (sprinting) spd = 2.8;
+  // Bloodlust frenzy speed boost
+  if (state.frenzyActive) spd *= state.frenzySpeedMult;
   if (inWater && !((p.inv.raft||0) > 0)) spd *= 0.5; // raft negates water slow
   if (inWater && (p.inv.raft||0) > 0) spd *= 1.0; // raft: normal speed
   if (inDeepOcean) spd *= 0.6;
@@ -8494,6 +8540,28 @@ function render(ctx, minimapCtx) {
   updateFloatingTexts();
   drawFloatingTexts(ctx, camX, camY);
 
+  // ── BLOODLUST / FRENZY SCREEN EFFECT ── pulsing red vignette border
+  if (state.frenzyActive && state.frenzyTimer > 0) {
+    const frenzyPct = state.frenzyTimer / state.frenzyDuration;
+    const pulse = 0.5 + Math.sin(state.frameCount * 0.18) * 0.5; // 0..1 pulsing
+    const alpha = pulse * 0.22 * Math.min(1, frenzyPct * 3); // fade in fast, fade out slowly
+    // Vignette border
+    const vigSize = 38;
+    ctx.fillStyle = `rgba(200,20,0,${alpha})`;
+    ctx.fillRect(0, 0, canvas.width, vigSize);
+    ctx.fillRect(0, canvas.height - vigSize, canvas.width, vigSize);
+    ctx.fillRect(0, vigSize, vigSize, canvas.height - vigSize * 2);
+    ctx.fillRect(canvas.width - vigSize, vigSize, vigSize, canvas.height - vigSize * 2);
+    // Countdown text in corner
+    const secsLeft = Math.ceil(state.frenzyTimer / 60);
+    ctx.save();
+    ctx.font = 'bold 11px Lato, sans-serif';
+    ctx.fillStyle = `rgba(255,80,40,${0.6 + pulse * 0.4})`;
+    ctx.textAlign = 'left';
+    ctx.fillText('BLOODLUST ' + secsLeft + 's', 10, canvas.height - 8);
+    ctx.restore();
+  }
+
   // ── CRIT FLASH OVERLAY ── brief golden screen flash on critical hit
   if ((state.critFlash||0) > 0) {
     ctx.fillStyle = `rgba(255,220,50,${(state.critFlash/4) * 0.22})`;
@@ -8572,6 +8640,11 @@ function render(ctx, minimapCtx) {
 
   // Death / collapse mechanic
   if (p.hp <= 0 && !state.collapsing && !state.collapsed && !(state.invincible > 0)) {
+    // Reset kill streak on death
+    state.killStreak = 0;
+    state.killStreakTimer = 0;
+    state.frenzyActive = false;
+    state.frenzyTimer = 0;
     state.collapsing = true;
     state.collapseTimer = 0;
     state.collapseDeathX = p.x;
@@ -11181,6 +11254,7 @@ window.addEventListener('DOMContentLoaded', () => {
   state.playerName = 'SURVIVOR';
   // Init run stats and load death ghosts
   state.runStats = { startTime: Date.now(), enemiesKilled: 0, treesChopped: 0, fishCaught: 0, distanceTraveled: 0, itemsCollected: 0, damageTaken: 0, highestDayReached: 1 };
+  state.killStreak = 0; state.killStreakTimer = 0; state.frenzyActive = false; state.frenzyTimer = 0;
   try { state.deathGhosts = JSON.parse(localStorage.getItem('island_deaths')||'[]').slice(0,5); } catch(e) { state.deathGhosts = []; }
   try { state.unlockedAchievements = new Set(JSON.parse(localStorage.getItem('island_achievements')||'[]')); } catch(e) {}
   try { state.discoveredRecipes = new Set(JSON.parse(localStorage.getItem('island_recipes')||'[]')); } catch(e) { state.discoveredRecipes = new Set(); }
@@ -11759,6 +11833,24 @@ function gameLoopWithUI() {
     return;
   }
   updatePlayer();
+  // === KILL STREAK / BLOODLUST UPDATE ===
+  if (state.killStreakTimer > 0) {
+    state.killStreakTimer--;
+    if (state.killStreakTimer <= 0 && !state.frenzyActive) {
+      // Window expired without another kill — reset streak
+      state.killStreak = 0;
+    }
+  }
+  if (state.frenzyActive) {
+    state.frenzyTimer--;
+    if (state.frenzyTimer <= 0) {
+      state.frenzyActive = false;
+      state.frenzyTimer = 0;
+      state.killStreak = 0;
+      state.killStreakTimer = 0;
+      showMsg('Bloodlust faded.', '#aa4422');
+    }
+  }
   updateEnemies();
   updateProjectiles();
   updateCreatures();
