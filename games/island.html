@@ -520,6 +520,7 @@ const state = {
   floatingTexts: [],
   fireTiles: [], // {x, y, timer} active fire areas
   loreStones: [],
+  hitStopFrames: 0,  // freeze-frame on impactful hits (classic "hitstop" feel)
   weatherRain: false,
   weatherTimer: 0,
   weatherNext: 60 * 60 * (3 + Math.random()*4), // 3-7 days
@@ -5605,6 +5606,7 @@ function handleClick(sx, sy) {
     if (isCrit) {
       combatDmg = Math.round(combatDmg * 2);
       state.critFlash = 4; // brief white screen tint (4 frames)
+      state.hitStopFrames = Math.max(state.hitStopFrames, 5); // hitstop: 5-frame freeze on crit
     }
     // Volcanic armor damage reduction applied when taking damage (handled below)
     p.attackCooldown = cooldownMap[tool] || 30;
@@ -5681,7 +5683,7 @@ function handleClick(sx, sy) {
             e.burning = 90;
             spawnParticles(e.x, e.y, '#ff6600', 5);
           }
-          if (e.hp <= 0) SFX.enemyDie();
+          if (e.hp <= 0) { SFX.enemyDie(); state.hitStopFrames = Math.max(state.hitStopFrames, 8); }
           hit = true; hitCount++;
         }
       }
@@ -5716,7 +5718,7 @@ function handleClick(sx, sy) {
             state.screenShake = Math.max(state.screenShake, 3);
             if (navigator.vibrate) navigator.vibrate(30);
           }
-          if (e.hp <= 0) SFX.enemyDie();
+          if (e.hp <= 0) { SFX.enemyDie(); state.hitStopFrames = Math.max(state.hitStopFrames, 8); }
           hit = true;
         }
       }
@@ -5761,7 +5763,7 @@ function handleClick(sx, sy) {
         if (isCrit) { SFX.critHit(); state.screenShake = Math.max(state.screenShake, 7); if (navigator.vibrate) navigator.vibrate([20,10,40]); }
         else { SFX.hit(); state.screenShake = Math.max(state.screenShake, 3); }
         if (c.hp <= 0) {
-          SFX.enemyDie();
+          SFX.enemyDie(); state.hitStopFrames = Math.max(state.hitStopFrames, 8);
           if (c.type === 'spider') { p.inv.wood++; addFloatingText(cx2, cy2-20, '+1 WOOD', '#8B6914'); }
           if (c.type === 'shark') { p.inv.fish = (p.inv.fish||0)+2; addFloatingText(cx2, cy2-20, '+2 FISH', '#3dd6d0'); }
           if (c.type === 'cave_guardian') { showMsg('CAVE GUARDIAN DEFEATED! The chamber is yours.', '#aa44ff'); spawnParticles(cx2, cy2, '#aa44ff', 5); }
@@ -5957,7 +5959,7 @@ function handleClick(sx, sy) {
       e.hitFlash = 6;
       spawnParticles(e.x, e.y, '#e73c3c',3);
       SFX.hit();
-      if (e.hp <= 0) SFX.enemyDie();
+      if (e.hp <= 0) { SFX.enemyDie(); state.hitStopFrames = Math.max(state.hitStopFrames, 8); }
       hit = true;
     }
   });
@@ -11830,6 +11832,12 @@ function gameLoopWithUI() {
   state.zoom += (state.targetZoom - state.zoom) * 0.12; // don't render when tab not visible
   if (state.cutscenePlaying) {
     renderCutscene(ctx);
+    return;
+  }
+  // ── HIT-STOP: freeze all game updates for N frames on impactful hits ──
+  if (state.hitStopFrames > 0) {
+    state.hitStopFrames--;
+    render(ctx, minimapCtx); // still render (frozen frame is the point)
     return;
   }
   updatePlayer();
