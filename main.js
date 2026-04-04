@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Ransom of Freedom: Haiti's Independence Debt and the Architecture of Permanent Underdevelopment",
+    date: "2026-04-04",
+    category: "History",
+    excerpt: "In 1804, Haiti became the first nation born of a successful slave revolt. The enslaved population of Saint-Domingue — France's most profitable colony, producing roughly 40 percent of Europe's sugar and more than half its coffee — had fought for thirt...",
+    url: "essays/2026-04-04-the-ransom-of-freedom-haitis-independence-debt-and-the-archi.html"
+  },
+  {
     title: "Haiti, 1804: The Revolution the Enlightenment Could Not Afford",
     date: "2026-04-03",
     category: "History",
@@ -127,7 +134,7 @@ const ESSAYS = [
    Fields: subject, title, due (YYYY-MM-DD), status ('pending'|'done')
    ══════════════════════════════════════════════════════════════ */
 const SCHOOL_TASKS = [
-  // Last updated: 2026-04-02 via ManageBac scraper
+  // Last updated: 2026-04-03 via ManageBac scraper
   // --- Mon Mar 30 ---
   { subject: "Science 7", title: "HW Science 7", due: "2026-03-30", time: "10:00 AM", status: "done", type: "Formative" },
   { subject: "Science 7", title: "Classwork Science 7", due: "2026-03-30", time: "10:25 AM", status: "done", type: "Classwork" },
@@ -140,7 +147,7 @@ const SCHOOL_TASKS = [
   // --- Wed Apr 1 ---
   { subject: "Math 8", title: "Math 8: MathSpace Surface Area", due: "2026-04-01", time: "1:30 PM", status: "done", type: "Formative" },
   { subject: "Math 7", title: "Math 7 (HW)", due: "2026-04-01", time: "3:30 PM", status: "done", type: "Formative" },
-  // --- No upcoming tasks as of Apr 2 ---
+  // --- No upcoming tasks as of Apr 3 (dashboard shows "No Tasks" for Upcoming) ---
 ];
 
 
