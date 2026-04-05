@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Myth of the Rational Voter and Why Democracy Keeps Failing Itself",
+    date: "2026-04-05",
+    category: "History",
+    excerpt: "In 1957, Anthony Downs published \"An Economic Theory of Democracy\" and introduced a concept that has aged better than most political science: rational ignorance. The argument is elegant and brutal. Becoming informed enough to vote well requires time,...",
+    url: "essays/2026-04-05-the-myth-of-the-rational-voter-and-why-democracy-keeps-faili.html"
+  },
+  {
     title: "The Ransom of Freedom: Haiti's Independence Debt and the Architecture of Permanent Underdevelopment",
     date: "2026-04-04",
     category: "History",
@@ -134,7 +141,7 @@ const ESSAYS = [
    Fields: subject, title, due (YYYY-MM-DD), status ('pending'|'done')
    ══════════════════════════════════════════════════════════════ */
 const SCHOOL_TASKS = [
-  // Last updated: 2026-04-03 via ManageBac scraper
+  // Last updated: 2026-04-04 via ManageBac scraper
   // --- Mon Mar 30 ---
   { subject: "Science 7", title: "HW Science 7", due: "2026-03-30", time: "10:00 AM", status: "done", type: "Formative" },
   { subject: "Science 7", title: "Classwork Science 7", due: "2026-03-30", time: "10:25 AM", status: "done", type: "Classwork" },
