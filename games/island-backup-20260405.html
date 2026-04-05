@@ -494,9 +494,7 @@ const state = {
       // Tribal loot
       tribal_weapon:0,
       // Underground artifacts
-      artifact_shard:0,
-      // Volcanic forge drop
-      magma_shard:0, magma_hammer:0
+      artifact_shard:0
     },
     chiefDefeated: false,
     settlementLevel: 0, // 0=survivor,1=settlement,2=fortified,3=village
@@ -4407,22 +4405,6 @@ window.SFX = (() => {
       _noise(0.3, 0.05, 5000);
       _osc('square', 880, 0.1, 0.06, 440);
       setTimeout(() => _osc('sine', 1320, 0.08, 0.12, 1760), 40);
-    },
-
-    // Magma hammer ground slam — deep seismic thud with molten sizzle
-    magmaSlam() {
-      _noise(0.5, 0.5, 60);               // deep sub rumble
-      _osc('sine', 55, 0.35, 0.55, 18);   // low boom
-      _osc('sawtooth', 280, 0.15, 0.35, 40); // crack
-      setTimeout(() => _noise(0.2, 0.3, 900), 80); // lava sizzle follow
-      setTimeout(() => _osc('sine', 120, 0.1, 0.25, 50), 100);
-    },
-
-    // Magma shard pickup — crystalline crack + heat hiss
-    magmaPickup() {
-      _noise(0.15, 0.12, 3000);
-      _osc('triangle', 520, 0.08, 0.15, 680);
-      setTimeout(() => _noise(0.1, 0.2, 600), 80);
     }
   };
 })();
@@ -5504,7 +5486,7 @@ function getActiveTool() {
   // Build tool list: same order as hotbar (excluding fishing_rod from hotbar — use F key)
   const tools = [
     {id:'axe'}, {id:'fire_axe'}, {id:'obsidian_pickaxe'}, {id:'pickaxe'}, {id:'sword'},
-    {id:'spear'}, {id:'fire_spear'}, {id:'lava_blade'}, {id:'magma_hammer'}, {id:'depth_spear'},
+    {id:'spear'}, {id:'fire_spear'}, {id:'lava_blade'}, {id:'depth_spear'},
     {id:'bone_spear'}, {id:'crystal_blade'}, {id:'tribal_weapon'},
     {id:'stone_knife'}, {id:'bow'},
     {id:'fire_bottle'}, {id:'lava_bomb'}, {id:'signal_mirror'}, {id:'torch'}, {id:'crystal_torch'}, {id:'coconut'}
@@ -5560,12 +5542,12 @@ function handleClick(sx, sy) {
   const tool = getActiveTool();
 
   // ── WEAPON TOOLS: attack nearest enemy ──
-  const isWeapon = tool === 'sword' || tool === 'spear' || tool === 'fire_spear' || tool === 'fire_axe' || tool === 'stone_knife' || tool === 'lava_blade' || tool === 'magma_hammer' || tool === 'depth_spear' || tool === 'bone_spear' || tool === 'crystal_blade' || tool === 'tribal_weapon';
+  const isWeapon = tool === 'sword' || tool === 'spear' || tool === 'fire_spear' || tool === 'fire_axe' || tool === 'stone_knife' || tool === 'lava_blade' || tool === 'depth_spear' || tool === 'bone_spear' || tool === 'crystal_blade' || tool === 'tribal_weapon';
 
   // Water combat restriction: melee weapons don't work in water
   const playerTileW = getTile(p.x, p.y);
   const onWater = playerTileW === T.SHALLOW_WATER || playerTileW === T.DEEP_OCEAN;
-  const isMelee = tool === 'sword' || tool === 'lava_blade' || tool === 'magma_hammer' || tool === 'fire_axe' || tool === 'stone_knife' || tool === 'crystal_blade' || tool === 'tribal_weapon';
+  const isMelee = tool === 'sword' || tool === 'lava_blade' || tool === 'fire_axe' || tool === 'stone_knife' || tool === 'crystal_blade' || tool === 'tribal_weapon';
   const isThrownInWater = tool === 'coconut' || tool === 'stone_knife' || tool === 'bow';
   if (onWater && isMelee) {
     showMsg('Too far to reach from water — use thrown weapons', '#888');
@@ -5605,12 +5587,12 @@ function handleClick(sx, sy) {
       return;
     }
     // Cooldown and range per weapon (modified by combat skill)
-    const _baseCooldowns = {sword:20, spear:30, fire_spear:45, fire_axe:25, stone_knife:15, lava_blade:22, magma_hammer:40, depth_spear:28, bone_spear:28, crystal_blade:20, tribal_weapon:25};
-    const _baseRanges    = {sword:48, spear:80, fire_spear:64, fire_axe:56, stone_knife:36, lava_blade:52, magma_hammer:60, depth_spear:72, bone_spear:80, crystal_blade:52, tribal_weapon:56};
+    const _baseCooldowns = {sword:20, spear:30, fire_spear:45, fire_axe:25, stone_knife:15, lava_blade:22, depth_spear:28, bone_spear:28, crystal_blade:20, tribal_weapon:25};
+    const _baseRanges    = {sword:48, spear:80, fire_spear:64, fire_axe:56, stone_knife:36, lava_blade:52, depth_spear:72, bone_spear:80, crystal_blade:52, tribal_weapon:56};
     const cooldownMap = Object.fromEntries(Object.entries(_baseCooldowns).map(([k,v])=>[k, getSkillAttackCooldown(v)]));
-    const dmgMap = {sword:15, spear:18, fire_spear:30, fire_axe:22, stone_knife:8, lava_blade:35, magma_hammer:45, depth_spear:50, bone_spear:25, crystal_blade:40, tribal_weapon:22};
+    const dmgMap = {sword:15, spear:18, fire_spear:30, fire_axe:22, stone_knife:8, lava_blade:35, depth_spear:50, bone_spear:25, crystal_blade:40, tribal_weapon:22};
     const rangeMap = Object.fromEntries(Object.entries(_baseRanges).map(([k,v])=>[k, getSkillCombatRange(v)]));
-    const combatColor = (tool==='fire_spear'||tool==='fire_axe'||tool==='lava_blade'||tool==='magma_hammer') ? '#ff6600' : (tool==='depth_spear' ? '#3dd6d0' : tool==='crystal_blade' ? '#aa44ff' : '#e74c3c');
+    const combatColor = (tool==='fire_spear'||tool==='fire_axe'||tool==='lava_blade') ? '#ff6600' : (tool==='depth_spear' ? '#3dd6d0' : tool==='crystal_blade' ? '#aa44ff' : '#e74c3c');
     const attackReach = rangeMap[tool] || getSkillCombatRange(56);
     let combatDmg = dmgMap[tool] || 8;
     const ignoresArmor = tool === 'crystal_blade'; // crystal blade pierces armor
@@ -5727,13 +5709,6 @@ function handleClick(sx, sy) {
             e.burning = 120;
             spawnParticles(e.x, e.y, '#ff3300', 5);
           }
-          // Magma hammer: AoE ground slam — stuns all enemies within 80px, massive knockback
-          if (tool === 'magma_hammer') {
-            e.stunTimer = (e.stunTimer||0) + 150; // 2.5s stun
-            e.x += Math.cos(knockAngle) * 28; // extra knockback
-            e.y += Math.sin(knockAngle) * 28;
-            spawnParticles(e.x, e.y, '#ff8800', 8);
-          }
           if (isCrit) {
             SFX.critHit();
             state.screenShake = Math.max(state.screenShake, 7);
@@ -5746,27 +5721,6 @@ function handleClick(sx, sy) {
           if (e.hp <= 0) { SFX.enemyDie(); state.hitStopFrames = Math.max(state.hitStopFrames, 8); }
           hit = true;
         }
-      }
-      // Magma hammer ground slam — AoE wave stuns enemies in 80px radius even if not directly hit
-      if (tool === 'magma_hammer' && hit) {
-        SFX.magmaSlam && SFX.magmaSlam();
-        state.screenShake = Math.max(state.screenShake, 10);
-        if (navigator.vibrate) navigator.vibrate([40, 20, 60]);
-        // Shockwave: stun all nearby enemies
-        for (const e2 of allTargets) {
-          const ed = Math.hypot(p.x-e2.x, p.y-e2.y);
-          if (ed < 80 && ed >= attackReach) {
-            e2.stunTimer = (e2.stunTimer||0) + 90; // 1.5s stun
-            e2.hitFlash = 8;
-            addFloatingText(e2.x, e2.y-20, 'STUNNED!', '#ff8800');
-            spawnParticles(e2.x, e2.y, '#ff6600', 4);
-          }
-        }
-        // Ground crack visual effect (store as a timed particle overlay)
-        spawnParticles(p.x, p.y, '#ff4400', 16);
-        spawnParticles(p.x+20, p.y+8, '#ff8800', 6);
-        spawnParticles(p.x-18, p.y-6, '#ff8800', 6);
-        addFloatingText(p.x, p.y - 40, 'MAGMA SLAM!', '#ff6600');
       }
       // Sword combo tracking
       if (tool === 'sword' && hit) {
@@ -5888,9 +5842,6 @@ function handleClick(sx, sy) {
     }
     return;
   }
-
-  // ── MAGMA HAMMER: melee AoE — handled below in weapon block ──
-  // (falls through to main weapon resolution after this point)
 
   // ── HEARTY MEAL: use from hotbar ──
   if (tool === 'hearty_meal') {
@@ -6036,43 +5987,6 @@ function handleClick(sx, sy) {
     if (obj.type === 'death_pack' || obj.type === 'shipwreck') continue;
     const d = Math.hypot(p.x-obj.x, p.y-obj.y);
     if (d > interactReach) continue;
-
-    // MAGMA DEPOSITS: mine with pickaxe for magma shards + volcanic stone
-    if (obj.type === 'magma_deposit' && !obj.mined) {
-      if (!p.inv.pickaxe && !p.inv.obsidian_pickaxe) {
-        showMsg('Need a PICKAXE to mine magma deposits', '#e74c3c');
-        return;
-      }
-      const isCool = (obj.coolTimer || 0) <= 0;
-      if (!isCool) {
-        // Still hot — damages player but can still mine (risk/reward)
-        const heatDmg = 8;
-        p.hp = Math.max(0, p.hp - heatDmg);
-        p.hitFlash = 6;
-        addFloatingText(p.x, p.y-20, '-'+heatDmg+' HEAT!', '#ff4400');
-        spawnParticles(obj.x, obj.y, '#ff6600', 5);
-      }
-      obj.mined = true;
-      const shards = 1 + Math.floor(Math.random() * 2); // 1-2 shards
-      const volStone = 1 + Math.floor(Math.random() * 3); // 1-3 volcanic stone
-      p.inv.magma_shard = (p.inv.magma_shard||0) + shards;
-      p.inv.volcanic_stone = (p.inv.volcanic_stone||0) + volStone;
-      addFloatingText(obj.x, obj.y-25, '+'+shards+' MAGMA SHARD!', '#ff8800');
-      addFloatingText(obj.x, obj.y-38, '+'+volStone+' VOLCANIC STONE', '#ff6622');
-      showMsg('MAGMA SHARD x'+shards+' mined! Craft the MAGMA HAMMER at the forge.', '#ff8800');
-      spawnParticles(obj.x, obj.y, '#ff6600', 10);
-      SFX.magmaPickup && SFX.magmaPickup();
-      gainSkill('mining');
-      // Unlock volcanic age if not already
-      if (state.craftingTier < 1 && (p.inv.volcanic_stone||0) >= 5) {
-        state.craftingTier = 1;
-        showMsg('VOLCANIC AGE UNLOCKED — new recipes available', '#ff6600');
-      }
-      // Discover the magma_hammer recipe
-      if (state.discoveredRecipes) state.discoveredRecipes.add('magma_hammer');
-      updateUI();
-      return;
-    }
 
     // ROCKS: always interactable, no tool required
     if (obj.type === 'rock' || obj.type === 'vol_rock') {
@@ -6324,8 +6238,6 @@ const CRAFT_ITEMS = [
   {id:'bone_spear',      label:'BONE SPEAR',    cost:{ancient_bone:3,wood:2},           desc:'25 dmg — crafted from ancient bones', requiredTier:0},
   {id:'crystal_blade',   label:'CRYSTAL BLADE', cost:{crystal:3,ancient_bone:2},        desc:'40 dmg — ignores armor, crystal-forged', requiredTier:0},
   {id:'crystal_torch',   label:'CRYSTAL TORCH', cost:{crystal:1},                       desc:'Permanent underground light, no darkness penalty', requiredTier:0},
-  // Volcanic forge tier — post-eruption loot
-  {id:'magma_hammer',    label:'MAGMA HAMMER',  cost:{magma_shard:3,volcanic_stone:2},  desc:'45 dmg — ground slam stuns all enemies within 80px', requiredTier:1},
 ];
 
 function openBuildMenu() {
@@ -7030,30 +6942,6 @@ function drawItemIcon(ctx, item, x, y, size) {
       ctx.fillStyle = '#6a4c1e'; ctx.fillRect(x+2, y+s-8, s-4, 6);
       ctx.fillStyle = '#3dd6d0'; ctx.fillRect(x+6, y+s-8, s-12, 5);
       break;
-    case 'magma_shard':
-      // Jagged glowing orange shard
-      ctx.fillStyle = '#cc2200';
-      ctx.beginPath(); ctx.moveTo(cx, y+2); ctx.lineTo(x+s-4, cy+4); ctx.lineTo(cx+2, y+s-2); ctx.lineTo(x+4, cy); ctx.closePath(); ctx.fill();
-      ctx.fillStyle = '#ff6600';
-      ctx.beginPath(); ctx.moveTo(cx, y+4); ctx.lineTo(x+s-7, cy+2); ctx.lineTo(cx, y+s-5); ctx.lineTo(x+7, cy-2); ctx.closePath(); ctx.fill();
-      ctx.fillStyle = '#ffaa44';
-      ctx.fillRect(Math.round(cx-2), Math.round(cy-3), 3, 4);
-      break;
-    case 'magma_hammer':
-      // Heavy hammer — dark red head with lava glow + brown handle
-      ctx.fillStyle = '#3a1a0a';
-      ctx.fillRect(x+4, y+3, s-6, s-14);
-      ctx.fillStyle = '#cc2200';
-      ctx.fillRect(x+3, y+2, s-6, 10);
-      ctx.fillStyle = '#ff6600';
-      ctx.fillRect(x+3, y+2, s-6, 3);
-      ctx.fillStyle = '#ffaa44';
-      ctx.fillRect(x+5, y+4, 5, 4);
-      ctx.fillStyle = '#7a5c2e';
-      ctx.fillRect(Math.round(cx-2), y+12, 4, s-12);
-      ctx.fillStyle = '#5a3c1e';
-      ctx.fillRect(Math.round(cx-3), y+s-6, 6, 4);
-      break;
     default:
       ctx.fillStyle = '#a08040'; ctx.font = `${Math.round(s*0.3)}px Courier New`; ctx.textAlign = 'center';
       ctx.fillText(item.substring(0,3).toUpperCase(), cx, cy+4);
@@ -7201,20 +7089,6 @@ function drawToolIcon(ctx, toolId, x, y, size) {
       ctx.fillStyle = '#ff4400'; ctx.beginPath(); ctx.ellipse(x+s/2, y+4, 4, 5, 0, 0, Math.PI*2); ctx.fill();
       ctx.fillStyle = '#ffcc00'; ctx.beginPath(); ctx.arc(x+s/2, y+2, 3, 0, Math.PI*2); ctx.fill();
       break;
-    case 'magma_hammer':
-      // Heavy hammer head (dark red/orange) + thick handle
-      ctx.fillStyle = '#3a1a0a'; // shadow base
-      ctx.fillRect(x+6, y+3, s-8, s-10);
-      ctx.fillStyle = '#cc2200'; // hammer face
-      ctx.fillRect(x+5, y+2, s-8, 9);
-      ctx.fillStyle = '#ff6600'; // hot metal highlight
-      ctx.fillRect(x+5, y+2, s-8, 3);
-      ctx.fillStyle = '#ffaa44'; // lava crack
-      ctx.fillRect(x+7, y+4, 4, 5);
-      ctx.fillStyle = '#7a5c2e'; // handle
-      ctx.fillRect(Math.round(x+s/2-2), y+11, 4, s-11);
-      ctx.fillStyle = '#5a3c1e'; ctx.fillRect(Math.round(x+s/2-3), y+s-6, 6, 4); // grip wrap
-      break;
     default:
       ctx.fillStyle = '#a08040'; ctx.font = `${Math.round(s*0.35)}px Courier New`; ctx.textAlign = 'center';
       ctx.fillText(toolId.substring(0,3).toUpperCase(), x+s/2, y+s/2+4); ctx.textAlign = 'left';
@@ -7227,7 +7101,7 @@ function drawHotbarIcons(ctx) {
   // Same tool order as updateUI hotbar
   const toolSlots = [
     {id:'axe'},{id:'fire_axe'},{id:'obsidian_pickaxe'},{id:'pickaxe'},{id:'sword'},
-    {id:'spear'},{id:'fire_spear'},{id:'lava_blade'},{id:'magma_hammer'},{id:'depth_spear'},
+    {id:'spear'},{id:'fire_spear'},{id:'lava_blade'},{id:'depth_spear'},
     {id:'stone_knife'},{id:'bow'},
     {id:'fire_bottle'},{id:'lava_bomb'},{id:'signal_mirror'},{id:'torch'},{id:'coconut'},
   ].filter(t => (p.inv[t.id]||0) > 0).slice(0, 6);
@@ -7994,40 +7868,6 @@ function render(ctx, minimapCtx) {
             ctx.fillText('CACHE', ssx, ssy-14); ctx.textAlign = 'left';
           } else {
             px(ctx,'#3a2808',ssx-10,ssy-4,20,8);
-          }
-          break;
-        }
-        case 'magma_deposit': {
-          if (!capturedObj.mined) {
-            const coolFrac = Math.min(1, 1 - (capturedObj.coolTimer || 0) / (60*90));
-            // Glow fades from intense orange to dull grey as it cools
-            const glow = Math.sin((capturedObj.glowPhase||0) + state.frameCount * 0.08) * 0.3 + 0.7;
-            const r = Math.round(220 - coolFrac * 120);
-            const g = Math.round(80 - coolFrac * 60);
-            if (coolFrac < 1) {
-              // Glow halo while hot
-              ctx.save();
-              ctx.globalAlpha = (1 - coolFrac) * 0.45 * glow;
-              ctx.fillStyle = `rgb(${r},${g},20)`;
-              ctx.beginPath(); ctx.arc(ssx, ssy, 18, 0, Math.PI*2); ctx.fill();
-              ctx.restore();
-            }
-            // Rock body
-            px(ctx,'#2a1a0a',ssx-11,ssy+2,22,7);
-            px(ctx,`rgb(${r},${g},20)`,ssx-10,ssy-8,20,14);
-            px(ctx,`rgb(${Math.min(255,r+40)},${g+20},30)`,ssx-8,ssy-10,16,10);
-            // Lava cracks
-            if (coolFrac < 0.7) {
-              ctx.fillStyle = `rgba(255,${Math.round(120 * (1-coolFrac))},0,${(1-coolFrac)*0.9})`;
-              px(ctx,`rgba(255,${Math.round(120*(1-coolFrac))},0,1)`,ssx-4,ssy-6,2,8);
-              px(ctx,`rgba(255,${Math.round(100*(1-coolFrac))},0,1)`,ssx+2,ssy-4,2,6);
-            }
-            // Label
-            ctx.save();
-            ctx.fillStyle = coolFrac < 0.6 ? '#ff8800' : '#887060';
-            ctx.font = '7px Courier New'; ctx.textAlign = 'center';
-            ctx.fillText(coolFrac < 0.6 ? 'MAGMA' : 'DEPOSIT', ssx, ssy-16);
-            ctx.textAlign = 'left'; ctx.restore();
           }
           break;
         }
@@ -9288,22 +9128,7 @@ function updateDayNight() {
     if (state.eruptionDuration <= 0) {
       state.eruptionPhase = 0;
       state.eruptionTimer = 60 * 60 * (10 + Math.random() * 8); // 10-18 min until next
-      showMsg('THE ERUPTION SUBSIDES. Magma deposits harden near the volcano!', '#ff8800');
-      // Spawn 2-4 magma deposits near the volcano base — they cool over 90 seconds
-      const VCENTER_MX = 75 * TSIZE, VCENTER_MY = 39 * TSIZE;
-      const depositCount = 2 + Math.floor(Math.random() * 3);
-      for (let di = 0; di < depositCount; di++) {
-        const angle = Math.random() * Math.PI * 2;
-        const dist = 60 + Math.random() * 120; // 60-180px from center
-        state.objects.push({
-          type: 'magma_deposit',
-          x: VCENTER_MX + Math.cos(angle) * dist,
-          y: VCENTER_MY + Math.sin(angle) * dist + 60,
-          mined: false,
-          coolTimer: 60 * 90, // 90 seconds to cool
-          glowPhase: Math.random() * Math.PI * 2
-        });
-      }
+      showMsg('THE ERUPTION SUBSIDES.', '#c8a060');
     }
   }
 
@@ -9345,14 +9170,7 @@ function updateDayNight() {
     if (state.season === 1 && o.respawn > 0 && (o.type === 'berry' || o.type === 'fruit')) {
       o.respawn = Math.max(0, o.respawn - 1); // double respawn speed
     }
-    // Magma deposits: cool over time; remove once mined and cool
-    if (o.type === 'magma_deposit') {
-      if (o.coolTimer > 0) o.coolTimer--;
-      if (o.mined && o.coolTimer <= 0) o._dead = true;
-    }
   });
-  // Clean up dead magma deposits
-  state.objects = state.objects.filter(o => !o._dead);
 }
 
 // ============================================================
@@ -11343,7 +11161,6 @@ function updateUI() {
     {id:'fire_spear', label:'F.SPEAR'},
     {id:'stone_knife', label:'KNIFE'},
     {id:'bow', label:'BOW'},
-    {id:'magma_hammer', label:'M.HAMMER'},
     {id:'fire_bottle', label:'F.BOTTLE'},
     {id:'torch', label:'TORCH'},
     {id:'coconut', label:'COCONUT'},
