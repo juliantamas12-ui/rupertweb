@@ -4613,107 +4613,6 @@ SFX.levelUp = () => {
     setTimeout(() => playSynth({type:'triangle', freq:f, decay:0.25, vol:0.12}), i*80);
   });
 };
-// ============================================================
-// TRIBAL DRUMS — proximity-based ambient percussion at night
-// Pulses louder/faster near the village; silent in daytime
-// ============================================================
-window.DRUMS = (() => {
-  let _ctx = null;
-  let _gainNode = null;
-  let _drumTimer = null;
-  let _bpm = 60;       // beats per minute
-  let _targetGain = 0; // 0-0.3
-  let _playing = false;
-
-  function getCtx() {
-    if (!_ctx) _ctx = new (window.AudioContext || window.webkitAudioContext)();
-    if (_ctx.state === 'suspended') _ctx.resume();
-    return _ctx;
-  }
-
-  function hit(freq, gain, dur) {
-    try {
-      const c = getCtx();
-      const osc = c.createOscillator();
-      const g = c.createGain();
-      osc.connect(g); g.connect(_gainNode || c.destination);
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, c.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(freq * 0.3, c.currentTime + dur * 0.8);
-      g.gain.setValueAtTime(gain, c.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + dur);
-      osc.start(c.currentTime);
-      osc.stop(c.currentTime + dur + 0.02);
-      // Short noise punch for attack click
-      const bufSz = Math.ceil(c.sampleRate * 0.03);
-      const buf = c.createBuffer(1, bufSz, c.sampleRate);
-      const data = buf.getChannelData(0);
-      for (let i = 0; i < bufSz; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / bufSz);
-      const ns = c.createBufferSource();
-      ns.buffer = buf;
-      const ng = c.createGain();
-      ng.gain.setValueAtTime(gain * 0.4, c.currentTime);
-      ng.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.03);
-      ns.connect(ng); ng.connect(_gainNode || c.destination);
-      ns.start(); ns.stop(c.currentTime + 0.04);
-    } catch(e) {}
-  }
-
-  // Patterns: array of [beat offset (0-1 within bar), freq, gain, dur]
-  const _patterns = [
-    [0,     80, 1.0, 0.25], // beat 1 — bass drum
-    [0.25,  60, 0.5, 0.18], // weak 2
-    [0.5,   80, 0.8, 0.22], // beat 3
-    [0.625, 55, 0.4, 0.15], // ghost
-    [0.75,  80, 0.7, 0.20], // beat 4
-  ];
-
-  function _scheduleBeat() {
-    if (!_playing) return;
-    const barMs = (60 / _bpm) * 4 * 1000;
-    const barStart = Date.now();
-    _patterns.forEach(([offset, freq, gainMult, dur]) => {
-      const delayMs = offset * barMs;
-      setTimeout(() => {
-        if (!_playing || _targetGain < 0.01) return;
-        hit(freq, _targetGain * gainMult, dur);
-      }, delayMs);
-    });
-    _drumTimer = setTimeout(_scheduleBeat, barMs);
-  }
-
-  function update(villageProx, isNight) {
-    // villageProx: 0=far, 1=at village; isNight: bool
-    const desiredGain = isNight ? villageProx * 0.28 : 0;
-    _targetGain = desiredGain;
-    const desiredBpm = 55 + Math.round(villageProx * 35); // 55-90 BPM
-    _bpm = desiredBpm;
-
-    if (desiredGain > 0.01 && !_playing) {
-      // Start drums
-      try {
-        const c = getCtx();
-        _gainNode = c.createGain();
-        _gainNode.gain.value = desiredGain;
-        _gainNode.connect(c.destination);
-        _playing = true;
-        _scheduleBeat();
-      } catch(e) { _playing = false; }
-    } else if (desiredGain < 0.01 && _playing) {
-      // Stop drums
-      _playing = false;
-      clearTimeout(_drumTimer);
-    }
-    if (_gainNode) {
-      try {
-        _gainNode.gain.setTargetAtTime(desiredGain, getCtx().currentTime, 1.5);
-      } catch(e) {}
-    }
-  }
-
-  return { update };
-})();
-
 SFX.raidAlert = () => {
   [220,220,330].forEach((f,i) => {
     setTimeout(() => playSynth({type:'sawtooth', freq:f, decay:0.4, vol:0.3}), i*200);
@@ -7795,70 +7694,6 @@ function render(ctx, minimapCtx) {
   const currentForecast = state.weatherForecast[state.weatherForecastIdx] || 'clear';
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  // === STARFIELD & MOON (night/dusk only) ===
-  if (state.isNight || state.dayTime > 0.6 || state.dayTime < 0.14) {
-    // Starfield alpha based on how dark it is
-    const starDark = Math.min(1, Math.max(0,
-      state.dayTime < 0.12 ? 1 :
-      state.dayTime < 0.2  ? 1 - (state.dayTime - 0.12) / 0.08 :
-      state.dayTime > 0.65 ? (state.dayTime - 0.65) / 0.08 : 0
-    ));
-
-    if (starDark > 0.05) {
-      ctx.save();
-      // Seed-based star positions (stable — no per-frame recalc)
-      if (!state._stars) {
-        const S = [];
-        for (let i = 0; i < 180; i++) {
-          S.push([
-            (Math.sin(i * 31.7 + 1.3) * 0.5 + 0.5), // x fraction 0-1
-            (Math.sin(i * 17.3 + 2.1) * 0.5 + 0.5) * 0.55, // y fraction 0-0.55
-            (Math.sin(i * 7.1) * 0.5 + 0.5),               // twinkle phase
-            i % 12 === 0 ? 2 : 1,                            // size: big star every 12
-            (Math.sin(i * 23.9) * 0.5 + 0.5) * 2.4,        // twinkle speed
-          ]);
-        }
-        state._stars = S;
-      }
-      const tf = state.frameCount;
-      state._stars.forEach(([xf, yf, phase, sz, spd]) => {
-        const twinkle = 0.45 + Math.sin(tf * spd * 0.04 + phase * 6.28) * 0.55;
-        ctx.globalAlpha = starDark * twinkle * (sz > 1 ? 0.9 : 0.7);
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(
-          Math.round(xf * canvas.width),
-          Math.round(yf * canvas.height),
-          sz, sz
-        );
-      });
-
-      // Crescent moon (upper-right quarter of sky)
-      const moonX = canvas.width * 0.78;
-      const moonY = canvas.height * 0.12;
-      const moonR = 18;
-      ctx.globalAlpha = starDark * 0.92;
-      // Bright outer circle
-      ctx.fillStyle = '#e8e4cc';
-      ctx.beginPath();
-      ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
-      ctx.fill();
-      // Crescent "bite" — slightly offset dark circle
-      ctx.fillStyle = sky; // punch-out using sky color
-      ctx.beginPath();
-      ctx.arc(moonX + moonR * 0.45, moonY - moonR * 0.1, moonR * 0.82, 0, Math.PI * 2);
-      ctx.fill();
-      // Subtle glow halo
-      ctx.globalAlpha = starDark * 0.12;
-      ctx.fillStyle = '#e8e4cc';
-      ctx.beginPath();
-      ctx.arc(moonX, moonY, moonR * 2.5, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.restore();
-    }
-  }
-
   // Cloudy weather: darker sky overlay
   if (currentForecast === 'cloudy' && !state.isNight) {
     ctx.fillStyle = 'rgba(60,60,80,0.22)';
@@ -12243,15 +12078,6 @@ function gameLoopWithUI() {
       const _isJungle = _tile === T.JUNGLE_LIGHT || _tile === T.JUNGLE_DARK;
       const _windVol = _isJungle ? 1.0 : (_isBeach ? 0.2 : 0.5);
       AMBIENT.update(_oceanVol, _fireVol, _windVol);
-    } catch(e) {}
-  }
-  // === TRIBAL DRUMS: update every 30 frames ===
-  if (state.frameCount % 30 === 0) {
-    try {
-      const _vx = 104 * 16, _vy = 57 * 16; // village center in world px
-      const _vdist = Math.hypot(state.player.x - _vx, state.player.y - _vy);
-      const _villageProx = Math.max(0, Math.min(1, 1 - (_vdist - 80) / 640)); // 0 at 720px, 1 at 80px
-      DRUMS.update(_villageProx, state.isNight);
     } catch(e) {}
   }
   // Handle canoe-targeted projectiles
