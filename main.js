@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Westphalian Myth: How a Peace Treaty Became the World's Most Useful Fiction",
+    date: "2026-04-06",
+    category: "History",
+    excerpt: "In 1648, two treaties signed in the German cities of Osnabrück and Münster ended thirty years of catastrophic religious warfare in Europe. Hundreds of thousands were dead. The Holy Roman Empire — that peculiar, multi-layered constitutional structure ...",
+    url: "essays/2026-04-06-the-westphalian-myth-how-a-peace-treaty-became-the-worlds-mo.html"
+  },
+  {
     title: "The Myth of the Rational Voter and Why Democracy Keeps Failing Itself",
     date: "2026-04-05",
     category: "History",
@@ -154,7 +161,9 @@ const SCHOOL_TASKS = [
   // --- Wed Apr 1 ---
   { subject: "Math 8", title: "Math 8: MathSpace Surface Area", due: "2026-04-01", time: "1:30 PM", status: "done", type: "Formative" },
   { subject: "Math 7", title: "Math 7 (HW)", due: "2026-04-01", time: "3:30 PM", status: "done", type: "Formative" },
-  // --- No upcoming tasks as of Apr 3 (dashboard shows "No Tasks" for Upcoming) ---
+  // --- Mon Apr 6 ---
+  { subject: "History/Geography 7", title: "Upload weeks 15 - 18 work", due: "2026-04-06", time: "12:10 PM", status: "pending", type: "Summative" },
+  // Last updated: 2026-04-05 via ManageBac scraper
 ];
 
 
