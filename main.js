@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Peace That Worked: What the Congress of Vienna Gets Right That Versailles Got Wrong",
+    date: "2026-04-07",
+    category: "History",
+    excerpt: "Everyone learns about Versailles. It is the cautionary tale of modern diplomatic history — the vindictive peace that humiliated Germany, wrecked the Weimar Republic, and handed Hitler his grievances pre-packaged. The lesson taught in classrooms is mo...",
+    url: "essays/2026-04-07-the-peace-that-worked-what-the-congress-of-vienna-gets-right.html"
+  },
+  {
     title: "The Westphalian Myth: How a Peace Treaty Became the World's Most Useful Fiction",
     date: "2026-04-06",
     category: "History",
@@ -163,7 +170,7 @@ const SCHOOL_TASKS = [
   { subject: "Math 7", title: "Math 7 (HW)", due: "2026-04-01", time: "3:30 PM", status: "done", type: "Formative" },
   // --- Mon Apr 6 ---
   { subject: "History/Geography 7", title: "Upload weeks 15 - 18 work", due: "2026-04-06", time: "12:10 PM", status: "pending", type: "Summative" },
-  // Last updated: 2026-04-05 via ManageBac scraper
+  // Last updated: 2026-04-06 via ManageBac scraper
 ];
 
 
