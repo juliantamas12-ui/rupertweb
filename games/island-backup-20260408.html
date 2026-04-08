@@ -471,7 +471,7 @@ const state = {
     knifeThrows: 3,    // throws remaining before knife breaks
     inv: {
       wood:0, stone:0, coconut:0, fruit:0, fish:0,
-      fish_cooked:0, fruit_cooked:0, raw_meat:0, cooked_meat:0,
+      fish_cooked:0, fruit_cooked:0,
       volcanic_stone:0, driftwood:0,
       torch:0, campfire:0, axe:0, spear:0,
       fire_axe:0, fire_spear:0, fishing_rod:0, journal:0,
@@ -931,11 +931,6 @@ function genObjects() {
         else if (r < 0.003) state.creatures.push({type:'shark', x:wx, y:wy, hp:50, maxHp:50, spd:0.9, attackTimer:0, walkTimer:0});
       } else if (t === T.VOLCANIC) {
         if (r < 0.04) state.objects.push({type:'vol_rock', x:wx, y:wy, hp:3, maxHp:3});
-      }
-      // Boar spawn: light jungle only, rare, away from start
-      if (t === T.JUNGLE_LIGHT && Math.random() < 0.0018) {
-        const distFromStart = Math.hypot(x - 62, y - 85);
-        if (distFromStart > 12) state.creatures.push({type:'boar', x:wx, y:wy, hp:30, maxHp:30, spd:1.4, attackTimer:0, walkTimer:0, graze:Math.random()*200, dir:1, chargeTimer:0, charging:false});
       }
     }
   }
@@ -3756,109 +3751,7 @@ function updateCreatures() {
         }
       }
     }
-
-    if (c.type === 'boar') {
-      // Boars stay in jungle tiles only
-      const boarTile = getTile(c.x, c.y);
-      if (boarTile === T.BEACH || boarTile === T.SHALLOW_WATER || boarTile === T.DEEP_OCEAN || boarTile === T.LAVA) {
-        // Push back toward jungle center
-        const jcx = 75*TSIZE, jcy = 75*TSIZE;
-        c.x += (jcx - c.x) * 0.03;
-        c.y += (jcy - c.y) * 0.03;
-        return;
-      }
-      c.graze = (c.graze||0) - 1;
-      c.chargeTimer = (c.chargeTimer||0) - 1;
-
-      // Charge behavior: if cornered (player very close for 2s), boar charges
-      if (dist < 60 && !c.charging) {
-        c.chargeTimer = (c.chargeTimer||0) - 1;
-        if (c.chargeTimer < -120) {
-          c.charging = true;
-          c.chargeTimer = 40; // charge duration
-          showMsg('BOAR CHARGES!', '#c0520a');
-          spawnParticles(c.x, c.y, '#c0520a', 5);
-        }
-      }
-      if (c.charging) {
-        if (c.chargeTimer > 0) {
-          // Sprint toward player
-          if (dist > 0) { c.x += dx/dist * 3.5; c.y += dy/dist * 3.5; }
-          c.attackTimer++;
-          if (dist < 22 && c.attackTimer > 10) {
-            c.attackTimer = 0;
-            p.hp = Math.max(0, p.hp - 6);
-            p.hitFlash = 8;
-            state.screenShake = Math.max(state.screenShake, 5);
-            state.lastDamageCause = 'boar charge';
-            if (state.runStats) state.runStats.damageTaken += 6;
-            spawnParticles(p.x, p.y, '#c0520a', 4);
-            showMsg('BOAR CHARGES! -6 HP', '#c0520a');
-          }
-        } else { c.charging = false; c.chargeTimer = 0; c.graze = 150; }
-      } else if (dist < 180) {
-        // Flee from player
-        if (dist > 0) {
-          const nx = c.x - dx/dist * c.spd;
-          const ny = c.y - dy/dist * c.spd;
-          const nt = getTile(nx, ny);
-          if (nt === T.JUNGLE_LIGHT || nt === T.JUNGLE_DARK) { c.x = nx; c.y = ny; }
-        }
-        c.dir = dx < 0 ? 1 : -1; // face away from player
-      } else if (c.graze <= 0) {
-        // Graze: wander short distance
-        c.graze = 120 + Math.random()*180;
-        const gx = c.x + (Math.random()-0.5)*80;
-        const gy = c.y + (Math.random()-0.5)*80;
-        const gt = getTile(gx, gy);
-        if (gt === T.JUNGLE_LIGHT || gt === T.JUNGLE_DARK) { c.x += (gx-c.x)*0.1; c.y += (gy-c.y)*0.1; }
-        c.dir = Math.random() > 0.5 ? 1 : -1;
-      }
-    }
   });
-}
-
-function drawBoar(ctx, sx, sy, dir, hp, maxHp) {
-  // Simple pixel-art boar: stocky brown body, dark head, tiny tusks, trotting legs
-  const d = (dir||1); // 1 = facing right, -1 = facing left
-  ctx.save();
-  ctx.translate(sx, sy);
-  if (d < 0) { ctx.scale(-1, 1); }
-
-  // Body (dark brown oval)
-  ctx.fillStyle = '#6b3a1f';
-  ctx.fillRect(-10, -8, 20, 12);
-  // Head (darker, forward)
-  ctx.fillStyle = '#4a2510';
-  ctx.fillRect(8, -10, 8, 10);
-  // Snout
-  ctx.fillStyle = '#7a4530';
-  ctx.fillRect(14, -6, 4, 5);
-  // Tusk
-  ctx.fillStyle = '#e8d8a0';
-  ctx.fillRect(15, -3, 5, 2);
-  // Eye
-  ctx.fillStyle = '#cc2200';
-  ctx.fillRect(10, -9, 2, 2);
-  // Legs (4 stubby legs, animated)
-  const legOff = Math.sin(Date.now() * 0.015) * 2;
-  ctx.fillStyle = '#4a2510';
-  ctx.fillRect(-8, 4, 3, 4 + legOff);
-  ctx.fillRect(-3, 4, 3, 4 - legOff);
-  ctx.fillRect(2, 4, 3, 4 + legOff);
-  ctx.fillRect(7, 4, 3, 4 - legOff);
-  // Bristle ridge (dark line along back)
-  ctx.fillStyle = '#2a1008';
-  ctx.fillRect(-8, -10, 18, 2);
-  // Tail (small stub)
-  ctx.fillStyle = '#6b3a1f';
-  ctx.fillRect(-12, -5, 3, 3);
-
-  ctx.restore();
-
-  // HP bar
-  px(ctx, '#333', sx-10, sy-20, 20, 3);
-  px(ctx, '#c0520a', sx-10, sy-20, Math.round(20*hp/maxHp), 3);
 }
 
 function drawCreatures(ctx, camX, camY) {
@@ -3877,8 +3770,6 @@ function drawCreatures(ctx, camX, camY) {
       drawBat(ctx, sx, sy);
       px(ctx, '#333', sx-8, sy-14, 16, 3);
       px(ctx, '#2a1040', sx-8, sy-14, Math.round(16*c.hp/c.maxHp), 3);
-    } else if (c.type === 'boar') {
-      drawBoar(ctx, sx, sy, c.dir||1, c.hp, c.maxHp);
     }
     if (false) {
       // hitFlash removed
@@ -5451,7 +5342,6 @@ function handleInteract() {
     if (obj.placed && obj.type === 'campfire') {
       const d = Math.hypot(p.x-obj.x, p.y-obj.y);
       if (d < reach) {
-        if (p.inv.raw_meat > 0) { p.inv.raw_meat--; p.inv.cooked_meat = (p.inv.cooked_meat||0)+1; state.cookedFoodDay = state.day; showMsg('COOKED BOAR MEAT — +70 food when eaten', '#c0520a'); SFX.craft && SFX.craft(); return; }
         if (p.inv.fish > 0) { p.inv.fish--; p.inv.fish_cooked++; state.cookedFoodDay = state.day; showMsg('COOKED FISH', '#e67e22'); return; }
         if (p.inv.fruit > 0) { p.inv.fruit--; p.inv.fruit_cooked++; state.cookedFoodDay = state.day; showMsg('COOKED FRUIT', '#e67e22'); return; }
         showMsg('NOTHING TO COOK', '#888');
@@ -6052,14 +5942,6 @@ function handleClick(sx, sy) {
           if (c.type === 'shark') { p.inv.fish = (p.inv.fish||0)+2; addFloatingText(cx2, cy2-20, '+2 FISH', '#3dd6d0'); }
           if (c.type === 'cave_guardian') { showMsg('CAVE GUARDIAN DEFEATED! The chamber is yours.', '#aa44ff'); spawnParticles(cx2, cy2, '#aa44ff', 5); }
           if (c.type === 'cave_spider') { p.inv.ancient_bone = (p.inv.ancient_bone||0)+1; addFloatingText(cx2, cy2-20, '+1 BONE', '#ccbbaa'); }
-          if (c.type === 'boar') {
-            const meatGain = 1 + Math.floor(Math.random()*2);
-            p.inv.raw_meat = (p.inv.raw_meat||0) + meatGain;
-            addFloatingText(cx2, cy2-20, '+'+meatGain+' RAW MEAT', '#c0520a');
-            showMsg('BOAR KILLED — cook the meat at a campfire!', '#c0520a');
-            spawnParticles(cx2, cy2, '#c0520a', 8);
-            gainSkill('combat');
-          }
           state.creatures.splice(i, 1);
         }
         hit = true;
@@ -7347,8 +7229,6 @@ function renderInvMenu() {
       if (k==='fish_cooked'&&p.inv.fish_cooked>0){p.inv.fish_cooked--;p.food=Math.min(p.maxFood,p.food+50);showMsg('+50 FOOD (COOKED)','#e67e22');}
       if (k==='fruit'&&p.inv.fruit>0){p.inv.fruit--;if(Math.random()<0.2){p.sick=200;showMsg('SICK FROM RAW FRUIT!','#e74c3c');}else{p.food=Math.min(p.maxFood,p.food+20);showMsg('+20 FOOD (RAW)','#e67e22');}}
       if (k==='fruit_cooked'&&p.inv.fruit_cooked>0){p.inv.fruit_cooked--;p.food=Math.min(p.maxFood,p.food+40);showMsg('+40 FOOD (COOKED)','#e67e22');}
-      if (k==='raw_meat'&&p.inv.raw_meat>0){p.inv.raw_meat--;if(Math.random()<0.4){p.sick=300;showMsg('SICK FROM RAW MEAT!','#e74c3c');}else{p.food=Math.min(p.maxFood,p.food+30);showMsg('+30 FOOD (RAW MEAT — cook it for more)','#c0520a');}}
-      if (k==='cooked_meat'&&p.inv.cooked_meat>0){p.inv.cooked_meat--;p.food=Math.min(p.maxFood,p.food+70);p.hp=Math.min(p.maxHp,p.hp+5);showMsg('+70 FOOD +5 HP (COOKED MEAT)','#e07830');}
       if (k==='hearty_meal'&&p.inv.hearty_meal>0){p.inv.hearty_meal--;p.food=Math.min(p.maxFood,p.food+40);p.hp=Math.min(p.maxHp,p.hp+20);showMsg('+40 FOOD +20 HP (HEARTY MEAL)','#ffcc80');}
       if (k==='healing_potion'&&p.inv.healing_potion>0){p.inv.healing_potion--;p.hp=Math.min(p.maxHp,p.hp+30);showMsg('+30 HP (HEALING POTION)','#40ff88');}
       if (k==='antidote'&&p.inv.antidote>0){p.inv.antidote--;p.poison=0;showMsg('POISON CURED (ANTIDOTE)','#40ff88');}
@@ -11751,7 +11631,7 @@ function updateUI() {
   if(wiEl) wiEl.textContent=state.weatherRain?'STORM':(state.player.torch?'TORCH':'') + (fcStr ? ' ['+fcStr+']' : '');
   const hwEl = document.getElementById('hw'); if(hwEl) hwEl.textContent = p.inv.wood||0;
   const hsEl = document.getElementById('hs'); if(hsEl) hsEl.textContent = p.inv.stone||0;
-  const totalFood=(p.inv.fish||0)+(p.inv.fruit||0)+(p.inv.fish_cooked||0)+(p.inv.fruit_cooked||0)+(p.inv.coconut||0)+(p.inv.raw_meat||0)+(p.inv.cooked_meat||0);
+  const totalFood=(p.inv.fish||0)+(p.inv.fruit||0)+(p.inv.fish_cooked||0)+(p.inv.fruit_cooked||0)+(p.inv.coconut||0);
   const hfEl = document.getElementById('hf'); if(hfEl) hfEl.textContent = totalFood;
   const hwtEl = document.getElementById('hwt'); if(hwtEl) hwtEl.textContent = Math.round(p.water);
   const htEl=document.getElementById('ht'); if(htEl) htEl.textContent='';
