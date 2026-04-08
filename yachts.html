@@ -512,7 +512,39 @@
     </div>
 
     <div class="section-label"><h2>Fleet Overview</h2></div>
-    <div class="fleet-grid" id="fleet-grid"></div>
+    
+<!-- Live port arrival feed -->
+<section style="background:rgba(0,20,40,0.6);border:1px solid rgba(200,160,32,0.3);border-radius:8px;padding:20px;margin:0 0 28px 0;">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+    <div style="width:8px;height:8px;border-radius:50%;background:#22cc66;box-shadow:0 0 6px #22cc66;flex-shrink:0;animation:pulse 2s infinite;"></div>
+    <h2 style="color:#c8a020;font-family:'Space Mono',monospace;font-size:13px;letter-spacing:3px;margin:0;">FLEET ACTIVITY</h2>
+    <span id="feed-last-updated" style="color:rgba(255,255,255,0.3);font-size:11px;font-family:monospace;margin-left:auto;"></span>
+  </div>
+  <div id="port-arrivals" style="font-family:'Space Mono',monospace;font-size:12px;color:rgba(255,255,255,0.5);">
+    Monitoring 11 vessels — port arrivals appear here automatically
+  </div>
+</section>
+<script>
+fetch('/yachts-live.json?' + Date.now())
+  .then(r => r.json())
+  .then(data => {
+    const el = document.getElementById('port-arrivals');
+    const upEl = document.getElementById('feed-last-updated');
+    if (upEl && data.lastUpdated) upEl.textContent = 'Checked: ' + new Date(data.lastUpdated).toUTCString();
+    if (data.recentMoves && data.recentMoves.length > 0) {
+      el.innerHTML = data.recentMoves.slice(0,5).map(m =>
+        '<div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.08);">' +
+        '<span style="color:#c8a020;">' + m.vessel + '</span> ' +
+        '<span style="color:rgba(255,255,255,0.4);">→</span> ' +
+        '<span style="color:#fff;">' + m.port + '</span>' +
+        '<span style="color:rgba(255,255,255,0.3);font-size:10px;margin-left:12px;">' + new Date(m.time).toUTCString() + '</span>' +
+        '</div>'
+      ).join('');
+    }
+  }).catch(() => {});
+</script>
+
+<div class="fleet-grid" id="fleet-grid"></div>
 
     <div class="map-section">
       <div class="section-label"><h2>Live Positions</h2></div>
