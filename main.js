@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Sovereign Debt Trap: How the IMF Became the World's Most Effective Colonial Tool",
+    date: "2026-04-08",
+    category: "History",
+    excerpt: "When historians of the twenty-second century look back at the late twentieth and early twenty-first centuries, they will not marvel at the atom bomb or the internet. They will marvel at how a relatively small institution in Washington, D.C., managed ...",
+    url: "essays/2026-04-08-the-sovereign-debt-trap-how-the-imf-became-the-worlds-most-e.html"
+  },
+  {
     title: "The Peace That Worked: What the Congress of Vienna Gets Right That Versailles Got Wrong",
     date: "2026-04-07",
     category: "History",
@@ -169,8 +176,8 @@ const SCHOOL_TASKS = [
   { subject: "Math 8", title: "Math 8: MathSpace Surface Area", due: "2026-04-01", time: "1:30 PM", status: "done", type: "Formative" },
   { subject: "Math 7", title: "Math 7 (HW)", due: "2026-04-01", time: "3:30 PM", status: "done", type: "Formative" },
   // --- Mon Apr 6 ---
-  { subject: "History/Geography 7", title: "Upload weeks 15 - 18 work", due: "2026-04-06", time: "12:10 PM", status: "pending", type: "Summative" },
-  // Last updated: 2026-04-06 via ManageBac scraper
+  { subject: "History/Geography 7", title: "Upload weeks 15 - 18 work", due: "2026-04-06", time: "12:10 PM", status: "overdue", type: "Summative" },
+  // Last updated: 2026-04-07 via ManageBac scraper (63 overdue badge visible; tasks page 404'd — only dashboard data captured)
 ];
 
 
