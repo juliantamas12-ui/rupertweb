@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Catastrophe by Design: De-Baathification and the Unmaking of Iraq",
+    date: "2026-04-09",
+    category: "History",
+    excerpt: "On May 16, 2003, L. Paul Bremer III, the newly appointed head of the Coalition Provisional Authority in Baghdad, signed Order Number 1. It dissolved the Baath Party and barred its members from government employment. Four days later, Order Number 2 di...",
+    url: "essays/2026-04-09-the-catastrophe-by-design-de-baathification-and-the-unmaking.html"
+  },
+  {
     title: "The Sovereign Debt Trap: How the IMF Became the World's Most Effective Colonial Tool",
     date: "2026-04-08",
     category: "History",
@@ -177,7 +184,7 @@ const SCHOOL_TASKS = [
   { subject: "Math 7", title: "Math 7 (HW)", due: "2026-04-01", time: "3:30 PM", status: "done", type: "Formative" },
   // --- Mon Apr 6 ---
   { subject: "History/Geography 7", title: "Upload weeks 15 - 18 work", due: "2026-04-06", time: "12:10 PM", status: "overdue", type: "Summative" },
-  // Last updated: 2026-04-07 via ManageBac scraper (63 overdue badge visible; tasks page 404'd — only dashboard data captured)
+  // Last updated: 2026-04-08 via ManageBac scraper (63 overdue badge visible; tasks/IB pages still 404 — only dashboard data captured)
 ];
 
 
