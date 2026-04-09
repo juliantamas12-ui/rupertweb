@@ -657,6 +657,13 @@ const state = {
   enemyNames: ['Tama', 'Vai', 'Hiro', 'Poe', 'Reva'],
   npcRelations: { tribe: 0 },
 
+  // === TRIBAL INFAMY SYSTEM ===
+  tribeInfamy: 0,           // count of village guards killed (not during raids)
+  bountyHunterActive: false,// true while a bounty hunter is alive
+  bountyHunter: null,       // the bounty hunter object (enemy-like)
+  bountyHunterTimer: 0,     // cooldown before next hunter can spawn (frames)
+  bountyHunterNames: ['Mata', 'Raka', 'Toru', 'Ono', 'Lima'],
+
   // === MULTIPLAYER FOUNDATION ===
   deathGhosts: [], // loaded from localStorage on start
   lastDamageCause: 'unknown',
@@ -3430,6 +3437,23 @@ function updateEnemies() {
       if (e.dyingTimer <= 0 && state.runStats) {
         state.runStats.enemiesKilled++;
         gainSkill('combat');
+        // === TRIBAL INFAMY — killing village guards raises wanted level ===
+        if (e.villageGuard && !state.raidActive && !state.peaceAchieved) {
+          const prevInfamy = state.tribeInfamy || 0;
+          state.tribeInfamy = prevInfamy + 1;
+          const inf = state.tribeInfamy;
+          if (inf === 3)  showMsg('WANTED: The tribe knows your face. A bounty hunter is coming.', '#ff8800');
+          else if (inf === 6)  showMsg('BLOOD PRICE: The tribe sends their best tracker. You cannot hide.', '#ff4400');
+          else if (inf === 10) showMsg('OUTLAW: The entire tribe marks you for death. Peace is now impossible.', '#ff0000');
+          else if (inf > 3 && (inf - prevInfamy) > 0 && state.bountyHunterTimer <= 0 && !state.bountyHunterActive) {
+            // Additional kills refresh bounty hunter sooner
+            state.bountyHunterTimer = Math.max(state.bountyHunterTimer, 60 * 20);
+          }
+          // Spawn bounty hunter at thresholds if not already active
+          if ((inf === 3 || inf === 6 || inf === 10) && !state.bountyHunterActive && state.bountyHunterTimer <= 0) {
+            state.bountyHunterTimer = 60 * 30; // 30s delay before he arrives
+          }
+        }
         // === KILL STREAK TRACKING ===
         state.killStreakTimer = state.killStreakWindow; // reset window
         state.killStreak = (state.killStreak||0) + 1;
@@ -3487,8 +3511,12 @@ function updateEnemies() {
     p.inv.chiefs_mask = 1;
     showMsg("TRIBAL CHIEF DEFEATED! CHIEF'S MASK ACQUIRED!", '#c8f135');
     spawnParticles(p.x, p.y, '#c8f135',3);
-    // Peace ending: if Kona is helping, tribe lowers weapons
+    // Peace ending: if Kona is helping, tribe lowers weapons (blocked by max infamy)
     if (state.storyChoices.konaHelping && !state.peaceAchieved) {
+      if ((state.tribeInfamy||0) >= 10) {
+        showMsg('The tribe will never forgive a Blood-Marked outsider. Peace is impossible.', '#ff4400');
+        return;
+      }
       state.peaceAchieved = true;
       state.ritual.active = true;
       state.ritual.phase = 'peace';
@@ -3548,7 +3576,7 @@ function updateProjectiles() {
     if (proj.type === 'lava_bomb') {
       // AoE explosion on enemy contact or life end
       let exploded = false;
-      const allTargetsLB = [...state.enemies, ...(state.chief?[state.chief]:[])];
+      const allTargetsLB = [...state.enemies, ...(state.chief?[state.chief]:[]), ...(state.bountyHunterActive && state.bountyHunter ? [state.bountyHunter] : [])];
       for (const e of allTargetsLB) {
         if (Math.hypot(proj.x-e.x, proj.y-e.y) < 22) { exploded = true; break; }
       }
@@ -3580,7 +3608,7 @@ function updateProjectiles() {
 
     if (proj.type === 'knife_throw') {
       let hit = false;
-      const allTargets2 = [...state.enemies, ...(state.chief?[state.chief]:[]), ...state.creatures.filter(c=>c.type!=='crab')];
+      const allTargets2 = [...state.enemies, ...(state.chief?[state.chief]:[]), ...state.creatures.filter(c=>c.type!=='crab'), ...(state.bountyHunterActive && state.bountyHunter ? [state.bountyHunter] : [])];
       for (const e of allTargets2) {
         if (Math.hypot(proj.x-e.x, proj.y-e.y) < 18) {
           e.hp -= 10;
@@ -3598,7 +3626,7 @@ function updateProjectiles() {
 
     if (proj.type === 'player_arrow') {
       let hit = false;
-      const allTargets2 = [...state.enemies, ...(state.chief?[state.chief]:[]), ...state.creatures.filter(c=>c.type!=='crab')];
+      const allTargets2 = [...state.enemies, ...(state.chief?[state.chief]:[]), ...state.creatures.filter(c=>c.type!=='crab'), ...(state.bountyHunterActive && state.bountyHunter ? [state.bountyHunter] : [])];
       for (const e of allTargets2) {
         if (Math.hypot(proj.x-e.x, proj.y-e.y) < 16) {
           e.hp -= 12;
@@ -5905,7 +5933,7 @@ function handleClick(sx, sy) {
     }
 
     let hit = false;
-    const allTargets = [...state.enemies, ...(state.chief?[state.chief]:[]), ...(state.raid||[])];
+    const allTargets = [...state.enemies, ...(state.chief?[state.chief]:[]), ...(state.raid||[]), ...(state.bountyHunterActive && state.bountyHunter ? [state.bountyHunter] : [])];
 
     if (tool === 'spear' || tool === 'fire_spear' || tool === 'depth_spear' || tool === 'bone_spear') {
       // Spear: hit up to 2 enemies in a line (sorted by distance)
@@ -7670,6 +7698,11 @@ function drawMinimap(minimapCtx) {
     mc.fillStyle = '#3498db';
     state.survivors.forEach(sv => mc.fillRect(sv.x/TSIZE*scale-1, sv.y/TSIZE*scale-1, 3, 3));
   }
+  // Bounty hunter on minimap — bright orange, pulsing
+  if (state.bountyHunterActive && state.bountyHunter) {
+    mc.fillStyle = (state.frameCount % 30 < 15) ? '#ff6600' : '#ff0000';
+    mc.fillRect(state.bountyHunter.x/TSIZE*scale-3, state.bountyHunter.y/TSIZE*scale-3, 6, 6);
+  }
 
   // Player
   mc.fillStyle = '#ffffff';
@@ -8410,6 +8443,40 @@ function render(ctx, minimapCtx) {
       capturedChief.walkTimer++;
       drawEnemy(ctx, capturedChief.x - camX, capturedChief.y - camY, capturedChief);
     }});
+  }
+
+  // Bounty Hunter
+  if (state.bountyHunterActive && state.bountyHunter) {
+    const bh = state.bountyHunter;
+    const bhsx = bh.x - camX, bhsy = bh.y - camY;
+    if (bhsx > -60 && bhsx < ctx.canvas.width+60 && bhsy > -60 && bhsy < ctx.canvas.height+60) {
+      drawList.push({y: bh.y, draw: () => {
+        const sx2 = bh.x - camX, sy2 = bh.y - camY;
+        // Draw bounty hunter: dark red tinted warrior with skull mark
+        if (bh.hitFlash > 0) { ctx.fillStyle='rgba(255,80,0,0.7)'; ctx.fillRect(sx2-8,sy2-20,16,26); }
+        // Body — dark crimson
+        ctx.fillStyle='#6a1010'; ctx.fillRect(sx2-5,sy2-10,10,14);
+        // Head
+        ctx.fillStyle='#c8956a'; ctx.fillRect(sx2-4,sy2-20,8,10);
+        // War paint — white stripes
+        ctx.fillStyle='rgba(255,255,255,0.85)';
+        ctx.fillRect(sx2-4,sy2-17,3,2);
+        ctx.fillRect(sx2+1,sy2-17,3,2);
+        // Skull mask hint (tier 2+)
+        if (bh.tier >= 2) { ctx.fillStyle='#fff'; ctx.fillRect(sx2-3,sy2-19,6,3); ctx.fillStyle='#6a1010'; ctx.fillRect(sx2-2,sy2-18,2,2); ctx.fillRect(sx2+1,sy2-18,2,2); }
+        // Weapon (bone spear)
+        ctx.strokeStyle='#8a6030'; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.moveTo(sx2+6,sy2-22); ctx.lineTo(sx2+6,sy2+4); ctx.stroke();
+        ctx.fillStyle='#d0c0a0'; ctx.fillRect(sx2+4,sy2-26,4,5);
+        // HP bar — red/orange
+        px(ctx,'#330000',sx2-12,sy2-28,24,4);
+        px(ctx,'#cc3300',sx2-12,sy2-28,Math.round(24*bh.hp/bh.maxHp),4);
+        // Name label with tier indicator
+        ctx.fillStyle='#ff6600'; ctx.font='bold 9px Lato,sans-serif'; ctx.textAlign='center';
+        ctx.fillText(bh.name + (bh.tier >= 3 ? ' [!!!]' : bh.tier >= 2 ? ' [!!]' : ' [!]'), sx2, sy2-31);
+        ctx.textAlign='left';
+      }});
+    }
   }
 
   // Creatures
@@ -10445,6 +10512,93 @@ function updateWorldEvents() {
       }
       return true;
     });
+  }
+
+  // === TRIBAL BOUNTY HUNTER ===
+  // A named elite hunter who tracks the player down after enough guard kills.
+  if (!state.bountyHunterActive && (state.tribeInfamy||0) >= 3 && !state.peaceAchieved) {
+    if ((state.bountyHunterTimer||0) > 0) {
+      state.bountyHunterTimer--;
+      if (state.bountyHunterTimer === 0) {
+        // Spawn bounty hunter from the village direction
+        const inf = state.tribeInfamy;
+        const tier = inf >= 10 ? 3 : inf >= 6 ? 2 : 1;
+        const nameIdx = Math.min(tier - 1, state.bountyHunterNames.length - 1);
+        const name = state.bountyHunterNames[Math.floor(Math.random() * state.bountyHunterNames.length)];
+        const hp   = 50 + tier * 30;     // tier1=80, tier2=110, tier3=140
+        const spd  = 1.3 + tier * 0.25;  // tier1=1.55, tier2=1.8, tier3=2.05
+        const dmg  = 10 + tier * 8;      // tier1=18, tier2=26, tier3=34
+        // Spawn near village
+        state.bountyHunter = {
+          x: 103 * TSIZE + (Math.random()-0.5)*3*TSIZE,
+          y: 57  * TSIZE + (Math.random()-0.5)*3*TSIZE,
+          hp, maxHp: hp, spd, dmg, tier,
+          name, hitFlash: 0, attackTimer: 0,
+          stuckTimer: 0, lastX: 0, lastY: 0,
+          isBountyHunter: true,
+        };
+        state.bountyHunterActive = true;
+        const tierLabel = ['', 'TRACKER', 'BLADE-SWORN', 'DEATH-MARKED'][tier];
+        showMsg(`BOUNTY HUNTER: ${name} the ${tierLabel} hunts you!`, '#ff6600');
+        SFX.raidAlert && SFX.raidAlert();
+        if (navigator.vibrate) navigator.vibrate([60,40,120]);
+      }
+    }
+  }
+
+  if (state.bountyHunterActive && state.bountyHunter) {
+    const bh = state.bountyHunter;
+    const p3 = state.player;
+    if (bh.hitFlash > 0) bh.hitFlash--;
+
+    // Chase player relentlessly (always knows position)
+    const dx = p3.x - bh.x, dy = p3.y - bh.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist > 18) {
+      const ang = Math.atan2(dy, dx);
+      // Stuck detection: if barely moving, nudge
+      if (Math.abs(bh.x - bh.lastX) < 0.5 && Math.abs(bh.y - bh.lastY) < 0.5) {
+        bh.stuckTimer = (bh.stuckTimer||0) + 1;
+      } else { bh.stuckTimer = 0; }
+      bh.lastX = bh.x; bh.lastY = bh.y;
+      const nudge = bh.stuckTimer > 30 ? (Math.random()-0.5)*2 : 0;
+      bh.x += Math.cos(ang + nudge) * bh.spd;
+      bh.y += Math.sin(ang + nudge) * bh.spd;
+    }
+
+    // Attack player on contact
+    if (dist < 22) {
+      bh.attackTimer = (bh.attackTimer||0) + 1;
+      if (bh.attackTimer % 75 === 0) { // attacks every 1.25s
+        const rawDmg = bh.dmg + Math.floor(Math.random()*6);
+        const reduced = Math.floor(rawDmg * (1 - (state.damageReduction||0)));
+        p3.hp = Math.max(0, p3.hp - reduced);
+        p3.hitFlash = 8;
+        addFloatingText(p3.x, p3.y-24, `-${reduced} ${bh.name}!`, '#ff6600');
+        SFX.hurt && SFX.hurt();
+        if (navigator.vibrate) navigator.vibrate(40);
+      }
+    }
+
+    // Check if bounty hunter is dead (take damage from player attacks — handled in attack loops via isBountyHunter flag)
+    if (bh.hp <= 0) {
+      // Hunter defeated: reduce infamy, nice loot, cooldown before next
+      state.bountyHunterActive = false;
+      const infReduction = Math.min(state.tribeInfamy, 2);
+      state.tribeInfamy = Math.max(0, (state.tribeInfamy||0) - infReduction);
+      state.bountyHunterTimer = 60 * 60 * 3; // 3 min before another can come
+      const lootItems = ['vine', 'tribal_weapon', 'volcanic_stone', 'fruit'];
+      const drop = lootItems[Math.floor(Math.random() * lootItems.length)];
+      if (!state.groundLoot) state.groundLoot = [];
+      state.groundLoot.push({ x: bh.x, y: bh.y, item: drop, qty: 2, life: 900, bobPhase: 0 });
+      // Bonus: tribal token — a unique item
+      p3.inv.tribal_token = (p3.inv.tribal_token||0) + 1;
+      state.bountyHunter = null;
+      addFloatingText(p3.x, p3.y - 50, 'BOUNTY DEFEATED! +TRIBAL TOKEN', '#ff9900');
+      showMsg(`${bh.name} has fallen. Your infamy drops to ${state.tribeInfamy}.`, '#c8f135');
+      SFX.victory && SFX.victory();
+      gainSkill('combat');
+    }
   }
 }
 
