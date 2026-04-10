@@ -191,7 +191,7 @@ const SCHOOL_TASKS = [
   { subject: "Math 7", title: "Math 7 (HW)", due: "2026-04-01", time: "3:30 PM", status: "done", type: "Formative" },
   // --- Mon Apr 6 ---
   { subject: "History/Geography 7", title: "Upload weeks 15 - 18 work", due: "2026-04-06", time: "12:10 PM", status: "overdue", type: "Summative" },
-  // Last updated: 2026-04-09 via ManageBac scraper (63 overdue badge visible; tasks/IB pages still 404 — only dashboard data captured)
+  // Last updated: 2026-04-10 via ManageBac scraper (63 overdue badge visible; tasks/IB pages still 404 — only dashboard data captured)
 ];
 
 
