@@ -551,10 +551,6 @@ const state = {
   dawnFired: false,    // has dawn event fired this day cycle
   duskFired: false,    // has dusk event fired this day cycle
 
-  // === DAILY BOUNTY HUNT ===
-  dailyBounty: null,       // { type, creatureId, killed, reward } — today's target
-  dailyBountyDay: 0,       // which game day this bounty was set
-
   // Volcano eruption event
   eruptionPhase: 0,        // 0=dormant, 1=rumbling warning, 2=erupting
   eruptionTimer: 60*60*(8+Math.random()*6), // first eruption in 8-14 in-game minutes
@@ -3697,12 +3693,6 @@ function updateProjectiles() {
 function updateCreatures() {
   const p = state.player;
   const inSafeZone = Math.hypot(p.x - 62*TSIZE, p.y - 87*TSIZE) < 18*TSIZE;
-  // Check bounty kill before filtering
-  state.creatures.forEach(c => {
-    if (c.hp <= 0 && c.isBounty && state.dailyBounty && !state.dailyBounty.killed) {
-      claimBountyReward(c.bountyDef);
-    }
-  });
   state.creatures = state.creatures.filter(c => c.hp > 0);
 
   state.creatures.forEach(c => {
@@ -3903,19 +3893,6 @@ function drawCreatures(ctx, camX, camY) {
   state.creatures.forEach(c => {
     const sx = c.x - camX, sy = c.y - camY;
     if (sx < -60 || sx > ctx.canvas.width+60 || sy < -60 || sy > ctx.canvas.height+60) return;
-
-    // === BOUNTY CREATURE GLOW ===
-    if (c.isBounty && state.dailyBounty && !state.dailyBounty.killed) {
-      c.glowPhase = (c.glowPhase || 0) + 0.08;
-      const glowAlpha = 0.25 + Math.sin(c.glowPhase) * 0.18;
-      const glowColor = c.bountyDef ? c.bountyDef.color : '#ffd700';
-      ctx.save();
-      ctx.globalAlpha = glowAlpha;
-      ctx.fillStyle = glowColor;
-      ctx.beginPath(); ctx.arc(sx, sy, 22, 0, Math.PI*2); ctx.fill();
-      ctx.restore();
-    }
-
     if (c.type === 'spider') {
       drawSpider(ctx, sx, sy);
       px(ctx, '#333', sx-10, sy-18, 20, 3);
@@ -3931,17 +3908,10 @@ function drawCreatures(ctx, camX, camY) {
     } else if (c.type === 'boar') {
       drawBoar(ctx, sx, sy, c.dir||1, c.hp, c.maxHp);
     }
-
-    // Bounty crown label above creature
-    if (c.isBounty && state.dailyBounty && !state.dailyBounty.killed) {
-      const glowColor = c.bountyDef ? c.bountyDef.color : '#ffd700';
-      ctx.save();
-      ctx.font = 'bold 8px Lato,sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillStyle = glowColor;
-      ctx.fillText('* BOUNTY *', sx, sy - 22);
-      ctx.textAlign = 'left';
-      ctx.restore();
+    if (false) {
+      // hitFlash removed
+      ctx.fillStyle = 'rgba(255,255,255,0)';
+      ctx.fillRect(sx-10, sy-8, 20, 16);
     }
   });
 }
@@ -6106,16 +6076,12 @@ function handleClick(sx, sy) {
         else { SFX.hit(); state.screenShake = Math.max(state.screenShake, 3); }
         if (c.hp <= 0) {
           SFX.enemyDie(); state.hitStopFrames = Math.max(state.hitStopFrames, 8);
-          // === DAILY BOUNTY REWARD ===
-          if (c.isBounty && state.dailyBounty && !state.dailyBounty.killed) {
-            claimBountyReward(c.bountyDef);
-          }
           if (c.type === 'spider') { p.inv.wood++; addFloatingText(cx2, cy2-20, '+1 WOOD', '#8B6914'); }
           if (c.type === 'shark') { p.inv.fish = (p.inv.fish||0)+2; addFloatingText(cx2, cy2-20, '+2 FISH', '#3dd6d0'); }
           if (c.type === 'cave_guardian') { showMsg('CAVE GUARDIAN DEFEATED! The chamber is yours.', '#aa44ff'); spawnParticles(cx2, cy2, '#aa44ff', 5); }
           if (c.type === 'cave_spider') { p.inv.ancient_bone = (p.inv.ancient_bone||0)+1; addFloatingText(cx2, cy2-20, '+1 BONE', '#ccbbaa'); }
           if (c.type === 'boar') {
-            const meatGain = c.isBounty ? (2 + Math.floor(Math.random()*2)) : (1 + Math.floor(Math.random()*2));
+            const meatGain = 1 + Math.floor(Math.random()*2);
             p.inv.raw_meat = (p.inv.raw_meat||0) + meatGain;
             addFloatingText(cx2, cy2-20, '+'+meatGain+' RAW MEAT', '#c0520a');
             showMsg('BOAR KILLED — cook the meat at a campfire!', '#c0520a');
@@ -9887,11 +9853,6 @@ function updateLivingIsland() {
         color: '#f5c842'
       });
     }
-
-    // === DAILY BOUNTY HUNT — spawn from day 2 onwards ===
-    if (state.day >= 2 && state.dailyBountyDay !== state.day) {
-      spawnDailyBounty();
-    }
   }
   if (dt >= 0.15 || dt < 0.1) state.dawnFired = false;
 
@@ -10259,136 +10220,6 @@ function updateNPCCompanions() {
       }
     });
   }
-}
-
-// ============================================================
-// DAILY BOUNTY HUNT SYSTEM
-// ============================================================
-const BOUNTY_TYPES = [
-  {
-    type: 'boar',
-    label: 'GOLDEN BOAR',
-    color: '#ffd700',
-    hpMult: 2.2,
-    spdMult: 1.5,
-    reward: { food: 50, raw_meat: 3, xp: 'combat' },
-    rewardMsg: '+50 FOOD, RAW MEAT x3, COMBAT XP — Golden Boar slain!',
-    rewardColor: '#ffd700',
-  },
-  {
-    type: 'spider',
-    label: 'GIANT SPIDER QUEEN',
-    color: '#cc44ff',
-    hpMult: 2.5,
-    spdMult: 1.3,
-    reward: { vine: 4, stone: 3, xp: 'combat' },
-    rewardMsg: '+VINE x4, STONE x3, COMBAT XP — Spider Queen crushed!',
-    rewardColor: '#cc44ff',
-  },
-  {
-    type: 'shark',
-    label: 'GREAT WHITE SHARK',
-    color: '#44ccff',
-    hpMult: 2.0,
-    spdMult: 1.4,
-    reward: { fish: 5, fish_cooked: 2, xp: 'fishing' },
-    rewardMsg: '+FISH x5, COOKED FISH x2, FISHING XP — Great White felled!',
-    rewardColor: '#44ccff',
-  },
-  {
-    type: 'bat',
-    label: 'SHADOW BAT LORD',
-    color: '#ff4488',
-    hpMult: 3.0,
-    spdMult: 1.6,
-    reward: { volcanic_stone: 2, fruit: 4, xp: 'combat' },
-    rewardMsg: '+VOL.STONE x2, FRUIT x4, COMBAT XP — Bat Lord destroyed!',
-    rewardColor: '#ff4488',
-  },
-];
-
-function spawnDailyBounty() {
-  const p = state.player;
-  // Pick a bounty type; rotate by day so they cycle
-  const def = BOUNTY_TYPES[(state.day - 2) % BOUNTY_TYPES.length];
-
-  // Find an existing creature of this type to mark, or spawn one near player
-  let target = null;
-
-  // Prefer an existing creature of the right type not already bounty'd
-  const candidates = state.creatures.filter(c => c.type === def.type && !c.isBounty);
-  if (candidates.length > 0) {
-    // Pick the one closest to player but not too close (> 200px)
-    const sorted = candidates.filter(c => Math.hypot(c.x - p.x, c.y - p.y) > 200);
-    target = sorted.length > 0 ? sorted[0] : candidates[0];
-  }
-
-  // If no existing creature found, spawn one at a sensible location
-  if (!target) {
-    let spawnX, spawnY;
-    if (def.type === 'shark') {
-      // Spawn in shallow water area
-      spawnX = (100 + Math.floor(Math.random() * 40)) * TSIZE;
-      spawnY = (110 + Math.floor(Math.random() * 10)) * TSIZE;
-    } else if (def.type === 'bat') {
-      // Spawn in jungle fringe area
-      spawnX = (50 + Math.floor(Math.random() * 30)) * TSIZE;
-      spawnY = (50 + Math.floor(Math.random() * 30)) * TSIZE;
-    } else {
-      // Boar / spider — jungle interior
-      spawnX = (45 + Math.floor(Math.random() * 40)) * TSIZE;
-      spawnY = (45 + Math.floor(Math.random() * 40)) * TSIZE;
-    }
-    const baseHp = def.type === 'shark' ? 50 : def.type === 'boar' ? 30 : def.type === 'spider' ? 25 : 15;
-    target = {
-      type: def.type,
-      x: spawnX, y: spawnY,
-      hp: Math.round(baseHp * def.hpMult),
-      maxHp: Math.round(baseHp * def.hpMult),
-      spd: (def.type === 'boar' ? 1.4 : def.type === 'shark' ? 0.9 : def.type === 'spider' ? 1.05 : 1.2) * def.spdMult,
-      attackTimer: 0, walkTimer: 0,
-      ...(def.type === 'boar' ? { graze: Math.random() * 200, dir: 1, chargeTimer: 0, charging: false } : {}),
-    };
-    state.creatures.push(target);
-  } else {
-    // Buff the existing creature
-    target.hp    = Math.round(target.maxHp * def.hpMult);
-    target.maxHp = target.hp;
-    target.spd   = (target.spd || 1) * def.spdMult;
-  }
-
-  target.isBounty   = true;
-  target.bountyDef  = def;
-  target.glowPhase  = 0;
-
-  state.dailyBounty = { type: def.type, label: def.label, killed: false, def };
-  state.dailyBountyDay = state.day;
-
-  setTimeout(() => {
-    showMsg('BOUNTY HUNT: ' + def.label + ' spotted on the island!', def.color);
-    addFloatingText(p.x, p.y - 40, 'NEW BOUNTY!', def.color);
-    SFX.raidAlert && SFX.raidAlert();
-  }, 1500);
-}
-
-function claimBountyReward(def) {
-  const p = state.player;
-  const r = def.reward;
-  if (r.food)        { p.food  = Math.min(p.maxFood,  p.food  + r.food);  }
-  if (r.raw_meat)    { p.inv.raw_meat    = (p.inv.raw_meat    || 0) + r.raw_meat; }
-  if (r.fish)        { p.inv.fish        = (p.inv.fish        || 0) + r.fish; }
-  if (r.fish_cooked) { p.inv.fish_cooked = (p.inv.fish_cooked || 0) + r.fish_cooked; }
-  if (r.vine)        { p.inv.vine        = (p.inv.vine        || 0) + r.vine; }
-  if (r.stone)       { p.inv.stone       = (p.inv.stone       || 0) + r.stone; }
-  if (r.volcanic_stone){ p.inv.volcanic_stone = (p.inv.volcanic_stone || 0) + r.volcanic_stone; }
-  if (r.fruit)       { p.inv.fruit       = (p.inv.fruit       || 0) + r.fruit; }
-  if (r.xp)         gainSkill(r.xp);
-  showMsg('BOUNTY CLAIMED: ' + def.rewardMsg, def.rewardColor);
-  spawnParticles(p.x, p.y, def.rewardColor, 10);
-  state.screenShake = Math.max(state.screenShake, 6);
-  SFX.achievement && SFX.achievement();
-  if (state.dailyBounty) state.dailyBounty.killed = true;
-  updateUI();
 }
 
 // ============================================================
@@ -12072,28 +11903,6 @@ function updateUI() {
   }
   const wiEl=document.getElementById('weather-icon');
   if(wiEl) wiEl.textContent=state.weatherRain?'STORM':(state.player.torch?'TORCH':'') + (fcStr ? ' ['+fcStr+']' : '');
-
-  // Bounty Hunt HUD badge
-  let bountyEl = document.getElementById('bounty-hud');
-  if (state.dailyBounty && state.day >= 2) {
-    if (!bountyEl) {
-      bountyEl = document.createElement('span');
-      bountyEl.id = 'bounty-hud';
-      bountyEl.style.cssText = 'font-size:9px;letter-spacing:1px;font-family:Lato,sans-serif;margin-top:2px;display:block;';
-      const dayPanel = document.getElementById('day-panel');
-      if (dayPanel) dayPanel.appendChild(bountyEl);
-    }
-    if (state.dailyBounty.killed) {
-      bountyEl.style.color = '#44cc44';
-      bountyEl.textContent = 'BOUNTY: ' + state.dailyBounty.label + ' [SLAIN]';
-    } else {
-      const def = state.dailyBounty.def;
-      bountyEl.style.color = def ? def.color : '#ffd700';
-      bountyEl.textContent = 'HUNT: ' + state.dailyBounty.label;
-    }
-  } else if (bountyEl) {
-    bountyEl.textContent = '';
-  }
   const hwEl = document.getElementById('hw'); if(hwEl) hwEl.textContent = p.inv.wood||0;
   const hsEl = document.getElementById('hs'); if(hsEl) hsEl.textContent = p.inv.stone||0;
   const totalFood=(p.inv.fish||0)+(p.inv.fruit||0)+(p.inv.fish_cooked||0)+(p.inv.fruit_cooked||0)+(p.inv.coconut||0)+(p.inv.raw_meat||0)+(p.inv.cooked_meat||0);
@@ -12209,7 +12018,6 @@ window.addEventListener('DOMContentLoaded', () => {
   // Init run stats and load death ghosts
   state.runStats = { startTime: Date.now(), enemiesKilled: 0, treesChopped: 0, fishCaught: 0, distanceTraveled: 0, itemsCollected: 0, damageTaken: 0, highestDayReached: 1 };
   state.killStreak = 0; state.killStreakTimer = 0; state.frenzyActive = false; state.frenzyTimer = 0;
-  state.dailyBounty = null; state.dailyBountyDay = 0;
   try { state.deathGhosts = JSON.parse(localStorage.getItem('island_deaths')||'[]').slice(0,5); } catch(e) { state.deathGhosts = []; }
   try { state.unlockedAchievements = new Set(JSON.parse(localStorage.getItem('island_achievements')||'[]')); } catch(e) {}
   try { state.discoveredRecipes = new Set(JSON.parse(localStorage.getItem('island_recipes')||'[]')); } catch(e) { state.discoveredRecipes = new Set(); }
