@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Invisible Revolution: Preference Falsification and Why Regimes Die Suddenly",
+    date: "2026-04-10",
+    category: "Geopolitics",
+    excerpt: "On December 21, 1989, Nicolae Ceausescu stepped onto a balcony in Bucharest to address a crowd of roughly 100,000 people. He had done this dozens of times. The crowd was bused in, organized, vetted. And then someone booed. A ripple passed through the...",
+    url: "essays/2026-04-10-the-invisible-revolution-preference-falsification-and-why-re.html"
+  },
+  {
     title: "The Catastrophe by Design: De-Baathification and the Unmaking of Iraq",
     date: "2026-04-09",
     category: "History",
@@ -184,7 +191,7 @@ const SCHOOL_TASKS = [
   { subject: "Math 7", title: "Math 7 (HW)", due: "2026-04-01", time: "3:30 PM", status: "done", type: "Formative" },
   // --- Mon Apr 6 ---
   { subject: "History/Geography 7", title: "Upload weeks 15 - 18 work", due: "2026-04-06", time: "12:10 PM", status: "overdue", type: "Summative" },
-  // Last updated: 2026-04-08 via ManageBac scraper (63 overdue badge visible; tasks/IB pages still 404 — only dashboard data captured)
+  // Last updated: 2026-04-09 via ManageBac scraper (63 overdue badge visible; tasks/IB pages still 404 — only dashboard data captured)
 ];
 
 
