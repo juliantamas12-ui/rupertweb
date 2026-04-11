@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Thousand-Year Republic: How Venice Made Tyranny Structurally Impossible",
+    date: "2026-04-11",
+    category: "History",
+    excerpt: "The Venetian Republic lasted from 697 to 1797 — 1,100 years without a successful internal revolution, without a coup, without a strongman seizing permanent power. For comparison, the Roman Republic endured about five centuries before Caesar crossed t...",
+    url: "essays/2026-04-11-the-thousand-year-republic-how-venice-made-tyranny-structura.html"
+  },
+  {
     title: "The Invisible Revolution: Preference Falsification and Why Regimes Die Suddenly",
     date: "2026-04-10",
     category: "Geopolitics",
