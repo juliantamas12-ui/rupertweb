@@ -4626,6 +4626,7 @@ window.AMBIENT = (() => {
   let _oceanGain = null, _oceanNoise = null;
   let _fireGain = null, _fireNoise = null;
   let _windGain = null, _windNoise = null;
+  let _cricketGain = null, _cricketNoise = null; // night jungle crickets
 
   function getCtx() {
     if (!_actx) {
@@ -4706,6 +4707,21 @@ window.AMBIENT = (() => {
       _windNoise = wSrc;
       makeLFO(ctx, 0.07, _windGain, 0, 0.08);
 
+      // === CRICKET LAYER ===
+      // Narrow bandpass at ~3500 Hz (cricket chirp range), modulated by a fast LFO
+      // that creates the pulsing chirp rhythm. A second slower LFO adds natural variation.
+      const { src: cSrc, filter: cFilt } = makeNoiseSource(ctx, 'bandpass', 3500, 12.0);
+      _cricketGain = ctx.createGain();
+      _cricketGain.gain.value = 0;
+      cFilt.connect(_cricketGain);
+      _cricketGain.connect(ctx.destination);
+      cSrc.start();
+      _cricketNoise = cSrc;
+      // Primary chirp pulse: ~7.5 Hz (fast on/off rhythm)
+      makeLFO(ctx, 7.5, _cricketGain, 0, 0.055);
+      // Slower envelope swell (natural variation between chirp bursts)
+      makeLFO(ctx, 0.3, _cricketGain, 0, 0.025);
+
     } catch(e) { /* AudioContext not available */ }
   }
 
@@ -4718,12 +4734,14 @@ window.AMBIENT = (() => {
   }
 
   // Call each frame from the game loop — pass proximity values 0..1
-  function update(oceanVol, fireVol, windVol) {
+  function update(oceanVol, fireVol, windVol, cricketVol) {
     if (!_actx || !_ambientOn) return;
     const t = 1.5; // fade time in seconds
-    _smoothGain(_oceanGain, oceanVol * 0.16, t);
-    _smoothGain(_fireGain,  fireVol  * 0.06, t);
-    _smoothGain(_windGain,  windVol  * 0.08, t);
+    _smoothGain(_oceanGain,   oceanVol   * 0.16, t);
+    _smoothGain(_fireGain,    fireVol    * 0.06, t);
+    _smoothGain(_windGain,    windVol    * 0.08, t);
+    // Cricket layer fades in slowly at night (4s transition so it feels natural)
+    _smoothGain(_cricketGain, (cricketVol||0) * 0.055, 4.0);
   }
 
   function setMusicOn(on) {
@@ -4738,9 +4756,10 @@ window.AMBIENT = (() => {
   function setAmbientOn(on) {
     _ambientOn = on;
     if (!on) {
-      _smoothGain(_oceanGain, 0, 0.5);
-      _smoothGain(_fireGain,  0, 0.5);
-      _smoothGain(_windGain,  0, 0.5);
+      _smoothGain(_oceanGain,   0, 0.5);
+      _smoothGain(_fireGain,    0, 0.5);
+      _smoothGain(_windGain,    0, 0.5);
+      _smoothGain(_cricketGain, 0, 0.5);
     }
   }
 
@@ -12847,7 +12866,20 @@ function gameLoopWithUI() {
       // Wind: louder in jungle/forest, quieter on open beach
       const _isJungle = _tile === T.JUNGLE_LIGHT || _tile === T.JUNGLE_DARK;
       const _windVol = _isJungle ? 1.0 : (_isBeach ? 0.2 : 0.5);
-      AMBIENT.update(_oceanVol, _fireVol, _windVol);
+      // Crickets: night-only, loudest deep in jungle, silent near ocean/beach
+      // Use dayTime for smooth sunrise/sunset fade (not the hard isNight boolean)
+      const _nightIntensity = (() => {
+        const dt = state.dayTime;
+        // Night is dt > 0.65 or dt < 0.12; fade over 0.06 on each side
+        if (dt > 0.71 || dt < 0.06) return 1.0;              // full night
+        if (dt >= 0.65 && dt <= 0.71) return (dt - 0.65) / 0.06; // dusk ramp up
+        if (dt >= 0.06 && dt <= 0.12) return 1.0 - (dt - 0.06) / 0.06; // dawn ramp down
+        return 0.0; // daytime
+      })();
+      // Quieter near water/beach, loudest in jungle
+      const _cricketLocationMult = _isWater ? 0.0 : (_isBeach ? 0.2 : (_isJungle ? 1.0 : 0.65));
+      const _cricketVol = _nightIntensity * _cricketLocationMult;
+      AMBIENT.update(_oceanVol, _fireVol, _windVol, _cricketVol);
     } catch(e) {}
   }
   // === TRIBAL DRUMS: update every 30 frames ===
