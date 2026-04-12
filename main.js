@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Venetian Republic and the Art of Institutional Survival",
+    date: "2026-04-12",
+    category: "History",
+    excerpt: "For a thousand years — from the late seventh century to 1797 — the Republic of Venice governed itself without a revolution, without a successful coup, and without a single monarch. That alone should make it one of the most studied political entities ...",
+    url: "essays/2026-04-12-the-venetian-republic-and-the-art-of-institutional-survival.html"
+  },
+  {
     title: "The Thousand-Year Republic: How Venice Made Tyranny Structurally Impossible",
     date: "2026-04-11",
     category: "History",
