@@ -4953,6 +4953,74 @@ SFX.frenzyActivate = () => {
 };
 
 // ============================================================
+// RAIN & STORM VISUAL SYSTEM
+// ============================================================
+// Screen-space rain streaks. No world coords needed — purely cosmetic canvas overlay.
+// Activated when weatherForecast is 'rain' or 'storm'. Costs ~0.1ms per frame.
+
+const _rainDrops = [];
+const RAIN_MAX_DROPS = 180;
+
+function _spawnRainDrop(canvasW, canvasH) {
+  const isStorm = (state.weatherForecast[state.weatherForecastIdx||0] === 'storm') || !!state.weatherRain;
+  const speed = isStorm ? (5 + Math.random() * 4) : (2.8 + Math.random() * 2.2);
+  const angle = isStorm ? (0.32 + Math.random() * 0.12) : (0.18 + Math.random() * 0.08); // steeper in storm
+  _rainDrops.push({
+    x: Math.random() * (canvasW + 100) - 50,
+    y: -10 - Math.random() * canvasH * 0.4, // start above screen
+    vx: Math.sin(angle) * speed,
+    vy: Math.cos(angle) * speed,
+    len: isStorm ? (9 + Math.random() * 7) : (5 + Math.random() * 4),
+    alpha: isStorm ? (0.25 + Math.random() * 0.25) : (0.12 + Math.random() * 0.15),
+  });
+}
+
+function updateRain() {
+  if (!state.running || state.underground) return;
+  const forecast = (state.weatherForecast && state.weatherForecastIdx !== undefined)
+    ? state.weatherForecast[state.weatherForecastIdx]
+    : 'clear';
+  const isRainy = forecast === 'rain' || forecast === 'storm' || !!state.weatherRain;
+  if (!isRainy) {
+    // Drain drops when weather clears
+    if (_rainDrops.length > 0) _rainDrops.splice(0, Math.min(4, _rainDrops.length));
+    return;
+  }
+  const cw = window._rainCanvasW || 400;
+  const ch = window._rainCanvasH || 700;
+  const isStormForecast = forecast === 'storm' || !!state.weatherRain;
+  const targetCount = isStormForecast ? RAIN_MAX_DROPS : Math.floor(RAIN_MAX_DROPS * 0.55);
+  // Spawn new drops
+  const spawnRate = isStormForecast ? 5 : 3;
+  for (let s = 0; s < spawnRate && _rainDrops.length < targetCount; s++) {
+    _spawnRainDrop(cw, ch);
+  }
+  // Update positions
+  for (let i = _rainDrops.length - 1; i >= 0; i--) {
+    const d = _rainDrops[i];
+    d.x += d.vx;
+    d.y += d.vy;
+    if (d.y > ch + 20 || d.x > cw + 60) {
+      _rainDrops.splice(i, 1);
+    }
+  }
+}
+
+function drawRain(ctx) {
+  if (_rainDrops.length === 0) return;
+  ctx.save();
+  ctx.lineWidth = 1;
+  for (const d of _rainDrops) {
+    ctx.beginPath();
+    ctx.strokeStyle = `rgba(180,210,240,${d.alpha})`;
+    ctx.moveTo(d.x, d.y);
+    ctx.lineTo(d.x - d.vx * (d.len / d.vy), d.y - d.len);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// ============================================================
 // PLAYER UPDATE, INPUT, INTERACTION
 // ============================================================
 
@@ -9130,6 +9198,11 @@ function render(ctx, minimapCtx) {
     ctx.fillRect(canvas.width-20,0,20,canvas.height);
   }
 
+  // Rain / storm streak overlay (screen-space, drawn after world)
+  window._rainCanvasW = canvas.width;
+  window._rainCanvasH = canvas.height;
+  drawRain(ctx);
+
   // Floating damage numbers
   updateFloatingTexts();
   drawFloatingTexts(ctx, camX, camY);
@@ -12842,6 +12915,7 @@ function gameLoopWithUI() {
   if (state.frameCount % 5 === 0) updateNPCCompanions();
   if (state.frameCount % 2 === 0) updateWorldEvents();
   updateBirdsAndFootprints();
+  updateRain();
   if (state.frameCount % 4 === 0) updateCrabs();
   if (state.frameCount % 30 === 0 && typeof updateSeaCreatures === "function") updateSeaCreatures();
   updateLivingIsland();
