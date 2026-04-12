@@ -205,7 +205,11 @@ const SCHOOL_TASKS = [
   { subject: "Math 7", title: "Math 7 (HW)", due: "2026-04-01", time: "3:30 PM", status: "done", type: "Formative" },
   // --- Mon Apr 6 ---
   { subject: "History/Geography 7", title: "Upload weeks 15 - 18 work", due: "2026-04-06", time: "12:10 PM", status: "overdue", type: "Summative" },
-  // Last updated: 2026-04-11 via ManageBac scraper (63 overdue badge visible; tasks/IB pages still 404 — only dashboard data captured; no new tasks found)
+  // --- Mon Apr 13 ---
+  { subject: "English 7", title: "Eng 7 - Memorization due!", due: "2026-04-13", time: "9:00 AM", status: "pending", type: "Deadline" },
+  { subject: "Science 7", title: "HW Science 7 - MEDIA STUDENTS", due: "2026-04-13", time: "9:20 AM", status: "pending", type: "Summative" },
+  { subject: "History/Geography 7", title: "Substition 1: Review the slides and complete the tasks", due: "2026-04-13", time: "7:20 PM", status: "pending", type: "Summative" },
+  // Last updated: 2026-04-12 via ManageBac scraper (tasks/IB pages still 404; 3 new tasks captured from dashboard for Mon Apr 13)
 ];
 
 
