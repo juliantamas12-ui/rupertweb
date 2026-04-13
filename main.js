@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "This is usually taught as a story about imperialism. It should also be taught as a story about law.",
+    date: "2026-04-13",
+    category: "History",
+    excerpt: "The Cartographers of Conquest: How the Berlin Conference Invented Modern International Law — and Why That Should Disturb You...",
+    url: "essays/2026-04-13-this-is-usually-taught-as-a-story-about-imperialism-it-shoul.html"
+  },
+  {
     title: "The Venetian Republic and the Art of Institutional Survival",
     date: "2026-04-12",
     category: "History",
