@@ -856,7 +856,6 @@ function genObjects() {
   state.creatures = [];
   state.seaCreatures = [];
   state.traps = [];
-  state.playerTraps = []; // player-placed spike traps that damage enemies
   state.altarUsed = false;
 
   // === LIVING ISLAND INIT ===
@@ -1950,36 +1949,6 @@ function drawSpikeTrap(ctx, sx, sy) {
     ctx.lineTo(ox+4, sy);
     ctx.fill();
   }
-}
-
-function drawPlayerSpikeTrap(ctx, sx, sy, triggered) {
-  if (triggered) {
-    // Triggered state: flattened, bloodied wood planks
-    px(ctx, '#3d2010', sx-9, sy+2, 18, 3);
-    px(ctx, '#4a1808', sx-5, sy+1, 10, 2);
-    // Bent/broken spike remnants
-    ctx.fillStyle = '#6a5030';
-    ctx.beginPath(); ctx.moveTo(sx-6, sy+1); ctx.lineTo(sx-5, sy-4); ctx.lineTo(sx-3, sy+1); ctx.fill();
-    ctx.beginPath(); ctx.moveTo(sx+2, sy+1); ctx.lineTo(sx+3, sy-3); ctx.lineTo(sx+5, sy+1); ctx.fill();
-    return;
-  }
-  // Active trap: wooden base + iron-tipped spikes (slightly distinct from tribal traps)
-  px(ctx, '#4a2e10', sx-9, sy+2, 18, 4); // dark wood base
-  px(ctx, '#6b4520', sx-7, sy, 14, 3);   // lighter wood slat
-  const spikeColors = ['#aaaaaa', '#888888', '#cccccc'];
-  for (let i = 0; i < 5; i++) {
-    const ox = sx - 8 + i * 4;
-    ctx.fillStyle = spikeColors[i%3];
-    ctx.beginPath();
-    ctx.moveTo(ox, sy);
-    ctx.lineTo(ox+2, sy-13);
-    ctx.lineTo(ox+4, sy);
-    ctx.fill();
-    // Iron tip highlight
-    px(ctx, '#dddddd', ox+1, sy-14, 2, 2);
-  }
-  // Small "P" marker dot so player can identify their own traps
-  px(ctx, '#c8f135', sx-2, sy-16, 4, 2);
 }
 
 function drawCampfireRemains(ctx, sx, sy) {
@@ -3453,33 +3422,6 @@ function updateEnemies() {
     }
   });
 
-  // === PLAYER SPIKE TRAPS — damage enemies that walk over them ===
-  if (state.playerTraps && state.playerTraps.length > 0) {
-    state.playerTraps.forEach(trap => {
-      // Rearming cooldown
-      if (trap.triggered) {
-        trap.triggerTimer = (trap.triggerTimer || 0) - 1;
-        if (trap.triggerTimer <= 0) { trap.triggered = false; } // rearm after ~8 seconds
-        return;
-      }
-      allE.forEach(e => {
-        if (e.dying || e.hp <= 0) return;
-        if (Math.hypot(e.x - trap.x, e.y - trap.y) < 14) {
-          trap.triggered = true;
-          trap.triggerTimer = 480; // 8s rearm
-          e.hp = Math.max(0, e.hp - 20);
-          // Slow enemy briefly
-          e.scatterTimer = Math.max(e.scatterTimer || 0, 90);
-          e.hitFlash = 10;
-          spawnParticles(trap.x, trap.y, '#cc6622', 5);
-          addFloatingText(e.x, e.y - 20, 'TRAP! -20', '#cc6622');
-          SFX.hit && SFX.hit();
-          if (e.hp <= 0 && state.runStats) state.runStats.enemiesKilled++;
-        }
-      });
-    });
-  }
-
   // Remove dead enemies — trigger group scatter on kill, show dying animation
   const prevCount = state.enemies.length;
   state.enemies = state.enemies.filter(e => {
@@ -3912,24 +3854,6 @@ function updateCreatures() {
       }
     }
   });
-
-  // === PLAYER SPIKE TRAPS — check creatures (spiders, boars, crocs) ===
-  if (state.playerTraps && state.playerTraps.length > 0) {
-    state.creatures.forEach(c => {
-      if (c.type === 'crab') return; // crabs are neutral, spare them
-      state.playerTraps.forEach(trap => {
-        if (trap.triggered) return;
-        if (Math.hypot(c.x - trap.x, c.y - trap.y) < 14) {
-          trap.triggered = true;
-          trap.triggerTimer = 480;
-          c.hp = Math.max(0, c.hp - 20);
-          spawnParticles(trap.x, trap.y, '#cc6622', 5);
-          addFloatingText(c.x, c.y - 20, 'TRAP! -20', '#cc6622');
-          SFX.hit && SFX.hit();
-        }
-      });
-    });
-  }
 }
 
 function drawBoar(ctx, sx, sy, dir, hp, maxHp) {
@@ -6758,7 +6682,6 @@ const BUILD_ITEMS = [
   {id:'forge',     label:'FORGE',     cost:{stone:8,wood:3},  desc:'Craft fire weapons'},
   {id:'smoker',    label:'SMOKER',    cost:{stone:3,wood:2},  desc:'Slows food decay'},
   {id:'vessel',    label:'VESSEL',    cost:{wood:2,stone:2},  desc:'Collects rain water'},
-  {id:'spike_trap',label:'SPIKE TRAP',cost:{wood:2,stone:2},  desc:'Damages & slows enemies that walk over it'},
 ];
 
 const CRAFT_ITEMS = [
@@ -6833,22 +6756,6 @@ function placeBuildItem(sx, sy) {
 
   const buildingSkill = (state.skills && state.skills.building) || 0;
   const wallHp = state.buildItem === 'wall' ? (buildingSkill >= 5 ? 30 : 20) : undefined;
-
-  // Spike trap goes into playerTraps, not objects
-  if (state.buildItem === 'spike_trap') {
-    if (!state.playerTraps) state.playerTraps = [];
-    state.playerTraps.push({
-      x: Math.round(wx/TSIZE)*TSIZE + TSIZE/2,
-      y: Math.round(wy/TSIZE)*TSIZE + TSIZE/2,
-      triggered: false,
-      triggerTimer: 0, // resets so trap rearms after cooldown
-    });
-    showMsg('SPIKE TRAP SET — enemies that walk over it take 20 dmg and are slowed', '#c8f135');
-    spawnParticles(wx, wy, '#c8f135', 3);
-    gainSkill('building');
-    return;
-  }
-
   state.objects.push({
     type: state.buildItem,
     x: Math.round(wx/TSIZE)*TSIZE + TSIZE/2,
@@ -8846,15 +8753,6 @@ function render(ctx, minimapCtx) {
       const tileUnder = getTile(trap.x, trap.y);
       if (tileUnder === T.JUNGLE_DARK && !p.torch) return; // invisible without torch
       drawSpikeTrap(ctx, tsx, tsy);
-    });
-  }
-
-  // Draw player-placed spike traps (always visible — player knows where they put them)
-  if (state.playerTraps) {
-    state.playerTraps.forEach(trap => {
-      const tsx = trap.x - camX, tsy = trap.y - camY;
-      if (tsx < -30 || tsx > canvas.width+30 || tsy < -30 || tsy > canvas.height+30) return;
-      drawPlayerSpikeTrap(ctx, tsx, tsy, trap.triggered);
     });
   }
 
