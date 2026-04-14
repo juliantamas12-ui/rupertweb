@@ -211,6 +211,7 @@ tBtn.addEventListener('click', () => {
     setSlide(slideIdx + 1);
   } else {
     overlay.style.display = 'none';
+    initAudio();
     gameReady = true;
     lastTs = performance.now();
     requestAnimationFrame(loop);
@@ -463,6 +464,7 @@ function doCraft(r) {
   for (const [k,v] of Object.entries(r.cost)) inv[k]-=v;
   inv[r.key]=(inv[r.key]||0)+1;
   addFloat('+1 '+r.name, CV.width/2, CV.height/2-50, '#c8f135');
+  playSound('craft');
   if (r.key==='raft')  player.raftCrafted=true;
   if (r.key==='yacht') startWin();
 }
@@ -485,6 +487,7 @@ function fishPress() {
     inv.fish=(inv.fish||0)+1;
     player.food=Math.min(player.maxFood,player.food+22);
     addFloat('+1 Fish  +22 Food',player.x-cam.x+8,player.y-cam.y-32,'#c8f135');
+    playSound('fish');
   } else {
     fishMG.active=false;
     addFloat('Missed!',player.x-cam.x+8,player.y-cam.y-32,'#ff6644');
@@ -602,7 +605,7 @@ function updateEnemies(dt) {
       if (d>1) { en.x+=dx/d*en.speed*dt; en.y+=dy/d*en.speed*dt; }
       en.facing=dx>0?1:-1;
       if (d<30&&en.atkCd<=0) {
-        if (player.invCd<=0) { player.health-=en.damage; player.invCd=0.88; addFloat('-'+en.damage,player.x-cam.x+8,player.y-cam.y-32,'#ff2222'); }
+        if (player.invCd<=0) { player.health-=en.damage; player.invCd=0.88; playSound('hurt'); addFloat('-'+en.damage,player.x-cam.x+8,player.y-cam.y-32,'#ff2222'); }
         en.atkCd=1.5;
       }
     } else {
@@ -1290,6 +1293,7 @@ function updateLoot(dt) {
     if (Math.sqrt(dx*dx+dy*dy) < 48) {
       inv[d.item] = (inv[d.item]||0) + 1;
       addFloat('+1 '+d.item, player.x-cam.x+8, player.y-cam.y-40, '#ffcc44');
+      playSound('pickup');
       lootDrops.splice(i,1);
     }
   }
@@ -1333,6 +1337,7 @@ window.addEventListener('keydown', e => {
 // ============================================================
 function killEnemy(en) {
   killCount++;
+  playSound(en.isChief ? 'chiefkill' : 'kill');
   spawnParticles(en.x+en.w/2, en.y+en.h/2, '#cc2222', 8);
   spawnParticles(en.x+en.w/2, en.y+en.h/2, '#ff8844', 5);
   if (!en.isChief) {
@@ -1368,6 +1373,7 @@ function handleClick() {
       if (Math.sqrt(dx*dx+dy*dy)<range) {
         const dmg=inv.spear?36:(inv.axe?22:10);
         en.health-=dmg;
+        playSound('hit');
         addFloat('-'+dmg,en.x-cam.x+en.w/2,en.y-cam.y-14,'#ff4422');
         player.atkCd=0.44;
         if (en.health<=0) { killEnemy(en); enemies.splice(i,1); }
@@ -1389,6 +1395,7 @@ function handleClick() {
       if (res.item==='stone') amt=2+(inv.axe?1:0);
       if (res.item==='wood')  amt=1+(inv.axe?1:0);
       inv[res.item]=(inv[res.item]||0)+amt;
+      playSound('harvest');
       spawnParticles(rx, ry, res.item==='wood'?'#a07030':res.item==='stone'?'#888':'#c8f135', 5);
       addFloat('+'+amt+' '+res.item,rx-cam.x,ry-cam.y-48,'#c8f135');
       if (res.item==='coconut') { player.water=Math.min(player.maxWater,player.water+38); addFloat('+38 Water',rx-cam.x,ry-cam.y-64,'#44aaff'); }
@@ -1430,6 +1437,116 @@ function drawStats() {
 }
 
 // ============================================================
+// WEB AUDIO — PROCEDURAL SOUND EFFECTS
+// All sounds synthesized with oscillators. No external files.
+// ============================================================
+let audioCtx = null;
+let lastDayPhase = 'day';
+
+function initAudio() {
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  } catch(e) { audioCtx = null; }
+}
+
+function playSound(type) {
+  if (!audioCtx) return;
+  const t = audioCtx.currentTime;
+  const masterVol = 0.55;
+
+  // Helper: create a short oscillator burst
+  function tone(freq, oscType, dur, vol, freqEnd, delay) {
+    delay = delay || 0;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.type = oscType;
+    osc.frequency.setValueAtTime(freq, t + delay);
+    if (freqEnd) osc.frequency.exponentialRampToValueAtTime(freqEnd, t + delay + dur);
+    gain.gain.setValueAtTime(vol * masterVol, t + delay);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + delay + dur);
+    osc.start(t + delay);
+    osc.stop(t + delay + dur + 0.01);
+  }
+
+  switch (type) {
+    case 'hit': // Weapon impact — percussive thwack
+      tone(260, 'sawtooth', 0.10, 0.55, 58);
+      tone(160, 'square',   0.06, 0.28, 80);
+      break;
+
+    case 'harvest': // Chop/chip — dull thud
+      tone(200, 'triangle', 0.09, 0.50, 90);
+      tone(130, 'sawtooth', 0.05, 0.22, 110);
+      break;
+
+    case 'kill': // Warrior dies — low descending grunt
+      tone(150, 'sawtooth', 0.30, 0.60, 36);
+      tone(300, 'square',   0.12, 0.25, 80);
+      break;
+
+    case 'chiefkill': // Chief dies — dramatic multi-layer impact
+      tone(80,  'sawtooth', 0.55, 0.75, 32);
+      tone(160, 'sawtooth', 0.40, 0.50, 60);
+      tone(440, 'sine',     0.30, 0.35, 220);
+      tone(880, 'sine',     0.20, 0.20, 440, 0.35);
+      break;
+
+    case 'pickup': // Loot grabbed — bright two-tone chime
+      tone(660, 'sine', 0.10, 0.30, 880);
+      tone(880, 'sine', 0.14, 0.18, 660, 0.08);
+      break;
+
+    case 'craft': { // Craft success — ascending two-note jingle
+      const freqs = [523, 784];
+      for (let i = 0; i < 2; i++) {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.connect(g); g.connect(audioCtx.destination);
+        o.type = 'sine';
+        o.frequency.value = freqs[i];
+        g.gain.setValueAtTime(0.18 * masterVol, t + i * 0.14);
+        g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.14 + 0.38);
+        o.start(t + i * 0.14);
+        o.stop(t + i * 0.14 + 0.39);
+      }
+      break;
+    }
+
+    case 'hurt': // Player takes damage — sharp descending buzz
+      tone(320, 'sawtooth', 0.18, 0.60, 85);
+      break;
+
+    case 'fish': // Fish caught — watery plop
+      tone(440, 'triangle', 0.06, 0.45, 880);
+      tone(220, 'triangle', 0.20, 0.38, 110);
+      break;
+
+    case 'dawn': { // New day — soft ascending chime
+      const df = [262, 330, 392, 523];
+      for (let i = 0; i < 4; i++) {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.connect(g); g.connect(audioCtx.destination);
+        o.type = 'sine';
+        o.frequency.value = df[i];
+        g.gain.setValueAtTime(0.10 * masterVol, t + i * 0.22);
+        g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.22 + 0.55);
+        o.start(t + i * 0.22);
+        o.stop(t + i * 0.22 + 0.56);
+      }
+      break;
+    }
+
+    case 'night': // Night falls — low descending drone
+      tone(196, 'sine', 0.90, 0.28, 98);
+      tone(147, 'sine', 0.70, 0.18, 73);
+      break;
+  }
+}
+
+// ============================================================
 // INIT
 // ============================================================
 generateWorld();
@@ -1447,6 +1564,13 @@ function update(dt) {
 
   dayTime+=dt/DAY_S;
   if (dayTime>=1) { dayTime-=1; dayCount++; if (dayCount===3) notify('Warriors begin to patrol the island...','#ff8844'); if (dayCount===15) notify('You sense a great evil approaching...','#ff4422'); }
+  // Day phase sound transitions
+  const curPhase = dayTime > 0.78 ? 'night' : (dayTime < 0.22 ? 'dawn' : 'day');
+  if (curPhase !== lastDayPhase) {
+    if (curPhase === 'dawn') playSound('dawn');
+    else if (curPhase === 'night') playSound('night');
+    lastDayPhase = curPhase;
+  }
 
   // Movement
   let mvx=0,mvy=0;
