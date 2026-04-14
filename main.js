@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Revolution the World Tried to Strangle",
+    date: "2026-04-14",
+    category: "History",
+    excerpt: "In 1804, a new nation declared independence in the Western Hemisphere. It had defeated the armies of three European empires, survived a decade of warfare that killed roughly half its population, and produced in the process some of the most extraordin...",
+    url: "essays/2026-04-14-the-revolution-the-world-tried-to-strangle.html"
+  },
+  {
     title: "This is usually taught as a story about imperialism. It should also be taught as a story about law.",
     date: "2026-04-13",
     category: "History",
