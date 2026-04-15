@@ -869,68 +869,180 @@ function drawYacht(x, y) {
 // MINIMAP
 // ============================================================
 function drawMinimap() {
-  const MW=100,MH=100, MX=CV.width-MW-10, MY=CV.height-MH-10;
+  const MW=140, MH=140;
+  const MX=CV.width-MW-14, MY=CV.height-MH-14;
   const step=WW/MW;
-  CX.fillStyle='rgba(0,0,0,0.72)'; CX.fillRect(MX-2,MY-2,MW+4,MH+4);
-  for (let py2=0;py2<MH;py2++) {
-    for (let px2=0;px2<MW;px2++) {
-      const tx=Math.floor(px2*step), ty=Math.floor(py2*step);
-      if (tx>=WW||ty>=WH) continue;
-      CX.fillStyle=TC[worldMap[ty*WW+tx]]; CX.fillRect(MX+px2,MY+py2,1,1);
+
+  // Outer glow border
+  CX.fillStyle='rgba(0,20,40,0.85)'; CX.fillRect(MX-4,MY-18,MW+8,MH+22);
+  CX.strokeStyle='rgba(200,160,32,0.6)'; CX.lineWidth=1;
+  CX.strokeRect(MX-4,MY-18,MW+8,MH+22);
+
+  // Header bar
+  CX.fillStyle='rgba(200,160,32,0.12)'; CX.fillRect(MX-4,MY-18,MW+8,14);
+  CX.fillStyle='#c8a020'; CX.font='bold 9px monospace';
+  CX.textAlign='center'; CX.fillText('ISLAND MAP', MX+MW/2, MY-7); CX.textAlign='left';
+
+  // Scanline overlay effect
+  for (let py2=0; py2<MH; py2+=2) { CX.fillStyle='rgba(0,0,0,0.08)'; CX.fillRect(MX,MY+py2,MW,1); }
+
+  // Terrain
+  for (let py2=0; py2<MH; py2++) {
+    for (let px2=0; px2<MW; px2++) {
+      const tx=Math.floor(px2*step), ty2=Math.floor(py2*step);
+      if (tx>=WW||ty2>=WH) continue;
+      const tile=worldMap[ty2*WW+tx];
+      // Richer colours on minimap
+      switch(tile) {
+        case 0: CX.fillStyle='#061428'; break; // deep
+        case 1: CX.fillStyle='#0a2244'; break; // ocean
+        case 2: CX.fillStyle='#1a4e88'; break; // shallow
+        case 3: CX.fillStyle='#d4bc6a'; break; // beach
+        case 4: CX.fillStyle='#1a6a1a'; break; // jungle
+        case 5: CX.fillStyle='#5a1a0a'; break; // volcanic
+        default: CX.fillStyle='#000';
+      }
+      CX.fillRect(MX+px2, MY+py2, 1, 1);
     }
   }
+
+  // Resources as dots
+  for (const res of resources) {
+    const rx=Math.floor((res.tx)/step), ry=Math.floor((res.ty)/step);
+    if (rx<0||rx>=MW||ry<0||ry>=MH) continue;
+    if (res.type==='fish') { CX.fillStyle='#44aaff'; CX.fillRect(MX+rx,MY+ry,1,1); }
+    else if (res.type==='rock') { CX.fillStyle='#888'; CX.fillRect(MX+rx,MY+ry,1,1); }
+  }
+
+  // Campfires
+  for (const cf of campfires||[]) {
+    const fx=Math.floor((cf.tx)/step), fy=Math.floor((cf.ty)/step);
+    CX.fillStyle='#ff8822'; CX.fillRect(MX+fx-1,MY+fy-1,2,2);
+  }
+
+  // Enemies — red pulsing dots
+  const pulse=0.6+0.4*Math.sin(totalTime*6);
+  CX.fillStyle=`rgba(255,30,30,${pulse})`;
+  for (const en of enemies) {
+    const ex=Math.floor((en.x/TS)/step), ey=Math.floor((en.y/TS)/step);
+    if (ex>=0&&ex<MW&&ey>=0&&ey<MH) CX.fillRect(MX+ex-1,MY+ey-1,3,3);
+  }
+
+  // View frustum rectangle (what camera sees)
+  const vx1=Math.floor((cam.x/TS)/step), vy1=Math.floor((cam.y/TS)/step);
+  const vw=Math.floor((CV.width/TS)/step), vh=Math.floor((CV.height/TS)/step);
+  CX.strokeStyle='rgba(255,255,255,0.15)'; CX.lineWidth=1;
+  CX.strokeRect(MX+vx1,MY+vy1,vw,vh);
+
+  // Player dot — bright with halo
   const mpx=Math.floor((player.x/TS)/step), mpy=Math.floor((player.y/TS)/step);
-  CX.fillStyle='#c8f135'; CX.fillRect(MX+mpx-1,MY+mpy-1,3,3);
-  CX.fillStyle='#ff3333';
-  for (const en of enemies) { const ex=Math.floor((en.x/TS)/step),ey=Math.floor((en.y/TS)/step); CX.fillRect(MX+ex-1,MY+ey-1,2,2); }
-  CX.strokeStyle='#c8f135'; CX.lineWidth=1; CX.strokeRect(MX-2,MY-2,MW+4,MH+4);
-  CX.fillStyle='rgba(200,241,53,0.75)'; CX.font='9px monospace'; CX.fillText('MAP',MX+2,MY+MH-3);
+  CX.fillStyle='rgba(200,241,53,0.3)'; CX.fillRect(MX+mpx-3,MY+mpy-3,7,7);
+  CX.fillStyle='#c8f135'; CX.fillRect(MX+mpx-1,MY+mpy-1,4,4);
+  CX.fillStyle='#ffffff'; CX.fillRect(MX+mpx,MY+mpy,2,2);
+
+  // Coordinates
+  const tileX=Math.floor(player.x/TS), tileY=Math.floor(player.y/TS);
+  CX.fillStyle='rgba(200,160,32,0.7)'; CX.font='8px monospace';
+  CX.fillText(tileX+','+tileY, MX, MY+MH+10);
+
+  // Enemy count
+  if (enemies.length>0) {
+    CX.fillStyle='rgba(255,60,60,0.8)'; CX.font='bold 8px monospace';
+    CX.textAlign='right'; CX.fillText(enemies.length+' HOSTILES', MX+MW, MY+MH+10); CX.textAlign='left';
+  }
 }
 
 // ============================================================
 // HUD
 // ============================================================
-function drawBar(x,y,w,h,val,max,col,lbl) {
-  CX.fillStyle='rgba(0,0,0,0.6)'; CX.fillRect(x-1,y-1,w+2,h+2);
-  CX.fillStyle='#2a2a2a'; CX.fillRect(x,y,w,h);
-  CX.fillStyle=col; CX.fillRect(x,y,Math.floor(w*(Math.max(0,val)/max)),h);
-  CX.fillStyle='rgba(255,255,255,0.12)'; CX.fillRect(x,y,w,2);
-  CX.strokeStyle='rgba(0,0,0,0.55)'; CX.lineWidth=1; CX.strokeRect(x,y,w,h);
-  CX.fillStyle='#fff'; CX.font='bold 10px monospace';
-  CX.fillText(lbl+': '+Math.ceil(Math.max(0,val))+'/'+max,x+3,y+h-2);
+function drawBar(x,y,w,h,val,max,col,lbl,icon) {
+  // Background track
+  CX.fillStyle='rgba(0,0,0,0.7)'; CX.fillRect(x-1,y-1,w+2,h+4);
+  CX.fillStyle='#111820'; CX.fillRect(x,y,w,h);
+  // Fill with gradient-like effect
+  const pct=Math.max(0,val)/max;
+  CX.fillStyle=col; CX.fillRect(x,y,Math.floor(w*pct),h);
+  // Highlight stripe
+  CX.fillStyle='rgba(255,255,255,0.15)'; CX.fillRect(x,y,Math.floor(w*pct),Math.floor(h/3));
+  // Low-health pulse on HP bar
+  if (lbl==='HP' && pct<0.3) {
+    CX.fillStyle='rgba(255,0,0,'+(0.2+0.15*Math.sin(totalTime*6))+')'; CX.fillRect(x,y,w,h);
+  }
+  // Border
+  CX.strokeStyle='rgba(255,255,255,0.15)'; CX.lineWidth=1; CX.strokeRect(x,y,w,h);
+  // Label + value
+  CX.fillStyle='rgba(255,255,255,0.9)'; CX.font='bold 10px monospace';
+  CX.fillText((icon||lbl)+' '+Math.ceil(Math.max(0,val)), x+4, y+h-2);
 }
 
 function drawHUD() {
-  CX.fillStyle='rgba(0,0,0,0.60)'; CX.fillRect(0,0,CV.width,44);
-  drawBar(10,8,160,14,player.health,player.maxHealth,'#cc2222','HP');
-  drawBar(182,8,160,14,player.water,player.maxWater,'#2299ee','Water');
-  drawBar(354,8,160,14,player.food,player.maxFood,'#ee9920','Food');
-  const phase=isNight()?'Night':(dayTime<0.22?'Dawn':dayTime<0.72?'Day':'Dusk');
-  CX.fillStyle='#c8f135'; CX.font='bold 13px monospace';
-  CX.fillText('Day '+dayCount+'  '+phase,CV.width-200,22);
+  // Top HUD bar — dark gradient panel
+  CX.fillStyle='rgba(0,8,20,0.82)'; CX.fillRect(0,0,CV.width,52);
+  CX.fillStyle='rgba(200,160,32,0.25)'; CX.fillRect(0,50,CV.width,2);
+
+  // Bars — wider, more spaced
+  drawBar(12,10,170,18,player.health,player.maxHealth,'#cc2222','HP','HP');
+  drawBar(196,10,170,18,player.water,player.maxWater,'#2288ee','Water','H2O');
+  drawBar(380,10,170,18,player.food,player.maxFood,'#dd8820','Food','FOOD');
+
+  // Day / time info — right side with clock-style icon
+  const phase=isNight()?'NIGHT':(dayTime<0.22?'DAWN':dayTime<0.72?'DAY':'DUSK');
+  const phaseCol=isNight()?'#8888ff':(dayTime<0.22?'#ffaa44':dayTime<0.72?'#ffe060':'#ff6622');
+  // Day clock bar
+  const clockX=CV.width-190, clockY=10;
+  CX.fillStyle='rgba(0,0,0,0.5)'; CX.fillRect(clockX,clockY,140,18);
+  CX.fillStyle='rgba(255,255,255,0.08)'; CX.fillRect(clockX,clockY,Math.floor(140*dayTime),18);
+  CX.strokeStyle='rgba(255,255,255,0.15)'; CX.lineWidth=1; CX.strokeRect(clockX,clockY,140,18);
+  CX.fillStyle=phaseCol; CX.font='bold 11px monospace'; CX.textAlign='center';
+  CX.fillText('DAY '+dayCount+' — '+phase, clockX+70, clockY+13);
+  CX.textAlign='left';
+
+  // Enemy count badge top-right
+  if (enemies.length>0) {
+    const badge='! '+enemies.length+' ENEMY'+(enemies.length>1?'S':'');
+    const bw=badge.length*8+10;
+    CX.fillStyle='rgba(180,20,20,0.85)'; CX.fillRect(CV.width-bw-4,clockY+22,bw,16);
+    CX.fillStyle='#ffaaaa'; CX.font='bold 9px monospace'; CX.textAlign='right';
+    CX.fillText(badge, CV.width-8, clockY+33); CX.textAlign='left';
+  }
+
   // Deep water overlay
   if (oceanFlash>0.05) {
-    CX.fillStyle='rgba(0,70,200,'+Math.min(0.42,oceanFlash*0.42)+')'; CX.fillRect(0,0,CV.width,CV.height);
-    CX.fillStyle='#ffffff'; CX.font='bold 26px monospace'; CX.textAlign='center';
-    CX.fillText('TOO DEEP \u2014 SWIM BACK',CV.width/2,CV.height/2); CX.textAlign='left';
+    CX.fillStyle='rgba(0,40,160,'+Math.min(0.5,oceanFlash*0.5)+')'; CX.fillRect(0,0,CV.width,CV.height);
+    CX.fillStyle='#ffffff'; CX.font='bold 28px monospace'; CX.textAlign='center';
+    CX.fillText('TOO DEEP — SWIM BACK', CV.width/2, CV.height/2); CX.textAlign='left';
   }
 }
 
 function drawHotbar() {
-  const ITEMS=[['wood','WOOD'],['stone','STON'],['coconut','COCO'],['fruit','FRUT'],['fish','FISH'],['campfire','CAMP'],['axe','AXE'],['spear','SPER'],['raft','RAFT']];
-  const SW=46,GAP=3,TOT=ITEMS.length*(SW+GAP)-GAP;
-  const SX=(CV.width-TOT)/2, SY=CV.height-SW-10;
-  CX.fillStyle='rgba(0,0,0,0.65)'; CX.fillRect(SX-5,SY-4,TOT+10,SW+8);
+  const ITEMS=[
+    ['wood','WOOD','#8b5e2a'],['stone','STON','#888'],['coconut','COCO','#6b4a1a'],
+    ['fruit','FRUT','#dd4422'],['fish','FISH','#2299dd'],['campfire','FIRE','#ff6600'],
+    ['axe','AXE','#aaa'],['spear','SPEAR','#c8c860'],['raft','RAFT','#6b8a4a']
+  ];
+  const SW=50, GAP=4, TOT=ITEMS.length*(SW+GAP)-GAP;
+  const SX=(CV.width-TOT)/2, SY=CV.height-SW-12;
+
+  // Panel background
+  CX.fillStyle='rgba(0,8,20,0.88)'; CX.fillRect(SX-8,SY-6,TOT+16,SW+12);
+  CX.strokeStyle='rgba(200,160,32,0.3)'; CX.lineWidth=1; CX.strokeRect(SX-8,SY-6,TOT+16,SW+12);
+  CX.fillStyle='rgba(200,160,32,0.15)'; CX.fillRect(SX-8,SY-6,TOT+16,3);
+
   for (let i=0;i<ITEMS.length;i++) {
-    const [k,lbl]=ITEMS[i], bx=SX+i*(SW+GAP), by=SY;
-    CX.fillStyle=inv[k]>0?'rgba(28,38,48,0.90)':'rgba(16,20,28,0.80)'; CX.fillRect(bx,by,SW,SW);
-    CX.strokeStyle=inv[k]>0?'#c8f135':'#333'; CX.lineWidth=1; CX.strokeRect(bx,by,SW,SW);
+    const [k,lbl,col]=ITEMS[i], bx=SX+i*(SW+GAP), by=SY;
+    const has=inv[k]>0;
+    // Slot bg
+    CX.fillStyle=has?'rgba(20,30,48,0.95)':'rgba(8,12,22,0.80)'; CX.fillRect(bx,by,SW,SW);
+    // Colour accent strip at top of slot
+    if (has) { CX.fillStyle=col||'#c8f135'; CX.fillRect(bx,by,SW,3); }
+    // Border
+    CX.strokeStyle=has?'rgba(200,241,53,0.6)':'rgba(255,255,255,0.08)'; CX.lineWidth=1; CX.strokeRect(bx,by,SW,SW);
     CX.textAlign='center';
-    if (inv[k]>0) {
-      CX.fillStyle='#c8f135'; CX.font='bold 9px monospace'; CX.fillText(lbl,bx+SW/2,by+14);
-      CX.fillStyle='#fff'; CX.font='bold 15px monospace'; CX.fillText(inv[k],bx+SW/2,by+SW-8);
+    if (has) {
+      CX.fillStyle='rgba(255,255,255,0.5)'; CX.font='bold 8px monospace'; CX.fillText(lbl,bx+SW/2,by+14);
+      CX.fillStyle='#fff'; CX.font='bold 18px monospace'; CX.fillText(inv[k],bx+SW/2,by+SW-7);
     } else {
-      CX.fillStyle='#333'; CX.font='bold 9px monospace'; CX.fillText(lbl,bx+SW/2,by+SW/2+4);
+      CX.fillStyle='rgba(255,255,255,0.12)'; CX.font='bold 8px monospace'; CX.fillText(lbl,bx+SW/2,by+SW/2+4);
     }
     CX.textAlign='left';
   }
