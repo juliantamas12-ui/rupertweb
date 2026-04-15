@@ -344,39 +344,7 @@
     }
 
     /* MAP */
-    .map-section { margin-bottom: 56px; }
-
-    .map-container {
-      background: var(--navy-card);
-      border: 1px solid var(--navy-border);
-      border-radius: 4px;
-      overflow: hidden;
-      position: relative;
-    }
-
-    .map-container iframe {
-      display: block;
-      width: 100%;
-      height: 600px;
-      border: none;
-    }
-
-    .map-overlay-label {
-      position: absolute;
-      top: 12px;
-      left: 12px;
-      background: rgba(10, 22, 40, 0.85);
-      border: 1px solid var(--navy-border);
-      border-radius: 3px;
-      padding: 6px 12px;
-      font-size: 10px;
-      letter-spacing: 0.12em;
-      color: var(--gold);
-      text-transform: uppercase;
-      pointer-events: none;
-    }
-
-    /* TABLE */
+/* TABLE */
     .detail-table-section { margin-bottom: 56px; }
 
     .vessel-table {
@@ -467,8 +435,7 @@
       .site-header { padding: 0 16px; }
       .fleet-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
       .vessel-name { font-size: 11px; }
-      .map-container iframe { height: 400px; }
-    }
+}
 
     @media (max-width: 480px) {
       .fleet-grid { grid-template-columns: 1fr; }
@@ -545,19 +512,6 @@ fetch('/yachts-live.json?' + Date.now())
 </script>
 
 <div class="fleet-grid" id="fleet-grid"></div>
-
-    <div class="map-section">
-      <div class="section-label"><h2>Live Positions</h2></div>
-      <div class="map-container">
-        <div class="map-overlay-label">AIS Live Map</div>
-        <iframe
-          id="vf-map"
-          src="https://www.vesselfinder.com/?mmsi=319300600,319137200,538071476,319069900,319296900,319268600,319242300,319324100,319104200,319077400,538071410&zoom=3&shownames=true"
-          allowfullscreen
-          loading="lazy"
-          title="VesselFinder Fleet Map"
-        ></iframe>
-      </div>
     </div>
 
     <div class="detail-table-section">
@@ -702,12 +656,7 @@ fetch('/yachts-live.json?' + Date.now())
     updateClock();
     setInterval(updateClock, 1000);
 
-    setInterval(() => {
-      const iframe = document.getElementById('vf-map');
-      const src = iframe.src;
-      iframe.src = '';
-      setTimeout(() => { iframe.src = src; }, 100);
-    }, 60000);
+    setInterval(() => {}, 60000);
   </script>
 
 </body>
