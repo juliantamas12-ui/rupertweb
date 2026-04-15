@@ -1,0 +1,1675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Island Survival — Pixel Art Edition</title>
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  overflow: hidden;
+  font-family: 'Courier New', monospace;
+}
+canvas {
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+#overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.90);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 200;
+}
+.tut-panel {
+  background: #0d0d1c;
+  border: 3px solid #c8f135;
+  padding: 42px 44px 36px;
+  max-width: 540px;
+  width: 94%;
+  text-align: center;
+  box-shadow: 0 0 48px rgba(200,241,53,0.18);
+}
+.tut-panel .game-logo {
+  color: #c8f135;
+  font-size: 11px;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  opacity: 0.55;
+  margin-bottom: 6px;
+}
+.tut-panel h2 {
+  color: #c8f135;
+  font-size: 21px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  margin-bottom: 18px;
+}
+.tut-panel .body-text {
+  color: #ddd;
+  font-size: 13px;
+  line-height: 2.0;
+  margin-bottom: 26px;
+  text-align: left;
+}
+.tut-panel .body-text .k {
+  color: #c8f135;
+  background: rgba(200,241,53,0.10);
+  border: 1px solid rgba(200,241,53,0.28);
+  padding: 1px 6px;
+  font-size: 12px;
+}
+.tut-panel .body-text .hi { color: #c8f135; }
+.dot-row {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+.dot { width: 9px; height: 9px; background: #1e1e2e; border: 1px solid #444; }
+.dot.on { background: #c8f135; border-color: #c8f135; }
+.next-btn {
+  background: #c8f135;
+  color: #000;
+  border: none;
+  padding: 13px 40px;
+  font-size: 13px;
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+  cursor: pointer;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+.next-btn:hover { background: #b2d828; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="overlay">
+  <div class="tut-panel">
+    <div class="game-logo" id="tLogo">Island Survival — Slide 1 of 5</div>
+    <h2 id="tTitle">Controls</h2>
+    <div class="dot-row" id="tDots"></div>
+    <div class="body-text" id="tBody"></div>
+    <button class="next-btn" id="tBtn">Next</button>
+  </div>
+</div>
+<script>
+/* ============================================================
+   ISLAND SURVIVAL - Pixel Art Edition
+   ============================================================
+   Full Terraria-style tile-based survival game.
+   - 250x250 tile world (16px tiles = 4000x4000px)
+   - Procedural island: beach, jungle, volcanic, ocean
+   - Survival: health, water (depletes q3s), food (q5s)
+   - Resources: palm trees, fruit trees, rocks, fish spots
+   - Enemies: tribal warriors + chief (day 15)
+   - Crafting: campfire, axe, spear, raft, yacht
+   - Day/night cycle (3 min/day), stars as 2x2 pixel rects
+   - Win: craft yacht -> animated sail-away + win screen
+   ============================================================ */
+"use strict";
+
+const CV = document.getElementById('c');
+const CX = CV.getContext('2d');
+CV.width  = window.innerWidth;
+CV.height = window.innerHeight;
+CX.imageSmoothingEnabled = false;
+
+// ============================================================
+// TUTORIAL SYSTEM
+// ============================================================
+const SLIDES = [
+  {
+    title: 'Controls',
+    html: '<span class="k">W A S D</span> &mdash; Move<br>' +
+          '<span class="k">Left Click</span> &mdash; Attack / Harvest<br>' +
+          '<span class="k">Space</span> &mdash; Fishing (press in green zone)<br>' +
+          '<span class="k">I</span> &mdash; Inventory &nbsp; <span class="k">C</span> &mdash; Crafting<br>' +
+          '<span class="k">Esc</span> &mdash; Close panel'
+  },
+  {
+    title: 'Survival Bars',
+    html: 'Three bars keep you alive:<br>' +
+          '<span class="hi">Health</span> &mdash; lose it, you die<br>' +
+          '<span class="hi">Water</span> &mdash; depletes every <span class="hi">3 seconds</span><br>' +
+          '<span class="hi">Food</span> &mdash; depletes every <span class="hi">5 seconds</span><br><br>' +
+          'Zero Water or Food = <span class="hi">health drains</span>.<br>' +
+          'Ocean tiles drain health <span class="hi">rapidly</span>. Swim back!'
+  },
+  {
+    title: 'Resources',
+    html: '<span class="hi">Palm Trees</span> (beach) &rarr; Coconut (restores Water)<br>' +
+          '<span class="hi">Fruit Trees</span> (jungle) &rarr; Fruit (restores Food)<br>' +
+          '<span class="hi">Fishing Spots</span> (blue shimmer) &rarr; press <span class="k">Space</span> in green zone<br>' +
+          '<span class="hi">Trees</span> &rarr; Wood<br>' +
+          '<span class="hi">Rocks</span> &rarr; Stone<br><br>' +
+          'Craft a <span class="hi">Stone Axe</span> to harvest faster!'
+  },
+  {
+    title: 'Enemies',
+    html: '<span class="hi">Tribal Warriors</span> spawn from <span class="hi">Day 3</span>.<br>' +
+          'They patrol and <span class="hi">chase on sight</span>.<br>' +
+          'Night waves are larger &mdash; build a Campfire!<br><br>' +
+          'The <span class="hi">Tribal Chief</span> appears on <span class="hi">Day 15</span>.<br>' +
+          'Larger, stronger, more health.<br>' +
+          'Defeat him to unlock the <span class="hi">Yacht</span> recipe.<br><br>' +
+          'Tip: Craft a <span class="hi">Spear</span> first.'
+  },
+  {
+    title: 'Goal — Escape!',
+    html: 'Survive. Gather. Craft. <span class="hi">Escape.</span><br><br>' +
+          '1. Gather <span class="hi">Wood</span> and <span class="hi">Stone</span><br>' +
+          '2. Craft a <span class="hi">Raft</span> (10 wood)<br>' +
+          '3. Survive to <span class="hi">Day 15</span>, defeat the <span class="hi">Chief</span><br>' +
+          '4. Craft the <span class="hi">Yacht</span> (25 wood + 10 stone + 1 raft)<br>' +
+          '5. Watch it sail away &mdash; <span class="hi">you win!</span><br><br>' +
+          'The <span class="hi">volcano</span> (center-north) is rich in Stone.'
+  }
+];
+
+let slideIdx  = 0;
+let gameReady = false;
+let lastTs    = 0;
+
+const tLogo   = document.getElementById('tLogo');
+const tTitle  = document.getElementById('tTitle');
+const tDots   = document.getElementById('tDots');
+const tBody   = document.getElementById('tBody');
+const tBtn    = document.getElementById('tBtn');
+const overlay = document.getElementById('overlay');
+
+function buildDots() {
+  tDots.innerHTML = '';
+  for (let i = 0; i < SLIDES.length; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === slideIdx ? ' on' : '');
+    tDots.appendChild(d);
+  }
+}
+
+function setSlide(i) {
+  slideIdx = i;
+  tLogo.textContent  = 'Island Survival \u2014 Slide ' + (i+1) + ' of ' + SLIDES.length;
+  tTitle.textContent = SLIDES[i].title;
+  tBody.innerHTML    = SLIDES[i].html;
+  tBtn.textContent   = i === SLIDES.length - 1 ? 'Start Game' : 'Next';
+  buildDots();
+}
+setSlide(0);
+
+tBtn.addEventListener('click', () => {
+  if (slideIdx < SLIDES.length - 1) {
+    setSlide(slideIdx + 1);
+  } else {
+    overlay.style.display = 'none';
+    initAudio();
+    gameReady = true;
+    lastTs = performance.now();
+    requestAnimationFrame(loop);
+  }
+});
+
+// ============================================================
+// CONSTANTS
+// ============================================================
+const TS    = 16;    // tile size px
+const WW    = 250;   // world width tiles
+const WH    = 250;   // world height tiles
+const DAY_S = 180;   // seconds per full day
+
+const TL = { DEEP:0, OCEAN:1, SHALLOW:2, BEACH:3, JUNGLE:4, VOLCANIC:5 };
+
+const TC = [
+  '#08121e', // DEEP OCEAN   - kills player
+  '#112f5a', // OCEAN        - kills player slowly
+  '#1a4e88', // SHALLOW
+  '#e2d490', // BEACH
+  '#2c6b1c', // JUNGLE
+  '#382020', // VOLCANIC
+];
+
+const TC2 = [
+  '#060e18', '#0e2545', '#164272',
+  '#d8ca7e', '#246014', '#4a1818'
+];
+
+// ============================================================
+// WORLD GENERATION
+// ============================================================
+const worldMap = new Uint8Array(WW * WH);
+
+function nHash(x, y, s) {
+  const n = Math.sin(x * 127.1 + y * 311.7 + s * 74.3) * 43758.5453;
+  return n - Math.floor(n);
+}
+
+function smoothNoise(x, y, s) {
+  const ix = Math.floor(x), iy = Math.floor(y);
+  const fx = x - ix, fy = y - iy;
+  const ux = fx*fx*(3-2*fx), uy = fy*fy*(3-2*fy);
+  const a = nHash(ix,iy,s), b = nHash(ix+1,iy,s);
+  const c = nHash(ix,iy+1,s), d = nHash(ix+1,iy+1,s);
+  return a + (b-a)*ux + (c-a)*uy + (a+d-b-c)*ux*uy;
+}
+
+function fbm(x, y, oct, s) {
+  let v = 0, a = 0.5, f = 1;
+  for (let i = 0; i < oct; i++) {
+    v += smoothNoise(x*f, y*f, s+i*37) * a;
+    a *= 0.5; f *= 2.1;
+  }
+  return v;
+}
+
+function generateWorld() {
+  const cx = WW/2, cy = WH/2;
+  for (let ty = 0; ty < WH; ty++) {
+    for (let tx = 0; tx < WW; tx++) {
+      const dx = (tx-cx)/(WW*0.37), dy = (ty-cy)/(WH*0.37);
+      const d  = Math.sqrt(dx*dx+dy*dy);
+      const n  = fbm(tx*0.038, ty*0.038, 6, 9);
+      const e  = (1-d) + n*0.44 - 0.16;
+      let t;
+      if      (e < 0.02) t = TL.DEEP;
+      else if (e < 0.12) t = TL.OCEAN;
+      else if (e < 0.20) t = TL.SHALLOW;
+      else if (e < 0.30) t = TL.BEACH;
+      else if (e < 0.73) t = TL.JUNGLE;
+      else               t = TL.VOLCANIC;
+      worldMap[ty*WW+tx] = t;
+    }
+  }
+  // Volcano center-north
+  const vx = Math.round(cx), vy = Math.round(cy*0.42);
+  for (let ty = vy-18; ty <= vy+18; ty++) {
+    for (let tx = vx-18; tx <= vx+18; tx++) {
+      if (tx<0||tx>=WW||ty<0||ty>=WH) continue;
+      const dd = Math.sqrt((tx-vx)**2+(ty-vy)**2);
+      if (dd < 18) worldMap[ty*WW+tx] = TL.VOLCANIC;
+      if (dd < 5)  worldMap[ty*WW+tx] = TL.DEEP;
+    }
+  }
+}
+
+// ============================================================
+// RESOURCES
+// ============================================================
+const resources = [];
+
+function seededRNG(seed) {
+  let s = seed >>> 0;
+  return function() {
+    s ^= s << 13; s ^= s >> 17; s ^= s << 5;
+    return (s>>>0) / 0xFFFFFFFF;
+  };
+}
+
+function mkRes(type, tx, ty, hp, item) {
+  return { type, tx, ty, hp, maxHp: hp, item, phase: Math.random()*Math.PI*2 };
+}
+
+function placeResources() {
+  const rng = seededRNG(998877);
+  for (let ty = 0; ty < WH; ty++) {
+    for (let tx = 0; tx < WW; tx++) {
+      const tile = worldMap[ty*WW+tx];
+      const r = rng();
+      if (tile === TL.BEACH) {
+        if      (r < 0.040) resources.push(mkRes('palm',   tx, ty, 3, 'coconut'));
+        else if (r < 0.055) resources.push(mkRes('fish',   tx, ty, 99,'fish'));
+        else if (r < 0.070) resources.push(mkRes('rock',   tx, ty, 5, 'stone'));
+      } else if (tile === TL.JUNGLE) {
+        if      (r < 0.046) resources.push(mkRes('fruit',  tx, ty, 3, 'fruit'));
+        else if (r < 0.092) resources.push(mkRes('tree',   tx, ty, 4, 'wood'));
+        else if (r < 0.108) resources.push(mkRes('rock',   tx, ty, 5, 'stone'));
+      } else if (tile === TL.VOLCANIC) {
+        if      (r < 0.140) resources.push(mkRes('rock',   tx, ty, 8, 'stone'));
+      } else if (tile === TL.SHALLOW) {
+        if      (r < 0.018) resources.push(mkRes('fish',   tx, ty, 99,'fish'));
+      }
+    }
+  }
+}
+
+function findBeachStart() {
+  const cx = WW/2, cy = WH/2;
+  for (let r = 5; r < 80; r++) {
+    for (let a = 0; a < 72; a++) {
+      const ang = (a/72)*Math.PI*2;
+      const tx  = Math.floor(cx+Math.cos(ang)*r);
+      const ty  = Math.floor(cy+Math.sin(ang)*r);
+      if (tx>=0&&tx<WW&&ty>=0&&ty<WH && worldMap[ty*WW+tx]===TL.BEACH)
+        return { x: tx*TS, y: ty*TS };
+    }
+  }
+  return { x: (WW/2)*TS, y: (WH/2)*TS };
+}
+
+// ============================================================
+// GAME STATE
+// ============================================================
+const player = {
+  x: 0, y: 0, w: 16, h: 32,
+  speed: 88,
+  health: 100, maxHealth: 100,
+  water:  100, maxWater:  100,
+  food:   100, maxFood:   100,
+  facing: 1,
+  atkCd: 0, invCd: 0,
+  chiefDefeated: false,
+  raftCrafted: false
+};
+
+const cam = { x: 0, y: 0 };
+
+const inv = {
+  wood:0, stone:0, coconut:0, fruit:0, fish:0,
+  campfire:0, axe:0, spear:0, raft:0, yacht:0
+};
+
+let dayTime    = 0.22;
+let dayCount   = 1;
+let waterT     = 0, foodT = 0;
+let oceanFlash = 0;
+let gameOver   = false;
+let winActive  = false, winTimer = 0;
+let yachtX     = 0, yachtY = 0;
+let totalTime  = 0;
+let invOpen    = false, craftOpen = false;
+
+const enemies    = [];
+let eSpawnT      = 0, nightWaveT = 0;
+let chiefSpawned = false;
+
+const floatTexts = [];
+const craftBtns  = [];
+
+// Pre-placed stars for night sky
+const STARS = [];
+for (let i = 0; i < 220; i++) {
+  STARS.push({
+    x: Math.random()*3800,
+    y: Math.random()*500,
+    sz: Math.random() < 0.4 ? 2 : 1
+  });
+}
+
+// Fishing state
+const fishMG = {
+  active: false, pos: 0, dir: 1,
+  speed: 0.4, greenA: 0.32, greenB: 0.60, timer: 0
+};
+
+// Input
+const keys  = Object.create(null);
+const mouse = { cx: 0, cy: 0, wx: 0, wy: 0 };
+
+window.addEventListener('keydown', e => {
+  keys[e.key.toLowerCase()] = true;
+  if (!gameReady || gameOver) return;
+  if (e.key==='i'||e.key==='I') { invOpen=!invOpen; craftOpen=false; }
+  if (e.key==='c'||e.key==='C') { craftOpen=!craftOpen; invOpen=false; }
+  if (e.key==='Escape')          { invOpen=false; craftOpen=false; }
+  if (e.key===' ') { e.preventDefault(); if (fishMG.active) fishPress(); }
+});
+window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+
+CV.addEventListener('mousemove', e => {
+  const r = CV.getBoundingClientRect();
+  mouse.cx = e.clientX-r.left; mouse.cy = e.clientY-r.top;
+  mouse.wx = mouse.cx+cam.x;   mouse.wy = mouse.cy+cam.y;
+});
+
+CV.addEventListener('click', e => {
+  if (!gameReady||gameOver||winActive) return;
+  const r = CV.getBoundingClientRect();
+  mouse.cx = e.clientX-r.left; mouse.cy = e.clientY-r.top;
+  mouse.wx = mouse.cx+cam.x;   mouse.wy = mouse.cy+cam.y;
+  handleClick();
+});
+
+window.addEventListener('resize', () => {
+  CV.width=window.innerWidth; CV.height=window.innerHeight;
+  CX.imageSmoothingEnabled=false;
+});
+
+// ============================================================
+// RECIPES
+// ============================================================
+const RECIPES = [
+  { name:'Campfire',  key:'campfire', cost:{wood:5},               req:null },
+  { name:'Stone Axe', key:'axe',      cost:{stone:3,wood:2},       req:null },
+  { name:'Spear',     key:'spear',    cost:{wood:4,stone:2},       req:null },
+  { name:'Raft',      key:'raft',     cost:{wood:10},              req:null },
+  { name:'Yacht',     key:'yacht',    cost:{wood:25,stone:10,raft:1}, req:'chiefDefeated' }
+];
+
+function canCraft(r) {
+  if (r.req && !player[r.req]) return false;
+  for (const [k,v] of Object.entries(r.cost)) if ((inv[k]||0)<v) return false;
+  return true;
+}
+
+function doCraft(r) {
+  if (!canCraft(r)) return;
+  for (const [k,v] of Object.entries(r.cost)) inv[k]-=v;
+  inv[r.key]=(inv[r.key]||0)+1;
+  addFloat('+1 '+r.name, CV.width/2, CV.height/2-50, '#c8f135');
+  playSound('craft');
+  if (r.key==='raft')  player.raftCrafted=true;
+  if (r.key==='yacht') startWin();
+}
+
+// ============================================================
+// FISHING
+// ============================================================
+function startFishing() {
+  fishMG.active=true; fishMG.pos=0; fishMG.dir=1;
+  fishMG.speed=0.30+Math.random()*0.58;
+  fishMG.greenA=0.24+Math.random()*0.22;
+  fishMG.greenB=fishMG.greenA+0.14+Math.random()*0.18;
+  fishMG.timer=7;
+}
+
+function fishPress() {
+  if (!fishMG.active) return;
+  if (fishMG.pos>=fishMG.greenA && fishMG.pos<=fishMG.greenB) {
+    fishMG.active=false;
+    inv.fish=(inv.fish||0)+1;
+    player.food=Math.min(player.maxFood,player.food+22);
+    addFloat('+1 Fish  +22 Food',player.x-cam.x+8,player.y-cam.y-32,'#c8f135');
+    playSound('fish');
+  } else {
+    fishMG.active=false;
+    addFloat('Missed!',player.x-cam.x+8,player.y-cam.y-32,'#ff6644');
+  }
+}
+
+// ============================================================
+// FLOATING TEXT
+// ============================================================
+function addFloat(text, x, y, color) {
+  floatTexts.push({ text, x, y, color, age:0, life:1.9 });
+}
+
+// ============================================================
+// WIN
+// ============================================================
+function startWin() {
+  winActive=true; winTimer=0;
+  yachtX=player.x-cam.x; yachtY=player.y-cam.y;
+}
+
+// ============================================================
+// CLICK HANDLER
+// ============================================================
+function handleClick() {
+  if (craftOpen) {
+    for (const btn of craftBtns) {
+      if (mouse.cx>=btn.x&&mouse.cx<=btn.x+btn.w&&mouse.cy>=btn.y&&mouse.cy<=btn.y+btn.h)
+        doCraft(RECIPES[btn.idx]);
+    }
+    return;
+  }
+  if (invOpen) { invOpen=false; return; }
+
+  const px=player.x+player.w/2, py=player.y+player.h/2;
+  const range=inv.axe?94:68;
+
+  // Attack enemy (nearest in range)
+  if (player.atkCd<=0) {
+    for (let i=enemies.length-1;i>=0;i--) {
+      const en=enemies[i];
+      const dx=(en.x+en.w/2)-px, dy=(en.y+en.h/2)-py;
+      if (Math.sqrt(dx*dx+dy*dy)<range) {
+        const dmg=inv.spear?36:(inv.axe?22:10);
+        en.health-=dmg;
+        addFloat('-'+dmg,en.x-cam.x+en.w/2,en.y-cam.y-14,'#ff4422');
+        player.atkCd=0.44;
+        if (en.health<=0) {
+          if (en.isChief) {
+            player.chiefDefeated=true;
+            addFloat('CHIEF DEFEATED!  Yacht Unlocked!',CV.width/2-150,CV.height/2-60,'#c8f135');
+          }
+          enemies.splice(i,1);
+        }
+        return;
+      }
+    }
+  }
+
+  // Harvest resource
+  for (let i=resources.length-1;i>=0;i--) {
+    const res=resources[i];
+    const rx=res.tx*TS+TS/2, ry=res.ty*TS+TS/2;
+    if (Math.sqrt((rx-px)**2+(ry-py)**2)>range) continue;
+    if (res.type==='fish') { if (!fishMG.active) startFishing(); return; }
+    const hits=inv.axe?2:1;
+    res.hp-=hits;
+    addFloat('-'+hits,rx-cam.x,ry-cam.y-30,'#ffffff');
+    if (res.hp<=0) {
+      let amt=1;
+      if (res.item==='stone') amt=2+(inv.axe?1:0);
+      if (res.item==='wood')  amt=1+(inv.axe?1:0);
+      inv[res.item]=(inv[res.item]||0)+amt;
+      addFloat('+'+amt+' '+res.item,rx-cam.x,ry-cam.y-48,'#c8f135');
+      if (res.item==='coconut') { player.water=Math.min(player.maxWater,player.water+38); addFloat('+38 Water',rx-cam.x,ry-cam.y-64,'#44aaff'); }
+      if (res.item==='fruit')   { player.food=Math.min(player.maxFood,player.food+30);   addFloat('+30 Food', rx-cam.x,ry-cam.y-64,'#ffaa22'); }
+      resources.splice(i,1);
+    }
+    return;
+  }
+}
+
+// ============================================================
+// ENEMIES
+// ============================================================
+function spawnEnemy(isChief) {
+  const ang=Math.random()*Math.PI*2, dist=310+Math.random()*200;
+  let ex=player.x+Math.cos(ang)*dist, ey=player.y+Math.sin(ang)*dist;
+  ex=Math.max(0,Math.min((WW-1)*TS,ex)); ey=Math.max(0,Math.min((WH-1)*TS,ey));
+  const tx=Math.floor(ex/TS), ty2=Math.floor(ey/TS);
+  if (tx<0||tx>=WW||ty2<0||ty2>=WH) return;
+  const t=worldMap[ty2*WW+tx];
+  if (t!==TL.JUNGLE&&t!==TL.BEACH&&t!==TL.VOLCANIC) return;
+  const w=isChief?28:16, h=isChief?52:32;
+  enemies.push({
+    x:ex,y:ey,w,h,
+    health:isChief?260:40, maxHealth:isChief?260:40,
+    speed:isChief?48:66, damage:isChief?24:10,
+    isChief, state:'patrol',
+    ptx:ex+(Math.random()-0.5)*280, pty:ey+(Math.random()-0.5)*280,
+    atkCd:0, facing:1, anim:0
+  });
+}
+
+function updateEnemies(dt) {
+  const px=player.x+player.w/2, py=player.y+player.h/2;
+  for (let i=enemies.length-1;i>=0;i--) {
+    const en=enemies[i];
+    en.anim+=dt*4.5;
+    if (en.atkCd>0) en.atkCd-=dt;
+    const dx=px-(en.x+en.w/2), dy=py-(en.y+en.h/2);
+    const d=Math.sqrt(dx*dx+dy*dy);
+    if (d<410) en.state='chase'; else if (d>620) en.state='patrol';
+    if (en.state==='chase') {
+      if (d>1) { en.x+=dx/d*en.speed*dt; en.y+=dy/d*en.speed*dt; }
+      en.facing=dx>0?1:-1;
+      if (d<30&&en.atkCd<=0) {
+        if (player.invCd<=0) { player.health-=en.damage; player.invCd=0.88; playSound('hurt'); addFloat('-'+en.damage,player.x-cam.x+8,player.y-cam.y-32,'#ff2222'); }
+        en.atkCd=1.5;
+      }
+    } else {
+      const tdx=en.ptx-en.x, tdy=en.pty-en.y, td=Math.sqrt(tdx*tdx+tdy*tdy);
+      if (td<14) { en.ptx=en.x+(Math.random()-0.5)*300; en.pty=en.y+(Math.random()-0.5)*300; }
+      else { en.x+=tdx/td*en.speed*0.38*dt; en.y+=tdy/td*en.speed*0.38*dt; en.facing=tdx>0?1:-1; }
+    }
+  }
+}
+
+// ============================================================
+// COLOUR / SKY HELPERS
+// ============================================================
+function lerpRGB(a, b, t) {
+  const parse = h => { h=h.replace('#',''); return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]; };
+  const [ar,ag,ab]=parse(a), [br,bg,bb]=parse(b);
+  return 'rgb('+Math.round(ar+(br-ar)*t)+','+Math.round(ag+(bg-ag)*t)+','+Math.round(ab+(bb-ab)*t)+')';
+}
+
+function skyColor(t) {
+  if (t<0.08) return lerpRGB('#100022','#ff5a22',t/0.08);
+  if (t<0.22) return lerpRGB('#ff5a22','#87ceeb',(t-0.08)/0.14);
+  if (t<0.55) return lerpRGB('#87ceeb','#4a8fd8',(t-0.22)/0.33);
+  if (t<0.70) return lerpRGB('#4a8fd8','#ff4400',(t-0.55)/0.15);
+  if (t<0.80) return lerpRGB('#ff4400','#080018',(t-0.70)/0.10);
+  return '#07001a';
+}
+
+function isNight()    { return dayTime > 0.78; }
+function nightAlpha() { return isNight() ? Math.min(0.72,(dayTime-0.78)/0.055*0.72) : 0; }
+
+// ============================================================
+// PIXEL ART DRAWING
+// All sprites use fillRect ONLY — no arcs, no curves, no gradients
+// ============================================================
+function fr(x,y,w,h) { CX.fillRect(Math.floor(x),Math.floor(y),w,h); }
+
+// Player (16x32, tan skin / green shirt / brown pants)
+function drawPlayer(x, y) {
+  CX.fillStyle='#6b3820'; fr(x+2,y,12,5); fr(x,y+2,2,4); fr(x+14,y+2,2,4); // hair
+  CX.fillStyle='#e8c07a'; fr(x+2,y+5,12,9);                                   // face
+  CX.fillStyle='#1a1a1a'; fr(x+4,y+8,2,2); fr(x+10,y+8,2,2);                 // eyes
+  CX.fillStyle='#3a7a40'; fr(x,y+14,16,10);                                   // shirt
+  CX.fillStyle='#2e6030'; fr(x+6,y+14,4,2);                                   // collar
+  CX.fillStyle='#e8c07a'; fr(x-2,y+14,3,8); fr(x+15,y+14,3,8);               // arms
+  CX.fillStyle='#7a5030'; fr(x,y+24,7,8); fr(x+9,y+24,7,8);                  // pants
+  CX.fillStyle='#4a2e18'; fr(x,y+24,16,2);                                    // belt
+  CX.fillStyle='#2a1808'; fr(x,y+30,8,2); fr(x+8,y+30,8,2);                  // boots
+  // Held item
+  if (inv.spear>0) {
+    CX.fillStyle='#a87028';
+    if (player.facing>0) { fr(x+15,y+16,22,3); CX.fillStyle='#b8b8b8'; fr(x+36,y+13,4,9); }
+    else                 { fr(x-20,y+16,22,3); CX.fillStyle='#b8b8b8'; fr(x-23,y+13,4,9); }
+  } else if (inv.axe>0) {
+    CX.fillStyle='#a87028';
+    if (player.facing>0) { fr(x+15,y+18,14,3); CX.fillStyle='#999'; fr(x+27,y+14,5,8); }
+    else                 { fr(x-12,y+18,14,3); CX.fillStyle='#999'; fr(x-14,y+14,5,8); }
+  }
+  // Invincibility flash
+  if (player.invCd>0 && Math.floor(player.invCd*9)%2===0) {
+    CX.fillStyle='rgba(255,255,255,0.5)'; fr(x-2,y,20,32);
+  }
+}
+
+// Tribal warrior (dark skin, red markings, spear)
+function drawWarrior(sx, sy, en) {
+  const c=en.isChief, sc=c?1.5:1;
+  const p=v=>Math.floor(v*sc);
+  const x=Math.floor(sx), y=Math.floor(sy);
+  // Headdress (chief)
+  if (c) {
+    CX.fillStyle='#ff4400'; fr(x+p(2),y-p(14),p(4),p(14)); fr(x+p(8),y-p(18),p(4),p(18)); fr(x+p(14),y-p(12),p(4),p(12));
+    CX.fillStyle='#ffaa00'; fr(x+p(4),y-p(10),p(3),p(10)); fr(x+p(12),y-p(14),p(3),p(14));
+    CX.fillStyle='#dd2200'; fr(x+p(3),y-p(16),p(2),p(4));
+  }
+  // Head
+  CX.fillStyle='#3a1e06'; fr(x+p(2),y,p(12),p(8));
+  // Face markings
+  CX.fillStyle='#cc0e00'; fr(x+p(3),y+p(3),p(3),p(2)); fr(x+p(10),y+p(3),p(3),p(2)); fr(x+p(6),y+p(1),p(4),p(1));
+  // Eyes
+  CX.fillStyle='#ffddaa'; fr(x+p(4),y+p(5),p(2),p(2)); fr(x+p(10),y+p(5),p(2),p(2));
+  // Body
+  CX.fillStyle='#2a1404'; fr(x,y+p(8),p(16),p(10));
+  CX.fillStyle='#cc0e00'; fr(x+p(4),y+p(10),p(8),p(2)); fr(x+p(7),y+p(8),p(2),p(6));
+  // Skirt
+  CX.fillStyle='#c4a048'; fr(x,y+p(18),p(16),p(8));
+  CX.fillStyle='#9a7830'; for (let i=0;i<4;i++) fr(x+p(2+i*4),y+p(18),p(2),p(8));
+  // Legs
+  CX.fillStyle='#2a1404'; fr(x+p(1),y+p(26),p(6),p(6)); fr(x+p(9),y+p(26),p(6),p(6));
+  // Spear
+  CX.fillStyle='#886010';
+  if (en.facing>0) { fr(x+p(16),y+p(5),p(30),p(3)); CX.fillStyle='#c8c8c8'; fr(x+p(45),y+p(3),p(4),p(7)); CX.fillStyle='#888'; fr(x+p(46),y+p(2),p(2),p(2)); }
+  else             { fr(x-p(28),y+p(5),p(30),p(3)); CX.fillStyle='#c8c8c8'; fr(x-p(30),y+p(3),p(4),p(7)); CX.fillStyle='#888'; fr(x-p(31),y+p(2),p(2),p(2)); }
+  // HP bar
+  const bw=c?58:36, bx=x+p(8)-bw/2, by=y-12;
+  CX.fillStyle='#180a0a'; fr(bx,by,bw,5);
+  CX.fillStyle=c?'#ff8800':'#cc2222'; fr(bx,by,Math.round(bw*(en.health/en.maxHealth)),5);
+  CX.strokeStyle='#333'; CX.lineWidth=1; CX.strokeRect(bx,by,bw,5);
+}
+
+// Palm tree — trunk + leafy fronds, all rectangles
+function drawPalm(sx, sy) {
+  const x=Math.floor(sx-8), y=Math.floor(sy);
+  CX.fillStyle='#a06030'; fr(x+6,y-8,4,8); fr(x+5,y-16,5,8); fr(x+4,y-24,5,8);
+  CX.fillStyle='#8a4e20'; fr(x+7,y-24,2,24);
+  CX.fillStyle='#29900e';
+  fr(x-14,y-26,16,4); fr(x+14,y-26,16,4); fr(x-2,y-38,4,16); fr(x+6,y-38,4,16);
+  fr(x-10,y-34,4,12); fr(x+14,y-34,4,12);
+  CX.fillStyle='#207808'; fr(x-18,y-24,6,3); fr(x+20,y-24,6,3); fr(x-6,y-40,3,6); fr(x+9,y-40,3,6);
+  CX.fillStyle='#6a4a1a'; fr(x+4,y-27,4,4); fr(x+8,y-27,4,4); fr(x+6,y-30,4,4);
+  CX.fillStyle='#8a6a3a'; fr(x+5,y-28,2,2);
+}
+
+// Fruit tree — trunk + canopy blocks + red fruit pixels
+function drawFruitTree(sx, sy) {
+  const x=Math.floor(sx-8), y=Math.floor(sy);
+  CX.fillStyle='#6b3e1e'; fr(x+5,y-22,6,22); CX.fillStyle='#562e10'; fr(x+7,y-22,2,22);
+  CX.fillStyle='#1c7612'; fr(x-10,y-38,36,16); fr(x-6,y-46,28,8); fr(x-2,y-50,20,4);
+  CX.fillStyle='#147008'; fr(x-6,y-36,28,6);
+  CX.fillStyle='#ee2020'; fr(x+1,y-34,4,4); fr(x+9,y-30,4,4); fr(x+17,y-34,4,4); fr(x+5,y-42,4,4); fr(x+13,y-44,4,4);
+  CX.fillStyle='#cc1010'; fr(x+2,y-35,2,2); fr(x+10,y-31,2,2);
+}
+
+// Jungle tree — tall trunk + multi-level canopy
+function drawTree(sx, sy) {
+  const x=Math.floor(sx-8), y=Math.floor(sy);
+  CX.fillStyle='#582e0e'; fr(x+5,y-24,6,24); CX.fillStyle='#482208'; fr(x+7,y-24,2,24);
+  CX.fillStyle='#1a5e0e'; fr(x-8,y-40,32,16); fr(x-4,y-48,24,8); fr(x,y-52,16,4);
+  CX.fillStyle='#125c06'; fr(x-4,y-38,24,6);
+}
+
+// Rock — layered rectangles
+function drawRock(sx, sy) {
+  const x=Math.floor(sx-8), y=Math.floor(sy);
+  CX.fillStyle='#686868'; fr(x-4,y-10,28,10); fr(x-2,y-14,24,4); fr(x,y-16,20,2);
+  CX.fillStyle='#888'; fr(x-2,y-14,8,4); fr(x+4,y-10,8,5); CX.fillStyle='#545454'; fr(x+14,y-12,6,4);
+}
+
+// Fishing spot — animated blue shimmer with 2x2 sparkle blocks
+function drawFishSpot(sx, sy, t) {
+  const x=Math.floor(sx), y=Math.floor(sy);
+  const p1=0.60+0.40*Math.sin(t*2.9), p2=0.45+0.45*Math.sin(t*3.6+1.3);
+  CX.fillStyle='rgba(55,140,255,'+(p1*0.55)+')'; fr(x-12,y-6,40,12);
+  CX.fillStyle='rgba(130,210,255,'+(p2*0.40)+')'; fr(x-8,y-10,32,5); fr(x-8,y+5,32,5);
+  if (Math.floor(t*4)%2===0) {
+    CX.fillStyle='rgba(255,255,255,0.88)'; fr(x-4,y-2,2,2); fr(x+10,y+2,2,2); fr(x+4,y-4,2,2);
+  } else {
+    CX.fillStyle='rgba(255,255,255,0.70)'; fr(x+2,y-3,2,2); fr(x+14,y,2,2);
+  }
+}
+
+// Pixel yacht — hull + mast + sails all from fillRect
+function drawYacht(x, y) {
+  CX.fillStyle='#1a386a'; fr(x,y+32,80,16); fr(x+8,y+40,64,12); fr(x+16,y+48,48,8);
+  CX.fillStyle='#1e4a88'; fr(x+4,y+32,72,4);
+  CX.fillStyle='#c4a048'; fr(x+8,y+28,64,6);
+  CX.fillStyle='#8a5a18'; fr(x+36,y-40,6,70);
+  CX.fillStyle='#f0f0f0'; fr(x+42,y-36,34,62); CX.fillStyle='#d8d8d8'; fr(x+42,y-36,4,62); fr(x+72,y-10,4,38);
+  CX.fillStyle='#e8e8e8'; fr(x+10,y-18,26,46);
+  CX.fillStyle='#c8f135'; fr(x+42,y-48,22,9);
+  CX.fillStyle='#111'; fr(x+44,y-46,4,5); fr(x+50,y-46,4,5);
+  CX.fillStyle='rgba(180,230,255,0.65)'; fr(x-24,y+52,128,4); fr(x-12,y+58,100,2);
+}
+
+// ============================================================
+// MINIMAP
+// ============================================================
+function drawMinimap() {
+  const MW=100,MH=100, MX=CV.width-MW-10, MY=CV.height-MH-10;
+  const step=WW/MW;
+  CX.fillStyle='rgba(0,0,0,0.72)'; CX.fillRect(MX-2,MY-2,MW+4,MH+4);
+  for (let py2=0;py2<MH;py2++) {
+    for (let px2=0;px2<MW;px2++) {
+      const tx=Math.floor(px2*step), ty=Math.floor(py2*step);
+      if (tx>=WW||ty>=WH) continue;
+      CX.fillStyle=TC[worldMap[ty*WW+tx]]; CX.fillRect(MX+px2,MY+py2,1,1);
+    }
+  }
+  const mpx=Math.floor((player.x/TS)/step), mpy=Math.floor((player.y/TS)/step);
+  CX.fillStyle='#c8f135'; CX.fillRect(MX+mpx-1,MY+mpy-1,3,3);
+  CX.fillStyle='#ff3333';
+  for (const en of enemies) { const ex=Math.floor((en.x/TS)/step),ey=Math.floor((en.y/TS)/step); CX.fillRect(MX+ex-1,MY+ey-1,2,2); }
+  CX.strokeStyle='#c8f135'; CX.lineWidth=1; CX.strokeRect(MX-2,MY-2,MW+4,MH+4);
+  CX.fillStyle='rgba(200,241,53,0.75)'; CX.font='9px monospace'; CX.fillText('MAP',MX+2,MY+MH-3);
+}
+
+// ============================================================
+// HUD
+// ============================================================
+function drawBar(x,y,w,h,val,max,col,lbl) {
+  CX.fillStyle='rgba(0,0,0,0.6)'; CX.fillRect(x-1,y-1,w+2,h+2);
+  CX.fillStyle='#2a2a2a'; CX.fillRect(x,y,w,h);
+  CX.fillStyle=col; CX.fillRect(x,y,Math.floor(w*(Math.max(0,val)/max)),h);
+  CX.fillStyle='rgba(255,255,255,0.12)'; CX.fillRect(x,y,w,2);
+  CX.strokeStyle='rgba(0,0,0,0.55)'; CX.lineWidth=1; CX.strokeRect(x,y,w,h);
+  CX.fillStyle='#fff'; CX.font='bold 10px monospace';
+  CX.fillText(lbl+': '+Math.ceil(Math.max(0,val))+'/'+max,x+3,y+h-2);
+}
+
+function drawHUD() {
+  CX.fillStyle='rgba(0,0,0,0.60)'; CX.fillRect(0,0,CV.width,44);
+  drawBar(10,8,160,14,player.health,player.maxHealth,'#cc2222','HP');
+  drawBar(182,8,160,14,player.water,player.maxWater,'#2299ee','Water');
+  drawBar(354,8,160,14,player.food,player.maxFood,'#ee9920','Food');
+  const phase=isNight()?'Night':(dayTime<0.22?'Dawn':dayTime<0.72?'Day':'Dusk');
+  CX.fillStyle='#c8f135'; CX.font='bold 13px monospace';
+  CX.fillText('Day '+dayCount+'  '+phase,CV.width-200,22);
+  // Deep water overlay
+  if (oceanFlash>0.05) {
+    CX.fillStyle='rgba(0,70,200,'+Math.min(0.42,oceanFlash*0.42)+')'; CX.fillRect(0,0,CV.width,CV.height);
+    CX.fillStyle='#ffffff'; CX.font='bold 26px monospace'; CX.textAlign='center';
+    CX.fillText('TOO DEEP \u2014 SWIM BACK',CV.width/2,CV.height/2); CX.textAlign='left';
+  }
+}
+
+function drawHotbar() {
+  const ITEMS=[['wood','WOOD'],['stone','STON'],['coconut','COCO'],['fruit','FRUT'],['fish','FISH'],['campfire','CAMP'],['axe','AXE'],['spear','SPER'],['raft','RAFT']];
+  const SW=46,GAP=3,TOT=ITEMS.length*(SW+GAP)-GAP;
+  const SX=(CV.width-TOT)/2, SY=CV.height-SW-10;
+  CX.fillStyle='rgba(0,0,0,0.65)'; CX.fillRect(SX-5,SY-4,TOT+10,SW+8);
+  for (let i=0;i<ITEMS.length;i++) {
+    const [k,lbl]=ITEMS[i], bx=SX+i*(SW+GAP), by=SY;
+    CX.fillStyle=inv[k]>0?'rgba(28,38,48,0.90)':'rgba(16,20,28,0.80)'; CX.fillRect(bx,by,SW,SW);
+    CX.strokeStyle=inv[k]>0?'#c8f135':'#333'; CX.lineWidth=1; CX.strokeRect(bx,by,SW,SW);
+    CX.textAlign='center';
+    if (inv[k]>0) {
+      CX.fillStyle='#c8f135'; CX.font='bold 9px monospace'; CX.fillText(lbl,bx+SW/2,by+14);
+      CX.fillStyle='#fff'; CX.font='bold 15px monospace'; CX.fillText(inv[k],bx+SW/2,by+SW-8);
+    } else {
+      CX.fillStyle='#333'; CX.font='bold 9px monospace'; CX.fillText(lbl,bx+SW/2,by+SW/2+4);
+    }
+    CX.textAlign='left';
+  }
+}
+
+function drawInventory() {
+  const PW=360,PH=330,PX=(CV.width-PW)/2,PY=(CV.height-PH)/2;
+  CX.fillStyle='rgba(8,8,18,0.97)'; CX.fillRect(PX,PY,PW,PH);
+  CX.strokeStyle='#c8f135'; CX.lineWidth=2; CX.strokeRect(PX,PY,PW,PH);
+  CX.fillStyle='#c8f135'; CX.font='bold 14px monospace'; CX.textAlign='center';
+  CX.fillText('INVENTORY',CV.width/2,PY+24); CX.textAlign='left';
+  const ILIST=[['wood','Wood'],['stone','Stone'],['coconut','Coconut'],['fruit','Fruit'],['fish','Fish'],['campfire','Campfire'],['axe','Axe'],['spear','Spear'],['raft','Raft'],['yacht','Yacht']];
+  for (let i=0;i<ILIST.length;i++) {
+    const [k,lbl]=ILIST[i], c=i%3, r=Math.floor(i/3);
+    const bx=PX+18+c*112, by=PY+44+r*54;
+    CX.fillStyle='rgba(22,32,44,0.85)'; CX.fillRect(bx,by,104,46);
+    CX.strokeStyle=inv[k]>0?'#4a5a44':'#333'; CX.lineWidth=1; CX.strokeRect(bx,by,104,46);
+    CX.fillStyle='#888'; CX.font='10px monospace'; CX.fillText(lbl,bx+4,by+15);
+    CX.fillStyle=inv[k]>0?'#c8f135':'#333'; CX.font='bold 20px monospace'; CX.fillText(inv[k]||0,bx+4,by+38);
+  }
+  CX.fillStyle='rgba(200,241,53,0.25)'; CX.font='10px monospace'; CX.textAlign='center';
+  CX.fillText('[I] to close',CV.width/2,PY+PH-8); CX.textAlign='left';
+}
+
+function drawCrafting() {
+  const PW=440,PH=390,PX=(CV.width-PW)/2,PY=(CV.height-PH)/2;
+  CX.fillStyle='rgba(8,8,18,0.97)'; CX.fillRect(PX,PY,PW,PH);
+  CX.strokeStyle='#c8f135'; CX.lineWidth=2; CX.strokeRect(PX,PY,PW,PH);
+  CX.fillStyle='#c8f135'; CX.font='bold 14px monospace'; CX.textAlign='center';
+  CX.fillText('CRAFTING',CV.width/2,PY+24); CX.textAlign='left';
+  craftBtns.length=0;
+  for (let i=0;i<RECIPES.length;i++) {
+    const r=RECIPES[i], by=PY+44+i*62;
+    const locked=r.req&&!player[r.req], ok=canCraft(r);
+    CX.fillStyle=locked?'rgba(30,10,10,0.8)':(ok?'rgba(14,30,14,0.8)':'rgba(18,22,34,0.80)'); CX.fillRect(PX+10,by,PW-20,54);
+    CX.strokeStyle=locked?'#440808':(ok?'#285028':'#2a2e3a'); CX.lineWidth=1; CX.strokeRect(PX+10,by,PW-20,54);
+    CX.fillStyle=locked?'#444':(ok?'#c8f135':'#bbb'); CX.font='bold 13px monospace'; CX.fillText(r.name,PX+18,by+20);
+    let costStr='Cost: '; for (const[k,v] of Object.entries(r.cost)) costStr+=v+' '+k+', '; costStr=costStr.slice(0,-2);
+    CX.fillStyle='#777'; CX.font='10px monospace';
+    CX.fillText(locked?'Requires: Defeat the Tribal Chief first':costStr,PX+18,by+36);
+    if (!locked) {
+      const BX=PX+PW-96,BW=74,BH=32,BBY=by+11;
+      CX.fillStyle=ok?'#c8f135':'#2a2a3a'; CX.fillRect(BX,BBY,BW,BH);
+      CX.fillStyle=ok?'#000':'#555'; CX.font='bold 11px monospace'; CX.textAlign='center';
+      CX.fillText('CRAFT',BX+BW/2,BBY+BH/2+4); CX.textAlign='left';
+      craftBtns.push({x:BX,y:BBY,w:BW,h:BH,idx:i});
+    } else { craftBtns.push({x:0,y:0,w:0,h:0,idx:i}); }
+  }
+  CX.fillStyle='rgba(200,241,53,0.25)'; CX.font='10px monospace'; CX.textAlign='center';
+  CX.fillText('[C] or [Esc] to close',CV.width/2,PY+PH-8); CX.textAlign='left';
+}
+
+function drawFishingUI() {
+  const BW=270,BH=24, BX=(CV.width-BW)/2, BY=CV.height/2+55;
+  CX.fillStyle='rgba(0,0,0,0.80)'; CX.fillRect(BX-12,BY-46,BW+24,86);
+  CX.strokeStyle='#2299ee'; CX.lineWidth=1; CX.strokeRect(BX-12,BY-46,BW+24,86);
+  CX.fillStyle='#c8f135'; CX.font='bold 12px monospace'; CX.textAlign='center';
+  CX.fillText('FISHING \u2014 Press SPACE in the green zone!',CV.width/2,BY-22); CX.textAlign='left';
+  CX.fillStyle='#2a2a3a'; CX.fillRect(BX,BY,BW,BH);
+  CX.fillStyle='#22aa44'; CX.fillRect(Math.floor(BX+fishMG.greenA*BW),BY,Math.floor((fishMG.greenB-fishMG.greenA)*BW),BH);
+  const CX2=Math.floor(BX+fishMG.pos*BW);
+  CX.fillStyle='#ffffff'; fr(CX2-2,BY-4,4,BH+8); CX.fillStyle='#ffe000'; fr(CX2-1,BY-3,2,BH+6);
+  CX.strokeStyle='#666'; CX.lineWidth=1; CX.strokeRect(BX,BY,BW,BH);
+  CX.fillStyle='#999'; CX.font='10px monospace'; CX.textAlign='center';
+  CX.fillText('Time: '+Math.ceil(fishMG.timer)+'s',CV.width/2,BY+BH+18); CX.textAlign='left';
+}
+
+function drawGameOver() {
+  CX.fillStyle='rgba(0,0,0,0.85)'; CX.fillRect(0,0,CV.width,CV.height);
+  CX.fillStyle='#cc2222'; CX.font='bold 38px monospace'; CX.textAlign='center';
+  CX.fillText('YOU DIED',CV.width/2,CV.height/2-36);
+  CX.fillStyle='#999'; CX.font='15px monospace';
+  CX.fillText('Survived '+dayCount+' day'+(dayCount!==1?'s':''),CV.width/2,CV.height/2+10);
+  CX.fillStyle='#c8f135'; CX.font='bold 14px monospace';
+  CX.fillText('Reload to try again',CV.width/2,CV.height/2+50); CX.textAlign='left';
+}
+
+function drawWinScreen() {
+  CX.fillStyle='rgba(0,20,50,0.88)'; CX.fillRect(0,0,CV.width,CV.height);
+  // Ocean shimmer
+  for (let i=0;i<10;i++) {
+    CX.fillStyle='rgba(80,160,255,'+(0.18+0.12*Math.sin(totalTime*2+i))+')';
+    fr(((i*90+totalTime*60)%CV.width)-20,CV.height/2+50+Math.floor(Math.sin(totalTime+i)*8)*2,60,4);
+  }
+  // Animated yacht sailing right
+  drawYacht(yachtX+winTimer*90-160, yachtY-winTimer*10);
+  if (winTimer>2.5) {
+    const PW=560,PH=240,PX=(CV.width-PW)/2,PY=(CV.height-PH)/2;
+    CX.fillStyle='rgba(5,12,22,0.94)'; CX.fillRect(PX,PY,PW,PH);
+    CX.strokeStyle='#c8f135'; CX.lineWidth=3; CX.strokeRect(PX,PY,PW,PH);
+    CX.fillStyle='#c8f135'; CX.font='bold 34px monospace'; CX.textAlign='center';
+    CX.fillText('YOU ESCAPED!',CV.width/2,PY+52);
+    CX.fillStyle='#ddd'; CX.font='14px monospace';
+    CX.fillText('You survived '+dayCount+' days on the island.',CV.width/2,PY+92);
+    CX.fillText('You built a Yacht and sailed to freedom.',CV.width/2,PY+116);
+    CX.fillStyle='#c8f135'; CX.font='bold 15px monospace';
+    CX.fillText('Congratulations, survivor!',CV.width/2,PY+158);
+    CX.fillStyle='#666'; CX.font='11px monospace';
+    CX.fillText('Reload to play again',CV.width/2,PY+PH-14); CX.textAlign='left';
+  }
+}
+
+// ============================================================
+// WORLD RENDER
+// ============================================================
+function renderSky() {
+  CX.fillStyle=skyColor(dayTime); CX.fillRect(0,0,CV.width,CV.height);
+  const na=nightAlpha();
+  // Stars — all 2x2 (or 1x1) white pixel squares as specified
+  if (na>0.04) {
+    for (const st of STARS) {
+      const twinkle=0.55+0.45*Math.sin(totalTime*1.2+st.x*0.01);
+      CX.fillStyle='rgba(255,255,255,'+(na*twinkle*0.88)+')';
+      CX.fillRect(Math.floor(st.x%CV.width),Math.floor(st.y),st.sz,st.sz);
+    }
+    // Moon — rectangles only
+    const mx=CV.width*0.82, my=65;
+    CX.fillStyle='rgba(235,235,210,'+(na*0.94)+')';
+    fr(mx+4,my,12,22); fr(mx,my+4,20,14); fr(mx+2,my+2,16,18);
+    CX.fillStyle='rgba(170,170,148,'+(na*0.45)+')'; fr(mx+6,my+5,4,4); fr(mx+10,my+9,3,3);
+  }
+  // Sun
+  if (!isNight()&&dayTime>0.14&&dayTime<0.72) {
+    const st=(dayTime-0.14)/0.58;
+    const sunX=CV.width*0.1+CV.width*0.8*st, sunY=90-Math.sin(st*Math.PI)*130;
+    CX.fillStyle='rgba(255,220,0,0.28)'; fr(sunX-20,sunY-20,40,40);
+    CX.fillStyle='#ffe040'; fr(sunX-10,sunY-10,20,20); CX.fillStyle='#ffd000'; fr(sunX-8,sunY-8,16,16);
+    CX.fillStyle='rgba(255,230,0,0.45)';
+    fr(sunX-26,sunY-2,6,4); fr(sunX+20,sunY-2,6,4); fr(sunX-2,sunY-26,4,6); fr(sunX-2,sunY+20,4,6);
+  }
+}
+
+function renderWorld() {
+  const x0=Math.max(0,Math.floor(cam.x/TS)-1), y0=Math.max(0,Math.floor(cam.y/TS)-1);
+  const x1=Math.min(WW,x0+Math.ceil(CV.width/TS)+3), y1=Math.min(WH,y0+Math.ceil(CV.height/TS)+3);
+  for (let ty=y0;ty<y1;ty++) {
+    for (let tx=x0;tx<x1;tx++) {
+      const tile=worldMap[ty*WW+tx];
+      CX.fillStyle=TC[tile];
+      const px2=Math.floor(tx*TS-cam.x), py2=Math.floor(ty*TS-cam.y);
+      CX.fillRect(px2,py2,TS,TS);
+      // Pixel detail on tiles — rectangles only
+      if (tile===TL.BEACH) {
+        if ((tx+ty)%5===0) { CX.fillStyle=TC2[tile]; fr(px2+6,py2+6,4,4); }
+        if ((tx*2+ty)%7===0) { CX.fillStyle='#ccc28a'; fr(px2+2,py2+10,2,2); }
+      } else if (tile===TL.JUNGLE) {
+        if ((tx+ty*2)%6===0) { CX.fillStyle=TC2[tile]; fr(px2+4,py2+4,8,8); }
+        if ((tx*3+ty)%9===0) { CX.fillStyle='#1c5a10'; fr(px2+10,py2+10,4,4); }
+      } else if (tile===TL.VOLCANIC) {
+        if ((tx+ty)%4===0) { CX.fillStyle=TC2[tile]; fr(px2+3,py2+3,6,6); }
+        if ((tx*2+ty)%7===0) { CX.fillStyle='rgba(200,50,0,0.28)'; fr(px2+8,py2+8,4,4); }
+      } else if (tile===TL.SHALLOW) {
+        if ((tx+ty)%4===0) { CX.fillStyle='rgba(100,180,255,0.22)'; fr(px2+4,py2+4,6,6); }
+      } else if (tile===TL.OCEAN) {
+        if ((tx+ty)%5===0) { CX.fillStyle='#0e2a52'; fr(px2+2,py2+8,8,2); }
+      }
+    }
+  }
+}
+
+function renderResources() {
+  for (const res of resources) {
+    const sx=res.tx*TS+TS/2-cam.x, sy=res.ty*TS+TS-cam.y;
+    if (sx<-100||sx>CV.width+100||sy<-100||sy>CV.height+100) continue;
+    switch(res.type) {
+      case 'palm':  drawPalm(sx,sy); break;
+      case 'fruit': drawFruitTree(sx,sy); break;
+      case 'tree':  drawTree(sx,sy); break;
+      case 'rock':  drawRock(sx,sy); break;
+      case 'fish':  drawFishSpot(sx,sy,totalTime); break;
+    }
+    if (res.type!=='fish'&&res.hp<res.maxHp) {
+      const bx=Math.floor(res.tx*TS+4-cam.x), by=Math.floor(res.ty*TS-4-cam.y);
+      CX.fillStyle='#1a1a1a'; fr(bx,by,24,3); CX.fillStyle='#44cc44'; fr(bx,by,Math.round(24*(res.hp/res.maxHp)),3);
+    }
+  }
+}
+
+function renderEnemies() {
+  for (const en of enemies) {
+    const sx=en.x-cam.x, sy=en.y-cam.y;
+    if (sx<-100||sx>CV.width+100||sy<-100||sy>CV.height+100) continue;
+    drawWarrior(sx,sy,en);
+  }
+}
+
+// ============================================================
+// UPDATE
+// ============================================================
+function update(dt) {
+  if (gameOver||!gameReady) return;
+  totalTime+=dt;
+  if (winActive) { winTimer+=dt; return; }
+
+  dayTime+=dt/DAY_S;
+  if (dayTime>=1) { dayTime-=1; dayCount++; }
+
+  // Movement
+  let mvx=0,mvy=0;
+  if (keys['w']||keys['arrowup'])    mvy-=1;
+  if (keys['s']||keys['arrowdown'])  mvy+=1;
+  if (keys['a']||keys['arrowleft'])  mvx-=1;
+  if (keys['d']||keys['arrowright']) mvx+=1;
+  if (mvx&&mvy) { mvx*=0.707; mvy*=0.707; }
+  if (mvx>0) player.facing=1; if (mvx<0) player.facing=-1;
+  player.x=Math.max(0,Math.min(WW*TS-player.w,player.x+mvx*player.speed*dt));
+  player.y=Math.max(0,Math.min(WH*TS-player.h,player.y+mvy*player.speed*dt));
+
+  // Tile check
+  const ftx=Math.floor((player.x+player.w/2)/TS), fty=Math.floor((player.y+player.h*0.9)/TS);
+  const curTile=(ftx>=0&&ftx<WW&&fty>=0&&fty<WH)?worldMap[fty*WW+ftx]:TL.DEEP;
+  if (curTile===TL.DEEP||curTile===TL.OCEAN) { player.health-=20*dt; oceanFlash=Math.min(1,oceanFlash+dt*5); }
+  else oceanFlash=Math.max(0,oceanFlash-dt*2.2);
+
+  // Survival
+  waterT+=dt; foodT+=dt;
+  if (waterT>=3) { waterT=0; player.water=Math.max(0,player.water-5); }
+  if (foodT>=5)  { foodT=0;  player.food=Math.max(0,player.food-4); }
+  if (player.water<=0) player.health-=5*dt;
+  if (player.food<=0)  player.health-=3*dt;
+  if (player.atkCd>0) player.atkCd-=dt;
+  if (player.invCd>0) player.invCd-=dt;
+  if (player.health<=0) { gameOver=true; return; }
+  player.health=Math.min(player.maxHealth,player.health);
+
+  // Enemy spawning
+  if (dayCount>=3) {
+    eSpawnT+=dt;
+    if (eSpawnT>=( isNight()?16:58 )) { eSpawnT=0; const n=isNight()?3:1; for (let i=0;i<n;i++) spawnEnemy(false); }
+    if (isNight()) { nightWaveT+=dt; if (nightWaveT>=42) { nightWaveT=0; for (let i=0;i<6;i++) spawnEnemy(false); } }
+  }
+  if (dayCount>=15&&!chiefSpawned) { chiefSpawned=true; spawnEnemy(true); }
+  updateEnemies(dt);
+
+  // Fishing
+  if (fishMG.active) {
+    fishMG.pos+=fishMG.dir*fishMG.speed*dt;
+    if (fishMG.pos>=1) { fishMG.pos=1; fishMG.dir=-1; }
+    if (fishMG.pos<=0) { fishMG.pos=0; fishMG.dir=1; }
+    fishMG.timer-=dt;
+    if (fishMG.timer<=0) { fishMG.active=false; addFloat('Fish got away!',player.x-cam.x+8,player.y-cam.y-32,'#ff8844'); }
+  }
+
+  // Floating text
+  for (let i=floatTexts.length-1;i>=0;i--) { floatTexts[i].age+=dt; if (floatTexts[i].age>floatTexts[i].life) floatTexts.splice(i,1); }
+
+  // Camera
+  cam.x=player.x-CV.width/2+player.w/2; cam.y=player.y-CV.height/2+player.h/2;
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+function render() {
+  CX.save(); CX.imageSmoothingEnabled=false;
+  renderSky(); renderWorld(); renderResources(); renderEnemies();
+  drawPlayer(Math.floor(player.x-cam.x),Math.floor(player.y-cam.y));
+
+  // Floating texts
+  for (const ft of floatTexts) {
+    const alpha=Math.max(0,1-(ft.age/ft.life));
+    CX.globalAlpha=alpha; CX.fillStyle=ft.color; CX.font='bold 13px monospace';
+    CX.fillText(ft.text,Math.floor(ft.x),Math.floor(ft.y-ft.age*30));
+  }
+  CX.globalAlpha=1;
+
+  // Night overlay
+  const na=nightAlpha();
+  if (na>0) { CX.fillStyle='rgba(0,0,15,'+(na*0.5)+')'; CX.fillRect(0,0,CV.width,CV.height); }
+
+  drawHUD(); drawHotbar(); drawMinimap();
+  if (fishMG.active) drawFishingUI();
+  if (invOpen)    drawInventory();
+  if (craftOpen)  drawCrafting();
+  if (winActive)  drawWinScreen();
+  if (gameOver)   drawGameOver();
+  CX.restore();
+}
+
+// ============================================================
+// GAME LOOP
+// ============================================================
+function loop(ts) {
+  const dt=Math.min(0.08,(ts-lastTs)/1000);
+  lastTs=ts; update(dt); render();
+  requestAnimationFrame(loop);
+}
+
+// ============================================================
+// CAMPFIRE SYSTEM
+// ============================================================
+const campfires = [];
+
+function placeCampfire() {
+  // Place a campfire at player position if they have one in inventory
+  if ((inv.campfire||0) <= 0) return;
+  const ftx = Math.floor((player.x+player.w/2)/TS);
+  const fty = Math.floor((player.y+player.h)/TS);
+  const tile = (ftx>=0&&ftx<WW&&fty>=0&&fty<WH) ? worldMap[fty*WW+ftx] : -1;
+  if (tile !== TL.BEACH && tile !== TL.JUNGLE) { addFloat('Cannot place here', player.x-cam.x, player.y-cam.y-40, '#ff8844'); return; }
+  // Check not already one nearby
+  for (const cf of campfires) {
+    if (Math.abs(cf.tx-ftx)<=2 && Math.abs(cf.ty-fty)<=2) { addFloat('Too close to another campfire', player.x-cam.x, player.y-cam.y-40, '#ff8844'); return; }
+  }
+  inv.campfire--;
+  campfires.push({ tx: ftx, ty: fty, lit: true, flickerPhase: Math.random()*Math.PI*2, age: 0 });
+  addFloat('Campfire placed!', player.x-cam.x, player.y-cam.y-40, '#c8f135');
+}
+
+function nearCampfire() {
+  // Returns true if player is within warmth range of a campfire
+  for (const cf of campfires) {
+    const dx = cf.tx*TS - player.x, dy = cf.ty*TS - player.y;
+    if (Math.sqrt(dx*dx+dy*dy) < 120) return true;
+  }
+  return false;
+}
+
+function drawCampfire(sx, sy, cf, t) {
+  const x = Math.floor(sx), y = Math.floor(sy);
+  // Stones forming ring
+  CX.fillStyle = '#686868'; fr(x-6,y+4,6,4); fr(x+8,y+4,6,4); fr(x-2,y+6,12,4);
+  CX.fillStyle = '#888'; fr(x-4,y+2,4,4); fr(x+8,y+2,4,4);
+  // Logs
+  CX.fillStyle = '#6b3810'; fr(x-8,y+2,20,4); CX.fillStyle = '#4a2808'; fr(x-6,y+4,16,2);
+  // Flames (animated rectangles, yellow/orange/red layers)
+  const flk = 0.7 + 0.3*Math.sin(t*8 + cf.flickerPhase);
+  const flk2 = 0.6 + 0.4*Math.sin(t*11 + cf.flickerPhase + 1.2);
+  // Base red
+  CX.fillStyle = 'rgba(200,40,0,'+(flk*0.9)+')'; fr(x-4,y-4,16,8);
+  // Orange mid
+  CX.fillStyle = 'rgba(255,130,0,'+(flk2*0.9)+')'; fr(x-2,y-8,12,8); fr(x,y-10,8,4);
+  // Yellow tip (2x2 pixel blocks)
+  CX.fillStyle = 'rgba(255,240,0,'+(flk*0.8)+')'; fr(x,y-12,8,4); fr(x+2,y-14,4,4);
+  // White hot center
+  CX.fillStyle = 'rgba(255,255,200,'+(flk2*0.6)+')'; fr(x+2,y-8,4,4);
+  // Glow on ground
+  if (isNight()) {
+    CX.fillStyle = 'rgba(255,150,0,0.08)'; CX.fillRect(x-40,y-40,88,88);
+    CX.fillStyle = 'rgba(255,150,0,0.12)'; CX.fillRect(x-20,y-20,48,48);
+  }
+}
+
+function renderCampfires() {
+  for (const cf of campfires) {
+    const sx = cf.tx*TS + TS/2 - cam.x;
+    const sy = cf.ty*TS + TS - cam.y;
+    if (sx<-80||sx>CV.width+80||sy<-80||sy>CV.height+80) continue;
+    drawCampfire(sx, sy, cf, totalTime);
+  }
+}
+
+// ============================================================
+// PARTICLE SYSTEM (fillRect particles — no canvas paths)
+// ============================================================
+const particles = [];
+
+function spawnParticles(x, y, color, count) {
+  for (let i = 0; i < count; i++) {
+    const ang = Math.random()*Math.PI*2;
+    const spd = 20 + Math.random()*80;
+    particles.push({
+      x, y,
+      vx: Math.cos(ang)*spd,
+      vy: Math.sin(ang)*spd - 30,
+      color,
+      life: 0.4 + Math.random()*0.6,
+      age: 0,
+      sz: Math.random()<0.5 ? 2 : 4
+    });
+  }
+}
+
+function updateParticles(dt) {
+  for (let i = particles.length-1; i >= 0; i--) {
+    const p = particles[i];
+    p.age += dt;
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.vy += 120 * dt; // gravity
+    if (p.age > p.life) particles.splice(i, 1);
+  }
+}
+
+function renderParticles() {
+  for (const p of particles) {
+    const alpha = Math.max(0, 1 - p.age/p.life);
+    CX.fillStyle = p.color;
+    CX.globalAlpha = alpha;
+    fr(p.x - cam.x, p.y - cam.y, p.sz, p.sz);
+  }
+  CX.globalAlpha = 1;
+}
+
+// ============================================================
+// KILL COUNTER & NOTIFICATIONS
+// ============================================================
+let killCount = 0;
+const notifications = [];
+
+function notify(text, color) {
+  notifications.push({ text, color: color||'#c8f135', age: 0, life: 3.5 });
+  // Keep max 5
+  if (notifications.length > 5) notifications.shift();
+}
+
+function drawNotifications() {
+  const startY = 56;
+  for (let i = 0; i < notifications.length; i++) {
+    const n = notifications[i];
+    const alpha = n.age < 0.3 ? n.age/0.3 : (n.age > n.life-0.5 ? Math.max(0,(n.life-n.age)/0.5) : 1);
+    CX.globalAlpha = alpha;
+    CX.fillStyle = 'rgba(0,0,0,0.55)';
+    CX.fillRect(CV.width-320, startY + i*22, 310, 18);
+    CX.fillStyle = n.color;
+    CX.font = '11px monospace';
+    CX.textAlign = 'right';
+    CX.fillText(n.text, CV.width-8, startY + i*22 + 13);
+    CX.textAlign = 'left';
+  }
+  CX.globalAlpha = 1;
+}
+
+function updateNotifications(dt) {
+  for (let i = notifications.length-1; i >= 0; i--) {
+    notifications[i].age += dt;
+    if (notifications[i].age > notifications[i].life) notifications.splice(i, 1);
+  }
+}
+
+// ============================================================
+// LOOT DROPS FROM ENEMIES
+// ============================================================
+const lootDrops = [];
+
+function spawnLoot(x, y) {
+  // Random small loot from warriors
+  const roll = Math.random();
+  let item;
+  if (roll < 0.35) item = 'wood';
+  else if (roll < 0.65) item = 'stone';
+  else if (roll < 0.80) item = 'coconut';
+  else item = 'fruit';
+  lootDrops.push({ x, y, item, age: 0, life: 20, bobOffset: Math.random()*Math.PI*2 });
+  addFloat('+drop', x-cam.x, y-cam.y-20, '#ffcc44');
+}
+
+function updateLoot(dt) {
+  for (let i = lootDrops.length-1; i >= 0; i--) {
+    const d = lootDrops[i];
+    d.age += dt;
+    if (d.age > d.life) { lootDrops.splice(i,1); continue; }
+    // Auto-pickup if player is close
+    const dx = d.x - (player.x+player.w/2), dy = d.y - (player.y+player.h/2);
+    if (Math.sqrt(dx*dx+dy*dy) < 48) {
+      inv[d.item] = (inv[d.item]||0) + 1;
+      addFloat('+1 '+d.item, player.x-cam.x+8, player.y-cam.y-40, '#ffcc44');
+      playSound('pickup');
+      lootDrops.splice(i,1);
+    }
+  }
+}
+
+function renderLoot() {
+  for (const d of lootDrops) {
+    const sx = d.x - cam.x;
+    const sy = d.y - cam.y + Math.sin(totalTime*3 + d.bobOffset)*4;
+    if (sx<-20||sx>CV.width+20||sy<-20||sy>CV.height+20) continue;
+    // Glow
+    CX.fillStyle = 'rgba(255,220,50,0.22)'; fr(sx-8,sy-8,20,20);
+    // Item pixel icon (tiny)
+    switch(d.item) {
+      case 'wood':    CX.fillStyle='#8b5020'; fr(sx-4,sy-2,12,6); CX.fillStyle='#6b3810'; fr(sx-2,sy,8,4); break;
+      case 'stone':   CX.fillStyle='#686868'; fr(sx-4,sy-4,12,10); CX.fillStyle='#888'; fr(sx-2,sy-2,6,4); break;
+      case 'coconut': CX.fillStyle='#6a4a1a'; fr(sx-4,sy-4,10,10); CX.fillStyle='#8a6a3a'; fr(sx-2,sy-2,4,4); break;
+      case 'fruit':   CX.fillStyle='#ee2020'; fr(sx-4,sy-4,10,10); CX.fillStyle='#cc1010'; fr(sx-2,sy-2,4,4); break;
+    }
+    // Fade indicator
+    if (d.age > d.life-3) {
+      CX.globalAlpha = Math.max(0,(d.life-d.age)/3);
+      CX.fillStyle='rgba(255,220,50,0.4)'; fr(sx-6,sy-6,16,16);
+      CX.globalAlpha=1;
+    }
+  }
+}
+
+// ============================================================
+// PLACE CAMPFIRE KEY HANDLER (F key)
+// ============================================================
+window.addEventListener('keydown', e => {
+  if (e.key==='f'||e.key==='F') { if (gameReady&&!gameOver) placeCampfire(); }
+  if (e.key==='k'||e.key==='K') { // Debug: give resources
+    // No debug in production
+  }
+});
+
+// ============================================================
+// ENHANCED ENEMY DEFEAT (spawn loot + particles)
+// ============================================================
+function killEnemy(en) {
+  killCount++;
+  playSound(en.isChief ? 'chiefkill' : 'kill');
+  spawnParticles(en.x+en.w/2, en.y+en.h/2, '#cc2222', 8);
+  spawnParticles(en.x+en.w/2, en.y+en.h/2, '#ff8844', 5);
+  if (!en.isChief) {
+    spawnLoot(en.x+en.w/2, en.y+en.h/2);
+    notify('Warrior defeated! ('+killCount+' total)', '#ff8844');
+  } else {
+    spawnParticles(en.x+en.w/2, en.y+en.h/2, '#c8f135', 20);
+    spawnParticles(en.x+en.w/2, en.y+en.h/2, '#ffff00', 12);
+    notify('TRIBAL CHIEF DEFEATED! Yacht recipe unlocked!', '#c8f135');
+    player.chiefDefeated = true;
+  }
+}
+
+// Override handleClick to use killEnemy
+const _origHandleClick = handleClick;
+function handleClick() {
+  if (craftOpen) {
+    for (const btn of craftBtns) {
+      if (mouse.cx>=btn.x&&mouse.cx<=btn.x+btn.w&&mouse.cy>=btn.y&&mouse.cy<=btn.y+btn.h)
+        doCraft(RECIPES[btn.idx]);
+    }
+    return;
+  }
+  if (invOpen) { invOpen=false; return; }
+
+  const px=player.x+player.w/2, py=player.y+player.h/2;
+  const range=inv.axe?94:68;
+
+  if (player.atkCd<=0) {
+    for (let i=enemies.length-1;i>=0;i--) {
+      const en=enemies[i];
+      const dx=(en.x+en.w/2)-px, dy=(en.y+en.h/2)-py;
+      if (Math.sqrt(dx*dx+dy*dy)<range) {
+        const dmg=inv.spear?36:(inv.axe?22:10);
+        en.health-=dmg;
+        playSound('hit');
+        addFloat('-'+dmg,en.x-cam.x+en.w/2,en.y-cam.y-14,'#ff4422');
+        player.atkCd=0.44;
+        if (en.health<=0) { killEnemy(en); enemies.splice(i,1); }
+        return;
+      }
+    }
+  }
+
+  for (let i=resources.length-1;i>=0;i--) {
+    const res=resources[i];
+    const rx=res.tx*TS+TS/2, ry=res.ty*TS+TS/2;
+    if (Math.sqrt((rx-px)**2+(ry-py)**2)>range) continue;
+    if (res.type==='fish') { if (!fishMG.active) startFishing(); return; }
+    const hits=inv.axe?2:1;
+    res.hp-=hits;
+    addFloat('-'+hits,rx-cam.x,ry-cam.y-30,'#ffffff');
+    if (res.hp<=0) {
+      let amt=1;
+      if (res.item==='stone') amt=2+(inv.axe?1:0);
+      if (res.item==='wood')  amt=1+(inv.axe?1:0);
+      inv[res.item]=(inv[res.item]||0)+amt;
+      playSound('harvest');
+      spawnParticles(rx, ry, res.item==='wood'?'#a07030':res.item==='stone'?'#888':'#c8f135', 5);
+      addFloat('+'+amt+' '+res.item,rx-cam.x,ry-cam.y-48,'#c8f135');
+      if (res.item==='coconut') { player.water=Math.min(player.maxWater,player.water+38); addFloat('+38 Water',rx-cam.x,ry-cam.y-64,'#44aaff'); }
+      if (res.item==='fruit')   { player.food=Math.min(player.maxFood,player.food+30);   addFloat('+30 Food', rx-cam.x,ry-cam.y-64,'#ffaa22'); }
+      resources.splice(i,1);
+    }
+    return;
+  }
+}
+
+// ============================================================
+// STATS OVERLAY (Tab key)
+// ============================================================
+let statsOpen = false;
+window.addEventListener('keydown', e => {
+  if (e.key==='Tab') { e.preventDefault(); if (gameReady&&!gameOver) statsOpen=!statsOpen; }
+});
+
+function drawStats() {
+  if (!statsOpen) return;
+  const PW=280,PH=220,PX=10,PY=54;
+  CX.fillStyle='rgba(8,8,18,0.95)'; CX.fillRect(PX,PY,PW,PH);
+  CX.strokeStyle='#c8f135'; CX.lineWidth=2; CX.strokeRect(PX,PY,PW,PH);
+  CX.fillStyle='#c8f135'; CX.font='bold 12px monospace'; CX.fillText('STATS [Tab]',PX+8,PY+18);
+  CX.fillStyle='#aaa'; CX.font='11px monospace';
+  const lines = [
+    'Day: '+dayCount,
+    'Time: '+(dayTime<0.25?'Early morning':dayTime<0.5?'Morning':dayTime<0.65?'Afternoon':dayTime<0.78?'Evening':'Night'),
+    'Kills: '+killCount,
+    'Enemies active: '+enemies.length,
+    'Resources left: '+resources.length,
+    'Chief defeated: '+(player.chiefDefeated?'Yes':'No'),
+    'Raft built: '+(player.raftCrafted?'Yes':'No'),
+    'Campfires placed: '+campfires.length,
+    'Near campfire: '+(nearCampfire()?'Yes':'No'),
+    '[F] Place Campfire'
+  ];
+  for (let i=0;i<lines.length;i++) CX.fillText(lines[i],PX+8,PY+34+i*17);
+}
+
+// ============================================================
+// WEB AUDIO — PROCEDURAL SOUND EFFECTS
+// All sounds synthesized with oscillators. No external files.
+// ============================================================
+let audioCtx = null;
+let lastDayPhase = 'day';
+
+function initAudio() {
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  } catch(e) { audioCtx = null; }
+}
+
+function playSound(type) {
+  if (!audioCtx) return;
+  const t = audioCtx.currentTime;
+  const masterVol = 0.55;
+
+  // Helper: create a short oscillator burst
+  function tone(freq, oscType, dur, vol, freqEnd, delay) {
+    delay = delay || 0;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.type = oscType;
+    osc.frequency.setValueAtTime(freq, t + delay);
+    if (freqEnd) osc.frequency.exponentialRampToValueAtTime(freqEnd, t + delay + dur);
+    gain.gain.setValueAtTime(vol * masterVol, t + delay);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + delay + dur);
+    osc.start(t + delay);
+    osc.stop(t + delay + dur + 0.01);
+  }
+
+  switch (type) {
+    case 'hit': // Weapon impact — percussive thwack
+      tone(260, 'sawtooth', 0.10, 0.55, 58);
+      tone(160, 'square',   0.06, 0.28, 80);
+      break;
+
+    case 'harvest': // Chop/chip — dull thud
+      tone(200, 'triangle', 0.09, 0.50, 90);
+      tone(130, 'sawtooth', 0.05, 0.22, 110);
+      break;
+
+    case 'kill': // Warrior dies — low descending grunt
+      tone(150, 'sawtooth', 0.30, 0.60, 36);
+      tone(300, 'square',   0.12, 0.25, 80);
+      break;
+
+    case 'chiefkill': // Chief dies — dramatic multi-layer impact
+      tone(80,  'sawtooth', 0.55, 0.75, 32);
+      tone(160, 'sawtooth', 0.40, 0.50, 60);
+      tone(440, 'sine',     0.30, 0.35, 220);
+      tone(880, 'sine',     0.20, 0.20, 440, 0.35);
+      break;
+
+    case 'pickup': // Loot grabbed — bright two-tone chime
+      tone(660, 'sine', 0.10, 0.30, 880);
+      tone(880, 'sine', 0.14, 0.18, 660, 0.08);
+      break;
+
+    case 'craft': { // Craft success — ascending two-note jingle
+      const freqs = [523, 784];
+      for (let i = 0; i < 2; i++) {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.connect(g); g.connect(audioCtx.destination);
+        o.type = 'sine';
+        o.frequency.value = freqs[i];
+        g.gain.setValueAtTime(0.18 * masterVol, t + i * 0.14);
+        g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.14 + 0.38);
+        o.start(t + i * 0.14);
+        o.stop(t + i * 0.14 + 0.39);
+      }
+      break;
+    }
+
+    case 'hurt': // Player takes damage — sharp descending buzz
+      tone(320, 'sawtooth', 0.18, 0.60, 85);
+      break;
+
+    case 'fish': // Fish caught — watery plop
+      tone(440, 'triangle', 0.06, 0.45, 880);
+      tone(220, 'triangle', 0.20, 0.38, 110);
+      break;
+
+    case 'dawn': { // New day — soft ascending chime
+      const df = [262, 330, 392, 523];
+      for (let i = 0; i < 4; i++) {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.connect(g); g.connect(audioCtx.destination);
+        o.type = 'sine';
+        o.frequency.value = df[i];
+        g.gain.setValueAtTime(0.10 * masterVol, t + i * 0.22);
+        g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.22 + 0.55);
+        o.start(t + i * 0.22);
+        o.stop(t + i * 0.22 + 0.56);
+      }
+      break;
+    }
+
+    case 'night': // Night falls — low descending drone
+      tone(196, 'sine', 0.90, 0.28, 98);
+      tone(147, 'sine', 0.70, 0.18, 73);
+      break;
+  }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+generateWorld();
+placeResources();
+const sp=findBeachStart();
+player.x=sp.x; player.y=sp.y;
+cam.x=player.x-CV.width/2; cam.y=player.y-CV.height/2;
+
+// Patch update to include new systems
+const _origUpdate = update;
+function update(dt) {
+  if (gameOver||!gameReady) return;
+  totalTime+=dt;
+  if (winActive) { winTimer+=dt; return; }
+
+  dayTime+=dt/DAY_S;
+  if (dayTime>=1) { dayTime-=1; dayCount++; if (dayCount===3) notify('Warriors begin to patrol the island...','#ff8844'); if (dayCount===15) notify('You sense a great evil approaching...','#ff4422'); }
+  // Day phase sound transitions
+  const curPhase = dayTime > 0.78 ? 'night' : (dayTime < 0.22 ? 'dawn' : 'day');
+  if (curPhase !== lastDayPhase) {
+    if (curPhase === 'dawn') playSound('dawn');
+    else if (curPhase === 'night') playSound('night');
+    lastDayPhase = curPhase;
+  }
+
+  // Movement
+  let mvx=0,mvy=0;
+  if (keys['w']||keys['arrowup'])    mvy-=1;
+  if (keys['s']||keys['arrowdown'])  mvy+=1;
+  if (keys['a']||keys['arrowleft'])  mvx-=1;
+  if (keys['d']||keys['arrowright']) mvx+=1;
+  if (mvx&&mvy) { mvx*=0.707; mvy*=0.707; }
+  if (mvx>0) player.facing=1; if (mvx<0) player.facing=-1;
+  player.x=Math.max(0,Math.min(WW*TS-player.w,player.x+mvx*player.speed*dt));
+  player.y=Math.max(0,Math.min(WH*TS-player.h,player.y+mvy*player.speed*dt));
+
+  const ftx=Math.floor((player.x+player.w/2)/TS), fty=Math.floor((player.y+player.h*0.9)/TS);
+  const curTile=(ftx>=0&&ftx<WW&&fty>=0&&fty<WH)?worldMap[fty*WW+ftx]:TL.DEEP;
+  if (curTile===TL.DEEP||curTile===TL.OCEAN) { player.health-=20*dt; oceanFlash=Math.min(1,oceanFlash+dt*5); }
+  else oceanFlash=Math.max(0,oceanFlash-dt*2.2);
+
+  waterT+=dt; foodT+=dt;
+  if (waterT>=3) { waterT=0; player.water=Math.max(0,player.water-5); if (player.water===0) notify('Water depleted! Health draining!','#4488ff'); }
+  if (foodT>=5)  { foodT=0;  player.food=Math.max(0,player.food-4);   if (player.food===0)  notify('Food depleted! Health draining!','#ff9922'); }
+  if (player.water<=0) player.health-=5*dt;
+  if (player.food<=0)  player.health-=3*dt;
+  if (player.atkCd>0) player.atkCd-=dt;
+  if (player.invCd>0) player.invCd-=dt;
+  if (player.health<=0) { gameOver=true; return; }
+  player.health=Math.min(player.maxHealth,player.health);
+
+  // Campfire age
+  for (const cf of campfires) cf.age+=dt;
+
+  if (dayCount>=3) {
+    eSpawnT+=dt;
+    if (eSpawnT>=(isNight()?16:58)) { eSpawnT=0; const n=isNight()?3:1; for (let i=0;i<n;i++) spawnEnemy(false); }
+    if (isNight()) { nightWaveT+=dt; if (nightWaveT>=42) { nightWaveT=0; for (let i=0;i<6;i++) spawnEnemy(false); } }
+  }
+  if (dayCount>=15&&!chiefSpawned) { chiefSpawned=true; spawnEnemy(true); }
+  updateEnemies(dt);
+  updateParticles(dt);
+  updateLoot(dt);
+  updateNotifications(dt);
+
+  if (fishMG.active) {
+    fishMG.pos+=fishMG.dir*fishMG.speed*dt;
+    if (fishMG.pos>=1) { fishMG.pos=1; fishMG.dir=-1; }
+    if (fishMG.pos<=0) { fishMG.pos=0; fishMG.dir=1; }
+    fishMG.timer-=dt;
+    if (fishMG.timer<=0) { fishMG.active=false; addFloat('Fish got away!',player.x-cam.x+8,player.y-cam.y-32,'#ff8844'); }
+  }
+
+  for (let i=floatTexts.length-1;i>=0;i--) { floatTexts[i].age+=dt; if (floatTexts[i].age>floatTexts[i].life) floatTexts.splice(i,1); }
+  cam.x=player.x-CV.width/2+player.w/2; cam.y=player.y-CV.height/2+player.h/2;
+}
+
+// Patch render to include new systems
+const _origRender = render;
+function render() {
+  CX.save(); CX.imageSmoothingEnabled=false;
+  renderSky(); renderWorld(); renderResources();
+  renderCampfires();
+  renderLoot();
+  renderEnemies();
+  renderParticles();
+  drawPlayer(Math.floor(player.x-cam.x),Math.floor(player.y-cam.y));
+  for (const ft of floatTexts) {
+    const alpha=Math.max(0,1-(ft.age/ft.life));
+    CX.globalAlpha=alpha; CX.fillStyle=ft.color; CX.font='bold 13px monospace';
+    CX.fillText(ft.text,Math.floor(ft.x),Math.floor(ft.y-ft.age*30));
+  }
+  CX.globalAlpha=1;
+  const na=nightAlpha();
+  if (na>0) { CX.fillStyle='rgba(0,0,15,'+(na*0.5)+')'; CX.fillRect(0,0,CV.width,CV.height); }
+  // Campfire glow at night through overlay
+  if (na>0.1) {
+    for (const cf of campfires) {
+      const sx=cf.tx*TS-cam.x, sy=cf.ty*TS-cam.y;
+      CX.fillStyle='rgba(255,140,0,'+(na*0.18)+')'; CX.fillRect(sx-80,sy-80,176,176);
+    }
+  }
+  drawHUD(); drawHotbar(); drawMinimap();
+  drawNotifications();
+  drawStats();
+  if (fishMG.active) drawFishingUI();
+  if (invOpen)    drawInventory();
+  if (craftOpen)  drawCrafting();
+  if (winActive)  drawWinScreen();
+  if (gameOver)   drawGameOver();
+  // Kill counter
+  CX.fillStyle='rgba(200,241,53,0.7)'; CX.font='11px monospace';
+  CX.fillText('Kills: '+killCount, 10, CV.height-68);
+  CX.restore();
+}
+
+// Loading placeholder while user reads tutorial
+CX.fillStyle='#08121e'; CX.fillRect(0,0,CV.width,CV.height);
+CX.fillStyle='#c8f135'; CX.font='bold 18px monospace'; CX.textAlign='center';
+CX.fillText('ISLAND SURVIVAL',CV.width/2,CV.height/2);
+CX.fillStyle='#666'; CX.font='13px monospace';
+CX.fillText('World generated \u2014 read the tutorial to begin',CV.width/2,CV.height/2+30);
+CX.textAlign='left';
+</script>
+</body>
+</html>
