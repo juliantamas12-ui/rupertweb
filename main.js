@@ -229,21 +229,26 @@ const SCHOOL_TASKS = [
   // --- Mon Apr 13 ---
   { subject: "English 7", title: "Eng 7 - Memorization due!", due: "2026-04-13", time: "9:00 AM", status: "done", type: "Deadline" },
   { subject: "Science 7", title: "HW Science 7 - MEDIA STUDENTS", due: "2026-04-13", time: "9:20 AM", status: "done", type: "Summative" },
+  { subject: "Science 7", title: "Classwork Science 7", due: "2026-04-13", time: "10:15 AM", status: "done", type: "Classwork" },
+  { subject: "History/Geography 7", title: "Classical Period Worksheet", due: "2026-04-13", time: "1:30 PM", status: "done", type: "Formative" },
   { subject: "History/Geography 7", title: "Substition 1: Review the slides and complete the tasks", due: "2026-04-13", time: "7:20 PM", status: "done", type: "Summative" },
   // --- Tue Apr 14 ---
-  { subject: "Ed. Technology 7", title: "Ed. Technology 7 - Classwork for March 31", due: "2026-04-14", time: "8:00 AM", status: "pending", type: "Summative" },
-  { subject: "Science 7", title: "Classwork Science 7", due: "2026-04-14", time: "10:35 AM", status: "pending", type: "Classwork" },
-  { subject: "Science 7", title: "Test Science 7", due: "2026-04-14", time: "10:40 AM", status: "pending", type: "Summative" },
+  { subject: "Ed. Technology 7", title: "Ed. Technology 7 - Classwork for March 31", due: "2026-04-14", time: "8:00 AM", status: "done", type: "Summative" },
+  { subject: "Science 7", title: "Classwork Science 7", due: "2026-04-14", time: "10:35 AM", status: "done", type: "Classwork" },
+  { subject: "Science 7", title: "Test Science 7", due: "2026-04-14", time: "10:40 AM", status: "done", type: "Summative" },
+  { subject: "Latin 7", title: "Reading: ad Urbem", due: "2026-04-14", time: "1:35 PM", status: "done", type: "Formative" },
   // --- Wed Apr 15 ---
   { subject: "Art", title: "MEDIA TESINA - MEDIA STUDENTS ONLY", due: "2026-04-15", time: "8:00 AM", status: "pending", type: "Summative" },
   { subject: "Math 8", title: "Math 8: Surface Area of Composite Shapes", due: "2026-04-15", time: "12:30 PM", status: "pending", type: "Formative" },
+  { subject: "Math 7", title: "Math 7 (HW)", due: "2026-04-15", time: "12:35 PM", status: "done", type: "Summative" },
   // --- Thu Apr 16 ---
   { subject: "English 7", title: "Eng 7 Test", due: "2026-04-16", time: "9:00 AM", status: "pending", type: "Summative" },
   // --- Fri Apr 17 ---
   { subject: "Math 8", title: "Math 8: Unit 6 Quiz", due: "2026-04-17", time: "8:30 AM", status: "pending", type: "Summative" },
   { subject: "Math 7", title: "Math 7 (Summative)", due: "2026-04-17", time: "9:30 AM", status: "pending", type: "Summative" },
+  { subject: "Latin 7", title: "Principal Parts 8", due: "2026-04-17", time: "12:35 PM", status: "pending", type: "Formative" },
   { subject: "History/Geography 7", title: "Substitution Work 3: Complete the tasks in the slides", due: "2026-04-17", time: "4:25 PM", status: "pending", type: "Summative" },
-  // Last updated: 2026-04-14 via ManageBac scraper (2 new tasks added; Apr 13 tasks marked done)
+  // Last updated: 2026-04-15 via ManageBac scraper (5 new tasks added; Apr 14 tasks marked done; Math 7 HW Apr 15 marked submitted)
 ];
 
 
