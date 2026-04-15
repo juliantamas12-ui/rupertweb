@@ -593,96 +593,18 @@ fetch('/yachts-live.json?' + Date.now())
   </footer>
 
   <script>
-    // WM Commons images (CC licensed) where available, otherwise null
     const VESSELS = [
-      {
-        name: 'BREAKTHROUGH', photo: "https://image.yachtcharterfleet.com/w1200/h779/qh/ca/k2c9920b2/vessel/resource/3351518/charter-breakthrough-yacht-5.jpg",
-          imo: '9899650', mmsi: '319300600',
-        builder: 'Feadship', year: 2025, length: '118.8m',
-        photo: null,
-        slug: 'breakthrough',
-        flag: 'Cayman Islands'
-      },
-      {
-        name: 'LADY S', photo: "https://photos.superyachtapi.com/download/204337/large",
-          imo: '1013121', mmsi: '319137200',
-        builder: 'Feadship', year: 2019, length: '93m',
-        photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/75/%27Lady_S%27_in_Barcelona.jpg/1280px-%27Lady_S%27_in_Barcelona.jpg',
-        slug: 'ladys',
-        flag: 'Cayman Islands'
-      },
-      {
-        name: 'KISMET', photo: "https://cdn.boatinternational.com/bi_prd/bi/library_images/Fq37Pm7lSmSk0EWFabnF_kismet%20ShowBoats%20Design%20Awards%20Finalist%20New.jpg",
-          imo: '9881627', mmsi: '538071476',
-        builder: 'Lurssen', year: 2024, length: '122m',
-        photo: null,
-        slug: 'kismet',
-        flag: 'Cayman Islands'
-      },
-      {
-        name: 'WHISPER', photo: "https://www.burgessyachts.com/web/vb/crop/5389554/y_-1_full.jpg?width=1200&format=webp&quality=60",
-          imo: '1012000', mmsi: '319069900',
-        builder: 'Lürssen / Krögerwerft', year: 2014, length: '95.2m',
-        photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Kismet_%28ship%2C_2014%29_in_S%C3%A8te.jpg/640px-Kismet_%28ship%2C_2014%29_in_S%C3%A8te.jpg',
-        slug: 'whisper',
-        flag: 'Cayman Islands'
-      },
-      {
-        name: 'DRAGONFLY', photo: "https://cdn.lurssen.com/images/new-build/the-yachts/dragonfly/header.jpg",
-          imo: '9907196', mmsi: '319296900',
-        builder: 'Lurssen', year: 2024, length: '142m',
-        photo: 'https://upload.wikimedia.org/wikipedia/commons/1/17/Yacht_Alibaba_2024-09-02_2.jpg',
-        slug: 'dragonfly',
-        flag: 'Cayman Islands'
-      },
-      {
-        name: 'RENAISSANCE', photo: "https://megayachtnews.com/wp-content/uploads/2023/07/Freire-Shipyard-yacht-Renaissance-photo-Chou-Pesqueria-from-BR.jpg",
-          imo: '9880776', mmsi: '319268600',
-        builder: 'Freire Shipyard', year: 2023, length: '112m',
-        photo: null,
-        slug: 'renaissance',
-        flag: 'Cayman Islands'
-      },
-      {
-        name: 'KENSHO', photo: "https://www.burgessyachts.com/web/vb/crop/5413399/y_-1_full.jpg?width=1200&format=webp&quality=60",
-          imo: '9854284', mmsi: '319242300',
-        builder: 'Admiral', year: 2022, length: '75.2m',
-        photo: null,
-        slug: 'kensho',
-        flag: 'Cayman Islands'
-      },
-      {
-        name: 'LEVIATHAN', photo: "https://www.oceancoyacht.com/wp-content/uploads/Oceanco_Leviathan_Load-Out_03-scaled.jpg",
-          imo: '9921491', mmsi: '319324100',
-        builder: 'Oceanco', year: 2025, length: '111m',
-        photo: null,
-        slug: 'leviathan',
-        flag: 'Cayman Islands'
-      },
-      {
-        name: 'BARBARA', photo: "https://image.yachtcharterfleet.com/w1277/h618/qh/ca/m2/k27675c83/vessel/resource/603774/charter-barbara-yacht.jpg",
-          imo: '1012725', mmsi: '319104200',
-        builder: 'Unknown', year: 2017, length: '88.5m',
-        photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Barbara%2C_Fremantle%2C_2020_%2801%29.jpg/1280px-Barbara%2C_Fremantle%2C_2020_%2801%29.jpg',
-        slug: 'barbara',
-        flag: 'Cayman Islands'
-      },
-      {
-        name: 'PROJECT X', photo: "https://photos.superyachtapi.com/download/251187/extra_large",
-          imo: '1010727', mmsi: '229063000',
-        builder: 'Unknown', year: 2014, length: '~88m',
-        photo: null,
-        slug: 'projectx',
-        flag: 'Malta'
-      },
-      {
-        name: 'CC SUMMER', photo: "https://image.yachtcharterfleet.com/w1277/h618/qh/ca/m2/k8a419ee4/vessel/resource/1959454/charter-cc-summer-yacht.jpg",
-          imo: '9807956', mmsi: '538071410',
-        builder: 'Lurssen', year: 2019, length: '95m',
-        photo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/9807956_Madsummer_2019.jpg/1280px-9807956_Madsummer_2019.jpg',
-        slug: 'ccsummer',
-        flag: 'Marshall Islands'
-      },
+      { name: 'BREAKTHROUGH', photo: 'https://image.yachtcharterfleet.com/w1200/h800/qh/ca/ke267f098/vessel/resource/3225328/charter-breakthrough-yacht-1.jpg', imo: '9899650', mmsi: '319300600', builder: 'Feadship', year: 2025, length: '118.8m', slug: 'breakthrough', flag: 'Cayman Islands' },
+      { name: 'LADY S', photo: 'https://photos.superyachtapi.com/download/204337/large', imo: '1013121', mmsi: '319137200', builder: 'Feadship', year: 2019, length: '93m', slug: 'ladys', flag: 'Cayman Islands' },
+      { name: 'KISMET', photo: 'https://cdn.boatinternational.com/files/2024/05/f295a960-0d1a-11ef-937e-93b8d9fe4658-kismet-credit-steffen-mayer.jpg', imo: '9881627', mmsi: '538071476', builder: 'Lurssen', year: 2024, length: '122m', slug: 'kismet', flag: 'Cayman Islands' },
+      { name: 'WHISPER', photo: 'https://www.burgessyachts.com/web/vb/crop/5389554/y_-1_full.jpg?width=1200&format=webp&quality=60', imo: '1012000', mmsi: '319069900', builder: 'Lürssen / Krögerwerft', year: 2014, length: '95.2m', slug: 'whisper', flag: 'Cayman Islands' },
+      { name: 'DRAGONFLY', photo: 'https://cdn.lurssen.com/images/new-build/the-yachts/dragonfly/header.jpg', imo: '9907196', mmsi: '319296900', builder: 'Lurssen', year: 2024, length: '142m', slug: 'dragonfly', flag: 'Cayman Islands' },
+      { name: 'RENAISSANCE', photo: 'https://megayachtnews.com/wp-content/uploads/2023/07/Freire-Shipyard-yacht-Renaissance-photo-Chou-Pesqueria-from-BR.jpg', imo: '9880776', mmsi: '319268600', builder: 'Freire Shipyard', year: 2023, length: '112m', slug: 'renaissance', flag: 'Cayman Islands' },
+      { name: 'KENSHO', photo: 'https://cdn.boatinternational.com/convert/files/2022/05/eb3a0b50-cd45-11ec-8130-c1169b81b7c5-kensho-credit-VANDERWALT-PRODUCTIONS.jpg/r%5Bwidth%5D=1920/eb3a0b50-cd45-11ec-8130-c1169b81b7c5-kensho-credit-VANDERWALT-PRODUCTIONS.jpg', imo: '9854284', mmsi: '319242300', builder: 'Admiral', year: 2022, length: '75.2m', slug: 'kensho', flag: 'Cayman Islands' },
+      { name: 'LEVIATHAN', photo: 'https://www.oceancoyacht.com/wp-content/uploads/Oceanco_Leviathan_Load-Out_03-scaled.jpg', imo: '9921491', mmsi: '319324100', builder: 'Oceanco', year: 2025, length: '111m', slug: 'leviathan', flag: 'Cayman Islands' },
+      { name: 'BARBARA', photo: 'https://image.yachtcharterfleet.com/w1277/h618/qh/ca/m2/k27675c83/vessel/resource/603774/charter-barbara-yacht.jpg', imo: '1012725', mmsi: '319104200', builder: 'Picchiotti', year: 2017, length: '88.5m', slug: 'barbara', flag: 'Cayman Islands' },
+      { name: 'PROJECT X', photo: 'https://cdn.boatinternational.com/files/2022/08/81983d90-14ce-11ed-83bf-b7fe2f922758-yacht-project-x.jpg', imo: '1010727', mmsi: '229063000', builder: 'Perini Navi', year: 2014, length: '~88m', slug: 'projectx', flag: 'Malta' },
+      { name: 'CC SUMMER', photo: 'https://image.yachtcharterfleet.com/w1277/h618/qh/ca/m2/k8a419ee4/vessel/resource/1959454/charter-cc-summer-yacht.jpg', imo: '9807956', mmsi: '538071410', builder: 'Lurssen', year: 2019, length: '95m', slug: 'ccsummer', flag: 'Marshall Islands' },
     ];
 
     function yachtSVG() {
