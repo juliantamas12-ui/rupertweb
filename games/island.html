@@ -652,52 +652,116 @@ function drawPlayer(x, y) {
   const walk = moving ? Math.sin(t*10) : 0;
   const bob  = moving ? Math.round(Math.abs(Math.sin(t*10))*(-2)) : 0;
   const bx = Math.floor(x), by = Math.floor(y+bob);
+  const f = player.facing;
 
   // Shadow
-  CX.fillStyle='rgba(0,0,0,0.18)'; CX.beginPath(); CX.ellipse(bx+8,by+33,8,3,0,0,Math.PI*2); CX.fill();
+  CX.fillStyle='rgba(0,0,0,0.22)'; CX.beginPath(); CX.ellipse(bx+9,by+36,9,3,0,0,Math.PI*2); CX.fill();
 
-  // Legs — animated
-  const lL = moving ? Math.round(Math.sin(t*10)*4) : 0;
-  const lR = moving ? Math.round(-Math.sin(t*10)*4) : 0;
-  CX.fillStyle='#7a5030';
-  fr(bx+1, by+24+lL, 6, 8);   // left leg
-  fr(bx+9, by+24+lR, 6, 8);   // right leg
-  CX.fillStyle='#2a1808';
-  fr(bx+1, by+30+lL, 7, 2);   // left boot
-  fr(bx+9, by+30+lR, 7, 2);   // right boot
+  // === BOOTS — heavy, dark, strapped ===
+  const lL = moving ? Math.round(Math.sin(t*10)*5) : 0;
+  const lR = moving ? Math.round(-Math.sin(t*10)*5) : 0;
+  // Boot shafts
+  CX.fillStyle='#1e1008'; fr(bx+1,by+28+lL,7,6); fr(bx+10,by+28+lR,7,6);
+  // Boot straps
+  CX.fillStyle='#8b6010'; fr(bx+1,by+29+lL,7,2); fr(bx+10,by+29+lR,7,2);
+  // Boot soles
+  CX.fillStyle='#0a0604'; fr(bx,by+33+lL,8,2); fr(bx+9,by+33+lR,8,2);
 
-  // Arms — swing opposite to legs
-  const aL = moving ? Math.round(-Math.sin(t*10)*5) : 0;
-  const aR = moving ? Math.round(Math.sin(t*10)*5) : 0;
-  CX.fillStyle='#e8c07a';
-  fr(bx-2, by+14+aL, 3, 8);  // left arm
-  fr(bx+15,by+14+aR, 3, 8);  // right arm
+  // === CARGO PANTS — tattered, with pocket detail ===
+  CX.fillStyle='#5a6830'; fr(bx+1,by+22+lL,7,9); fr(bx+10,by+22+lR,7,9);
+  // Tear/rip lines on pants
+  CX.fillStyle='#3a4820'; fr(bx+3,by+26+lL,2,1); fr(bx+12,by+25+lR,2,1);
+  // Pocket
+  CX.fillStyle='#4a5828'; fr(bx+2,by+23,3,3);
 
-  // Body
-  CX.fillStyle='#3a7a40'; fr(bx, by+14, 16, 10);  // shirt
-  CX.fillStyle='#2e6030'; fr(bx+6,by+14,4,2);      // collar
-  CX.fillStyle='#4a2e18'; fr(bx, by+23, 16, 2);    // belt
+  // === BELT — thick with buckle ===
+  CX.fillStyle='#2a1a08'; fr(bx,by+21,18,3);
+  CX.fillStyle='#c8a020'; fr(bx+7,by+21,4,3); // gold buckle
+  CX.fillStyle='#a07810'; fr(bx+8,by+22,2,1);
 
-  // Head
-  CX.fillStyle='#e8c07a'; fr(bx+2,by+5,12,9);       // face
-  CX.fillStyle='#6b3820'; fr(bx+2,by, 12,5);         // hair
-  fr(bx,by+2,2,4); fr(bx+14,by+2,2,4);               // hair sides
-  CX.fillStyle='#1a1a1a'; fr(bx+4,by+8,2,2); fr(bx+10,by+8,2,2); // eyes
+  // === ARMS — tanned, muscular ===
+  const aL = moving ? Math.round(-Math.sin(t*10)*6) : 0;
+  const aR = moving ? Math.round(Math.sin(t*10)*6) : 0;
+  CX.fillStyle='#c8924a'; fr(bx-3,by+15+aL,4,10); fr(bx+17,by+15+aR,4,10);
+  // Wristband left
+  CX.fillStyle='#8a3010'; fr(bx-3,by+21+aL,4,2);
 
-  // Held item
+  // === BODY — torn tank top, survival vest ===
+  // Vest base
+  CX.fillStyle='#2a3820'; fr(bx,by+14,18,9);
+  // Vest straps / tactical detail
+  CX.fillStyle='#1a2818'; fr(bx+1,by+14,2,9); fr(bx+15,by+14,2,9);
+  // Chest strap diagonal
+  CX.fillStyle='#c8a020'; fr(bx+3,by+15,2,2); fr(bx+5,by+17,2,2); fr(bx+7,by+19,2,2);
+  // Torn shirt underneath
+  CX.fillStyle='#8a9060'; fr(bx+3,by+16,12,6);
+  // Scratch/wear marks
+  CX.fillStyle='#6a7040'; fr(bx+5,by+17,1,3); fr(bx+10,by+16,1,4);
+
+  // === NECK ===
+  CX.fillStyle='#c8924a'; fr(bx+6,by+11,6,4);
+
+  // === HEAD ===
+  // Face — tanned
+  CX.fillStyle='#c8924a'; fr(bx+2,by+4,14,10);
+  // Jaw shadow
+  CX.fillStyle='#b07838'; fr(bx+2,by+11,14,3);
+  // Eyes — sharp, glowing slightly
+  CX.fillStyle='#0a0a0a'; fr(bx+4,by+7,3,3); fr(bx+11,by+7,3,3);
+  CX.fillStyle='#40d0ff'; fr(bx+5,by+8,2,2); fr(bx+12,by+8,2,2); // blue eyes
+  CX.fillStyle='#ffffff'; fr(bx+5,by+7,1,1); fr(bx+12,by+7,1,1); // eye highlight
+  // Nose
+  CX.fillStyle='#a06030'; fr(bx+7,by+10,2,1);
+  // Stubble / jaw
+  CX.fillStyle='#7a5030'; fr(bx+3,by+12,2,1); fr(bx+6,by+13,2,1); fr(bx+10,by+13,2,1); fr(bx+13,by+12,2,1);
+
+  // === HAIR — messy, windswept ===
+  CX.fillStyle='#2a1808'; // dark brown
+  fr(bx+2,by,14,5);        // top bulk
+  fr(bx,by+2,4,4);          // left side spiky
+  fr(bx+14,by+2,4,5);       // right side
+  fr(bx+2,by-2,10,3);       // top spikes
+  CX.fillStyle='#3a2410';
+  fr(bx+4,by-3,3,2); fr(bx+10,by-4,4,3); fr(bx+14,by-1,3,3); // individual spikes
+  fr(bx-1,by+2,3,2); // left wisp
+
+  // === SCAR across cheek ===
+  CX.fillStyle='#e87050'; fr(bx+f>0?10:4, by+9, 3, 1);
+
+  // === HELD ITEM (scaled up, more detailed) ===
   if (inv.spear>0) {
-    CX.fillStyle='#a87028';
-    if (player.facing>0) { fr(bx+15,by+16,22,3); CX.fillStyle='#b8b8b8'; fr(bx+36,by+13,4,9); }
-    else                 { fr(bx-20,by+16,22,3); CX.fillStyle='#b8b8b8'; fr(bx-23,by+13,4,9); }
+    // Spear shaft
+    CX.fillStyle='#8a6020';
+    if (f>0) { fr(bx+18,by+14,26,4); fr(bx+18,by+15,26,2); }
+    else     { fr(bx-26,by+14,26,4); fr(bx-26,by+15,26,2); }
+    // Spearhead
+    CX.fillStyle='#c8c8d8';
+    if (f>0) { fr(bx+43,by+11,6,10); fr(bx+46,by+10,3,12); CX.fillStyle='#9090a8'; fr(bx+44,by+12,2,8); }
+    else     { fr(bx-48,by+11,6,10); fr(bx-49,by+10,3,12); CX.fillStyle='#9090a8'; fr(bx-47,by+12,2,8); }
+    // Wrap on shaft
+    CX.fillStyle='#6a4010';
+    if (f>0) { fr(bx+22,by+14,2,4); fr(bx+26,by+14,2,4); }
+    else     { fr(bx-24,by+14,2,4); fr(bx-28,by+14,2,4); }
   } else if (inv.axe>0) {
-    CX.fillStyle='#a87028';
-    if (player.facing>0) { fr(bx+15,by+18,14,3); CX.fillStyle='#999'; fr(bx+27,by+14,5,8); }
-    else                 { fr(bx-12,by+18,14,3); CX.fillStyle='#999'; fr(bx-14,by+14,5,8); }
+    // Axe handle
+    CX.fillStyle='#8a6020';
+    if (f>0) { fr(bx+18,by+16,16,4); }
+    else     { fr(bx-16,by+16,16,4); }
+    // Axe head
+    CX.fillStyle='#aaaaaa';
+    if (f>0) { fr(bx+32,by+10,8,14); fr(bx+34,by+8,6,4); CX.fillStyle='#888'; fr(bx+33,by+12,3,8); }
+    else     { fr(bx-38,by+10,8,14); fr(bx-38,by+8,6,4); CX.fillStyle='#888'; fr(bx-37,by+12,3,8); }
   }
 
-  // Invincibility flash
+  // === INVINCIBILITY FLASH ===
   if (player.invCd>0 && Math.floor(player.invCd*9)%2===0) {
-    CX.fillStyle='rgba(255,255,255,0.5)'; fr(bx-2,by,20,34);
+    CX.fillStyle='rgba(255,255,255,0.45)'; fr(bx-3,by-4,24,40);
+  }
+
+  // === LOW HEALTH — red vignette pulse on player ===
+  if (player.health < player.maxHealth*0.25) {
+    const pulse = 0.3+0.2*Math.sin(t*6);
+    CX.fillStyle=`rgba(255,0,0,${pulse})`; fr(bx-3,by-4,24,40);
   }
 }
 
