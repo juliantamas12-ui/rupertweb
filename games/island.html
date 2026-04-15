@@ -605,7 +605,7 @@ function updateEnemies(dt) {
       if (d>1) { en.x+=dx/d*en.speed*dt; en.y+=dy/d*en.speed*dt; }
       en.facing=dx>0?1:-1;
       if (d<30&&en.atkCd<=0) {
-        if (player.invCd<=0) { player.health-=en.damage; player.invCd=0.88; playSound('hurt'); addFloat('-'+en.damage,player.x-cam.x+8,player.y-cam.y-32,'#ff2222'); }
+        if (player.invCd<=0) { player.health-=en.damage; player.invCd=0.88; playSound('hurt'); shakeScreen(en.isChief?14:8, 0.22); addFloat('-'+en.damage,player.x-cam.x+8,player.y-cam.y-32,'#ff2222'); }
         en.atkCd=1.5;
       }
     } else {
@@ -1193,6 +1193,26 @@ function renderCampfires() {
 // ============================================================
 const particles = [];
 
+// ============================================================
+// SCREEN SHAKE — combat feedback (no external dependencies)
+// ============================================================
+const screenShake = { x: 0, y: 0, dur: 0, intensity: 0 };
+function shakeScreen(intensity, duration) {
+  screenShake.intensity = Math.max(screenShake.intensity, intensity);
+  screenShake.dur = Math.max(screenShake.dur, duration);
+}
+function updateShake(dt) {
+  if (screenShake.dur > 0) {
+    screenShake.dur = Math.max(0, screenShake.dur - dt);
+    screenShake.x = (Math.random()-0.5)*2 * screenShake.intensity;
+    screenShake.y = (Math.random()-0.5)*2 * screenShake.intensity;
+  } else {
+    screenShake.x = 0;
+    screenShake.y = 0;
+    screenShake.intensity = 0;
+  }
+}
+
 function spawnParticles(x, y, color, count) {
   for (let i = 0; i < count; i++) {
     const ang = Math.random()*Math.PI*2;
@@ -1338,6 +1358,7 @@ window.addEventListener('keydown', e => {
 function killEnemy(en) {
   killCount++;
   playSound(en.isChief ? 'chiefkill' : 'kill');
+  shakeScreen(en.isChief ? 18 : 7, en.isChief ? 0.50 : 0.18);
   spawnParticles(en.x+en.w/2, en.y+en.h/2, '#cc2222', 8);
   spawnParticles(en.x+en.w/2, en.y+en.h/2, '#ff8844', 5);
   if (!en.isChief) {
@@ -1374,6 +1395,11 @@ function handleClick() {
         const dmg=inv.spear?36:(inv.axe?22:10);
         en.health-=dmg;
         playSound('hit');
+        shakeScreen(3, 0.09);
+        // Knockback: push enemy away from player
+        const _kbForce = inv.spear ? 55 : (inv.axe ? 38 : 24);
+        const _kbD = Math.sqrt(dx*dx+dy*dy);
+        if (_kbD > 0) { en.x += (dx/_kbD)*_kbForce; en.y += (dy/_kbD)*_kbForce; }
         addFloat('-'+dmg,en.x-cam.x+en.w/2,en.y-cam.y-14,'#ff4422');
         player.atkCd=0.44;
         if (en.health<=0) { killEnemy(en); enemies.splice(i,1); }
@@ -1609,6 +1635,7 @@ function update(dt) {
   if (dayCount>=15&&!chiefSpawned) { chiefSpawned=true; spawnEnemy(true); }
   updateEnemies(dt);
   updateParticles(dt);
+  updateShake(dt);
   updateLoot(dt);
   updateNotifications(dt);
 
@@ -1628,6 +1655,9 @@ function update(dt) {
 const _origRender = render;
 function render() {
   CX.save(); CX.imageSmoothingEnabled=false;
+  // Screen shake offset — applies to world and sprites, not HUD
+  if (screenShake.x !== 0 || screenShake.y !== 0)
+    CX.translate(Math.floor(screenShake.x), Math.floor(screenShake.y));
   renderSky(); renderWorld(); renderResources();
   renderCampfires();
   renderLoot();
