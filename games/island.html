@@ -284,6 +284,7 @@ function generateWorld() {
       else if (e < 0.20) t = TL.SHALLOW;
       else if (e < 0.30) t = TL.BEACH;
       else if (e < 0.73) t = TL.JUNGLE;
+      else if (e < 0.90) t = TL.JUNGLE;
       else               t = TL.VOLCANIC;
       worldMap[ty*WW+tx] = t;
     }
@@ -324,9 +325,8 @@ function placeResources() {
       const tile = worldMap[ty*WW+tx];
       const r = rng();
       if (tile === TL.BEACH) {
-        if      (r < 0.040) resources.push(mkRes('palm',   tx, ty, 3, 'coconut'));
-        else if (r < 0.055) resources.push(mkRes('fish',   tx, ty, 99,'fish'));
-        else if (r < 0.070) resources.push(mkRes('rock',   tx, ty, 5, 'stone'));
+        if      (r < 0.050) resources.push(mkRes('palm',   tx, ty, 3, 'coconut'));
+        else if (r < 0.080) resources.push(mkRes('rock',   tx, ty, 5, 'stone'));
       } else if (tile === TL.JUNGLE) {
         if      (r < 0.046) resources.push(mkRes('fruit',  tx, ty, 3, 'fruit'));
         else if (r < 0.092) resources.push(mkRes('tree',   tx, ty, 4, 'wood'));
@@ -645,28 +645,59 @@ function fr(x,y,w,h) { CX.fillRect(Math.floor(x),Math.floor(y),w,h); }
 
 // Player (16x32, tan skin / green shirt / brown pants)
 function drawPlayer(x, y) {
-  CX.fillStyle='#6b3820'; fr(x+2,y,12,5); fr(x,y+2,2,4); fr(x+14,y+2,2,4); // hair
-  CX.fillStyle='#e8c07a'; fr(x+2,y+5,12,9);                                   // face
-  CX.fillStyle='#1a1a1a'; fr(x+4,y+8,2,2); fr(x+10,y+8,2,2);                 // eyes
-  CX.fillStyle='#3a7a40'; fr(x,y+14,16,10);                                   // shirt
-  CX.fillStyle='#2e6030'; fr(x+6,y+14,4,2);                                   // collar
-  CX.fillStyle='#e8c07a'; fr(x-2,y+14,3,8); fr(x+15,y+14,3,8);               // arms
-  CX.fillStyle='#7a5030'; fr(x,y+24,7,8); fr(x+9,y+24,7,8);                  // pants
-  CX.fillStyle='#4a2e18'; fr(x,y+24,16,2);                                    // belt
-  CX.fillStyle='#2a1808'; fr(x,y+30,8,2); fr(x+8,y+30,8,2);                  // boots
+  const t = totalTime;
+  const dx = player.x-(player._lx||player.x), dy = player.y-(player._ly||player.y);
+  const moving = (Math.abs(dx)>0.3||Math.abs(dy)>0.3);
+  player._lx = player.x; player._ly = player.y;
+  const walk = moving ? Math.sin(t*10) : 0;
+  const bob  = moving ? Math.round(Math.abs(Math.sin(t*10))*(-2)) : 0;
+  const bx = Math.floor(x), by = Math.floor(y+bob);
+
+  // Shadow
+  CX.fillStyle='rgba(0,0,0,0.18)'; CX.beginPath(); CX.ellipse(bx+8,by+33,8,3,0,0,Math.PI*2); CX.fill();
+
+  // Legs — animated
+  const lL = moving ? Math.round(Math.sin(t*10)*4) : 0;
+  const lR = moving ? Math.round(-Math.sin(t*10)*4) : 0;
+  CX.fillStyle='#7a5030';
+  fr(bx+1, by+24+lL, 6, 8);   // left leg
+  fr(bx+9, by+24+lR, 6, 8);   // right leg
+  CX.fillStyle='#2a1808';
+  fr(bx+1, by+30+lL, 7, 2);   // left boot
+  fr(bx+9, by+30+lR, 7, 2);   // right boot
+
+  // Arms — swing opposite to legs
+  const aL = moving ? Math.round(-Math.sin(t*10)*5) : 0;
+  const aR = moving ? Math.round(Math.sin(t*10)*5) : 0;
+  CX.fillStyle='#e8c07a';
+  fr(bx-2, by+14+aL, 3, 8);  // left arm
+  fr(bx+15,by+14+aR, 3, 8);  // right arm
+
+  // Body
+  CX.fillStyle='#3a7a40'; fr(bx, by+14, 16, 10);  // shirt
+  CX.fillStyle='#2e6030'; fr(bx+6,by+14,4,2);      // collar
+  CX.fillStyle='#4a2e18'; fr(bx, by+23, 16, 2);    // belt
+
+  // Head
+  CX.fillStyle='#e8c07a'; fr(bx+2,by+5,12,9);       // face
+  CX.fillStyle='#6b3820'; fr(bx+2,by, 12,5);         // hair
+  fr(bx,by+2,2,4); fr(bx+14,by+2,2,4);               // hair sides
+  CX.fillStyle='#1a1a1a'; fr(bx+4,by+8,2,2); fr(bx+10,by+8,2,2); // eyes
+
   // Held item
   if (inv.spear>0) {
     CX.fillStyle='#a87028';
-    if (player.facing>0) { fr(x+15,y+16,22,3); CX.fillStyle='#b8b8b8'; fr(x+36,y+13,4,9); }
-    else                 { fr(x-20,y+16,22,3); CX.fillStyle='#b8b8b8'; fr(x-23,y+13,4,9); }
+    if (player.facing>0) { fr(bx+15,by+16,22,3); CX.fillStyle='#b8b8b8'; fr(bx+36,by+13,4,9); }
+    else                 { fr(bx-20,by+16,22,3); CX.fillStyle='#b8b8b8'; fr(bx-23,by+13,4,9); }
   } else if (inv.axe>0) {
     CX.fillStyle='#a87028';
-    if (player.facing>0) { fr(x+15,y+18,14,3); CX.fillStyle='#999'; fr(x+27,y+14,5,8); }
-    else                 { fr(x-12,y+18,14,3); CX.fillStyle='#999'; fr(x-14,y+14,5,8); }
+    if (player.facing>0) { fr(bx+15,by+18,14,3); CX.fillStyle='#999'; fr(bx+27,by+14,5,8); }
+    else                 { fr(bx-12,by+18,14,3); CX.fillStyle='#999'; fr(bx-14,by+14,5,8); }
   }
+
   // Invincibility flash
   if (player.invCd>0 && Math.floor(player.invCd*9)%2===0) {
-    CX.fillStyle='rgba(255,255,255,0.5)'; fr(x-2,y,20,32);
+    CX.fillStyle='rgba(255,255,255,0.5)'; fr(bx-2,by,20,34);
   }
 }
 
@@ -1041,8 +1072,23 @@ function update(dt) {
   if (keys['d']||keys['arrowright']) mvx+=1;
   if (mvx&&mvy) { mvx*=0.707; mvy*=0.707; }
   if (mvx>0) player.facing=1; if (mvx<0) player.facing=-1;
-  player.x=Math.max(0,Math.min(WW*TS-player.w,player.x+mvx*player.speed*dt));
-  player.y=Math.max(0,Math.min(WH*TS-player.h,player.y+mvy*player.speed*dt));
+  const newPX = Math.max(0,Math.min(WW*TS-player.w,player.x+mvx*player.speed*dt));
+  const newPY = Math.max(0,Math.min(WH*TS-player.h,player.y+mvy*player.speed*dt));
+  // Collision vs solid resources (trees, rocks)
+  const pw=player.w, ph=player.h;
+  let blockedX=false, blockedY=false;
+  for (const res of resources) {
+    if (!res.hp||res.hp<=0) continue;
+    const type=res.type;
+    if (type!=='tree'&&type!=='palm'&&type!=='rock'&&type!=='fruit') continue;
+    const rx=res.tx*TS+2, ry=res.ty*TS+6, rw=TS-4, rh=TS-6;
+    // Test X
+    if (newPX<rx+rw && newPX+pw>rx && player.y<ry+rh && player.y+ph>ry) blockedX=true;
+    // Test Y
+    if (player.x<rx+rw && player.x+pw>rx && newPY<ry+rh && newPY+ph>ry) blockedY=true;
+  }
+  player.x = blockedX ? player.x : newPX;
+  player.y = blockedY ? player.y : newPY;
 
   // Tile check
   const ftx=Math.floor((player.x+player.w/2)/TS), fty=Math.floor((player.y+player.h*0.9)/TS);
@@ -1062,10 +1108,10 @@ function update(dt) {
   player.health=Math.min(player.maxHealth,player.health);
 
   // Enemy spawning
-  if (dayCount>=3) {
+  if (dayCount>=1) {
     eSpawnT+=dt;
-    if (eSpawnT>=( isNight()?16:58 )) { eSpawnT=0; const n=isNight()?3:1; for (let i=0;i<n;i++) spawnEnemy(false); }
-    if (isNight()) { nightWaveT+=dt; if (nightWaveT>=42) { nightWaveT=0; for (let i=0;i<6;i++) spawnEnemy(false); } }
+    if (eSpawnT>=(isNight()?12:35)) { eSpawnT=0; const n=isNight()?3:1; for (let i=0;i<n;i++) spawnEnemy(false); }
+    if (isNight()) { nightWaveT+=dt; if (nightWaveT>=30) { nightWaveT=0; for (let i=0;i<4;i++) spawnEnemy(false); } }
   }
   if (dayCount>=15&&!chiefSpawned) { chiefSpawned=true; spawnEnemy(true); }
   updateEnemies(dt);
