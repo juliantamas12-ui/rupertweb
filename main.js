@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Year the World Ended: The Bronze Age Collapse and the Fragility of Complex Systems",
+    date: "2026-04-15",
+    category: "History",
+    excerpt: "Around 1200 BCE, something extraordinary happened. In the space of roughly fifty years — less than a human lifetime — virtually every major civilization in the Eastern Mediterranean ceased to exist. The Hittite Empire, which had battled Egypt to a st...",
+    url: "essays/2026-04-15-the-year-the-world-ended-the-bronze-age-collapse-and-the-fra.html"
+  },
+  {
     title: "The Revolution the World Tried to Strangle",
     date: "2026-04-14",
     category: "History",
