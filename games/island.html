@@ -613,6 +613,11 @@ const state = {
   birdTimer: 0,
   footprints: [], // fading beach footprints
 
+  // === BIOLUMINESCENT NIGHT EVENT ===
+  bioNightTimer: 60*60*(7 + Math.random()*5), // first event in 7-12 in-game minutes
+  bioNightActive: false,
+  bioNightDuration: 0, // frames remaining
+
   // Crafting tech tiers
   craftingTier: 0, // 0=Stone Age, 1=Volcanic Age, 2=Deep Sea Age
 
@@ -4153,13 +4158,18 @@ function updateMinigame(canvas) {
       if (mg.inZone > 60) {
         // Caught! High tide gives bonus fish
         const bonusFish = state.tideLevel > 0.7 ? 1 : 0;
+        const bioBonusFish = state.bioNightActive ? 1 : 0;
         // Fishing skill: rare fish chance
         const fishingSkill = (state.skills && state.skills.fishing) || 0;
-        const rareFishChance = fishingSkill >= 15 ? 0.4 : fishingSkill >= 5 ? 0.2 : 0;
+        // Bioluminescent nights dramatically increase rare fish chance
+        const baseRareChance = fishingSkill >= 15 ? 0.4 : fishingSkill >= 5 ? 0.2 : 0;
+        const rareFishChance = state.bioNightActive ? Math.min(0.65, baseRareChance + 0.35) : baseRareChance;
         const isRare = rareFishChance > 0 && Math.random() < rareFishChance;
-        const fishGained = (isRare ? 2 : 1) + bonusFish;
+        const fishGained = (isRare ? 2 : 1) + bonusFish + bioBonusFish;
         state.player.inv.fish += fishGained;
-        const catchMsg = isRare ? 'RARE FISH CAUGHT! (x2 food value)' : (bonusFish ? 'FISH CAUGHT! (High tide bonus +1)' : 'FISH CAUGHT!');
+        const catchMsg = isRare
+          ? (state.bioNightActive ? 'RARE FISH CAUGHT! (Bioluminescent bonus!)' : 'RARE FISH CAUGHT! (x2 food value)')
+          : (state.bioNightActive ? 'FISH CAUGHT! (Glowing waters bonus +1)' : (bonusFish ? 'FISH CAUGHT! (High tide bonus +1)' : 'FISH CAUGHT!'));
         showMsg(catchMsg, '#4a9ab4');
         spawnParticles(state.player.x, state.player.y, '#3a9ab3',3);
         if (state.runStats) { state.runStats.fishCaught += fishGained; }
@@ -4599,6 +4609,17 @@ window.SFX = (() => {
       _noise(0.15, 0.12, 3000);
       _osc('triangle', 520, 0.08, 0.15, 680);
       setTimeout(() => _noise(0.1, 0.2, 600), 80);
+    },
+
+    // Bioluminescent shimmer — crystalline rising tones, soft and otherworldly
+    bioShimmer() {
+      [440, 554, 659, 880, 1108].forEach((f, i) => {
+        setTimeout(() => {
+          _osc('sine', f, 0.04, 0.6, f * 2);
+          _osc('triangle', f * 1.005, 0.02, 0.5, f * 2.01);
+        }, i * 120);
+      });
+      setTimeout(() => _osc('sine', 1320, 0.03, 0.9, 2640), 700);
     },
 
     // Ship horn — deep foghorn blast + harmonics (distant, mournful)
@@ -8339,6 +8360,47 @@ function render(ctx, minimapCtx) {
   const vcx = 75*TSIZE - camX, vcy = 39*TSIZE - camY;
   if (vcx > -350 && vcx < canvas.width+350) drawVolcano(ctx, vcx, vcy);
 
+  // === BIOLUMINESCENT NIGHT OCEAN GLOW ===
+  if (state.bioNightActive && state.isNight) {
+    const bioPhase = (state.frameCount * 0.018) % (Math.PI * 2);
+    const bioAlpha = 0.13 + Math.sin(bioPhase) * 0.05;
+    for (let ty2 = sy0; ty2 < sy1; ty2++) {
+      if (!state.map[ty2]) continue;
+      for (let tx2 = sx0; tx2 < sx1; tx2++) {
+        const ttype = state.map[ty2][tx2];
+        if (ttype === T.DEEP_OCEAN || ttype === T.SHALLOW_WATER) {
+          const tsx = Math.floor(tx2 * TSIZE - camX);
+          const tsy = Math.floor(ty2 * TSIZE - camY);
+          // Per-tile subtle pulse offset
+          const tilePhase = bioPhase + (tx2 * 0.37 + ty2 * 0.23);
+          const tileA = bioAlpha * (0.7 + Math.sin(tilePhase) * 0.3);
+          ctx.fillStyle = ttype === T.DEEP_OCEAN
+            ? `rgba(0,200,180,${tileA * 0.75})`
+            : `rgba(40,255,200,${tileA})`;
+          ctx.fillRect(tsx, tsy, TSIZE, TSIZE);
+        }
+      }
+    }
+    // Floating bioluminescent sparkle dots
+    if (state.frameCount % 3 === 0) {
+      const numSparkles = 6;
+      const viewW = canvas.width, viewH = canvas.height;
+      for (let s = 0; s < numSparkles; s++) {
+        const sx2 = Math.floor((state.frameCount * 1.7 + s * 197 + Math.sin(state.frameCount * 0.07 + s) * 80) % viewW);
+        const sy2 = Math.floor((state.frameCount * 0.9 + s * 131 + Math.cos(state.frameCount * 0.05 + s) * 60) % viewH);
+        // Only draw on water tiles
+        const wx2 = sx2 + camX, wy2 = sy2 + camY;
+        const txc = Math.floor(wx2 / TSIZE), tyc = Math.floor(wy2 / TSIZE);
+        const stile = state.map[tyc] && state.map[tyc][txc];
+        if (stile === T.DEEP_OCEAN || stile === T.SHALLOW_WATER) {
+          const spA = 0.5 + Math.sin(state.frameCount * 0.2 + s * 1.3) * 0.4;
+          ctx.fillStyle = `rgba(100,255,220,${spA * 0.7})`;
+          ctx.fillRect(sx2, sy2, 2, 2);
+        }
+      }
+    }
+  }
+
   // Lore stones
   state.loreStones.forEach(stone => {
     const sx = stone.x - camX, sy = stone.y - camY;
@@ -9762,6 +9824,25 @@ function updateDayNight() {
     // Wet season: drinking water refills slightly
     if (state.season === 1) {
       state.player.water = Math.min(state.player.maxWater, state.player.water + 5);
+    }
+  }
+
+  // Bioluminescent Night event tick
+  if (!state.bioNightActive) {
+    state.bioNightTimer = (state.bioNightTimer || 1) - 1;
+    if (state.bioNightTimer <= 0 && state.isNight && !state.weatherRain && state.eruptionPhase === 0) {
+      state.bioNightActive = true;
+      state.bioNightDuration = state.DAY_FRAMES * 0.38; // roughly one full night
+      state.bioNightTimer = state.DAY_FRAMES * (7 + Math.random() * 5); // reset
+      showMsg('THE OCEAN IS GLOWING — bioluminescence lights the shallows', '#22ffcc');
+      SFX.bioShimmer && SFX.bioShimmer();
+    } else if (state.bioNightTimer <= 0) {
+      state.bioNightTimer = state.DAY_FRAMES * (2 + Math.random() * 3); // retry sooner if conditions wrong
+    }
+  } else {
+    state.bioNightDuration--;
+    if (state.bioNightDuration <= 0 || (!state.isNight && state.bioNightActive)) {
+      state.bioNightActive = false;
     }
   }
 
