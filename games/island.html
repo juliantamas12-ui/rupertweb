@@ -9599,7 +9599,7 @@ function render(ctx, minimapCtx) {
 
   // === COMPANION PORTRAITS (bottom-left) ===
   drawCompanionPortraits(ctx);
-}
+} } // end render + close inner block
 
 function drawCompanionPortraits(ctx) {
   const companions = state.npcs.filter(n => n && n.companion);
@@ -9710,8 +9710,6 @@ function fireDayMilestone(day) {
 // ============================================================
 // GAME LOOP, DAY/NIGHT, WEATHER
 // ============================================================
-
-} // end render()
 
 function updateDayNight() {
   // Skip expensive calculations on most frames
