@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Affair That Broke France and Invented Zionism",
+    date: "2026-04-16",
+    category: "History",
+    excerpt: "In the autumn of 1894, a French army captain named Alfred Dreyfus was arrested for treason. He had allegedly passed military secrets to the German embassy in Paris. The evidence was a torn-up note found in a wastepaper basket by a cleaning woman work...",
+    url: "essays/2026-04-16-the-affair-that-broke-france-and-invented-zionism.html"
+  },
+  {
     title: "The Year the World Ended: The Bronze Age Collapse and the Fragility of Complex Systems",
     date: "2026-04-15",
     category: "History",
