@@ -255,7 +255,7 @@ const SCHOOL_TASKS = [
   { subject: "Math 7", title: "Math 7 (Summative)", due: "2026-04-17", time: "9:30 AM", status: "pending", type: "Summative" },
   { subject: "Latin 7", title: "Principal Parts 8", due: "2026-04-17", time: "12:35 PM", status: "pending", type: "Formative" },
   { subject: "History/Geography 7", title: "Substitution Work 3: Complete the tasks in the slides", due: "2026-04-17", time: "4:25 PM", status: "pending", type: "Summative" },
-  // Last updated: 2026-04-15 via ManageBac scraper (5 new tasks added; Apr 14 tasks marked done; Math 7 HW Apr 15 marked submitted)
+  // Last updated: 2026-04-16 via ManageBac scraper (no new tasks; confirmed Apr 16 Eng 7 Test + Apr 17 tasks still pending)
 ];
 
 
