@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Line That Wasn't: Sykes-Picot and the Convenient Myth of the Artificial Border",
+    date: "2026-04-17",
+    category: "History",
+    excerpt: "Ask almost anyone why the Middle East is unstable and you will hear the same answer delivered with great confidence: the Sykes-Picot Agreement. In 1916, the story goes, two imperial bureaucrats — a British diplomat named Mark Sykes and a French one n...",
+    url: "essays/2026-04-17-the-line-that-wasnt-sykes-picot-and-the-convenient-myth-of-t.html"
+  },
+  {
     title: "The Affair That Broke France and Invented Zionism",
     date: "2026-04-16",
     category: "History",
