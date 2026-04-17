@@ -618,6 +618,12 @@ const state = {
   bioNightActive: false,
   bioNightDuration: 0, // frames remaining
 
+  // === BLOOD MOON EVENT ===
+  bloodMoonTimer: 60*60*(12 + Math.random()*8), // first blood moon in 12-20 in-game minutes
+  bloodMoonActive: false,
+  bloodMoonDuration: 0, // frames remaining
+  bloodMoonPhase: 0,    // 0=rising(fade-in), 1=full, 2=fading
+
   // Crafting tech tiers
   craftingTier: 0, // 0=Stone Age, 1=Volcanic Age, 2=Deep Sea Age
 
@@ -3315,7 +3321,8 @@ function updateEnemies() {
         const tdx = targetX - e.x, tdy = targetY - e.y;
         const td = Math.sqrt(tdx*tdx+tdy*tdy);
         const stormBoost = (state.season === 2 && state.isNight) ? 1.25 : 1;
-        const spd = e.spd * (e.type==='shadow' && state.isNight ? 1.3 : 1) * stormBoost;
+        const bloodMoonBoost = state.bloodMoonActive && state.bloodMoonPhase === 1 ? 1.35 : 1;
+        const spd = e.spd * (e.type==='shadow' && state.isNight ? 1.3 : 1) * stormBoost * bloodMoonBoost;
         moveX = td > 0 ? e.x + tdx/td * spd : e.x;
         moveY = td > 0 ? e.y + tdy/td * spd : e.y;
       }
@@ -3375,6 +3382,7 @@ function updateEnemies() {
       if (dist < attackR && e.attackTimer > 80 && !e.fleeing && e.scatterTimer <= 0 && !state.invincible) {
         e.attackTimer = 0;
         let dmg = e.type==='chief' ? 8 : (e.type==='shadow'?3:3);
+        if (state.bloodMoonActive && state.bloodMoonPhase === 1) dmg = Math.ceil(dmg * 1.25);
         if (state._volcanicArmorActive) dmg = Math.round(dmg * 0.7);
         p.hp = Math.max(0, p.hp - dmg);
         p.hitFlash = 8;
@@ -3499,14 +3507,29 @@ function updateEnemies() {
         for (const d of dropTable) { acc += d.weight; if (roll < acc) { chosen = d; break; } }
         if (chosen) {
           if (!state.groundLoot) state.groundLoot = [];
+          const bloodMoonBonus = state.bloodMoonActive && state.bloodMoonPhase === 1;
+          const dropQty = bloodMoonBonus ? chosen.qty + 1 : chosen.qty;
           state.groundLoot.push({
             x: e.x + (Math.random()-0.5)*12,
             y: e.y + (Math.random()-0.5)*12,
             item: chosen.item,
-            qty: chosen.qty,
+            qty: dropQty,
             life: 900, // ~15 seconds at 60fps
             bobPhase: Math.random() * Math.PI * 2,
           });
+          // Blood moon always drops an extra rare item
+          if (bloodMoonBonus && Math.random() < 0.55) {
+            const moonDrops = ['stone','wood','volcanic_stone','vine','coconut'];
+            const extraItem = moonDrops[Math.floor(Math.random()*moonDrops.length)];
+            state.groundLoot.push({
+              x: e.x + (Math.random()-0.5)*20,
+              y: e.y + (Math.random()-0.5)*20,
+              item: extraItem,
+              qty: 1,
+              life: 900,
+              bobPhase: Math.random() * Math.PI * 2,
+            });
+          }
         }
       }
       return e.dyingTimer > 0;
@@ -4971,6 +4994,23 @@ SFX.frenzyActivate = () => {
   playSynth({type:'sawtooth', freq:80, decay:0.6, pitchRise:3.0, vol:0.25});
   setTimeout(() => playSynth({type:'square', freq:220, decay:0.4, pitchRise:1.5, vol:0.18}), 120);
   setTimeout(() => playSynth({type:'sine', freq:880, decay:0.5, vol:0.12}), 300);
+};
+
+// Blood Moon rises — deep ominous drone + distant howl
+SFX.bloodMoonRise = () => {
+  // Low rumble drone
+  playSynth({type:'sine', freq:55, decay:2.2, pitchRise:0.08, vol:0.28});
+  // Mid howl sweep
+  setTimeout(() => playSynth({type:'triangle', freq:140, decay:1.4, pitchRise:0.6, vol:0.18}), 300);
+  // High eerie overtone
+  setTimeout(() => playSynth({type:'sine', freq:440, decay:0.9, pitchDrop:0.3, vol:0.10}), 900);
+  // Second howl echo
+  setTimeout(() => playSynth({type:'triangle', freq:110, decay:1.2, pitchRise:0.5, vol:0.13}), 1400);
+};
+
+// Blood Moon fades — brief descending tone
+SFX.bloodMoonFade = () => {
+  playSynth({type:'sine', freq:220, decay:1.8, pitchDrop:0.8, vol:0.15});
 };
 
 // ============================================================
@@ -8902,6 +8942,55 @@ function render(ctx, minimapCtx) {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
 
+  // === BLOOD MOON VISUAL OVERLAY ===
+  if (state.bloodMoonActive) {
+    // Alpha based on phase: fade in (phase 0), full (phase 1), fade out (phase 2)
+    const totalDuration = state.DAY_FRAMES * 0.45;
+    const elapsed = totalDuration - state.bloodMoonDuration;
+    let bmAlpha;
+    if (state.bloodMoonPhase === 0) {
+      bmAlpha = Math.min(1, elapsed / (60 * 4)) * 0.18; // fade in over 4s
+    } else if (state.bloodMoonPhase === 2) {
+      bmAlpha = Math.max(0, state.bloodMoonDuration / (60 * 5)) * 0.18; // fade out over 5s
+    } else {
+      const pulse = 0.015 * Math.sin(state.frameCount * 0.04); // gentle pulse
+      bmAlpha = 0.18 + pulse;
+    }
+    // Deep crimson overlay
+    ctx.fillStyle = `rgba(160,0,0,${bmAlpha})`;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Blood moon disk in upper-right sky
+    const moonX = canvas.width * 0.82;
+    const moonY = canvas.height * 0.12;
+    const moonR = 22 + 4 * Math.sin(state.frameCount * 0.03);
+    const moonGrd = ctx.createRadialGradient(moonX, moonY, 2, moonX, moonY, moonR * 2.5);
+    moonGrd.addColorStop(0, `rgba(220,60,30,${bmAlpha * 5.5})`);
+    moonGrd.addColorStop(0.35, `rgba(180,20,10,${bmAlpha * 3.5})`);
+    moonGrd.addColorStop(1, 'rgba(80,0,0,0)');
+    ctx.fillStyle = moonGrd;
+    ctx.beginPath();
+    ctx.arc(moonX, moonY, moonR * 2.5, 0, Math.PI * 2);
+    ctx.fill();
+    // Solid moon circle
+    ctx.fillStyle = `rgba(200,50,20,${Math.min(0.95, bmAlpha * 6)})`;
+    ctx.beginPath();
+    ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
+    ctx.fill();
+    // Moon craters
+    ctx.fillStyle = `rgba(140,20,10,${Math.min(0.9, bmAlpha * 5)})`;
+    ctx.beginPath(); ctx.arc(moonX - 6, moonY + 4, 5, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(moonX + 7, moonY - 5, 3, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(moonX + 2, moonY + 8, 4, 0, Math.PI*2); ctx.fill();
+    // Screen-edge blood drip vignette
+    if (state.bloodMoonPhase === 1) {
+      const vigGrd = ctx.createRadialGradient(canvas.width/2, canvas.height/2, canvas.height * 0.3, canvas.width/2, canvas.height/2, canvas.height * 0.85);
+      vigGrd.addColorStop(0, 'rgba(0,0,0,0)');
+      vigGrd.addColorStop(1, `rgba(80,0,0,${0.22 + 0.06 * Math.sin(state.frameCount * 0.04)})`);
+      ctx.fillStyle = vigGrd;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+  }
+
   // Volcano heat shimmer (subtle, only very close)
   if (state.volcanoTint > 0.25) {
     ctx.fillStyle = `rgba(255,80,0,0.08)`;
@@ -9841,6 +9930,44 @@ function updateDayNight() {
     state.bioNightDuration--;
     if (state.bioNightDuration <= 0 || (!state.isNight && state.bioNightActive)) {
       state.bioNightActive = false;
+    }
+  }
+
+  // === BLOOD MOON EVENT TICK ===
+  if (!state.bloodMoonActive) {
+    state.bloodMoonTimer = (state.bloodMoonTimer || 1) - 1;
+    // Only trigger at night, not during eruption, bio night, surge, or storm
+    const forecast = (state.weatherForecast && state.weatherForecastIdx !== undefined)
+      ? state.weatherForecast[state.weatherForecastIdx] : 'clear';
+    if (state.bloodMoonTimer <= 0 && state.isNight && state.eruptionPhase === 0
+        && !state.bioNightActive && state.surgePhase === 0
+        && forecast !== 'storm' && state.day >= 3) {
+      state.bloodMoonActive = true;
+      state.bloodMoonPhase = 0; // rising
+      state.bloodMoonDuration = state.DAY_FRAMES * 0.45; // most of a night
+      state.bloodMoonTimer = state.DAY_FRAMES * (10 + Math.random() * 8); // next blood moon
+      showMsg('BLOOD MOON RISES — the beasts grow restless', '#cc2222');
+      addFloatingText(state.player.x, state.player.y - 60, 'BLOOD MOON', '#cc2222');
+      SFX.bloodMoonRise && SFX.bloodMoonRise();
+    } else if (state.bloodMoonTimer <= 0) {
+      state.bloodMoonTimer = state.DAY_FRAMES * (3 + Math.random() * 4); // retry sooner
+    }
+  } else {
+    state.bloodMoonDuration--;
+    // Phase transitions for smooth fade
+    const totalDuration = state.DAY_FRAMES * 0.45;
+    const elapsed = totalDuration - state.bloodMoonDuration;
+    if (elapsed < 60 * 4) state.bloodMoonPhase = 0; // first 4s rising
+    else if (state.bloodMoonDuration < 60 * 5) state.bloodMoonPhase = 2; // last 5s fading
+    else state.bloodMoonPhase = 1; // full blood moon
+    // End conditions
+    if (state.bloodMoonDuration <= 0 || !state.isNight) {
+      if (state.bloodMoonActive && state.bloodMoonPhase !== 2) {
+        SFX.bloodMoonFade && SFX.bloodMoonFade();
+        showMsg('The blood moon fades', '#883333');
+      }
+      state.bloodMoonActive = false;
+      state.bloodMoonPhase = 0;
     }
   }
 
@@ -12245,7 +12372,15 @@ function updateUI() {
     }
   }
   const wiEl=document.getElementById('weather-icon');
-  if(wiEl) wiEl.textContent=state.weatherRain?'STORM':(state.player.torch?'TORCH':'') + (fcStr ? ' ['+fcStr+']' : '');
+  let wiText = state.weatherRain ? 'STORM' : (state.player.torch ? 'TORCH' : '') + (fcStr ? ' ['+fcStr+']' : '');
+  if (state.bloodMoonActive) {
+    const bmLabel = state.bloodMoonPhase === 0 ? 'BLOOD MOON RISING' : (state.bloodMoonPhase === 2 ? 'BLOOD MOON FADING' : 'BLOOD MOON');
+    wiText = bmLabel + (wiText ? '  ' + wiText : '');
+    if (wiEl) { wiEl.style.color = '#cc3333'; wiEl.style.textShadow = '0 0 6px rgba(200,30,30,0.7)'; }
+  } else {
+    if (wiEl) { wiEl.style.color = '#7ab0c0'; wiEl.style.textShadow = 'none'; }
+  }
+  if(wiEl) wiEl.textContent = wiText;
 
   // Bounty Hunt HUD badge
   let bountyEl = document.getElementById('bounty-hud');
