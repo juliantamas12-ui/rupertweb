@@ -252,17 +252,17 @@ const SCHOOL_TASKS = [
   { subject: "Science 7", title: "Test Science 7", due: "2026-04-14", time: "10:40 AM", status: "done", type: "Summative" },
   { subject: "Latin 7", title: "Reading: ad Urbem", due: "2026-04-14", time: "1:35 PM", status: "done", type: "Formative" },
   // --- Wed Apr 15 ---
-  { subject: "Art", title: "MEDIA TESINA - MEDIA STUDENTS ONLY", due: "2026-04-15", time: "8:00 AM", status: "pending", type: "Summative" },
-  { subject: "Math 8", title: "Math 8: Surface Area of Composite Shapes", due: "2026-04-15", time: "12:30 PM", status: "pending", type: "Formative" },
+  { subject: "Art", title: "MEDIA TESINA - MEDIA STUDENTS ONLY", due: "2026-04-15", time: "8:00 AM", status: "overdue", type: "Summative" },
+  { subject: "Math 8", title: "Math 8: Surface Area of Composite Shapes", due: "2026-04-15", time: "12:30 PM", status: "overdue", type: "Formative" },
   { subject: "Math 7", title: "Math 7 (HW)", due: "2026-04-15", time: "12:35 PM", status: "done", type: "Summative" },
   // --- Thu Apr 16 ---
-  { subject: "English 7", title: "Eng 7 Test", due: "2026-04-16", time: "9:00 AM", status: "pending", type: "Summative" },
+  { subject: "English 7", title: "Eng 7 Test", due: "2026-04-16", time: "9:00 AM", status: "done", type: "Summative" },
   // --- Fri Apr 17 ---
   { subject: "Math 8", title: "Math 8: Unit 6 Quiz", due: "2026-04-17", time: "8:30 AM", status: "pending", type: "Summative" },
   { subject: "Math 7", title: "Math 7 (Summative)", due: "2026-04-17", time: "9:30 AM", status: "pending", type: "Summative" },
   { subject: "Latin 7", title: "Principal Parts 8", due: "2026-04-17", time: "12:35 PM", status: "pending", type: "Formative" },
   { subject: "History/Geography 7", title: "Substitution Work 3: Complete the tasks in the slides", due: "2026-04-17", time: "4:25 PM", status: "pending", type: "Summative" },
-  // Last updated: 2026-04-16 via ManageBac scraper (no new tasks; confirmed Apr 16 Eng 7 Test + Apr 17 tasks still pending)
+  // Last updated: 2026-04-17 via ManageBac scraper (no new tasks; Apr 17 confirmed: Principal Parts 8 + Substitution Work 3 still pending)
 ];
 
 
