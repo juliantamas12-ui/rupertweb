@@ -3,388 +3,368 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Juan Pelotes Darwin FC — Official Kit 2026</title>
+<title>Juan Pelotes Darwin FC — 2026/27 Kit</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: #0e1218; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 40px 20px 60px; font-family: 'Helvetica Neue', Arial, sans-serif; }
-  .header { text-align: center; margin-bottom: 48px; }
-  .club-name { font-size: 11px; letter-spacing: 6px; color: #c8a020; text-transform: uppercase; margin-bottom: 6px; }
-  .kit-season { font-size: 10px; letter-spacing: 3px; color: rgba(255,255,255,0.25); }
-  .kits { display: flex; gap: 40px; flex-wrap: wrap; justify-content: center; }
-  .kit-item { display: flex; flex-direction: column; align-items: center; gap: 14px; }
-  .kit-label { font-size: 9px; letter-spacing: 4px; text-transform: uppercase; color: rgba(255,255,255,0.3); }
-  svg { overflow: visible; }
-  .kit-shadow { filter: drop-shadow(0 20px 40px rgba(0,0,0,0.7)) drop-shadow(0 4px 12px rgba(0,0,0,0.4)); }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #111416;
+  min-height: 100vh;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 20px 80px;
+}
+.brand { text-align: center; margin-bottom: 52px; }
+.brand-name { font-size: 10px; letter-spacing: 7px; color: #c8a020; text-transform: uppercase; margin-bottom: 5px; }
+.brand-sub  { font-size: 9px;  letter-spacing: 3px; color: rgba(255,255,255,0.2); }
+
+.kits { display: flex; gap: 32px; flex-wrap: wrap; justify-content: center; }
+
+.kit-card {
+  background: #1a1d22;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  padding: 32px 28px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 260px;
+  transition: border-color 0.2s;
+}
+.kit-card:hover { border-color: rgba(200,160,32,0.3); }
+
+.kit-name { font-size: 9px; letter-spacing: 4px; color: rgba(255,255,255,0.3); text-transform: uppercase; }
+
+/* Jersey canvas */
+.jersey-wrap { position: relative; width: 200px; height: 230px; filter: drop-shadow(0 24px 48px rgba(0,0,0,0.6)); }
+
+/* Swatch strip */
+.swatches { display: flex; gap: 6px; }
+.swatch { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.15); }
 </style>
 </head>
 <body>
 
-<div class="header">
-  <div class="club-name">Juan Pelotes Darwin FC</div>
-  <div class="kit-season">2026/27 Season Kit &bull; Isabela Island, Galápagos</div>
+<div class="brand">
+  <div class="brand-name">Juan Pelotes Darwin FC</div>
+  <div class="brand-sub">2026 / 27 Official Kit Collection — Isabela Island, Galápagos</div>
 </div>
 
 <div class="kits">
 
-<!-- ══════════════ HOME KIT ══════════════ -->
-<div class="kit-item">
-<svg class="kit-shadow" width="220" height="310" viewBox="0 0 220 310">
-<defs>
-  <!-- Shirt gradient: light left shoulder, darker right -->
-  <linearGradient id="h-body" x1="0%" y1="0%" x2="100%" y2="100%">
-    <stop offset="0%"   stop-color="#162850"/>
-    <stop offset="40%"  stop-color="#0d1e3d"/>
-    <stop offset="100%" stop-color="#081328"/>
-  </linearGradient>
-  <linearGradient id="h-side-l" x1="0%" y1="0%" x2="100%" y2="0%">
-    <stop offset="0%" stop-color="#c8a020"/>
-    <stop offset="100%" stop-color="#a07818"/>
-  </linearGradient>
-  <linearGradient id="h-side-r" x1="0%" y1="0%" x2="100%" y2="0%">
-    <stop offset="0%" stop-color="#a07818"/>
-    <stop offset="100%" stop-color="#c8a020"/>
-  </linearGradient>
-  <linearGradient id="h-sleeve-l" x1="0%" y1="0%" x2="100%" y2="80%">
-    <stop offset="0%"   stop-color="#162850"/>
-    <stop offset="100%" stop-color="#0a1830"/>
-  </linearGradient>
-  <linearGradient id="h-sleeve-r" x1="100%" y1="0%" x2="0%" y2="80%">
-    <stop offset="0%"   stop-color="#162850"/>
-    <stop offset="100%" stop-color="#0a1830"/>
-  </linearGradient>
-  <!-- Subtle fabric sheen -->
-  <linearGradient id="h-sheen" x1="20%" y1="0%" x2="80%" y2="100%">
-    <stop offset="0%"  stop-color="rgba(255,255,255,0.06)"/>
-    <stop offset="50%" stop-color="rgba(255,255,255,0)"/>
-    <stop offset="100%" stop-color="rgba(0,0,0,0.1)"/>
-  </linearGradient>
-  <!-- Shorts -->
-  <linearGradient id="h-shorts" x1="0%" y1="0%" x2="100%" y2="100%">
-    <stop offset="0%"   stop-color="#0d1e3d"/>
-    <stop offset="100%" stop-color="#060f20"/>
-  </linearGradient>
-  <!-- Sock -->
-  <linearGradient id="h-sock" x1="0%" y1="0%" x2="0%" y2="100%">
-    <stop offset="0%"   stop-color="#1a2e50"/>
-    <stop offset="100%" stop-color="#0a1428"/>
-  </linearGradient>
-  <!-- Hex pattern -->
-  <pattern id="hex-h" x="0" y="0" width="22" height="26" patternUnits="userSpaceOnUse">
-    <polygon points="11,2 20,7 20,19 11,24 2,19 2,7" fill="none" stroke="rgba(200,160,32,0.12)" stroke-width="0.8"/>
-    <polygon points="22,15 31,20 31,32 22,37 13,32 13,20" fill="none" stroke="rgba(200,160,32,0.12)" stroke-width="0.8"/>
-  </pattern>
-  <clipPath id="h-body-clip">
-    <path d="M68,42 L42,90 L60,98 L60,248 L160,248 L160,98 L178,90 L152,42 L130,32 Q110,24 90,32 Z"/>
-  </clipPath>
-  <filter id="inner-shadow">
-    <feOffset dx="2" dy="2"/>
-    <feGaussianBlur stdDeviation="3"/>
-    <feComposite operator="out" in="SourceGraphic"/>
-  </filter>
-</defs>
+  <!-- ─── HOME ─── -->
+  <div class="kit-card">
+    <div class="kit-name">Home Kit</div>
+    <div class="jersey-wrap">
+      <svg width="200" height="230" viewBox="0 0 200 230" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <!-- Body: lit from top-left, deep navy -->
+          <radialGradient id="hb" cx="38%" cy="28%" r="70%">
+            <stop offset="0%"   stop-color="#1e3360"/>
+            <stop offset="45%"  stop-color="#0f2040"/>
+            <stop offset="100%" stop-color="#060e1e"/>
+          </radialGradient>
+          <!-- Sleeve gradients -->
+          <linearGradient id="hsl" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%"   stop-color="#1a2e55"/>
+            <stop offset="100%" stop-color="#081020"/>
+          </linearGradient>
+          <linearGradient id="hsr" x1="100%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%"   stop-color="#1a2e55"/>
+            <stop offset="100%" stop-color="#081020"/>
+          </linearGradient>
+          <!-- Gold panel -->
+          <linearGradient id="hgp" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%"   stop-color="#d4aa22"/>
+            <stop offset="50%"  stop-color="#c8a020"/>
+            <stop offset="100%" stop-color="#8c6e14"/>
+          </linearGradient>
+          <!-- Body highlight -->
+          <linearGradient id="hhi" x1="30%" y1="0%" x2="60%" y2="100%">
+            <stop offset="0%"   stop-color="rgba(255,255,255,0.10)"/>
+            <stop offset="35%"  stop-color="rgba(255,255,255,0.04)"/>
+            <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
+          </linearGradient>
+          <!-- Hex pattern -->
+          <pattern id="hexh" x="0" y="0" width="20" height="23" patternUnits="userSpaceOnUse">
+            <polygon points="10,1.5 18.5,6.5 18.5,17 10,21.5 1.5,17 1.5,6.5" fill="none" stroke="rgba(200,160,32,0.14)" stroke-width="0.7"/>
+          </pattern>
+          <clipPath id="hbc">
+            <path d="M62,38 L30,82 L52,92 L52,210 L148,210 L148,92 L170,82 L138,38 Q118,28 100,28 Q82,28 62,38Z"/>
+          </clipPath>
+          <!-- Collar shadow -->
+          <linearGradient id="hcs" x1="50%" y1="0%" x2="50%" y2="100%">
+            <stop offset="0%"   stop-color="rgba(0,0,0,0.5)"/>
+            <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
+          </linearGradient>
+        </defs>
 
-<!-- SHIRT -->
-<!-- Left sleeve -->
-<path d="M68,42 L42,90 L60,98 L76,60 Z" fill="url(#h-sleeve-l)"/>
-<!-- Left sleeve inner shadow -->
-<path d="M68,42 L42,90 L60,98 L76,60 Z" fill="url(#h-sheen)"/>
+        <!-- ── LEFT SLEEVE ── -->
+        <path d="M62,38 L30,82 L52,92 L72,52 Z" fill="url(#hsl)"/>
+        <!-- Sleeve seam highlight -->
+        <path d="M62,38 L30,82 L33,84 L65,40 Z" fill="rgba(255,255,255,0.06)"/>
+        <!-- Cuff — gold + green bands -->
+        <path d="M32,80 L44,96 L52,92 L40,76 Z" fill="#c8a020"/>
+        <path d="M35,86 L47,102 L52,99 L40,83 Z" fill="#1a5c38"/>
+        <path d="M38,92 L50,108 L52,106 L40,90 Z" fill="rgba(200,160,32,0.4)"/>
 
-<!-- Right sleeve -->
-<path d="M152,42 L178,90 L160,98 L144,60 Z" fill="url(#h-sleeve-r)"/>
-<path d="M152,42 L178,90 L160,98 L144,60 Z" fill="url(#h-sheen)"/>
+        <!-- ── RIGHT SLEEVE ── -->
+        <path d="M138,38 L170,82 L148,92 L128,52 Z" fill="url(#hsr)"/>
+        <path d="M138,38 L170,82 L167,84 L135,40 Z" fill="rgba(255,255,255,0.04)"/>
+        <!-- Cuff -->
+        <path d="M168,80 L156,96 L148,92 L160,76 Z" fill="#c8a020"/>
+        <path d="M165,86 L153,102 L148,99 L160,83 Z" fill="#1a5c38"/>
+        <path d="M162,92 L150,108 L148,106 L160,90 Z" fill="rgba(200,160,32,0.4)"/>
 
-<!-- Main body -->
-<path d="M76,60 L60,98 L60,248 L160,248 L160,98 L144,60 L130,32 Q110,24 90,32 Z" fill="url(#h-body)"/>
+        <!-- ── BODY ── -->
+        <path d="M72,52 L52,92 L52,210 L148,210 L148,92 L128,52 Q114,42 100,40 Q86,42 72,52 Z" fill="url(#hb)"/>
 
-<!-- Hex pattern overlay -->
-<rect x="0" y="0" width="220" height="310" fill="url(#hex-h)" clip-path="url(#h-body-clip)"/>
+        <!-- Hex texture -->
+        <rect x="0" y="0" width="200" height="230" fill="url(#hexh)" clip-path="url(#hbc)"/>
 
-<!-- Gold left side panel -->
-<path d="M60,98 L60,248 L82,248 L82,98 Z" fill="url(#h-side-l)"/>
-<!-- Gold right side panel -->
-<path d="M138,98 L138,248 L160,248 L160,98 Z" fill="url(#h-side-r)"/>
+        <!-- Left gold side panel -->
+        <path d="M52,92 L52,210 L74,210 L74,92 Z" fill="url(#hgp)"/>
+        <!-- Right gold side panel -->
+        <path d="M126,92 L126,210 L148,210 L148,92 Z" fill="url(#hgp)"/>
 
-<!-- Sheen overlay on body -->
-<path d="M76,60 L60,98 L60,248 L160,248 L160,98 L144,60 L130,32 Q110,24 90,32 Z" fill="url(#h-sheen)"/>
+        <!-- Highlight sweep over body -->
+        <path d="M72,52 L52,92 L52,210 L148,210 L148,92 L128,52 Q114,42 100,40 Q86,42 72,52 Z" fill="url(#hhi)"/>
 
-<!-- Sleeve gold cuff bands -->
-<path d="M44,84 L52,100 L63,96 L55,80 Z" fill="#c8a020" opacity="0.9"/>
-<path d="M176,84 L168,100 L157,96 L165,80 Z" fill="#c8a020" opacity="0.9"/>
-<!-- Second cuff stripe -->
-<path d="M47,91 L55,107 L60,105 L52,89 Z" fill="#1a5c38" opacity="0.85"/>
-<path d="M173,91 L165,107 L160,105 L168,89 Z" fill="#1a5c38" opacity="0.85"/>
+        <!-- Panel seam shadows -->
+        <line x1="74" y1="92" x2="74" y2="210" stroke="rgba(0,0,0,0.25)" stroke-width="1.2"/>
+        <line x1="126" y1="92" x2="126" y2="210" stroke="rgba(0,0,0,0.25)" stroke-width="1.2"/>
 
-<!-- Collar — round neck with gold trim -->
-<path d="M90,32 Q110,24 130,32 L126,44 Q110,38 94,44 Z" fill="#c8a020"/>
-<!-- Collar inner darker -->
-<path d="M94,44 Q110,38 126,44 L124,50 Q110,45 96,50 Z" fill="#0d1e3d"/>
-<!-- Collar V notch -->
-<path d="M104,46 L110,56 L116,46" fill="#0d1e3d" stroke="#c8a020" stroke-width="1.5"/>
+        <!-- ── COLLAR ── -->
+        <!-- Collar base (gold) -->
+        <path d="M83,36 Q100,28 117,36 L113,50 Q100,44 87,50 Z" fill="#c8a020"/>
+        <!-- Inner jersey (navy inside collar) -->
+        <path d="M87,50 Q100,44 113,50 L111,57 Q100,52 89,57 Z" fill="#0d1e3d"/>
+        <!-- V-neck opening shadow -->
+        <path d="M96,52 L100,62 L104,52" fill="rgba(0,0,0,0.4)"/>
+        <!-- Collar highlight -->
+        <path d="M83,36 Q100,28 100,28 L100,30 Q88,30 85,40 Z" fill="rgba(255,255,255,0.12)"/>
 
-<!-- Sleeve seam lines -->
-<line x1="68" y1="44" x2="60" y2="98" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
-<line x1="152" y1="44" x2="160" y2="98" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
-<!-- Side seam shadows -->
-<line x1="82" y1="98" x2="82" y2="248" stroke="rgba(0,0,0,0.2)" stroke-width="1.5"/>
-<line x1="138" y1="98" x2="138" y2="248" stroke="rgba(0,0,0,0.2)" stroke-width="1.5"/>
+        <!-- ── SHOULDER SEAM LINE ── -->
+        <line x1="72" y1="52" x2="52" y2="92" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+        <line x1="128" y1="52" x2="148" y2="92" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
 
-<!-- CREST (left chest) -->
-<circle cx="91" cy="112" r="16" fill="rgba(200,160,32,0.12)" stroke="#c8a020" stroke-width="0.8"/>
-<text x="91" y="107" text-anchor="middle" font-size="6.5" fill="#c8a020" font-weight="bold" letter-spacing="0.5">UIJP</text>
-<text x="91" y="116" text-anchor="middle" font-size="4.5" fill="rgba(200,160,32,0.8)">DARWIN FC</text>
-<text x="91" y="124" text-anchor="middle" font-size="4" fill="rgba(200,160,32,0.5)">EST. 2001</text>
+        <!-- ── CREST ── -->
+        <circle cx="82" cy="102" r="15" fill="rgba(200,160,32,0.1)" stroke="#c8a020" stroke-width="0.8"/>
+        <text x="82" y="97"  text-anchor="middle" font-size="6"   fill="#c8a020"            font-weight="bold" letter-spacing="0.5">UIJP</text>
+        <text x="82" y="105" text-anchor="middle" font-size="4.2" fill="rgba(200,160,32,0.8)">DARWIN FC</text>
+        <text x="82" y="113" text-anchor="middle" font-size="3.5" fill="rgba(200,160,32,0.45)">EST. 2001</text>
 
-<!-- KIT MANUFACTURER logo placeholder (right chest) -->
-<rect x="122" y="100" width="20" height="14" rx="2" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.12)" stroke-width="0.5"/>
-<text x="132" y="110" text-anchor="middle" font-size="5" fill="rgba(255,255,255,0.3)" font-weight="bold">KIT</text>
+        <!-- ── KIT BADGE placeholder ── -->
+        <rect x="111" y="92" width="18" height="13" rx="2" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/>
+        <text x="120" y="101" text-anchor="middle" font-size="4.5" fill="rgba(255,255,255,0.25)" font-weight="bold">KIT</text>
 
-<!-- SPONSOR -->
-<rect x="84" y="148" width="52" height="22" rx="3" fill="rgba(200,160,32,0.08)" stroke="rgba(200,160,32,0.35)" stroke-width="0.8"/>
-<text x="110" y="160" text-anchor="middle" font-size="8" fill="#c8a020" font-weight="bold" letter-spacing="2">PELOTES</text>
-<text x="110" y="167" text-anchor="middle" font-size="5" fill="rgba(200,160,32,0.5)" letter-spacing="1">MARSEC</text>
+        <!-- ── SPONSOR ── -->
+        <rect x="76" y="138" width="48" height="20" rx="2.5" fill="rgba(200,160,32,0.06)" stroke="rgba(200,160,32,0.3)" stroke-width="0.7"/>
+        <text x="100" y="149" text-anchor="middle" font-size="7.5" fill="#c8a020" font-weight="bold" letter-spacing="1.5">PELOTES</text>
+        <text x="100" y="155" text-anchor="middle" font-size="4"   fill="rgba(200,160,32,0.45)" letter-spacing="1">MARSEC</text>
 
-<!-- Body crease lines (fabric realism) -->
-<line x1="110" y1="80" x2="108" y2="200" stroke="rgba(255,255,255,0.03)" stroke-width="2"/>
-<line x1="100" y1="140" x2="120" y2="230" stroke="rgba(0,0,0,0.08)" stroke-width="1.5"/>
+        <!-- ── HEM ── -->
+        <path d="M52,207 L52,210 L148,210 L148,207" fill="none" stroke="rgba(200,160,32,0.3)" stroke-width="1"/>
 
-<!-- SHORTS -->
-<path d="M66,248 L66,298 L106,298 Q110,284 114,298 L154,298 L154,248 Z" fill="url(#h-shorts)"/>
-<!-- Shorts gold side trim -->
-<path d="M66,248 L66,298 L75,298 L75,248 Z" fill="url(#h-side-l)" opacity="0.9"/>
-<path d="M145,248 L145,298 L154,298 L154,248 Z" fill="url(#h-side-r)" opacity="0.9"/>
-<!-- Shorts waistband -->
-<rect x="66" y="247" width="88" height="8" fill="#0a1428" rx="1"/>
-<rect x="66" y="247" width="88" height="3" fill="rgba(200,160,32,0.3)" rx="1"/>
-<!-- Inner leg seam -->
-<line x1="110" y1="250" x2="110" y2="298" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+        <!-- Bottom shadow to ground -->
+        <ellipse cx="100" cy="214" rx="48" ry="4" fill="rgba(0,0,0,0.35)"/>
+      </svg>
+    </div>
+    <div class="swatches">
+      <div class="swatch" style="background:#0d1e3d;"></div>
+      <div class="swatch" style="background:#c8a020;"></div>
+      <div class="swatch" style="background:#1a5c38;"></div>
+    </div>
+    <div class="kit-name" style="font-size:8px;color:rgba(255,255,255,0.18);">Navy · Gold · Galápagos Green</div>
+  </div>
 
-<!-- SOCKS (left) -->
-<rect x="74" y="298" width="22" height="12" rx="2" fill="url(#h-sock)"/>
-<rect x="74" y="298" width="22" height="3" fill="#c8a020" rx="1"/>
-<rect x="74" y="301" width="22" height="2" fill="#1a5c38"/>
-<!-- SOCKS (right) -->
-<rect x="124" y="298" width="22" height="12" rx="2" fill="url(#h-sock)"/>
-<rect x="124" y="298" width="22" height="3" fill="#c8a020" rx="1"/>
-<rect x="124" y="301" width="22" height="2" fill="#1a5c38"/>
+  <!-- ─── AWAY ─── -->
+  <div class="kit-card">
+    <div class="kit-name">Away Kit</div>
+    <div class="jersey-wrap">
+      <svg width="200" height="230" viewBox="0 0 200 230" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="ab" cx="38%" cy="28%" r="70%">
+            <stop offset="0%"   stop-color="#2a7050"/>
+            <stop offset="50%"  stop-color="#1a5c38"/>
+            <stop offset="100%" stop-color="#0a3020"/>
+          </radialGradient>
+          <linearGradient id="asl" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%"   stop-color="#246648"/>
+            <stop offset="100%" stop-color="#0c3820"/>
+          </linearGradient>
+          <linearGradient id="asr" x1="100%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%"   stop-color="#246648"/>
+            <stop offset="100%" stop-color="#0c3820"/>
+          </linearGradient>
+          <linearGradient id="agp" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%"   stop-color="#1e3360"/>
+            <stop offset="100%" stop-color="#060e1e"/>
+          </linearGradient>
+          <linearGradient id="ahi" x1="30%" y1="0%" x2="60%" y2="100%">
+            <stop offset="0%"   stop-color="rgba(255,255,255,0.09)"/>
+            <stop offset="35%"  stop-color="rgba(255,255,255,0.03)"/>
+            <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
+          </linearGradient>
+          <pattern id="wavea" x="0" y="0" width="36" height="20" patternUnits="userSpaceOnUse">
+            <path d="M-4,10 Q4,2 12,10 Q20,18 28,10 Q36,2 44,10" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+          </pattern>
+          <clipPath id="abc">
+            <path d="M62,38 L30,82 L52,92 L52,210 L148,210 L148,92 L170,82 L138,38 Q118,28 100,28 Q82,28 62,38Z"/>
+          </clipPath>
+        </defs>
 
-</svg>
-<div class="kit-label">Home Kit</div>
-</div>
+        <path d="M62,38 L30,82 L52,92 L72,52 Z" fill="url(#asl)"/>
+        <path d="M62,38 L30,82 L33,84 L65,40 Z" fill="rgba(255,255,255,0.05)"/>
+        <path d="M32,80 L44,96 L52,92 L40,76 Z" fill="#c8a020"/>
+        <path d="M35,86 L47,102 L52,99 L40,83 Z" fill="#0d1e3d"/>
 
-<!-- ══════════════ AWAY KIT ══════════════ -->
-<div class="kit-item">
-<svg class="kit-shadow" width="220" height="310" viewBox="0 0 220 310">
-<defs>
-  <linearGradient id="a-body" x1="0%" y1="0%" x2="100%" y2="100%">
-    <stop offset="0%"   stop-color="#236648"/>
-    <stop offset="50%"  stop-color="#1a5c38"/>
-    <stop offset="100%" stop-color="#0e3a22"/>
-  </linearGradient>
-  <linearGradient id="a-panel" x1="0%" y1="0%" x2="100%" y2="0%">
-    <stop offset="0%" stop-color="#0d1e3d"/>
-    <stop offset="100%" stop-color="#162850"/>
-  </linearGradient>
-  <linearGradient id="a-panel-r" x1="0%" y1="0%" x2="100%" y2="0%">
-    <stop offset="0%" stop-color="#162850"/>
-    <stop offset="100%" stop-color="#0d1e3d"/>
-  </linearGradient>
-  <linearGradient id="a-sheen" x1="20%" y1="0%" x2="80%" y2="100%">
-    <stop offset="0%"  stop-color="rgba(255,255,255,0.07)"/>
-    <stop offset="50%" stop-color="rgba(255,255,255,0)"/>
-    <stop offset="100%" stop-color="rgba(0,0,0,0.1)"/>
-  </linearGradient>
-  <linearGradient id="a-shorts" x1="0%" y1="0%" x2="100%" y2="100%">
-    <stop offset="0%"   stop-color="#236648"/>
-    <stop offset="100%" stop-color="#0e3a22"/>
-  </linearGradient>
-  <!-- Wave pattern for away -->
-  <pattern id="wave-a" x="0" y="0" width="40" height="22" patternUnits="userSpaceOnUse">
-    <path d="M-5,11 Q5,2 15,11 Q25,20 35,11 Q45,2 55,11" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1.2"/>
-  </pattern>
-  <clipPath id="a-body-clip">
-    <path d="M68,42 L42,90 L60,98 L60,248 L160,248 L160,98 L178,90 L152,42 L130,32 Q110,24 90,32 Z"/>
-  </clipPath>
-</defs>
+        <path d="M138,38 L170,82 L148,92 L128,52 Z" fill="url(#asr)"/>
+        <path d="M168,80 L156,96 L148,92 L160,76 Z" fill="#c8a020"/>
+        <path d="M165,86 L153,102 L148,99 L160,83 Z" fill="#0d1e3d"/>
 
-<!-- Sleeves -->
-<path d="M68,42 L42,90 L60,98 L76,60 Z" fill="url(#a-body)"/>
-<path d="M152,42 L178,90 L160,98 L144,60 Z" fill="url(#a-body)"/>
+        <path d="M72,52 L52,92 L52,210 L148,210 L148,92 L128,52 Q114,42 100,40 Q86,42 72,52 Z" fill="url(#ab)"/>
+        <rect x="0" y="0" width="200" height="230" fill="url(#wavea)" clip-path="url(#abc)"/>
 
-<!-- Body -->
-<path d="M76,60 L60,98 L60,248 L160,248 L160,98 L144,60 L130,32 Q110,24 90,32 Z" fill="url(#a-body)"/>
+        <path d="M52,92 L52,210 L74,210 L74,92 Z" fill="url(#agp)"/>
+        <path d="M126,92 L126,210 L148,210 L148,92 Z" fill="url(#agp)"/>
 
-<!-- Wave pattern -->
-<rect x="0" y="0" width="220" height="310" fill="url(#wave-a)" clip-path="url(#a-body-clip)"/>
+        <path d="M72,52 L52,92 L52,210 L148,210 L148,92 L128,52 Q114,42 100,40 Q86,42 72,52 Z" fill="url(#ahi)"/>
 
-<!-- Navy side panels -->
-<path d="M60,98 L60,248 L82,248 L82,98 Z" fill="url(#a-panel)"/>
-<path d="M138,98 L138,248 L160,248 L160,98 Z" fill="url(#a-panel-r)"/>
+        <line x1="74" y1="92" x2="74" y2="210" stroke="rgba(0,0,0,0.25)" stroke-width="1.2"/>
+        <line x1="126" y1="92" x2="126" y2="210" stroke="rgba(0,0,0,0.25)" stroke-width="1.2"/>
 
-<!-- Sheen -->
-<path d="M76,60 L60,98 L60,248 L160,248 L160,98 L144,60 L130,32 Q110,24 90,32 Z" fill="url(#a-sheen)"/>
+        <!-- Collar -->
+        <path d="M83,36 Q100,28 117,36 L113,50 Q100,44 87,50 Z" fill="#c8a020"/>
+        <path d="M87,50 Q100,44 113,50 L111,57 Q100,52 89,57 Z" fill="#1a5c38"/>
+        <path d="M96,52 L100,62 L104,52" fill="rgba(0,0,0,0.35)"/>
 
-<!-- Cuffs — gold + navy -->
-<path d="M44,84 L52,100 L63,96 L55,80 Z" fill="#c8a020" opacity="0.9"/>
-<path d="M176,84 L168,100 L157,96 L165,80 Z" fill="#c8a020" opacity="0.9"/>
-<path d="M47,91 L55,107 L60,105 L52,89 Z" fill="#0d1e3d" opacity="0.85"/>
-<path d="M173,91 L165,107 L160,105 L168,89 Z" fill="#0d1e3d" opacity="0.85"/>
+        <line x1="72" y1="52" x2="52" y2="92" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+        <line x1="128" y1="52" x2="148" y2="92" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
 
-<!-- Collar — gold trim on dark green -->
-<path d="M90,32 Q110,24 130,32 L126,44 Q110,38 94,44 Z" fill="#c8a020"/>
-<path d="M94,44 Q110,38 126,44 L124,50 Q110,45 96,50 Z" fill="#1a5c38"/>
-<path d="M104,46 L110,56 L116,46" fill="#1a5c38" stroke="#c8a020" stroke-width="1.5"/>
+        <circle cx="82" cy="102" r="15" fill="rgba(200,160,32,0.1)" stroke="#c8a020" stroke-width="0.8"/>
+        <text x="82" y="97"  text-anchor="middle" font-size="6"   fill="#c8a020"            font-weight="bold" letter-spacing="0.5">UIJP</text>
+        <text x="82" y="105" text-anchor="middle" font-size="4.2" fill="rgba(200,160,32,0.8)">DARWIN FC</text>
+        <text x="82" y="113" text-anchor="middle" font-size="3.5" fill="rgba(200,160,32,0.45)">EST. 2001</text>
 
-<!-- Seams -->
-<line x1="68" y1="44" x2="60" y2="98" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
-<line x1="152" y1="44" x2="160" y2="98" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
-<line x1="82" y1="98" x2="82" y2="248" stroke="rgba(0,0,0,0.2)" stroke-width="1.5"/>
-<line x1="138" y1="98" x2="138" y2="248" stroke="rgba(0,0,0,0.2)" stroke-width="1.5"/>
+        <rect x="111" y="92" width="18" height="13" rx="2" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/>
+        <text x="120" y="101" text-anchor="middle" font-size="4.5" fill="rgba(255,255,255,0.25)" font-weight="bold">KIT</text>
 
-<!-- Crest -->
-<circle cx="91" cy="112" r="16" fill="rgba(200,160,32,0.12)" stroke="#c8a020" stroke-width="0.8"/>
-<text x="91" y="107" text-anchor="middle" font-size="6.5" fill="#c8a020" font-weight="bold" letter-spacing="0.5">UIJP</text>
-<text x="91" y="116" text-anchor="middle" font-size="4.5" fill="rgba(200,160,32,0.8)">DARWIN FC</text>
-<text x="91" y="124" text-anchor="middle" font-size="4" fill="rgba(200,160,32,0.5)">EST. 2001</text>
+        <rect x="76" y="138" width="48" height="20" rx="2.5" fill="rgba(200,160,32,0.06)" stroke="rgba(200,160,32,0.3)" stroke-width="0.7"/>
+        <text x="100" y="149" text-anchor="middle" font-size="7.5" fill="#c8a020" font-weight="bold" letter-spacing="1.5">PELOTES</text>
+        <text x="100" y="155" text-anchor="middle" font-size="4"   fill="rgba(200,160,32,0.45)" letter-spacing="1">MARSEC</text>
 
-<!-- Kit badge -->
-<rect x="122" y="100" width="20" height="14" rx="2" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.12)" stroke-width="0.5"/>
-<text x="132" y="110" text-anchor="middle" font-size="5" fill="rgba(255,255,255,0.3)" font-weight="bold">KIT</text>
+        <path d="M52,207 L52,210 L148,210 L148,207" fill="none" stroke="rgba(200,160,32,0.25)" stroke-width="1"/>
+        <ellipse cx="100" cy="214" rx="48" ry="4" fill="rgba(0,0,0,0.35)"/>
+      </svg>
+    </div>
+    <div class="swatches">
+      <div class="swatch" style="background:#1a5c38;"></div>
+      <div class="swatch" style="background:#0d1e3d;"></div>
+      <div class="swatch" style="background:#c8a020;"></div>
+    </div>
+    <div class="kit-name" style="font-size:8px;color:rgba(255,255,255,0.18);">Galápagos Green · Navy · Gold</div>
+  </div>
 
-<!-- Sponsor -->
-<rect x="84" y="148" width="52" height="22" rx="3" fill="rgba(200,160,32,0.08)" stroke="rgba(200,160,32,0.35)" stroke-width="0.8"/>
-<text x="110" y="160" text-anchor="middle" font-size="8" fill="#c8a020" font-weight="bold" letter-spacing="2">PELOTES</text>
-<text x="110" y="167" text-anchor="middle" font-size="5" fill="rgba(200,160,32,0.5)" letter-spacing="1">MARSEC</text>
+  <!-- ─── GOALKEEPER ─── -->
+  <div class="kit-card">
+    <div class="kit-name">Goalkeeper Kit</div>
+    <div class="jersey-wrap">
+      <svg width="200" height="230" viewBox="0 0 200 230" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="gb" cx="38%" cy="28%" r="70%">
+            <stop offset="0%"   stop-color="#dbb828"/>
+            <stop offset="50%"  stop-color="#c8a020"/>
+            <stop offset="100%" stop-color="#7a6010"/>
+          </radialGradient>
+          <linearGradient id="gsl" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%"   stop-color="#d4aa22"/>
+            <stop offset="100%" stop-color="#8a6a0e"/>
+          </linearGradient>
+          <linearGradient id="gsr" x1="100%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%"   stop-color="#d4aa22"/>
+            <stop offset="100%" stop-color="#8a6a0e"/>
+          </linearGradient>
+          <linearGradient id="ggp" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%"   stop-color="#1e3360"/>
+            <stop offset="100%" stop-color="#060e1e"/>
+          </linearGradient>
+          <linearGradient id="ghi" x1="30%" y1="0%" x2="60%" y2="100%">
+            <stop offset="0%"   stop-color="rgba(255,255,255,0.16)"/>
+            <stop offset="35%"  stop-color="rgba(255,255,255,0.05)"/>
+            <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
+          </linearGradient>
+          <pattern id="diamg" x="0" y="0" width="16" height="16" patternUnits="userSpaceOnUse">
+            <path d="M8,0 L16,8 L8,16 L0,8 Z" fill="none" stroke="rgba(0,0,0,0.18)" stroke-width="0.7"/>
+          </pattern>
+          <clipPath id="gbc">
+            <path d="M62,38 L30,82 L52,92 L52,210 L148,210 L148,92 L170,82 L138,38 Q118,28 100,28 Q82,28 62,38Z"/>
+          </clipPath>
+        </defs>
 
-<!-- Shorts — green -->
-<path d="M66,248 L66,298 L106,298 Q110,284 114,298 L154,298 L154,248 Z" fill="url(#a-shorts)"/>
-<path d="M66,248 L66,298 L75,298 L75,248 Z" fill="url(#a-panel)" opacity="0.9"/>
-<path d="M145,248 L145,298 L154,298 L154,248 Z" fill="url(#a-panel-r)" opacity="0.9"/>
-<rect x="66" y="247" width="88" height="8" fill="#0a2218" rx="1"/>
-<rect x="66" y="247" width="88" height="3" fill="rgba(200,160,32,0.3)" rx="1"/>
-<line x1="110" y1="250" x2="110" y2="298" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+        <path d="M62,38 L30,82 L52,92 L72,52 Z" fill="url(#gsl)"/>
+        <path d="M62,38 L30,82 L33,84 L65,40 Z" fill="rgba(255,255,255,0.1)"/>
+        <path d="M32,80 L44,96 L52,92 L40,76 Z" fill="#0d1e3d"/>
+        <path d="M35,86 L47,102 L52,99 L40,83 Z" fill="#1a5c38"/>
 
-<!-- Socks — green/gold -->
-<rect x="74" y="298" width="22" height="12" rx="2" fill="#1a5c38"/>
-<rect x="74" y="298" width="22" height="3" fill="#c8a020" rx="1"/>
-<rect x="74" y="301" width="22" height="2" fill="#0d1e3d"/>
-<rect x="124" y="298" width="22" height="12" rx="2" fill="#1a5c38"/>
-<rect x="124" y="298" width="22" height="3" fill="#c8a020" rx="1"/>
-<rect x="124" y="301" width="22" height="2" fill="#0d1e3d"/>
+        <path d="M138,38 L170,82 L148,92 L128,52 Z" fill="url(#gsr)"/>
+        <path d="M168,80 L156,96 L148,92 L160,76 Z" fill="#0d1e3d"/>
+        <path d="M165,86 L153,102 L148,99 L160,83 Z" fill="#1a5c38"/>
 
-</svg>
-<div class="kit-label">Away Kit</div>
-</div>
+        <path d="M72,52 L52,92 L52,210 L148,210 L148,92 L128,52 Q114,42 100,40 Q86,42 72,52 Z" fill="url(#gb)"/>
+        <rect x="0" y="0" width="200" height="230" fill="url(#diamg)" clip-path="url(#gbc)"/>
 
-<!-- ══════════════ GOALKEEPER KIT ══════════════ -->
-<div class="kit-item">
-<svg class="kit-shadow" width="220" height="310" viewBox="0 0 220 310">
-<defs>
-  <linearGradient id="g-body" x1="0%" y1="0%" x2="100%" y2="100%">
-    <stop offset="0%"   stop-color="#d4a820"/>
-    <stop offset="50%"  stop-color="#c8a020"/>
-    <stop offset="100%" stop-color="#9a7810"/>
-  </linearGradient>
-  <linearGradient id="g-panel" x1="0%" y1="0%" x2="100%" y2="0%">
-    <stop offset="0%" stop-color="#0d1e3d"/>
-    <stop offset="100%" stop-color="#162850"/>
-  </linearGradient>
-  <linearGradient id="g-panel-r" x1="0%" y1="0%" x2="100%" y2="0%">
-    <stop offset="0%" stop-color="#162850"/>
-    <stop offset="100%" stop-color="#0d1e3d"/>
-  </linearGradient>
-  <linearGradient id="g-sheen" x1="15%" y1="0%" x2="85%" y2="100%">
-    <stop offset="0%"  stop-color="rgba(255,255,255,0.14)"/>
-    <stop offset="40%" stop-color="rgba(255,255,255,0.04)"/>
-    <stop offset="100%" stop-color="rgba(0,0,0,0.15)"/>
-  </linearGradient>
-  <linearGradient id="g-shorts" x1="0%" y1="0%" x2="100%" y2="100%">
-    <stop offset="0%"   stop-color="#0d1e3d"/>
-    <stop offset="100%" stop-color="#060f20"/>
-  </linearGradient>
-  <!-- Diamond pattern for GK -->
-  <pattern id="diamond-g" x="0" y="0" width="18" height="18" patternUnits="userSpaceOnUse">
-    <path d="M9,0 L18,9 L9,18 L0,9 Z" fill="none" stroke="rgba(0,0,0,0.2)" stroke-width="0.7"/>
-  </pattern>
-  <clipPath id="g-body-clip">
-    <path d="M68,42 L42,90 L60,98 L60,248 L160,248 L160,98 L178,90 L152,42 L130,32 Q110,24 90,32 Z"/>
-  </clipPath>
-</defs>
+        <path d="M52,92 L52,210 L74,210 L74,92 Z" fill="url(#ggp)"/>
+        <path d="M126,92 L126,210 L148,210 L148,92 Z" fill="url(#ggp)"/>
 
-<!-- Sleeves -->
-<path d="M68,42 L42,90 L60,98 L76,60 Z" fill="url(#g-body)"/>
-<path d="M152,42 L178,90 L160,98 L144,60 Z" fill="url(#g-body)"/>
+        <path d="M72,52 L52,92 L52,210 L148,210 L148,92 L128,52 Q114,42 100,40 Q86,42 72,52 Z" fill="url(#ghi)"/>
 
-<!-- Body -->
-<path d="M76,60 L60,98 L60,248 L160,248 L160,98 L144,60 L130,32 Q110,24 90,32 Z" fill="url(#g-body)"/>
+        <line x1="74" y1="92" x2="74" y2="210" stroke="rgba(0,0,0,0.2)" stroke-width="1.2"/>
+        <line x1="126" y1="92" x2="126" y2="210" stroke="rgba(0,0,0,0.2)" stroke-width="1.2"/>
 
-<!-- Diamond pattern -->
-<rect x="0" y="0" width="220" height="310" fill="url(#diamond-g)" clip-path="url(#g-body-clip)"/>
+        <!-- Collar — navy collar, gold inner -->
+        <path d="M83,36 Q100,28 117,36 L113,50 Q100,44 87,50 Z" fill="#0d1e3d"/>
+        <path d="M87,50 Q100,44 113,50 L111,57 Q100,52 89,57 Z" fill="#c8a020"/>
+        <path d="M96,52 L100,62 L104,52" fill="rgba(0,0,0,0.3)"/>
+        <path d="M83,36 Q100,28 100,28 L100,30 Q88,30 85,40 Z" fill="rgba(255,255,255,0.08)"/>
 
-<!-- Navy side panels -->
-<path d="M60,98 L60,248 L82,248 L82,98 Z" fill="url(#g-panel)"/>
-<path d="M138,98 L138,248 L160,248 L160,98 Z" fill="url(#g-panel-r)"/>
+        <line x1="72" y1="52" x2="52" y2="92" stroke="rgba(0,0,0,0.1)" stroke-width="1"/>
+        <line x1="128" y1="52" x2="148" y2="92" stroke="rgba(0,0,0,0.1)" stroke-width="1"/>
 
-<!-- Sheen -->
-<path d="M76,60 L60,98 L60,248 L160,248 L160,98 L144,60 L130,32 Q110,24 90,32 Z" fill="url(#g-sheen)"/>
+        <circle cx="82" cy="102" r="15" fill="rgba(13,30,61,0.15)" stroke="#0d1e3d" stroke-width="0.8"/>
+        <text x="82" y="97"  text-anchor="middle" font-size="6"   fill="#0d1e3d" font-weight="bold" letter-spacing="0.5">UIJP</text>
+        <text x="82" y="105" text-anchor="middle" font-size="4.2" fill="rgba(13,30,61,0.8)">DARWIN FC</text>
+        <text x="82" y="113" text-anchor="middle" font-size="3.5" fill="rgba(13,30,61,0.5)">EST. 2001</text>
 
-<!-- Cuffs — navy + green -->
-<path d="M44,84 L52,100 L63,96 L55,80 Z" fill="#0d1e3d" opacity="0.9"/>
-<path d="M176,84 L168,100 L157,96 L165,80 Z" fill="#0d1e3d" opacity="0.9"/>
-<path d="M47,91 L55,107 L60,105 L52,89 Z" fill="#1a5c38" opacity="0.85"/>
-<path d="M173,91 L165,107 L160,105 L168,89 Z" fill="#1a5c38" opacity="0.85"/>
+        <rect x="111" y="92" width="18" height="13" rx="2" fill="rgba(0,0,0,0.08)" stroke="rgba(0,0,0,0.15)" stroke-width="0.5"/>
+        <text x="120" y="101" text-anchor="middle" font-size="4.5" fill="rgba(13,30,61,0.4)" font-weight="bold">KIT</text>
 
-<!-- Collar — navy with green inner -->
-<path d="M90,32 Q110,24 130,32 L126,44 Q110,38 94,44 Z" fill="#0d1e3d"/>
-<path d="M94,44 Q110,38 126,44 L124,50 Q110,45 96,50 Z" fill="#c8a020"/>
-<path d="M104,46 L110,56 L116,46" fill="#c8a020" stroke="#0d1e3d" stroke-width="1.5"/>
+        <rect x="76" y="138" width="48" height="20" rx="2.5" fill="rgba(13,30,61,0.08)" stroke="rgba(13,30,61,0.3)" stroke-width="0.7"/>
+        <text x="100" y="149" text-anchor="middle" font-size="7.5" fill="#0d1e3d" font-weight="bold" letter-spacing="1.5">PELOTES</text>
+        <text x="100" y="155" text-anchor="middle" font-size="4"   fill="rgba(13,30,61,0.5)" letter-spacing="1">MARSEC</text>
 
-<!-- Seams -->
-<line x1="68" y1="44" x2="60" y2="98" stroke="rgba(0,0,0,0.15)" stroke-width="1"/>
-<line x1="152" y1="44" x2="160" y2="98" stroke="rgba(0,0,0,0.15)" stroke-width="1"/>
-<line x1="82" y1="98" x2="82" y2="248" stroke="rgba(0,0,0,0.2)" stroke-width="1.5"/>
-<line x1="138" y1="98" x2="138" y2="248" stroke="rgba(0,0,0,0.2)" stroke-width="1.5"/>
+        <!-- Number watermark -->
+        <text x="100" y="200" text-anchor="middle" font-size="50" fill="rgba(0,0,0,0.1)" font-weight="bold" font-family="Arial">1</text>
 
-<!-- Crest -->
-<circle cx="91" cy="112" r="16" fill="rgba(13,30,61,0.2)" stroke="#0d1e3d" stroke-width="0.8"/>
-<text x="91" y="107" text-anchor="middle" font-size="6.5" fill="#0d1e3d" font-weight="bold" letter-spacing="0.5">UIJP</text>
-<text x="91" y="116" text-anchor="middle" font-size="4.5" fill="rgba(13,30,61,0.8)">DARWIN FC</text>
-<text x="91" y="124" text-anchor="middle" font-size="4" fill="rgba(13,30,61,0.6)">EST. 2001</text>
-
-<!-- Kit badge -->
-<rect x="122" y="100" width="20" height="14" rx="2" fill="rgba(0,0,0,0.1)" stroke="rgba(0,0,0,0.2)" stroke-width="0.5"/>
-<text x="132" y="110" text-anchor="middle" font-size="5" fill="rgba(13,30,61,0.5)" font-weight="bold">KIT</text>
-
-<!-- Sponsor -->
-<rect x="84" y="148" width="52" height="22" rx="3" fill="rgba(13,30,61,0.1)" stroke="rgba(13,30,61,0.35)" stroke-width="0.8"/>
-<text x="110" y="160" text-anchor="middle" font-size="8" fill="#0d1e3d" font-weight="bold" letter-spacing="2">PELOTES</text>
-<text x="110" y="167" text-anchor="middle" font-size="5" fill="rgba(13,30,61,0.6)" letter-spacing="1">MARSEC</text>
-
-<!-- GK number 1 watermark -->
-<text x="110" y="215" text-anchor="middle" font-size="52" fill="rgba(0,0,0,0.08)" font-weight="bold">1</text>
-
-<!-- Shorts — navy -->
-<path d="M66,248 L66,298 L106,298 Q110,284 114,298 L154,298 L154,248 Z" fill="url(#g-shorts)"/>
-<path d="M66,248 L66,298 L75,298 L75,248 Z" fill="#c8a020" opacity="0.7"/>
-<path d="M145,248 L145,298 L154,298 L154,248 Z" fill="#c8a020" opacity="0.7"/>
-<rect x="66" y="247" width="88" height="8" fill="#060f20" rx="1"/>
-<rect x="66" y="247" width="88" height="3" fill="rgba(200,160,32,0.4)" rx="1"/>
-
-<!-- Socks — gold/navy -->
-<rect x="74" y="298" width="22" height="12" rx="2" fill="#c8a020"/>
-<rect x="74" y="298" width="22" height="3" fill="#0d1e3d" rx="1"/>
-<rect x="74" y="301" width="22" height="2" fill="#1a5c38"/>
-<rect x="124" y="298" width="22" height="12" rx="2" fill="#c8a020"/>
-<rect x="124" y="298" width="22" height="3" fill="#0d1e3d" rx="1"/>
-<rect x="124" y="301" width="22" height="2" fill="#1a5c38"/>
-
-</svg>
-<div class="kit-label">Goalkeeper Kit</div>
-</div>
+        <path d="M52,207 L52,210 L148,210 L148,207" fill="none" stroke="rgba(13,30,61,0.4)" stroke-width="1"/>
+        <ellipse cx="100" cy="214" rx="48" ry="4" fill="rgba(0,0,0,0.35)"/>
+      </svg>
+    </div>
+    <div class="swatches">
+      <div class="swatch" style="background:#c8a020;"></div>
+      <div class="swatch" style="background:#0d1e3d;"></div>
+      <div class="swatch" style="background:#1a5c38;"></div>
+    </div>
+    <div class="kit-name" style="font-size:8px;color:rgba(255,255,255,0.18);">Gold · Navy · Galápagos Green</div>
+  </div>
 
 </div>
 
-<div style="margin-top:48px;font-size:9px;letter-spacing:3px;color:rgba(255,255,255,0.12);text-align:center;">
-  JUAN PELOTES DARWIN FC &bull; LOS TORTUGAS &bull; ISABELA ISLAND, GALÁPAGOS &bull; 2026/27
+<div style="margin-top:52px;font-size:8px;letter-spacing:4px;color:rgba(255,255,255,0.1);text-align:center;">
+  JUAN PELOTES DARWIN FC &nbsp;·&nbsp; LOS TORTUGAS &nbsp;·&nbsp; ISABELA ISLAND, GALÁPAGOS &nbsp;·&nbsp; 2026/27
 </div>
 
 </body>
