@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Forgotten Theorist Who Understood Power Better Than Anyone",
+    date: "2026-04-18",
+    category: "History",
+    excerpt: "In 1377, a North African scholar named Ibn Khaldun sat in a remote fortress in what is now Algeria and wrote what he called a mere introduction to a larger history. That introduction — the Muqaddimah — turned out to be one of the most extraordinary w...",
+    url: "essays/2026-04-18-the-forgotten-theorist-who-understood-power-better-than-anyo.html"
+  },
+  {
     title: "The Line That Wasn't: Sykes-Picot and the Convenient Myth of the Artificial Border",
     date: "2026-04-17",
     category: "History",
