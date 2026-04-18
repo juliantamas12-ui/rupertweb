@@ -561,11 +561,6 @@ const state = {
   eruptionDuration: 0,     // frames remaining in active eruption
   lavaBombs: [],           // [{x, y, vx, vy, life, maxLife, landed, landTimer}]
 
-  // === LIGHTNING STORM SYSTEM ===
-  lightningBolts: [],      // active on-screen lightning bolts [{x, y, life, maxLife, segs}]
-  lightningTimer: 600,     // countdown frames before next lightning check
-  lightningFlash: 0,       // brief screen-flash frames after a strike
-
   // === STORM SURGE EVENT ===
   surgePhase: 0,           // 0=dormant, 1=warning, 2=active, 3=receding
   surgeTimer: 60*60*(5 + Math.random()*4), // first surge in 5-9 in-game minutes
@@ -5018,19 +5013,6 @@ SFX.bloodMoonFade = () => {
   playSynth({type:'sine', freq:220, decay:1.8, pitchDrop:0.8, vol:0.15});
 };
 
-// Lightning strike — instant electric crack + rolling thunder boom
-SFX.lightningStrike = function() {
-  // Instantaneous high-freq crack
-  playSynth({type:'sawtooth', freq:1200, decay:0.04, pitchDrop:0.08, vol:0.55});
-  playSynth({type:'square',   freq:440,  decay:0.03, pitchDrop:0.05, vol:0.35});
-  // Rolling thunder ~80ms later
-  setTimeout(() => {
-    playSynth({type:'sine',     freq:58,  decay:3.0, pitchDrop:0.30, vol:0.45});
-    playSynth({type:'sine',     freq:38,  decay:2.2, pitchDrop:0.35, vol:0.30});
-    playSynth({type:'triangle', freq:90,  decay:1.5, pitchDrop:0.40, vol:0.18});
-  }, 80);
-};
-
 // ============================================================
 // RAIN & STORM VISUAL SYSTEM
 // ============================================================
@@ -9372,9 +9354,6 @@ function render(ctx, minimapCtx) {
   window._rainCanvasH = canvas.height;
   drawRain(ctx);
 
-  // Lightning bolts during storms (drawn after rain, before HUD)
-  drawLightning(ctx, camX, camY);
-
   // Floating damage numbers
   updateFloatingTexts();
   drawFloatingTexts(ctx, camX, camY);
@@ -13105,167 +13084,6 @@ function drawBonePile(ctx, tsx, tsy, size) {
 // END SHIP/CAVE SYSTEMS
 // ============================================================
 
-// ============================================================
-// LIGHTNING STRIKE SYSTEM — only fires during storm weather
-// ============================================================
-
-function updateLightning() {
-  if (!state.running || state.underground) return;
-  const forecast = (state.weatherForecast && state.weatherForecastIdx !== undefined)
-    ? state.weatherForecast[state.weatherForecastIdx] : 'clear';
-  // Active during storm forecast OR during rain in storm season
-  const isStormy = (forecast === 'storm') || (state.weatherRain && state.season === 2);
-
-  // Decay existing bolts
-  state.lightningBolts = state.lightningBolts.filter(b => { b.life--; return b.life > 0; });
-  if (state.lightningFlash > 0) state.lightningFlash--;
-
-  if (!isStormy) return;
-
-  // Cooldown between strikes (15-40 real seconds during storm)
-  if (state.lightningTimer > 0) { state.lightningTimer--; return; }
-  // Low-probability gate so not every storm frame fires
-  if (Math.random() > 0.018) return;
-
-  // Reset cooldown for next strike
-  state.lightningTimer = 60 * (15 + Math.random() * 25);
-
-  const p = state.player;
-  const strikeWX = p.x + (Math.random() - 0.5) * 720;
-  const strikeWY = p.y + (Math.random() - 0.5) * 520;
-
-  // Build zigzag bolt path from high above to ground
-  const segCount = 8 + Math.floor(Math.random() * 5);
-  const segs = [];
-  let sx2 = strikeWX + (Math.random() - 0.5) * 60;
-  let sy2 = strikeWY - 400;
-  for (let li = 0; li <= segCount; li++) {
-    const t = li / segCount;
-    const nx2 = strikeWX + (Math.random() - 0.5) * (80 * (1 - t * 0.6));
-    const ny2 = strikeWY - 400 + t * 440;
-    segs.push({ x: sx2, y: sy2, nx: nx2, ny: ny2 });
-    sx2 = nx2; sy2 = ny2;
-  }
-  state.lightningBolts.push({ x: strikeWX, y: strikeWY, life: 14, maxLife: 14, segs });
-  state.lightningFlash = 7;
-
-  SFX.lightningStrike && SFX.lightningStrike();
-  state.screenShake = Math.max(state.screenShake, 9);
-
-  // Damage enemies within 80px of strike point
-  const _ltTargets = [
-    ...state.enemies,
-    ...(state.chief ? [state.chief] : []),
-    ...(state.raid || []),
-    ...state.creatures.filter(c => c.type !== 'crab'),
-    ...(state.bountyHunterActive && state.bountyHunter ? [state.bountyHunter] : []),
-  ];
-  let _ltHit = false;
-  _ltTargets.forEach(e => {
-    if (Math.hypot(e.x - strikeWX, e.y - strikeWY) < 80) {
-      e.hp -= 30;
-      if (e.hitFlash !== undefined) e.hitFlash = 12;
-      addFloatingText(e.x, e.y - 20, '-30 LIGHTNING!', '#aaccff');
-      spawnParticles(e.x, e.y, '#aaccff', 8);
-      _ltHit = true;
-    }
-  });
-  if (_ltHit) showMsg('LIGHTNING STRIKE — enemy hit!', '#aaccff');
-
-  // Player damage if very close to strike
-  const _ltPlayerDist = Math.hypot(p.x - strikeWX, p.y - strikeWY);
-  if (_ltPlayerDist < 60) {
-    const _ltDmg = 22;
-    p.hp = Math.max(0, p.hp - _ltDmg);
-    p.hitFlash = 12;
-    addFloatingText(p.x, p.y - 30, '-22 LIGHTNING!', '#aaccff');
-    showMsg('STRUCK BY LIGHTNING! Find shelter!', '#aaccff');
-    state.lastDamageCause = 'lightning strike';
-    if (state.runStats) state.runStats.damageTaken += _ltDmg;
-    SFX.hurt && SFX.hurt();
-    if (navigator.vibrate) navigator.vibrate([40, 20, 80]);
-  } else if (_ltPlayerDist < 240) {
-    showMsg('Lightning crackles nearby — seek cover!', '#8899cc');
-  }
-
-  // Leave a brief fire tile at the strike point
-  if (!state.fireTiles) state.fireTiles = [];
-  state.fireTiles.push({ x: strikeWX, y: strikeWY, timer: 240 });
-  // 35% chance to ignite a second tile (simulates a tree or brush catching)
-  if (Math.random() < 0.35) {
-    state.fireTiles.push({
-      x: strikeWX + (Math.random() - 0.5) * 36,
-      y: strikeWY + (Math.random() - 0.5) * 36,
-      timer: 300,
-    });
-  }
-  spawnParticles(strikeWX, strikeWY, '#ffffff', 16);
-  spawnParticles(strikeWX, strikeWY, '#aaccff', 10);
-}
-
-function drawLightning(ctx, camX, camY) {
-  if (!state.lightningBolts || state.lightningBolts.length === 0) {
-    // Still draw flash even if bolt already faded
-    if (state.lightningFlash > 0) {
-      const fa = (state.lightningFlash / 7) * 0.55;
-      ctx.fillStyle = `rgba(210,225,255,${fa})`;
-      ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    }
-    return;
-  }
-  ctx.save();
-  state.lightningBolts.forEach(bolt => {
-    const alpha = bolt.life / bolt.maxLife;
-    const bsx = bolt.x - camX;
-    const bsy = bolt.y - camY;
-    if (bsx < -500 || bsx > ctx.canvas.width + 500) return;
-
-    // Wide glowing outer pass
-    ctx.lineWidth = 7;
-    ctx.strokeStyle = `rgba(160,185,255,${alpha * 0.45})`;
-    ctx.shadowColor = `rgba(100,150,255,${alpha * 0.85})`;
-    ctx.shadowBlur = 24;
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    bolt.segs.forEach((seg, i) => {
-      if (i === 0) ctx.moveTo(seg.x - camX, seg.y - camY);
-      ctx.lineTo(seg.nx - camX, seg.ny - camY);
-    });
-    ctx.stroke();
-
-    // Bright white inner core
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = `rgba(230,242,255,${alpha * 0.95})`;
-    ctx.shadowBlur = 10;
-    ctx.beginPath();
-    bolt.segs.forEach((seg, i) => {
-      if (i === 0) ctx.moveTo(seg.x - camX, seg.y - camY);
-      ctx.lineTo(seg.nx - camX, seg.ny - camY);
-    });
-    ctx.stroke();
-
-    // Radial glow at ground impact point
-    ctx.shadowBlur = 0;
-    const grd = ctx.createRadialGradient(bsx, bsy, 0, bsx, bsy, 42);
-    grd.addColorStop(0, `rgba(200,220,255,${alpha * 0.80})`);
-    grd.addColorStop(0.5, `rgba(120,160,255,${alpha * 0.35})`);
-    grd.addColorStop(1, 'rgba(80,120,255,0)');
-    ctx.fillStyle = grd;
-    ctx.beginPath();
-    ctx.arc(bsx, bsy, 42, 0, Math.PI * 2);
-    ctx.fill();
-  });
-  ctx.shadowBlur = 0;
-  ctx.restore();
-
-  // Full-screen white flash overlay
-  if (state.lightningFlash > 0) {
-    const fa = (state.lightningFlash / 7) * 0.55;
-    ctx.fillStyle = `rgba(210,225,255,${fa})`;
-    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-  }
-}
-
 function gameLoopWithUI() {
   if (!state.running && !state.cutscenePlaying) return;
   requestAnimationFrame(gameLoopWithUI);
@@ -13315,7 +13133,6 @@ function gameLoopWithUI() {
   if (state.frameCount % 2 === 0) updateWorldEvents();
   updateBirdsAndFootprints();
   updateRain();
-  updateLightning();
   if (state.frameCount % 4 === 0) updateCrabs();
   if (state.frameCount % 30 === 0 && typeof updateSeaCreatures === "function") updateSeaCreatures();
   updateLivingIsland();
