@@ -278,7 +278,27 @@ const SCHOOL_TASKS = [
   { subject: "Latin 7", title: "Principal Parts 8", due: "2026-04-17", time: "12:35 PM", status: "done", type: "Formative" },
   { subject: "Latin 7", title: "Reading: ad Urbem", due: "2026-04-17", time: "1:35 PM", status: "done", type: "Formative" },
   { subject: "History/Geography 7", title: "Substitution Work 3: Complete the tasks in the slides", due: "2026-04-17", time: "4:25 PM", status: "done", type: "Summative" },
-  // Last updated: 2026-04-18 via ManageBac scraper (added Apr 16 Classwork Science 7 + Apr 17 Reading: ad Urbem; Apr 17 tasks marked done)
+  // --- Mon Apr 20 ---
+  { subject: "Math 8", title: "Math 8: Unit 6 Quiz", due: "2026-04-20", time: "8:30 AM", status: "done", type: "Summative" },
+  { subject: "Math 8", title: "Math 8: Unit 6 Quiz Review", due: "2026-04-20", time: "8:30 AM", status: "done", type: "Classwork" },
+  { subject: "German 7", title: "Ruhrgebiet_Stadt-Präsentation_Rasmus-Text", due: "2026-04-20", time: "10:30 AM", status: "done", type: "Formative" },
+  { subject: "History/Geography 7", title: "Substitution Work 4: Complete the tasks on the slides", due: "2026-04-20", time: "6:25 PM", status: "done", type: "Summative" },
+  // --- Tue Apr 21 ---
+  { subject: "Italian", title: "Compiti", due: "2026-04-21", time: "All Day", status: "pending", type: "Formative" },
+  { subject: "Latin 7", title: "Quiz: Irregular Comparatives & Superlatives", due: "2026-04-21", time: "12:35 PM", status: "pending", type: "Formative" },
+  // --- Wed Apr 22 ---
+  { subject: "German 7", title: "Test_A1_Kap 11_Meine Stadt", due: "2026-04-22", time: "10:40 AM", status: "pending", type: "Summative" },
+  // --- Thu Apr 23 ---
+  { subject: "Italian", title: "Orale individuale", due: "2026-04-23", time: "All Day", status: "pending", type: "Summative" },
+  { subject: "Math 7", title: "Math 7 (HW/Review)", due: "2026-04-23", time: "12:35 PM", status: "pending", type: "Formative" },
+  { subject: "Math 7", title: "Math 7 (Summative)", due: "2026-04-23", time: "1:30 PM", status: "pending", type: "Summative" },
+  { subject: "History/Geography 7", title: "Substition work 2: Complete the tasks on the slides", due: "2026-04-23", time: "4:20 PM", status: "pending", type: "Summative" },
+  { subject: "History/Geography 7", title: "Substitution 5: Complete the tasks on the slides", due: "2026-04-23", time: "4:25 PM", status: "pending", type: "Summative" },
+  // --- Fri Apr 24 ---
+  { subject: "Italian", title: "Compiti", due: "2026-04-24", time: "All Day", status: "pending", type: "Formative" },
+  { subject: "Italian", title: "Orale individuale", due: "2026-04-24", time: "All Day", status: "pending", type: "Summative" },
+  { subject: "History/Geography 7", title: "Substitution work 6: Complete the work on the slides", due: "2026-04-24", time: "3:30 PM", status: "pending", type: "Summative" },
+  // Last updated: 2026-04-20 via ManageBac scraper (added Apr 20-24 tasks from weekly calendar)
 ];
 
 
