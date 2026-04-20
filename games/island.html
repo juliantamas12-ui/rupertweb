@@ -178,9 +178,6 @@ canvas#c{pointer-events:none}
 .inv-slot-themed .count{color:#e8d490;font-size:14px;font-weight:700;font-family:'Courier New'}
 
 /* ── OVERLAY (start/death) ── */
-#overlay{position:fixed;inset:0;background:radial-gradient(ellipse at center,rgba(28,10,4,0.98) 0%,rgba(8,4,2,0.99) 100%);z-index:200;display:none!important;flex-direction:column;align-items:center;justify-content:center;color:#f0e0b0;pointer-events:all;touch-action:manipulation}
-#overlay h1{color:#c8d060;font-size:26px;letter-spacing:6px;margin-bottom:8px;text-shadow:0 0 28px rgba(200,210,50,0.35);font-family:'Cinzel',serif;font-weight:600}
-#overlay .subtitle{color:#8a7030;font-size:11px;letter-spacing:4px;margin-bottom:30px;font-family:'Lato',sans-serif}
 .slide-box{
   max-width:560px;text-align:center;padding:22px 32px;
   background:
@@ -214,14 +211,10 @@ canvas#c{pointer-events:none}
 #controls-hint{position:fixed;bottom:60px;left:10px;font-size:10px;line-height:1.8;pointer-events:none;z-index:5;font-family:'Lato',sans-serif;background:rgba(240,224,176,0.15);padding:6px 10px;border:1px solid rgba(200,168,100,0.3);border-radius:8px;color:rgba(240,224,176,0.6)}
 @media(max-width:767px){#controls-hint{display:none}}
 /* ── FORCE-HIDE START SCREENS & MOBILE UI ON DESKTOP ── */
-#char-creator,#overlay{display:none !important}
-@media(min-width:768px){#touch-controls,#joystick-zone,#btn-zone,#joystick-canvas{display:none !important}}
+#char-creator,@media(min-width:768px){#touch-controls,#joystick-zone,#btn-zone,#joystick-canvas{display:none !important}}
 @media(min-width:769px){#touch-controls{display:none !important}#joystick-zone{display:none !important}#btn-zone{display:none !important}#joystick-canvas{display:none !important}}
 
 /* ── CHARACTER CREATOR ── */
-#char-creator{position:fixed;inset:0;background:rgba(20,8,2,0.98);z-index:250;display:none!important;flex-direction:column;align-items:center;justify-content:center;color:#f0e0b0;font-family:'Lato',sans-serif;pointer-events:all;touch-action:manipulation;overflow:hidden}
-#char-creator h1{color:#e8d49a;font-family:'Cinzel',serif;font-size:22px;letter-spacing:6px;margin-bottom:4px;text-shadow:0 0 20px rgba(200,168,100,0.4)}
-#char-creator .cc-sub{color:#a08040;font-family:'Lato',sans-serif;font-size:11px;letter-spacing:4px;margin-bottom:28px}
 .cc-card{background:linear-gradient(160deg,#3d2010 0%,#2a1508 100%);border:2px solid #8b6020;box-shadow:inset 0 1px 0 rgba(255,220,100,0.1);padding:20px 28px;display:flex;gap:32px;align-items:flex-start;max-width:640px;width:100%;border-radius:14px}
 .cc-preview-wrap{display:flex;flex-direction:column;align-items:center;gap:8px}
 #cc-preview{image-rendering:pixelated;border:2px solid #8b6020;background:#1a0c04;border-radius:6px}
@@ -416,8 +409,6 @@ canvas#c{pointer-events:none}
 // ISLAND SURVIVAL v4 — Full game state and constants
 // ============================================================
 
-// Global overlay dismiss - called by HTML onclick attributes
-function startScreenClick(){['char-creator','overlay','start-screen'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.cssText='display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;';});}
 
 const TSIZE = 16;
 const MSIZE = 150;
@@ -2987,7 +2978,7 @@ const ACHIEVEMENTS = [
   try {
     state.unlockedAchievements = new Set(JSON.parse(localStorage.getItem('island_achievements')||'[]'));
     state.deathGhosts = JSON.parse(localStorage.getItem('island_deaths')||'[]').slice(0,5);
-  } catch(e) {}
+  } catch(e){_logError('catch',e);}
 })();
 
 function calculateScore() {
@@ -3011,7 +3002,7 @@ function saveRunToLeaderboard(score, endingType) {
     runs.push({ score, ending: endingType, days: state.day, ts: Date.now() });
     runs.sort((a,b) => b.score - a.score);
     localStorage.setItem('island_runs', JSON.stringify(runs.slice(0,5)));
-  } catch(e) {}
+  } catch(e){_logError('catch',e);}
 }
 
 function renderLeaderboard() {
@@ -3305,7 +3296,7 @@ function updateEnemies() {
     }
 
     // Campfire repels shadow warriors
-    const campfires = state.objects.filter(o => o.placed && o.type === 'campfire');
+    const campfires = _getPlacedCampfires();
     const nearCampfire = campfires.some(cf => Math.hypot(p.x-cf.x, p.y-cf.y) < 80);
     const shadowBlockedByCampfire = e.type === 'shadow' && nearCampfire && dist < 60;
 
@@ -4490,7 +4481,7 @@ window.SFX = (() => {
       gainNode.gain.exponentialRampToValueAtTime(0.001, c.currentTime + dur);
       osc.start(c.currentTime);
       osc.stop(c.currentTime + dur);
-    } catch(e) {}
+    } catch(e){_logError('catch',e);}
   }
 
   function _noise(gainVal, dur, filterFreq) {
@@ -4514,7 +4505,7 @@ window.SFX = (() => {
       gainNode.connect(c.destination);
       src.start();
       src.stop(c.currentTime + dur);
-    } catch(e) {}
+    } catch(e){_logError('catch',e);}
   }
 
   return {
@@ -4788,7 +4779,7 @@ window.AMBIENT = (() => {
     try {
       gainNode.gain.cancelScheduledValues(_actx.currentTime);
       gainNode.gain.setTargetAtTime(target, _actx.currentTime, duration);
-    } catch(e) {}
+    } catch(e){_logError('catch',e);}
   }
 
   // Call each frame from the game loop — pass proximity values 0..1
@@ -4857,8 +4848,8 @@ function playSynth({type='sine', freq=440, decay=0.3, pitchDrop, pitchRise, vol=
     gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + decay);
     osc.start(ac.currentTime);
     osc.stop(ac.currentTime + decay + 0.05);
-    setTimeout(() => { try { ac.close(); } catch(e){} }, (decay + 0.1) * 1000);
-  } catch(e) {}
+    setTimeout(() => { try { ac.close(); } catch(e){_logError('catch',e);} }, (decay + 0.1) * 1000);
+  } catch(e){_logError('catch',e);}
 }
 
 // Add synthesized sounds to SFX
@@ -4918,7 +4909,7 @@ window.DRUMS = (() => {
       ng.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.03);
       ns.connect(ng); ng.connect(_gainNode || c.destination);
       ns.start(); ns.stop(c.currentTime + 0.04);
-    } catch(e) {}
+    } catch(e){_logError('catch',e);}
   }
 
   // Patterns: array of [beat offset (0-1 within bar), freq, gain, dur]
@@ -4969,7 +4960,7 @@ window.DRUMS = (() => {
     if (_gainNode) {
       try {
         _gainNode.gain.setTargetAtTime(desiredGain, getCtx().currentTime, 1.5);
-      } catch(e) {}
+      } catch(e){_logError('catch',e);}
     }
   }
 
@@ -5113,6 +5104,89 @@ function drawRain(ctx) {
 // ============================================================
 
 window.keys = {};
+// === ERROR RING BUFFER (diagnostic) ===
+// Previously many catch(e) blocks were silent. They now log here.
+window._islandErrors = window._islandErrors || [];
+window._logError = function(where, e) {
+  try {
+    const entry = {
+      where: String(where).slice(0, 60),
+      msg: (e && e.message ? String(e.message) : String(e)).slice(0, 200),
+      stack: (e && e.stack ? String(e.stack) : '').split('\n').slice(0, 3).join(' | ').slice(0, 300),
+      t: Date.now(),
+      frame: (typeof state !== 'undefined' && state && state.frameCount) || 0
+    };
+    window._islandErrors.push(entry);
+    if (window._islandErrors.length > 200) window._islandErrors.shift();
+  } catch (_) { /* never throw from logger */ }
+};
+// Inspect with: window._islandErrors in console
+// === OBJECT INDEX CACHE (performance) ===
+// Auto-invalidates when state.objects is mutated. Version-based so assignment
+// (state.objects = state.objects.filter(...)) also invalidates.
+state._objectsCacheVersion = 0;
+state._objectsCache = null;
+function _invalidateObjectsCache() { state._objectsCacheVersion++; state._objectsCache = null; }
+// Patch push/splice/pop to auto-invalidate
+(function() {
+  if (!state.objects.__cacheInstrumented) {
+    const origPush = state.objects.push;
+    state.objects.push = function() { _invalidateObjectsCache(); return origPush.apply(this, arguments); };
+    const origSplice = state.objects.splice;
+    state.objects.splice = function() { _invalidateObjectsCache(); return origSplice.apply(this, arguments); };
+    const origPop = state.objects.pop;
+    state.objects.pop = function() { _invalidateObjectsCache(); return origPop.apply(this, arguments); };
+    const origShift = state.objects.shift;
+    state.objects.shift = function() { _invalidateObjectsCache(); return origShift.apply(this, arguments); };
+    state.objects.__cacheInstrumented = true;
+  }
+})();
+// NOTE: assignments (state.objects = arr) DON'T preserve the instrumentation.
+// _getObjectsCache() handles this by checking a fingerprint too.
+function _getObjectsCache() {
+  // Fast path: cache valid if version+length+first match
+  const arr = state.objects;
+  if (!arr.__cacheInstrumented) {
+    // Re-instrument after assignment
+    _invalidateObjectsCache();
+    const origPush = arr.push;
+    arr.push = function() { _invalidateObjectsCache(); return origPush.apply(this, arguments); };
+    const origSplice = arr.splice;
+    arr.splice = function() { _invalidateObjectsCache(); return origSplice.apply(this, arguments); };
+    const origPop = arr.pop;
+    arr.pop = function() { _invalidateObjectsCache(); return origPop.apply(this, arguments); };
+    const origShift = arr.shift;
+    arr.shift = function() { _invalidateObjectsCache(); return origShift.apply(this, arguments); };
+    arr.__cacheInstrumented = true;
+  }
+  if (state._objectsCache && state._objectsCache._v === state._objectsCacheVersion && state._objectsCache._len === arr.length) {
+    return state._objectsCache;
+  }
+  const placed = [];
+  const placedByType = {};
+  for (let i = 0; i < arr.length; i++) {
+    const o = arr[i];
+    if (o && o.placed) {
+      placed.push(o);
+      const t = o.type;
+      if (!placedByType[t]) placedByType[t] = [];
+      placedByType[t].push(o);
+    }
+  }
+  state._objectsCache = { _v: state._objectsCacheVersion, _len: arr.length, placed, placedByType };
+  return state._objectsCache;
+}
+function _getPlacedCampfires() {
+  return _getObjectsCache().placedByType['campfire'] || [];
+}
+function _getPlacedObjects() {
+  return _getObjectsCache().placed;
+}
+function _getPlacedByType(t) {
+  return _getObjectsCache().placedByType[t] || [];
+}
+
+
 let mx = 0, my = 0;
 let mouseDown = false;
 
@@ -7950,7 +8024,7 @@ function drawMinimap(minimapCtx) {
 
   // Placed objects
   mc.fillStyle = '#c8f135';
-  state.objects.filter(o=>o.placed).forEach(o => {
+  _getPlacedObjects().forEach(o => {
     mc.fillRect(o.x/TSIZE*scale-1, o.y/TSIZE*scale-1, 3, 3);
   });
 
@@ -8587,7 +8661,7 @@ function render(ctx, minimapCtx) {
   });
 
   // Placed objects
-  state.objects.filter(o=>o.placed).forEach(obj => {
+  _getPlacedObjects().forEach(obj => {
     const sx = obj.x - camX, sy = obj.y - camY;
     if (sx < -50 || sx > canvas.width+50) return;
     drawPlacedObject(ctx, obj, sx, sy);
@@ -8990,7 +9064,7 @@ function render(ctx, minimapCtx) {
 
   // Campfire glow at night — warm golden radius, brighter when player is nearby
   if (state.isNight) {
-    state.objects.filter(o => o.placed && o.type === 'campfire').forEach(cf => {
+    _getPlacedCampfires().forEach(cf => {
       const cfsx = cf.x - camX, cfsy = cf.y - camY;
       if (cfsx < -140 || cfsx > canvas.width+140) return;
       const nearPlayer = Math.hypot(state.player.x - cf.x, state.player.y - cf.y) < 120;
@@ -9610,7 +9684,7 @@ function render(ctx, minimapCtx) {
       const _existing = JSON.parse(localStorage.getItem('island_deaths') || '[]');
       _existing.unshift(_deathData);
       localStorage.setItem('island_deaths', JSON.stringify(_existing.slice(0, 5)));
-    } catch(e2) {}
+    } catch(e2){_logError('catch',e2);}
     state.deathGhosts = [_deathData, ...(state.deathGhosts||[])].slice(0,5);
     // Clear inventory (keep equipped tools by zeroing consumables)
     const keepKeys = ['axe','pickaxe','sword','spear','fire_axe','fire_spear','torch','fishing_rod'];
@@ -12653,9 +12727,9 @@ window.addEventListener('DOMContentLoaded', () => {
   state.killStreak = 0; state.killStreakTimer = 0; state.frenzyActive = false; state.frenzyTimer = 0;
   state.dailyBounty = null; state.dailyBountyDay = 0;
   try { state.deathGhosts = JSON.parse(localStorage.getItem('island_deaths')||'[]').slice(0,5); } catch(e) { state.deathGhosts = []; }
-  try { state.unlockedAchievements = new Set(JSON.parse(localStorage.getItem('island_achievements')||'[]')); } catch(e) {}
+  try { state.unlockedAchievements = new Set(JSON.parse(localStorage.getItem('island_achievements')||'[]')); } catch(e){_logError('catch',e);}
   try { state.discoveredRecipes = new Set(JSON.parse(localStorage.getItem('island_recipes')||'[]')); } catch(e) { state.discoveredRecipes = new Set(); }
-  try { const sk = JSON.parse(localStorage.getItem('island_skills')||'null'); if(sk) state.skills = sk; } catch(e) {}
+  try { const sk = JSON.parse(localStorage.getItem('island_skills')||'null'); if(sk) state.skills = sk; } catch(e){_logError('catch',e);}
   genMap(); genObjects();
   state.underground = false;
   state.caveMapGenerated = false;
@@ -12679,11 +12753,6 @@ window.addEventListener('DOMContentLoaded', () => {
   setTimeout(() => {
     if (state.day === 1) showMsg('SAFE BEACH — Gather resources and prepare before venturing into the jungle', '#c8f135');
   }, 2000);
-  // Nuclear option: hide all possible overlay elements
-  ['char-creator','overlay','start-screen'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) { el.style.cssText = 'display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;'; }
-  });
   // Prevent scroll/zoom on canvas
   canvas.addEventListener('touchstart', e => e.preventDefault(), {passive: false});
   canvas.addEventListener('touchmove', e => e.preventDefault(), {passive: false});
@@ -13381,7 +13450,15 @@ function drawLightning(ctx, camX, camY) {
 function gameLoopWithUI() {
   if (!state.running && !state.cutscenePlaying) return;
   requestAnimationFrame(gameLoopWithUI);
-  if (document.hidden) return;
+  if (document.hidden) { state._lastFrameTime = 0; return; }
+  // === DELTA TIME TRACKING ===
+  // state.dt is a multiplier: 1.0 = 60fps target. Use for time-scaled updates.
+  // frameCount logic is unchanged to avoid regressions; use dt where fidelity matters.
+  const _now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+  if (!state._lastFrameTime) state._lastFrameTime = _now;
+  const _rawDt = (_now - state._lastFrameTime) / 16.67;
+  state.dt = Math.min(3.0, Math.max(0.25, _rawDt || 1));
+  state._lastFrameTime = _now;
   // Smooth zoom lerp
   if (!state.zoom) state.zoom = 1.8;
   if (!state.targetZoom) state.targetZoom = 1.8;
@@ -13445,7 +13522,7 @@ function gameLoopWithUI() {
       const _isBeach = _tile === T.BEACH;
       const _oceanVol = _isWater ? 1.0 : (_isBeach ? 0.55 : 0.15);
       // Fire proximity: 1.0 if very close to any placed campfire
-      const _campfires = state.objects.filter(o => o.placed && o.type === 'campfire');
+      const _campfires = _getPlacedCampfires();
       const _minFireDist = _campfires.length > 0
         ? Math.min(..._campfires.map(cf => Math.hypot(_ap.x - cf.x, _ap.y - cf.y)))
         : Infinity;
@@ -13467,7 +13544,7 @@ function gameLoopWithUI() {
       const _cricketLocationMult = _isWater ? 0.0 : (_isBeach ? 0.2 : (_isJungle ? 1.0 : 0.65));
       const _cricketVol = _nightIntensity * _cricketLocationMult;
       AMBIENT.update(_oceanVol, _fireVol, _windVol, _cricketVol);
-    } catch(e) {}
+    } catch(e){_logError('catch',e);}
   }
   // === TRIBAL DRUMS: update every 30 frames ===
   if (state.frameCount % 30 === 0) {
@@ -13476,7 +13553,7 @@ function gameLoopWithUI() {
       const _vdist = Math.hypot(state.player.x - _vx, state.player.y - _vy);
       const _villageProx = Math.max(0, Math.min(1, 1 - (_vdist - 80) / 640)); // 0 at 720px, 1 at 80px
       DRUMS.update(_villageProx, state.isNight);
-    } catch(e) {}
+    } catch(e){_logError('catch',e);}
   }
   // Handle canoe-targeted projectiles
   updateCanoeProjectiles();
@@ -13495,14 +13572,14 @@ function gameLoopWithUI() {
     ACHIEVEMENTS.forEach(ach => {
       if (!state.unlockedAchievements.has(ach.id) && ach.check(state)) {
         state.unlockedAchievements.add(ach.id);
-        try { localStorage.setItem('island_achievements', JSON.stringify([...state.unlockedAchievements])); } catch(e) {}
+        try { localStorage.setItem('island_achievements', JSON.stringify([...state.unlockedAchievements])); } catch(e){_logError('catch',e);}
         showMsg('ACHIEVEMENT: ' + ach.name + ' \u2014 ' + ach.desc, '#c8f135');
         SFX.achievement && SFX.achievement();
       }
     });
     // Save recipes and skills
-    try { localStorage.setItem('island_recipes', JSON.stringify([...(state.discoveredRecipes||[])])); } catch(e) {}
-    try { localStorage.setItem('island_skills', JSON.stringify(state.skills||{})); } catch(e) {}
+    try { localStorage.setItem('island_recipes', JSON.stringify([...(state.discoveredRecipes||[])])); } catch(e){_logError('catch',e);}
+    try { localStorage.setItem('island_skills', JSON.stringify(state.skills||{})); } catch(e){_logError('catch',e);}
     // Run recipe discovery check periodically
     checkRecipeDiscovery();
   }
