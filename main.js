@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Man Who Made Authoritarianism Respectable: Carl Schmitt and the Permanent Emergency",
+    date: "2026-04-20",
+    category: "History",
+    excerpt: "In 1922, a German legal theorist named Carl Schmitt wrote a single sentence that has haunted democratic theory ever since: \"Sovereign is he who decides on the exception.\" It is the most consequential sentence in twentieth-century political philosophy...",
+    url: "essays/2026-04-20-the-man-who-made-authoritarianism-respectable-carl-schmitt-a.html"
+  },
+  {
     title: "The Forgotten Theorist Who Understood Power Better Than Anyone",
     date: "2026-04-18",
     category: "History",
