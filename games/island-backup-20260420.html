@@ -493,8 +493,6 @@ const state = {
       bone_spear:0, crystal_blade:0, crystal_torch:0,
       // Tribal loot
       tribal_weapon:0,
-      // Trapping
-      snare_trap:0,
       // Underground artifacts
       artifact_shard:0,
       // Volcanic forge drop
@@ -4659,13 +4657,6 @@ window.SFX = (() => {
       _osc('triangle', 128, 0.08, 2.0, 105);      // mid warmth
       setTimeout(() => _osc('sine', 80, 0.2, 1.5, 65), 400);  // short second blast
       setTimeout(() => _osc('sine', 160, 0.07, 1.2, 130), 500);
-    },
-
-    // Snare trap spring — sharp wooden snap + vine twang
-    trapSnap() {
-      _noise(0.28, 0.06, 2200);                   // dry crack
-      _osc('square', 520, 0.08, 0.04, 180);       // wood impact
-      setTimeout(() => _osc('triangle', 340, 0.06, 0.18, 120), 40); // vine twang decay
     }
   };
 })();
@@ -5561,29 +5552,6 @@ function handleInteract() {
         spawnParticles(obj.x, obj.y, '#3dd6d0', 4);
         SFX.pickup && SFX.pickup();
         gainSkill && gainSkill('building'); // small skill tick
-        updateUI();
-        return;
-      }
-    }
-  }
-
-  // Snare trap: collect triggered catch
-  for (let i = state.objects.length-1; i >= 0; i--) {
-    const obj = state.objects[i];
-    if (obj.placed && obj.type === 'snare_trap' && obj._trapTriggered) {
-      const d = Math.hypot(p.x-obj.x, p.y-obj.y);
-      if (d < reach) {
-        const meatQty = 1 + Math.floor(Math.random() * 2); // 1-2 raw meat
-        p.inv.raw_meat = (p.inv.raw_meat||0) + meatQty;
-        addFloatingText(obj.x, obj.y-24, '+'+meatQty+' RAW MEAT', '#c0520a');
-        showMsg('TRAP COLLECTED — cook the meat at a campfire!', '#c0520a');
-        spawnParticles(obj.x, obj.y, '#c0520a', 5);
-        SFX.pickup && SFX.pickup();
-        // Reset trap for reuse
-        obj._trapTriggered = false;
-        obj._trapTimer = 0;
-        if (typeof gainSkill === 'function') gainSkill('combat'); // hunting = combat xp
-        if (state.runStats) state.runStats.itemsCollected++;
         updateUI();
         return;
       }
@@ -6793,7 +6761,6 @@ const BUILD_ITEMS = [
   {id:'forge',     label:'FORGE',     cost:{stone:8,wood:3},  desc:'Craft fire weapons'},
   {id:'smoker',    label:'SMOKER',    cost:{stone:3,wood:2},  desc:'Slows food decay'},
   {id:'vessel',    label:'VESSEL',    cost:{wood:2,stone:2},  desc:'Collects rain water'},
-  {id:'snare_trap',label:'SNARE TRAP',cost:{wood:2,vine:1},   desc:'Place in jungle — catches boars for raw meat'},
 ];
 
 const CRAFT_ITEMS = [
@@ -6834,9 +6801,6 @@ const CRAFT_ITEMS = [
   // Volcanic forge tier — post-eruption loot
   {id:'magma_hammer',    label:'MAGMA HAMMER',  cost:{magma_shard:3,volcanic_stone:2},  desc:'45 dmg — ground slam stuns all enemies within 80px', requiredTier:1},
 ];
-
-// ── PLACED STRUCTURES (BUILD MENU items) ──
-// snare_trap is intentionally listed here as a build item (placed in world)
 
 function openBuildMenu() {
   state.buildMode = !state.buildMode;
@@ -7564,16 +7528,6 @@ function drawItemIcon(ctx, item, x, y, size) {
       ctx.fillStyle = '#5a3c1e';
       ctx.fillRect(Math.round(cx-3), y+s-6, 6, 4);
       break;
-    case 'snare_trap':
-      // Icon: crossed sticks with vine loop
-      ctx.strokeStyle = '#6b3d1e'; ctx.lineWidth = Math.max(2, s/12); ctx.lineCap = 'round';
-      ctx.beginPath(); ctx.moveTo(x+4, y+s-4); ctx.lineTo(x+s-4, y+4); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(x+s-4, y+s-4); ctx.lineTo(x+4, y+4); ctx.stroke();
-      ctx.strokeStyle = '#4a8a2a'; ctx.lineWidth = Math.max(1.5, s/14);
-      ctx.beginPath(); ctx.ellipse(cx, cy, s*0.28, s*0.2, 0, 0, Math.PI*2); ctx.stroke();
-      ctx.fillStyle = '#cc3322';
-      ctx.beginPath(); ctx.arc(cx, cy, Math.max(2, s/9), 0, Math.PI*2); ctx.fill();
-      break;
     default:
       ctx.fillStyle = '#a08040'; ctx.font = `${Math.round(s*0.3)}px Courier New`; ctx.textAlign = 'center';
       ctx.fillText(item.substring(0,3).toUpperCase(), cx, cy+4);
@@ -7901,38 +7855,6 @@ function drawPlacedObject(ctx, obj, sx, sy) {
         px(ctx, '#3dd6d0', sx-6, sy+1, 12, 6);
       }
       break;
-    case 'snare_trap': {
-      // Wooden snare: crossed sticks + vine loop on ground
-      const triggered = obj._trapTriggered;
-      // Ground shadow
-      ctx.fillStyle = 'rgba(0,0,0,0.18)';
-      ctx.beginPath(); ctx.ellipse(sx, sy+4, 12, 5, 0, 0, Math.PI*2); ctx.fill();
-      if (triggered) {
-        // Triggered: flat collapsed sticks, glowing meat loot
-        px(ctx, '#7a5c2e', sx-9, sy+1, 18, 3);
-        px(ctx, '#8B6914', sx-2, sy-1, 4, 6);
-        // Blinking "!" loot indicator
-        if (Math.floor(state.frameCount / 20) % 2 === 0) {
-          ctx.fillStyle = '#c8f135'; ctx.font = 'bold 11px Courier New'; ctx.textAlign = 'center';
-          ctx.fillText('!', sx, sy - 10); ctx.textAlign = 'left';
-        }
-      } else {
-        // Set trap: two crossed sticks
-        ctx.save();
-        ctx.translate(sx, sy);
-        ctx.strokeStyle = '#6b3d1e'; ctx.lineWidth = 3; ctx.lineCap = 'round';
-        ctx.beginPath(); ctx.moveTo(-8, 6); ctx.lineTo(8, -8); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(8, 6); ctx.lineTo(-8, -8); ctx.stroke();
-        // Vine loop
-        ctx.strokeStyle = '#4a8a2a'; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.ellipse(0, 0, 7, 5, 0, 0, Math.PI*2); ctx.stroke();
-        // Small bait berry
-        ctx.fillStyle = '#cc3322';
-        ctx.beginPath(); ctx.arc(0, 0, 2.5, 0, Math.PI*2); ctx.fill();
-        ctx.restore();
-      }
-      break;
-    }
   }
 }
 
@@ -8135,40 +8057,6 @@ const GROUND_LOOT_COLORS = {
   stone:'#aaa', wood:'#c8a060', coconut:'#6a8a30', fruit:'#e8a040',
   vine:'#3a8a20', volcanic_stone:'#ff6600', tribal_weapon:'#cc4422'
 };
-// ============================================================
-// SNARE TRAP SYSTEM
-// ============================================================
-function updateSnareTraps() {
-  if (!state.running || state.underground) return;
-  const traps = state.objects.filter(o => o.placed && o.type === 'snare_trap' && !o._trapTriggered);
-  if (traps.length === 0) return;
-
-  traps.forEach(trap => {
-    trap._trapTimer = (trap._trapTimer || 0) + 1;
-    // Check every 600 frames (10s real time)
-    if (trap._trapTimer % 600 !== 0) return;
-
-    // Higher chance if a boar is nearby
-    const nearBoar = state.creatures.some(c => c.type === 'boar' && Math.hypot(c.x - trap.x, c.y - trap.y) < 220);
-    const triggerChance = nearBoar ? 0.65 : 0.12;
-
-    if (Math.random() < triggerChance) {
-      trap._trapTriggered = true;
-      trap._trapTimer = 0;
-      // Remove the boar that walked in (if any nearby)
-      if (nearBoar) {
-        const boarIdx = state.creatures.findIndex(c => c.type === 'boar' && Math.hypot(c.x - trap.x, c.y - trap.y) < 220);
-        if (boarIdx !== -1) state.creatures.splice(boarIdx, 1);
-      }
-      SFX.trapSnap && SFX.trapSnap();
-      spawnParticles(trap.x, trap.y, '#c0520a', 6);
-      addFloatingText(trap.x, trap.y - 28, 'SNAP! Press E to collect', '#c8f135');
-      showMsg('SNARE TRAP TRIGGERED — Press E nearby to collect meat', '#c0520a');
-      state.screenShake = Math.max(state.screenShake, 2);
-    }
-  });
-}
-
 function updateGroundLoot() {
   if (!state.groundLoot) { state.groundLoot = []; return; }
   if (state.underground) return; // no surface loot while caving
@@ -13434,7 +13322,6 @@ function gameLoopWithUI() {
   if (state.frameCount % 2 === 0) updateCanoes();
   updateCaveCreatures();
   updateGroundLoot();
-  updateSnareTraps();
   // === AMBIENT AUDIO UPDATE (every 6 frames to keep it cheap) ===
   if (state.frameCount % 6 === 0) {
     try {
