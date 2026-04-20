@@ -239,66 +239,84 @@ const ESSAYS = [
    Fields: subject, title, due (YYYY-MM-DD), status ('pending'|'done')
    ══════════════════════════════════════════════════════════════ */
 const SCHOOL_TASKS = [
-  // Last updated: 2026-04-04 via ManageBac scraper
-  // --- Mon Mar 30 ---
-  { subject: "Science 7", title: "HW Science 7", due: "2026-03-30", time: "10:00 AM", status: "done", type: "Formative" },
-  { subject: "Science 7", title: "Classwork Science 7", due: "2026-03-30", time: "10:25 AM", status: "done", type: "Classwork" },
-  { subject: "Art", title: "Upload weeks 11 - 14 work", due: "2026-03-30", time: "12:10 PM", status: "done", type: "Summative" },
-  { subject: "Music", title: "Ukulele Assessment", due: "2026-03-30", time: "12:35 PM", status: "done", type: "Summative" },
-  // --- Tue Mar 31 ---
-  { subject: "Italian", title: "Compiti", due: "2026-03-31", time: "All Day", status: "done", type: "Formative" },
-  { subject: "Science 7", title: "Classwork Science 7", due: "2026-03-31", time: "10:30 AM", status: "done", type: "Classwork" },
-  { subject: "General", title: "Classwork", due: "2026-03-31", time: "10:45 AM", status: "done", type: "Classwork" },
-  // --- Wed Apr 1 ---
-  { subject: "Math 8", title: "Math 8: MathSpace Surface Area", due: "2026-04-01", time: "1:30 PM", status: "done", type: "Formative" },
-  { subject: "Math 7", title: "Math 7 (HW)", due: "2026-04-01", time: "3:30 PM", status: "done", type: "Formative" },
-  // --- Mon Apr 6 ---
-  { subject: "History/Geography 7", title: "Upload weeks 15 - 18 work", due: "2026-04-06", time: "12:10 PM", status: "overdue", type: "Summative" },
-  // --- Mon Apr 13 ---
-  { subject: "English 7", title: "Eng 7 - Memorization due!", due: "2026-04-13", time: "9:00 AM", status: "done", type: "Deadline" },
-  { subject: "Science 7", title: "HW Science 7 - MEDIA STUDENTS", due: "2026-04-13", time: "9:20 AM", status: "done", type: "Summative" },
-  { subject: "Science 7", title: "Classwork Science 7", due: "2026-04-13", time: "10:15 AM", status: "done", type: "Classwork" },
-  { subject: "History/Geography 7", title: "Classical Period Worksheet", due: "2026-04-13", time: "1:30 PM", status: "done", type: "Formative" },
-  { subject: "History/Geography 7", title: "Substition 1: Review the slides and complete the tasks", due: "2026-04-13", time: "7:20 PM", status: "done", type: "Summative" },
-  // --- Tue Apr 14 ---
-  { subject: "Ed. Technology 7", title: "Ed. Technology 7 - Classwork for March 31", due: "2026-04-14", time: "8:00 AM", status: "done", type: "Summative" },
-  { subject: "Science 7", title: "Classwork Science 7", due: "2026-04-14", time: "10:35 AM", status: "done", type: "Classwork" },
-  { subject: "Science 7", title: "Test Science 7", due: "2026-04-14", time: "10:40 AM", status: "done", type: "Summative" },
-  { subject: "Latin 7", title: "Reading: ad Urbem", due: "2026-04-14", time: "1:35 PM", status: "done", type: "Formative" },
-  // --- Wed Apr 15 ---
-  { subject: "Art", title: "MEDIA TESINA - MEDIA STUDENTS ONLY", due: "2026-04-15", time: "8:00 AM", status: "overdue", type: "Summative" },
-  { subject: "Math 8", title: "Math 8: Surface Area of Composite Shapes", due: "2026-04-15", time: "12:30 PM", status: "overdue", type: "Formative" },
-  { subject: "Math 7", title: "Math 7 (HW)", due: "2026-04-15", time: "12:35 PM", status: "done", type: "Summative" },
-  // --- Thu Apr 16 ---
-  { subject: "English 7", title: "Eng 7 Test", due: "2026-04-16", time: "9:00 AM", status: "done", type: "Summative" },
-  { subject: "Science 7", title: "Classwork Science 7", due: "2026-04-16", time: "9:50 AM", status: "done", type: "Classwork" },
-  // --- Fri Apr 17 ---
-  { subject: "Math 8", title: "Math 8: Unit 6 Quiz", due: "2026-04-17", time: "8:30 AM", status: "done", type: "Summative" },
-  { subject: "Math 7", title: "Math 7 (Summative)", due: "2026-04-17", time: "9:30 AM", status: "done", type: "Summative" },
-  { subject: "Latin 7", title: "Principal Parts 8", due: "2026-04-17", time: "12:35 PM", status: "done", type: "Formative" },
-  { subject: "Latin 7", title: "Reading: ad Urbem", due: "2026-04-17", time: "1:35 PM", status: "done", type: "Formative" },
-  { subject: "History/Geography 7", title: "Substitution Work 3: Complete the tasks in the slides", due: "2026-04-17", time: "4:25 PM", status: "done", type: "Summative" },
-  // --- Mon Apr 20 ---
-  { subject: "Math 8", title: "Math 8: Unit 6 Quiz", due: "2026-04-20", time: "8:30 AM", status: "done", type: "Summative" },
-  { subject: "Math 8", title: "Math 8: Unit 6 Quiz Review", due: "2026-04-20", time: "8:30 AM", status: "done", type: "Classwork" },
-  { subject: "German 7", title: "Ruhrgebiet_Stadt-Präsentation_Rasmus-Text", due: "2026-04-20", time: "10:30 AM", status: "done", type: "Formative" },
-  { subject: "History/Geography 7", title: "Substitution Work 4: Complete the tasks on the slides", due: "2026-04-20", time: "6:25 PM", status: "done", type: "Summative" },
-  // --- Tue Apr 21 ---
-  { subject: "Italian", title: "Compiti", due: "2026-04-21", time: "All Day", status: "pending", type: "Formative" },
-  { subject: "Latin 7", title: "Quiz: Irregular Comparatives & Superlatives", due: "2026-04-21", time: "12:35 PM", status: "pending", type: "Formative" },
-  // --- Wed Apr 22 ---
-  { subject: "German 7", title: "Test_A1_Kap 11_Meine Stadt", due: "2026-04-22", time: "10:40 AM", status: "pending", type: "Summative" },
-  // --- Thu Apr 23 ---
-  { subject: "Italian", title: "Orale individuale", due: "2026-04-23", time: "All Day", status: "pending", type: "Summative" },
-  { subject: "Math 7", title: "Math 7 (HW/Review)", due: "2026-04-23", time: "12:35 PM", status: "pending", type: "Formative" },
-  { subject: "Math 7", title: "Math 7 (Summative)", due: "2026-04-23", time: "1:30 PM", status: "pending", type: "Summative" },
-  { subject: "History/Geography 7", title: "Substition work 2: Complete the tasks on the slides", due: "2026-04-23", time: "4:20 PM", status: "pending", type: "Summative" },
-  { subject: "History/Geography 7", title: "Substitution 5: Complete the tasks on the slides", due: "2026-04-23", time: "4:25 PM", status: "pending", type: "Summative" },
-  // --- Fri Apr 24 ---
-  { subject: "Italian", title: "Compiti", due: "2026-04-24", time: "All Day", status: "pending", type: "Formative" },
-  { subject: "Italian", title: "Orale individuale", due: "2026-04-24", time: "All Day", status: "pending", type: "Summative" },
-  { subject: "History/Geography 7", title: "Substitution work 6: Complete the work on the slides", due: "2026-04-24", time: "3:30 PM", status: "pending", type: "Summative" },
-  // Last updated: 2026-04-20 via ManageBac scraper (added Apr 20-24 tasks from weekly calendar)
+  {
+    "title": "Marymount International School, Rome",
+    "due": "",
+    "subject": "Classes\n\nC\n\n\n\n\n\n\n\nAdvisory SL (7) 2\n\n\n\n\n\nArt (7) 4\n\n\n\n\n\nLatin Int. I (8) 1\n\n\n\n\n\nEng (7) 1\n\n\n\n\n\nIt Interm2 (8) 3\n\n\n\n\n\nMath 8 (8) 4\n\n\n\n\n\nMath 7 (7) 1\n\n\n\n\n\nGerman Int. I (7) 2\n\n\n\n\n\nSport and Resilience (7) 1\n\n\n\n\n\nRel Ed 7 (7) 1\n\n\n\n\n\nScience (7) 4\n\n\n\n\n\nHistory/Geography (7) 2\n\n\n\n\n\nEd. Technology (7) 4\n\n\n\n\n\nGeneral Music (7) 1\n\n\n\nBrowse All Classes",
+    "status": "upcoming"
+  },
+  {
+    "title": "Quiz: Irregular Comparatives & Superlatives",
+    "due": "",
+    "subject": "",
+    "status": "upcoming"
+  },
+  {
+    "title": "Test_A1_Kap 11_Meine Stadt",
+    "due": "",
+    "subject": "",
+    "status": "upcoming"
+  },
+  {
+    "title": "Math 7 (HW/Review)",
+    "due": "",
+    "subject": "",
+    "status": "upcoming"
+  },
+  {
+    "title": "Submit Coursework",
+    "due": "",
+    "subject": "",
+    "status": "upcoming"
+  },
+  {
+    "title": "Math 7 (Summative)",
+    "due": "",
+    "subject": "",
+    "status": "upcoming"
+  },
+  {
+    "title": "Substition work 2: Complete the tasks on the slides",
+    "due": "",
+    "subject": "",
+    "status": "upcoming"
+  },
+  {
+    "title": "Substitution 5: Complete the tasks on the slides",
+    "due": "",
+    "subject": "",
+    "status": "upcoming"
+  },
+  {
+    "title": "Substitution work 6: Complete the work on the slides",
+    "due": "",
+    "subject": "",
+    "status": "upcoming"
+  },
+  {
+    "title": "Upload weeks 19 - 22 work",
+    "due": "",
+    "subject": "",
+    "status": "upcoming"
+  },
+  {
+    "title": "Math 7 (Formative)",
+    "due": "",
+    "subject": "",
+    "status": "upcoming"
+  },
+  {
+    "title": "Ed. Tech 7 - Spreadsheets Unit Test",
+    "due": "",
+    "subject": "",
+    "status": "upcoming"
+  },
+  {
+    "title": "Test Science 7",
+    "due": "",
+    "subject": "",
+    "status": "upcoming"
+  }
 ];
 
 
