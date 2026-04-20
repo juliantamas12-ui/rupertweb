@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FleetWatch — Real-Time Superyacht Tracking Alerts</title>
+<meta name="description" content="Get instant alerts when superyachts arrive at port, depart, or change course. Track the world's most exclusive fleet in real time.">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0a1628;
+  --navy2:#0d1e3d;
+  --gold:#c8a020;
+  --gold2:#e8c040;
+  --text:rgba(255,255,255,0.85);
+  --dim:rgba(255,255,255,0.35);
+}
+body{background:var(--navy);color:var(--text);font-family:'Helvetica Neue',Arial,sans-serif;line-height:1.6}
+
+/* NAV */
+nav{display:flex;align-items:center;justify-content:space-between;padding:20px 48px;border-bottom:1px solid rgba(255,255,255,0.06);position:sticky;top:0;background:rgba(10,22,40,0.95);backdrop-filter:blur(12px);z-index:100}
+.nav-logo{font-size:18px;font-weight:700;letter-spacing:1px;color:#fff}
+.nav-logo span{color:var(--gold)}
+.nav-links{display:flex;gap:32px;font-size:13px;color:var(--dim)}
+.nav-links a{color:var(--dim);text-decoration:none;transition:color .2s}
+.nav-links a:hover{color:#fff}
+.nav-cta{background:var(--gold);color:#000;padding:8px 20px;border-radius:4px;font-size:13px;font-weight:700;text-decoration:none;transition:background .2s}
+.nav-cta:hover{background:var(--gold2)}
+
+/* HERO */
+.hero{text-align:center;padding:100px 24px 80px;max-width:900px;margin:0 auto}
+.hero-badge{display:inline-block;background:rgba(200,160,32,0.12);border:1px solid rgba(200,160,32,0.3);color:var(--gold);font-size:11px;letter-spacing:3px;padding:6px 16px;border-radius:100px;margin-bottom:24px;text-transform:uppercase}
+.hero h1{font-size:clamp(36px,6vw,68px);font-weight:800;line-height:1.1;margin-bottom:20px;letter-spacing:-1px}
+.hero h1 span{color:var(--gold)}
+.hero p{font-size:18px;color:var(--dim);max-width:560px;margin:0 auto 40px}
+.hero-ctas{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.btn-primary{background:var(--gold);color:#000;padding:14px 32px;border-radius:6px;font-weight:700;font-size:15px;text-decoration:none;transition:all .2s;border:none;cursor:pointer}
+.btn-primary:hover{background:var(--gold2);transform:translateY(-1px)}
+.btn-ghost{background:transparent;color:#fff;padding:14px 32px;border-radius:6px;font-weight:600;font-size:15px;text-decoration:none;border:1px solid rgba(255,255,255,0.2);transition:all .2s;cursor:pointer}
+.btn-ghost:hover{border-color:rgba(255,255,255,0.5)}
+
+/* LIVE TICKER */
+.ticker{background:var(--navy2);border-top:1px solid rgba(200,160,32,0.15);border-bottom:1px solid rgba(200,160,32,0.15);padding:12px 0;overflow:hidden}
+.ticker-inner{display:flex;gap:48px;animation:scroll 30s linear infinite;white-space:nowrap}
+.ticker-item{font-size:12px;color:var(--dim);letter-spacing:1px;flex-shrink:0}
+.ticker-item strong{color:var(--gold)}
+@keyframes scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.06);border-radius:8px;max-width:700px;margin:48px auto;overflow:hidden}
+.stat{background:var(--navy2);padding:28px 24px;text-align:center}
+.stat-num{font-size:36px;font-weight:800;color:var(--gold);line-height:1}
+.stat-label{font-size:11px;letter-spacing:2px;color:var(--dim);margin-top:6px;text-transform:uppercase}
+
+/* HOW IT WORKS */
+.section{padding:80px 24px;max-width:1100px;margin:0 auto}
+.section-label{font-size:10px;letter-spacing:4px;color:var(--gold);text-transform:uppercase;margin-bottom:12px}
+.section h2{font-size:clamp(28px,4vw,42px);font-weight:700;margin-bottom:48px;max-width:500px}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.step{background:var(--navy2);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:28px}
+.step-num{width:32px;height:32px;border-radius:50%;background:rgba(200,160,32,0.12);border:1px solid rgba(200,160,32,0.3);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--gold);margin-bottom:16px}
+.step h3{font-size:16px;font-weight:700;margin-bottom:8px}
+.step p{font-size:14px;color:var(--dim);line-height:1.6}
+
+/* FLEET PREVIEW */
+.fleet-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-top:40px}
+.fleet-card{background:var(--navy2);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:20px;display:flex;align-items:center;gap:16px;transition:border-color .2s}
+.fleet-card:hover{border-color:rgba(200,160,32,0.3)}
+.vessel-dot{width:8px;height:8px;border-radius:50%;background:#22cc66;box-shadow:0 0 6px #22cc66;flex-shrink:0;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.vessel-info{flex:1;min-width:0}
+.vessel-name{font-weight:700;font-size:14px}
+.vessel-pos{font-size:12px;color:var(--dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vessel-flag{font-size:18px}
+
+/* PRICING */
+.pricing{padding:80px 24px;background:var(--navy2);border-top:1px solid rgba(255,255,255,0.06)}
+.pricing-inner{max-width:900px;margin:0 auto;text-align:center}
+.pricing h2{font-size:clamp(28px,4vw,42px);font-weight:700;margin-bottom:12px}
+.pricing-sub{color:var(--dim);font-size:16px;margin-bottom:48px}
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;text-align:left}
+.plan{background:var(--navy);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:28px;position:relative}
+.plan.featured{border-color:var(--gold);background:#0f1f3a}
+.plan-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--gold);color:#000;font-size:10px;font-weight:700;letter-spacing:2px;padding:4px 14px;border-radius:100px}
+.plan-name{font-size:12px;letter-spacing:3px;color:var(--dim);text-transform:uppercase;margin-bottom:8px}
+.plan-price{font-size:36px;font-weight:800;line-height:1}
+.plan-price sup{font-size:18px;font-weight:400;vertical-align:top;margin-top:6px;display:inline-block}
+.plan-price span{font-size:14px;color:var(--dim);font-weight:400}
+.plan-desc{font-size:13px;color:var(--dim);margin:12px 0 20px;padding-bottom:20px;border-bottom:1px solid rgba(255,255,255,0.06)}
+.plan-features{list-style:none;margin-bottom:24px}
+.plan-features li{font-size:13px;padding:6px 0;display:flex;align-items:center;gap:10px}
+.plan-features li::before{content:'✓';color:var(--gold);font-weight:700;flex-shrink:0}
+.plan-features li.no{color:var(--dim)}
+.plan-features li.no::before{content:'—';color:rgba(255,255,255,0.15)}
+.plan-btn{display:block;text-align:center;padding:12px;border-radius:5px;font-weight:700;font-size:14px;text-decoration:none;transition:all .2s;cursor:pointer;border:none;width:100%}
+.plan-btn.gold{background:var(--gold);color:#000}
+.plan-btn.gold:hover{background:var(--gold2)}
+.plan-btn.outline{background:transparent;border:1px solid rgba(255,255,255,0.2);color:#fff}
+.plan-btn.outline:hover{border-color:rgba(255,255,255,0.5)}
+
+/* SIGNUP FORM */
+.signup-section{padding:80px 24px;text-align:center;max-width:600px;margin:0 auto}
+.signup-section h2{font-size:clamp(28px,4vw,40px);font-weight:700;margin-bottom:12px}
+.signup-section p{color:var(--dim);margin-bottom:32px}
+.signup-form{display:flex;flex-direction:column;gap:14px;text-align:left}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group label{font-size:12px;letter-spacing:1px;color:var(--dim);text-transform:uppercase}
+.form-group input,.form-group select{background:#0d1e3d;border:1px solid rgba(255,255,255,0.12);border-radius:5px;padding:12px 14px;color:#fff;font-size:14px;outline:none;transition:border-color .2s}
+.form-group input:focus,.form-group select:focus{border-color:var(--gold)}
+.form-group select option{background:#0d1e3d}
+.vessel-checkboxes{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:4px}
+.vessel-cb{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;padding:8px 12px;border:1px solid rgba(255,255,255,0.08);border-radius:5px;transition:all .2s}
+.vessel-cb:hover{border-color:rgba(200,160,32,0.3)}
+.vessel-cb input{accent-color:var(--gold)}
+.vessel-cb.checked{border-color:rgba(200,160,32,0.4);background:rgba(200,160,32,0.05)}
+.submit-btn{background:var(--gold);color:#000;padding:14px;border-radius:6px;font-weight:700;font-size:15px;border:none;cursor:pointer;transition:all .2s;margin-top:8px}
+.submit-btn:hover{background:var(--gold2)}
+.form-note{font-size:12px;color:var(--dim);text-align:center;margin-top:4px}
+.success-msg{display:none;background:rgba(34,204,102,0.1);border:1px solid rgba(34,204,102,0.3);border-radius:6px;padding:16px;text-align:center;color:#22cc66;font-size:14px}
+
+/* FOOTER */
+footer{border-top:1px solid rgba(255,255,255,0.06);padding:32px 48px;display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--dim)}
+
+@media(max-width:700px){
+  nav{padding:16px 20px}
+  .nav-links{display:none}
+  .steps,.plans{grid-template-columns:1fr}
+  .stats{grid-template-columns:1fr 1fr 1fr}
+  .form-row{grid-template-columns:1fr}
+  footer{flex-direction:column;gap:12px;text-align:center}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">Fleet<span>Watch</span></div>
+  <div class="nav-links">
+    <a href="#how">How it works</a>
+    <a href="#fleet">Fleet</a>
+    <a href="#pricing">Pricing</a>
+  </div>
+  <a href="#signup" class="nav-cta">Get Alerts</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">Live AIS Tracking</div>
+  <h1>Know where the <span>world's biggest yachts</span> are. Always.</h1>
+  <p>Real-time alerts when superyachts arrive at port, depart, or go underway. Built for enthusiasts who take it seriously.</p>
+  <div class="hero-ctas">
+    <a href="#signup" class="btn-primary">Start Tracking Free</a>
+    <a href="#fleet" class="btn-ghost">View Fleet</a>
+  </div>
+</section>
+
+<!-- LIVE TICKER -->
+<div class="ticker">
+  <div class="ticker-inner">
+    <span class="ticker-item"><strong>DRAGONFLY</strong> — heading Gibraltar &bull; 36N 5W</span>
+    <span class="ticker-item"><strong>KISMET</strong> — Balearic Sea, heading Barcelona</span>
+    <span class="ticker-item"><strong>BREAKTHROUGH</strong> — underway NW Atlantic 13.2kn</span>
+    <span class="ticker-item"><strong>LEVIATHAN</strong> — Caribbean Sea</span>
+    <span class="ticker-item"><strong>LADY S</strong> — West Mediterranean</span>
+    <span class="ticker-item"><strong>WHISPER</strong> — Bahamas</span>
+    <span class="ticker-item"><strong>DRAGONFLY</strong> — heading Gibraltar &bull; 36N 5W</span>
+    <span class="ticker-item"><strong>KISMET</strong> — Balearic Sea, heading Barcelona</span>
+    <span class="ticker-item"><strong>BREAKTHROUGH</strong> — underway NW Atlantic 13.2kn</span>
+    <span class="ticker-item"><strong>LEVIATHAN</strong> — Caribbean Sea</span>
+    <span class="ticker-item"><strong>LADY S</strong> — West Mediterranean</span>
+    <span class="ticker-item"><strong>WHISPER</strong> — Bahamas</span>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats" style="max-width:700px;margin:48px auto">
+  <div class="stat"><div class="stat-num">11</div><div class="stat-label">Vessels Tracked</div></div>
+  <div class="stat"><div class="stat-num">4h</div><div class="stat-label">Update Interval</div></div>
+  <div class="stat"><div class="stat-num">24/7</div><div class="stat-label">Monitoring</div></div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section class="section" id="how">
+  <div class="section-label">How it works</div>
+  <h2>Set it up in two minutes. Alerts handle themselves.</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <h3>Pick your vessels</h3>
+      <p>Select from our tracked fleet of 11 superyachts — Breakthrough, Dragonfly, Kismet, and more.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <h3>Choose alert type</h3>
+      <p>Get notified via Telegram or email. Port arrivals, departures, underway status changes.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <h3>We watch, you know</h3>
+      <p>AIS position data checked every 4 hours. Brief, factual alerts sent the moment anything changes.</p>
+    </div>
+  </div>
+</section>
+
+<!-- FLEET -->
+<section class="section" id="fleet" style="padding-top:0">
+  <div class="section-label">Current Fleet</div>
+  <h2>11 vessels under continuous monitoring</h2>
+  <div class="fleet-grid">
+    <div class="fleet-card"><div class="vessel-dot"></div><div class="vessel-info"><div class="vessel-name">BREAKTHROUGH</div><div class="vessel-pos">NW Atlantic — underway 13.2kn</div></div><div class="vessel-flag">🇰🇾</div></div>
+    <div class="fleet-card"><div class="vessel-dot"></div><div class="vessel-info"><div class="vessel-name">DRAGONFLY</div><div class="vessel-pos">W Mediterranean — heading Gibraltar</div></div><div class="vessel-flag">🇰🇾</div></div>
+    <div class="fleet-card"><div class="vessel-dot"></div><div class="vessel-info"><div class="vessel-name">KISMET</div><div class="vessel-pos">Balearic Sea — heading Barcelona</div></div><div class="vessel-flag">🇰🇾</div></div>
+    <div class="fleet-card"><div class="vessel-dot"></div><div class="vessel-info"><div class="vessel-name">LEVIATHAN</div><div class="vessel-pos">Caribbean Sea</div></div><div class="vessel-flag">🇰🇾</div></div>
+    <div class="fleet-card"><div class="vessel-dot"></div><div class="vessel-info"><div class="vessel-name">LADY S</div><div class="vessel-pos">West Mediterranean</div></div><div class="vessel-flag">🇰🇾</div></div>
+    <div class="fleet-card"><div class="vessel-dot"></div><div class="vessel-info"><div class="vessel-name">WHISPER</div><div class="vessel-pos">Bahamas</div></div><div class="vessel-flag">🇰🇾</div></div>
+    <div class="fleet-card"><div class="vessel-dot"></div><div class="vessel-info"><div class="vessel-name">RENAISSANCE</div><div class="vessel-pos">West Mediterranean</div></div><div class="vessel-flag">🇰🇾</div></div>
+    <div class="fleet-card"><div class="vessel-dot"></div><div class="vessel-info"><div class="vessel-name">KENSHO</div><div class="vessel-pos">NE Atlantic</div></div><div class="vessel-flag">🇰🇾</div></div>
+    <div class="fleet-card"><div class="vessel-dot"></div><div class="vessel-info"><div class="vessel-name">BARBARA</div><div class="vessel-pos">US East Coast</div></div><div class="vessel-flag">🇰🇾</div></div>
+    <div class="fleet-card"><div class="vessel-dot"></div><div class="vessel-info"><div class="vessel-name">PROJECT X</div><div class="vessel-pos">Caribbean Sea</div></div><div class="vessel-flag">🇲🇹</div></div>
+    <div class="fleet-card"><div class="vessel-dot"></div><div class="vessel-info"><div class="vessel-name">CC SUMMER</div><div class="vessel-pos">US East Coast</div></div><div class="vessel-flag">🇲🇭</div></div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing" id="pricing">
+  <div class="pricing-inner">
+    <div class="section-label" style="text-align:center">Pricing</div>
+    <h2>Simple, honest pricing</h2>
+    <p class="pricing-sub">No contracts. Cancel any time.</p>
+    <div class="plans">
+
+      <div class="plan">
+        <div class="plan-name">Basic</div>
+        <div class="plan-price"><sup>£</sup>0<span>/month</span></div>
+        <p class="plan-desc">Track up to 2 vessels. Weekly digest only.</p>
+        <ul class="plan-features">
+          <li>2 vessels</li>
+          <li>Weekly position digest</li>
+          <li class="no">Real-time alerts</li>
+          <li class="no">Telegram notifications</li>
+          <li class="no">Email alerts</li>
+        </ul>
+        <button class="plan-btn outline" onclick="document.getElementById('signup').scrollIntoView({behavior:'smooth'})">Get started free</button>
+      </div>
+
+      <div class="plan featured">
+        <div class="plan-badge">MOST POPULAR</div>
+        <div class="plan-name">Pro</div>
+        <div class="plan-price"><sup>£</sup>4.99<span>/month</span></div>
+        <p class="plan-desc">Full fleet access. Instant alerts on every move.</p>
+        <ul class="plan-features">
+          <li>All 11 vessels</li>
+          <li>Real-time port arrival alerts</li>
+          <li>Departure alerts</li>
+          <li>Telegram notifications</li>
+          <li>Email alerts</li>
+        </ul>
+        <button class="plan-btn gold" onclick="document.getElementById('signup').scrollIntoView({behavior:'smooth'})">Start tracking — £4.99/mo</button>
+      </div>
+
+      <div class="plan">
+        <div class="plan-name">Fleet</div>
+        <div class="plan-price"><sup>£</sup>14.99<span>/month</span></div>
+        <p class="plan-desc">For professionals. Custom vessels on request.</p>
+        <ul class="plan-features">
+          <li>All 11 vessels</li>
+          <li>Custom vessel requests</li>
+          <li>Priority updates (2h interval)</li>
+          <li>Telegram + email alerts</li>
+          <li>Historical movement data</li>
+        </ul>
+        <button class="plan-btn outline" onclick="document.getElementById('signup').scrollIntoView({behavior:'smooth'})">Contact for access</button>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- SIGNUP FORM -->
+<section class="signup-section" id="signup">
+  <div class="section-label">Get Started</div>
+  <h2>Start tracking now</h2>
+  <p>Free tier available. No card required to sign up.</p>
+
+  <form class="signup-form" id="signupForm">
+    <div class="form-row">
+      <div class="form-group">
+        <label>Name</label>
+        <input type="text" name="name" placeholder="Your name" required>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" name="email" placeholder="you@example.com" required>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Telegram username (optional — for instant alerts)</label>
+      <input type="text" name="telegram" placeholder="@yourusername">
+    </div>
+    <div class="form-group">
+      <label>Plan</label>
+      <select name="plan">
+        <option value="free">Basic — Free</option>
+        <option value="pro" selected>Pro — £4.99/month</option>
+        <option value="fleet">Fleet — £14.99/month</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Vessels to track</label>
+      <div class="vessel-checkboxes" id="vesselCheckboxes">
+        <label class="vessel-cb"><input type="checkbox" name="vessels" value="BREAKTHROUGH"> Breakthrough</label>
+        <label class="vessel-cb"><input type="checkbox" name="vessels" value="DRAGONFLY" checked> Dragonfly</label>
+        <label class="vessel-cb"><input type="checkbox" name="vessels" value="KISMET"> Kismet</label>
+        <label class="vessel-cb"><input type="checkbox" name="vessels" value="LEVIATHAN"> Leviathan</label>
+        <label class="vessel-cb"><input type="checkbox" name="vessels" value="LADY S"> Lady S</label>
+        <label class="vessel-cb"><input type="checkbox" name="vessels" value="WHISPER"> Whisper</label>
+        <label class="vessel-cb"><input type="checkbox" name="vessels" value="RENAISSANCE"> Renaissance</label>
+        <label class="vessel-cb"><input type="checkbox" name="vessels" value="KENSHO"> Kensho</label>
+        <label class="vessel-cb"><input type="checkbox" name="vessels" value="BARBARA"> Barbara</label>
+        <label class="vessel-cb"><input type="checkbox" name="vessels" value="PROJECT X"> Project X</label>
+        <label class="vessel-cb"><input type="checkbox" name="vessels" value="CC SUMMER"> CC Summer</label>
+      </div>
+    </div>
+    <button type="submit" class="submit-btn">Sign me up</button>
+    <p class="form-note">Pro and Fleet plans: we'll email you a payment link within 24 hours to activate your alerts.</p>
+  </form>
+  <div class="success-msg" id="successMsg">You're on the list. We'll be in touch within 24 hours to activate your alerts.</div>
+</section>
+
+<footer>
+  <div>FleetWatch &copy; 2026</div>
+  <div>Real-time superyacht position tracking</div>
+</footer>
+
+<script>
+// Checkbox visual state
+document.querySelectorAll('.vessel-cb').forEach(label => {
+  const cb = label.querySelector('input');
+  if (cb.checked) label.classList.add('checked');
+  cb.addEventListener('change', () => label.classList.toggle('checked', cb.checked));
+});
+
+// Form submission
+document.getElementById('signupForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const form = e.target;
+  const data = {
+    name: form.name.value,
+    email: form.email.value,
+    telegram: form.telegram.value,
+    plan: form.plan.value,
+    vessels: [...form.querySelectorAll('input[name="vessels"]:checked')].map(i => i.value),
+    timestamp: new Date().toISOString()
+  };
+
+  try {
+    const res = await fetch('/api/fleet-signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (res.ok) {
+      form.style.display = 'none';
+      document.getElementById('successMsg').style.display = 'block';
+    } else {
+      // Fallback: mailto
+      window.location.href = `mailto:julian.tamas12@gmail.com?subject=FleetWatch Signup&body=${encodeURIComponent(JSON.stringify(data,null,2))}`;
+    }
+  } catch {
+    window.location.href = `mailto:julian.tamas12@gmail.com?subject=FleetWatch Signup&body=${encodeURIComponent(JSON.stringify(data,null,2))}`;
+  }
+});
+</script>
+</body>
+</html>
