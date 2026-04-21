@@ -131,6 +131,7 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
   <div class="nav-tabs" id="navTabs" style="display:none">
     <button class="nav-tab active" data-view="library">Library</button>
     <button class="nav-tab" data-view="recs">Recommendations</button>
+    <button class="nav-tab" data-view="deals">Deals</button>
     <button class="nav-tab" data-view="achievements">Achievements</button>
     <button class="nav-tab" data-view="news">News</button>
     <button class="nav-tab" data-view="leaderboards">Leaderboards</button>
@@ -262,6 +263,80 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
   </div>
 </div>
 
+<div class="view" id="view-deals">
+  <div class="section">
+    <div class="section-head">
+      <h2>Deals For You — Games You Don't Own</h2>
+      <button class="link" onclick="loadMyDeals()">Refresh →</button>
+    </div>
+    <div id="myDealsList"><div class="empty"><span class="loading"></span> Finding deals on games you don't own...</div></div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <h2>Top Deals Right Now — All Stores</h2>
+      <button class="link" onclick="loadAllDeals()">Refresh →</button>
+    </div>
+
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;align-items:center">
+      <div style="display:flex;gap:6px;align-items:center">
+        <span style="font-size:11px;color:var(--dim);letter-spacing:1px;text-transform:uppercase">Store</span>
+        <select id="dealStoreSelect" onchange="loadAllDeals()" style="background:var(--panel);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:4px;font-size:12px;font-family:inherit;cursor:pointer">
+          <option value="">All stores</option>
+          <option value="1">Steam</option>
+          <option value="25">Epic Games</option>
+          <option value="7">GOG</option>
+          <option value="11">Humble Store</option>
+          <option value="15">Fanatical</option>
+          <option value="3">Green Man Gaming</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <span style="font-size:11px;color:var(--dim);letter-spacing:1px;text-transform:uppercase">Min Rating</span>
+        <select id="dealRatingSelect" onchange="loadAllDeals()" style="background:var(--panel);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:4px;font-size:12px;font-family:inherit;cursor:pointer">
+          <option value="0">Any</option>
+          <option value="70">70%+</option>
+          <option value="80" selected>80%+</option>
+          <option value="90">90%+</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <span style="font-size:11px;color:var(--dim);letter-spacing:1px;text-transform:uppercase">Max Price</span>
+        <select id="dealPriceSelect" onchange="loadAllDeals()" style="background:var(--panel);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:4px;font-size:12px;font-family:inherit;cursor:pointer">
+          <option value="">Any</option>
+          <option value="5">$5</option>
+          <option value="10">$10</option>
+          <option value="20" selected>$20</option>
+          <option value="40">$40</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <span style="font-size:11px;color:var(--dim);letter-spacing:1px;text-transform:uppercase">Sort</span>
+        <select id="dealSortSelect" onchange="loadAllDeals()" style="background:var(--panel);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:4px;font-size:12px;font-family:inherit;cursor:pointer">
+          <option value="Deal Rating">Best deals</option>
+          <option value="Savings">Biggest savings</option>
+          <option value="Price">Lowest price</option>
+          <option value="Recent">Newest</option>
+          <option value="Reviews">Highest rated</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="allDealsList"><div class="empty"><span class="loading"></span> Loading deals...</div></div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <h2>Search Any Game Across All Stores</h2>
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:16px">
+      <input type="text" id="dealSearchInput" placeholder="e.g. Baldur's Gate 3" style="flex:1;background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit" onkeydown="if(event.key==='Enter')searchDeal()">
+      <button onclick="searchDeal()" class="connect-btn" style="padding:10px 20px;font-size:13px">Search</button>
+    </div>
+    <div id="dealSearchResults"></div>
+  </div>
+</div>
+
 <div class="view" id="view-achievements">
   <div class="section">
     <div class="section-head">
@@ -313,6 +388,7 @@ document.querySelectorAll('.nav-tab').forEach(tab => {
     document.getElementById('view-' + view).classList.add('active');
     // Lazy-load views
     if (view === 'recs' && !STATE.recsLoaded) { loadRecs(); loadBuyRecs(); }
+    if (view === 'deals' && !STATE.dealsLoaded) { loadMyDeals(); loadAllDeals(); STATE.dealsLoaded = true; }
     if (view === 'news' && !STATE.newsLoaded) loadNews();
     if (view === 'achievements' && !STATE.achLoaded) loadAchievements();
     if (view === 'leaderboards' && !STATE.lbLoaded) loadLeaderboards();
@@ -474,6 +550,109 @@ async function loadRecs() {
     `).join('');
   } catch (e) {
     document.getElementById('recList').innerHTML = `<div class="error">${e.message}</div>`;
+  }
+}
+
+// ═════ DEAL HUNTER ═════
+
+function renderDealCard(d, compact = false) {
+  const ratingColor = d.steamRating >= 85 ? 'var(--accent)' : d.steamRating >= 70 ? '#d5e65c' : d.steamRating >= 50 ? '#ff9e42' : '#ff5a5a';
+  const storeBadge = `<span style="background:var(--panel2);color:var(--text);padding:3px 8px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:0.5px">${d.storeName}</span>`;
+  const savings = d.savings >= 1 ? `<span style="color:var(--accent);font-weight:700">-${d.savings}%</span>` : '';
+  const price = `<span style="color:${d.savings >= 10 ? 'var(--accent)' : 'var(--text)'};font-weight:700;font-size:15px">$${d.salePrice.toFixed(2)}</span>` +
+                (d.savings >= 1 ? ` <span style="text-decoration:line-through;color:var(--dim);font-size:11px">$${d.normalPrice.toFixed(2)}</span>` : '');
+
+  return `
+    <div class="rec-card" onclick="window.open('${d.dealLink}','_blank')">
+      <div class="rec-cover" style="background-image:url('${d.thumb}')"></div>
+      <div class="rec-info">
+        <div class="rec-reason">${storeBadge} ${savings}</div>
+        <div class="rec-title">${d.title}</div>
+        <div class="rec-sub" style="margin-top:4px;display:flex;gap:14px;flex-wrap:wrap;align-items:center">
+          ${price}
+          ${d.steamRating ? `<span style="color:${ratingColor};font-weight:700">${d.steamRating}% ★</span> <span style="color:var(--dim);font-size:11px">${d.steamReviews || ''}</span>` : ''}
+          ${d.metacritic ? `<span style="color:var(--dim);font-size:11px">Metacritic ${d.metacritic}</span>` : ''}
+        </div>
+      </div>
+      <button class="rec-action">Buy →</button>
+    </div>
+  `;
+}
+
+async function loadMyDeals() {
+  if (!STATE.sid) {
+    document.getElementById('myDealsList').innerHTML = '<div class="empty">Connect Steam to see deals filtered to games you don\'t own.</div>';
+    return;
+  }
+  document.getElementById('myDealsList').innerHTML = '<div class="empty"><span class="loading"></span> Loading...</div>';
+  try {
+    const data = await api('/api/my-deals');
+    const el = document.getElementById('myDealsList');
+    if (!data.deals?.length) { el.innerHTML = '<div class="empty">No personalised deals right now.</div>'; return; }
+    el.innerHTML = data.deals.slice(0, 12).map(d => renderDealCard(d)).join('');
+  } catch (e) {
+    document.getElementById('myDealsList').innerHTML = `<div class="error">${e.message}</div>`;
+  }
+}
+
+async function loadAllDeals() {
+  const store  = document.getElementById('dealStoreSelect').value;
+  const rating = document.getElementById('dealRatingSelect').value;
+  const maxPrice = document.getElementById('dealPriceSelect').value;
+  const sortBy = document.getElementById('dealSortSelect').value;
+
+  const params = new URLSearchParams();
+  if (store)    params.set('storeID', store);
+  if (rating)   params.set('minRating', rating);
+  if (maxPrice) params.set('maxPrice', maxPrice);
+  params.set('sortBy', sortBy);
+  params.set('onSale', '1');
+
+  document.getElementById('allDealsList').innerHTML = '<div class="empty"><span class="loading"></span> Loading deals...</div>';
+  try {
+    const r = await fetch('/api/deals?' + params.toString());
+    const data = await r.json();
+    const el = document.getElementById('allDealsList');
+    if (!data.deals?.length) { el.innerHTML = '<div class="empty">No deals match these filters.</div>'; return; }
+    el.innerHTML = data.deals.slice(0, 30).map(d => renderDealCard(d)).join('');
+  } catch (e) {
+    document.getElementById('allDealsList').innerHTML = `<div class="error">${e.message}</div>`;
+  }
+}
+
+async function searchDeal() {
+  const title = document.getElementById('dealSearchInput').value.trim();
+  if (!title) return;
+  document.getElementById('dealSearchResults').innerHTML = '<div class="empty"><span class="loading"></span> Searching all stores...</div>';
+  try {
+    const r = await fetch(`/api/deal-search?title=${encodeURIComponent(title)}`);
+    const data = await r.json();
+    const el = document.getElementById('dealSearchResults');
+    if (!data.results?.length) { el.innerHTML = '<div class="empty">No games found matching that title.</div>'; return; }
+
+    el.innerHTML = data.results.map(g => `
+      <div class="sidebar-card" style="margin-bottom:12px">
+        <div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:12px">
+          <div style="width:120px;aspect-ratio:460/215;background:url('${g.thumb}') center/cover;border-radius:4px;flex-shrink:0"></div>
+          <div style="flex:1">
+            <div style="font-size:15px;font-weight:700;margin-bottom:4px">${g.title}</div>
+            <div style="font-size:12px;color:var(--dim)">Cheapest now: <strong style="color:var(--accent)">$${g.cheapest.toFixed(2)}</strong> · Historical low: ${g.cheapestEver ? '$' + g.cheapestEver.toFixed(2) : '—'}</div>
+          </div>
+        </div>
+        <table style="width:100%;font-size:13px;border-collapse:collapse">
+          ${g.deals.map(d => `
+            <tr style="border-bottom:1px solid var(--border)">
+              <td style="padding:8px 0"><strong>${d.storeName}</strong></td>
+              <td style="padding:8px 0;color:var(--accent);font-weight:700">$${d.price.toFixed(2)}</td>
+              <td style="padding:8px 0;color:var(--dim);font-size:11px">${d.savings > 0 ? '-' + d.savings + '%' : ''} ${d.retailPrice > d.price ? '<span style="text-decoration:line-through">$' + d.retailPrice.toFixed(2) + '</span>' : ''}</td>
+              <td style="padding:8px 0;text-align:right"><a href="${d.dealLink}" target="_blank" style="color:var(--accent);font-size:12px">Buy →</a></td>
+            </tr>
+          `).join('')}
+        </table>
+      </div>
+    `).join('');
+  } catch (e) {
+    document.getElementById('dealSearchResults').innerHTML = `<div class="error">${e.message}</div>`;
   }
 }
 

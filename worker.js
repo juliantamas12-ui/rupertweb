@@ -29,6 +29,9 @@ export default {
       if (p === '/api/recommend-buy')                                 return recommendBuy(url);
       if (p.startsWith('/api/game-details/'))                         return gameDetails(p);
       if (p.startsWith('/api/reviews/'))                              return steamReviews(p);
+      if (p === '/api/deals')                                         return getDeals(url);
+      if (p === '/api/deal-search')                                   return searchDeal(url);
+      if (p === '/api/my-deals')                                      return myDeals(url);
       if (p === '/api/xbox/login')                                    return xboxLogin();
       if (p === '/api/xbox/callback')                                 return xboxCallback(url);
       if (p === '/api/xbox/games')                                    return xboxGames(url);
@@ -594,6 +597,110 @@ async function steamReviews(path) {
   } catch {
     return jsonResponse({ appid, score: 0, total: 0, label: '—' });
   }
+}
+
+// ════════════════════════════════════════════════════════
+// GAME DEAL HUNTER (via CheapShark — free, aggregates 20+ stores)
+// ════════════════════════════════════════════════════════
+
+const STORE_NAMES = {
+  '1': 'Steam', '2': 'GamersGate', '3': 'GreenManGaming', '7': 'GOG',
+  '8': 'Origin', '11': 'Humble Store', '13': 'Uplay', '15': 'Fanatical',
+  '21': 'WinGameStore', '23': 'GameBillet', '24': '2Game', '25': 'Epic Games',
+  '27': 'Gamesplanet', '28': 'Gamesload', '29': 'IndieGala', '30': 'Blizzard',
+  '31': 'AllYouPlay', '32': 'DLGamer', '34': 'Noctre', '35': 'DreamGame',
+};
+
+async function getDeals(url) {
+  // Params: minRating (Steam %), maxPrice, sortBy (Deal Rating / Savings / Price / Recent), storeID
+  const params = new URLSearchParams();
+  params.set('pageSize', '60');
+  params.set('sortBy', url.searchParams.get('sortBy') || 'Deal Rating');
+  params.set('desc', url.searchParams.get('desc') || '1');
+  if (url.searchParams.get('minRating')) params.set('steamRating', url.searchParams.get('minRating'));
+  if (url.searchParams.get('maxPrice'))  params.set('upperPrice', url.searchParams.get('maxPrice'));
+  if (url.searchParams.get('onSale'))    params.set('onSale', '1');
+  if (url.searchParams.get('storeID'))   params.set('storeID', url.searchParams.get('storeID'));
+  if (url.searchParams.get('title'))     params.set('title', url.searchParams.get('title'));
+
+  const data = await fetchJSON(`https://www.cheapshark.com/api/1.0/deals?${params}`);
+  const deals = (data || []).map(d => ({
+    dealID:         d.dealID,
+    gameID:         d.gameID,
+    title:          d.title,
+    storeID:        d.storeID,
+    storeName:      STORE_NAMES[d.storeID] || `Store ${d.storeID}`,
+    salePrice:      parseFloat(d.salePrice),
+    normalPrice:    parseFloat(d.normalPrice),
+    savings:        Math.round(parseFloat(d.savings)),
+    dealRating:     parseFloat(d.dealRating),
+    steamRating:    d.steamRatingPercent ? parseInt(d.steamRatingPercent) : null,
+    steamReviews:   d.steamRatingText,
+    steamReviewCount: d.steamRatingCount ? parseInt(d.steamRatingCount) : 0,
+    metacritic:     d.metacriticScore ? parseInt(d.metacriticScore) : null,
+    thumb:          d.thumb,
+    releaseDate:    d.releaseDate,
+    dealLink:       `https://www.cheapshark.com/redirect?dealID=${d.dealID}`,
+  }));
+  return jsonResponse({ deals });
+}
+
+async function searchDeal(url) {
+  const title = url.searchParams.get('title');
+  if (!title) return jsonResponse({ error: 'title required' }, 400);
+  const data = await fetchJSON(`https://www.cheapshark.com/api/1.0/games?title=${encodeURIComponent(title)}&limit=5`);
+  const results = await Promise.all((data || []).slice(0, 3).map(async g => {
+    const detail = await fetchJSON(`https://www.cheapshark.com/api/1.0/games?id=${g.gameID}`).catch(() => ({}));
+    const deals = (detail.deals || []).map(d => ({
+      storeID: d.storeID,
+      storeName: STORE_NAMES[d.storeID] || `Store ${d.storeID}`,
+      price: parseFloat(d.price),
+      retailPrice: parseFloat(d.retailPrice),
+      savings: Math.round(parseFloat(d.savings)),
+      dealID: d.dealID,
+      dealLink: `https://www.cheapshark.com/redirect?dealID=${d.dealID}`,
+    })).sort((a, b) => a.price - b.price);
+    return {
+      gameID: g.gameID,
+      title: g.external,
+      thumb: g.thumb,
+      steamAppID: g.steamAppID,
+      cheapest: parseFloat(g.cheapest),
+      cheapestEver: detail.cheapestPriceEver ? parseFloat(detail.cheapestPriceEver.price) : null,
+      deals,
+    };
+  }));
+  return jsonResponse({ results });
+}
+
+// For logged-in Steam users: find deals on games in their wishlist or similar to their library
+async function myDeals(url) {
+  const sid = url.searchParams.get('sid') || DEFAULT_STEAM_ID;
+  const games = await fetchJSON(
+    `https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${STEAM_KEY}&steamid=${sid}&include_appinfo=1&include_played_free_games=1`
+  );
+  const ownedIds = new Set((games?.response?.games || []).map(g => g.appid));
+
+  // Get global top deals, then filter out games user already owns
+  const deals = await fetchJSON('https://www.cheapshark.com/api/1.0/deals?pageSize=60&sortBy=Deal%20Rating&steamRating=75&upperPrice=40');
+  const unowned = (deals || [])
+    .filter(d => !d.steamAppID || !ownedIds.has(parseInt(d.steamAppID)))
+    .slice(0, 30)
+    .map(d => ({
+      dealID: d.dealID,
+      title: d.title,
+      storeID: d.storeID,
+      storeName: STORE_NAMES[d.storeID] || `Store ${d.storeID}`,
+      salePrice: parseFloat(d.salePrice),
+      normalPrice: parseFloat(d.normalPrice),
+      savings: Math.round(parseFloat(d.savings)),
+      steamRating: d.steamRatingPercent ? parseInt(d.steamRatingPercent) : null,
+      steamReviews: d.steamRatingText,
+      thumb: d.thumb,
+      dealLink: `https://www.cheapshark.com/redirect?dealID=${d.dealID}`,
+    }));
+
+  return jsonResponse({ deals: unowned });
 }
 
 // ════════════════════════════════════════════════════════
