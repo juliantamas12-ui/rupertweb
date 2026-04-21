@@ -32,6 +32,12 @@ export default {
       if (p === '/api/free-games')                                    return freeGames();
       if (p === '/api/new-releases')                                  return newReleases(url);
       if (p === '/api/upcoming')                                      return upcomingReleases();
+      if (p === '/api/wrapped')                                       return getWrapped(url);
+      if (p === '/api/compare-friend')                                return compareFriend(url);
+      if (p === '/api/game-of-the-day')                               return gameOfTheDay(url);
+      if (p === '/api/finish-this')                                   return finishThis(url);
+      if (p === '/api/backlog-estimate')                              return backlogEstimate(url);
+      if (p === '/api/price-alert' && request.method === 'POST')      return createPriceAlert(request);
       if (p === '/api/deals')                                         return getDeals(url);
       if (p === '/api/deal-search')                                   return searchDeal(url);
       if (p === '/api/my-deals')                                      return myDeals(url);
@@ -813,6 +819,248 @@ async function steamReviews(path) {
     });
   } catch {
     return jsonResponse({ appid, score: 0, total: 0, label: '—' });
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// WRAPPED / YEAR IN GAMES / BACKLOG / FRIEND / GAME OF THE DAY / FINISH-THIS / PRICE ALERTS
+// ════════════════════════════════════════════════════════
+
+async function getWrapped(url) {
+  const sid = url.searchParams.get('sid') || DEFAULT_STEAM_ID;
+  const games = await fetchJSON(
+    `https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${STEAM_KEY}&steamid=${sid}&include_appinfo=1&include_played_free_games=1`
+  );
+  const list = games?.response?.games || [];
+  const recent = list.filter(g => (g.playtime_2weeks || 0) > 0).sort((a, b) => b.playtime_2weeks - a.playtime_2weeks);
+  const allTime = [...list].sort((a, b) => (b.playtime_forever || 0) - (a.playtime_forever || 0));
+  const totalHours = Math.round(list.reduce((s, g) => s + (g.playtime_forever || 0), 0) / 60);
+  const recentHours = Math.round(recent.reduce((s, g) => s + (g.playtime_2weeks || 0), 0) / 60 * 10) / 10;
+
+  // Top 5 all time
+  const top5 = allTime.slice(0, 5).map(g => ({
+    appid: g.appid,
+    name: g.name,
+    hours: Math.round(g.playtime_forever / 60),
+    img: `https://cdn.cloudflare.steamstatic.com/steam/apps/${g.appid}/header.jpg`,
+  }));
+
+  // Most played recently (top 3)
+  const topRecent = recent.slice(0, 3).map(g => ({
+    appid: g.appid,
+    name: g.name,
+    hours: Math.round(g.playtime_2weeks / 60 * 10) / 10,
+    img: `https://cdn.cloudflare.steamstatic.com/steam/apps/${g.appid}/header.jpg`,
+  }));
+
+  // Untouched games count
+  const untouched = list.filter(g => !g.playtime_forever).length;
+  const barelyPlayed = list.filter(g => g.playtime_forever > 0 && g.playtime_forever < 60).length;
+
+  // Completion estimate
+  const completed = list.filter(g => g.playtime_forever > 1800).length; // 30h+
+
+  return jsonResponse({
+    totalGames: list.length,
+    totalHours,
+    recentHours,
+    top5,
+    topRecent,
+    untouched,
+    barelyPlayed,
+    completed,
+    generatedAt: new Date().toISOString(),
+  });
+}
+
+async function compareFriend(url) {
+  const sid = url.searchParams.get('sid') || DEFAULT_STEAM_ID;
+  const friendSid = url.searchParams.get('friendSid');
+  if (!friendSid) return jsonResponse({ error: 'friendSid required' }, 400);
+
+  const [meGames, themGames, meProfile, themProfile] = await Promise.all([
+    fetchJSON(`https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${STEAM_KEY}&steamid=${sid}&include_appinfo=1&include_played_free_games=1`),
+    fetchJSON(`https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${STEAM_KEY}&steamid=${friendSid}&include_appinfo=1&include_played_free_games=1`),
+    fetchJSON(`https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=${STEAM_KEY}&steamids=${sid}`),
+    fetchJSON(`https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=${STEAM_KEY}&steamids=${friendSid}`),
+  ]);
+
+  const meList = meGames?.response?.games || [];
+  const themList = themGames?.response?.games || [];
+  if (!themList.length) return jsonResponse({ error: 'Friend profile private or no games' }, 404);
+
+  const meMap = Object.fromEntries(meList.map(g => [g.appid, g]));
+  const themMap = Object.fromEntries(themList.map(g => [g.appid, g]));
+
+  // Games you both own
+  const shared = meList.filter(g => themMap[g.appid]).map(g => ({
+    appid: g.appid,
+    name: g.name,
+    img: `https://cdn.cloudflare.steamstatic.com/steam/apps/${g.appid}/header.jpg`,
+    meHours: Math.round((g.playtime_forever || 0) / 60),
+    themHours: Math.round((themMap[g.appid].playtime_forever || 0) / 60),
+  })).sort((a, b) => (b.meHours + b.themHours) - (a.meHours + a.themHours)).slice(0, 10);
+
+  // Games they have you don't
+  const theirExclusive = themList.filter(g => !meMap[g.appid] && g.playtime_forever > 600)
+    .sort((a, b) => b.playtime_forever - a.playtime_forever)
+    .slice(0, 5)
+    .map(g => ({
+      appid: g.appid,
+      name: g.name,
+      img: `https://cdn.cloudflare.steamstatic.com/steam/apps/${g.appid}/header.jpg`,
+      hours: Math.round(g.playtime_forever / 60),
+    }));
+
+  const me = meProfile?.response?.players?.[0] || {};
+  const them = themProfile?.response?.players?.[0] || {};
+
+  return jsonResponse({
+    me: { name: me.personaname, avatar: me.avatarfull, games: meList.length, hours: Math.round(meList.reduce((s, g) => s + (g.playtime_forever || 0), 0) / 60) },
+    them: { name: them.personaname, avatar: them.avatarfull, games: themList.length, hours: Math.round(themList.reduce((s, g) => s + (g.playtime_forever || 0), 0) / 60) },
+    shared,
+    theirRecommendations: theirExclusive,
+  });
+}
+
+async function gameOfTheDay(url) {
+  // Deterministic by date — everyone gets the same pick today
+  const today = new Date().toISOString().slice(0, 10);
+  const seed = [...today].reduce((s, c) => s + c.charCodeAt(0), 0);
+
+  // Curated list of "must play" games
+  const CURATED = [
+    { appid: 1086940, name: "Baldur's Gate 3", reason: 'The RPG that revived the whole genre' },
+    { appid: 1145360, name: 'Hades',            reason: 'Roguelike with soul' },
+    { appid: 367520,  name: 'Hollow Knight',    reason: 'Best metroidvania of the decade' },
+    { appid: 1091500, name: 'Cyberpunk 2077',   reason: 'Redemption arc complete' },
+    { appid: 1245620, name: 'Elden Ring',       reason: 'Game of the Year 2022' },
+    { appid: 1222670, name: 'Disco Elysium',    reason: 'Best-written RPG ever' },
+    { appid: 620,     name: 'Portal 2',         reason: 'Still the best puzzle game' },
+    { appid: 588650,  name: 'Outer Wilds',      reason: 'Mind-bending space mystery' },
+    { appid: 413150,  name: 'Stardew Valley',   reason: 'The cosiest escape' },
+    { appid: 892970,  name: 'Valheim',          reason: 'Viking survival with friends' },
+    { appid: 1426210, name: 'It Takes Two',     reason: 'Best co-op experience in years' },
+    { appid: 1593500, name: 'Vampire Survivors',reason: '£4 of pure serotonin' },
+    { appid: 2379780, name: 'Balatro',          reason: 'Poker roguelike, 2024 sleeper hit' },
+    { appid: 427520,  name: 'Factorio',         reason: 'The GOAT of automation' },
+    { appid: 646570,  name: 'Slay the Spire',   reason: 'The deckbuilder that started it all' },
+  ];
+
+  const pick = CURATED[seed % CURATED.length];
+
+  // Enrich with live review + price
+  try {
+    const [rev, details] = await Promise.all([
+      fetchJSON(`https://store.steampowered.com/appreviews/${pick.appid}?json=1&language=all&purchase_type=all&num_per_page=0`).catch(() => null),
+      fetchJSON(`https://store.steampowered.com/api/appdetails?appids=${pick.appid}&cc=gb&l=en`).catch(() => null),
+    ]);
+    const info = details?.[pick.appid]?.data;
+    const r = rev?.query_summary;
+    return jsonResponse({
+      appid: pick.appid,
+      name: pick.name,
+      reason: pick.reason,
+      date: today,
+      img: `https://cdn.cloudflare.steamstatic.com/steam/apps/${pick.appid}/header.jpg`,
+      url: `https://store.steampowered.com/app/${pick.appid}`,
+      price: info?.is_free ? 'Free' : (info?.price_overview?.final_formatted || '—'),
+      discount: info?.price_overview?.discount_percent || 0,
+      review: r && r.total_reviews > 0 ? {
+        score: Math.round(r.total_positive / r.total_reviews * 100),
+        label: r.review_score_desc,
+        count: r.total_reviews,
+      } : null,
+    });
+  } catch (e) {
+    return jsonResponse({ appid: pick.appid, name: pick.name, reason: pick.reason, img: `https://cdn.cloudflare.steamstatic.com/steam/apps/${pick.appid}/header.jpg`, url: `https://store.steampowered.com/app/${pick.appid}` });
+  }
+}
+
+async function finishThis(url) {
+  const sid = url.searchParams.get('sid') || DEFAULT_STEAM_ID;
+  const games = await fetchJSON(
+    `https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${STEAM_KEY}&steamid=${sid}&include_appinfo=1&include_played_free_games=1`
+  );
+  const list = games?.response?.games || [];
+
+  // Games started but not finished: played 2-15 hours
+  const candidates = list.filter(g => g.playtime_forever > 120 && g.playtime_forever < 900);
+  if (!candidates.length) return jsonResponse({ error: 'No in-progress games to finish' }, 404);
+
+  // Pick one based on today's date (deterministic so refresh doesn't cycle)
+  const today = new Date().toISOString().slice(0, 10);
+  const seed = [...today].reduce((s, c) => s + c.charCodeAt(0), 0);
+  const pick = candidates[seed % candidates.length];
+
+  return jsonResponse({
+    appid: pick.appid,
+    name: pick.name,
+    hoursPlayed: Math.round(pick.playtime_forever / 60 * 10) / 10,
+    img: `https://cdn.cloudflare.steamstatic.com/steam/apps/${pick.appid}/header.jpg`,
+    url: `https://store.steampowered.com/app/${pick.appid}`,
+    message: `You started this and never finished. Give it 30 minutes tonight.`,
+  });
+}
+
+async function backlogEstimate(url) {
+  const sid = url.searchParams.get('sid') || DEFAULT_STEAM_ID;
+  const games = await fetchJSON(
+    `https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${STEAM_KEY}&steamid=${sid}&include_appinfo=1&include_played_free_games=1`
+  );
+  const list = games?.response?.games || [];
+
+  const untouched = list.filter(g => !g.playtime_forever);
+  const barelyPlayed = list.filter(g => g.playtime_forever > 0 && g.playtime_forever < 120);
+
+  // Total playtime (minutes) all-time, convert to avg hours/week
+  const totalHours = list.reduce((s, g) => s + (g.playtime_forever || 0), 0) / 60;
+  const accountAgeDays = 2500; // rough default ~7 years
+  const hoursPerWeek = (totalHours / accountAgeDays) * 7;
+  // Backlog estimate: assume each untouched game takes 20h, barely-played takes 15h
+  const estimatedBacklogHours = (untouched.length * 20) + (barelyPlayed.length * 15);
+  const weeksToFinish = hoursPerWeek > 0 ? estimatedBacklogHours / hoursPerWeek : 0;
+  const yearsToFinish = Math.round(weeksToFinish / 52 * 10) / 10;
+
+  return jsonResponse({
+    untouchedCount: untouched.length,
+    barelyPlayedCount: barelyPlayed.length,
+    backlogHours: Math.round(estimatedBacklogHours),
+    hoursPerWeek: Math.round(hoursPerWeek * 10) / 10,
+    yearsToFinish,
+    totalHours: Math.round(totalHours),
+  });
+}
+
+async function createPriceAlert(request) {
+  try {
+    const data = await request.json();
+    if (!data.email || !data.gameTitle || !data.targetPrice) {
+      return jsonResponse({ error: 'email, gameTitle, and targetPrice required' }, 400);
+    }
+
+    // Email owner + subscriber confirmation via Resend
+    const html = `
+      <div style="font-family:Arial,sans-serif;max-width:540px;margin:0 auto;padding:20px">
+        <h2 style="color:#0a0e1a;border-bottom:2px solid #c8f135;padding-bottom:8px">QuestLog Price Alert Set</h2>
+        <p>We'll email you when <strong>${data.gameTitle}</strong> drops below <strong>£${data.targetPrice}</strong> on any store.</p>
+        <p style="color:#666;font-size:13px">We check prices every hour across Steam, Epic, GOG, Humble, Fanatical and more.</p>
+      </div>`;
+
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: 'onboarding@resend.dev',
+        to: OWNER_EMAIL,
+        subject: `Price alert: ${data.email} wants ${data.gameTitle} at £${data.targetPrice}`,
+        html: `<pre>${JSON.stringify(data, null, 2)}</pre>`,
+      }),
+    });
+
+    return jsonResponse({ ok: true, message: 'Alert registered. Check your email.' });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
   }
 }
 

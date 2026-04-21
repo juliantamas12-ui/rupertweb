@@ -137,6 +137,7 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
     <button class="nav-tab" data-view="achievements">Achievements</button>
     <button class="nav-tab" data-view="news">News</button>
     <button class="nav-tab" data-view="leaderboards">Leaderboards</button>
+    <button class="nav-tab" data-view="more">More</button>
   </div>
   <div class="nav-user" id="navUser" style="display:none">
     <div class="nav-user-avatar" id="userAvatar"></div>
@@ -428,6 +429,68 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
   </div>
 </div>
 
+<div class="view" id="view-more">
+  <!-- GAME OF THE DAY -->
+  <div class="section">
+    <div class="section-head">
+      <h2>Game of the Day</h2>
+      <span class="link" style="cursor:default">Fresh pick daily</span>
+    </div>
+    <div id="gameOfDay"><div class="empty"><span class="loading"></span></div></div>
+  </div>
+
+  <!-- YEAR IN GAMES -->
+  <div class="section">
+    <div class="section-head"><h2>Year in Games — Your Stats</h2></div>
+    <div id="wrappedPanel" class="sidebar-card"><div class="empty"><span class="loading"></span></div></div>
+  </div>
+
+  <!-- BACKLOG ESTIMATE -->
+  <div class="section">
+    <div class="section-head"><h2>Your Backlog Reality Check</h2></div>
+    <div id="backlogPanel" class="sidebar-card"><div class="empty"><span class="loading"></span></div></div>
+  </div>
+
+  <!-- FINISH THIS -->
+  <div class="section">
+    <div class="section-head">
+      <h2>Finish This</h2>
+      <button class="link" onclick="loadFinishThis()">New pick</button>
+    </div>
+    <div id="finishThisPanel"><div class="empty"><span class="loading"></span></div></div>
+  </div>
+
+  <!-- FRIEND COMPARE -->
+  <div class="section">
+    <div class="section-head"><h2>Compare With a Friend</h2></div>
+    <div class="sidebar-card">
+      <p style="color:var(--dim);font-size:13px;margin-bottom:12px">Paste their Steam ID (64-bit). They need a public profile.</p>
+      <div style="display:flex;gap:10px;margin-bottom:16px">
+        <input type="text" id="friendSidInput" placeholder="76561198..." style="flex:1;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit">
+        <button onclick="compareFriend()" class="connect-btn" style="padding:10px 20px;font-size:13px">Compare</button>
+      </div>
+      <div id="friendCompareResult"></div>
+    </div>
+  </div>
+
+  <!-- PRICE ALERTS -->
+  <div class="section">
+    <div class="section-head">
+      <h2>Price Drop Alerts <span style="background:rgba(200,241,53,0.15);color:var(--accent);font-size:10px;padding:3px 8px;border-radius:3px;letter-spacing:1px;margin-left:8px">PRO</span></h2>
+    </div>
+    <div class="sidebar-card">
+      <p style="color:var(--dim);font-size:13px;margin-bottom:16px">Get emailed the moment a game drops below your target price on any store.</p>
+      <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;margin-bottom:10px">
+        <input type="text" id="alertGame" placeholder="Game title" style="background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit">
+        <input type="number" id="alertPrice" placeholder="Target £" step="0.01" style="background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit">
+        <input type="email" id="alertEmail" placeholder="Your email" style="background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit">
+      </div>
+      <button onclick="createPriceAlert()" class="connect-btn" style="width:100%">Set alert</button>
+      <div id="alertResult" style="margin-top:12px;font-size:13px"></div>
+    </div>
+  </div>
+</div>
+
 <div class="view" id="view-leaderboards">
   <div class="section">
     <div class="section-head"><h2>Your Top Games — Live Player Counts</h2></div>
@@ -462,6 +525,13 @@ document.querySelectorAll('.nav-tab').forEach(tab => {
     if (view === 'news' && !STATE.newsLoaded) loadNews();
     if (view === 'achievements' && !STATE.achLoaded) loadAchievements();
     if (view === 'leaderboards' && !STATE.lbLoaded) loadLeaderboards();
+    if (view === 'more' && !STATE.moreLoaded) {
+      loadGameOfDay();
+      loadWrapped();
+      loadBacklog();
+      loadFinishThis();
+      STATE.moreLoaded = true;
+    }
   });
 });
 
@@ -621,6 +691,160 @@ async function loadRecs() {
   } catch (e) {
     document.getElementById('recList').innerHTML = `<div class="error">${e.message}</div>`;
   }
+}
+
+// ═════ MORE (Wrapped / Backlog / Game of Day / Finish This / Friend Compare / Price Alert) ═════
+
+async function loadGameOfDay() {
+  try {
+    const r = await fetch('/api/game-of-the-day');
+    const g = await r.json();
+    document.getElementById('gameOfDay').innerHTML = `
+      <div class="rec-card" onclick="window.open('${g.url}','_blank')" style="background:linear-gradient(135deg,var(--panel) 0%,#1a2340 100%);border:1px solid rgba(200,241,53,0.3)">
+        <div class="rec-cover" style="background-image:url('${g.img}')"></div>
+        <div class="rec-info">
+          <div class="rec-reason">${new Date(g.date||Date.now()).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})}</div>
+          <div class="rec-title">${g.name}</div>
+          <div class="rec-sub">${g.reason}</div>
+          <div class="rec-sub" style="margin-top:6px;display:flex;gap:12px;flex-wrap:wrap">
+            ${g.price ? `<span style="color:var(--accent);font-weight:700">${g.price}</span>` : ''}
+            ${g.review ? `<span style="color:var(--accent);font-weight:700">${g.review.score}% ★</span> <span style="color:var(--dim);font-size:11px">${g.review.label}</span>` : ''}
+          </div>
+        </div>
+        <button class="rec-action">View →</button>
+      </div>`;
+  } catch (e) { document.getElementById('gameOfDay').innerHTML = `<div class="error">${e.message}</div>`; }
+}
+
+async function loadWrapped() {
+  if (!STATE.sid) return;
+  try {
+    const r = await api('/api/wrapped');
+    const el = document.getElementById('wrappedPanel');
+    el.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:24px">
+        <div style="background:var(--panel2);border-radius:8px;padding:16px;text-align:center">
+          <div style="font-size:28px;font-weight:800;color:var(--accent)">${r.totalHours.toLocaleString()}</div>
+          <div style="font-size:11px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-top:4px">Hours Played</div>
+        </div>
+        <div style="background:var(--panel2);border-radius:8px;padding:16px;text-align:center">
+          <div style="font-size:28px;font-weight:800">${r.totalGames}</div>
+          <div style="font-size:11px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-top:4px">Games Owned</div>
+        </div>
+        <div style="background:var(--panel2);border-radius:8px;padding:16px;text-align:center">
+          <div style="font-size:28px;font-weight:800">${r.completed}</div>
+          <div style="font-size:11px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-top:4px">Played 30h+</div>
+        </div>
+        <div style="background:var(--panel2);border-radius:8px;padding:16px;text-align:center">
+          <div style="font-size:28px;font-weight:800;color:#ff9e42">${r.untouched}</div>
+          <div style="font-size:11px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-top:4px">Never Touched</div>
+        </div>
+      </div>
+      <h3 style="font-size:13px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Top 5 All Time</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px">
+        ${r.top5.map((g,i)=>`
+          <div style="position:relative" onclick="window.open('https://store.steampowered.com/app/${g.appid}','_blank')">
+            <div style="aspect-ratio:460/215;background:url('${g.img}') center/cover;border-radius:6px;cursor:pointer"></div>
+            <div style="position:absolute;top:4px;left:4px;background:var(--accent);color:#000;font-weight:800;padding:2px 8px;border-radius:3px;font-size:11px">#${i+1}</div>
+            <div style="font-size:12px;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${g.name}</div>
+            <div style="font-size:11px;color:var(--accent)">${g.hours}h</div>
+          </div>
+        `).join('')}
+      </div>`;
+  } catch (e) { document.getElementById('wrappedPanel').innerHTML = `<div class="error">${e.message}</div>`; }
+}
+
+async function loadBacklog() {
+  if (!STATE.sid) return;
+  try {
+    const r = await api('/api/backlog-estimate');
+    document.getElementById('backlogPanel').innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:16px">
+        <div><div style="font-size:11px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Never Played</div><div style="font-size:22px;font-weight:800;color:#ff9e42">${r.untouchedCount}</div></div>
+        <div><div style="font-size:11px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Barely Played</div><div style="font-size:22px;font-weight:800">${r.barelyPlayedCount}</div></div>
+        <div><div style="font-size:11px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Est. Hours to Finish</div><div style="font-size:22px;font-weight:800">${r.backlogHours.toLocaleString()}h</div></div>
+        <div><div style="font-size:11px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">At Your Pace</div><div style="font-size:22px;font-weight:800;color:var(--accent)">${r.yearsToFinish} years</div></div>
+      </div>
+      <p style="color:var(--dim);font-size:13px">You play roughly <strong style="color:var(--text)">${r.hoursPerWeek}h/week</strong>. At that rate your backlog would take <strong style="color:var(--accent)">${r.yearsToFinish} years</strong> to clear. Maybe stop buying Steam sales.</p>`;
+  } catch (e) { document.getElementById('backlogPanel').innerHTML = `<div class="error">${e.message}</div>`; }
+}
+
+async function loadFinishThis() {
+  if (!STATE.sid) return;
+  try {
+    const r = await api('/api/finish-this');
+    if (r.error) { document.getElementById('finishThisPanel').innerHTML = `<div class="empty">${r.error}</div>`; return; }
+    document.getElementById('finishThisPanel').innerHTML = `
+      <div class="rec-card" onclick="window.open('${r.url}','_blank')" style="border:1px solid rgba(255,158,66,0.3)">
+        <div class="rec-cover" style="background-image:url('${r.img}')"></div>
+        <div class="rec-info">
+          <div class="rec-reason" style="color:#ff9e42">⚠ UNFINISHED</div>
+          <div class="rec-title">${r.name}</div>
+          <div class="rec-sub">${r.message} You already put in ${r.hoursPlayed}h.</div>
+        </div>
+        <button class="rec-action">Play →</button>
+      </div>`;
+  } catch (e) { document.getElementById('finishThisPanel').innerHTML = `<div class="error">${e.message}</div>`; }
+}
+
+async function compareFriend() {
+  const friendSid = document.getElementById('friendSidInput').value.trim();
+  if (!friendSid.match(/^7656\d{13}$/)) { alert('Invalid Steam ID'); return; }
+  document.getElementById('friendCompareResult').innerHTML = '<div class="empty"><span class="loading"></span> Comparing...</div>';
+  try {
+    const r = await fetch(`/api/compare-friend?sid=${STATE.sid}&friendSid=${friendSid}`);
+    const d = await r.json();
+    if (d.error) { document.getElementById('friendCompareResult').innerHTML = `<div class="error">${d.error}</div>`; return; }
+    document.getElementById('friendCompareResult').innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+        <div style="background:var(--panel2);border-radius:8px;padding:16px;text-align:center">
+          <div style="width:56px;height:56px;border-radius:50%;background:url('${d.me.avatar}') center/cover;margin:0 auto 10px"></div>
+          <div style="font-weight:700;margin-bottom:8px">${d.me.name}</div>
+          <div style="font-size:12px;color:var(--dim)">${d.me.games} games · ${d.me.hours.toLocaleString()}h</div>
+        </div>
+        <div style="background:var(--panel2);border-radius:8px;padding:16px;text-align:center">
+          <div style="width:56px;height:56px;border-radius:50%;background:url('${d.them.avatar}') center/cover;margin:0 auto 10px"></div>
+          <div style="font-weight:700;margin-bottom:8px">${d.them.name}</div>
+          <div style="font-size:12px;color:var(--dim)">${d.them.games} games · ${d.them.hours.toLocaleString()}h</div>
+        </div>
+      </div>
+      <h3 style="font-size:13px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Games You Both Own</h3>
+      ${d.shared.length === 0 ? '<p style="color:var(--dim)">No overlap. Wow.</p>' : d.shared.map(g => `
+        <div style="display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+          <div style="width:80px;aspect-ratio:460/215;background:url('${g.img}') center/cover;border-radius:4px;flex-shrink:0"></div>
+          <div style="flex:1"><div style="font-weight:600;font-size:13px">${g.name}</div><div style="font-size:11px;color:var(--dim)">You: ${g.meHours}h · Them: ${g.themHours}h</div></div>
+        </div>
+      `).join('')}
+      ${d.theirRecommendations.length ? `<h3 style="font-size:13px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin:20px 0 10px">They Play (You Don't Own)</h3>${d.theirRecommendations.map(g => `
+        <div style="display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="window.open('https://store.steampowered.com/app/${g.appid}','_blank')">
+          <div style="width:80px;aspect-ratio:460/215;background:url('${g.img}') center/cover;border-radius:4px;flex-shrink:0"></div>
+          <div style="flex:1"><div style="font-weight:600;font-size:13px">${g.name}</div><div style="font-size:11px;color:var(--dim)">They've played ${g.hours}h — might be worth a look</div></div>
+        </div>`).join('')}` : ''}
+    `;
+  } catch (e) { document.getElementById('friendCompareResult').innerHTML = `<div class="error">${e.message}</div>`; }
+}
+
+async function createPriceAlert() {
+  const gameTitle = document.getElementById('alertGame').value.trim();
+  const targetPrice = parseFloat(document.getElementById('alertPrice').value);
+  const email = document.getElementById('alertEmail').value.trim();
+  if (!gameTitle || !targetPrice || !email) { document.getElementById('alertResult').innerHTML = '<div class="error">All fields required</div>'; return; }
+
+  try {
+    const r = await fetch('/api/price-alert', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ gameTitle, targetPrice, email, sid: STATE.sid }),
+    });
+    const d = await r.json();
+    if (d.ok) {
+      document.getElementById('alertResult').innerHTML = '<div style="color:var(--accent)">✓ Alert set. You\'ll get an email when it drops.</div>';
+      document.getElementById('alertGame').value = '';
+      document.getElementById('alertPrice').value = '';
+    } else {
+      document.getElementById('alertResult').innerHTML = `<div class="error">${d.error || 'Failed'}</div>`;
+    }
+  } catch (e) { document.getElementById('alertResult').innerHTML = `<div class="error">${e.message}</div>`; }
 }
 
 // ═════ NEW RELEASES ═════
