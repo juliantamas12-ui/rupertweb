@@ -1529,6 +1529,7 @@ const STORE_NAMES = {
 async function getDeals(url) {
   // Params: minRating (Steam %), maxPrice, sortBy (Deal Rating / Savings / Price / Recent), storeID
   const params = new URLSearchParams();
+  // Pull more so we can quality-filter
   params.set('pageSize', '60');
   params.set('sortBy', url.searchParams.get('sortBy') || 'Deal Rating');
   params.set('desc', url.searchParams.get('desc') || '1');
@@ -1538,8 +1539,40 @@ async function getDeals(url) {
   if (url.searchParams.get('storeID'))   params.set('storeID', url.searchParams.get('storeID'));
   if (url.searchParams.get('title'))     params.set('title', url.searchParams.get('title'));
 
-  const data = await fetchJSON(`https://www.cheapshark.com/api/1.0/deals?${params}`);
-  const deals = (data || []).map(d => ({
+  // Fetch multiple pages to get a bigger pool for filtering
+  const [page0, page1] = await Promise.all([
+    fetchJSON(`https://www.cheapshark.com/api/1.0/deals?${params}`),
+    fetchJSON(`https://www.cheapshark.com/api/1.0/deals?${params}&pageNumber=1`),
+  ]);
+  const raw = [...(page0 || []), ...(page1 || [])];
+
+  // Strict quality filter: real games have reviews. Shovelware usually has <200 reviews.
+  // Skip if no steam rating at all, or if review count is tiny.
+  const MIN_REVIEWS = parseInt(url.searchParams.get('minReviews') || '500');
+  const cleaned = raw.filter(d => {
+    const revCount = d.steamRatingCount ? parseInt(d.steamRatingCount) : 0;
+    const rating = d.steamRatingPercent ? parseInt(d.steamRatingPercent) : 0;
+    // Need both: enough reviews to not be asset flip, and rating > 60%
+    if (revCount < MIN_REVIEWS) return false;
+    if (rating < 60) return false;
+    // Drop joke/bad titles patterns
+    const t = (d.title || '').toLowerCase();
+    if (/\bhentai\b|\bwaifu\b|\bgirl ?simulator\b|\bsex\b|\bnsfw\b|\bboobs\b|\bnudist\b/.test(t)) return false;
+    // Drop demos/DLC tracked separately
+    if (/\bdemo\b|\bsoundtrack\b|\bost\b(\s|$)/.test(t)) return false;
+    return true;
+  });
+
+  // Dedupe by gameID (same game on multiple stores — keep cheapest)
+  const byGame = {};
+  for (const d of cleaned) {
+    const key = d.gameID;
+    if (!byGame[key] || parseFloat(d.salePrice) < parseFloat(byGame[key].salePrice)) {
+      byGame[key] = d;
+    }
+  }
+
+  const deals = Object.values(byGame).map(d => ({
     dealID:         d.dealID,
     gameID:         d.gameID,
     title:          d.title,
@@ -1557,6 +1590,14 @@ async function getDeals(url) {
     releaseDate:    d.releaseDate,
     dealLink:       `https://www.cheapshark.com/redirect?dealID=${d.dealID}`,
   }));
+
+  // Sort by review count * savings (balances popularity and deal strength)
+  deals.sort((a, b) => {
+    const scoreA = Math.log10(a.steamReviewCount + 1) * a.savings;
+    const scoreB = Math.log10(b.steamReviewCount + 1) * b.savings;
+    return scoreB - scoreA;
+  });
+
   return jsonResponse({ deals });
 }
 
