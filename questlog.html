@@ -649,7 +649,7 @@ function renderNewReleaseCard(g) {
         <div class="rec-title">${g.name}</div>
         <div class="rec-sub" style="margin-top:4px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
           ${price}
-          ${g.review ? `<span style="color:${scoreColour};font-weight:700">${g.review.score}% ★</span> <span style="color:var(--dim);font-size:11px">${g.review.label} (${g.review.count.toLocaleString()})</span>` : '<span style="color:var(--dim);font-size:11px">Too new for reviews</span>'}
+          <span style="color:${scoreColour};font-weight:700">${g.review.score}% ★</span> <span style="color:var(--dim);font-size:11px">${g.review.label} (${g.review.count.toLocaleString()})</span>
         </div>
       </div>
       <button class="rec-action">View →</button>
@@ -663,8 +663,10 @@ async function loadNewReleases() {
     const r = await fetch(`/api/new-releases?filter=${STATE.newFilter || 'popular'}`);
     const data = await r.json();
     const el = document.getElementById('newReleasesList');
-    if (!data.items?.length) { el.innerHTML = '<div class="empty">No items available.</div>'; return; }
-    el.innerHTML = data.items.map(renderNewReleaseCard).join('');
+    // Filter: must have at least 150 reviews — excludes shovelware/untested
+    const filtered = (data.items || []).filter(g => g.review && g.review.count >= 150);
+    if (!filtered.length) { el.innerHTML = '<div class="empty">No new releases with enough reviews yet. Check back later.</div>'; return; }
+    el.innerHTML = filtered.map(renderNewReleaseCard).join('');
   } catch (e) {
     document.getElementById('newReleasesList').innerHTML = `<div class="error">${e.message}</div>`;
   }

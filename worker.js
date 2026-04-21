@@ -834,7 +834,7 @@ async function newReleases(url) {
       default:            source = data.new_releases;
     }
 
-    const items = (source?.items || []).slice(0, 20);
+    const items = (source?.items || []).slice(0, 40);
 
     // Enrich with reviews in parallel
     const enriched = await Promise.all(items.map(async it => {
