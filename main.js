@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Silver That Killed an Empire: Potosí, the Ming, and the First Global Crisis",
+    date: "2026-04-21",
+    category: "History",
+    excerpt: "In 1545, an indigenous llama herder named Diego Huallpa slipped on a mountainside in what is now Bolivia, grabbed a shrub to steady himself, and pulled up roots coated in raw silver. The mountain was Cerro Rico — the Rich Hill — and within a decade it had become the most valuable piece of real estate on Earth...",
+    url: "essays/2026-04-21-the-silver-that-killed-an-empire-potosi-the-ming-and-the-firs.html"
+  },
+  {
     title: "The Man Who Made Authoritarianism Respectable: Carl Schmitt and the Permanent Emergency",
     date: "2026-04-20",
     category: "History",
