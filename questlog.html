@@ -200,10 +200,18 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
 <div class="view" id="view-recs">
   <div class="section">
     <div class="section-head">
-      <h2>For You Tonight</h2>
+      <h2>Play Tonight — From Your Library</h2>
       <button class="link" onclick="loadRecs()">Refresh →</button>
     </div>
     <div id="recList"><div class="empty"><span class="loading"></span> Generating recommendations...</div></div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <h2>Games to Buy — Based on What You Play</h2>
+      <button class="link" onclick="loadBuyRecs()">Refresh →</button>
+    </div>
+    <div id="buyRecList"><div class="empty"><span class="loading"></span> Finding games...</div></div>
   </div>
 </div>
 
@@ -257,7 +265,7 @@ document.querySelectorAll('.nav-tab').forEach(tab => {
     tab.classList.add('active');
     document.getElementById('view-' + view).classList.add('active');
     // Lazy-load views
-    if (view === 'recs' && !STATE.recsLoaded) loadRecs();
+    if (view === 'recs' && !STATE.recsLoaded) { loadRecs(); loadBuyRecs(); }
     if (view === 'news' && !STATE.newsLoaded) loadNews();
     if (view === 'achievements' && !STATE.achLoaded) loadAchievements();
     if (view === 'leaderboards' && !STATE.lbLoaded) loadLeaderboards();
@@ -372,6 +380,30 @@ async function loadRecs() {
     `).join('');
   } catch (e) {
     document.getElementById('recList').innerHTML = `<div class="error">${e.message}</div>`;
+  }
+}
+
+async function loadBuyRecs() {
+  document.getElementById('buyRecList').innerHTML = '<div class="empty"><span class="loading"></span> Finding deals & matches...</div>';
+  try {
+    const data = await api('/api/recommend-buy');
+    if (!data.recommendations?.length) {
+      document.getElementById('buyRecList').innerHTML = '<div class="empty">No buy recommendations yet.</div>';
+      return;
+    }
+    document.getElementById('buyRecList').innerHTML = data.recommendations.map(r => `
+      <div class="rec-card" onclick="window.open('https://store.steampowered.com/app/${r.appid}','_blank')">
+        <div class="rec-cover" style="background-image:url('${r.img}')"></div>
+        <div class="rec-info">
+          <div class="rec-reason">${r.reason}</div>
+          <div class="rec-title">${r.game}</div>
+          <div class="rec-sub">${r.sub}${r.price ? ` · <span style="color:${r.discounted ? 'var(--accent)' : 'var(--text)'};font-weight:600">${r.price}</span>` : ''}</div>
+        </div>
+        <button class="rec-action">${r.price === 'Free' ? 'Install' : 'Buy →'}</button>
+      </div>
+    `).join('');
+  } catch (e) {
+    document.getElementById('buyRecList').innerHTML = `<div class="error">${e.message}</div>`;
   }
 }
 

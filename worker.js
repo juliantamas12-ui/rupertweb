@@ -21,6 +21,8 @@ export default {
       if (p.startsWith('/api/steam/game-stats/'))                     return steamGameStats(p);
       if (p.startsWith('/api/steam/news/'))                           return steamNews(p);
       if (p === '/api/recommend')                                     return recommend(url);
+      if (p === '/api/recommend-buy')                                 return recommendBuy(url);
+      if (p.startsWith('/api/game-details/'))                         return gameDetails(p);
     } catch (e) {
       return jsonResponse({ error: e.message }, 500);
     }
@@ -265,6 +267,160 @@ async function recommend(url) {
   }
 
   return jsonResponse({ recommendations: recs.slice(0, 4) });
+}
+
+// Games to BUY — uses tag-based similar games + Steam featured
+async function recommendBuy(url) {
+  const sid = url.searchParams.get('sid') || DEFAULT_STEAM_ID;
+  const games = await fetchJSON(
+    `https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${STEAM_KEY}&steamid=${sid}&include_appinfo=1&include_played_free_games=1`
+  );
+  const owned = new Set((games?.response?.games || []).map(g => g.appid));
+  const topPlayed = [...(games?.response?.games || [])]
+    .filter(g => (g.playtime_forever || 0) > 300)
+    .sort((a, b) => (b.playtime_forever || 0) - (a.playtime_forever || 0))
+    .slice(0, 5);
+
+  // Manual similarity map for popular genres — fast + reliable without scraping
+  const SIMILARITY = {
+    // Sea of Thieves (adventure, pirate, multiplayer)
+    1172620: [
+      { appid: 2220280, name: 'Skull and Bones', reason: 'Naval combat in a massive open world' },
+      { appid: 582010, name: 'Monster Hunter: World', reason: 'Co-op adventure grind' },
+      { appid: 2344520, name: 'Diablo IV', reason: 'Same loot chase feeling' },
+    ],
+    // CS2
+    730: [
+      { appid: 1172470, name: 'Apex Legends', reason: 'FPS you\'d pick up fast' },
+      { appid: 252490, name: 'Rust', reason: 'Tense tactical gunplay' },
+      { appid: 1938090, name: 'Call of Duty: MW III', reason: 'If you want something heavier' },
+    ],
+    // RDR2
+    1174180: [
+      { appid: 1091500, name: 'Cyberpunk 2077', reason: 'Same RPG depth, modern setting' },
+      { appid: 1245620, name: 'Elden Ring', reason: 'Massive open world, huge hours' },
+      { appid: 1086940, name: "Baldur's Gate 3", reason: 'Story-driven epic' },
+    ],
+    // Elden Ring
+    1245620: [
+      { appid: 814380, name: 'Sekiro', reason: 'FromSoftware, tighter combat' },
+      { appid: 1627720, name: 'Lies of P', reason: 'Souls-like, bloodborne vibes' },
+      { appid: 1623730, name: 'Palworld', reason: 'Massive open-world survival' },
+    ],
+    // Rocket League
+    252950: [
+      { appid: 1517290, name: 'Battlefield 2042', reason: 'Another competitive team game' },
+      { appid: 892970, name: 'Valheim', reason: 'Chill co-op change of pace' },
+    ],
+    // Rust
+    252490: [
+      { appid: 1604030, name: 'SCUM', reason: 'Hardcore survival' },
+      { appid: 306130, name: 'Elder Scrolls Online', reason: 'MMO grind energy' },
+    ],
+    // Cyberpunk
+    1091500: [
+      { appid: 2651280, name: 'Alan Wake 2', reason: 'Narrative with atmosphere' },
+      { appid: 1238810, name: 'Battlefield V', reason: 'If you want shooter action' },
+    ],
+    // The Witcher 3
+    292030: [
+      { appid: 1086940, name: "Baldur's Gate 3", reason: 'Deep RPG, best in years' },
+      { appid: 2344520, name: 'Diablo IV', reason: 'Dark fantasy with loot' },
+      { appid: 2322010, name: 'Kingdom Come: Deliverance II', reason: 'Same medieval realism' },
+    ],
+  };
+
+  // Trending / consensus must-plays (2025-2026)
+  const TRENDING = [
+    { appid: 2344520, name: 'Diablo IV', reason: 'Season 6 is the best yet', img: 'https://cdn.cloudflare.steamstatic.com/steam/apps/2344520/header.jpg' },
+    { appid: 1086940, name: "Baldur's Gate 3", reason: 'Game of the Year 2023, still peak', img: 'https://cdn.cloudflare.steamstatic.com/steam/apps/1086940/header.jpg' },
+    { appid: 2322010, name: 'Kingdom Come: Deliverance II', reason: 'Medieval RPG, realistic and huge', img: 'https://cdn.cloudflare.steamstatic.com/steam/apps/2322010/header.jpg' },
+    { appid: 2767030, name: 'Marvel Rivals', reason: 'Most played hero shooter right now', img: 'https://cdn.cloudflare.steamstatic.com/steam/apps/2767030/header.jpg' },
+    { appid: 2073850, name: 'The Finals', reason: 'Free-to-play FPS, physics-driven destruction', img: 'https://cdn.cloudflare.steamstatic.com/steam/apps/2073850/header.jpg' },
+    { appid: 2651280, name: 'Alan Wake 2', reason: 'Best-looking game of the past year', img: 'https://cdn.cloudflare.steamstatic.com/steam/apps/2651280/header.jpg' },
+    { appid: 1623730, name: 'Palworld', reason: 'Survival + Pokemon, became a phenomenon', img: 'https://cdn.cloudflare.steamstatic.com/steam/apps/1623730/header.jpg' },
+    { appid: 1145360, name: 'Hades', reason: "Roguelike masterpiece, you don't own it", img: 'https://cdn.cloudflare.steamstatic.com/steam/apps/1145360/header.jpg' },
+  ];
+
+  const recs = [];
+
+  // Based on your top 3 played games
+  for (const g of topPlayed.slice(0, 3)) {
+    const similar = SIMILARITY[g.appid];
+    if (similar) {
+      for (const s of similar) {
+        if (!owned.has(s.appid) && !recs.find(r => r.appid === s.appid)) {
+          recs.push({
+            reason: `Because you loved ${g.name} (${Math.round(g.playtime_forever/60)}h)`,
+            game: s.name,
+            appid: s.appid,
+            img: `https://cdn.cloudflare.steamstatic.com/steam/apps/${s.appid}/header.jpg`,
+            sub: s.reason,
+            buy: true,
+          });
+          if (recs.length >= 6) break;
+        }
+      }
+    }
+    if (recs.length >= 6) break;
+  }
+
+  // Trending you don't own
+  for (const t of TRENDING) {
+    if (!owned.has(t.appid) && !recs.find(r => r.appid === t.appid)) {
+      recs.push({
+        reason: 'Trending right now',
+        game: t.name,
+        appid: t.appid,
+        img: t.img,
+        sub: t.reason,
+        buy: true,
+      });
+      if (recs.length >= 10) break;
+    }
+  }
+
+  // Enrich with price info from Steam store API
+  for (const r of recs) {
+    try {
+      const data = await fetchJSON(`https://store.steampowered.com/api/appdetails?appids=${r.appid}&cc=gb&l=en`);
+      const info = data?.[r.appid]?.data;
+      if (info?.is_free) r.price = 'Free';
+      else if (info?.price_overview) {
+        const p = info.price_overview;
+        if (p.discount_percent > 0) {
+          r.price = `${p.final_formatted} (-${p.discount_percent}%)`;
+          r.discounted = true;
+        } else {
+          r.price = p.final_formatted;
+        }
+      }
+    } catch {}
+  }
+
+  return jsonResponse({ recommendations: recs });
+}
+
+async function gameDetails(path) {
+  const appid = path.split('/').pop();
+  try {
+    const data = await fetchJSON(`https://store.steampowered.com/api/appdetails?appids=${appid}&cc=gb&l=en`);
+    const info = data?.[appid]?.data;
+    if (!info) return jsonResponse({ error: 'Not found' }, 404);
+    return jsonResponse({
+      appid,
+      name: info.name,
+      price: info.is_free ? 'Free' : (info.price_overview?.final_formatted || '—'),
+      discount: info.price_overview?.discount_percent || 0,
+      description: info.short_description,
+      genres: (info.genres || []).map(g => g.description),
+      metacritic: info.metacritic?.score || null,
+      releaseDate: info.release_date?.date,
+      header: info.header_image,
+    });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
+  }
 }
 
 // ════════════════════════════════════════════════════════
