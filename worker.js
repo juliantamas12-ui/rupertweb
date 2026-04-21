@@ -115,6 +115,15 @@ async function steamGames(url) {
   const data = await fetchJSON(
     `https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${STEAM_KEY}&steamid=${sid}&include_appinfo=1&include_played_free_games=1`
   );
+
+  // If response is {} (not {games: []}), the privacy setting is blocking us
+  if (!data?.response || (data.response.game_count === undefined && !data.response.games)) {
+    return jsonResponse({
+      error: 'privacy',
+      message: 'Your owned games are private. Go to Steam → Edit Profile → Privacy Settings and set "Game details" AND "Owned games" to Public. Your profile being public alone is not enough.',
+    }, 403);
+  }
+
   const games = (data?.response?.games || []).map(g => ({
     appid: g.appid,
     name: g.name,

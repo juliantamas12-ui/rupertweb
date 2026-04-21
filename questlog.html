@@ -622,6 +622,26 @@ async function connectSteam() {
   try {
     const [profile, games] = await Promise.all([api('/api/steam/profile'), api('/api/steam/games')]);
     if (profile.error) throw new Error(profile.error);
+
+    if (games.error === 'privacy') {
+      alert(
+        'Owned Games is still private.\n\n' +
+        'Your profile loads fine but Steam is hiding your games list.\n\n' +
+        'Go to Steam → right-click your username → Profile → Edit Profile → Privacy Settings.\n\n' +
+        'Set BOTH of these to Public:\n' +
+        '• Game details\n' +
+        '• Owned games  (scroll down — this is a SEPARATE setting)\n\n' +
+        'Save and try again.'
+      );
+      return;
+    }
+    if (games.error) throw new Error(games.error);
+
+    if (!games.games || games.games.length === 0) {
+      alert('Connected to your Steam profile but your library is empty. Either you own no games or the "Owned games" privacy setting is hidden.');
+      return;
+    }
+
     STATE.profile = profile;
     STATE.games = games.games;
     STATE.gameCount = games.count;
@@ -631,12 +651,11 @@ async function connectSteam() {
   } catch (e) {
     alert(
       "Couldn't connect.\n\n" +
-      "Most likely cause: your Steam privacy settings.\n\n" +
-      "Go to Steam → Edit Profile → Privacy Settings and set ALL THREE to Public:\n" +
+      "Most common cause: Steam privacy settings.\n\n" +
+      "Go to Steam → Edit Profile → Privacy Settings. Set ALL of these to Public:\n" +
       "• My Profile\n" +
-      "• Game Details\n" +
-      "• Owned Games  ← this one especially\n\n" +
-      "Even if your profile is public, if 'Owned Games' is hidden we can't read your library.\n\n" +
+      "• Game details\n" +
+      "• Owned games  ← this one is separate and is the one most people miss\n\n" +
       "Error: " + e.message
     );
   }
