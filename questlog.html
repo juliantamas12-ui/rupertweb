@@ -469,15 +469,26 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
     <div id="finishThisPanel"><div class="empty"><span class="loading"></span></div></div>
   </div>
 
-  <!-- FRIEND COMPARE -->
+  <!-- FRIENDS LIST + COMPARE -->
   <div class="section">
-    <div class="section-head"><h2>Compare With a Friend</h2></div>
+    <div class="section-head"><h2>Friends</h2></div>
     <div class="sidebar-card">
-      <p style="color:var(--dim);font-size:13px;margin-bottom:12px">Paste their Steam ID (64-bit). They need a public profile.</p>
-      <div style="display:flex;gap:10px;margin-bottom:16px">
-        <input type="text" id="friendSidInput" placeholder="76561198..." style="flex:1;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit">
-        <button onclick="compareFriend()" class="connect-btn" style="padding:10px 20px;font-size:13px">Compare</button>
+      <p style="color:var(--dim);font-size:13px;margin-bottom:12px">Add friends by Steam ID to compare libraries, hours and achievements. Saved in this browser.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+        <input type="text" id="friendSidInput" placeholder="Steam ID (76561198...)" style="flex:2;min-width:180px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit">
+        <input type="text" id="friendNickInput" placeholder="Nickname (optional)" style="flex:1;min-width:120px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit">
+        <button onclick="addFriend()" class="connect-btn" style="padding:10px 20px;font-size:13px">Add friend</button>
       </div>
+      <div id="friendsList"></div>
+    </div>
+  </div>
+
+  <div class="section" id="compareSection" style="display:none">
+    <div class="section-head">
+      <h2 id="compareTitle">Comparison</h2>
+      <button class="link" onclick="document.getElementById('compareSection').style.display='none'">Close ×</button>
+    </div>
+    <div class="sidebar-card">
       <div id="friendCompareResult"></div>
     </div>
   </div>
@@ -594,12 +605,15 @@ document.querySelectorAll('.nav-tab').forEach(tab => {
     if (view === 'news' && !STATE.newsLoaded) loadNews();
     if (view === 'achievements' && !STATE.achLoaded) loadAchievements();
     if (view === 'leaderboards' && !STATE.lbLoaded) loadLeaderboards();
-    if (view === 'more' && !STATE.moreLoaded) {
-      loadGameOfDay();
-      loadWrapped();
-      loadBacklog();
-      loadFinishThis();
-      STATE.moreLoaded = true;
+    if (view === 'more') {
+      renderFriends();  // always refresh friends list in case storage changed
+      if (!STATE.moreLoaded) {
+        loadGameOfDay();
+        loadWrapped();
+        loadBacklog();
+        loadFinishThis();
+        STATE.moreLoaded = true;
+      }
     }
   });
 });
@@ -886,9 +900,83 @@ async function loadFinishThis() {
   } catch (e) { document.getElementById('finishThisPanel').innerHTML = `<div class="error">${e.message}</div>`; }
 }
 
+function getFriends() {
+  try { return JSON.parse(localStorage.getItem('questlog_friends') || '[]'); }
+  catch { return []; }
+}
+function saveFriends(f) { localStorage.setItem('questlog_friends', JSON.stringify(f)); }
+
+async function addFriend() {
+  const sid = document.getElementById('friendSidInput').value.trim();
+  const nick = document.getElementById('friendNickInput').value.trim();
+  if (!sid.match(/^7656\d{13}$/)) { alert('Invalid Steam ID. Must be a 17-digit number starting with 7656.'); return; }
+  if (sid === STATE.sid) { alert("That's you."); return; }
+
+  const friends = getFriends();
+  if (friends.find(f => f.sid === sid)) { alert('Already added.'); return; }
+
+  // Fetch profile to save avatar + name
+  try {
+    const r = await fetch(`/api/steam/profile?sid=${sid}`);
+    const p = await r.json();
+    if (p.error) { alert('Could not load profile. Their account must be public.'); return; }
+    friends.push({
+      sid,
+      name: nick || p.name,
+      steamName: p.name,
+      avatar: p.avatar,
+      added: Date.now(),
+    });
+    saveFriends(friends);
+    document.getElementById('friendSidInput').value = '';
+    document.getElementById('friendNickInput').value = '';
+    renderFriends();
+  } catch (e) {
+    alert('Error adding friend: ' + e.message);
+  }
+}
+
+function removeFriend(sid) {
+  if (!confirm('Remove this friend?')) return;
+  saveFriends(getFriends().filter(f => f.sid !== sid));
+  renderFriends();
+}
+
+function renderFriends() {
+  const friends = getFriends();
+  const el = document.getElementById('friendsList');
+  if (!el) return;
+  if (!friends.length) { el.innerHTML = '<div class="empty" style="text-align:left;padding:14px 0;font-size:13px">No friends added yet. Add one above.</div>'; return; }
+
+  el.innerHTML = friends.map(f => `
+    <div style="display:flex;gap:12px;align-items:center;padding:12px;background:var(--panel2);border:1px solid var(--border);border-radius:8px;margin-bottom:8px">
+      <div style="width:44px;height:44px;border-radius:50%;background:url('${f.avatar}') center/cover;flex-shrink:0"></div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:14px">${f.name}</div>
+        ${f.name !== f.steamName ? `<div style="font-size:11px;color:var(--dim)">(Steam: ${f.steamName})</div>` : ''}
+      </div>
+      <button onclick="compareFriendBySid('${f.sid}','${(f.name || '').replace(/'/g,"\\'")}')" style="background:var(--accent);color:#000;border:none;padding:8px 14px;border-radius:5px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">Compare</button>
+      <button onclick="removeFriend('${f.sid}')" style="background:transparent;color:var(--dim);border:none;font-size:16px;cursor:pointer;padding:4px 8px" title="Remove">×</button>
+    </div>
+  `).join('');
+}
+
+async function compareFriendBySid(friendSid, friendName) {
+  document.getElementById('compareSection').style.display = 'block';
+  document.getElementById('compareTitle').textContent = 'You vs ' + (friendName || 'Friend');
+  document.getElementById('friendCompareResult').innerHTML = '<div class="empty"><span class="loading"></span> Comparing libraries...</div>';
+  document.getElementById('compareSection').scrollIntoView({behavior:'smooth'});
+  try {
+    const r = await fetch(`/api/compare-friend?sid=${STATE.sid}&friendSid=${friendSid}`);
+    await renderCompareResult(r);
+  } catch (e) { document.getElementById('friendCompareResult').innerHTML = `<div class="error">${e.message}</div>`; }
+}
+
 async function compareFriend() {
   const friendSid = document.getElementById('friendSidInput').value.trim();
   if (!friendSid.match(/^7656\d{13}$/)) { alert('Invalid Steam ID'); return; }
+  document.getElementById('compareSection').style.display = 'block';
+  document.getElementById('compareTitle').textContent = 'Comparison';
   document.getElementById('friendCompareResult').innerHTML = '<div class="empty"><span class="loading"></span> Comparing...</div>';
   try {
     const r = await fetch(`/api/compare-friend?sid=${STATE.sid}&friendSid=${friendSid}`);
