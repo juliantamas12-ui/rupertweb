@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QuestLog — Your Gaming Command Center</title>
+<meta name="description" content="Connect Steam, track achievements, get smart game recommendations, find quest guides, and see leaderboards — all in one place.">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0e1a;
+  --panel:#12182a;
+  --panel2:#1a2138;
+  --border:rgba(255,255,255,0.06);
+  --accent:#c8f135;
+  --accent2:#9bc624;
+  --text:#e8ecf4;
+  --dim:rgba(232,236,244,0.4);
+  --dim2:rgba(232,236,244,0.15);
+}
+body{background:var(--bg);color:var(--text);font-family:'Inter','Helvetica Neue',Arial,sans-serif;line-height:1.5;min-height:100vh}
+
+/* ── NAV ── */
+nav{display:flex;align-items:center;justify-content:space-between;padding:16px 32px;border-bottom:1px solid var(--border);position:sticky;top:0;background:rgba(10,14,26,0.95);backdrop-filter:blur(12px);z-index:100}
+.logo{font-size:18px;font-weight:800;letter-spacing:-0.5px;color:#fff;display:flex;align-items:center;gap:8px}
+.logo-dot{width:8px;height:8px;background:var(--accent);border-radius:50%;box-shadow:0 0 12px var(--accent)}
+.nav-tabs{display:flex;gap:4px}
+.nav-tab{padding:8px 16px;font-size:13px;color:var(--dim);background:transparent;border:none;border-radius:4px;cursor:pointer;transition:all 0.15s;font-family:inherit}
+.nav-tab:hover{color:var(--text);background:var(--panel)}
+.nav-tab.active{color:var(--accent);background:var(--panel2)}
+.nav-user{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--dim)}
+.nav-user-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#c8f135,#9bc624);display:flex;align-items:center;justify-content:center;font-weight:700;color:#000;font-size:11px}
+
+/* ── MAIN ── */
+main{padding:24px 32px;max-width:1400px;margin:0 auto}
+
+/* Landing (no Steam connected) */
+.landing{text-align:center;padding:80px 20px}
+.landing-badge{display:inline-block;background:rgba(200,241,53,0.1);border:1px solid rgba(200,241,53,0.3);color:var(--accent);font-size:10px;letter-spacing:3px;padding:6px 14px;border-radius:100px;text-transform:uppercase;margin-bottom:24px}
+.landing h1{font-size:clamp(36px,6vw,64px);font-weight:800;letter-spacing:-1.5px;line-height:1.05;margin-bottom:20px;max-width:700px;margin-left:auto;margin-right:auto}
+.landing h1 span{color:var(--accent)}
+.landing p{font-size:17px;color:var(--dim);max-width:520px;margin:0 auto 36px}
+.connect-btn{background:var(--accent);color:#000;padding:16px 36px;border-radius:8px;font-weight:700;font-size:15px;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:10px;transition:all 0.2s}
+.connect-btn:hover{background:var(--accent2);transform:translateY(-1px)}
+.connect-btn svg{width:18px;height:18px}
+.landing-features{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:80px auto 0;max-width:1000px}
+.feature-card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:24px;text-align:left}
+.feature-icon{font-size:28px;margin-bottom:12px}
+.feature-card h3{font-size:14px;font-weight:700;margin-bottom:6px}
+.feature-card p{font-size:12px;color:var(--dim);line-height:1.5}
+
+/* ── DASHBOARD ── */
+.dashboard{display:grid;grid-template-columns:1fr 320px;gap:24px}
+.dashboard-main{min-width:0}
+
+/* Stats strip */
+.stats-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.stat-card{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:18px}
+.stat-label{font-size:10px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:8px}
+.stat-value{font-size:24px;font-weight:800;color:var(--text);line-height:1}
+.stat-sub{font-size:11px;color:var(--dim);margin-top:4px}
+
+/* Section */
+.section{margin-bottom:32px}
+.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.section-head h2{font-size:14px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--text)}
+.section-head .link{font-size:12px;color:var(--dim);text-decoration:none;cursor:pointer}
+.section-head .link:hover{color:var(--accent)}
+
+/* Game grid */
+.game-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px}
+.game-card{background:var(--panel);border:1px solid var(--border);border-radius:8px;overflow:hidden;cursor:pointer;transition:all 0.2s;position:relative}
+.game-card:hover{border-color:rgba(200,241,53,0.3);transform:translateY(-2px)}
+.game-img{width:100%;aspect-ratio:460/215;background:var(--panel2);background-size:cover;background-position:center;position:relative}
+.game-hours{position:absolute;bottom:6px;right:6px;background:rgba(0,0,0,0.8);color:var(--accent);font-size:10px;font-weight:700;padding:3px 8px;border-radius:3px}
+.game-body{padding:10px 12px}
+.game-title{font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:4px}
+.game-meta{font-size:11px;color:var(--dim);display:flex;justify-content:space-between;align-items:center}
+.achievement-bar{height:3px;background:var(--panel2);border-radius:3px;margin-top:8px;overflow:hidden}
+.achievement-fill{height:100%;background:var(--accent);border-radius:3px;transition:width 0.3s}
+
+/* Recommendations */
+.rec-card{background:linear-gradient(135deg,var(--panel) 0%,#1a2340 100%);border:1px solid rgba(200,241,53,0.2);border-radius:10px;padding:18px;display:flex;gap:16px;align-items:center;margin-bottom:10px;cursor:pointer;transition:all 0.2s}
+.rec-card:hover{border-color:rgba(200,241,53,0.5)}
+.rec-cover{width:80px;aspect-ratio:460/215;flex-shrink:0;border-radius:6px;background-size:cover;background-position:center}
+.rec-info{flex:1;min-width:0}
+.rec-reason{font-size:10px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;margin-bottom:4px}
+.rec-title{font-size:15px;font-weight:700;margin-bottom:4px}
+.rec-sub{font-size:12px;color:var(--dim)}
+.rec-action{background:var(--accent);color:#000;padding:8px 14px;border-radius:5px;font-size:12px;font-weight:700;border:none;cursor:pointer;flex-shrink:0}
+
+/* Sidebar */
+.sidebar-card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:16px}
+.sidebar-card h3{font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--dim);margin-bottom:14px}
+.news-item{padding:10px 0;border-bottom:1px solid var(--border);font-size:12px;line-height:1.5}
+.news-item:last-child{border-bottom:none}
+.news-item .game{color:var(--accent);font-weight:600;font-size:10px;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px}
+.news-item .title{color:var(--text);font-weight:500;margin-bottom:2px}
+.news-item .date{color:var(--dim);font-size:10px}
+
+/* Achievement list */
+.ach-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:all 0.15s}
+.ach-item:last-child{border-bottom:none}
+.ach-item:hover{background:rgba(200,241,53,0.02)}
+.ach-icon{width:36px;height:36px;border-radius:6px;background:linear-gradient(135deg,#c8f135,#9bc624);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px}
+.ach-info{flex:1;min-width:0}
+.ach-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px}
+.ach-desc{font-size:11px;color:var(--dim);line-height:1.4}
+.ach-rarity{font-size:10px;color:var(--accent);font-weight:700;flex-shrink:0}
+
+/* Leaderboard */
+.leaderboard-table{width:100%;border-collapse:collapse;font-size:13px}
+.leaderboard-table th{text-align:left;padding:10px 8px;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);border-bottom:1px solid var(--border)}
+.leaderboard-table td{padding:12px 8px;border-bottom:1px solid var(--border)}
+.leaderboard-table .rank{font-weight:800;font-size:14px;color:var(--accent);width:40px}
+.leaderboard-table .rank.me{color:#fff;background:rgba(200,241,53,0.1);border-radius:50%;width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center}
+.leaderboard-row-me{background:rgba(200,241,53,0.05)}
+.pro-badge{display:inline-block;background:rgba(200,241,53,0.15);color:var(--accent);font-size:9px;font-weight:700;letter-spacing:1px;padding:2px 6px;border-radius:3px;margin-left:6px}
+
+/* Pricing */
+.pricing-banner{background:linear-gradient(135deg,#1a2340,#0f1f3a);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between}
+.pricing-banner-text h3{font-size:16px;margin-bottom:4px}
+.pricing-banner-text p{font-size:12px;color:var(--dim)}
+.pricing-banner .connect-btn{padding:10px 20px;font-size:13px}
+
+/* View hidden by default */
+.view{display:none}
+.view.active{display:block}
+
+@media(max-width:900px){
+  nav{padding:12px 16px;flex-wrap:wrap;gap:12px}
+  .nav-tabs{order:3;width:100%;overflow-x:auto;justify-content:flex-start}
+  main{padding:16px}
+  .dashboard{grid-template-columns:1fr}
+  .stats-strip{grid-template-columns:1fr 1fr}
+  .landing-features{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo"><span class="logo-dot"></span>QuestLog</div>
+  <div class="nav-tabs" id="navTabs">
+    <button class="nav-tab active" data-view="library">Library</button>
+    <button class="nav-tab" data-view="recs">Recommendations</button>
+    <button class="nav-tab" data-view="achievements">Achievements</button>
+    <button class="nav-tab" data-view="news">News</button>
+    <button class="nav-tab" data-view="leaderboards">Leaderboards</button>
+  </div>
+  <div class="nav-user" id="navUser" style="display:none">
+    <div class="nav-user-avatar" id="userAvatar">J</div>
+    <span id="userName">MrWhale12</span>
+  </div>
+</nav>
+
+<main>
+
+<!-- LANDING -->
+<div class="view active" id="view-landing">
+  <div class="landing">
+    <div class="landing-badge">Now in Beta · Connect your Steam</div>
+    <h1>Your gaming life, <span>organised.</span></h1>
+    <p>Track achievements. Get real recommendations. Find quest guides. See where you rank. All in one place.</p>
+    <button class="connect-btn" onclick="connectSteam()">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.6 0 12 0zm-1.3 5.1c3.8 0 6.9 3 6.9 6.9s-3.1 6.9-6.9 6.9c-3.2 0-6-2.2-6.7-5.3l4.4 1.8c.3.7 1 1.2 1.8 1.2 1.1 0 2-.9 2-2s-.9-2-2-2c-.3 0-.5.1-.7.2L5.3 10.5c.6-3.1 3.4-5.4 6.4-5.4zm5.8 3c-1.5 0-2.7 1.2-2.7 2.7s1.2 2.7 2.7 2.7 2.7-1.2 2.7-2.7-1.2-2.7-2.7-2.7z"/></svg>
+      Connect Steam Account
+    </button>
+
+    <div class="landing-features">
+      <div class="feature-card"><div class="feature-icon">🎮</div><h3>Full Library Import</h3><p>Steam, Xbox, PlayStation. All your games, one place. Hours played, last played, achievements.</p></div>
+      <div class="feature-card"><div class="feature-icon">🧠</div><h3>Smart Recommendations</h3><p>Not "people who liked X". Actual recommendations based on what you play, how long you have, and your mood.</p></div>
+      <div class="feature-card"><div class="feature-icon">🏆</div><h3>Achievement Hunter</h3><p>Easiest uncompleted achievements across your library. Rarity rankings. Time-to-platinum estimates.</p></div>
+      <div class="feature-card"><div class="feature-icon">📊</div><h3>Global Leaderboards</h3><p>See how you rank against other players on hours, achievements, completion rate, rare hunts.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- LIBRARY -->
+<div class="view" id="view-library">
+  <div class="pricing-banner">
+    <div class="pricing-banner-text">
+      <h3>You're on Free · Upgrade to QuestLog Pro</h3>
+      <p>Price alerts · Rare achievement guides · Session journal · Unlimited library · £4.99/mo</p>
+    </div>
+    <button class="connect-btn" style="padding:10px 20px;font-size:13px" onclick="showUpgrade()">Upgrade</button>
+  </div>
+
+  <div class="stats-strip">
+    <div class="stat-card"><div class="stat-label">Games Owned</div><div class="stat-value" id="statGames">—</div><div class="stat-sub">from Steam</div></div>
+    <div class="stat-card"><div class="stat-label">Total Hours</div><div class="stat-value" id="statHours">—</div><div class="stat-sub">lifetime played</div></div>
+    <div class="stat-card"><div class="stat-label">Achievements</div><div class="stat-value" id="statAch">—</div><div class="stat-sub">unlocked</div></div>
+    <div class="stat-card"><div class="stat-label">Completion</div><div class="stat-value" id="statComp">—</div><div class="stat-sub">average %</div></div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <h2>Recently Played</h2>
+      <a class="link">View all →</a>
+    </div>
+    <div class="game-grid" id="recentGames"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <h2>Most Played</h2>
+      <a class="link">View all →</a>
+    </div>
+    <div class="game-grid" id="mostPlayed"></div>
+  </div>
+</div>
+
+<!-- RECOMMENDATIONS -->
+<div class="view" id="view-recs">
+  <div class="section">
+    <div class="section-head">
+      <h2>For You Tonight</h2>
+      <a class="link">Refresh →</a>
+    </div>
+    <div id="recList"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <h2>From Your Backlog</h2>
+      <a class="link">View all →</a>
+    </div>
+    <div class="game-grid" id="backlogGames"></div>
+  </div>
+</div>
+
+<!-- ACHIEVEMENTS -->
+<div class="view" id="view-achievements">
+  <div class="section">
+    <div class="section-head">
+      <h2>Easiest Achievements You Haven't Unlocked</h2>
+      <a class="link">Pro feature — full list with guides</a>
+    </div>
+    <div class="sidebar-card" id="achList"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-head"><h2>Near Completion</h2></div>
+    <div class="game-grid" id="nearComplete"></div>
+  </div>
+</div>
+
+<!-- NEWS -->
+<div class="view" id="view-news">
+  <div class="section">
+    <div class="section-head">
+      <h2>News From Your Library</h2>
+      <a class="link">All sources</a>
+    </div>
+    <div class="sidebar-card" id="newsFeed"></div>
+  </div>
+</div>
+
+<!-- LEADERBOARDS -->
+<div class="view" id="view-leaderboards">
+  <div class="stats-strip" style="grid-template-columns:repeat(3,1fr)">
+    <div class="stat-card"><div class="stat-label">Your Rank (Hours)</div><div class="stat-value" style="color:var(--accent)">#2,438</div><div class="stat-sub">of 142k players</div></div>
+    <div class="stat-card"><div class="stat-label">Achievement Rank</div><div class="stat-value">#8,921</div><div class="stat-sub">top 6.2%</div></div>
+    <div class="stat-card"><div class="stat-label">Sea of Thieves Rank</div><div class="stat-value" style="color:var(--accent)">#412</div><div class="stat-sub">top 0.3% by hours</div></div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <h2>Sea of Thieves — Top Players by Hours</h2>
+      <a class="link">Change game</a>
+    </div>
+    <div class="sidebar-card">
+      <table class="leaderboard-table" id="leaderboard"></table>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<script>
+// ── Tab switching ──
+document.querySelectorAll('.nav-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    const view = tab.dataset.view;
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('view-' + view).classList.add('active');
+  });
+});
+
+// ── Mock data (Steam API will populate real data) ──
+const MOCK_GAMES = [
+  {name:'Sea of Thieves', hours:2221, img:'https://cdn.cloudflare.steamstatic.com/steam/apps/1172620/header.jpg', ach:'42/78', pct:54, genre:'Adventure'},
+  {name:'Counter-Strike 2', hours:834, img:'https://cdn.cloudflare.steamstatic.com/steam/apps/730/header.jpg', ach:'38/167', pct:23, genre:'FPS'},
+  {name:'Red Dead Redemption 2', hours:186, img:'https://cdn.cloudflare.steamstatic.com/steam/apps/1174180/header.jpg', ach:'22/51', pct:43, genre:'Western'},
+  {name:'Elden Ring', hours:94, img:'https://cdn.cloudflare.steamstatic.com/steam/apps/1245620/header.jpg', ach:'18/42', pct:43, genre:'Souls'},
+  {name:'Cyberpunk 2077', hours:78, img:'https://cdn.cloudflare.steamstatic.com/steam/apps/1091500/header.jpg', ach:'31/56', pct:55, genre:'RPG'},
+  {name:'The Witcher 3', hours:164, img:'https://cdn.cloudflare.steamstatic.com/steam/apps/292030/header.jpg', ach:'52/78', pct:67, genre:'RPG'},
+  {name:'Rocket League', hours:241, img:'https://cdn.cloudflare.steamstatic.com/steam/apps/252950/header.jpg', ach:'47/88', pct:53, genre:'Sports'},
+  {name:'Rust', hours:312, img:'https://cdn.cloudflare.steamstatic.com/steam/apps/252490/header.jpg', ach:'12/27', pct:44, genre:'Survival'},
+];
+
+const BACKLOG = [
+  {name:'Baldur\'s Gate 3', hours:3, img:'https://cdn.cloudflare.steamstatic.com/steam/apps/1086940/header.jpg', ach:'1/54', pct:2, genre:'RPG'},
+  {name:'Hollow Knight', hours:0, img:'https://cdn.cloudflare.steamstatic.com/steam/apps/367520/header.jpg', ach:'0/63', pct:0, genre:'Metroidvania'},
+  {name:'Stardew Valley', hours:2, img:'https://cdn.cloudflare.steamstatic.com/steam/apps/413150/header.jpg', ach:'2/40', pct:5, genre:'Farming'},
+  {name:'Hades', hours:0, img:'https://cdn.cloudflare.steamstatic.com/steam/apps/1145360/header.jpg', ach:'0/49', pct:0, genre:'Roguelike'},
+];
+
+// ── Connect Steam flow (stub) ──
+function connectSteam() {
+  // In production: OAuth with Steam OpenID
+  // For now: demo mode with Julian's actual Steam data
+  document.getElementById('view-landing').classList.remove('active');
+  document.getElementById('view-library').classList.add('active');
+  document.getElementById('navUser').style.display = 'flex';
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelector('[data-view="library"]').classList.add('active');
+
+  // Populate stats
+  document.getElementById('statGames').textContent = '49';
+  document.getElementById('statHours').textContent = '4,312';
+  document.getElementById('statAch').textContent = '1,247';
+  document.getElementById('statComp').textContent = '41%';
+
+  // Recently played (sorted by hours desc, top 4)
+  renderGames('recentGames', MOCK_GAMES.slice(0, 4));
+  renderGames('mostPlayed', MOCK_GAMES.slice(0, 8));
+  renderGames('backlogGames', BACKLOG);
+  renderGames('nearComplete', MOCK_GAMES.filter(g => g.pct > 50).slice(0, 4));
+
+  renderRecommendations();
+  renderAchievements();
+  renderNews();
+  renderLeaderboard();
+}
+
+function renderGames(id, games) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = games.map(g => `
+    <div class="game-card" onclick="openGame('${g.name.replace(/'/g,'\\\\\\'')}')">
+      <div class="game-img" style="background-image:url('${g.img}')">
+        <div class="game-hours">${g.hours}h</div>
+      </div>
+      <div class="game-body">
+        <div class="game-title">${g.name}</div>
+        <div class="game-meta"><span>${g.genre}</span><span>${g.ach}</span></div>
+        <div class="achievement-bar"><div class="achievement-fill" style="width:${g.pct}%"></div></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderRecommendations() {
+  const recs = [
+    {reason:'Because you loved Sea of Thieves', title:'Skull and Bones', sub:'Naval combat · 30-40h main story · Similar tone', img:'https://cdn.cloudflare.steamstatic.com/steam/apps/2220280/header.jpg'},
+    {reason:'Short session tonight (2h free)', title:'Hades II', sub:'Roguelike · 20-30min runs · Pick up & play', img:'https://cdn.cloudflare.steamstatic.com/steam/apps/1145350/header.jpg'},
+    {reason:'From your backlog you haven\'t touched', title:'Hollow Knight', sub:'Metroidvania · 40h · 97% positive · You own it', img:'https://cdn.cloudflare.steamstatic.com/steam/apps/367520/header.jpg'},
+    {reason:'Trending in your friends network', title:'Helldivers 2', sub:'Co-op shooter · 3 friends playing · Live service', img:'https://cdn.cloudflare.steamstatic.com/steam/apps/553850/header.jpg'},
+  ];
+  document.getElementById('recList').innerHTML = recs.map(r => `
+    <div class="rec-card">
+      <div class="rec-cover" style="background-image:url('${r.img}')"></div>
+      <div class="rec-info">
+        <div class="rec-reason">${r.reason}</div>
+        <div class="rec-title">${r.title}</div>
+        <div class="rec-sub">${r.sub}</div>
+      </div>
+      <button class="rec-action">View →</button>
+    </div>
+  `).join('');
+}
+
+function renderAchievements() {
+  const ach = [
+    {game:'Sea of Thieves', name:'Sunken Kingdom', desc:'Complete the Sunken Kingdom Tall Tale · 1-2 hours', rarity:'8.4%'},
+    {game:'Red Dead 2', name:'Friends with Benefits', desc:'Greet & antagonize every companion · easy', rarity:'34.1%'},
+    {game:'Elden Ring', name:'Legendary Ashes', desc:'Find all legendary spirit ashes · 2 left', rarity:'18.7%'},
+    {game:'Cyberpunk 2077', name:'Wanted: Dead or Alive', desc:'Complete 30 Gigs · you have 27', rarity:'22.5%'},
+    {game:'The Witcher 3', name:'Card Collector', desc:'Collect 50 Gwent cards · you have 47', rarity:'41.2%'},
+  ];
+  document.getElementById('achList').innerHTML = ach.map(a => `
+    <div class="ach-item">
+      <div class="ach-icon">🏆</div>
+      <div class="ach-info">
+        <div class="ach-name">${a.name} <span style="color:var(--dim);font-weight:400;font-size:11px">· ${a.game}</span></div>
+        <div class="ach-desc">${a.desc}</div>
+      </div>
+      <div class="ach-rarity">${a.rarity}</div>
+    </div>
+  `).join('');
+}
+
+function renderNews() {
+  const news = [
+    {game:'Sea of Thieves', title:'Season 16 patch notes — new Hourglass changes', date:'2 hours ago'},
+    {game:'Elden Ring', title:'Shadow of the Erdtree DLC passes 10M sales', date:'1 day ago'},
+    {game:'Cyberpunk 2077', title:'Phantom Liberty expansion on sale 50% off', date:'2 days ago'},
+    {game:'Counter-Strike 2', title:'Major 2026 Dust II rework revealed', date:'3 days ago'},
+    {game:'Rocket League', title:'Summer tournament schedule announced', date:'4 days ago'},
+  ];
+  document.getElementById('newsFeed').innerHTML = news.map(n => `
+    <div class="news-item">
+      <div class="game">${n.game}</div>
+      <div class="title">${n.title}</div>
+      <div class="date">${n.date}</div>
+    </div>
+  `).join('');
+}
+
+function renderLeaderboard() {
+  const players = [
+    {rank:1, name:'LegendaryPirate', hours:14832, ach:'76/78', country:'🇺🇸'},
+    {rank:2, name:'Kraken_King', hours:12401, ach:'78/78', country:'🇬🇧'},
+    {rank:3, name:'RumRunner_42', hours:11203, ach:'74/78', country:'🇦🇺'},
+    {rank:412, name:'MrWhale12', hours:2221, ach:'42/78', country:'🇮🇹', me:true},
+    {rank:413, name:'SeadogSam', hours:2219, ach:'38/78', country:'🇩🇪'},
+    {rank:414, name:'CaptainNoob', hours:2205, ach:'44/78', country:'🇫🇷'},
+  ];
+  document.getElementById('leaderboard').innerHTML = `
+    <thead><tr><th>#</th><th>Player</th><th>Hours</th><th>Achievements</th><th></th></tr></thead>
+    <tbody>
+    ${players.map(p => `
+      <tr ${p.me ? 'class="leaderboard-row-me"' : ''}>
+        <td><span class="rank ${p.me ? 'me' : ''}">${p.rank}</span></td>
+        <td><strong>${p.country} ${p.name}</strong>${p.me ? ' <span class="pro-badge">YOU</span>' : ''}</td>
+        <td>${p.hours.toLocaleString()}h</td>
+        <td>${p.ach}</td>
+        <td><a class="link">View profile</a></td>
+      </tr>
+    `).join('')}
+    </tbody>
+  `;
+}
+
+function openGame(name) {
+  alert('Game detail page coming soon — guides, quests, price tracker, achievement walkthroughs.');
+}
+
+function showUpgrade() {
+  alert('Pro upgrade: £4.99/mo — unlimited library, price alerts, rare achievement guides, session journal, export data. Coming with Stripe integration.');
+}
+
+// Auto-connect if ?demo=1 in URL (for testing)
+if (location.search.includes('demo')) connectSteam();
+</script>
+
+</body>
+</html>
