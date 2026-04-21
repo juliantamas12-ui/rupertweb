@@ -211,6 +211,42 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
       <h2>Games to Buy — Based on What You Play</h2>
       <button class="link" onclick="loadBuyRecs()">Refresh →</button>
     </div>
+
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;align-items:center">
+      <div style="display:flex;gap:6px;align-items:center">
+        <span style="font-size:11px;color:var(--dim);letter-spacing:1px;text-transform:uppercase">Sort</span>
+        <select id="buySortSelect" onchange="renderBuyRecs()" style="background:var(--panel);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:4px;font-size:12px;font-family:inherit;cursor:pointer">
+          <option value="default">Recommended</option>
+          <option value="review">Best reviews</option>
+          <option value="players">Most players now</option>
+          <option value="price-low">Price: low to high</option>
+          <option value="price-high">Price: high to low</option>
+          <option value="discount">Biggest discount</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <span style="font-size:11px;color:var(--dim);letter-spacing:1px;text-transform:uppercase">Price</span>
+        <select id="buyPriceSelect" onchange="renderBuyRecs()" style="background:var(--panel);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:4px;font-size:12px;font-family:inherit;cursor:pointer">
+          <option value="any">Any price</option>
+          <option value="free">Free only</option>
+          <option value="under10">Under £10</option>
+          <option value="under20">Under £20</option>
+          <option value="under40">Under £40</option>
+          <option value="discounted">On sale only</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <span style="font-size:11px;color:var(--dim);letter-spacing:1px;text-transform:uppercase">Reviews</span>
+        <select id="buyReviewSelect" onchange="renderBuyRecs()" style="background:var(--panel);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:4px;font-size:12px;font-family:inherit;cursor:pointer">
+          <option value="0">Any reviews</option>
+          <option value="50">50%+</option>
+          <option value="70">70%+ (Mostly Positive)</option>
+          <option value="85" selected>85%+ (Very Positive)</option>
+          <option value="95">95%+ (Overwhelmingly Positive)</option>
+        </select>
+      </div>
+    </div>
+
     <div id="buyRecList"><div class="empty"><span class="loading"></span> Finding games...</div></div>
   </div>
 </div>
@@ -391,28 +427,79 @@ async function loadBuyRecs() {
       document.getElementById('buyRecList').innerHTML = '<div class="empty">No buy recommendations yet.</div>';
       return;
     }
-    document.getElementById('buyRecList').innerHTML = data.recommendations.map(r => {
-      const scoreColour = r.reviewScore >= 85 ? 'var(--accent)' : r.reviewScore >= 70 ? '#d5e65c' : r.reviewScore >= 50 ? '#ff9e42' : '#ff5a5a';
-      const badges = [];
-      if (r.reviewScore) badges.push(`<span style="color:${scoreColour};font-weight:700">${r.reviewScore}% ★</span> <span style="color:var(--dim);font-size:11px">${r.reviewLabel || ''} (${(r.reviewCount||0).toLocaleString()})</span>`);
-      if (r.currentPlayers > 100) badges.push(`<span style="color:var(--accent)">●</span> <span style="color:var(--dim);font-size:11px">${r.currentPlayers.toLocaleString()} playing</span>`);
-      if (r.price) badges.push(`<span style="color:${r.discounted ? 'var(--accent)' : 'var(--text)'};font-weight:600">${r.price}</span>`);
-      return `
-        <div class="rec-card" onclick="window.open('https://store.steampowered.com/app/${r.appid}','_blank')">
-          <div class="rec-cover" style="background-image:url('${r.img}')"></div>
-          <div class="rec-info">
-            <div class="rec-reason">${r.reason}</div>
-            <div class="rec-title">${r.game}</div>
-            <div class="rec-sub">${r.sub}</div>
-            <div class="rec-sub" style="margin-top:6px;display:flex;gap:14px;flex-wrap:wrap">${badges.join(' <span style="color:var(--dim2)">·</span> ')}</div>
-          </div>
-          <button class="rec-action">${r.price === 'Free' ? 'Install' : 'Buy →'}</button>
-        </div>
-      `;
-    }).join('');
+    STATE.buyRecs = data.recommendations;
+    renderBuyRecs();
   } catch (e) {
     document.getElementById('buyRecList').innerHTML = `<div class="error">${e.message}</div>`;
   }
+}
+
+function parsePrice(priceStr) {
+  if (!priceStr) return null;
+  if (priceStr === 'Free') return 0;
+  const m = priceStr.match(/([£€$])([\d.,]+)/);
+  if (!m) return null;
+  return parseFloat(m[2].replace(',', '.'));
+}
+
+function renderBuyRecs() {
+  if (!STATE.buyRecs) return;
+  const sort = document.getElementById('buySortSelect').value;
+  const priceFilter = document.getElementById('buyPriceSelect').value;
+  const reviewMin = parseInt(document.getElementById('buyReviewSelect').value);
+
+  let list = [...STATE.buyRecs];
+
+  // Filter: reviews
+  if (reviewMin > 0) list = list.filter(r => (r.reviewScore || 0) >= reviewMin);
+
+  // Filter: price
+  list = list.filter(r => {
+    const p = parsePrice(r.price);
+    switch (priceFilter) {
+      case 'free':       return p === 0;
+      case 'under10':    return p !== null && p < 10;
+      case 'under20':    return p !== null && p < 20;
+      case 'under40':    return p !== null && p < 40;
+      case 'discounted': return r.discounted;
+      default:           return true;
+    }
+  });
+
+  // Sort
+  switch (sort) {
+    case 'review':     list.sort((a, b) => (b.reviewScore || 0) - (a.reviewScore || 0)); break;
+    case 'players':    list.sort((a, b) => (b.currentPlayers || 0) - (a.currentPlayers || 0)); break;
+    case 'price-low':  list.sort((a, b) => (parsePrice(a.price) ?? Infinity) - (parsePrice(b.price) ?? Infinity)); break;
+    case 'price-high': list.sort((a, b) => (parsePrice(b.price) ?? -1) - (parsePrice(a.price) ?? -1)); break;
+    case 'discount':   list.sort((a, b) => (b.discounted ? 1 : 0) - (a.discounted ? 1 : 0) || 0); break;
+  }
+
+  const el = document.getElementById('buyRecList');
+  if (!list.length) {
+    el.innerHTML = '<div class="empty">No games match these filters. Loosen the criteria.</div>';
+    return;
+  }
+
+  el.innerHTML = list.map(r => {
+    const scoreColour = r.reviewScore >= 85 ? 'var(--accent)' : r.reviewScore >= 70 ? '#d5e65c' : r.reviewScore >= 50 ? '#ff9e42' : '#ff5a5a';
+    const badges = [];
+    if (r.reviewScore) badges.push(`<span style="color:${scoreColour};font-weight:700">${r.reviewScore}% ★</span> <span style="color:var(--dim);font-size:11px">${r.reviewLabel || ''} (${(r.reviewCount||0).toLocaleString()})</span>`);
+    if (r.currentPlayers > 100) badges.push(`<span style="color:var(--accent)">●</span> <span style="color:var(--dim);font-size:11px">${r.currentPlayers.toLocaleString()} playing</span>`);
+    if (r.price) badges.push(`<span style="color:${r.discounted ? 'var(--accent)' : 'var(--text)'};font-weight:600">${r.price}</span>`);
+    return `
+      <div class="rec-card" onclick="window.open('https://store.steampowered.com/app/${r.appid}','_blank')">
+        <div class="rec-cover" style="background-image:url('${r.img}')"></div>
+        <div class="rec-info">
+          <div class="rec-reason">${r.reason}</div>
+          <div class="rec-title">${r.game}</div>
+          <div class="rec-sub">${r.sub}</div>
+          <div class="rec-sub" style="margin-top:6px;display:flex;gap:14px;flex-wrap:wrap">${badges.join(' <span style="color:var(--dim2)">·</span> ')}</div>
+        </div>
+        <button class="rec-action">${r.price === 'Free' ? 'Install' : 'Buy →'}</button>
+      </div>
+    `;
+  }).join('');
 }
 
 async function loadNews() {
