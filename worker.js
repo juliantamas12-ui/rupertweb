@@ -1,7 +1,7 @@
 // rupertweb Worker — handles API endpoints + static assets
 
 const STEAM_KEY = '7E0FBB2D8E9A19B0F40556A78A6B9C47';
-const DEFAULT_STEAM_ID = '76561199040427763'; // Julian's Steam ID
+const DEFAULT_STEAM_ID = null; // no default — each user provides their own
 const RESEND_KEY = 're_dNyaesf8_GH99GVk3N5u45x6RuA1LCSR8';
 const OWNER_EMAIL = 'julian.tamas12@gmail.com';
 
@@ -85,7 +85,7 @@ async function fetchJSON(url) {
 // ════════════════════════════════════════════════════════
 
 async function steamProfile(url) {
-  const sid = url.searchParams.get('sid') || DEFAULT_STEAM_ID;
+  const sid = url.searchParams.get('sid'); if (!sid) return jsonResponse({ error: 'sid required' }, 400);
   const data = await fetchJSON(`https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=${STEAM_KEY}&steamids=${sid}`);
   const player = data?.response?.players?.[0];
   if (!player) return jsonResponse({ error: 'Profile not found' }, 404);
@@ -111,7 +111,7 @@ async function steamProfile(url) {
 }
 
 async function steamGames(url) {
-  const sid = url.searchParams.get('sid') || DEFAULT_STEAM_ID;
+  const sid = url.searchParams.get('sid'); if (!sid) return jsonResponse({ error: 'sid required' }, 400);
   const data = await fetchJSON(
     `https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${STEAM_KEY}&steamid=${sid}&include_appinfo=1&include_played_free_games=1`
   );
@@ -135,7 +135,7 @@ async function steamGames(url) {
 }
 
 async function steamRecent(url) {
-  const sid = url.searchParams.get('sid') || DEFAULT_STEAM_ID;
+  const sid = url.searchParams.get('sid'); if (!sid) return jsonResponse({ error: 'sid required' }, 400);
   const data = await fetchJSON(
     `https://api.steampowered.com/IPlayerService/GetRecentlyPlayedGames/v1/?key=${STEAM_KEY}&steamid=${sid}`
   );
@@ -151,7 +151,7 @@ async function steamRecent(url) {
 
 async function steamAchievements(url, path) {
   const appid = path.split('/').pop();
-  const sid = url.searchParams.get('sid') || DEFAULT_STEAM_ID;
+  const sid = url.searchParams.get('sid'); if (!sid) return jsonResponse({ error: 'sid required' }, 400);
 
   try {
     const [player, schema, global] = await Promise.all([
@@ -226,7 +226,7 @@ async function steamNews(path) {
 
 // Mega-simple recommendation: genre-similar games you own but haven't played much
 async function recommend(url) {
-  const sid = url.searchParams.get('sid') || DEFAULT_STEAM_ID;
+  const sid = url.searchParams.get('sid'); if (!sid) return jsonResponse({ error: 'sid required' }, 400);
   const games = await fetchJSON(
     `https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${STEAM_KEY}&steamid=${sid}&include_appinfo=1&include_played_free_games=1`
   );
@@ -295,7 +295,7 @@ async function recommend(url) {
 
 // Games to BUY — large curated pool with genre tags
 async function recommendBuy(url) {
-  const sid = url.searchParams.get('sid') || DEFAULT_STEAM_ID;
+  const sid = url.searchParams.get('sid'); if (!sid) return jsonResponse({ error: 'sid required' }, 400);
   const games = await fetchJSON(
     `https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${STEAM_KEY}&steamid=${sid}&include_appinfo=1&include_played_free_games=1`
   );
@@ -829,7 +829,7 @@ async function steamReviews(path) {
 // ════════════════════════════════════════════════════════
 
 async function getWrapped(url) {
-  const sid = url.searchParams.get('sid') || DEFAULT_STEAM_ID;
+  const sid = url.searchParams.get('sid'); if (!sid) return jsonResponse({ error: 'sid required' }, 400);
   const games = await fetchJSON(
     `https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${STEAM_KEY}&steamid=${sid}&include_appinfo=1&include_played_free_games=1`
   );
@@ -876,7 +876,7 @@ async function getWrapped(url) {
 }
 
 async function compareFriend(url) {
-  const sid = url.searchParams.get('sid') || DEFAULT_STEAM_ID;
+  const sid = url.searchParams.get('sid'); if (!sid) return jsonResponse({ error: 'sid required' }, 400);
   const friendSid = url.searchParams.get('friendSid');
   if (!friendSid) return jsonResponse({ error: 'friendSid required' }, 400);
 
@@ -980,7 +980,7 @@ async function gameOfTheDay(url) {
 }
 
 async function finishThis(url) {
-  const sid = url.searchParams.get('sid') || DEFAULT_STEAM_ID;
+  const sid = url.searchParams.get('sid'); if (!sid) return jsonResponse({ error: 'sid required' }, 400);
   const games = await fetchJSON(
     `https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${STEAM_KEY}&steamid=${sid}&include_appinfo=1&include_played_free_games=1`
   );
@@ -1006,7 +1006,7 @@ async function finishThis(url) {
 }
 
 async function backlogEstimate(url) {
-  const sid = url.searchParams.get('sid') || DEFAULT_STEAM_ID;
+  const sid = url.searchParams.get('sid'); if (!sid) return jsonResponse({ error: 'sid required' }, 400);
   const games = await fetchJSON(
     `https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${STEAM_KEY}&steamid=${sid}&include_appinfo=1&include_played_free_games=1`
   );
@@ -1477,7 +1477,7 @@ async function searchDeal(url) {
 
 // For logged-in Steam users: find deals on games in their wishlist or similar to their library
 async function myDeals(url) {
-  const sid = url.searchParams.get('sid') || DEFAULT_STEAM_ID;
+  const sid = url.searchParams.get('sid'); if (!sid) return jsonResponse({ error: 'sid required' }, 400);
   const games = await fetchJSON(
     `https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${STEAM_KEY}&steamid=${sid}&include_appinfo=1&include_played_free_games=1`
   );
