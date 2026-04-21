@@ -821,6 +821,26 @@ async function steamReviews(path) {
 async function freeGames() {
   const results = { epic: [], steam: [], prime: [], errors: [] };
 
+  // Helper: search CheapShark for a title to get Steam rating
+  async function lookupRating(title) {
+    try {
+      const data = await fetchJSON(`https://www.cheapshark.com/api/1.0/games?title=${encodeURIComponent(title)}&limit=1&exact=0`);
+      if (data?.[0]?.steamAppID) {
+        // Also try to get proper Steam reviews
+        const rev = await fetchJSON(`https://store.steampowered.com/appreviews/${data[0].steamAppID}?json=1&language=all&purchase_type=all&num_per_page=0`).catch(() => null);
+        if (rev?.query_summary?.total_reviews > 0) {
+          return {
+            score: Math.round(rev.query_summary.total_positive / rev.query_summary.total_reviews * 100),
+            label: rev.query_summary.review_score_desc,
+            count: rev.query_summary.total_reviews,
+            steamAppID: data[0].steamAppID,
+          };
+        }
+      }
+    } catch {}
+    return null;
+  }
+
   // ── EPIC GAMES free promotions (weekly freebies)
   try {
     const epic = await fetchJSON(
@@ -838,6 +858,8 @@ async function freeGames() {
               || (g.keyImages || [])[0]?.url;
       const slug = g.catalogNs?.mappings?.[0]?.pageSlug || g.urlSlug || g.productSlug || '';
 
+      const ratings = await lookupRating(g.title);
+
       results.epic.push({
         title: g.title,
         desc: g.description,
@@ -847,25 +869,42 @@ async function freeGames() {
         endDate:   (isFreeNow ? promos : upcoming)?.endDate,
         available: isFreeNow,
         url: slug ? `https://store.epicgames.com/en-US/p/${slug}` : 'https://store.epicgames.com/en-US/free-games',
+        steamRating: ratings?.score,
+        steamLabel: ratings?.label,
+        steamCount: ratings?.count,
       });
     }
   } catch (e) { results.errors.push('epic: ' + e.message); }
 
-  // ── STEAM free weekends & permanently free (via CheapShark steam deals at $0)
+  // ── STEAM free weekends & permanently free (via CheapShark, enriched with real Steam reviews)
   try {
-    const steamDeals = await fetchJSON('https://www.cheapshark.com/api/1.0/deals?storeID=1&upperPrice=0&sortBy=Recent&pageSize=30');
-    for (const d of (steamDeals || [])) {
-      if (parseFloat(d.salePrice) === 0) {
-        results.steam.push({
-          title: d.title,
-          img: d.thumb,
-          originalPrice: parseFloat(d.normalPrice) > 0 ? `$${d.normalPrice}` : 'Free',
-          steamAppID: d.steamAppID,
-          steamRating: d.steamRatingPercent ? parseInt(d.steamRatingPercent) : null,
-          url: `https://store.steampowered.com/app/${d.steamAppID}`,
-          available: true,
-        });
-      }
+    const steamDeals = await fetchJSON('https://www.cheapshark.com/api/1.0/deals?storeID=1&upperPrice=0&sortBy=Reviews&pageSize=30');
+    const freeOnes = (steamDeals || []).filter(d => parseFloat(d.salePrice) === 0);
+
+    // Parallel fetch full reviews for top 20 to get label + count
+    await Promise.all(freeOnes.slice(0, 20).map(async d => {
+      try {
+        const rev = await fetchJSON(`https://store.steampowered.com/appreviews/${d.steamAppID}?json=1&language=all&purchase_type=all&num_per_page=0`);
+        if (rev?.query_summary?.total_reviews > 0) {
+          d.reviewLabel = rev.query_summary.review_score_desc;
+          d.reviewCount = rev.query_summary.total_reviews;
+          d.reviewScore = Math.round(rev.query_summary.total_positive / rev.query_summary.total_reviews * 100);
+        }
+      } catch {}
+    }));
+
+    for (const d of freeOnes.slice(0, 20)) {
+      results.steam.push({
+        title: d.title,
+        img: d.thumb,
+        originalPrice: parseFloat(d.normalPrice) > 0 ? `$${d.normalPrice}` : 'Free',
+        steamAppID: d.steamAppID,
+        steamRating: d.reviewScore ?? (d.steamRatingPercent ? parseInt(d.steamRatingPercent) : null),
+        steamLabel: d.reviewLabel || d.steamRatingText,
+        steamCount: d.reviewCount || (d.steamRatingCount ? parseInt(d.steamRatingCount) : null),
+        url: `https://store.steampowered.com/app/${d.steamAppID}`,
+        available: true,
+      });
     }
   } catch (e) { results.errors.push('steam: ' + e.message); }
 

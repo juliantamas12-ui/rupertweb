@@ -615,6 +615,11 @@ function renderFreeGame(g, showCountdown = true) {
     ? `<span style="color:#ff9e42;font-size:11px;font-weight:600">• ${daysLeft(g.endDate)}</span>`
     : '';
 
+  const scoreColour = g.steamRating >= 85 ? 'var(--accent)' : g.steamRating >= 70 ? '#d5e65c' : g.steamRating >= 50 ? '#ff9e42' : '#ff5a5a';
+  const reviewBadge = g.steamRating
+    ? `<span style="color:${scoreColour};font-weight:700;font-size:12px">${g.steamRating}% ★</span>${g.steamLabel ? ` <span style="color:var(--dim);font-size:11px">${g.steamLabel}${g.steamCount ? ` (${g.steamCount.toLocaleString()})` : ''}</span>` : ''}`
+    : '';
+
   return `
     <div class="rec-card" onclick="window.open('${g.url}','_blank')">
       <div class="rec-cover" style="background-image:url('${g.img || ''}')"></div>
@@ -624,7 +629,7 @@ function renderFreeGame(g, showCountdown = true) {
         <div class="rec-sub" style="margin-top:4px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
           <span style="color:var(--accent);font-weight:700">FREE</span>
           ${price}
-          ${g.steamRating ? `<span style="color:var(--dim);font-size:11px">${g.steamRating}% ★</span>` : ''}
+          ${reviewBadge}
         </div>
       </div>
       <button class="rec-action">${g.available ? 'Claim →' : 'Remind me'}</button>
