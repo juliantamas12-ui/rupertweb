@@ -611,10 +611,6 @@ const state = {
   birdTimer: 0,
   footprints: [], // fading beach footprints
 
-  // === FIREFLIES: nocturnal jungle atmosphere ===
-  fireflies: [],        // active firefly particles [{x,y,vx,vy,phase,glowSpeed,hue,life,maxLife}]
-  fireflyTimer: 0,      // frame counter for spawn cadence
-
   // === BIOLUMINESCENT NIGHT EVENT ===
   bioNightTimer: 60*60*(7 + Math.random()*5), // first event in 7-12 in-game minutes
   bioNightActive: false,
@@ -9150,9 +9146,6 @@ function render(ctx, minimapCtx) {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
 
-  // Fireflies — drawn after night overlay so their glow shows through the dark
-  drawFireflies(ctx, camX, camY);
-
   // === BLOOD MOON VISUAL OVERLAY ===
   if (state.bloodMoonActive) {
     // Alpha based on phase: fade in (phase 0), full (phase 1), fade out (phase 2)
@@ -10493,126 +10486,6 @@ function updateBirdsAndFootprints() {
     if (state.footprints.length > 80) state.footprints.shift();
   }
   state.footprints = state.footprints.filter(fp => { fp.life--; return fp.life > 0; });
-}
-
-// === FIREFLIES — nocturnal jungle atmosphere ===
-// Spawns gentle glowing points near the player at night when in/near jungle.
-// Pure visual polish. No gameplay effect. Capped at 28 for performance.
-function updateFireflies() {
-  if (state.underground) { state.fireflies.length = 0; return; }
-  const p = state.player;
-  if (!p) return;
-
-  // Spawn only at night (or bioluminescent night event). Purge quickly at dawn.
-  const isNightish = state.isNight || state.bioNightActive;
-  if (!isNightish) {
-    // Fade out during day
-    if (state.fireflies.length > 0) {
-      state.fireflies.forEach(f => { if (f.life > 30) f.life = 30; });
-    }
-  }
-
-  // Check if player is in/near jungle — fireflies prefer vegetation
-  const ptile = getTile(p.x, p.y);
-  const nearJungle = (ptile === T.JUNGLE_LIGHT || ptile === T.JUNGLE_DARK || ptile === T.BEACH);
-  const spawnCap = state.bioNightActive ? 40 : 28;
-
-  // Spawn cadence: every ~25 frames at night in jungle, slower elsewhere
-  state.fireflyTimer++;
-  const spawnEvery = nearJungle ? 22 : 70;
-  if (isNightish && nearJungle && state.fireflies.length < spawnCap && state.fireflyTimer >= spawnEvery) {
-    state.fireflyTimer = 0;
-    // Spawn 1-3 fireflies in a ring 80-220px around player
-    const burst = 1 + Math.floor(Math.random() * 2);
-    for (let i = 0; i < burst; i++) {
-      const ang = Math.random() * Math.PI * 2;
-      const r = 80 + Math.random() * 140;
-      const fx = p.x + Math.cos(ang) * r;
-      const fy = p.y + Math.sin(ang) * r;
-      // Only spawn in jungle/beach tiles — not in water/lava
-      const ft = getTile(fx, fy);
-      if (ft !== T.JUNGLE_LIGHT && ft !== T.JUNGLE_DARK && ft !== T.BEACH) continue;
-      state.fireflies.push({
-        x: fx, y: fy,
-        vx: (Math.random() - 0.5) * 0.25,
-        vy: (Math.random() - 0.5) * 0.25,
-        phase: Math.random() * Math.PI * 2,
-        glowSpeed: 0.04 + Math.random() * 0.05,
-        hue: Math.random() < 0.15 ? 'teal' : (Math.random() < 0.3 ? 'amber' : 'gold'),
-        life: 420 + Math.floor(Math.random() * 300),
-        maxLife: 600
-      });
-    }
-  }
-
-  // Update each firefly
-  const dt = state.dt || 1;
-  state.fireflies = state.fireflies.filter(f => {
-    // Gentle drift with occasional direction change
-    if (Math.random() < 0.02) {
-      f.vx = (Math.random() - 0.5) * 0.3;
-      f.vy = (Math.random() - 0.5) * 0.3;
-    }
-    f.x += f.vx * dt;
-    f.y += f.vy * dt;
-    f.phase += f.glowSpeed * dt;
-    f.life -= dt;
-
-    // Avoid drifting into water — bounce back
-    const ft = getTile(f.x, f.y);
-    if (ft === T.DEEP_OCEAN || ft === T.SHALLOW_WATER || ft === T.LAVA) {
-      f.vx = -f.vx; f.vy = -f.vy;
-      f.x += f.vx * 2; f.y += f.vy * 2;
-    }
-
-    // Cull if too far from camera (performance)
-    const dx = f.x - (state.cam.x + window.innerWidth / 2);
-    const dy = f.y - (state.cam.y + window.innerHeight / 2);
-    if (dx*dx + dy*dy > 900 * 900) return false;
-
-    return f.life > 0;
-  });
-}
-
-function drawFireflies(ctx, camX, camY) {
-  if (!state.fireflies || state.fireflies.length === 0) return;
-  ctx.save();
-  ctx.globalCompositeOperation = 'lighter';
-  for (let i = 0; i < state.fireflies.length; i++) {
-    const f = state.fireflies[i];
-    const sx = f.x - camX, sy = f.y - camY;
-    if (sx < -30 || sx > canvas.width + 30 || sy < -30 || sy > canvas.height + 30) continue;
-    // Flicker: sinusoidal glow + small random jitter
-    const glow = 0.45 + 0.55 * Math.abs(Math.sin(f.phase));
-    // Fade in/out at life boundaries
-    const lifeFade = Math.min(1, f.life / 90) * Math.min(1, (f.maxLife - f.life) / 60 + 0.3);
-    const alpha = glow * lifeFade;
-    // Color by hue
-    let core, halo;
-    if (f.hue === 'teal') {
-      core = `rgba(180,255,240,${alpha})`;
-      halo = `rgba(80,200,220,${alpha * 0.35})`;
-    } else if (f.hue === 'amber') {
-      core = `rgba(255,210,140,${alpha})`;
-      halo = `rgba(255,150,60,${alpha * 0.35})`;
-    } else {
-      core = `rgba(255,245,170,${alpha})`;
-      halo = `rgba(220,200,80,${alpha * 0.35})`;
-    }
-    // Soft halo
-    ctx.fillStyle = halo;
-    ctx.beginPath();
-    ctx.arc(sx, sy, 5, 0, Math.PI * 2);
-    ctx.fill();
-    // Brighter inner halo
-    ctx.fillStyle = core;
-    ctx.beginPath();
-    ctx.arc(sx, sy, 2.2, 0, Math.PI * 2);
-    ctx.fill();
-    // Pixel-sharp core
-    ctx.fillRect(Math.round(sx) - 1, Math.round(sy) - 1, 2, 2);
-  }
-  ctx.restore();
 }
 
 function updateCrabs() {
@@ -13630,7 +13503,6 @@ function gameLoopWithUI() {
   if (state.frameCount % 5 === 0) updateNPCCompanions();
   if (state.frameCount % 2 === 0) updateWorldEvents();
   updateBirdsAndFootprints();
-  if (state.frameCount % 2 === 0) updateFireflies();
   updateRain();
   updateLightning();
   if (state.frameCount % 4 === 0) updateCrabs();
