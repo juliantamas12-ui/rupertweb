@@ -165,7 +165,17 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
           Connect Steam
         </button>
       </div>
-      <div class="sid-label" style="margin-top:0">Find yours at <a href="https://steamidfinder.com" target="_blank" style="color:var(--accent)">steamidfinder.com</a> — needs public profile</div>
+      <div class="sid-label" style="margin-top:0">Find yours at <a href="https://steamidfinder.com" target="_blank" style="color:var(--accent)">steamidfinder.com</a></div>
+
+      <details style="margin-top:20px;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:14px 18px;max-width:520px;text-align:left">
+        <summary style="cursor:pointer;font-size:13px;font-weight:600;color:var(--accent)">How to sign in (read this)</summary>
+        <ol style="margin-top:12px;padding-left:18px;font-size:13px;color:var(--dim);line-height:1.7">
+          <li><strong style="color:var(--text)">Make your Steam profile public.</strong> Go to <a href="https://steamcommunity.com/my/edit/settings" target="_blank" style="color:var(--accent)">Steam → Edit Profile → Privacy Settings</a>. Set <em>My profile</em>, <em>Game details</em>, AND <em>Owned games</em> to <strong style="color:var(--accent)">Public</strong>. If any of these are Friends-only or Private, this will NOT work.</li>
+          <li><strong style="color:var(--text)">Find your Steam ID.</strong> Go to <a href="https://steamidfinder.com" target="_blank" style="color:var(--accent)">steamidfinder.com</a>, paste your profile URL, copy the 17-digit number that starts with <code style="background:var(--panel2);padding:1px 6px;border-radius:3px;color:var(--accent)">7656...</code></li>
+          <li><strong style="color:var(--text)">Paste it above and hit Connect.</strong> Your library will load in a couple of seconds.</li>
+        </ol>
+        <p style="margin-top:12px;font-size:12px;color:var(--dim);border-top:1px solid var(--border);padding-top:10px">Not working? 99% of the time it's because "Owned games" privacy is still private. That's the one most people forget.</p>
+      </details>
 
       <div style="display:flex;align-items:center;gap:12px;width:100%;max-width:360px;margin-top:8px">
         <div style="flex:1;height:1px;background:var(--border)"></div>
@@ -619,7 +629,16 @@ async function connectSteam() {
     renderDashboard();
     showDashboard();
   } catch (e) {
-    alert('Could not connect: ' + e.message + '. Make sure your Steam profile is set to Public.');
+    alert(
+      "Couldn't connect.\n\n" +
+      "Most likely cause: your Steam privacy settings.\n\n" +
+      "Go to Steam → Edit Profile → Privacy Settings and set ALL THREE to Public:\n" +
+      "• My Profile\n" +
+      "• Game Details\n" +
+      "• Owned Games  ← this one especially\n\n" +
+      "Even if your profile is public, if 'Owned Games' is hidden we can't read your library.\n\n" +
+      "Error: " + e.message
+    );
   }
 }
 
