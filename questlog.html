@@ -391,17 +391,25 @@ async function loadBuyRecs() {
       document.getElementById('buyRecList').innerHTML = '<div class="empty">No buy recommendations yet.</div>';
       return;
     }
-    document.getElementById('buyRecList').innerHTML = data.recommendations.map(r => `
-      <div class="rec-card" onclick="window.open('https://store.steampowered.com/app/${r.appid}','_blank')">
-        <div class="rec-cover" style="background-image:url('${r.img}')"></div>
-        <div class="rec-info">
-          <div class="rec-reason">${r.reason}</div>
-          <div class="rec-title">${r.game}</div>
-          <div class="rec-sub">${r.sub}${r.price ? ` · <span style="color:${r.discounted ? 'var(--accent)' : 'var(--text)'};font-weight:600">${r.price}</span>` : ''}</div>
+    document.getElementById('buyRecList').innerHTML = data.recommendations.map(r => {
+      const scoreColour = r.reviewScore >= 85 ? 'var(--accent)' : r.reviewScore >= 70 ? '#d5e65c' : r.reviewScore >= 50 ? '#ff9e42' : '#ff5a5a';
+      const badges = [];
+      if (r.reviewScore) badges.push(`<span style="color:${scoreColour};font-weight:700">${r.reviewScore}% ★</span> <span style="color:var(--dim);font-size:11px">${r.reviewLabel || ''} (${(r.reviewCount||0).toLocaleString()})</span>`);
+      if (r.currentPlayers > 100) badges.push(`<span style="color:var(--accent)">●</span> <span style="color:var(--dim);font-size:11px">${r.currentPlayers.toLocaleString()} playing</span>`);
+      if (r.price) badges.push(`<span style="color:${r.discounted ? 'var(--accent)' : 'var(--text)'};font-weight:600">${r.price}</span>`);
+      return `
+        <div class="rec-card" onclick="window.open('https://store.steampowered.com/app/${r.appid}','_blank')">
+          <div class="rec-cover" style="background-image:url('${r.img}')"></div>
+          <div class="rec-info">
+            <div class="rec-reason">${r.reason}</div>
+            <div class="rec-title">${r.game}</div>
+            <div class="rec-sub">${r.sub}</div>
+            <div class="rec-sub" style="margin-top:6px;display:flex;gap:14px;flex-wrap:wrap">${badges.join(' <span style="color:var(--dim2)">·</span> ')}</div>
+          </div>
+          <button class="rec-action">${r.price === 'Free' ? 'Install' : 'Buy →'}</button>
         </div>
-        <button class="rec-action">${r.price === 'Free' ? 'Install' : 'Buy →'}</button>
-      </div>
-    `).join('');
+      `;
+    }).join('');
   } catch (e) {
     document.getElementById('buyRecList').innerHTML = `<div class="error">${e.message}</div>`;
   }
@@ -514,27 +522,33 @@ async function loadAchDetail(appid, name) {
 
 async function loadLeaderboards() {
   STATE.lbLoaded = true;
-  const topGames = STATE.games.slice(0, 8);
-  const rows = [];
-  for (const g of topGames) {
+  const topGames = STATE.games.slice(0, 10);
+  const rows = await Promise.all(topGames.map(async g => {
     try {
-      const r = await fetch(`/api/steam/game-stats/${g.appid}`);
-      const data = await r.json();
-      rows.push({ ...g, currentPlayers: data.currentPlayers });
-    } catch {}
-  }
+      const [stats, reviews] = await Promise.all([
+        fetch(`/api/steam/game-stats/${g.appid}`).then(r => r.json()).catch(() => ({})),
+        fetch(`/api/reviews/${g.appid}`).then(r => r.json()).catch(() => ({})),
+      ]);
+      return { ...g, currentPlayers: stats.currentPlayers, reviewScore: reviews.score, reviewLabel: reviews.label, reviewCount: reviews.total };
+    } catch {
+      return g;
+    }
+  }));
 
   const el = document.getElementById('playerCounts');
-  el.innerHTML = rows.map(r => `
-    <div class="ach-item">
-      <div class="ach-icon" style="background-image:url('${r.img}')"></div>
-      <div class="ach-info">
-        <div class="ach-name">${r.name}</div>
-        <div class="ach-desc">${r.hours}h played by you</div>
+  el.innerHTML = rows.map(r => {
+    const scoreColour = r.reviewScore >= 85 ? 'var(--accent)' : r.reviewScore >= 70 ? '#d5e65c' : r.reviewScore >= 50 ? '#ff9e42' : '#ff5a5a';
+    return `
+      <div class="ach-item">
+        <div class="ach-icon" style="background-image:url('${r.img}')"></div>
+        <div class="ach-info">
+          <div class="ach-name">${r.name}</div>
+          <div class="ach-desc">${r.hours}h played by you · ${r.reviewScore ? `<span style="color:${scoreColour}">${r.reviewScore}% ★ ${r.reviewLabel || ''}</span>` : 'No reviews'}</div>
+        </div>
+        <div class="ach-rarity" style="color:${r.currentPlayers > 10000 ? 'var(--accent)' : 'var(--dim)'}">${r.currentPlayers !== null && r.currentPlayers !== undefined ? r.currentPlayers.toLocaleString() + ' online' : '—'}</div>
       </div>
-      <div class="ach-rarity" style="color:${r.currentPlayers > 10000 ? 'var(--accent)' : 'var(--dim)'}">${r.currentPlayers !== null ? r.currentPlayers.toLocaleString() + ' online' : '—'}</div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 
   // Simple "leaderboard" — your most played games ranked with mock global averages
   document.getElementById('leaderboard').innerHTML = `

@@ -23,6 +23,7 @@ export default {
       if (p === '/api/recommend')                                     return recommend(url);
       if (p === '/api/recommend-buy')                                 return recommendBuy(url);
       if (p.startsWith('/api/game-details/'))                         return gameDetails(p);
+      if (p.startsWith('/api/reviews/'))                              return steamReviews(p);
     } catch (e) {
       return jsonResponse({ error: e.message }, 500);
     }
@@ -380,11 +381,16 @@ async function recommendBuy(url) {
     }
   }
 
-  // Enrich with price info from Steam store API
-  for (const r of recs) {
+  // Enrich with price + reviews + player count (parallel)
+  await Promise.all(recs.map(async r => {
     try {
-      const data = await fetchJSON(`https://store.steampowered.com/api/appdetails?appids=${r.appid}&cc=gb&l=en`);
-      const info = data?.[r.appid]?.data;
+      const [details, reviews, pc] = await Promise.all([
+        fetchJSON(`https://store.steampowered.com/api/appdetails?appids=${r.appid}&cc=gb&l=en`).catch(() => null),
+        fetchJSON(`https://store.steampowered.com/appreviews/${r.appid}?json=1&language=all&purchase_type=all&num_per_page=0`).catch(() => null),
+        fetchJSON(`https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/?appid=${r.appid}`).catch(() => null),
+      ]);
+
+      const info = details?.[r.appid]?.data;
       if (info?.is_free) r.price = 'Free';
       else if (info?.price_overview) {
         const p = info.price_overview;
@@ -395,8 +401,18 @@ async function recommendBuy(url) {
           r.price = p.final_formatted;
         }
       }
+
+      const rev = reviews?.query_summary;
+      if (rev && rev.total_reviews > 0) {
+        r.reviewScore = Math.round(rev.total_positive / rev.total_reviews * 100);
+        r.reviewLabel = rev.review_score_desc;
+        r.reviewCount = rev.total_reviews;
+      }
+
+      const players = pc?.response?.player_count;
+      if (players) r.currentPlayers = players;
     } catch {}
-  }
+  }));
 
   return jsonResponse({ recommendations: recs });
 }
@@ -404,9 +420,20 @@ async function recommendBuy(url) {
 async function gameDetails(path) {
   const appid = path.split('/').pop();
   try {
-    const data = await fetchJSON(`https://store.steampowered.com/api/appdetails?appids=${appid}&cc=gb&l=en`);
-    const info = data?.[appid]?.data;
+    const [details, reviews, playerCount] = await Promise.all([
+      fetchJSON(`https://store.steampowered.com/api/appdetails?appids=${appid}&cc=gb&l=en`),
+      fetchJSON(`https://store.steampowered.com/appreviews/${appid}?json=1&language=all&purchase_type=all&num_per_page=0`),
+      fetchJSON(`https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/?appid=${appid}`).catch(() => ({ response: { player_count: null } })),
+    ]);
+
+    const info = details?.[appid]?.data;
     if (!info) return jsonResponse({ error: 'Not found' }, 404);
+
+    const rev = reviews?.query_summary || {};
+    const totalPositive = rev.total_positive || 0;
+    const totalReviews  = rev.total_reviews || 0;
+    const reviewScore   = totalReviews > 0 ? Math.round(totalPositive / totalReviews * 100) : 0;
+
     return jsonResponse({
       appid,
       name: info.name,
@@ -414,12 +441,42 @@ async function gameDetails(path) {
       discount: info.price_overview?.discount_percent || 0,
       description: info.short_description,
       genres: (info.genres || []).map(g => g.description),
+      tags: (info.categories || []).map(c => c.description).slice(0, 8),
       metacritic: info.metacritic?.score || null,
       releaseDate: info.release_date?.date,
       header: info.header_image,
+      developer: info.developers?.[0] || null,
+      publisher: info.publishers?.[0] || null,
+      reviews: {
+        score: reviewScore,
+        total: totalReviews,
+        label: rev.review_score_desc || null,
+      },
+      currentPlayers: playerCount?.response?.player_count ?? null,
     });
   } catch (e) {
     return jsonResponse({ error: e.message }, 500);
+  }
+}
+
+// Bulk reviews endpoint for buy recommendations (fast lookup)
+async function steamReviews(path) {
+  const appid = path.split('/').pop();
+  try {
+    const data = await fetchJSON(
+      `https://store.steampowered.com/appreviews/${appid}?json=1&language=all&purchase_type=all&num_per_page=0`
+    );
+    const r = data?.query_summary || {};
+    const total = r.total_reviews || 0;
+    const positive = r.total_positive || 0;
+    return jsonResponse({
+      appid,
+      score: total > 0 ? Math.round(positive / total * 100) : 0,
+      total,
+      label: r.review_score_desc || '—',
+    });
+  } catch {
+    return jsonResponse({ appid, score: 0, total: 0, label: '—' });
   }
 }
 
