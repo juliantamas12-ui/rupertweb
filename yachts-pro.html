@@ -197,7 +197,7 @@ footer{border-top:1px solid rgba(255,255,255,0.06);padding:32px 48px;display:fle
     <div style="background:#0d1e3d;border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:24px">
       <div style="font-size:24px;margin-bottom:12px">🔔</div>
       <h3 style="font-size:15px;font-weight:700;margin-bottom:8px">Instant Alerts</h3>
-      <p style="font-size:13px;color:rgba(255,255,255,0.4);line-height:1.6">Port arrivals, departures, heading changes. Get a brief Telegram or email notification the moment something happens — no noise, just the facts.</p>
+      <p style="font-size:13px;color:rgba(255,255,255,0.4);line-height:1.6">Port arrivals, departures, heading changes. Get a brief email the moment something happens — no noise, just the facts.</p>
     </div>
   </div>
 </section>
@@ -215,7 +215,7 @@ footer{border-top:1px solid rgba(255,255,255,0.06);padding:32px 48px;display:fle
     <div class="step">
       <div class="step-num">2</div>
       <h3>Choose alert type</h3>
-      <p>Get notified via Telegram or email. Port arrivals, departures, underway status changes.</p>
+      <p>Email alerts sent the moment a vessel arrives at port, departs, or changes course.</p>
     </div>
     <div class="step">
       <div class="step-num">3</div>
@@ -260,7 +260,6 @@ footer{border-top:1px solid rgba(255,255,255,0.06);padding:32px 48px;display:fle
           <li>2 vessels</li>
           <li>Weekly position digest</li>
           <li class="no">Real-time alerts</li>
-          <li class="no">Telegram notifications</li>
           <li class="no">Email alerts</li>
         </ul>
         <button class="plan-btn outline" onclick="document.getElementById('signup').scrollIntoView({behavior:'smooth'})">Get started free</button>
@@ -275,8 +274,8 @@ footer{border-top:1px solid rgba(255,255,255,0.06);padding:32px 48px;display:fle
           <li>All 11 vessels</li>
           <li>Port arrival &amp; departure alerts</li>
           <li>Weekly news digest (SuperYacht Times, Boat International, Reddit)</li>
-          <li>Telegram notifications</li>
           <li>Email alerts</li>
+          <li>Private member dashboard</li>
         </ul>
         <button class="plan-btn gold" onclick="document.getElementById('signup').scrollIntoView({behavior:'smooth'})">Start tracking — £4.99/mo</button>
       </div>
@@ -289,7 +288,7 @@ footer{border-top:1px solid rgba(255,255,255,0.06);padding:32px 48px;display:fle
           <li>All 11 vessels + custom requests</li>
           <li>2-hour AIS check interval</li>
           <li>Daily news digest with full source links</li>
-          <li>Telegram + email alerts</li>
+          <li>Email alerts</li>
           <li>Movement history log</li>
         </ul>
         <button class="plan-btn outline" onclick="document.getElementById('signup').scrollIntoView({behavior:'smooth'})">Contact for access</button>
@@ -315,10 +314,6 @@ footer{border-top:1px solid rgba(255,255,255,0.06);padding:32px 48px;display:fle
         <label>Email</label>
         <input type="email" name="email" placeholder="you@example.com" required>
       </div>
-    </div>
-    <div class="form-group">
-      <label>Telegram username (optional — for instant alerts)</label>
-      <input type="text" name="telegram" placeholder="@yourusername">
     </div>
     <div class="form-group">
       <label>Plan</label>
@@ -370,7 +365,6 @@ document.getElementById('signupForm').addEventListener('submit', async e => {
   const data = {
     name: form.name.value,
     email: form.email.value,
-    telegram: form.telegram.value,
     plan: form.plan.value,
     vessels: [...form.querySelectorAll('input[name="vessels"]:checked')].map(i => i.value),
     timestamp: new Date().toISOString()
