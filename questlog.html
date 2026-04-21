@@ -88,13 +88,13 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
 .news-item a{color:inherit;text-decoration:none}
 .news-item a:hover .title{color:var(--accent)}
 
-.ach-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.ach-item{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border);align-items:center}
 .ach-item:last-child{border-bottom:none}
-.ach-icon{width:36px;height:36px;border-radius:6px;flex-shrink:0;background-size:cover;background-color:var(--panel2)}
+.ach-icon{width:48px;height:48px;border-radius:6px;flex-shrink:0;background-size:cover;background-color:var(--panel2)}
 .ach-info{flex:1;min-width:0}
-.ach-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px}
-.ach-desc{font-size:11px;color:var(--dim);line-height:1.4}
-.ach-rarity{font-size:10px;color:var(--accent);font-weight:700;flex-shrink:0;white-space:nowrap}
+.ach-name{font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px}
+.ach-desc{font-size:13px;color:var(--dim);line-height:1.5}
+.ach-rarity{font-size:13px;color:var(--accent);font-weight:700;flex-shrink:0;white-space:nowrap}
 
 .leaderboard-table{width:100%;border-collapse:collapse;font-size:13px}
 .leaderboard-table th{text-align:left;padding:10px 8px;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);border-bottom:1px solid var(--border)}
@@ -142,6 +142,9 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
   <div class="nav-user" id="navUser" style="display:none">
     <div class="nav-user-avatar" id="userAvatar"></div>
     <span id="userName">—</span>
+    <label style="font-size:11px;color:var(--dim);display:flex;align-items:center;gap:5px;cursor:pointer;margin-left:12px" title="Open games in Steam app instead of browser">
+      <input type="checkbox" id="steamAppToggle" onchange="toggleSteamApp(this.checked)" style="accent-color:var(--accent);cursor:pointer"> Steam app
+    </label>
     <button class="link" onclick="disconnect()" style="background:none;border:none;color:var(--dim);cursor:pointer;font-size:11px;margin-left:8px">Disconnect</button>
   </div>
 </nav>
@@ -352,11 +355,7 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
       <button class="link" onclick="loadNewReleases()">Refresh →</button>
     </div>
     <p style="color:var(--dim);font-size:13px;margin-bottom:16px">Fresh games hitting Steam right now. Enriched with live review scores.</p>
-    <div style="display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap">
-      <button class="new-filter-btn active" data-filter="popular" onclick="setNewFilter('popular')">Popular New</button>
-      <button class="new-filter-btn" data-filter="top-sellers" onclick="setNewFilter('top-sellers')">Top Sellers</button>
-      <button class="new-filter-btn" data-filter="specials" onclick="setNewFilter('specials')">Current Specials</button>
-    </div>
+
     <div id="newReleasesList"><div class="empty"><span class="loading"></span> Loading new releases...</div></div>
   </div>
 
@@ -544,7 +543,31 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
 </main>
 
 <script>
-let STATE = { sid: null, games: [], profile: null };
+let STATE = { sid: null, games: [], profile: null, useSteamApp: localStorage.getItem('questlog_useapp') !== '0' };
+
+function toggleSteamApp(on) {
+  STATE.useSteamApp = on;
+  localStorage.setItem('questlog_useapp', on ? '1' : '0');
+}
+function steamUrl(appid) {
+  // If Steam-app mode is on, try steam:// first. Browsers will gracefully fall back.
+  if (STATE.useSteamApp) return `steam://store/${appid}`;
+  return `https://store.steampowered.com/app/${appid}`;
+}
+function openSteam(appid) {
+  if (STATE.useSteamApp) {
+    // Try steam:// — if no Steam client, attempt a browser fallback after short delay
+    const t = Date.now();
+    window.location.href = `steam://store/${appid}`;
+    setTimeout(() => {
+      if (Date.now() - t < 2000 && !document.hidden) {
+        window.open(`https://store.steampowered.com/app/${appid}`, '_blank');
+      }
+    }, 800);
+  } else {
+    window.open(`https://store.steampowered.com/app/${appid}`, '_blank');
+  }
+}
 
 document.querySelectorAll('.nav-tab').forEach(tab => {
   tab.addEventListener('click', () => {
@@ -604,6 +627,8 @@ function showDashboard() {
   document.getElementById('view-landing').classList.remove('active');
   document.getElementById('view-library').classList.add('active');
   document.getElementById('navUser').style.display = 'flex';
+  const t = document.getElementById('steamAppToggle');
+  if (t) t.checked = STATE.useSteamApp;
   document.getElementById('navTabs').style.display = 'flex';
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   document.querySelector('[data-view="library"]').classList.add('active');
@@ -685,14 +710,14 @@ function renderDashboard() {
   }
 
   // Most played
-  renderGames('mostPlayed', games.slice(0, 12));
+  renderGames('mostPlayed', games);  // Show ALL games
 }
 
 function renderGames(id, gs) {
   const el = document.getElementById(id);
   if (!gs.length) { el.innerHTML = '<div class="empty">No games yet.</div>'; return; }
   el.innerHTML = gs.map(g => `
-    <div class="game-card" onclick="window.open('https://store.steampowered.com/app/${g.appid}','_blank')">
+    <div class="game-card" onclick="openSteam(${g.appid})">
       <div class="game-img" style="background-image:url('${g.img || ''}')">
         <div class="game-hours">${g.hours}h</div>
       </div>
@@ -714,7 +739,7 @@ async function loadRecs() {
       return;
     }
     document.getElementById('recList').innerHTML = data.recommendations.map(r => `
-      <div class="rec-card" onclick="window.open('https://store.steampowered.com/app/${r.appid}','_blank')">
+      <div class="rec-card" onclick="openSteam(${r.appid})">
         <div class="rec-cover" style="background-image:url('${r.img}')"></div>
         <div class="rec-info">
           <div class="rec-reason">${r.reason}</div>
@@ -779,7 +804,7 @@ async function loadWrapped() {
       <h3 style="font-size:13px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Top 5 All Time</h3>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px">
         ${r.top5.map((g,i)=>`
-          <div style="position:relative" onclick="window.open('https://store.steampowered.com/app/${g.appid}','_blank')">
+          <div style="position:relative" onclick="openSteam(${g.appid})">
             <div style="aspect-ratio:460/215;background:url('${g.img}') center/cover;border-radius:6px;cursor:pointer"></div>
             <div style="position:absolute;top:4px;left:4px;background:var(--accent);color:#000;font-weight:800;padding:2px 8px;border-radius:3px;font-size:11px">#${i+1}</div>
             <div style="font-size:12px;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${g.name}</div>
@@ -852,7 +877,7 @@ async function compareFriend() {
         </div>
       `).join('')}
       ${d.theirRecommendations.length ? `<h3 style="font-size:13px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin:20px 0 10px">They Play (You Don't Own)</h3>${d.theirRecommendations.map(g => `
-        <div style="display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="window.open('https://store.steampowered.com/app/${g.appid}','_blank')">
+        <div style="display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="openSteam(${g.appid})">
           <div style="width:80px;aspect-ratio:460/215;background:url('${g.img}') center/cover;border-radius:4px;flex-shrink:0"></div>
           <div style="flex:1"><div style="font-weight:600;font-size:13px">${g.name}</div><div style="font-size:11px;color:var(--dim)">They've played ${g.hours}h — might be worth a look</div></div>
         </div>`).join('')}` : ''}
@@ -1120,8 +1145,10 @@ async function loadMyDeals() {
   try {
     const data = await api('/api/my-deals');
     const el = document.getElementById('myDealsList');
-    if (!data.deals?.length) { el.innerHTML = '<div class="empty">No personalised deals right now.</div>'; return; }
-    el.innerHTML = data.deals.slice(0, 12).map(d => renderDealCard(d)).join('');
+    // Filter out 100%-off items (those belong in Free Now tab)
+    const actual = data.deals.filter(d => d.savings < 100 && d.salePrice > 0);
+    if (!actual.length) { el.innerHTML = '<div class="empty">No personalised deals right now.</div>'; return; }
+    el.innerHTML = actual.slice(0, 12).map(d => renderDealCard(d)).join('');
   } catch (e) {
     document.getElementById('myDealsList').innerHTML = `<div class="error">${e.message}</div>`;
   }
@@ -1145,8 +1172,9 @@ async function loadAllDeals() {
     const r = await fetch('/api/deals?' + params.toString());
     const data = await r.json();
     const el = document.getElementById('allDealsList');
-    if (!data.deals?.length) { el.innerHTML = '<div class="empty">No deals match these filters.</div>'; return; }
-    el.innerHTML = data.deals.slice(0, 30).map(d => renderDealCard(d)).join('');
+    const actual = (data.deals || []).filter(d => d.savings < 100 && d.salePrice > 0);
+    if (!actual.length) { el.innerHTML = '<div class="empty">No deals match these filters.</div>'; return; }
+    el.innerHTML = actual.slice(0, 30).map(d => renderDealCard(d)).join('');
   } catch (e) {
     document.getElementById('allDealsList').innerHTML = `<div class="error">${e.message}</div>`;
   }
@@ -1328,7 +1356,7 @@ function renderBuyRecs() {
     if (r.currentPlayers > 100) badges.push(`<span style="color:var(--accent)">●</span> <span style="color:var(--dim);font-size:11px">${r.currentPlayers.toLocaleString()} playing</span>`);
     if (r.price) badges.push(`<span style="color:${r.discounted ? 'var(--accent)' : 'var(--text)'};font-weight:600">${r.price}</span>`);
     return `
-      <div class="rec-card" onclick="window.open('https://store.steampowered.com/app/${r.appid}','_blank')">
+      <div class="rec-card" onclick="openSteam(${r.appid})">
         <div class="rec-cover" style="background-image:url('${r.img}')"></div>
         <div class="rec-info">
           <div class="rec-reason">${r.reason}</div>

@@ -930,23 +930,28 @@ async function gameOfTheDay(url) {
   const today = new Date().toISOString().slice(0, 10);
   const seed = [...today].reduce((s, c) => s + c.charCodeAt(0), 0);
 
-  // Curated list of "must play" games
+  // Curated list of "must play" games — appids verified
   const CURATED = [
-    { appid: 1086940, name: "Baldur's Gate 3", reason: 'The RPG that revived the whole genre' },
-    { appid: 1145360, name: 'Hades',            reason: 'Roguelike with soul' },
-    { appid: 367520,  name: 'Hollow Knight',    reason: 'Best metroidvania of the decade' },
-    { appid: 1091500, name: 'Cyberpunk 2077',   reason: 'Redemption arc complete' },
-    { appid: 1245620, name: 'Elden Ring',       reason: 'Game of the Year 2022' },
-    { appid: 1222670, name: 'Disco Elysium',    reason: 'Best-written RPG ever' },
-    { appid: 620,     name: 'Portal 2',         reason: 'Still the best puzzle game' },
-    { appid: 588650,  name: 'Outer Wilds',      reason: 'Mind-bending space mystery' },
-    { appid: 413150,  name: 'Stardew Valley',   reason: 'The cosiest escape' },
-    { appid: 892970,  name: 'Valheim',          reason: 'Viking survival with friends' },
-    { appid: 1426210, name: 'It Takes Two',     reason: 'Best co-op experience in years' },
-    { appid: 1593500, name: 'Vampire Survivors',reason: '£4 of pure serotonin' },
-    { appid: 2379780, name: 'Balatro',          reason: 'Poker roguelike, 2024 sleeper hit' },
-    { appid: 427520,  name: 'Factorio',         reason: 'The GOAT of automation' },
-    { appid: 646570,  name: 'Slay the Spire',   reason: 'The deckbuilder that started it all' },
+    { appid: 1086940, name: "Baldur's Gate 3",   reason: 'The RPG that revived the whole genre' },
+    { appid: 1145360, name: 'Hades',              reason: 'Roguelike with soul' },
+    { appid: 367520,  name: 'Hollow Knight',      reason: 'Best metroidvania of the decade' },
+    { appid: 1091500, name: 'Cyberpunk 2077',     reason: 'Redemption arc complete' },
+    { appid: 1245620, name: 'Elden Ring',         reason: 'Game of the Year 2022' },
+    { appid: 632470,  name: 'Disco Elysium',      reason: 'Best-written RPG ever' },
+    { appid: 620,     name: 'Portal 2',           reason: 'Still the best puzzle game' },
+    { appid: 753640,  name: 'Outer Wilds',        reason: 'Mind-bending space mystery' },
+    { appid: 413150,  name: 'Stardew Valley',     reason: 'The cosiest escape' },
+    { appid: 892970,  name: 'Valheim',            reason: 'Viking survival with friends' },
+    { appid: 1426210, name: 'It Takes Two',       reason: 'Best co-op experience in years' },
+    { appid: 1794680, name: 'Vampire Survivors',  reason: '£4 of pure serotonin' },
+    { appid: 2379780, name: 'Balatro',            reason: 'Poker roguelike sleeper hit' },
+    { appid: 427520,  name: 'Factorio',           reason: 'The GOAT of automation' },
+    { appid: 646570,  name: 'Slay the Spire',     reason: 'The deckbuilder that started it all' },
+    { appid: 292030,  name: 'The Witcher 3',      reason: 'Still the open-world benchmark' },
+    { appid: 1593500, name: 'Stray',              reason: 'You play as a cat' },
+    { appid: 1966720, name: 'Like a Dragon: Infinite Wealth', reason: 'Yakuza-style in Hawaii' },
+    { appid: 2050650, name: 'Resident Evil 4 Remake', reason: 'Survival horror remade' },
+    { appid: 1174180, name: 'Red Dead Redemption 2', reason: 'A technical and narrative masterpiece' },
   ];
 
   const pick = CURATED[seed % CURATED.length];
@@ -1060,6 +1065,10 @@ const GPU_SCORES = {
   'RX 6700 XT': 185, 'RX 6650 XT': 150, 'RX 6600 XT': 140, 'RX 6600': 120, 'RX 6500 XT': 70,
   // Intel Arc
   'Arc B580': 200, 'Arc A770': 150, 'Arc A750': 130, 'Arc A580': 110,
+  // Steam Deck (LCD + OLED) — approximate GPU score. 800p native target.
+  'Steam Deck': 60, 'Steam Deck OLED': 65,
+  // ROG Ally / Legion Go handhelds
+  'ROG Ally': 85, 'ROG Ally X': 95, 'Legion Go': 90, 'MSI Claw': 75,
 };
 
 // Game demand profile: score needed for 60fps at 1080p ultra
@@ -1144,7 +1153,19 @@ async function fpsEstimate(url) {
 
   // Multipliers per setting/resolution
   // Base: 1080p ultra = 60fps reference at score == demand
-  const profiles = [
+  const isHandheld = gpuKey.includes('Deck') || gpuKey.includes('Ally') || gpuKey.includes('Legion Go') || gpuKey.includes('Claw');
+
+  const profiles = isHandheld ? [
+    // Handheld-appropriate resolutions
+    { label: '720p Low',    resMult: 1.8,  settingMult: 2.0 },
+    { label: '720p Medium', resMult: 1.8,  settingMult: 1.5 },
+    { label: '720p High',   resMult: 1.8,  settingMult: 1.2 },
+    { label: '800p Medium', resMult: 1.5,  settingMult: 1.5 },
+    { label: '800p High',   resMult: 1.5,  settingMult: 1.2 },
+    { label: '1080p Low',   resMult: 1.0,  settingMult: 2.0 },
+    { label: '1080p Medium',resMult: 1.0,  settingMult: 1.5 },
+    { label: '1080p High',  resMult: 1.0,  settingMult: 1.2 },
+  ] : [
     { label: '1080p Low',    resMult: 1.0,  settingMult: 2.0 },
     { label: '1080p Medium', resMult: 1.0,  settingMult: 1.5 },
     { label: '1080p High',   resMult: 1.0,  settingMult: 1.2 },
@@ -1387,13 +1408,30 @@ async function freeGames() {
     const gog = await fetchJSON('https://catalog.gog.com/v1/catalog?limit=48&order=desc%3Atrending&price=between%3A0%2C0&productType=in%3Agame%2Cpack&page=1');
     const gogGames = gog?.products || [];
     for (const g of gogGames.slice(0, 20)) {
-      results.prime.push({ // reusing 'prime' slot for GOG display
+      // GOG storeLink is a full relative path like '/game/slug-name'
+      // Fallback: build from slug if storeLink missing
+      let url;
+      if (g.storeLink && g.storeLink.startsWith('/')) {
+        url = `https://www.gog.com${g.storeLink}`;
+      } else if (g.slug) {
+        url = `https://www.gog.com/en/game/${g.slug}`;
+      } else {
+        // Last-resort: search
+        url = `https://www.gog.com/en/games?search=${encodeURIComponent(g.title || '')}`;
+      }
+
+      const ratings = await lookupRating(g.title);
+
+      results.prime.push({
         title: g.title,
         img: g.coverHorizontal || g.image,
         originalPrice: g.price?.baseMoney?.amount > 0 ? g.price.baseMoney.amount + ' ' + g.price.baseMoney.currency : 'Free',
-        url: `https://www.gog.com${g.storeLink || '/game/' + (g.slug || '')}`,
+        url,
         store: 'GOG',
         available: true,
+        steamRating: ratings?.score,
+        steamLabel: ratings?.label,
+        steamCount: ratings?.count,
       });
     }
   } catch (e) { results.errors.push('gog: ' + e.message); }
