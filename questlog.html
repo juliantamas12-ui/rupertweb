@@ -473,6 +473,42 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
     </div>
   </div>
 
+  <!-- FPS ESTIMATOR -->
+  <div class="section">
+    <div class="section-head"><h2>FPS Estimator — Will it run?</h2></div>
+    <div class="sidebar-card">
+      <p style="color:var(--dim);font-size:13px;margin-bottom:16px">Check how a game will run on your hardware. Enter GPU + RAM + game, we estimate FPS at every resolution/settings combo.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px">
+        <div>
+          <label style="font-size:11px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px">GPU</label>
+          <input list="gpuList" id="fpsGpu" placeholder="e.g. RTX 5090" style="width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit">
+          <datalist id="gpuList"></datalist>
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px">RAM (GB)</label>
+          <select id="fpsRam" style="width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit">
+            <option>8</option><option selected>16</option><option>32</option><option>64</option><option>96</option><option>128</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px">Game</label>
+          <input list="gameList" id="fpsGame" placeholder="e.g. Cyberpunk 2077" style="width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit">
+          <datalist id="gameList">
+            <option>Cyberpunk 2077</option><option>Alan Wake 2</option><option>Black Myth: Wukong</option>
+            <option>Red Dead Redemption 2</option><option>Elden Ring</option><option>Counter-Strike 2</option>
+            <option>Sea of Thieves</option><option>Baldur's Gate 3</option><option>Hogwarts Legacy</option>
+            <option>Grand Theft Auto V</option><option>Palworld</option><option>Helldivers 2</option>
+            <option>Monster Hunter Wilds</option><option>Fortnite</option><option>Rocket League</option>
+            <option>Starfield</option><option>The Witcher 3: Wild Hunt</option><option>Apex Legends</option>
+            <option>Kingdom Come: Deliverance II</option><option>Microsoft Flight Simulator 2024</option>
+          </datalist>
+        </div>
+      </div>
+      <button onclick="estimateFPS()" class="connect-btn" style="width:100%">Estimate FPS</button>
+      <div id="fpsResult" style="margin-top:16px"></div>
+    </div>
+  </div>
+
   <!-- PRICE ALERTS -->
   <div class="section">
     <div class="section-head">
@@ -823,6 +859,53 @@ async function compareFriend() {
     `;
   } catch (e) { document.getElementById('friendCompareResult').innerHTML = `<div class="error">${e.message}</div>`; }
 }
+
+async function estimateFPS() {
+  const gpu = document.getElementById('fpsGpu').value.trim();
+  const ram = document.getElementById('fpsRam').value;
+  const game = document.getElementById('fpsGame').value.trim();
+  const el = document.getElementById('fpsResult');
+  if (!gpu || !game) { el.innerHTML = '<div class="error">Enter both GPU and game</div>'; return; }
+  el.innerHTML = '<div class="empty"><span class="loading"></span> Crunching numbers...</div>';
+
+  try {
+    const r = await fetch(`/api/fps-estimate?gpu=${encodeURIComponent(gpu)}&ram=${ram}&game=${encodeURIComponent(game)}`);
+    const d = await r.json();
+    if (d.error) {
+      const sugg = d.suggestions ? `<div style="font-size:12px;color:var(--dim);margin-top:8px">Try one of: ${d.suggestions.join(', ')}</div>` : '';
+      el.innerHTML = `<div class="error">${d.error}</div>${sugg}`;
+      return;
+    }
+
+    const verdictColor = d.gpuScore/d.gameDemand > 1.5 ? 'var(--accent)' : d.gpuScore/d.gameDemand > 0.7 ? '#ffb84a' : '#ff5a5a';
+    el.innerHTML = `
+      <div style="background:var(--panel2);border:1px solid ${verdictColor}44;border-radius:8px;padding:18px;margin-bottom:16px">
+        <div style="font-size:10px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:6px">Verdict</div>
+        <div style="font-size:18px;font-weight:700;color:${verdictColor};margin-bottom:4px">${d.verdict}</div>
+        <div style="font-size:12px;color:var(--dim)">${d.gpu} · ${d.ram}GB RAM · ${d.game}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+        ${d.estimates.map(e => {
+          const c = e.fps >= 120 ? 'var(--accent)' : e.fps >= 60 ? '#d5e65c' : e.fps >= 30 ? '#ffb84a' : '#ff5a5a';
+          return `<div style="background:var(--panel2);border-radius:6px;padding:12px;text-align:center">
+            <div style="font-size:10px;color:var(--dim);letter-spacing:1px;text-transform:uppercase">${e.setting}</div>
+            <div style="font-size:26px;font-weight:800;color:${c};margin-top:4px">${e.fps}</div>
+            <div style="font-size:10px;color:var(--dim)">fps</div>
+          </div>`;
+        }).join('')}
+      </div>
+      <div style="font-size:11px;color:var(--dim);margin-top:12px;text-align:center">Estimates based on GPU performance score vs game demand. Actual results vary by driver, settings, CPU bottleneck.</div>
+    `;
+  } catch (e) {
+    el.innerHTML = `<div class="error">${e.message}</div>`;
+  }
+}
+
+// Populate GPU datalist on load
+fetch('/api/gpu-list').then(r => r.json()).then(d => {
+  const list = document.getElementById('gpuList');
+  if (list && d.gpus) list.innerHTML = d.gpus.map(g => `<option>${g}</option>`).join('');
+}).catch(() => {});
 
 async function createPriceAlert() {
   const gameTitle = document.getElementById('alertGame').value.trim();

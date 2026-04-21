@@ -38,6 +38,8 @@ export default {
       if (p === '/api/finish-this')                                   return finishThis(url);
       if (p === '/api/backlog-estimate')                              return backlogEstimate(url);
       if (p === '/api/price-alert' && request.method === 'POST')      return createPriceAlert(request);
+      if (p === '/api/fps-estimate')                                  return fpsEstimate(url);
+      if (p === '/api/gpu-list')                                      return jsonResponse({ gpus: Object.keys(GPU_SCORES).sort() });
       if (p === '/api/deals')                                         return getDeals(url);
       if (p === '/api/deal-search')                                   return searchDeal(url);
       if (p === '/api/my-deals')                                      return myDeals(url);
@@ -1030,6 +1032,157 @@ async function backlogEstimate(url) {
     yearsToFinish,
     totalHours: Math.round(totalHours),
   });
+}
+
+// ════════════════════════════════════════════════════════
+// FPS ESTIMATOR
+// Based on relative GPU performance score (100 = baseline GTX 1060)
+// ════════════════════════════════════════════════════════
+
+const GPU_SCORES = {
+  // NVIDIA 5000 series
+  'RTX 5090': 800, 'RTX 5080': 600, 'RTX 5070 Ti': 450, 'RTX 5070': 360, 'RTX 5060 Ti': 260, 'RTX 5060': 210,
+  // NVIDIA 4000 series
+  'RTX 4090': 540, 'RTX 4080 SUPER': 430, 'RTX 4080': 410, 'RTX 4070 Ti SUPER': 370, 'RTX 4070 Ti': 330,
+  'RTX 4070 SUPER': 290, 'RTX 4070': 250, 'RTX 4060 Ti': 200, 'RTX 4060': 170,
+  // NVIDIA 3000 series
+  'RTX 3090 Ti': 370, 'RTX 3090': 350, 'RTX 3080 Ti': 330, 'RTX 3080': 310, 'RTX 3070 Ti': 250,
+  'RTX 3070': 230, 'RTX 3060 Ti': 210, 'RTX 3060': 170, 'RTX 3050': 110,
+  // NVIDIA 2000/1000 series
+  'RTX 2080 Ti': 230, 'RTX 2080 SUPER': 200, 'RTX 2080': 190, 'RTX 2070 SUPER': 170, 'RTX 2070': 150,
+  'RTX 2060 SUPER': 140, 'RTX 2060': 120, 'GTX 1080 Ti': 170, 'GTX 1080': 130, 'GTX 1070 Ti': 115,
+  'GTX 1070': 105, 'GTX 1060 6GB': 100, 'GTX 1060 3GB': 85, 'GTX 1050 Ti': 60, 'GTX 1050': 50,
+  // AMD Radeon RX 7000/9000
+  'RX 9070 XT': 380, 'RX 9070': 320, 'RX 7900 XTX': 420, 'RX 7900 XT': 370, 'RX 7900 GRE': 310,
+  'RX 7800 XT': 280, 'RX 7700 XT': 230, 'RX 7600 XT': 180, 'RX 7600': 160,
+  // AMD 6000 series
+  'RX 6950 XT': 310, 'RX 6900 XT': 290, 'RX 6800 XT': 270, 'RX 6800': 230, 'RX 6750 XT': 200,
+  'RX 6700 XT': 185, 'RX 6650 XT': 150, 'RX 6600 XT': 140, 'RX 6600': 120, 'RX 6500 XT': 70,
+  // Intel Arc
+  'Arc B580': 200, 'Arc A770': 150, 'Arc A750': 130, 'Arc A580': 110,
+};
+
+// Game demand profile: score needed for 60fps at 1080p ultra
+const GAME_DEMAND = {
+  // Extremely demanding
+  'Cyberpunk 2077':              { score: 250, nicePlay: true },
+  'Alan Wake 2':                 { score: 280, nicePlay: true },
+  'Black Myth: Wukong':          { score: 260, nicePlay: true },
+  'Star Wars Outlaws':           { score: 240 },
+  'Hogwarts Legacy':             { score: 220 },
+  "Assassin's Creed Shadows":    { score: 230 },
+  'Hellblade II':                { score: 280, nicePlay: true },
+  'Starfield':                   { score: 230 },
+  // Demanding
+  'Red Dead Redemption 2':       { score: 180 },
+  'Horizon Forbidden West':      { score: 210 },
+  'Marvel\'s Spider-Man 2':      { score: 180 },
+  'Microsoft Flight Simulator 2024': { score: 220 },
+  'Avatar: Frontiers of Pandora':{ score: 210 },
+  'Palworld':                    { score: 160 },
+  'The Witcher 3: Wild Hunt':    { score: 130 },
+  // Medium
+  'Elden Ring':                  { score: 150 },
+  'Monster Hunter Wilds':        { score: 200 },
+  'Helldivers 2':                { score: 160 },
+  'Baldur\'s Gate 3':            { score: 150 },
+  'Grand Theft Auto V':          { score: 90 },
+  'Battlefield 2042':            { score: 170 },
+  'Call of Duty: MW III':        { score: 180 },
+  'Apex Legends':                { score: 110 },
+  'Overwatch 2':                 { score: 100 },
+  'Rust':                        { score: 150 },
+  'Kingdom Come: Deliverance II':{ score: 220 },
+  // Light
+  'Counter-Strike 2':            { score: 70, nicePlay: true },
+  'Valorant':                    { score: 40 },
+  'Fortnite':                    { score: 90 },
+  'Rocket League':               { score: 60 },
+  'Sea of Thieves':              { score: 110 },
+  'League of Legends':           { score: 25 },
+  'Dota 2':                      { score: 60 },
+  'Minecraft':                   { score: 40 },
+  'Stardew Valley':              { score: 10 },
+  'Hollow Knight':               { score: 30 },
+  'Hades':                       { score: 40 },
+  'Terraria':                    { score: 20 },
+  'Roblox':                      { score: 30 },
+};
+
+function normalizeGPU(name) {
+  if (!name) return null;
+  const n = name.toUpperCase().replace(/\s+/g, ' ').trim();
+  for (const key of Object.keys(GPU_SCORES)) {
+    if (n.includes(key.toUpperCase())) return key;
+  }
+  return null;
+}
+
+function normalizeGame(name) {
+  if (!name) return null;
+  const n = name.toLowerCase().trim();
+  for (const key of Object.keys(GAME_DEMAND)) {
+    if (key.toLowerCase() === n || key.toLowerCase().includes(n) || n.includes(key.toLowerCase().slice(0, 12))) {
+      return { name: key, ...GAME_DEMAND[key] };
+    }
+  }
+  return null;
+}
+
+async function fpsEstimate(url) {
+  const gpu = url.searchParams.get('gpu');
+  const ramGB = parseInt(url.searchParams.get('ram') || '16');
+  const gameName = url.searchParams.get('game');
+
+  const gpuKey = normalizeGPU(gpu);
+  const game = normalizeGame(gameName);
+
+  if (!gpuKey) return jsonResponse({ error: 'GPU not recognised', suggestions: Object.keys(GPU_SCORES).slice(0, 10) }, 400);
+  if (!game)   return jsonResponse({ error: 'Game not in our database', suggestions: Object.keys(GAME_DEMAND).slice(0, 12) }, 400);
+
+  const score = GPU_SCORES[gpuKey];
+
+  // Multipliers per setting/resolution
+  // Base: 1080p ultra = 60fps reference at score == demand
+  const profiles = [
+    { label: '1080p Low',    resMult: 1.0,  settingMult: 2.0 },
+    { label: '1080p Medium', resMult: 1.0,  settingMult: 1.5 },
+    { label: '1080p High',   resMult: 1.0,  settingMult: 1.2 },
+    { label: '1080p Ultra',  resMult: 1.0,  settingMult: 1.0 },
+    { label: '1440p High',   resMult: 0.6,  settingMult: 1.2 },
+    { label: '1440p Ultra',  resMult: 0.6,  settingMult: 1.0 },
+    { label: '4K High',      resMult: 0.35, settingMult: 1.2 },
+    { label: '4K Ultra',     resMult: 0.35, settingMult: 1.0 },
+  ];
+
+  // RAM penalty if below 16GB
+  const ramMult = ramGB >= 32 ? 1.05 : ramGB >= 16 ? 1.0 : ramGB >= 8 ? 0.85 : 0.65;
+
+  const estimates = profiles.map(p => {
+    const fps = Math.round(60 * (score / game.score) * p.resMult * p.settingMult * ramMult);
+    return { setting: p.label, fps: Math.max(5, Math.min(fps, 500)) };
+  });
+
+  return jsonResponse({
+    gpu: gpuKey,
+    ram: ramGB,
+    game: game.name,
+    gpuScore: score,
+    gameDemand: game.score,
+    estimates,
+    verdict: scoreToVerdict(score, game.score),
+  });
+}
+
+function scoreToVerdict(gpuScore, gameScore) {
+  const ratio = gpuScore / gameScore;
+  if (ratio > 3) return 'Runs flawlessly. You can max everything.';
+  if (ratio > 2) return 'Runs excellently at high refresh rates.';
+  if (ratio > 1.3) return 'Runs great at 1440p ultra.';
+  if (ratio > 1) return 'Solid 1080p/1440p experience.';
+  if (ratio > 0.7) return 'Playable at 1080p medium-high.';
+  if (ratio > 0.4) return 'Struggles — drop to 1080p low.';
+  return 'Not recommended for this GPU.';
 }
 
 async function createPriceAlert(request) {
