@@ -270,7 +270,7 @@ async function recommend(url) {
   return jsonResponse({ recommendations: recs.slice(0, 4) });
 }
 
-// Games to BUY — uses tag-based similar games + Steam featured
+// Games to BUY — large curated pool with genre tags
 async function recommendBuy(url) {
   const sid = url.searchParams.get('sid') || DEFAULT_STEAM_ID;
   const games = await fetchJSON(
@@ -282,71 +282,166 @@ async function recommendBuy(url) {
     .sort((a, b) => (b.playtime_forever || 0) - (a.playtime_forever || 0))
     .slice(0, 5);
 
-  // Manual similarity map for popular genres — fast + reliable without scraping
-  const SIMILARITY = {
-    // Sea of Thieves (adventure, pirate, multiplayer)
-    1172620: [
-      { appid: 2220280, name: 'Skull and Bones', reason: 'Naval combat in a massive open world' },
-      { appid: 582010, name: 'Monster Hunter: World', reason: 'Co-op adventure grind' },
-      { appid: 2344520, name: 'Diablo IV', reason: 'Same loot chase feeling' },
-    ],
-    // CS2
-    730: [
-      { appid: 1172470, name: 'Apex Legends', reason: 'FPS you\'d pick up fast' },
-      { appid: 252490, name: 'Rust', reason: 'Tense tactical gunplay' },
-      { appid: 1938090, name: 'Call of Duty: MW III', reason: 'If you want something heavier' },
-    ],
-    // RDR2
-    1174180: [
-      { appid: 1091500, name: 'Cyberpunk 2077', reason: 'Same RPG depth, modern setting' },
-      { appid: 1245620, name: 'Elden Ring', reason: 'Massive open world, huge hours' },
-      { appid: 1086940, name: "Baldur's Gate 3", reason: 'Story-driven epic' },
-    ],
-    // Elden Ring
-    1245620: [
-      { appid: 814380, name: 'Sekiro', reason: 'FromSoftware, tighter combat' },
-      { appid: 1627720, name: 'Lies of P', reason: 'Souls-like, bloodborne vibes' },
-      { appid: 1623730, name: 'Palworld', reason: 'Massive open-world survival' },
-    ],
-    // Rocket League
-    252950: [
-      { appid: 1517290, name: 'Battlefield 2042', reason: 'Another competitive team game' },
-      { appid: 892970, name: 'Valheim', reason: 'Chill co-op change of pace' },
-    ],
-    // Rust
-    252490: [
-      { appid: 1604030, name: 'SCUM', reason: 'Hardcore survival' },
-      { appid: 306130, name: 'Elder Scrolls Online', reason: 'MMO grind energy' },
-    ],
-    // Cyberpunk
-    1091500: [
-      { appid: 2651280, name: 'Alan Wake 2', reason: 'Narrative with atmosphere' },
-      { appid: 1238810, name: 'Battlefield V', reason: 'If you want shooter action' },
-    ],
-    // The Witcher 3
-    292030: [
-      { appid: 1086940, name: "Baldur's Gate 3", reason: 'Deep RPG, best in years' },
-      { appid: 2344520, name: 'Diablo IV', reason: 'Dark fantasy with loot' },
-      { appid: 2322010, name: 'Kingdom Come: Deliverance II', reason: 'Same medieval realism' },
-    ],
+  // Tag-based similarity — match your owned-games' tags to the CATALOG
+  const TAG_MAP = {
+    1172620: ['multiplayer', 'pirate', 'adventure', 'openworld', 'coop'],   // Sea of Thieves
+    730:     ['fps', 'competitive', 'shooter', 'tactical', 'multiplayer'],  // CS2
+    1174180: ['openworld', 'action', 'rpg', 'story', 'western'],            // RDR2
+    1245620: ['souls', 'rpg', 'openworld', 'action', 'hardcore'],           // Elden Ring
+    1091500: ['rpg', 'openworld', 'action', 'story', 'cyberpunk'],          // Cyberpunk 2077
+    292030:  ['rpg', 'openworld', 'action', 'story', 'medieval'],           // Witcher 3
+    252950:  ['sports', 'multiplayer', 'competitive', 'arcade'],            // Rocket League
+    252490:  ['survival', 'multiplayer', 'openworld', 'hardcore'],          // Rust
+    578080:  ['battleroyale', 'shooter', 'multiplayer', 'survival'],        // PUBG
+    271590:  ['openworld', 'action', 'story', 'crime'],                     // GTA V
+    431960:  ['casual', 'relaxing'],                                         // Wallpaper Engine
+    105600:  ['sandbox', 'crafting', 'exploration', 'survival'],            // Terraria
+    813780:  ['strategy', 'historical', 'rts'],                             // Age of Empires II DE
+    1086940: ['rpg', 'story', 'turnbased', 'fantasy'],                      // BG3
+    570:     ['moba', 'competitive', 'multiplayer'],                        // Dota 2
+    440:     ['fps', 'shooter', 'multiplayer', 'casual'],                   // TF2
+    582010:  ['action', 'rpg', 'coop', 'fantasy', 'grind'],                 // Monster Hunter World
+    582160:  ['stealth', 'openworld', 'action'],                            // Assassin's Creed Origins
+    377160:  ['rpg', 'openworld', 'postapocalyptic'],                       // Fallout 4
   };
 
-  // Trending / consensus must-plays (2025-2026)
-  const TRENDING = [
-    { appid: 2344520, name: 'Diablo IV', reason: 'Season 6 is the best yet', img: 'https://cdn.cloudflare.steamstatic.com/steam/apps/2344520/header.jpg' },
-    { appid: 1086940, name: "Baldur's Gate 3", reason: 'Game of the Year 2023, still peak', img: 'https://cdn.cloudflare.steamstatic.com/steam/apps/1086940/header.jpg' },
-    { appid: 2322010, name: 'Kingdom Come: Deliverance II', reason: 'Medieval RPG, realistic and huge', img: 'https://cdn.cloudflare.steamstatic.com/steam/apps/2322010/header.jpg' },
-    { appid: 2767030, name: 'Marvel Rivals', reason: 'Most played hero shooter right now', img: 'https://cdn.cloudflare.steamstatic.com/steam/apps/2767030/header.jpg' },
-    { appid: 2073850, name: 'The Finals', reason: 'Free-to-play FPS, physics-driven destruction', img: 'https://cdn.cloudflare.steamstatic.com/steam/apps/2073850/header.jpg' },
-    { appid: 2651280, name: 'Alan Wake 2', reason: 'Best-looking game of the past year', img: 'https://cdn.cloudflare.steamstatic.com/steam/apps/2651280/header.jpg' },
-    { appid: 1623730, name: 'Palworld', reason: 'Survival + Pokemon, became a phenomenon', img: 'https://cdn.cloudflare.steamstatic.com/steam/apps/1623730/header.jpg' },
-    { appid: 1145360, name: 'Hades', reason: "Roguelike masterpiece, you don't own it", img: 'https://cdn.cloudflare.steamstatic.com/steam/apps/1145360/header.jpg' },
+  // Big catalog — 80+ games, each with tags for matching
+  const CATALOG = [
+    // RPGs
+    { appid: 1086940, name: "Baldur's Gate 3",           tags: ['rpg','story','turnbased','fantasy'],        reason: 'Game of the Year 2023, still peak RPG' },
+    { appid: 2322010, name: 'Kingdom Come: Deliverance II', tags: ['rpg','openworld','medieval','hardcore'],   reason: 'Medieval RPG with unmatched realism' },
+    { appid: 1627720, name: 'Lies of P',                 tags: ['souls','rpg','action','hardcore'],          reason: 'Souls-like with Bloodborne energy' },
+    { appid: 2344520, name: 'Diablo IV',                 tags: ['rpg','action','loot','fantasy','grind'],    reason: 'Endless loot chase, dark fantasy' },
+    { appid: 2050650, name: 'Resident Evil 4 Remake',    tags: ['action','story','horror'],                   reason: 'Remake of the classic, top reviews' },
+    { appid: 814380,  name: 'Sekiro: Shadows Die Twice', tags: ['souls','action','hardcore'],                reason: 'Tighter, faster FromSoftware combat' },
+    { appid: 374320,  name: 'Dark Souls III',            tags: ['souls','rpg','action','hardcore'],          reason: 'Still one of the best Souls games' },
+    { appid: 489830,  name: 'Skyrim Special Edition',    tags: ['rpg','openworld','fantasy','story'],         reason: 'Timeless open-world RPG' },
+    { appid: 377160,  name: 'Fallout 4',                 tags: ['rpg','openworld','postapocalyptic'],        reason: 'Huge wasteland to explore' },
+    { appid: 1716740, name: 'Starfield',                 tags: ['rpg','openworld','scifi','exploration'],    reason: 'Bethesda\'s biggest ever RPG' },
+    { appid: 1222670, name: 'Disco Elysium',             tags: ['rpg','story','detective'],                   reason: 'Best-written RPG ever made' },
+    { appid: 1966720, name: 'Like a Dragon: Infinite Wealth', tags: ['rpg','story','turnbased','japanese'], reason: 'Yakuza-style RPG in Hawaii' },
+
+    // FPS / Shooter
+    { appid: 2767030, name: 'Marvel Rivals',             tags: ['shooter','hero','multiplayer','competitive'], reason: 'Most played hero shooter now' },
+    { appid: 2073850, name: 'The Finals',                tags: ['fps','shooter','multiplayer','destruction'], reason: 'F2P FPS with insane physics' },
+    { appid: 1172470, name: 'Apex Legends',              tags: ['battleroyale','fps','shooter','multiplayer'], reason: 'Fast, tight FPS battle royale' },
+    { appid: 553850,  name: 'HELLDIVERS 2',              tags: ['shooter','coop','multiplayer','action'],    reason: 'Co-op shooter hit of 2024' },
+    { appid: 1938090, name: 'Call of Duty: MW III',      tags: ['fps','shooter','competitive'],               reason: 'Modern military FPS at its peak' },
+    { appid: 1238810, name: 'Battlefield V',             tags: ['fps','shooter','multiplayer','ww2'],        reason: '64-player chaos in WW2 setting' },
+    { appid: 1517290, name: 'Battlefield 2042',          tags: ['fps','shooter','multiplayer'],               reason: 'Large-scale modern warfare' },
+    { appid: 2246340, name: 'Monster Hunter Wilds',      tags: ['action','rpg','coop','grind'],               reason: 'Latest in the hunt series' },
+    { appid: 1259420, name: 'Ready or Not',              tags: ['fps','tactical','shooter','coop'],           reason: 'Modern SWAT tactical shooter' },
+
+    // Open world / adventure
+    { appid: 2651280, name: 'Alan Wake 2',               tags: ['story','action','horror','cinematic'],       reason: 'Visual masterpiece, horror thriller' },
+    { appid: 1623730, name: 'Palworld',                  tags: ['survival','openworld','coop','crafting'],    reason: 'Survival + Pokemon phenomenon' },
+    { appid: 1328670, name: 'Mount & Blade II: Bannerlord', tags: ['rpg','medieval','strategy','openworld'], reason: 'Medieval sandbox warfare' },
+    { appid: 346110,  name: 'ARK: Survival Evolved',     tags: ['survival','dinosaurs','openworld','coop'],   reason: 'Dinosaur taming sandbox' },
+    { appid: 892970,  name: 'Valheim',                   tags: ['survival','coop','viking','crafting'],       reason: 'Chill Viking co-op survival' },
+    { appid: 2375030, name: 'Nightingale',               tags: ['survival','openworld','crafting','coop'],    reason: 'Victorian fantasy survival' },
+    { appid: 2195250, name: 'EA Sports FC 25',           tags: ['sports','football','multiplayer'],           reason: 'The FIFA successor' },
+    { appid: 582660,  name: 'Black Desert',              tags: ['mmorpg','openworld','fantasy'],              reason: 'Stunning MMORPG visuals' },
+
+    // Stealth / action
+    { appid: 813630,  name: 'Assassin\'s Creed Odyssey', tags: ['rpg','openworld','action','stealth','historical'], reason: 'Ancient Greek epic' },
+    { appid: 2239550, name: 'Assassin\'s Creed Mirage',  tags: ['action','stealth','openworld'],              reason: 'Back-to-basics AC adventure' },
+    { appid: 1432140, name: 'HITMAN 3',                  tags: ['stealth','action','story'],                  reason: 'The assassin simulator perfected' },
+    { appid: 2050900, name: 'Tekken 8',                  tags: ['fighting','competitive','multiplayer'],      reason: 'Latest Tekken, best mechanically' },
+    { appid: 1665460, name: 'Street Fighter 6',          tags: ['fighting','competitive','multiplayer'],      reason: 'Definitive fighting game' },
+
+    // Roguelike / indie
+    { appid: 1145360, name: 'Hades',                     tags: ['roguelike','action','story','indie'],        reason: 'Roguelike masterpiece' },
+    { appid: 1145350, name: 'Hades II',                  tags: ['roguelike','action','indie'],                reason: 'Sequel in early access, phenomenal' },
+    { appid: 646570,  name: 'Slay the Spire',            tags: ['roguelike','deckbuilder','turnbased','indie'], reason: 'Deckbuilder that started a genre' },
+    { appid: 2379780, name: 'Balatro',                   tags: ['roguelike','deckbuilder','indie'],           reason: 'Poker roguelike, 2024 sleeper hit' },
+    { appid: 1794680, name: 'Vampire Survivors',         tags: ['roguelike','action','indie'],                reason: 'Addictive bullet-hell' },
+    { appid: 588650,  name: 'Dead Cells',                tags: ['roguelike','action','metroidvania','indie'], reason: 'Fast, precise action-platformer' },
+    { appid: 367520,  name: 'Hollow Knight',             tags: ['metroidvania','action','indie'],             reason: 'Best metroidvania of the decade' },
+    { appid: 2246340, name: 'Silksong',                  tags: ['metroidvania','action','indie'],             reason: 'Hollow Knight sequel' },
+
+    // Sandbox / crafting / strategy
+    { appid: 526870,  name: 'Satisfactory',              tags: ['sandbox','crafting','factory','coop'],       reason: 'Factory-building nirvana' },
+    { appid: 427520,  name: 'Factorio',                  tags: ['sandbox','crafting','factory','automation'], reason: 'The GOAT of automation games' },
+    { appid: 322330,  name: 'Don\'t Starve Together',    tags: ['survival','coop','multiplayer'],             reason: 'Survival with personality' },
+    { appid: 394360,  name: 'Hearts of Iron IV',         tags: ['strategy','historical','ww2','grand'],       reason: 'Grand strategy WW2' },
+    { appid: 236850,  name: 'Europa Universalis IV',     tags: ['strategy','historical','grand'],             reason: 'Historical empire builder' },
+    { appid: 1158310, name: 'Crusader Kings III',        tags: ['strategy','medieval','grand','roleplay'],    reason: 'Medieval dynasty simulator' },
+    { appid: 281990,  name: 'Stellaris',                 tags: ['strategy','scifi','grand','space'],          reason: 'Space grand strategy' },
+    { appid: 413150,  name: 'Stardew Valley',            tags: ['farming','relaxing','indie','cosy'],         reason: 'Cosy farming, millions sold' },
+    { appid: 1145740, name: 'Dwarf Fortress',            tags: ['sandbox','simulation','strategy'],           reason: 'The original roguelike legend' },
+
+    // Simulation / driving
+    { appid: 244210,  name: 'Assetto Corsa',             tags: ['racing','simulation'],                        reason: 'Hardcore racing sim' },
+    { appid: 1551360, name: 'Forza Horizon 5',           tags: ['racing','openworld','arcade'],                reason: 'Most fun arcade racer ever' },
+    { appid: 2420120, name: 'EA Sports WRC',             tags: ['racing','rally','simulation'],                reason: 'Best rally game in years' },
+    { appid: 1174170, name: 'Microsoft Flight Simulator 2024', tags: ['simulation','flight','relaxing'], reason: 'Fly the whole world' },
+    { appid: 294100,  name: 'RimWorld',                  tags: ['simulation','strategy','colony','story'],     reason: 'Colony sim with emergent stories' },
+    { appid: 1599340, name: 'Lossless Scaling',          tags: ['utility'],                                     reason: 'Frame-gen on any game' },
+
+    // Horror / thriller
+    { appid: 1794680, name: 'Lethal Company',            tags: ['horror','coop','multiplayer','indie'],       reason: 'Co-op horror viral hit' },
+    { appid: 2881650, name: 'Content Warning',           tags: ['horror','coop','indie','comedy'],            reason: 'Make scary videos with friends' },
+    { appid: 2437700, name: 'Phasmophobia',              tags: ['horror','coop','multiplayer'],               reason: 'Ghost hunting with friends' },
+    { appid: 1366540, name: 'Dying Light 2',             tags: ['action','zombies','openworld','parkour'],    reason: 'Parkour zombie survival' },
+
+    // Co-op / multiplayer specific
+    { appid: 1282100, name: 'It Takes Two',              tags: ['coop','story','puzzle','platformer'],        reason: 'Best co-op experience in years' },
+    { appid: 2277860, name: 'Split Fiction',             tags: ['coop','story','platformer'],                 reason: 'From the makers of It Takes Two' },
+    { appid: 2195250, name: 'No Man\'s Sky',             tags: ['openworld','scifi','exploration','coop'],    reason: 'Massive space exploration, now great' },
+    { appid: 242760,  name: 'The Forest',                tags: ['survival','horror','coop'],                  reason: 'Co-op survival horror' },
+    { appid: 1326470, name: 'Sons of the Forest',        tags: ['survival','horror','coop'],                  reason: 'Sequel, way scarier' },
+
+    // Competitive / esports
+    { appid: 2139460, name: 'Overwatch 2',               tags: ['shooter','hero','competitive','multiplayer'], reason: 'F2P hero shooter' },
+    { appid: 1343400, name: 'Rumbleverse',               tags: ['fighting','battleroyale','multiplayer'],     reason: 'Wrestling battle royale' },
+    { appid: 1384160, name: 'Naraka: Bladepoint',        tags: ['battleroyale','action','melee'],             reason: 'Martial arts battle royale' },
+    { appid: 1203620, name: 'Enlisted',                  tags: ['fps','shooter','ww2','multiplayer'],         reason: 'F2P squad-based WW2 FPS' },
+
+    // Cinematic / story
+    { appid: 990080,  name: 'Hogwarts Legacy',           tags: ['rpg','openworld','fantasy','magic'],         reason: 'Open-world Hogwarts' },
+    { appid: 2054970, name: 'Senua\'s Saga: Hellblade II', tags: ['action','story','cinematic','horror'],    reason: 'Most visually stunning game out' },
+    { appid: 2344520, name: 'Diablo IV',                 tags: ['rpg','action','loot','grind'],               reason: 'Polished ARPG' },
+    { appid: 2183900, name: 'Silent Hill 2 Remake',      tags: ['horror','story','action'],                   reason: 'Beloved horror classic remade' },
+    { appid: 2183550, name: 'Black Myth: Wukong',        tags: ['action','rpg','souls','chinese'],            reason: 'Mythology souls-like, 20M+ sold' },
+    { appid: 2694490, name: 'Path of Exile 2',           tags: ['rpg','action','loot','grind'],               reason: 'Deepest ARPG ever made' },
+
+    // Quirky / unique
+    { appid: 1599340, name: 'Lethal Company',            tags: ['horror','coop','indie'],                      reason: 'Viral co-op hit' },
+    { appid: 2236860, name: 'Dave the Diver',            tags: ['indie','management','adventure'],            reason: 'Deep sea + sushi bar. Genius.' },
+    { appid: 427520,  name: 'Factorio: Space Age',       tags: ['automation','strategy'],                      reason: 'Factorio expansion, GOTY-tier' },
+    { appid: 3075840, name: 'Frostpunk 2',               tags: ['strategy','survival','city'],                reason: 'Bleak survival city-builder sequel' },
+    { appid: 2138330, name: 'Manor Lords',               tags: ['strategy','medieval','city','simulation'],   reason: 'Medieval city-builder, 2024 hit' },
+    { appid: 2694490, name: 'Warhammer 40K: Space Marine 2', tags: ['action','shooter','coop'],              reason: 'Third-person 40K mayhem' },
+
+    // Free-to-play essentials
+    { appid: 570,     name: 'Dota 2',                    tags: ['moba','competitive','multiplayer'],          reason: 'The OG MOBA, completely free' },
+    { appid: 440,     name: 'Team Fortress 2',           tags: ['fps','shooter','multiplayer','casual','free'], reason: 'Free Valve FPS classic' },
+    { appid: 578080,  name: 'PUBG: Battlegrounds',       tags: ['battleroyale','shooter','free'],             reason: 'Original BR, now free' },
   ];
+
+  // Build SIMILARITY map from TAG_MAP + CATALOG
+  const SIMILARITY = {};
+  for (const [ownedId, ownedTags] of Object.entries(TAG_MAP)) {
+    const matches = CATALOG
+      .filter(c => c.appid !== parseInt(ownedId))
+      .map(c => ({ ...c, overlap: c.tags.filter(t => ownedTags.includes(t)).length }))
+      .filter(m => m.overlap >= 2)
+      .sort((a, b) => b.overlap - a.overlap)
+      .slice(0, 6);
+    SIMILARITY[ownedId] = matches;
+  }
+
+  // Trending list (subset of CATALOG marked as currently hot)
+  const TRENDING_IDS = [2344520, 1086940, 2322010, 2767030, 2073850, 2651280, 1623730, 1145360, 1145350, 2138330, 2050900, 2050650, 2183550, 990080, 553850, 1794680, 2881650, 1966720, 2277860];
+  const TRENDING = CATALOG.filter(c => TRENDING_IDS.includes(c.appid)).map(c => ({
+    ...c,
+    img: `https://cdn.cloudflare.steamstatic.com/steam/apps/${c.appid}/header.jpg`,
+  }));
 
   const recs = [];
 
-  // Based on your top 3 played games
-  for (const g of topPlayed.slice(0, 3)) {
+  // Based on your top played games
+  for (const g of topPlayed.slice(0, 5)) {
     const similar = SIMILARITY[g.appid];
     if (similar) {
       for (const s of similar) {
@@ -359,11 +454,9 @@ async function recommendBuy(url) {
             sub: s.reason,
             buy: true,
           });
-          if (recs.length >= 6) break;
         }
       }
     }
-    if (recs.length >= 6) break;
   }
 
   // Trending you don't own
@@ -377,12 +470,26 @@ async function recommendBuy(url) {
         sub: t.reason,
         buy: true,
       });
-      if (recs.length >= 10) break;
     }
   }
 
-  // Enrich with price + reviews + player count (parallel)
-  await Promise.all(recs.map(async r => {
+  // Rest of catalog — anything not already recommended, not owned
+  for (const c of CATALOG) {
+    if (!owned.has(c.appid) && !recs.find(r => r.appid === c.appid)) {
+      recs.push({
+        reason: 'From our catalog',
+        game: c.name,
+        appid: c.appid,
+        img: `https://cdn.cloudflare.steamstatic.com/steam/apps/${c.appid}/header.jpg`,
+        sub: c.reason,
+        buy: true,
+      });
+    }
+  }
+
+  // Enrich with price + reviews + player count (parallel, first 50 to stay under CPU budget)
+  const toEnrich = recs.slice(0, 50);
+  await Promise.all(toEnrich.map(async r => {
     try {
       const [details, reviews, pc] = await Promise.all([
         fetchJSON(`https://store.steampowered.com/api/appdetails?appids=${r.appid}&cc=gb&l=en`).catch(() => null),
