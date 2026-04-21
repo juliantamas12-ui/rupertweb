@@ -307,15 +307,33 @@ async function recommendBuy(url) {
     252490:  ['survival', 'multiplayer', 'openworld', 'hardcore'],          // Rust
     578080:  ['battleroyale', 'shooter', 'multiplayer', 'survival'],        // PUBG
     271590:  ['openworld', 'action', 'story', 'crime'],                     // GTA V
-    431960:  ['casual', 'relaxing'],                                         // Wallpaper Engine
     105600:  ['sandbox', 'crafting', 'exploration', 'survival'],            // Terraria
     813780:  ['strategy', 'historical', 'rts'],                             // Age of Empires II DE
     1086940: ['rpg', 'story', 'turnbased', 'fantasy'],                      // BG3
     570:     ['moba', 'competitive', 'multiplayer'],                        // Dota 2
     440:     ['fps', 'shooter', 'multiplayer', 'casual'],                   // TF2
     582010:  ['action', 'rpg', 'coop', 'fantasy', 'grind'],                 // Monster Hunter World
-    582160:  ['stealth', 'openworld', 'action'],                            // Assassin's Creed Origins
     377160:  ['rpg', 'openworld', 'postapocalyptic'],                       // Fallout 4
+    489830:  ['rpg', 'openworld', 'fantasy', 'story'],                      // Skyrim
+    1716740: ['rpg', 'openworld', 'scifi', 'exploration'],                  // Starfield
+    990080:  ['rpg', 'openworld', 'fantasy', 'magic'],                      // Hogwarts Legacy
+    2344520: ['rpg', 'action', 'loot', 'grind'],                            // Diablo IV
+    1623730: ['survival', 'openworld', 'coop', 'crafting'],                 // Palworld
+    553850:  ['shooter', 'coop', 'multiplayer', 'scifi'],                   // Helldivers 2
+    2183550: ['action', 'rpg', 'souls'],                                    // Black Myth: Wukong
+    1145360: ['roguelike', 'action', 'indie'],                              // Hades
+    367520:  ['metroidvania', 'action', 'indie'],                           // Hollow Knight
+    413150:  ['farming', 'cosy', 'relaxing', 'indie'],                      // Stardew
+    892970:  ['survival', 'coop', 'crafting'],                              // Valheim
+    1551360: ['racing', 'openworld', 'arcade'],                             // Forza Horizon 5
+    2139460: ['shooter', 'hero', 'competitive', 'multiplayer'],             // Overwatch 2
+    570940:  ['moba'],                                                      // (n/a)
+    1172470: ['battleroyale', 'fps', 'multiplayer'],                        // Apex Legends
+    2246340: ['action', 'rpg', 'grind'],                                    // MH Wilds
+    2139460: ['shooter', 'competitive', 'multiplayer'],                     // OW2
+    1938090: ['fps', 'shooter', 'competitive'],                             // MW3
+    814380:  ['souls', 'action', 'hardcore'],                               // Sekiro
+    271590:  ['openworld', 'action', 'story', 'crime'],                     // GTA V
   };
 
   // Big catalog — 80+ games, each with tags for matching
@@ -430,6 +448,196 @@ async function recommendBuy(url) {
     { appid: 570,     name: 'Dota 2',                    tags: ['moba','competitive','multiplayer'],          reason: 'The OG MOBA, completely free' },
     { appid: 440,     name: 'Team Fortress 2',           tags: ['fps','shooter','multiplayer','casual','free'], reason: 'Free Valve FPS classic' },
     { appid: 578080,  name: 'PUBG: Battlegrounds',       tags: ['battleroyale','shooter','free'],             reason: 'Original BR, now free' },
+
+    // More AAA RPGs
+    { appid: 1794860, name: 'Star Wars Jedi: Survivor',  tags: ['action','rpg','story','starwars'],           reason: 'Best Star Wars game in years' },
+    { appid: 1237970, name: 'Titanfall 2',               tags: ['fps','shooter','story','scifi'],             reason: 'Best FPS campaign ever made' },
+    { appid: 1174180, name: 'Red Dead Redemption 2',     tags: ['openworld','action','rpg','story','western'],reason: 'A technical and narrative masterpiece' },
+    { appid: 1091500, name: 'Cyberpunk 2077',            tags: ['rpg','openworld','action','story','cyberpunk'], reason: 'Redemption arc complete, now incredible' },
+    { appid: 1245620, name: 'Elden Ring',                tags: ['souls','rpg','openworld','action','hardcore'], reason: 'Game of the Year 2022' },
+    { appid: 292030,  name: 'The Witcher 3: Wild Hunt',  tags: ['rpg','openworld','action','story','medieval'], reason: 'Still the benchmark for open-world RPGs' },
+    { appid: 257420,  name: 'Serious Sam 4',             tags: ['fps','shooter','chaos'],                      reason: 'Brainless shooter fun' },
+    { appid: 1196590, name: 'Jedi: Fallen Order',        tags: ['action','souls','story','starwars'],          reason: 'Souls-lite with a lightsaber' },
+    { appid: 1237970, name: 'Apex Legends',              tags: ['battleroyale','fps','shooter','free','multiplayer'], reason: 'Tightest movement in battle royale' },
+    { appid: 2050650, name: 'Resident Evil 4',           tags: ['horror','action','story','survival'],         reason: 'The peak of survival horror' },
+    { appid: 1196590, name: 'Persona 5 Royal',           tags: ['rpg','story','japanese','turnbased'],         reason: 'Best JRPG of the decade' },
+    { appid: 1888160, name: 'Persona 3 Reload',          tags: ['rpg','story','japanese','turnbased'],         reason: 'Stunning Persona 3 remake' },
+    { appid: 1812620, name: 'Final Fantasy XVI',         tags: ['rpg','action','story','japanese','fantasy'],  reason: 'Dark, cinematic FF reinvention' },
+    { appid: 2050650, name: 'Final Fantasy VII Rebirth', tags: ['rpg','action','story','japanese'],            reason: 'Remake part 2, beautiful' },
+    { appid: 39540,   name: 'Mass Effect Legendary',     tags: ['rpg','scifi','story','space'],                reason: 'Sci-fi trilogy remastered' },
+    { appid: 1086940, name: 'Pillars of Eternity II',    tags: ['rpg','story','fantasy','isometric'],          reason: 'Classic-style CRPG with pirate adventure' },
+
+    // More FPS
+    { appid: 489830,  name: 'DOOM Eternal',              tags: ['fps','shooter','action','fastpaced'],         reason: 'Fastest, most satisfying FPS ever' },
+    { appid: 782330,  name: 'DOOM (2016)',               tags: ['fps','shooter','action'],                     reason: 'The reboot that saved DOOM' },
+    { appid: 1551180, name: 'DOOM: The Dark Ages',       tags: ['fps','shooter','action','medieval'],          reason: 'New medieval DOOM 2025' },
+    { appid: 1217060, name: 'Gunfire Reborn',            tags: ['fps','roguelike','coop'],                     reason: 'Roguelike FPS co-op gem' },
+    { appid: 1361210, name: 'Metro Exodus',              tags: ['fps','shooter','postapocalyptic','story'],    reason: 'Post-apocalyptic atmospheric shooter' },
+    { appid: 1174180, name: 'Wolfenstein: Youngblood',   tags: ['fps','shooter','coop'],                       reason: 'Nazi-punching co-op' },
+    { appid: 1203620, name: 'Enlisted',                  tags: ['fps','shooter','ww2','multiplayer','free'],   reason: 'F2P squad WW2 shooter' },
+    { appid: 1203220, name: 'NARAKA: BLADEPOINT',        tags: ['battleroyale','action','melee'],              reason: 'Martial arts BR, unique' },
+    { appid: 1794680, name: 'Ready or Not',              tags: ['fps','tactical','shooter','coop'],            reason: 'Hardcore tactical SWAT' },
+    { appid: 1009290, name: 'Insurgency: Sandstorm',     tags: ['fps','tactical','shooter','multiplayer'],     reason: 'Modern tactical realism' },
+
+    // Open world hits
+    { appid: 1086940, name: "Assassin's Creed Valhalla",  tags: ['rpg','openworld','action','historical','stealth'], reason: 'Viking era open world' },
+    { appid: 2239550, name: "Assassin's Creed Shadows",   tags: ['action','stealth','openworld','historical'],  reason: 'Feudal Japan AC' },
+    { appid: 1085660, name: 'Destiny 2',                  tags: ['mmo','fps','shooter','scifi','loot','free'], reason: 'FPS/MMO loot shooter, F2P base game' },
+    { appid: 2050650, name: 'Horizon Forbidden West',     tags: ['rpg','openworld','action','scifi','story'],  reason: 'Aloy\'s epic continues on PC' },
+    { appid: 2050650, name: 'Horizon Zero Dawn Remastered', tags: ['rpg','openworld','action','scifi'],        reason: 'Updated for 2024' },
+    { appid: 1817190, name: 'Marvel\'s Spider-Man Remastered', tags: ['action','openworld','superhero','story'], reason: 'Best superhero game ever' },
+    { appid: 1817070, name: 'Marvel\'s Spider-Man: Miles Morales', tags: ['action','openworld','superhero'], reason: 'Shorter, focused sequel' },
+    { appid: 2512560, name: 'Marvel\'s Spider-Man 2',     tags: ['action','openworld','superhero'],             reason: 'Latest Spider-Man for PC' },
+    { appid: 1030830, name: 'God of War',                 tags: ['action','story','cinematic'],                 reason: 'Kratos\'s Norse saga begins' },
+    { appid: 2322010, name: 'God of War Ragnarok',        tags: ['action','story','cinematic'],                 reason: 'Norse saga conclusion' },
+    { appid: 1888930, name: 'Uncharted: Legacy of Thieves', tags: ['action','story','cinematic'],               reason: 'Nathan Drake on PC' },
+    { appid: 1971870, name: 'Avatar: Frontiers of Pandora', tags: ['action','openworld','story','scifi'],       reason: 'Stunning Pandora open world' },
+    { appid: 1144200, name: 'Forspoken',                  tags: ['action','openworld','fantasy'],               reason: 'Parkour magic combat' },
+    { appid: 1811260, name: 'EA Sports FC 24',            tags: ['sports','football','multiplayer'],            reason: 'Football (soccer) sim' },
+    { appid: 2195250, name: 'EA Sports FC 25',            tags: ['sports','football','multiplayer'],            reason: 'Latest FC release' },
+    { appid: 2195250, name: 'NBA 2K25',                   tags: ['sports','basketball','multiplayer'],          reason: 'Premier basketball sim' },
+
+    // Platformers / Metroidvanias
+    { appid: 268910,  name: 'Cuphead',                    tags: ['platformer','indie','coop','art','hardcore'], reason: 'Jazz-era bullet-hell boss rush' },
+    { appid: 391540,  name: 'Undertale',                  tags: ['rpg','indie','story','quirky'],               reason: 'Indie RPG phenomenon' },
+    { appid: 1794680, name: 'Prince of Persia: The Lost Crown', tags: ['metroidvania','action','platformer'],   reason: 'Best metroidvania of 2024' },
+    { appid: 774361,  name: 'Ori and the Will of the Wisps', tags: ['platformer','indie','metroidvania'],        reason: 'Gorgeous and challenging' },
+    { appid: 261570,  name: 'Celeste',                    tags: ['platformer','indie','hardcore'],              reason: 'Pixel-perfect platforming' },
+    { appid: 367520,  name: 'Hollow Knight',              tags: ['metroidvania','action','indie'],              reason: 'Best metroidvania of the decade' },
+    { appid: 2246340, name: 'Hollow Knight: Silksong',    tags: ['metroidvania','action','indie'],              reason: 'The long-awaited sequel' },
+    { appid: 588650,  name: 'Dead Cells',                 tags: ['roguelike','metroidvania','action','indie'],  reason: 'Roguelike metroidvania' },
+
+    // City builders / sims
+    { appid: 949230,  name: 'Cities: Skylines II',        tags: ['simulation','citybuilder','strategy'],        reason: 'Next-gen city builder' },
+    { appid: 255710,  name: 'Cities: Skylines',           tags: ['simulation','citybuilder','strategy'],        reason: 'Still the gold standard' },
+    { appid: 394690,  name: 'Tropico 6',                  tags: ['simulation','citybuilder','strategy','comedy'], reason: 'Banana republic dictator sim' },
+    { appid: 578080,  name: 'Frostpunk',                  tags: ['simulation','citybuilder','survival'],         reason: 'Moral choices in a frozen world' },
+    { appid: 3075840, name: 'Frostpunk 2',                tags: ['simulation','citybuilder','strategy','survival'], reason: 'Sequel to the masterpiece' },
+    { appid: 1039340, name: 'Anno 1800',                  tags: ['simulation','citybuilder','strategy','historical'], reason: 'Industrial-era empire builder' },
+    { appid: 1097150, name: 'Two Point Hospital',         tags: ['simulation','management','comedy'],           reason: 'Theme Hospital spiritual successor' },
+    { appid: 1649080, name: 'Two Point Campus',           tags: ['simulation','management','comedy'],           reason: 'Run your own wacky university' },
+    { appid: 2138330, name: 'Manor Lords',                tags: ['simulation','citybuilder','strategy','medieval'], reason: 'Medieval village builder' },
+    { appid: 1506830, name: 'FIFA Manager',               tags: ['simulation','sports','football','management'], reason: 'Football manager sim' },
+    { appid: 2252570, name: 'Football Manager 2024',      tags: ['simulation','sports','football','management'], reason: 'The GOAT of management games' },
+
+    // Racing / driving
+    { appid: 1190000, name: 'F1 24',                      tags: ['racing','simulation','sports'],               reason: 'Official F1 game' },
+    { appid: 2155180, name: 'F1 25',                      tags: ['racing','simulation','sports'],               reason: 'Latest F1 sim' },
+    { appid: 274170,  name: 'Hotline Miami',              tags: ['action','indie','topdown','violent'],         reason: 'Neon 80s murder puzzler' },
+    { appid: 805550,  name: 'Wreckfest',                  tags: ['racing','arcade','destruction'],              reason: 'Destruction derby joy' },
+    { appid: 1551360, name: 'Forza Horizon 5',            tags: ['racing','openworld','arcade'],                reason: 'Best arcade racer ever' },
+    { appid: 525980,  name: 'Euro Truck Simulator 2',     tags: ['simulation','driving','relaxing'],            reason: 'Zen trucking across Europe' },
+    { appid: 270880,  name: 'American Truck Simulator',   tags: ['simulation','driving','relaxing'],            reason: 'Trucking across the US' },
+    { appid: 244210,  name: 'Assetto Corsa',              tags: ['racing','simulation','hardcore'],             reason: 'Hardcore racing sim' },
+    { appid: 805550,  name: 'Assetto Corsa Competizione',  tags: ['racing','simulation','hardcore'],             reason: 'GT3 spec racing' },
+    { appid: 2420120, name: 'EA Sports WRC',              tags: ['racing','rally','simulation'],                reason: 'Best rally game' },
+    { appid: 379720,  name: 'DiRT Rally 2.0',             tags: ['racing','rally','simulation'],                reason: 'Rally sim classic' },
+    { appid: 1174170, name: 'Microsoft Flight Simulator 2024', tags: ['simulation','flight','relaxing'],         reason: 'Fly the whole world' },
+
+    // Simulation / management
+    { appid: 413150,  name: 'Stardew Valley',             tags: ['farming','relaxing','indie','cosy'],          reason: 'The cosiest farming sim' },
+    { appid: 1145450, name: 'Coral Island',               tags: ['farming','relaxing','cosy'],                   reason: 'Tropical farming beauty' },
+    { appid: 1203620, name: 'My Time at Sandrock',        tags: ['farming','cosy','relaxing','rpg'],             reason: 'Crafting & farming with depth' },
+    { appid: 633230,  name: 'Graveyard Keeper',           tags: ['simulation','management','indie','dark'],      reason: 'Morbid but addictive' },
+    { appid: 1237970, name: 'Dredge',                     tags: ['horror','indie','fishing','relaxing'],         reason: 'Cosmic horror fishing game' },
+    { appid: 1942280, name: 'The Sims 4',                 tags: ['simulation','life','relaxing','family'],       reason: 'Life sim icon, base game free' },
+    { appid: 2054970, name: 'InZOI',                      tags: ['simulation','life'],                           reason: 'New Sims competitor' },
+    { appid: 1812620, name: 'Planet Zoo',                 tags: ['simulation','management','animals'],           reason: 'Best zoo building sim' },
+    { appid: 1203620, name: 'Planet Coaster 2',           tags: ['simulation','management','theme park'],        reason: 'Theme park building' },
+    { appid: 589360,  name: 'PC Building Simulator',      tags: ['simulation','relaxing','niche'],               reason: 'Build PCs as a career' },
+    { appid: 1544020, name: 'PC Building Simulator 2',    tags: ['simulation','relaxing','niche'],               reason: 'Sequel with better tech' },
+    { appid: 1144400, name: 'PowerWash Simulator',        tags: ['simulation','relaxing','cosy'],                reason: 'Oddly therapeutic' },
+    { appid: 1794680, name: 'House Flipper',              tags: ['simulation','relaxing'],                        reason: 'Renovate houses' },
+    { appid: 1382330, name: 'Farming Simulator 25',       tags: ['simulation','farming','relaxing'],              reason: 'Serious farming sim' },
+
+    // Indie darlings
+    { appid: 1903340, name: 'Pizza Tower',                tags: ['platformer','indie','fastpaced','retro'],      reason: 'Wario Land on steroids' },
+    { appid: 1127500, name: 'Mindustry',                  tags: ['strategy','tower defense','indie','free'],      reason: 'Factory + tower defense' },
+    { appid: 1145360, name: 'Slay the Spire',             tags: ['roguelike','deckbuilder','turnbased','indie'],   reason: 'Best deckbuilder' },
+    { appid: 1593500, name: 'Vampire Survivors',          tags: ['roguelike','action','indie','cheap'],           reason: '£4 of pure serotonin' },
+    { appid: 2379780, name: 'Balatro',                    tags: ['roguelike','deckbuilder','indie','cheap'],      reason: 'Poker roguelike, everyone\'s hooked' },
+    { appid: 2246340, name: 'Brotato',                    tags: ['roguelike','action','indie','cheap'],           reason: 'Potato with guns' },
+    { appid: 2246340, name: 'Slice & Dice',               tags: ['roguelike','turnbased','indie'],                reason: 'Dice-based dungeon crawler' },
+    { appid: 1386610, name: 'Cult of the Lamb',           tags: ['roguelike','action','indie','cult'],            reason: 'Start a cute cult' },
+    { appid: 730990,  name: 'Into the Breach',            tags: ['strategy','turnbased','indie','puzzle'],        reason: 'Perfect tactical chess-like' },
+    { appid: 268850,  name: 'FTL: Faster Than Light',     tags: ['roguelike','strategy','indie','space'],         reason: 'Space roguelike classic' },
+    { appid: 1203220, name: 'Noita',                      tags: ['roguelike','indie','sandbox','magic'],           reason: 'Every pixel is simulated' },
+    { appid: 2246340, name: 'Risk of Rain 2',             tags: ['roguelike','action','coop','indie'],            reason: 'Best co-op roguelike' },
+    { appid: 632360,  name: 'Risk of Rain Returns',       tags: ['roguelike','action','indie'],                   reason: 'Classic ROR remastered' },
+    { appid: 632470,  name: 'Disco Elysium',              tags: ['rpg','story','detective','indie'],              reason: 'Best writing ever' },
+
+    // Strategy / 4X
+    { appid: 289070,  name: 'Sid Meier\'s Civilization VI', tags: ['strategy','turnbased','historical','4x'],     reason: 'One more turn simulator' },
+    { appid: 1295660, name: 'Sid Meier\'s Civilization VII', tags: ['strategy','turnbased','historical','4x'],    reason: 'Latest Civ release' },
+    { appid: 281990,  name: 'Stellaris',                   tags: ['strategy','scifi','grand','space'],            reason: 'Space grand strategy' },
+    { appid: 394360,  name: 'Hearts of Iron IV',           tags: ['strategy','historical','ww2','grand'],         reason: 'WW2 grand strategy' },
+    { appid: 203770,  name: 'Crusader Kings III',          tags: ['strategy','medieval','grand','roleplay'],      reason: 'Medieval dynasty drama' },
+    { appid: 236850,  name: 'Europa Universalis IV',       tags: ['strategy','historical','grand'],               reason: 'Empire builder' },
+    { appid: 1158310, name: 'Age of Empires IV',           tags: ['strategy','rts','historical'],                 reason: 'RTS revival' },
+    { appid: 813780,  name: 'Age of Empires II: Definitive Edition', tags: ['strategy','rts','historical'],      reason: 'Wololo, forever' },
+    { appid: 548430,  name: 'Total War: Warhammer III',    tags: ['strategy','rts','turnbased','fantasy'],         reason: 'Fantasy total war epic' },
+    { appid: 1142710, name: 'Total War: Pharaoh',           tags: ['strategy','rts','turnbased','historical'],     reason: 'Bronze Age collapse' },
+    { appid: 1467930, name: 'XCOM 2',                       tags: ['strategy','turnbased','tactical','scifi'],    reason: 'Aliens vs your squad' },
+    { appid: 2213600, name: 'Company of Heroes 3',          tags: ['strategy','rts','historical','ww2'],           reason: 'WW2 tactical RTS' },
+    { appid: 570940,  name: 'Warhammer 40K: Dawn of War III', tags: ['strategy','rts','scifi','warhammer'],       reason: '40K RTS with heroes' },
+
+    // Horror
+    { appid: 1816570, name: 'Resident Evil 2',             tags: ['horror','action','story','survival'],          reason: 'The Leon/Claire remake' },
+    { appid: 952060,  name: 'Resident Evil 3',             tags: ['horror','action','story','survival'],          reason: 'Nemesis stalking you' },
+    { appid: 1196590, name: 'Resident Evil Village',        tags: ['horror','action','story'],                     reason: 'Tall vampire lady' },
+    { appid: 381210,  name: 'Dead by Daylight',            tags: ['horror','multiplayer','coop','asymmetric'],    reason: '4v1 horror chase' },
+    { appid: 2183900, name: 'Silent Hill 2',               tags: ['horror','story','action','cult'],              reason: 'Beloved remake' },
+    { appid: 2050650, name: 'Alien: Isolation',             tags: ['horror','stealth','story','scifi'],            reason: 'The only good Alien game' },
+    { appid: 292030,  name: 'The Mortuary Assistant',      tags: ['horror','indie','psychological'],              reason: 'Embalming + demons' },
+    { appid: 1237970, name: 'Amnesia: The Bunker',         tags: ['horror','survival','story'],                   reason: 'Gripping survival horror' },
+
+    // Co-op / multiplayer
+    { appid: 2767030, name: 'Lethal Company',              tags: ['horror','coop','multiplayer','indie'],         reason: 'The viral co-op hit' },
+    { appid: 2881650, name: 'Content Warning',              tags: ['horror','coop','indie','comedy'],              reason: 'Make scary videos with friends' },
+    { appid: 739630,  name: 'Phasmophobia',                 tags: ['horror','coop','multiplayer'],                 reason: 'Ghost hunting, surprisingly scary' },
+    { appid: 242760,  name: 'The Forest',                   tags: ['survival','horror','coop','multiplayer'],       reason: 'Cannibal survival' },
+    { appid: 1326470, name: 'Sons of the Forest',           tags: ['survival','horror','coop','multiplayer'],       reason: 'The sequel, even scarier' },
+    { appid: 553850,  name: 'HELLDIVERS 2',                 tags: ['shooter','coop','multiplayer','action','scifi'], reason: 'Managed Democracy' },
+    { appid: 322330,  name: 'Don\'t Starve Together',       tags: ['survival','coop','multiplayer'],               reason: 'Quirky survival' },
+    { appid: 440900,  name: 'Conan Exiles',                 tags: ['survival','openworld','coop','multiplayer'],    reason: 'Barbarian sandbox' },
+    { appid: 892970,  name: 'Valheim',                      tags: ['survival','coop','viking','crafting'],          reason: 'Viking co-op survival' },
+    { appid: 2694490, name: 'Warhammer 40K: Space Marine 2', tags: ['action','shooter','coop','warhammer'],         reason: 'Third-person 40K carnage' },
+
+    // Fighting / sports
+    { appid: 2050900, name: 'Tekken 8',                    tags: ['fighting','competitive','multiplayer'],         reason: 'Best 3D fighter now' },
+    { appid: 1665460, name: 'Street Fighter 6',            tags: ['fighting','competitive','multiplayer'],         reason: '2D fighter icon returns' },
+    { appid: 1388590, name: 'Mortal Kombat 1',             tags: ['fighting','competitive','violent'],             reason: 'MK rebooted' },
+    { appid: 1384160, name: 'Guilty Gear Strive',          tags: ['fighting','anime','competitive'],               reason: 'Gorgeous anime fighter' },
+    { appid: 1778820, name: 'Dragon Ball: Sparking ZERO',  tags: ['fighting','anime','dragonball'],                reason: 'DBZ Budokai Tenkaichi revival' },
+
+    // Puzzle / thoughtful
+    { appid: 620,     name: 'Portal 2',                     tags: ['puzzle','story','indie','comedy'],             reason: 'Still the best puzzle game ever' },
+    { appid: 620,     name: 'Portal',                       tags: ['puzzle','story','indie'],                       reason: 'The cake is a lie' },
+    { appid: 105600,  name: 'The Witness',                  tags: ['puzzle','indie','exploration'],                 reason: 'Stunning puzzle island' },
+    { appid: 1097150, name: 'Return of the Obra Dinn',      tags: ['puzzle','indie','mystery','story'],             reason: 'Unique detective puzzle' },
+    { appid: 588650,  name: 'Outer Wilds',                  tags: ['exploration','puzzle','indie','mystery'],       reason: 'Mind-bending space mystery' },
+    { appid: 1012880, name: 'Inscryption',                  tags: ['card','horror','indie','puzzle'],              reason: 'Deck-builder horror twist' },
+    { appid: 1593500, name: 'Chants of Sennaar',             tags: ['puzzle','indie','story'],                       reason: 'Translate lost languages' },
+    { appid: 588650,  name: 'Tunic',                         tags: ['action','adventure','indie','puzzle'],          reason: 'Zelda-like with secrets' },
+    { appid: 1127500, name: 'Baba Is You',                   tags: ['puzzle','indie'],                               reason: 'Rules are the puzzle' },
+    { appid: 2196890, name: 'Lorelei and the Laser Eyes',    tags: ['puzzle','indie','mystery','story'],             reason: '2024 puzzle masterpiece' },
+
+    // Cosy / relaxing
+    { appid: 648800,  name: 'Raft',                          tags: ['survival','coop','crafting','ocean'],           reason: 'Ocean survival with friends' },
+    { appid: 2132840, name: 'Palia',                         tags: ['mmo','cosy','relaxing','crafting','free'],      reason: 'F2P cosy MMO' },
+    { appid: 2276930, name: 'Tiny Glade',                    tags: ['cosy','relaxing','indie','sandbox'],            reason: 'Build tiny dioramas' },
+    { appid: 1659040, name: 'A Short Hike',                  tags: ['indie','cosy','exploration','relaxing'],        reason: '90 minutes of pure joy' },
+    { appid: 1627730, name: 'Unpacking',                     tags: ['puzzle','cosy','indie','relaxing'],             reason: 'Unpack boxes, feel feelings' },
+    { appid: 1659040, name: 'Dave the Diver',                tags: ['indie','relaxing','management','cosy'],         reason: 'Dive, then run a sushi bar' },
+    { appid: 2622380, name: 'Tchia',                         tags: ['adventure','cosy','indie','exploration'],       reason: 'Island adventure' },
+    { appid: 1389660, name: 'Spiritfarer',                   tags: ['indie','cosy','story','management'],            reason: 'Ferry souls to afterlife' },
+
+    // MMOs / live-service
+    { appid: 306130,  name: 'The Elder Scrolls Online',      tags: ['mmo','rpg','openworld','fantasy'],             reason: 'Huge Elder Scrolls MMO' },
+    { appid: 39540,   name: 'Final Fantasy XIV',             tags: ['mmo','rpg','story','japanese'],                reason: 'Best MMO in years' },
+    { appid: 1599340, name: 'New World',                     tags: ['mmo','rpg','openworld'],                       reason: 'Amazon\'s MMO' },
+    { appid: 1446780, name: 'Lost Ark',                      tags: ['mmo','rpg','action','free'],                   reason: 'Korean ARPG-MMO, F2P' },
+    { appid: 221100,  name: 'DayZ',                          tags: ['survival','openworld','multiplayer','hardcore'], reason: 'Brutal zombie survival' },
   ];
 
   // Build SIMILARITY map from TAG_MAP + CATALOG
