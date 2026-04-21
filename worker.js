@@ -5,6 +5,11 @@ const DEFAULT_STEAM_ID = '76561199040427763'; // Julian's Steam ID
 const RESEND_KEY = 're_dNyaesf8_GH99GVk3N5u45x6RuA1LCSR8';
 const OWNER_EMAIL = 'julian.tamas12@gmail.com';
 
+// Xbox / Microsoft OAuth (to be populated once registered)
+const XBOX_CLIENT_ID     = 'PENDING';
+const XBOX_CLIENT_SECRET = 'PENDING';
+const XBOX_REDIRECT_URI  = 'https://rupertweb.com/api/xbox/callback';
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -24,6 +29,10 @@ export default {
       if (p === '/api/recommend-buy')                                 return recommendBuy(url);
       if (p.startsWith('/api/game-details/'))                         return gameDetails(p);
       if (p.startsWith('/api/reviews/'))                              return steamReviews(p);
+      if (p === '/api/xbox/login')                                    return xboxLogin();
+      if (p === '/api/xbox/callback')                                 return xboxCallback(url);
+      if (p === '/api/xbox/games')                                    return xboxGames(url);
+      if (p === '/api/xbox/profile')                                  return xboxProfile(url);
     } catch (e) {
       return jsonResponse({ error: e.message }, 500);
     }
@@ -585,6 +594,113 @@ async function steamReviews(path) {
   } catch {
     return jsonResponse({ appid, score: 0, total: 0, label: '—' });
   }
+}
+
+// ════════════════════════════════════════════════════════
+// XBOX OAUTH + API
+// ════════════════════════════════════════════════════════
+
+function xboxLogin() {
+  if (XBOX_CLIENT_ID === 'PENDING') {
+    return jsonResponse({ error: 'Xbox integration not yet configured. Admin needs to register Microsoft app.' }, 503);
+  }
+  const authUrl = `https://login.live.com/oauth20_authorize.srf?client_id=${XBOX_CLIENT_ID}&response_type=code&approval_prompt=auto&scope=Xboxlive.signin+Xboxlive.offline_access&redirect_uri=${encodeURIComponent(XBOX_REDIRECT_URI)}`;
+  return new Response(null, { status: 302, headers: { Location: authUrl, ...corsHeaders() } });
+}
+
+async function xboxCallback(url) {
+  const code = url.searchParams.get('code');
+  if (!code) return jsonResponse({ error: 'No auth code' }, 400);
+
+  // Step 1: Exchange code for Microsoft access token
+  const tokenRes = await fetch('https://login.live.com/oauth20_token.srf', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      client_id: XBOX_CLIENT_ID,
+      client_secret: XBOX_CLIENT_SECRET,
+      code,
+      grant_type: 'authorization_code',
+      redirect_uri: XBOX_REDIRECT_URI,
+    }),
+  });
+  const tokenData = await tokenRes.json();
+  const accessToken = tokenData.access_token;
+  if (!accessToken) return jsonResponse({ error: 'Token exchange failed', detail: tokenData }, 500);
+
+  // Step 2: Authenticate with Xbox Live
+  const xblRes = await fetch('https://user.auth.xboxlive.com/user/authenticate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'x-xbl-contract-version': '1' },
+    body: JSON.stringify({
+      RelyingParty: 'http://auth.xboxlive.com',
+      TokenType: 'JWT',
+      Properties: { AuthMethod: 'RPS', SiteName: 'user.auth.xboxlive.com', RpsTicket: 'd=' + accessToken },
+    }),
+  });
+  const xblData = await xblRes.json();
+  const xblToken = xblData.Token;
+  const userHash = xblData.DisplayClaims?.xui?.[0]?.uhs;
+
+  // Step 3: XSTS token
+  const xstsRes = await fetch('https://xsts.auth.xboxlive.com/xsts/authorize', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({
+      RelyingParty: 'http://xboxlive.com',
+      TokenType: 'JWT',
+      Properties: { SandboxId: 'RETAIL', UserTokens: [xblToken] },
+    }),
+  });
+  const xstsData = await xstsRes.json();
+  const xstsToken = xstsData.Token;
+  const xuid = xstsData.DisplayClaims?.xui?.[0]?.xid;
+
+  // Redirect back to QuestLog with token (client stores it)
+  const authHeader = `XBL3.0 x=${userHash};${xstsToken}`;
+  const redirectTo = `/questlog.html?xbox_token=${encodeURIComponent(authHeader)}&xuid=${xuid}`;
+  return new Response(null, { status: 302, headers: { Location: redirectTo } });
+}
+
+async function xboxProfile(url) {
+  const token = url.searchParams.get('token');
+  const xuid = url.searchParams.get('xuid');
+  if (!token || !xuid) return jsonResponse({ error: 'Missing token or xuid' }, 400);
+
+  const r = await fetch(`https://profile.xboxlive.com/users/xuid(${xuid})/profile/settings?settings=Gamertag,GameDisplayPicRaw,Gamerscore`, {
+    headers: { Authorization: token, 'x-xbl-contract-version': '2', Accept: 'application/json' },
+  });
+  const data = await r.json();
+  const settings = Object.fromEntries((data.profileUsers?.[0]?.settings || []).map(s => [s.id, s.value]));
+  return jsonResponse({
+    xuid,
+    gamertag: settings.Gamertag,
+    avatar: settings.GameDisplayPicRaw,
+    gamerscore: parseInt(settings.Gamerscore || 0),
+  });
+}
+
+async function xboxGames(url) {
+  const token = url.searchParams.get('token');
+  const xuid = url.searchParams.get('xuid');
+  if (!token || !xuid) return jsonResponse({ error: 'Missing token or xuid' }, 400);
+
+  const r = await fetch(`https://titlehub.xboxlive.com/users/xuid(${xuid})/titles/titlehistory/decoration/GamePass,Achievement,Image,Stats`, {
+    headers: { Authorization: token, 'x-xbl-contract-version': '2', Accept: 'application/json', 'Accept-Language': 'en-US' },
+  });
+  const data = await r.json();
+  const titles = (data.titles || []).map(t => ({
+    titleId: t.titleId,
+    name: t.name,
+    lastPlayed: t.titleHistory?.lastTimePlayed,
+    gamerscore: t.achievement?.currentGamerscore || 0,
+    totalGamerscore: t.achievement?.totalGamerscore || 0,
+    achievements: t.achievement?.currentAchievements || 0,
+    totalAchievements: t.achievement?.totalAchievements || 0,
+    img: t.displayImage,
+  }));
+  titles.sort((a, b) => new Date(b.lastPlayed || 0) - new Date(a.lastPlayed || 0));
+  return jsonResponse({ count: titles.length, games: titles });
 }
 
 // ════════════════════════════════════════════════════════
