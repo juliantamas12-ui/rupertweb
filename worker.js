@@ -1294,62 +1294,85 @@ async function newReleases(url) {
 }
 
 async function upcomingReleases() {
-  // Curated list of most-anticipated upcoming games — the ones everyone's talking about
-  // Verified appids. Reason lines tell the user why it's big.
-  const ANTICIPATED = [
-    { appid: 1086940, name: "Grand Theft Auto VI", reason: 'The biggest entertainment launch of all time' },
-    { appid: 2246340, name: 'Hollow Knight: Silksong', reason: 'Most awaited indie in history — out of dev hell at last' },
-    { appid: 1237970, name: 'Ghost of Yōtei', reason: 'Ghost of Tsushima successor from Sucker Punch' },
-    { appid: 1903340, name: 'The Outer Worlds 2', reason: 'Obsidian\'s satirical space RPG sequel' },
-    { appid: 2694490, name: 'Marathon', reason: 'Bungie\'s extraction shooter revival' },
-    { appid: 2064650, name: 'Fable', reason: 'Playground Games rebooting a legend' },
+  // Hype candidates — games widely expected to drop in 2026+. Reason lines tell the user why it's big.
+  // Each gets verified against Steam live: if already released, skipped.
+  const HYPE = [
+    { appid: 3240220, name: 'Grand Theft Auto VI', reason: 'The biggest entertainment launch of all time' },
+    { appid: 1030300, name: 'Hollow Knight: Silksong', reason: 'The most-awaited indie in history' },
     { appid: 1245620, name: 'Elden Ring: Nightreign', reason: 'FromSoftware co-op spin-off' },
+    { appid: 2677660, name: 'Intergalactic: The Heretic Prophet', reason: 'Naughty Dog\'s sci-fi epic' },
+    { appid: 2358720, name: 'Borderlands 4', reason: 'Gearbox\'s looter-shooter returns' },
+    { appid: 2456740, name: 'Ghost of Yōtei', reason: 'Ghost of Tsushima successor from Sucker Punch' },
     { appid: 2183900, name: 'Silent Hill f', reason: 'New Silent Hill, 1960s Japan setting' },
-    { appid: 2677660, name: 'Intergalactic: The Heretic Prophet', reason: 'Neil Druckmann\'s sci-fi epic from Naughty Dog' },
-    { appid: 2358720, name: 'Borderlands 4', reason: 'Gearbox\'s looter-shooter returns 2025' },
-    { appid: 2183550, name: 'Directive 8020', reason: 'Sci-fi horror from Supermassive' },
-    { appid: 1655630, name: 'Crimson Desert', reason: 'Open-world action RPG, technically stunning' },
-    { appid: 2138330, name: 'Light No Fire', reason: 'Hello Games\' fantasy successor to No Man\'s Sky' },
-    { appid: 1940340, name: 'Pragmata', reason: 'Capcom\'s long-delayed moon sci-fi' },
-    { appid: 1966720, name: 'Metal Gear Solid Delta: Snake Eater', reason: 'MGS3 remake' },
-    { appid: 1366540, name: 'Project Mugen', reason: 'NetEase\'s open-world action game' },
-    { appid: 2377660, name: 'Death Stranding 2: On the Beach', reason: 'Kojima sequel for PC' },
-    { appid: 2356570, name: 'Monster Hunter Wilds', reason: 'Next mainline Monster Hunter' },
-    { appid: 2323900, name: 'Assassin\'s Creed Shadows', reason: 'Feudal Japan AC, already controversial' },
-    { appid: 1544020, name: 'Perfect Dark', reason: 'The Initiative\'s spy reboot' },
+    { appid: 2710330, name: 'Directive 8020', reason: 'Sci-fi horror from Supermassive' },
+    { appid: 1655630, name: 'Crimson Desert', reason: 'Technically stunning open-world RPG' },
+    { appid: 1655650, name: 'Light No Fire', reason: 'Hello Games\' fantasy successor to No Man\'s Sky' },
+    { appid: 1940340, name: 'Pragmata', reason: "Capcom's moon sci-fi" },
+    { appid: 2399830, name: 'The Outer Worlds 2', reason: "Obsidian's satirical space RPG sequel" },
+    { appid: 2694490, name: 'Marathon', reason: "Bungie's extraction shooter revival" },
+    { appid: 2064650, name: 'Fable', reason: 'Playground Games rebooting a legend' },
+    { appid: 2183550, name: 'Perfect Dark', reason: "The Initiative's spy reboot" },
+    { appid: 2807960, name: 'Resident Evil 9: Requiem', reason: 'Next mainline RE horror' },
+    { appid: 2371070, name: 'Civilization VII: Next', reason: 'The next big 4X expansion' },
+    { appid: 3159330, name: 'Subnautica 2', reason: 'Return to the alien ocean' },
+    { appid: 2183650, name: 'Bloodlines 2', reason: 'Vampire: The Masquerade sequel' },
+    { appid: 3017860, name: 'Warhammer 40K: Dark Heresy', reason: 'New 40K CRPG from Owlcat' },
   ];
 
-  // Enrich with live Steam data (release date + image if available)
-  const items = await Promise.all(ANTICIPATED.map(async g => {
+  // Validate each appid against Steam. Only include if appid resolves and is still coming_soon.
+  const items = await Promise.all(HYPE.map(async g => {
     try {
-      const d = await fetchJSON(`https://store.steampowered.com/api/appdetails?appids=${g.appid}&cc=gb&l=en`);
+      const d = await fetchJSON(`https://store.steampowered.com/api/appdetails?appids=${g.appid}&cc=gb&l=en&filters=basic,release_date`);
       const info = d?.[g.appid]?.data;
+      if (!info) return null; // appid doesn't exist
+
+      const comingSoon = info.release_date?.coming_soon === true;
+      if (!comingSoon) return null; // already released
+
+      const name = info.name || g.name;
+      // Sanity-check: if name has wildly drifted from hype entry, we likely have the wrong appid
+      const hypeFirstWord = g.name.split(/[\s:]/)[0].toLowerCase();
+      const steamFirstWord = name.split(/[\s:]/)[0].toLowerCase();
+      if (hypeFirstWord !== steamFirstWord && hypeFirstWord.length > 2 && !name.toLowerCase().includes(hypeFirstWord)) {
+        return null; // mismatched appid, skip
+      }
+
       return {
         appid: g.appid,
-        name: info?.name || g.name,
+        name,
         reason: g.reason,
-        img: info?.header_image || `https://cdn.cloudflare.steamstatic.com/steam/apps/${g.appid}/header.jpg`,
+        img: info.header_image || `https://cdn.cloudflare.steamstatic.com/steam/apps/${g.appid}/header.jpg`,
         url: `https://store.steampowered.com/app/${g.appid}`,
-        releaseDate: info?.release_date?.date || 'TBA',
-        comingSoon: info?.release_date?.coming_soon ?? true,
+        releaseDate: info.release_date?.date || 'TBA',
       };
     } catch {
-      return {
-        appid: g.appid,
-        name: g.name,
-        reason: g.reason,
-        img: `https://cdn.cloudflare.steamstatic.com/steam/apps/${g.appid}/header.jpg`,
-        url: `https://store.steampowered.com/app/${g.appid}`,
-        releaseDate: 'TBA',
-        comingSoon: true,
-      };
+      return null;
     }
   }));
 
-  // Keep only actually-upcoming (in case any released already)
-  const filtered = items.filter(i => i.comingSoon);
+  const validated = items.filter(Boolean);
 
-  return jsonResponse({ items: filtered });
+  // Top up with Steam's own "coming_soon" feed if we don't have enough
+  if (validated.length < 12) {
+    try {
+      const feed = await fetchJSON('https://store.steampowered.com/api/featuredcategories?cc=us&l=en');
+      const steamItems = (feed.coming_soon?.items || []).slice(0, 20);
+      for (const it of steamItems) {
+        if (validated.find(v => v.appid === it.id)) continue;
+        validated.push({
+          appid: it.id,
+          name: it.name,
+          reason: 'Upcoming on Steam',
+          img: it.large_capsule_image || `https://cdn.cloudflare.steamstatic.com/steam/apps/${it.id}/header.jpg`,
+          url: `https://store.steampowered.com/app/${it.id}`,
+          releaseDate: it.original_release_string || 'TBA',
+        });
+        if (validated.length >= 20) break;
+      }
+    } catch {}
+  }
+
+  return jsonResponse({ items: validated });
 }
 
 // ════════════════════════════════════════════════════════
