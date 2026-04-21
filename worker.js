@@ -708,8 +708,14 @@ async function recommendBuy(url) {
     }
   }
 
-  // Enrich with price + reviews + player count (parallel, first 50 to stay under CPU budget)
-  const toEnrich = recs.slice(0, 50);
+  // Attach tags to each rec so frontend can filter by genre
+  for (const r of recs) {
+    const catEntry = CATALOG.find(c => c.appid === r.appid);
+    if (catEntry) r.tags = catEntry.tags;
+  }
+
+  // Enrich with price + reviews + player count (parallel, first 60 to stay under CPU budget)
+  const toEnrich = recs.slice(0, 60);
   await Promise.all(toEnrich.map(async r => {
     try {
       const [details, reviews, pc] = await Promise.all([

@@ -225,7 +225,7 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
       <button class="link" onclick="loadBuyRecs()">Refresh →</button>
     </div>
 
-    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;align-items:center">
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;align-items:center">
       <div style="display:flex;gap:6px;align-items:center">
         <span style="font-size:11px;color:var(--dim);letter-spacing:1px;text-transform:uppercase">Sort</span>
         <select id="buySortSelect" onchange="renderBuyRecs()" style="background:var(--panel);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:4px;font-size:12px;font-family:inherit;cursor:pointer">
@@ -258,6 +258,11 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
           <option value="95">95%+ (Overwhelmingly Positive)</option>
         </select>
       </div>
+    </div>
+
+    <div style="margin-bottom:16px">
+      <div style="font-size:11px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Genres <span id="genreCount" style="color:var(--accent);text-transform:none;letter-spacing:0;margin-left:6px"></span></div>
+      <div id="genrePills" style="display:flex;gap:6px;flex-wrap:wrap"></div>
     </div>
 
     <div id="buyRecList"><div class="empty"><span class="loading"></span> Finding games...</div></div>
@@ -767,8 +772,76 @@ async function searchDeal() {
   }
 }
 
+const GENRE_GROUPS = {
+  'RPG':        ['rpg','souls'],
+  'FPS/Shooter':['fps','shooter','battleroyale'],
+  'Action':     ['action','hero'],
+  'Strategy':   ['strategy','rts','4x','grand','turnbased','moba'],
+  'Simulation': ['simulation','farming','citybuilder','management','flight','driving'],
+  'Racing':     ['racing','rally'],
+  'Sports':     ['sports','football','basketball'],
+  'Fighting':   ['fighting'],
+  'Horror':     ['horror','survival'],
+  'Co-op':      ['coop'],
+  'Multiplayer':['multiplayer','competitive','mmo'],
+  'Indie':      ['indie'],
+  'Roguelike':  ['roguelike','deckbuilder'],
+  'Open World': ['openworld','exploration','sandbox'],
+  'Story':      ['story','cinematic'],
+  'Puzzle':     ['puzzle'],
+  'Platformer': ['platformer','metroidvania'],
+  'Cosy':       ['cosy','relaxing','cute'],
+  'Fantasy':    ['fantasy','medieval'],
+  'Sci-Fi':     ['scifi','cyberpunk','space','postapocalyptic'],
+  'Historical': ['historical','ww2','viking','western'],
+  'Crafting':   ['crafting'],
+  'Free':       ['free'],
+};
+
+STATE.selectedGenres = new Set();
+
+function renderGenrePills() {
+  const el = document.getElementById('genrePills');
+  if (!el) return;
+  el.innerHTML = Object.keys(GENRE_GROUPS).map(g => {
+    const active = STATE.selectedGenres.has(g);
+    return `<button onclick="toggleGenre('${g}')" style="background:${active ? 'var(--accent)' : 'var(--panel)'};color:${active ? '#000' : 'var(--text)'};border:1px solid ${active ? 'var(--accent)' : 'var(--border)'};padding:5px 12px;border-radius:100px;font-size:11px;font-family:inherit;cursor:pointer;font-weight:${active ? 700 : 500};transition:all 0.15s">${g}</button>`;
+  }).join('') +
+    (STATE.selectedGenres.size > 0 ? `<button onclick="clearGenres()" style="background:transparent;color:var(--dim);border:none;padding:5px 12px;font-size:11px;font-family:inherit;cursor:pointer;text-decoration:underline">Clear all</button>` : '');
+
+  const countEl = document.getElementById('genreCount');
+  if (countEl) {
+    countEl.textContent = STATE.selectedGenres.size > 0 ? `(${STATE.selectedGenres.size} selected)` : '';
+  }
+}
+
+function toggleGenre(g) {
+  if (STATE.selectedGenres.has(g)) STATE.selectedGenres.delete(g);
+  else STATE.selectedGenres.add(g);
+  renderGenrePills();
+  renderBuyRecs();
+}
+
+function clearGenres() {
+  STATE.selectedGenres.clear();
+  renderGenrePills();
+  renderBuyRecs();
+}
+
+function matchesGenres(rec) {
+  if (STATE.selectedGenres.size === 0) return true;
+  const recTags = rec.tags || [];
+  // Match if ANY selected genre group overlaps with rec tags
+  for (const g of STATE.selectedGenres) {
+    const groupTags = GENRE_GROUPS[g] || [];
+    if (groupTags.some(t => recTags.includes(t))) return true;
+  }
+  return false;
+}
+
 async function loadBuyRecs() {
   document.getElementById('buyRecList').innerHTML = '<div class="empty"><span class="loading"></span> Finding deals & matches...</div>';
+  renderGenrePills();
   try {
     const data = await api('/api/recommend-buy');
     if (!data.recommendations?.length) {
@@ -797,6 +870,9 @@ function renderBuyRecs() {
   const reviewMin = parseInt(document.getElementById('buyReviewSelect').value);
 
   let list = [...STATE.buyRecs];
+
+  // Filter: genres
+  list = list.filter(matchesGenres);
 
   // Filter: reviews
   if (reviewMin > 0) list = list.filter(r => (r.reviewScore || 0) >= reviewMin);
