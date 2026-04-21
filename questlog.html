@@ -1012,12 +1012,13 @@ async function loadUpcoming() {
     const el = document.getElementById('upcomingList');
     if (!data.items?.length) { el.innerHTML = '<div class="empty">No upcoming releases.</div>'; return; }
     el.innerHTML = data.items.map(g => `
-      <div class="rec-card" onclick="window.open('${g.url}','_blank')">
+      <div class="rec-card" onclick="openSteam(${g.appid})">
         <div class="rec-cover" style="background-image:url('${g.img}')"></div>
         <div class="rec-info">
-          <div class="rec-reason"><span style="background:rgba(200,160,32,0.15);color:#c8a020;padding:3px 8px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:1px">COMING SOON</span></div>
+          <div class="rec-reason"><span style="background:rgba(200,160,32,0.15);color:#c8a020;padding:3px 8px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:1px">MOST ANTICIPATED</span></div>
           <div class="rec-title">${g.name}</div>
-          <div class="rec-sub" style="margin-top:4px">${g.releaseDate ? `Releases: <span style="color:var(--accent)">${g.releaseDate}</span>` : 'Release date TBA'}</div>
+          <div class="rec-sub" style="margin-top:4px;line-height:1.5">${g.reason || ''}</div>
+          <div class="rec-sub" style="margin-top:4px;font-size:11px">⏱ <span style="color:var(--accent);font-weight:600">${g.releaseDate || 'TBA'}</span></div>
         </div>
         <button class="rec-action">Wishlist →</button>
       </div>
