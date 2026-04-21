@@ -133,6 +133,7 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
     <button class="nav-tab" data-view="recs">Recommendations</button>
     <button class="nav-tab" data-view="deals">Deals</button>
     <button class="nav-tab" data-view="free">Free Now</button>
+    <button class="nav-tab" data-view="new">New Releases</button>
     <button class="nav-tab" data-view="achievements">Achievements</button>
     <button class="nav-tab" data-view="news">News</button>
     <button class="nav-tab" data-view="leaderboards">Leaderboards</button>
@@ -343,6 +344,36 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
   </div>
 </div>
 
+<div class="view" id="view-new">
+  <div class="section">
+    <div class="section-head">
+      <h2>New Releases</h2>
+      <button class="link" onclick="loadNewReleases()">Refresh →</button>
+    </div>
+    <p style="color:var(--dim);font-size:13px;margin-bottom:16px">Fresh games hitting Steam right now. Enriched with live review scores.</p>
+    <div style="display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap">
+      <button class="new-filter-btn active" data-filter="popular" onclick="setNewFilter('popular')">Popular New</button>
+      <button class="new-filter-btn" data-filter="top-sellers" onclick="setNewFilter('top-sellers')">Top Sellers</button>
+      <button class="new-filter-btn" data-filter="specials" onclick="setNewFilter('specials')">Current Specials</button>
+    </div>
+    <div id="newReleasesList"><div class="empty"><span class="loading"></span> Loading new releases...</div></div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <h2>Coming Soon</h2>
+    </div>
+    <p style="color:var(--dim);font-size:13px;margin-bottom:16px">Games launching in the next few weeks. Wishlist them now.</p>
+    <div id="upcomingList"><div class="empty"><span class="loading"></span> Loading upcoming...</div></div>
+  </div>
+</div>
+
+<style>
+.new-filter-btn{background:var(--panel);color:var(--dim);border:1px solid var(--border);padding:7px 14px;border-radius:100px;font-size:12px;font-family:inherit;cursor:pointer;transition:all 0.15s;font-weight:500}
+.new-filter-btn:hover{border-color:rgba(200,241,53,0.4);color:var(--text)}
+.new-filter-btn.active{background:var(--accent);color:#000;border-color:var(--accent);font-weight:700}
+</style>
+
 <div class="view" id="view-free">
   <div class="section">
     <div class="section-head">
@@ -427,6 +458,7 @@ document.querySelectorAll('.nav-tab').forEach(tab => {
     if (view === 'recs' && !STATE.recsLoaded) { loadRecs(); loadBuyRecs(); }
     if (view === 'deals' && !STATE.dealsLoaded) { loadMyDeals(); loadAllDeals(); STATE.dealsLoaded = true; }
     if (view === 'free' && !STATE.freeLoaded) { loadFreeGames(); STATE.freeLoaded = true; }
+    if (view === 'new' && !STATE.newLoaded) { loadNewReleases(); loadUpcoming(); STATE.newLoaded = true; }
     if (view === 'news' && !STATE.newsLoaded) loadNews();
     if (view === 'achievements' && !STATE.achLoaded) loadAchievements();
     if (view === 'leaderboards' && !STATE.lbLoaded) loadLeaderboards();
@@ -588,6 +620,76 @@ async function loadRecs() {
     `).join('');
   } catch (e) {
     document.getElementById('recList').innerHTML = `<div class="error">${e.message}</div>`;
+  }
+}
+
+// ═════ NEW RELEASES ═════
+
+STATE.newFilter = 'popular';
+
+function setNewFilter(f) {
+  STATE.newFilter = f;
+  document.querySelectorAll('.new-filter-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.filter === f);
+  });
+  loadNewReleases();
+}
+
+function renderNewReleaseCard(g) {
+  const scoreColour = g.review?.score >= 85 ? 'var(--accent)' : g.review?.score >= 70 ? '#d5e65c' : g.review?.score >= 50 ? '#ff9e42' : '#ff5a5a';
+  const price = g.discount > 0
+    ? `<span style="color:var(--accent);font-weight:700">${g.finalPrice}</span> <span style="text-decoration:line-through;color:var(--dim);font-size:11px">${g.originalPrice}</span> <span style="color:var(--accent);font-weight:700">-${g.discount}%</span>`
+    : (g.finalPrice ? `<span style="color:var(--text);font-weight:600">${g.finalPrice}</span>` : '');
+
+  return `
+    <div class="rec-card" onclick="window.open('${g.url}','_blank')">
+      <div class="rec-cover" style="background-image:url('${g.img}')"></div>
+      <div class="rec-info">
+        <div class="rec-reason"><span style="background:rgba(200,241,53,0.15);color:var(--accent);padding:3px 8px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:1px">NEW RELEASE</span></div>
+        <div class="rec-title">${g.name}</div>
+        <div class="rec-sub" style="margin-top:4px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          ${price}
+          ${g.review ? `<span style="color:${scoreColour};font-weight:700">${g.review.score}% ★</span> <span style="color:var(--dim);font-size:11px">${g.review.label} (${g.review.count.toLocaleString()})</span>` : '<span style="color:var(--dim);font-size:11px">Too new for reviews</span>'}
+        </div>
+      </div>
+      <button class="rec-action">View →</button>
+    </div>
+  `;
+}
+
+async function loadNewReleases() {
+  document.getElementById('newReleasesList').innerHTML = '<div class="empty"><span class="loading"></span> Loading...</div>';
+  try {
+    const r = await fetch(`/api/new-releases?filter=${STATE.newFilter || 'popular'}`);
+    const data = await r.json();
+    const el = document.getElementById('newReleasesList');
+    if (!data.items?.length) { el.innerHTML = '<div class="empty">No items available.</div>'; return; }
+    el.innerHTML = data.items.map(renderNewReleaseCard).join('');
+  } catch (e) {
+    document.getElementById('newReleasesList').innerHTML = `<div class="error">${e.message}</div>`;
+  }
+}
+
+async function loadUpcoming() {
+  document.getElementById('upcomingList').innerHTML = '<div class="empty"><span class="loading"></span> Loading...</div>';
+  try {
+    const r = await fetch('/api/upcoming');
+    const data = await r.json();
+    const el = document.getElementById('upcomingList');
+    if (!data.items?.length) { el.innerHTML = '<div class="empty">No upcoming releases.</div>'; return; }
+    el.innerHTML = data.items.map(g => `
+      <div class="rec-card" onclick="window.open('${g.url}','_blank')">
+        <div class="rec-cover" style="background-image:url('${g.img}')"></div>
+        <div class="rec-info">
+          <div class="rec-reason"><span style="background:rgba(200,160,32,0.15);color:#c8a020;padding:3px 8px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:1px">COMING SOON</span></div>
+          <div class="rec-title">${g.name}</div>
+          <div class="rec-sub" style="margin-top:4px">${g.releaseDate ? `Releases: <span style="color:var(--accent)">${g.releaseDate}</span>` : 'Release date TBA'}</div>
+        </div>
+        <button class="rec-action">Wishlist →</button>
+      </div>
+    `).join('');
+  } catch (e) {
+    document.getElementById('upcomingList').innerHTML = `<div class="error">${e.message}</div>`;
   }
 }
 

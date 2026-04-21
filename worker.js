@@ -30,6 +30,8 @@ export default {
       if (p.startsWith('/api/game-details/'))                         return gameDetails(p);
       if (p.startsWith('/api/reviews/'))                              return steamReviews(p);
       if (p === '/api/free-games')                                    return freeGames();
+      if (p === '/api/new-releases')                                  return newReleases(url);
+      if (p === '/api/upcoming')                                      return upcomingReleases();
       if (p === '/api/deals')                                         return getDeals(url);
       if (p === '/api/deal-search')                                   return searchDeal(url);
       if (p === '/api/my-deals')                                      return myDeals(url);
@@ -811,6 +813,77 @@ async function steamReviews(path) {
     });
   } catch {
     return jsonResponse({ appid, score: 0, total: 0, label: '—' });
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// NEW RELEASES + UPCOMING
+// ════════════════════════════════════════════════════════
+
+async function newReleases(url) {
+  const filter = url.searchParams.get('filter') || 'popular'; // popular | top-sellers | new
+
+  try {
+    const data = await fetchJSON('https://store.steampowered.com/api/featuredcategories?cc=us&l=en');
+
+    let source;
+    switch (filter) {
+      case 'top-sellers': source = data.top_sellers; break;
+      case 'trending':    source = data.coming_soon || data.new_releases; break;
+      case 'specials':    source = data.specials; break;
+      default:            source = data.new_releases;
+    }
+
+    const items = (source?.items || []).slice(0, 20);
+
+    // Enrich with reviews in parallel
+    const enriched = await Promise.all(items.map(async it => {
+      let review = null;
+      try {
+        const rev = await fetchJSON(`https://store.steampowered.com/appreviews/${it.id}?json=1&language=all&purchase_type=all&num_per_page=0`);
+        if (rev?.query_summary?.total_reviews > 0) {
+          review = {
+            score: Math.round(rev.query_summary.total_positive / rev.query_summary.total_reviews * 100),
+            label: rev.query_summary.review_score_desc,
+            count: rev.query_summary.total_reviews,
+          };
+        }
+      } catch {}
+
+      return {
+        appid: it.id,
+        name: it.name,
+        img: it.large_capsule_image || it.header_image || `https://cdn.cloudflare.steamstatic.com/steam/apps/${it.id}/header.jpg`,
+        finalPrice: it.final_price !== undefined ? `$${(it.final_price/100).toFixed(2)}` : null,
+        originalPrice: it.original_price !== undefined ? `$${(it.original_price/100).toFixed(2)}` : null,
+        discount: it.discount_percent || 0,
+        url: `https://store.steampowered.com/app/${it.id}`,
+        review,
+      };
+    }));
+
+    return jsonResponse({
+      filter,
+      items: enriched,
+    });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
+  }
+}
+
+async function upcomingReleases() {
+  try {
+    const data = await fetchJSON('https://store.steampowered.com/api/featuredcategories?cc=us&l=en');
+    const items = (data.coming_soon?.items || []).slice(0, 20).map(it => ({
+      appid: it.id,
+      name: it.name,
+      img: it.large_capsule_image || it.header_image || `https://cdn.cloudflare.steamstatic.com/steam/apps/${it.id}/header.jpg`,
+      url: `https://store.steampowered.com/app/${it.id}`,
+      releaseDate: it.original_release_string || null,
+    }));
+    return jsonResponse({ items });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
   }
 }
 
