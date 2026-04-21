@@ -29,6 +29,7 @@ export default {
       if (p === '/api/recommend-buy')                                 return recommendBuy(url);
       if (p.startsWith('/api/game-details/'))                         return gameDetails(p);
       if (p.startsWith('/api/reviews/'))                              return steamReviews(p);
+      if (p === '/api/free-games')                                    return freeGames();
       if (p === '/api/deals')                                         return getDeals(url);
       if (p === '/api/deal-search')                                   return searchDeal(url);
       if (p === '/api/my-deals')                                      return myDeals(url);
@@ -597,6 +598,80 @@ async function steamReviews(path) {
   } catch {
     return jsonResponse({ appid, score: 0, total: 0, label: '—' });
   }
+}
+
+// ════════════════════════════════════════════════════════
+// FREE GAMES TRACKER — Epic, Steam, Prime Gaming, GOG
+// ════════════════════════════════════════════════════════
+
+async function freeGames() {
+  const results = { epic: [], steam: [], prime: [], errors: [] };
+
+  // ── EPIC GAMES free promotions (weekly freebies)
+  try {
+    const epic = await fetchJSON(
+      'https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions?locale=en-US&country=US&allowCountries=US'
+    );
+    const elements = epic?.data?.Catalog?.searchStore?.elements || [];
+    for (const g of elements) {
+      const promos = g.promotions?.promotionalOffers?.[0]?.promotionalOffers?.[0];
+      const upcoming = g.promotions?.upcomingPromotionalOffers?.[0]?.promotionalOffers?.[0];
+      const isFreeNow = promos && promos.discountSetting?.discountPercentage === 0;
+      const isUpcoming = upcoming && upcoming.discountSetting?.discountPercentage === 0;
+      if (!isFreeNow && !isUpcoming) continue;
+
+      const img = (g.keyImages || []).find(i => i.type === 'OfferImageWide' || i.type === 'DieselStoreFrontWide')?.url
+              || (g.keyImages || [])[0]?.url;
+      const slug = g.catalogNs?.mappings?.[0]?.pageSlug || g.urlSlug || g.productSlug || '';
+
+      results.epic.push({
+        title: g.title,
+        desc: g.description,
+        img,
+        originalPrice: g.price?.totalPrice?.fmtPrice?.originalPrice,
+        startDate: (isFreeNow ? promos : upcoming)?.startDate,
+        endDate:   (isFreeNow ? promos : upcoming)?.endDate,
+        available: isFreeNow,
+        url: slug ? `https://store.epicgames.com/en-US/p/${slug}` : 'https://store.epicgames.com/en-US/free-games',
+      });
+    }
+  } catch (e) { results.errors.push('epic: ' + e.message); }
+
+  // ── STEAM free weekends & permanently free (via CheapShark steam deals at $0)
+  try {
+    const steamDeals = await fetchJSON('https://www.cheapshark.com/api/1.0/deals?storeID=1&upperPrice=0&sortBy=Recent&pageSize=30');
+    for (const d of (steamDeals || [])) {
+      if (parseFloat(d.salePrice) === 0) {
+        results.steam.push({
+          title: d.title,
+          img: d.thumb,
+          originalPrice: parseFloat(d.normalPrice) > 0 ? `$${d.normalPrice}` : 'Free',
+          steamAppID: d.steamAppID,
+          steamRating: d.steamRatingPercent ? parseInt(d.steamRatingPercent) : null,
+          url: `https://store.steampowered.com/app/${d.steamAppID}`,
+          available: true,
+        });
+      }
+    }
+  } catch (e) { results.errors.push('steam: ' + e.message); }
+
+  // ── GOG free games (via their storefront API)
+  try {
+    const gog = await fetchJSON('https://catalog.gog.com/v1/catalog?limit=48&order=desc%3Atrending&price=between%3A0%2C0&productType=in%3Agame%2Cpack&page=1');
+    const gogGames = gog?.products || [];
+    for (const g of gogGames.slice(0, 20)) {
+      results.prime.push({ // reusing 'prime' slot for GOG display
+        title: g.title,
+        img: g.coverHorizontal || g.image,
+        originalPrice: g.price?.baseMoney?.amount > 0 ? g.price.baseMoney.amount + ' ' + g.price.baseMoney.currency : 'Free',
+        url: `https://www.gog.com${g.storeLink || '/game/' + (g.slug || '')}`,
+        store: 'GOG',
+        available: true,
+      });
+    }
+  } catch (e) { results.errors.push('gog: ' + e.message); }
+
+  return jsonResponse(results);
 }
 
 // ════════════════════════════════════════════════════════
