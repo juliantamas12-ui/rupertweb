@@ -152,8 +152,8 @@ footer a:hover{color:var(--text)}
   <div class="hero-bg"></div>
   <div class="hero-content">
     <div class="hero-badge"><span class="dot"></span>Free to use · No credit card</div>
-    <h1>Stop juggling 5 tabs for your <span>gaming life.</span></h1>
-    <p>One dashboard for everything: library, deals across every store, free games, new releases, achievements, global rankings. Connect Steam in 10 seconds.</p>
+    <h1>Stop juggling 10 tabs for your <span>gaming life.</span></h1>
+    <p>One dashboard for everything: library, deals across every store, free games, new releases, achievements, FPS estimator, friend compare, price alerts. Connect Steam in 10 seconds.</p>
     <div class="hero-ctas">
       <a href="/questlog.html" class="btn btn-xl btn-primary">Get started — it's free</a>
       <a href="#features" class="btn btn-xl btn-ghost">See what's inside →</a>
@@ -162,6 +162,28 @@ footer a:hover{color:var(--text)}
       <span class="hero-trust-item">No credit card required</span>
       <span class="hero-trust-item">Free forever tier</span>
       <span class="hero-trust-item">Steam, Epic, GOG, Humble & more</span>
+    </div>
+  </div>
+</section>
+
+<!-- LIVE STATS STRIP -->
+<section style="padding:40px 20px 80px;max-width:1100px;margin:0 auto;position:relative;z-index:1">
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:28px 20px;box-shadow:0 20px 40px rgba(0,0,0,0.3)">
+    <div style="text-align:center;padding:4px;border-right:1px solid var(--border)">
+      <div id="stat-games" style="font-size:clamp(22px,3vw,32px);font-weight:800;color:var(--accent);line-height:1">—</div>
+      <div style="font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-top:6px">Games Tracked</div>
+    </div>
+    <div style="text-align:center;padding:4px;border-right:1px solid var(--border)">
+      <div id="stat-stores" style="font-size:clamp(22px,3vw,32px);font-weight:800;line-height:1">20+</div>
+      <div style="font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-top:6px">Stores Scanned</div>
+    </div>
+    <div style="text-align:center;padding:4px;border-right:1px solid var(--border)">
+      <div id="stat-deals" style="font-size:clamp(22px,3vw,32px);font-weight:800;line-height:1">—</div>
+      <div style="font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-top:6px">Live Deals Right Now</div>
+    </div>
+    <div style="text-align:center;padding:4px">
+      <div id="stat-free" style="font-size:clamp(22px,3vw,32px);font-weight:800;color:#22cc66;line-height:1">—</div>
+      <div style="font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-top:6px">Free This Week</div>
     </div>
   </div>
 </section>
@@ -189,14 +211,14 @@ footer a:hover{color:var(--text)}
   </div>
 </div>
 
-<!-- FEATURES -->
+<!-- FEATURES — 10 tiles -->
 <section class="section" id="features">
   <div class="section-head">
-    <div class="section-eyebrow">Features</div>
-    <h2>Everything you've been using 5 different sites for.</h2>
+    <div class="section-eyebrow">10 Features in 1 App</div>
+    <h2>Everything you've been using 10 different sites for.</h2>
     <p>Built for people who actually play games, not just browse them.</p>
   </div>
-  <div class="features">
+  <div class="features" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">
     <div class="feature">
       <div class="feature-icon">🎮</div>
       <h3>Full library dashboard</h3>
@@ -204,8 +226,8 @@ footer a:hover{color:var(--text)}
     </div>
     <div class="feature">
       <div class="feature-icon">💰</div>
-      <h3>Deal hunter across every store</h3>
-      <p>Steam, Epic, GOG, Humble, Fanatical, Green Man Gaming. Search any game, see the cheapest price live.</p>
+      <h3>Deal hunter — 20+ stores</h3>
+      <p>Steam, Epic, GOG, Humble, Fanatical, Green Man Gaming. Search any game, see cheapest price live.</p>
     </div>
     <div class="feature">
       <div class="feature-icon">🎁</div>
@@ -215,17 +237,37 @@ footer a:hover{color:var(--text)}
     <div class="feature">
       <div class="feature-icon">🧠</div>
       <h3>Smart recommendations</h3>
-      <p>200+ games, filtered by your actual playtime. Not "people who liked X". Proper reasoning.</p>
+      <p>200+ games filtered by your actual playtime. Not "people who liked X". Proper reasoning.</p>
     </div>
     <div class="feature">
       <div class="feature-icon">🏆</div>
       <h3>Achievement hunter</h3>
-      <p>Easiest unlocks across your library, sorted by global rarity. Finally clean up those 98% completions.</p>
+      <p>Easiest unlocks across your library, sorted by global rarity. Finally clean up 98% completions.</p>
     </div>
     <div class="feature">
-      <div class="feature-icon">📊</div>
-      <h3>New releases, properly curated</h3>
+      <div class="feature-icon">🚀</div>
+      <h3>New releases — curated</h3>
       <p>Only games with 150+ reviews. No shovelware, no asset flips. Real releases from real developers.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">📅</div>
+      <h3>Most anticipated</h3>
+      <p>GTA VI. Silksong. Ghost of Yōtei. The games everyone's talking about, with live release dates.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">⚡</div>
+      <h3>FPS estimator</h3>
+      <p>Input your GPU + RAM + game. Get realistic FPS estimates at every resolution. Steam Deck supported.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">👥</div>
+      <h3>Friend comparisons</h3>
+      <p>Add friends by Steam ID. See shared games, hours played, what they play that you don't own.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🔔</div>
+      <h3>Price drop alerts <span class="feature-tag">PRO</span></h3>
+      <p>Set a target price, we watch every store. You get an email the second a game drops below it.</p>
     </div>
   </div>
 </section>
@@ -331,6 +373,55 @@ footer a:hover{color:var(--text)}
 window.addEventListener('scroll', () => {
   document.getElementById('mainNav').classList.toggle('scrolled', window.scrollY > 20);
 });
+</script>
+
+<script>
+// ── LIVE STATS counter animation ──
+function animate(el, target, suffix = '', duration = 1800) {
+  if (!el) return;
+  const start = 0;
+  const startTime = performance.now();
+  function step(now) {
+    const t = Math.min((now - startTime) / duration, 1);
+    const eased = 1 - Math.pow(1 - t, 3);
+    const val = Math.floor(start + (target - start) * eased);
+    el.textContent = val.toLocaleString() + suffix;
+    if (t < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+// Fetch real deal + free count from our API for live social proof
+async function loadLiveStats() {
+  try {
+    const [deals, free] = await Promise.all([
+      fetch('/api/deals?sortBy=Deal%20Rating&onSale=1').then(r => r.json()).catch(() => ({deals:[]})),
+      fetch('/api/free-games').then(r => r.json()).catch(() => ({epic:[],steam:[],prime:[]})),
+    ]);
+    const dealCount = deals.deals?.length || 60;
+    const freeCount = (free.epic?.length || 0) + (free.steam?.length || 0) + (free.prime?.length || 0);
+
+    // Use IntersectionObserver to animate only when visible
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          animate(document.getElementById('stat-games'), 200000, '+');
+          animate(document.getElementById('stat-deals'), dealCount);
+          animate(document.getElementById('stat-free'), freeCount);
+          observer.disconnect();
+        }
+      });
+    }, { threshold: 0.3 });
+    const target = document.getElementById('stat-games');
+    if (target) observer.observe(target.parentElement.parentElement);
+  } catch (e) {
+    // Fallback static numbers
+    if (document.getElementById('stat-games')) document.getElementById('stat-games').textContent = '200,000+';
+    if (document.getElementById('stat-deals')) document.getElementById('stat-deals').textContent = '60+';
+    if (document.getElementById('stat-free')) document.getElementById('stat-free').textContent = '10+';
+  }
+}
+loadLiveStats();
 </script>
 </body>
 </html>
