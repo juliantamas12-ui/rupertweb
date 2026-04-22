@@ -1,63 +1,69 @@
 {
-  "lastUpdated": "2026-04-22T14:04:08.845Z",
+  "lastUpdated": "2026-04-22T22:03:46.207Z",
   "vessels": [
     {
       "name": "WHISPER",
       "port": "the Caribbean Sea",
-      "updated": "2026-04-22T14:03:40.570Z"
+      "updated": "2026-04-22T22:03:25.129Z"
     },
     {
       "name": "PROJECT X",
       "port": "the Caribbean Sea",
-      "updated": "2026-04-22T14:04:04.939Z"
+      "updated": "2026-04-22T22:03:43.147Z"
     },
     {
       "name": "BARBARA",
-      "port": "La Ciotat, France",
-      "updated": "2026-04-22T14:03:59.097Z"
+      "port": "the US East Coast",
+      "updated": "2026-04-22T22:03:41.097Z"
     },
     {
       "name": "LADY S",
       "port": "the Balearic Sea",
-      "updated": "2026-04-22T14:03:22.187Z"
+      "updated": "2026-04-22T22:03:20.705Z"
     },
     {
       "name": "KENSHO",
       "port": "Palma de Mallorca, Spain",
-      "updated": "2026-04-22T10:03:44.374Z"
+      "updated": "2026-04-22T22:03:36.770Z"
     },
     {
       "name": "RENAISSANCE",
       "port": "the Balearic Sea",
-      "updated": "2026-04-22T14:03:52.519Z"
+      "updated": "2026-04-22T22:03:32.579Z"
     },
     {
       "name": "DRAGONFLY",
       "port": "Mediterranean",
-      "updated": "2026-04-22T14:03:47.705Z"
+      "updated": "2026-04-22T22:03:28.191Z"
     },
     {
       "name": "BREAKTHROUGH",
       "port": "the US East Coast",
-      "updated": "2026-04-22T14:03:20.092Z"
+      "updated": "2026-04-22T22:03:17.860Z"
     },
     {
       "name": "LEVIATHAN",
       "port": "Stornoway",
-      "updated": "2026-04-22T14:03:56.979Z"
+      "updated": "2026-04-22T22:03:38.968Z"
     },
     {
       "name": "CC SUMMER",
       "port": "the US East Coast",
-      "updated": "2026-04-22T14:04:07.843Z"
+      "updated": "2026-04-22T22:03:45.206Z"
     },
     {
       "name": "KISMET",
       "port": "Barcelona, Spain on Apr",
-      "updated": "2026-04-22T10:03:27.939Z"
+      "updated": "2026-04-22T22:03:22.751Z"
     }
   ],
   "recentMoves": [
+    {
+      "vessel": "BARBARA",
+      "from": "La Ciotat, France",
+      "to": "the US East Coast",
+      "time": "2026-04-22T22:03:46.207Z"
+    },
     {
       "vessel": "DRAGONFLY",
       "from": "Sint Maarten was the",
