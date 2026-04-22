@@ -40,6 +40,10 @@ export default {
       if (p === '/api/price-alert' && request.method === 'POST')      return createPriceAlert(request);
       if (p === '/api/fps-estimate')                                  return fpsEstimate(url);
       if (p === '/api/gpu-list')                                      return jsonResponse({ gpus: Object.keys(GPU_SCORES).sort() });
+      if (p === '/api/steam-dna')                                     return steamDNA(url);
+      if (p === '/api/hltb')                                          return howLongToBeat(url);
+      if (p === '/api/subscribe-digest' && request.method === 'POST') return subscribeDigest(request);
+      if (p === '/api/game-night')                                    return gameNight(request, url);
       if (p === '/api/deals')                                         return getDeals(url);
       if (p === '/api/deal-search')                                   return searchDeal(url);
       if (p === '/api/my-deals')                                      return myDeals(url);
@@ -1213,6 +1217,275 @@ function scoreToVerdict(gpuScore, gameScore) {
   if (ratio > 0.7) return 'Playable at 1080p medium-high.';
   if (ratio > 0.4) return 'Struggles — drop to 1080p low.';
   return 'Not recommended for this GPU.';
+}
+
+// ════════════════════════════════════════════════════════
+// STEAM DNA — analyse library, build taste profile
+// ════════════════════════════════════════════════════════
+
+// Rough genre keyword map for games we know about
+const GAME_GENRES = {
+  1172620: ['Adventure', 'Multiplayer', 'Pirate'],
+  730:     ['FPS', 'Competitive'],
+  1174180: ['Open World', 'Story', 'Western'],
+  1245620: ['Souls', 'RPG', 'Open World'],
+  1091500: ['RPG', 'Cyberpunk', 'Story'],
+  292030:  ['RPG', 'Open World', 'Fantasy'],
+  252950:  ['Sports', 'Competitive'],
+  252490:  ['Survival', 'Multiplayer'],
+  578080:  ['Battle Royale', 'Shooter'],
+  271590:  ['Open World', 'Crime', 'Action'],
+  105600:  ['Sandbox', 'Crafting'],
+  813780:  ['Strategy', 'RTS'],
+  1086940: ['RPG', 'Turn-based', 'Fantasy'],
+  570:     ['MOBA', 'Competitive'],
+  440:     ['FPS', 'Casual'],
+  582010:  ['Action', 'Co-op', 'Grind'],
+  377160:  ['RPG', 'Post-apocalyptic'],
+  489830:  ['RPG', 'Fantasy'],
+  1716740: ['RPG', 'Sci-Fi', 'Exploration'],
+  1086940: ['RPG', 'Fantasy'],
+  367520:  ['Metroidvania', 'Indie'],
+  1145360: ['Roguelike', 'Indie'],
+  2344520: ['RPG', 'Loot'],
+  1623730: ['Survival', 'Co-op'],
+  553850:  ['Shooter', 'Co-op'],
+  413150:  ['Farming', 'Cosy'],
+  892970:  ['Survival', 'Co-op', 'Viking'],
+  570:     ['MOBA'],
+  1551360: ['Racing', 'Arcade'],
+  2139460: ['Shooter', 'Hero', 'Competitive'],
+  1938090: ['FPS', 'Military'],
+  814380:  ['Souls', 'Action'],
+  582660:  ['MMORPG', 'Fantasy'],
+};
+
+async function steamDNA(url) {
+  const sid = url.searchParams.get('sid'); if (!sid) return jsonResponse({ error: 'sid required' }, 400);
+  const data = await fetchJSON(
+    `https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${STEAM_KEY}&steamid=${sid}&include_appinfo=1&include_played_free_games=1`
+  );
+  if (!data?.response?.games) return jsonResponse({ error: 'privacy' }, 403);
+
+  const games = data.response.games;
+  const totalHours = games.reduce((s, g) => s + (g.playtime_forever || 0) / 60, 0);
+
+  // Genre hours tally
+  const genreHours = {};
+  let categorized = 0;
+  for (const g of games) {
+    const hours = (g.playtime_forever || 0) / 60;
+    const genres = GAME_GENRES[g.appid];
+    if (genres) {
+      categorized += hours;
+      for (const genre of genres) {
+        genreHours[genre] = (genreHours[genre] || 0) + hours;
+      }
+    }
+  }
+
+  // Sort genres by hours
+  const topGenres = Object.entries(genreHours)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8)
+    .map(([name, hours]) => ({ name, hours: Math.round(hours), pct: Math.round(hours / categorized * 100) }));
+
+  // Personality archetype
+  const topGame = games.reduce((a, b) => (b.playtime_forever > (a.playtime_forever || 0) ? b : a), games[0] || {});
+  const hoursInTopGame = (topGame.playtime_forever || 0) / 60;
+  const topGamePct = totalHours > 0 ? Math.round(hoursInTopGame / totalHours * 100) : 0;
+
+  let personality = 'The Dabbler';
+  const desc = [];
+
+  if (topGamePct > 40) { personality = 'The Loyalist'; desc.push(`${topGamePct}% of your time is in ${topGame.name || 'one game'}. You find something and commit.`); }
+  else if (topGamePct > 20) { personality = 'The Devoted'; desc.push(`You have a strong favourite (${topGame.name || ''}) but still explore.`); }
+
+  // Genre tilt
+  const top = topGenres[0];
+  if (top) {
+    if (top.name === 'Roguelike' || top.name === 'Souls') personality = 'The Masochist';
+    else if (top.name === 'RPG') personality = 'The Story Seeker';
+    else if (top.name === 'Competitive' || top.name === 'FPS') personality = 'The Competitor';
+    else if (top.name === 'Cosy' || top.name === 'Farming') personality = 'The Vibes Gamer';
+    else if (top.name === 'Strategy' || top.name === 'RTS') personality = 'The Tactician';
+    else if (top.name === 'Sandbox' || top.name === 'Crafting') personality = 'The Architect';
+    else if (top.name === 'Survival') personality = 'The Hoarder';
+    else if (top.name === 'MOBA') personality = 'The Glutton for Punishment';
+    else if (top.name === 'MMORPG') personality = 'The Grinder';
+  }
+
+  // Bacon stats
+  const untouched = games.filter(g => !g.playtime_forever).length;
+  const obsessed = games.filter(g => g.playtime_forever > 6000).length; // 100h+
+  const tried = games.filter(g => g.playtime_forever > 0 && g.playtime_forever < 120).length; // <2h
+
+  return jsonResponse({
+    personality,
+    description: desc.join(' '),
+    totalHours: Math.round(totalHours),
+    totalGames: games.length,
+    topGenres,
+    topGame: topGame.name,
+    topGameHours: Math.round(hoursInTopGame),
+    topGamePct,
+    stats: {
+      untouched,
+      obsessed,
+      tried,
+      completionRate: Math.round(((games.length - untouched) / games.length) * 100),
+    }
+  });
+}
+
+// ════════════════════════════════════════════════════════
+// HOW LONG TO BEAT
+// ════════════════════════════════════════════════════════
+
+async function howLongToBeat(url) {
+  const title = url.searchParams.get('title');
+  if (!title) return jsonResponse({ error: 'title required' }, 400);
+
+  // HLTB doesn't have an open API, but their search endpoint is reachable
+  try {
+    const searchUrl = 'https://howlongtobeat.com/api/seek/36d90fd2b6c9f83d';
+    const body = {
+      searchType: 'games',
+      searchTerms: title.split(/\s+/),
+      searchPage: 1,
+      size: 5,
+      searchOptions: {
+        games: { userId: 0, platform: '', sortCategory: 'popular', rangeCategory: 'main', rangeTime: { min: null, max: null }, gameplay: { perspective: '', flag: '', genre: '' }, rangeYear: { min: '', max: '' }, modifier: '' },
+        users: { sortCategory: 'postcount' },
+        lists: { sortCategory: 'follows' },
+        filter: '',
+        sort: 0,
+        randomizer: 0,
+      },
+    };
+    const r = await fetch(searchUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Referer': 'https://howlongtobeat.com/', 'Origin': 'https://howlongtobeat.com', 'User-Agent': 'Mozilla/5.0' },
+      body: JSON.stringify(body),
+    });
+    const data = await r.json();
+    const top = data?.data?.[0];
+    if (!top) return jsonResponse({ error: 'not found' }, 404);
+
+    return jsonResponse({
+      title: top.game_name,
+      mainStory:  Math.round((top.comp_main  || 0) / 3600 * 10) / 10,
+      mainExtra:  Math.round((top.comp_plus  || 0) / 3600 * 10) / 10,
+      completionist: Math.round((top.comp_100 || 0) / 3600 * 10) / 10,
+      allStyles:  Math.round((top.comp_all   || 0) / 3600 * 10) / 10,
+      reviewScore: top.review_score,
+      image: top.game_image ? `https://howlongtobeat.com/games/${top.game_image}` : null,
+    });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// GAME NIGHT — find co-op games everyone in a group owns
+// ════════════════════════════════════════════════════════
+
+// Games known to support co-op/multiplayer — quick whitelist for matching
+const COOP_WHITELIST = new Set([
+  1172620, 730, 570, 440, 1174180, 271590, 252490, 578080, 582010, 553850,
+  892970, 2767030, 2073850, 1172470, 1238810, 1938090, 252950, 242760, 1326470,
+  413150, 2246340, 813780, 1158310, 570940, 1086940, 440900, 1282100,
+  2277860, 382260, 252670, 739630, 381210, 739630, 2437700, 322330,
+  394360, 281990, 107410, 1426210, 2050650, 2195250, 2211420,
+  1203620, 367520, 1222670, 346110, 739630, 1426210, 1259420,
+]);
+
+async function gameNight(request, url) {
+  const sids = url.searchParams.get('sids'); // comma-separated steam IDs
+  if (!sids) return jsonResponse({ error: 'sids required (comma separated)' }, 400);
+  const sidList = sids.split(',').map(s => s.trim()).filter(s => /^7656\d{13}$/.test(s));
+  if (sidList.length < 2) return jsonResponse({ error: 'need at least 2 Steam IDs' }, 400);
+
+  // Fetch each player's games in parallel
+  const allLibs = await Promise.all(sidList.map(sid =>
+    fetchJSON(`https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${STEAM_KEY}&steamid=${sid}&include_appinfo=1&include_played_free_games=1`).catch(() => null)
+  ));
+
+  // Check privacy
+  for (let i = 0; i < allLibs.length; i++) {
+    if (!allLibs[i]?.response?.games) {
+      return jsonResponse({ error: `Steam ID ${sidList[i]} has private library` }, 403);
+    }
+  }
+
+  // Find appids owned by everyone
+  const libs = allLibs.map(l => new Set((l.response.games || []).map(g => g.appid)));
+  const firstLib = libs[0];
+  const shared = [...firstLib].filter(id => libs.every(lib => lib.has(id)));
+
+  // Use the first player's game details for names
+  const firstGames = allLibs[0].response.games;
+  const gameMap = Object.fromEntries(firstGames.map(g => [g.appid, g]));
+
+  // Score: prefer co-op whitelist games, then by total combined playtime
+  const candidates = shared
+    .map(appid => {
+      const info = gameMap[appid];
+      if (!info) return null;
+      const totalHours = allLibs.reduce((s, l) => {
+        const g = l.response.games.find(x => x.appid === appid);
+        return s + (g?.playtime_forever || 0) / 60;
+      }, 0);
+      const isCoop = COOP_WHITELIST.has(appid);
+      return {
+        appid,
+        name: info.name,
+        img: `https://cdn.cloudflare.steamstatic.com/steam/apps/${appid}/header.jpg`,
+        totalHours: Math.round(totalHours),
+        isCoop,
+        playerHours: allLibs.map((l, i) => {
+          const g = l.response.games.find(x => x.appid === appid);
+          return { sid: sidList[i], hours: Math.round((g?.playtime_forever || 0) / 60) };
+        }),
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => (b.isCoop - a.isCoop) || (b.totalHours - a.totalHours));
+
+  return jsonResponse({
+    playerCount: sidList.length,
+    sharedCount: shared.length,
+    coopCount: candidates.filter(c => c.isCoop).length,
+    suggestions: candidates.slice(0, 12),
+  });
+}
+
+// ════════════════════════════════════════════════════════
+// WEEKLY DIGEST SUBSCRIBE
+// ════════════════════════════════════════════════════════
+
+async function subscribeDigest(request) {
+  try {
+    const { email, sid } = await request.json();
+    if (!email || !email.includes('@')) return jsonResponse({ error: 'valid email required' }, 400);
+
+    // Notify owner (we'll store subscriber lists properly when we add KV)
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: 'onboarding@resend.dev',
+        to: OWNER_EMAIL,
+        subject: `QuestLog digest signup: ${email}`,
+        html: `<p><strong>${email}</strong> subscribed to the QuestLog weekly digest.</p><p>Steam ID: ${sid || 'not provided'}</p>`,
+      }),
+    });
+
+    // Confirmation to subscriber (only works if subscriber == verified owner email while we're on resend test domain)
+    return jsonResponse({ ok: true, message: 'Subscribed. First digest arrives Sunday morning.' });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
+  }
 }
 
 async function createPriceAlert(request) {

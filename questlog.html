@@ -493,6 +493,58 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
     </div>
   </div>
 
+  <!-- STEAM DNA -->
+  <div class="section">
+    <div class="section-head"><h2>Your Steam DNA</h2></div>
+    <div id="dnaPanel" class="sidebar-card"><div class="empty"><span class="loading"></span></div></div>
+  </div>
+
+  <!-- HOW LONG TO BEAT -->
+  <div class="section">
+    <div class="section-head"><h2>How Long to Beat</h2></div>
+    <div class="sidebar-card">
+      <p style="color:var(--dim);font-size:13px;margin-bottom:14px">How many hours does this game actually take? Main story vs completionist.</p>
+      <div style="display:flex;gap:10px;margin-bottom:16px">
+        <input type="text" id="hltbInput" placeholder="Game title" style="flex:1;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit" onkeydown="if(event.key==='Enter') checkHLTB()">
+        <button onclick="checkHLTB()" class="connect-btn" style="padding:10px 20px;font-size:13px">Check</button>
+      </div>
+      <div id="hltbResult"></div>
+    </div>
+  </div>
+
+  <!-- BACKLOG CHALLENGE -->
+  <div class="section">
+    <div class="section-head"><h2>Backlog Challenge</h2></div>
+    <div class="sidebar-card">
+      <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Pick 3 games from your library to focus on. Set a 30-day deadline. Stop buying more until you finish them.</p>
+      <div id="challengePanel"><div class="empty"><span class="loading"></span></div></div>
+    </div>
+  </div>
+
+  <!-- GAME NIGHT -->
+  <div class="section">
+    <div class="section-head"><h2>Game Night</h2></div>
+    <div class="sidebar-card">
+      <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Find co-op games all your friends own. Pick who's in, we'll show what to play.</p>
+      <div id="gameNightPanel"></div>
+      <button onclick="findGameNight()" class="connect-btn" style="width:100%;margin-top:12px">Find games for tonight</button>
+      <div id="gameNightResult" style="margin-top:16px"></div>
+    </div>
+  </div>
+
+  <!-- WEEKLY DIGEST -->
+  <div class="section">
+    <div class="section-head"><h2>Weekly Digest — By Email</h2></div>
+    <div class="sidebar-card">
+      <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Every Sunday: best deals on games like yours, the week's free game, 3 new releases with 90%+ reviews, price drops on your wishlist.</p>
+      <div style="display:flex;gap:10px">
+        <input type="email" id="digestEmail" placeholder="you@example.com" style="flex:1;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit">
+        <button onclick="subscribeDigest()" class="connect-btn" style="padding:10px 24px;font-size:13px">Subscribe</button>
+      </div>
+      <div id="digestResult" style="margin-top:12px;font-size:13px"></div>
+    </div>
+  </div>
+
   <!-- FPS ESTIMATOR -->
   <div class="section">
     <div class="section-head"><h2>FPS Estimator — Will it run?</h2></div>
@@ -606,12 +658,15 @@ document.querySelectorAll('.nav-tab').forEach(tab => {
     if (view === 'achievements' && !STATE.achLoaded) loadAchievements();
     if (view === 'leaderboards' && !STATE.lbLoaded) loadLeaderboards();
     if (view === 'more') {
-      renderFriends();  // always refresh friends list in case storage changed
+      renderFriends();
+      renderChallengeUI();
+      renderGameNightUI();
       if (!STATE.moreLoaded) {
         loadGameOfDay();
         loadWrapped();
         loadBacklog();
         loadFinishThis();
+        loadSteamDNA();
         STATE.moreLoaded = true;
       }
     }
@@ -1009,6 +1064,237 @@ async function compareFriend() {
         </div>`).join('')}` : ''}
     `;
   } catch (e) { document.getElementById('friendCompareResult').innerHTML = `<div class="error">${e.message}</div>`; }
+}
+
+// ───── STEAM DNA ─────
+async function loadSteamDNA() {
+  if (!STATE.sid) return;
+  const el = document.getElementById('dnaPanel');
+  try {
+    const r = await api('/api/steam-dna');
+    if (r.error) { el.innerHTML = `<div class="error">${r.error}</div>`; return; }
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:24px">
+        <div style="flex:1;min-width:220px">
+          <div style="font-size:11px;color:var(--dim);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px">Your Type</div>
+          <div style="font-size:28px;font-weight:800;color:var(--accent);line-height:1;margin-bottom:8px">${r.personality}</div>
+          <div style="font-size:13px;color:var(--dim);line-height:1.5">${r.description || ''}</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;min-width:240px">
+          <div style="background:var(--panel2);border-radius:6px;padding:12px;text-align:center">
+            <div style="font-size:20px;font-weight:800">${r.totalHours.toLocaleString()}h</div>
+            <div style="font-size:10px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-top:2px">Total</div>
+          </div>
+          <div style="background:var(--panel2);border-radius:6px;padding:12px;text-align:center">
+            <div style="font-size:20px;font-weight:800;color:var(--accent)">${r.topGamePct}%</div>
+            <div style="font-size:10px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-top:2px">In ${(r.topGame||'?').substring(0,15)}</div>
+          </div>
+          <div style="background:var(--panel2);border-radius:6px;padding:12px;text-align:center">
+            <div style="font-size:20px;font-weight:800;color:#ff9e42">${r.stats.untouched}</div>
+            <div style="font-size:10px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-top:2px">Untouched</div>
+          </div>
+          <div style="background:var(--panel2);border-radius:6px;padding:12px;text-align:center">
+            <div style="font-size:20px;font-weight:800">${r.stats.obsessed}</div>
+            <div style="font-size:10px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-top:2px">100h+ Games</div>
+          </div>
+        </div>
+      </div>
+      <h3 style="font-size:12px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Genre Breakdown</h3>
+      ${r.topGenres.map(g => `
+        <div style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+            <span>${g.name}</span>
+            <span style="color:var(--dim)">${g.hours}h · ${g.pct}%</span>
+          </div>
+          <div style="height:6px;background:var(--panel2);border-radius:3px;overflow:hidden">
+            <div style="height:100%;width:${g.pct}%;background:var(--accent)"></div>
+          </div>
+        </div>
+      `).join('')}
+    `;
+  } catch (e) { el.innerHTML = `<div class="error">${e.message}</div>`; }
+}
+
+// ───── HOW LONG TO BEAT ─────
+async function checkHLTB() {
+  const title = document.getElementById('hltbInput').value.trim();
+  if (!title) return;
+  const el = document.getElementById('hltbResult');
+  el.innerHTML = '<div class="empty"><span class="loading"></span> Checking...</div>';
+  try {
+    const r = await fetch(`/api/hltb?title=${encodeURIComponent(title)}`);
+    const d = await r.json();
+    if (d.error) { el.innerHTML = `<div class="error">${d.error}</div>`; return; }
+    el.innerHTML = `
+      <div style="display:flex;gap:16px;align-items:center;margin-bottom:16px">
+        ${d.image ? `<div style="width:120px;height:90px;background:url('${d.image}') center/cover;border-radius:6px;flex-shrink:0"></div>` : ''}
+        <div><div style="font-size:15px;font-weight:700;margin-bottom:4px">${d.title}</div><div style="font-size:12px;color:var(--dim)">HowLongToBeat data</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px">
+        ${d.mainStory    ? `<div style="background:var(--panel2);border-radius:6px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:800;color:var(--accent)">${d.mainStory}h</div><div style="font-size:10px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-top:4px">Main Story</div></div>` : ''}
+        ${d.mainExtra    ? `<div style="background:var(--panel2);border-radius:6px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:800">${d.mainExtra}h</div><div style="font-size:10px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-top:4px">Main + Extras</div></div>` : ''}
+        ${d.completionist? `<div style="background:var(--panel2);border-radius:6px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:800;color:#ff9e42">${d.completionist}h</div><div style="font-size:10px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-top:4px">100%</div></div>` : ''}
+      </div>`;
+  } catch (e) { el.innerHTML = `<div class="error">${e.message}</div>`; }
+}
+
+// ───── BACKLOG CHALLENGE ─────
+function getChallenge() {
+  try { return JSON.parse(localStorage.getItem('questlog_challenge') || 'null'); } catch { return null; }
+}
+function saveChallenge(c) { localStorage.setItem('questlog_challenge', JSON.stringify(c)); }
+
+function renderChallengeUI() {
+  const el = document.getElementById('challengePanel');
+  if (!el) return;
+  const ch = getChallenge();
+
+  if (!ch) {
+    // New challenge picker — show backlog games
+    if (!STATE.games || !STATE.games.length) { el.innerHTML = '<div class="empty">Connect Steam to start a challenge.</div>'; return; }
+    const backlog = STATE.games.filter(g => (g.hours || 0) < 5).slice(0, 20);
+    el.innerHTML = `
+      <p style="color:var(--dim);font-size:12px;margin-bottom:12px">Pick exactly 3 games from your backlog:</p>
+      <div style="max-height:340px;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:14px" id="challengePicker">
+        ${backlog.map(g => `
+          <label style="display:block;cursor:pointer;position:relative">
+            <input type="checkbox" value="${g.appid}" data-name="${(g.name||'').replace(/"/g,'&quot;')}" data-img="${g.img || ''}" style="position:absolute;opacity:0;pointer-events:none" onchange="toggleChallengePick(this)">
+            <div class="challenge-opt" style="aspect-ratio:460/215;background:url('${g.img||''}') center/cover;border-radius:6px;border:2px solid transparent;transition:border-color 0.15s">
+              <div style="background:rgba(0,0,0,0.7);padding:4px 8px;font-size:11px;text-align:center;position:absolute;bottom:0;left:0;right:0;border-radius:0 0 4px 4px">${(g.name||'').substring(0,28)}</div>
+            </div>
+          </label>
+        `).join('')}
+      </div>
+      <button onclick="startChallenge()" class="connect-btn" style="width:100%" id="startChallengeBtn" disabled>Start 30-Day Challenge</button>
+    `;
+  } else {
+    // Existing challenge — show progress
+    const daysLeft = Math.max(0, Math.ceil((ch.endDate - Date.now()) / 86400000));
+    el.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div><div style="font-size:20px;font-weight:800;color:var(--accent)">${daysLeft} days left</div><div style="font-size:11px;color:var(--dim)">Challenge ends ${new Date(ch.endDate).toLocaleDateString('en-GB')}</div></div>
+        <button onclick="cancelChallenge()" style="background:transparent;color:var(--dim);border:1px solid var(--border);padding:6px 12px;border-radius:4px;font-size:11px;cursor:pointer;font-family:inherit">Cancel</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+        ${ch.games.map(g => `
+          <div onclick="openSteam(${g.appid})" style="cursor:pointer">
+            <div style="aspect-ratio:460/215;background:url('${g.img}') center/cover;border-radius:6px;border:2px solid ${g.done ? 'var(--accent)' : 'var(--border)'};position:relative">
+              ${g.done ? '<div style="position:absolute;inset:0;background:rgba(200,241,53,0.3);display:flex;align-items:center;justify-content:center;font-size:40px">✓</div>' : ''}
+            </div>
+            <div style="font-size:12px;margin-top:6px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${g.name}</div>
+            <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--dim);margin-top:2px;cursor:pointer">
+              <input type="checkbox" ${g.done ? 'checked' : ''} onchange="toggleChallengeDone('${g.appid}')" style="accent-color:var(--accent)"> Finished
+            </label>
+          </div>
+        `).join('')}
+      </div>
+      ${ch.games.every(g => g.done) ? '<div style="margin-top:16px;padding:14px;background:rgba(34,204,102,0.1);border:1px solid rgba(34,204,102,0.3);color:#22cc66;border-radius:6px;text-align:center">Challenge completed. You actually did it.</div>' : ''}
+    `;
+  }
+}
+
+STATE.challengePicks = [];
+function toggleChallengePick(cb) {
+  const label = cb.closest('label').querySelector('.challenge-opt');
+  if (cb.checked) {
+    if (STATE.challengePicks.length >= 3) { cb.checked = false; return; }
+    STATE.challengePicks.push({ appid: cb.value, name: cb.dataset.name, img: cb.dataset.img });
+    label.style.borderColor = 'var(--accent)';
+  } else {
+    STATE.challengePicks = STATE.challengePicks.filter(p => p.appid !== cb.value);
+    label.style.borderColor = 'transparent';
+  }
+  document.getElementById('startChallengeBtn').disabled = STATE.challengePicks.length !== 3;
+  document.getElementById('startChallengeBtn').textContent = `Start 30-Day Challenge (${STATE.challengePicks.length}/3)`;
+}
+
+function startChallenge() {
+  if (STATE.challengePicks.length !== 3) return;
+  saveChallenge({
+    games: STATE.challengePicks.map(p => ({ ...p, done: false })),
+    startDate: Date.now(),
+    endDate: Date.now() + 30 * 86400000,
+  });
+  STATE.challengePicks = [];
+  renderChallengeUI();
+}
+function toggleChallengeDone(appid) {
+  const ch = getChallenge();
+  if (!ch) return;
+  const g = ch.games.find(g => g.appid == appid);
+  if (g) g.done = !g.done;
+  saveChallenge(ch);
+  renderChallengeUI();
+}
+function cancelChallenge() {
+  if (confirm('Cancel current challenge?')) { localStorage.removeItem('questlog_challenge'); renderChallengeUI(); }
+}
+
+// ───── GAME NIGHT ─────
+function renderGameNightUI() {
+  const el = document.getElementById('gameNightPanel');
+  if (!el) return;
+  const friends = getFriends();
+  if (!STATE.sid) { el.innerHTML = '<div class="empty">Connect Steam first.</div>'; return; }
+  if (!friends.length) { el.innerHTML = '<div class="empty">Add friends above first.</div>'; return; }
+
+  el.innerHTML = `
+    <div style="font-size:12px;color:var(--dim);margin-bottom:8px">Select who's joining:</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      ${friends.map(f => `
+        <label style="display:flex;align-items:center;gap:6px;background:var(--panel2);padding:6px 10px;border-radius:100px;cursor:pointer;font-size:12px">
+          <input type="checkbox" value="${f.sid}" style="accent-color:var(--accent)"> ${f.name}
+        </label>
+      `).join('')}
+    </div>
+  `;
+}
+
+async function findGameNight() {
+  const checked = [...document.querySelectorAll('#gameNightPanel input:checked')].map(c => c.value);
+  if (checked.length === 0) { alert('Select at least one friend'); return; }
+  const sids = [STATE.sid, ...checked];
+  const el = document.getElementById('gameNightResult');
+  el.innerHTML = '<div class="empty"><span class="loading"></span> Finding overlapping co-op games...</div>';
+  try {
+    const r = await fetch(`/api/game-night?sids=${sids.join(',')}`);
+    const d = await r.json();
+    if (d.error) { el.innerHTML = `<div class="error">${d.error}</div>`; return; }
+    el.innerHTML = `
+      <div style="color:var(--dim);font-size:12px;margin-bottom:12px">${d.sharedCount} games in common · ${d.coopCount} support co-op</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px">
+        ${d.suggestions.map(s => `
+          <div onclick="openSteam(${s.appid})" style="cursor:pointer">
+            <div style="aspect-ratio:460/215;background:url('${s.img}') center/cover;border-radius:6px;border:2px solid ${s.isCoop ? 'var(--accent)' : 'var(--border)'};position:relative">
+              ${s.isCoop ? '<span style="position:absolute;top:4px;right:4px;background:var(--accent);color:#000;padding:2px 6px;border-radius:3px;font-size:9px;font-weight:700">CO-OP</span>' : ''}
+            </div>
+            <div style="font-size:12px;margin-top:4px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.name}</div>
+            <div style="font-size:10px;color:var(--dim)">${s.totalHours}h combined</div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  } catch (e) { el.innerHTML = `<div class="error">${e.message}</div>`; }
+}
+
+// ───── WEEKLY DIGEST ─────
+async function subscribeDigest() {
+  const email = document.getElementById('digestEmail').value.trim();
+  if (!email || !email.includes('@')) { document.getElementById('digestResult').innerHTML = '<div class="error">Enter a valid email</div>'; return; }
+  try {
+    const r = await fetch('/api/subscribe-digest', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, sid: STATE.sid }),
+    });
+    const d = await r.json();
+    if (d.ok) {
+      document.getElementById('digestResult').innerHTML = '<div style="color:var(--accent)">✓ Subscribed. First digest arrives Sunday.</div>';
+      document.getElementById('digestEmail').value = '';
+    } else {
+      document.getElementById('digestResult').innerHTML = `<div class="error">${d.error || 'Failed'}</div>`;
+    }
+  } catch (e) { document.getElementById('digestResult').innerHTML = `<div class="error">${e.message}</div>`; }
 }
 
 async function estimateFPS() {
