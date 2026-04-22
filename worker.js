@@ -1303,29 +1303,29 @@ async function newReleases(url) {
 }
 
 async function upcomingReleases() {
-  // Hype candidates — games widely expected to drop in 2026+. Reason lines tell the user why it's big.
-  // Each gets verified against Steam live: if already released, skipped.
+  // MOST ANTICIPATED upcoming games — verified Steam appids only.
+  // Criteria: not yet released, top wishlisted / most-talked-about games.
+  // GTA VI, Ghost of Yōtei, Perfect Dark excluded because they're not on Steam.
   const HYPE = [
-    { appid: 3240220, name: 'Grand Theft Auto VI', reason: 'The biggest entertainment launch of all time' },
-    { appid: 1030300, name: 'Hollow Knight: Silksong', reason: 'The most-awaited indie in history' },
-    { appid: 1245620, name: 'Elden Ring: Nightreign', reason: 'FromSoftware co-op spin-off' },
-    { appid: 2677660, name: 'Intergalactic: The Heretic Prophet', reason: 'Naughty Dog\'s sci-fi epic' },
-    { appid: 2358720, name: 'Borderlands 4', reason: 'Gearbox\'s looter-shooter returns' },
-    { appid: 2456740, name: 'Ghost of Yōtei', reason: 'Ghost of Tsushima successor from Sucker Punch' },
-    { appid: 2183900, name: 'Silent Hill f', reason: 'New Silent Hill, 1960s Japan setting' },
-    { appid: 2710330, name: 'Directive 8020', reason: 'Sci-fi horror from Supermassive' },
-    { appid: 1655630, name: 'Crimson Desert', reason: 'Technically stunning open-world RPG' },
-    { appid: 1655650, name: 'Light No Fire', reason: 'Hello Games\' fantasy successor to No Man\'s Sky' },
-    { appid: 1940340, name: 'Pragmata', reason: "Capcom's moon sci-fi" },
-    { appid: 2399830, name: 'The Outer Worlds 2', reason: "Obsidian's satirical space RPG sequel" },
-    { appid: 2694490, name: 'Marathon', reason: "Bungie's extraction shooter revival" },
-    { appid: 2064650, name: 'Fable', reason: 'Playground Games rebooting a legend' },
-    { appid: 2183550, name: 'Perfect Dark', reason: "The Initiative's spy reboot" },
-    { appid: 2807960, name: 'Resident Evil 9: Requiem', reason: 'Next mainline RE horror' },
-    { appid: 2371070, name: 'Civilization VII: Next', reason: 'The next big 4X expansion' },
-    { appid: 3159330, name: 'Subnautica 2', reason: 'Return to the alien ocean' },
-    { appid: 2183650, name: 'Bloodlines 2', reason: 'Vampire: The Masquerade sequel' },
-    { appid: 3017860, name: 'Warhammer 40K: Dark Heresy', reason: 'New 40K CRPG from Owlcat' },
+    { appid: 1030300, name: 'Hollow Knight: Silksong',        reason: 'The most-awaited indie in history' },
+    { appid: 2622380, name: 'Elden Ring Nightreign',          reason: 'FromSoftware co-op spin-off' },
+    { appid: 3065800, name: 'Marathon',                        reason: "Bungie's extraction shooter revival" },
+    { appid: 1449110, name: 'The Outer Worlds 2',              reason: "Obsidian's satirical space RPG sequel" },
+    { appid: 2769570, name: 'Fable',                            reason: 'Playground Games rebooting a legend' },
+    { appid: 1643320, name: 'S.T.A.L.K.E.R. 2: Heart of Chornobyl', reason: 'Post-apocalyptic shooter with huge hype' },
+    { appid: 2694490, name: 'Path of Exile 2',                 reason: "ARPG that's dethroning Diablo" },
+    { appid: 1962700, name: 'Subnautica 2',                     reason: 'Return to the alien ocean' },
+    { appid: 2277560, name: 'WUCHANG: Fallen Feathers',         reason: 'Chinese soulslike generating massive buzz' },
+    { appid: 3357650, name: 'Pragmata',                         reason: "Capcom's long-awaited moon sci-fi" },
+    { appid: 2719590, name: 'Light No Fire',                    reason: "Hello Games' fantasy successor to No Man's Sky" },
+    { appid: 3321460, name: 'Crimson Desert',                   reason: 'Technically stunning open-world RPG' },
+    { appid: 4115450, name: 'Phantom Blade Zero',               reason: 'Chinese action game, Kung Fu souls-adjacent' },
+    { appid: 2255370, name: 'Directive 8020',                   reason: 'Sci-fi horror from Supermassive (Dark Pictures)' },
+    { appid: 532790,  name: 'Vampire: The Masquerade - Bloodlines 2', reason: '20-year-awaited cult sequel' },
+    { appid: 1422450, name: 'Deadlock',                         reason: "Valve's new hero shooter in open beta" },
+    { appid: 388860,  name: 'Judas',                             reason: "BioShock creator's spiritual successor" },
+    { appid: 2678080, name: 'Tides of Tomorrow',                 reason: 'Post-apocalyptic atmospheric ocean adventure' },
+    { appid: 2456740, name: 'Shadow Labyrinth',                  reason: 'Pac-Man metroidvania, critically buzzed' },
   ];
 
   // Validate each appid against Steam. Only include if appid resolves and is still coming_soon.
