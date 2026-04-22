@@ -1346,9 +1346,29 @@ async function howLongToBeat(url) {
   const title = url.searchParams.get('title');
   if (!title) return jsonResponse({ error: 'title required' }, 400);
 
-  // HLTB doesn't have an open API, but their search endpoint is reachable
+  // HLTB's search endpoint needs a rotating key in the URL. We fetch their main JS,
+  // extract the current key, then POST to the search endpoint with it.
   try {
-    const searchUrl = 'https://howlongtobeat.com/api/seek/36d90fd2b6c9f83d';
+    // Step 1: get HLTB homepage HTML and find their JS chunk name
+    const homeRes = await fetch('https://howlongtobeat.com/', {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36' },
+    });
+    const homeHTML = await homeRes.text();
+    const scriptMatch = homeHTML.match(/\/_next\/static\/chunks\/pages\/_app-[a-f0-9]+\.js/);
+    if (!scriptMatch) return jsonResponse({ error: 'HLTB layout changed (no JS chunk)', fallback: `https://howlongtobeat.com/?q=${encodeURIComponent(title)}` }, 502);
+
+    // Step 2: fetch the JS chunk, extract the rotating API key
+    const jsRes = await fetch(`https://howlongtobeat.com${scriptMatch[0]}`, {
+      headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://howlongtobeat.com/' },
+    });
+    const jsText = await jsRes.text();
+    const keyMatch = jsText.match(/\/api\/seek\/([a-f0-9]{16,})/) || jsText.match(/"\/api\/seek\/([a-f0-9]+)"/);
+    if (!keyMatch) return jsonResponse({ error: 'HLTB key not found in bundle', fallback: `https://howlongtobeat.com/?q=${encodeURIComponent(title)}` }, 502);
+
+    const apiKey = keyMatch[1];
+    const searchUrl = `https://howlongtobeat.com/api/seek/${apiKey}`;
+
+    // Step 3: POST to the search endpoint
     const body = {
       searchType: 'games',
       searchTerms: title.split(/\s+/),
@@ -1368,21 +1388,26 @@ async function howLongToBeat(url) {
       headers: { 'Content-Type': 'application/json', 'Referer': 'https://howlongtobeat.com/', 'Origin': 'https://howlongtobeat.com', 'User-Agent': 'Mozilla/5.0' },
       body: JSON.stringify(body),
     });
+    const ct = r.headers.get('content-type') || '';
+    if (!ct.includes('json')) {
+      return jsonResponse({ error: 'HLTB returned non-JSON', fallback: `https://howlongtobeat.com/?q=${encodeURIComponent(title)}` }, 502);
+    }
     const data = await r.json();
     const top = data?.data?.[0];
-    if (!top) return jsonResponse({ error: 'not found' }, 404);
+    if (!top) return jsonResponse({ error: 'No results found', fallback: `https://howlongtobeat.com/?q=${encodeURIComponent(title)}` }, 404);
 
     return jsonResponse({
       title: top.game_name,
-      mainStory:  Math.round((top.comp_main  || 0) / 3600 * 10) / 10,
-      mainExtra:  Math.round((top.comp_plus  || 0) / 3600 * 10) / 10,
+      mainStory:   Math.round((top.comp_main  || 0) / 3600 * 10) / 10,
+      mainExtra:   Math.round((top.comp_plus  || 0) / 3600 * 10) / 10,
       completionist: Math.round((top.comp_100 || 0) / 3600 * 10) / 10,
-      allStyles:  Math.round((top.comp_all   || 0) / 3600 * 10) / 10,
+      allStyles:   Math.round((top.comp_all   || 0) / 3600 * 10) / 10,
       reviewScore: top.review_score,
       image: top.game_image ? `https://howlongtobeat.com/games/${top.game_image}` : null,
+      sourceUrl: `https://howlongtobeat.com/game?id=${top.game_id}`,
     });
   } catch (e) {
-    return jsonResponse({ error: e.message }, 500);
+    return jsonResponse({ error: e.message, fallback: `https://howlongtobeat.com/?q=${encodeURIComponent(title)}` }, 500);
   }
 }
 

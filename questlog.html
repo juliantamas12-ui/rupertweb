@@ -1124,7 +1124,11 @@ async function checkHLTB() {
   try {
     const r = await fetch(`/api/hltb?title=${encodeURIComponent(title)}`);
     const d = await r.json();
-    if (d.error) { el.innerHTML = `<div class="error">${d.error}</div>`; return; }
+    if (d.error) {
+      const fallback = d.fallback ? `<div style="margin-top:10px;font-size:12px"><a href="${d.fallback}" target="_blank" style="color:var(--accent)">→ Search HowLongToBeat directly</a></div>` : '';
+      el.innerHTML = `<div class="error">${d.error}</div>${fallback}`;
+      return;
+    }
     el.innerHTML = `
       <div style="display:flex;gap:16px;align-items:center;margin-bottom:16px">
         ${d.image ? `<div style="width:120px;height:90px;background:url('${d.image}') center/cover;border-radius:6px;flex-shrink:0"></div>` : ''}
