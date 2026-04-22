@@ -1,63 +1,69 @@
 {
-  "lastUpdated": "2026-04-22T02:03:55.856Z",
+  "lastUpdated": "2026-04-22T06:03:57.006Z",
   "vessels": [
     {
       "name": "WHISPER",
       "port": "the Caribbean Sea",
-      "updated": "2026-04-22T02:03:29.843Z"
+      "updated": "2026-04-22T06:03:27.184Z"
     },
     {
       "name": "PROJECT X",
       "port": "the Caribbean Sea",
-      "updated": "2026-04-22T02:03:52.823Z"
+      "updated": "2026-04-22T06:03:53.774Z"
     },
     {
       "name": "BARBARA",
       "port": "the US East Coast",
-      "updated": "2026-04-22T02:03:50.888Z"
+      "updated": "2026-04-22T06:03:51.922Z"
     },
     {
       "name": "LADY S",
       "port": "the Balearic Sea",
-      "updated": "2026-04-22T02:03:24.241Z"
+      "updated": "2026-04-22T06:03:20.789Z"
     },
     {
       "name": "KENSHO",
       "port": "Palma de Mallorca, Spain",
-      "updated": "2026-04-22T02:03:40.972Z"
+      "updated": "2026-04-22T06:03:47.670Z"
     },
     {
       "name": "RENAISSANCE",
       "port": "the Balearic Sea",
-      "updated": "2026-04-22T02:03:34.394Z"
+      "updated": "2026-04-22T06:03:44.007Z"
     },
     {
       "name": "DRAGONFLY",
-      "port": "the West Mediterranean",
-      "updated": "2026-04-22T02:03:31.680Z"
+      "port": "Mediterranean",
+      "updated": "2026-04-22T06:03:38.555Z"
     },
     {
       "name": "BREAKTHROUGH",
       "port": "the US East Coast",
-      "updated": "2026-04-22T02:03:19.785Z"
+      "updated": "2026-04-22T06:03:18.686Z"
     },
     {
       "name": "LEVIATHAN",
       "port": "Stornoway",
-      "updated": "2026-04-22T02:03:43.534Z"
+      "updated": "2026-04-22T06:03:50.178Z"
     },
     {
       "name": "CC SUMMER",
       "port": "the US East Coast",
-      "updated": "2026-04-22T02:03:54.855Z"
+      "updated": "2026-04-22T06:03:56.004Z"
     },
     {
       "name": "KISMET",
       "port": "Barcelona, Spain on Apr",
-      "updated": "2026-04-22T02:03:27.621Z"
+      "updated": "2026-04-22T06:03:24.505Z"
     }
   ],
   "recentMoves": [
+    {
+      "vessel": "DRAGONFLY",
+      "from": "the West Mediterranean",
+      "to": "Mediterranean",
+      "time": "2026-04-22T06:03:57.006Z"
+    },
     {
       "vessel": "DRAGONFLY",
       "from": "Mediterranean",
