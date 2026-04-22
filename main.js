@@ -260,12 +260,6 @@ const SCHOOL_TASKS = [
     "status": "upcoming"
   },
   {
-    "title": "Quiz: Irregular Comparatives & Superlatives",
-    "due": "",
-    "subject": "",
-    "status": "upcoming"
-  },
-  {
     "title": "Test_A1_Kap 11_Meine Stadt",
     "due": "",
     "subject": "",
