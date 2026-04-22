@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Man Who Invented Containment and Spent Forty Years Watching It Go Wrong",
+    date: "2026-04-22",
+    category: "History",
+    excerpt: "On 22 February 1946, a middle-ranking American diplomat in Moscow sat down at a typewriter with a bad sinus infection and, over the course of two feverish days, produced what is still probably the most consequential cable in the history of American foreign policy. Its author, George Kennan, had been asked to explain why the Soviets refused to join the IMF. He gave them a diagnosis of an entire civilization instead...",
+    url: "essays/2026-04-22-the-man-who-invented-containment-and-spent-forty-years-watching-.html"
+  },
+  {
     title: "The Silver That Killed an Empire: Potosí, the Ming, and the First Global Crisis",
     date: "2026-04-21",
     category: "History",
