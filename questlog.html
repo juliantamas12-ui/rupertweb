@@ -578,10 +578,69 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
     <div class="section-head"><h2>Your Public Profile</h2></div>
     <div class="sidebar-card">
       <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Share a public page showing your Steam stats. Works with a URL anyone can open.</p>
-      <div id="profileUrlBox" style="background:var(--panel2);padding:12px 14px;border-radius:6px;font-family:'Courier New',monospace;font-size:13px;color:var(--accent);display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <div id="profileUrlBox" style="background:var(--panel2);padding:12px 14px;border-radius:6px;font-family:'Courier New',monospace;font-size:13px;color:var(--accent);display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px">
         <span id="profileUrl">Connect Steam first</span>
         <button onclick="copyProfileUrl()" class="connect-btn" style="padding:6px 14px;font-size:11px">Copy</button>
       </div>
+
+      <!-- PRO: Custom URL -->
+      <div style="background:rgba(200,241,53,0.05);border:1px solid rgba(200,241,53,0.2);border-radius:6px;padding:14px;margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="background:var(--accent);color:#000;font-size:10px;font-weight:700;padding:3px 8px;border-radius:3px;letter-spacing:1px">PRO</span><span style="font-size:13px;font-weight:600">Custom URL</span></div>
+        <p style="font-size:12px;color:var(--dim);margin-bottom:10px">Replace your Steam ID with a name of your choice.</p>
+        <div style="display:flex;gap:8px">
+          <div style="background:var(--panel2);padding:10px 12px;border-radius:5px;font-family:'Courier New',monospace;font-size:12px;color:var(--dim);flex-shrink:0">${location.origin}/u/</div>
+          <input type="text" id="customUrlInput" placeholder="your-name" style="flex:1;background:var(--panel2);border:1px solid var(--border);border-radius:5px;padding:10px 12px;color:var(--text);font-size:13px;font-family:inherit" maxlength="20" pattern="[a-z0-9-]+">
+          <button onclick="saveCustomUrl()" class="connect-btn" style="padding:10px 18px;font-size:12px">Save</button>
+        </div>
+        <div id="customUrlResult" style="font-size:12px;margin-top:8px"></div>
+      </div>
+
+      <!-- PRO: Theme -->
+      <div style="background:rgba(200,241,53,0.05);border:1px solid rgba(200,241,53,0.2);border-radius:6px;padding:14px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="background:var(--accent);color:#000;font-size:10px;font-weight:700;padding:3px 8px;border-radius:3px;letter-spacing:1px">PRO</span><span style="font-size:13px;font-weight:600">Profile Theme</span></div>
+        <p style="font-size:12px;color:var(--dim);margin-bottom:10px">Change how your public profile looks.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button onclick="setTheme('dark')" class="theme-btn" data-theme="dark" style="background:linear-gradient(135deg,#0a0e1a,#1a2340);">Dark</button>
+          <button onclick="setTheme('light')" class="theme-btn" data-theme="light" style="background:linear-gradient(135deg,#f5f2e8,#e8e1ce);color:#1a1a1a">Light</button>
+          <button onclick="setTheme('gold')" class="theme-btn" data-theme="gold" style="background:linear-gradient(135deg,#2a1f0a,#5a3f18);">Gold</button>
+          <button onclick="setTheme('retro')" class="theme-btn" data-theme="retro" style="background:linear-gradient(135deg,#2d0a2d,#4a1440);">Retro</button>
+          <button onclick="setTheme('neon')" class="theme-btn" data-theme="neon" style="background:linear-gradient(135deg,#0f0020,#2a0a4a);">Neon</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+  .theme-btn{color:#fff;border:2px solid transparent;padding:14px 18px;border-radius:6px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s;min-width:80px}
+  .theme-btn:hover{transform:translateY(-1px)}
+  .theme-btn.active{border-color:var(--accent)}
+  </style>
+
+  <!-- PRO: Price Alerts -->
+  <div class="section">
+    <div class="section-head"><h2>Price Drop Alerts <span style="background:rgba(200,241,53,0.15);color:var(--accent);font-size:10px;padding:3px 8px;border-radius:3px;letter-spacing:1px;margin-left:8px">PRO</span></h2></div>
+    <div class="sidebar-card">
+      <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Set target prices. We check every hour and email you the instant a game drops below your target on any store.</p>
+      <div style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:10px;margin-bottom:10px">
+        <input type="text" id="alertGameInput" placeholder="Game title" style="background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit">
+        <input type="number" id="alertTarget" placeholder="Target £" step="0.01" style="background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit">
+        <input type="email" id="alertEmailPro" placeholder="Email" style="background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit">
+        <button onclick="addPriceAlert()" class="connect-btn" style="padding:10px 18px;font-size:12px">Add</button>
+      </div>
+      <div id="priceAlertsList" style="margin-top:14px"></div>
+    </div>
+  </div>
+
+  <!-- PRO: Wishlist Sync -->
+  <div class="section">
+    <div class="section-head"><h2>Wishlist Sync <span style="background:rgba(200,241,53,0.15);color:var(--accent);font-size:10px;padding:3px 8px;border-radius:3px;letter-spacing:1px;margin-left:8px">PRO</span></h2></div>
+    <div class="sidebar-card">
+      <p style="color:var(--dim);font-size:13px;margin-bottom:14px">One wishlist across every store. Prices monitored continuously. Weekly email digest of biggest drops.</p>
+      <div style="display:flex;gap:10px;margin-bottom:12px">
+        <input type="text" id="wishlistInput" placeholder="Add a game" style="flex:1;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit" onkeydown="if(event.key==='Enter') addWishlist()">
+        <button onclick="addWishlist()" class="connect-btn" style="padding:10px 20px;font-size:13px">Add</button>
+      </div>
+      <div id="wishlistItems"></div>
     </div>
   </div>
 
@@ -798,6 +857,7 @@ document.querySelectorAll('.nav-tab').forEach(tab => {
       renderJournal();
       refreshNowPlaying();
       updateProfileUrl();
+      initProFeatures();
       if (!STATE.moreLoaded) {
         loadGameOfDay();
         loadWrapped();
@@ -1620,7 +1680,24 @@ function filterLibrary(mode) {
 // ───── PUBLIC PROFILE URL ─────
 function updateProfileUrl() {
   const box = document.getElementById('profileUrl');
-  if (box && STATE.sid) box.textContent = `${location.origin}/u/${STATE.sid}`;
+  if (!box || !STATE.sid) return;
+  const customUrl = localStorage.getItem('questlog_custom_url');
+  const theme = localStorage.getItem('questlog_theme') || 'dark';
+  const isPro = localStorage.getItem('questlog_pro') === '1';
+  const base = customUrl || STATE.sid;
+  const params = [];
+  if (theme !== 'dark') params.push(`theme=${theme}`);
+  if (isPro) params.push('pro=1');
+  const q = params.length ? '?' + params.join('&') : '';
+  box.textContent = `${location.origin}/u/${base}${q}`;
+}
+function initProFeatures() {
+  renderPriceAlerts();
+  renderWishlist();
+  loadActiveTheme();
+  const savedCustom = localStorage.getItem('questlog_custom_url');
+  const input = document.getElementById('customUrlInput');
+  if (input && savedCustom) input.value = savedCustom;
 }
 function copyProfileUrl() {
   if (!STATE.sid) return;
@@ -1671,6 +1748,132 @@ function renderJournal() {
       ${e.note ? `<div style="font-size:13px;color:var(--dim);margin-top:6px;white-space:pre-wrap">${e.note}</div>` : ''}
       <div style="font-size:10px;color:var(--dim);margin-top:6px;letter-spacing:1px">${new Date(e.date).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'})}</div>
     </div>`).join('');
+}
+
+// ───── CUSTOM URL (PRO) ─────
+function saveCustomUrl() {
+  const name = document.getElementById('customUrlInput').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-');
+  if (!name || name.length < 3) { document.getElementById('customUrlResult').innerHTML = '<span style="color:#ff5a5a">Min 3 characters, a-z 0-9 - only.</span>'; return; }
+  localStorage.setItem('questlog_custom_url', name);
+  const url = `${location.origin}/u/${name}`;
+  document.getElementById('customUrlResult').innerHTML = `<span style="color:var(--accent)">✓ Saved. Your URL: ${url}</span>`;
+  updateProfileUrl();
+}
+
+// ───── THEME (PRO) ─────
+function setTheme(theme) {
+  localStorage.setItem('questlog_theme', theme);
+  document.querySelectorAll('.theme-btn').forEach(b => b.classList.toggle('active', b.dataset.theme === theme));
+  const note = document.createElement('div');
+  note.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--accent);color:#000;padding:10px 20px;border-radius:6px;font-size:13px;font-weight:700;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,0.4)';
+  note.textContent = `✓ Theme saved: ${theme}`;
+  document.body.appendChild(note);
+  setTimeout(() => note.remove(), 2000);
+}
+function loadActiveTheme() {
+  const saved = localStorage.getItem('questlog_theme') || 'dark';
+  document.querySelectorAll('.theme-btn').forEach(b => b.classList.toggle('active', b.dataset.theme === saved));
+}
+
+// ───── PRICE ALERTS (PRO) ─────
+function getAlerts() { try { return JSON.parse(localStorage.getItem('questlog_alerts') || '[]'); } catch { return []; } }
+function saveAlerts(a) { localStorage.setItem('questlog_alerts', JSON.stringify(a)); }
+
+async function addPriceAlert() {
+  const game = document.getElementById('alertGameInput').value.trim();
+  const target = parseFloat(document.getElementById('alertTarget').value);
+  const email = document.getElementById('alertEmailPro').value.trim();
+  if (!game || !target || !email) { alert('Fill all fields'); return; }
+  try {
+    const r = await fetch('/api/price-alert', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ gameTitle: game, targetPrice: target, email, sid: STATE.sid }),
+    });
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.error || 'Failed');
+    const alerts = getAlerts();
+    alerts.unshift({ game, target, email, created: Date.now(), active: true });
+    saveAlerts(alerts);
+    document.getElementById('alertGameInput').value = '';
+    document.getElementById('alertTarget').value = '';
+    renderPriceAlerts();
+  } catch (e) { alert(e.message); }
+}
+function removeAlert(ts) {
+  if (!confirm('Remove this alert?')) return;
+  saveAlerts(getAlerts().filter(a => a.created !== ts));
+  renderPriceAlerts();
+}
+function renderPriceAlerts() {
+  const el = document.getElementById('priceAlertsList');
+  if (!el) return;
+  const list = getAlerts();
+  if (!list.length) { el.innerHTML = '<div class="empty" style="text-align:left;font-size:12px;padding:8px 0">No alerts yet.</div>'; return; }
+  el.innerHTML = list.map(a => `
+    <div style="display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:13px">${a.game}</div>
+        <div style="font-size:11px;color:var(--dim)">Target: <span style="color:var(--accent)">£${a.target.toFixed(2)}</span> — ${a.email}</div>
+      </div>
+      <span style="background:rgba(34,204,102,0.15);color:#22cc66;padding:3px 8px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:1px">ACTIVE</span>
+      <button onclick="removeAlert(${a.created})" style="background:transparent;color:var(--dim);border:none;cursor:pointer;font-size:16px">×</button>
+    </div>`).join('');
+}
+
+// ───── WISHLIST SYNC (PRO) ─────
+function getWishlist() { try { return JSON.parse(localStorage.getItem('questlog_wishlist') || '[]'); } catch { return []; } }
+function saveWishlist(w) { localStorage.setItem('questlog_wishlist', JSON.stringify(w)); }
+
+async function addWishlist() {
+  const game = document.getElementById('wishlistInput').value.trim();
+  if (!game) return;
+  try {
+    const r = await fetch(`/api/deal-search?title=${encodeURIComponent(game)}`);
+    const d = await r.json();
+    if (!d.results?.[0]) { alert('Game not found'); return; }
+    const g = d.results[0];
+    const w = getWishlist();
+    if (w.find(x => x.gameID === g.gameID)) { alert('Already in wishlist'); return; }
+    w.unshift({ gameID: g.gameID, title: g.title, thumb: g.thumb, cheapestEver: g.cheapestEver, cheapest: g.cheapest, added: Date.now() });
+    saveWishlist(w);
+    document.getElementById('wishlistInput').value = '';
+    renderWishlist();
+  } catch (e) { alert(e.message); }
+}
+function removeWishlist(id) {
+  if (!confirm('Remove from wishlist?')) return;
+  saveWishlist(getWishlist().filter(x => x.gameID !== id));
+  renderWishlist();
+}
+async function renderWishlist() {
+  const el = document.getElementById('wishlistItems');
+  if (!el) return;
+  const list = getWishlist();
+  if (!list.length) { el.innerHTML = '<div class="empty" style="text-align:left;font-size:12px;padding:8px 0">No games yet.</div>'; return; }
+  const refreshed = await Promise.all(list.map(async item => {
+    try {
+      const r = await fetch(`/api/deal-search?title=${encodeURIComponent(item.title)}`);
+      const d = await r.json();
+      if (d.results?.[0]) return { ...item, cheapest: d.results[0].cheapest, deals: d.results[0].deals };
+    } catch {}
+    return item;
+  }));
+  el.innerHTML = refreshed.map(item => {
+    const cheapestDeal = item.deals?.[0];
+    const isLow = item.cheapestEver && item.cheapest <= item.cheapestEver * 1.05;
+    return `
+      <div style="display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+        <div style="width:80px;aspect-ratio:460/215;background:url('${item.thumb}') center/cover;border-radius:4px;flex-shrink:0"></div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;font-size:13px">${item.title}</div>
+          <div style="font-size:11px;color:var(--dim)">Now: <strong style="color:${isLow?'var(--accent)':'var(--text)'}">$${(item.cheapest||0).toFixed(2)}</strong>${item.cheapestEver?` · Low: $${item.cheapestEver.toFixed(2)}`:''}${cheapestDeal?` — ${cheapestDeal.storeName}`:''}</div>
+        </div>
+        ${isLow?'<span style="background:rgba(200,241,53,0.15);color:var(--accent);padding:3px 8px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:1px">GOOD DEAL</span>':''}
+        ${cheapestDeal?`<a href="${cheapestDeal.dealLink}" target="_blank" style="background:var(--accent);color:#000;padding:6px 12px;border-radius:4px;font-size:11px;font-weight:700;text-decoration:none">Buy</a>`:''}
+        <button onclick="removeWishlist('${item.gameID}')" style="background:transparent;color:var(--dim);border:none;cursor:pointer;font-size:16px">×</button>
+      </div>`;
+  }).join('');
 }
 
 // ───── SPEND ANALYTICS ─────

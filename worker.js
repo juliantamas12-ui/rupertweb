@@ -1830,12 +1830,14 @@ async function spendAnalytics(url) {
 }
 
 async function publicProfile(url) {
-  // Accept either a Steam ID or a vanity URL segment
   const key = url.pathname.slice(3); // strip /u/
   if (!key) return new Response('Missing profile id', { status: 400 });
 
+  // Theme can be overridden via ?theme=gold etc
+  const theme = url.searchParams.get('theme') || 'dark';
+  const isPro = url.searchParams.get('pro') === '1';
+
   let sid = key;
-  // If it's not a 17-digit Steam ID, try to resolve it as a vanity URL
   if (!/^7656\d{13}$/.test(key)) {
     const resolve = await fetchJSON(`https://api.steampowered.com/ISteamUser/ResolveVanityURL/v1/?key=${STEAM_KEY}&vanityurl=${encodeURIComponent(key)}`);
     sid = resolve?.response?.steamid;
@@ -1855,6 +1857,18 @@ async function publicProfile(url) {
   const top5 = [...g].sort((a,b) => (b.playtime_forever||0) - (a.playtime_forever||0)).slice(0, 5);
 
   // Return a small HTML page (shareable)
+  const themes = {
+    dark:  { bg: '#0a0e1a', card: '#12182a', accent: '#c8f135', text: '#e8ecf4', dim: 'rgba(232,236,244,0.5)', panel: '#1a2138', border: 'rgba(255,255,255,0.1)' },
+    light: { bg: '#f4efe3', card: '#fffbf2', accent: '#b89452', text: '#1a1a1a', dim: 'rgba(26,26,26,0.55)', panel: '#e8e1ce', border: 'rgba(0,0,0,0.1)' },
+    gold:  { bg: '#1a1206', card: '#2a1f0a', accent: '#e8c068', text: '#f4e8cc', dim: 'rgba(244,232,204,0.55)', panel: '#3a2c12', border: 'rgba(232,192,104,0.2)' },
+    retro: { bg: '#2d0a2d', card: '#3a1040', accent: '#ff3a8c', text: '#fce8ff', dim: 'rgba(252,232,255,0.55)', panel: '#4a1450', border: 'rgba(255,58,140,0.25)' },
+    neon:  { bg: '#0f0020', card: '#1a0a3a', accent: '#00e0ff', text: '#e8e8ff', dim: 'rgba(232,232,255,0.55)', panel: '#2a0a4a', border: 'rgba(0,224,255,0.2)' },
+  };
+  const t = themes[theme] || themes.dark;
+
+  const proBadge = isPro ? `<span style="display:inline-block;background:${t.accent};color:${t.bg};font-size:10px;font-weight:700;letter-spacing:1.5px;padding:3px 8px;border-radius:3px;margin-left:8px;vertical-align:middle">PRO</span>` : '';
+  const avatarRing = isPro ? `box-shadow:0 0 0 3px ${t.bg}, 0 0 0 5px ${t.accent}` : `border:2px solid ${t.accent}`;
+
   const html = `<!doctype html><html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${p.personaname} on QuestLog</title>
@@ -1862,33 +1876,33 @@ async function publicProfile(url) {
 <meta property="og:description" content="${g.length} games owned. Top: ${top5.map(t=>t.name).slice(0,3).join(' · ')}">
 <meta property="og:image" content="${p.avatarfull}">
 <style>
-body{background:#0a0e1a;color:#e8ecf4;font-family:'Inter',-apple-system,sans-serif;margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:40px 20px}
-.card{background:#12182a;border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:40px;max-width:720px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.5)}
+body{background:${t.bg};color:${t.text};font-family:'Inter',-apple-system,sans-serif;margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:40px 20px}
+.card{background:${t.card};border:1px solid ${t.border};border-radius:16px;padding:40px;max-width:720px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.5)}
 .head{display:flex;gap:20px;align-items:center;margin-bottom:32px}
-.head img{width:80px;height:80px;border-radius:50%;border:2px solid #c8f135}
-.head h1{font-size:28px;font-weight:800;margin-bottom:4px}
-.head p{color:rgba(232,236,244,0.5);font-size:13px}
+.head img{width:80px;height:80px;border-radius:50%;${avatarRing}}
+.head h1{font-size:28px;font-weight:800;margin-bottom:4px;display:flex;align-items:center}
+.head p{color:${t.dim};font-size:13px}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:28px}
-.stat{background:#1a2138;padding:18px;border-radius:10px;text-align:center}
-.stat-v{font-size:24px;font-weight:800;color:#c8f135}
-.stat-l{font-size:10px;color:rgba(232,236,244,0.4);text-transform:uppercase;letter-spacing:2px;margin-top:4px}
-h2{font-size:12px;letter-spacing:2px;color:rgba(232,236,244,0.4);text-transform:uppercase;margin-bottom:14px}
-.game{display:flex;gap:14px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.08);align-items:center}
+.stat{background:${t.panel};padding:18px;border-radius:10px;text-align:center}
+.stat-v{font-size:24px;font-weight:800;color:${t.accent}}
+.stat-l{font-size:10px;color:${t.dim};text-transform:uppercase;letter-spacing:2px;margin-top:4px}
+h2{font-size:12px;letter-spacing:2px;color:${t.dim};text-transform:uppercase;margin-bottom:14px}
+.game{display:flex;gap:14px;padding:12px 0;border-bottom:1px solid ${t.border};align-items:center}
 .game img{width:120px;aspect-ratio:460/215;object-fit:cover;border-radius:4px}
 .game-n{font-weight:600;font-size:14px;margin-bottom:2px}
-.game-h{font-size:11px;color:rgba(232,236,244,0.45)}
+.game-h{font-size:11px;color:${t.dim}}
 .foot{text-align:center;margin-top:28px}
-.foot a{background:#c8f135;color:#000;padding:10px 22px;border-radius:5px;text-decoration:none;font-weight:700;font-size:13px;letter-spacing:1px}
+.foot a{background:${t.accent};color:${t.bg};padding:10px 22px;border-radius:5px;text-decoration:none;font-weight:700;font-size:13px;letter-spacing:1px}
 </style></head><body>
 <div class="card">
-  <div class="head"><img src="${p.avatarfull}" alt=""><div><h1>${p.personaname}</h1><p>${p.loccountrycode || ''} · Joined Steam ${p.timecreated ? new Date(p.timecreated*1000).getFullYear() : ''}</p></div></div>
+  <div class="head"><img src="${p.avatarfull}" alt=""><div><h1>${p.personaname}${proBadge}</h1><p>${p.loccountrycode || ''} · Joined Steam ${p.timecreated ? new Date(p.timecreated*1000).getFullYear() : ''}</p></div></div>
   <div class="stats">
     <div class="stat"><div class="stat-v">${g.length.toLocaleString()}</div><div class="stat-l">Games</div></div>
     <div class="stat"><div class="stat-v">${totalHours.toLocaleString()}</div><div class="stat-l">Hours</div></div>
     <div class="stat"><div class="stat-v">${top5[0] ? Math.round(top5[0].playtime_forever/60) : 0}h</div><div class="stat-l">Most Played</div></div>
   </div>
   <h2>Top 5 Games</h2>
-  ${top5.map(t => `<div class="game"><img src="https://cdn.cloudflare.steamstatic.com/steam/apps/${t.appid}/header.jpg" alt=""><div><div class="game-n">${t.name}</div><div class="game-h">${Math.round(t.playtime_forever/60)} hours played</div></div></div>`).join('')}
+  ${top5.map(x => `<div class="game"><img src="https://cdn.cloudflare.steamstatic.com/steam/apps/${x.appid}/header.jpg" alt=""><div><div class="game-n">${x.name}</div><div class="game-h">${Math.round(x.playtime_forever/60)} hours played</div></div></div>`).join('')}
   <div class="foot"><a href="/questlog.html">See your own →</a></div>
 </div></body></html>`;
   return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=300' } });
