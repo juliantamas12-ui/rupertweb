@@ -553,7 +553,116 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
 
 <!-- ───── UTILITY TAB ───── -->
 <div class="view" id="view-utility">
-  <p style="color:var(--dim);font-size:14px;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--border)">Tools for research, price hunting, profile management, and pro features. Everything here is ad-hoc — use it when you need it.</p>
+  <p style="color:var(--dim);font-size:14px;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--border)">Research tools, price hunting, profile management. Pro features are grouped in one place below.</p>
+
+  <!-- ═══ PRO HUB ═══ -->
+  <div id="proHub" class="section">
+    <div id="proHubGated" style="background:linear-gradient(135deg,rgba(200,241,53,0.08),rgba(200,241,53,0.02));border:1px solid rgba(200,241,53,0.3);border-radius:12px;padding:32px;margin-bottom:24px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <span style="background:var(--accent);color:#000;font-size:11px;font-weight:800;padding:4px 10px;border-radius:3px;letter-spacing:1.5px">PRO</span>
+        <span style="font-size:11px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;font-weight:600">Upgrade to unlock</span>
+      </div>
+      <h2 style="font-size:28px;font-weight:800;line-height:1.15;margin-bottom:8px">Everything Pro, in one place.</h2>
+      <p style="color:var(--dim);font-size:14px;margin-bottom:24px;max-width:600px">Spend analytics. Price alerts. Wishlist sync across every store. Custom profile URL &amp; themes. Weekly digest. £4.99/month, cancel anytime.</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:24px">
+        <div style="background:var(--panel2);padding:14px;border-radius:8px"><div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:4px">Spend Analytics</div><div style="font-size:11px;color:var(--dim);line-height:1.5">See exactly how much you spent and cost per hour.</div></div>
+        <div style="background:var(--panel2);padding:14px;border-radius:8px"><div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:4px">Price Alerts</div><div style="font-size:11px;color:var(--dim);line-height:1.5">Set target prices, get emailed the moment they hit.</div></div>
+        <div style="background:var(--panel2);padding:14px;border-radius:8px"><div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:4px">Wishlist Sync</div><div style="font-size:11px;color:var(--dim);line-height:1.5">One wishlist across Steam, Epic, GOG, Humble.</div></div>
+        <div style="background:var(--panel2);padding:14px;border-radius:8px"><div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:4px">Custom Profile URL</div><div style="font-size:11px;color:var(--dim);line-height:1.5">Your name instead of your Steam ID.</div></div>
+        <div style="background:var(--panel2);padding:14px;border-radius:8px"><div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:4px">Profile Themes</div><div style="font-size:11px;color:var(--dim);line-height:1.5">5 themes + Pro badge on your public profile.</div></div>
+        <div style="background:var(--panel2);padding:14px;border-radius:8px"><div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:4px">Weekly Digest</div><div style="font-size:11px;color:var(--dim);line-height:1.5">Sunday email with deals on games you care about.</div></div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="connect-btn" onclick="upgradeToPro()" style="padding:14px 28px;font-size:13px;font-weight:700">Upgrade to Pro — £4.99/mo</button>
+        <button onclick="togglePro()" style="background:transparent;color:var(--dim);border:1px solid var(--border);padding:14px 20px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit">Preview Pro (demo)</button>
+      </div>
+    </div>
+
+    <!-- PRO FEATURES (hidden unless Pro is active) -->
+    <div id="proHubUnlocked" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:rgba(200,241,53,0.05);border:1px solid rgba(200,241,53,0.3);border-radius:8px;margin-bottom:20px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="background:var(--accent);color:#000;font-size:10px;font-weight:800;padding:4px 10px;border-radius:3px;letter-spacing:1.5px">PRO ACTIVE</span>
+          <span style="font-size:13px;color:var(--text)">Thanks for being Pro. All features below are unlocked.</span>
+        </div>
+        <button onclick="togglePro()" style="background:transparent;color:var(--dim);border:1px solid var(--border);padding:6px 12px;border-radius:4px;font-size:11px;cursor:pointer;font-family:inherit">Disable demo</button>
+      </div>
+
+      <div class="section" style="padding:0;margin-bottom:20px">
+        <div class="section-head"><h3 style="font-size:15px">Spend Analytics</h3></div>
+        <div id="spendPanel" class="sidebar-card"><div class="empty"><span class="loading"></span> Calculating what you spent...</div></div>
+      </div>
+
+      <div class="section" style="padding:0;margin-bottom:20px">
+        <div class="section-head"><h3 style="font-size:15px">Price Drop Alerts</h3></div>
+        <div class="sidebar-card">
+          <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Set target prices. We check every hour and email you the instant a game drops below your target on any store.</p>
+          <div style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:10px;margin-bottom:10px">
+            <div style="position:relative">
+              <input type="text" id="alertGameInput" placeholder="Game title" autocomplete="off" style="width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit" oninput="alertGameSuggest(this)" onkeydown="alertGameSuggestKey(event)" onblur="setTimeout(()=>document.getElementById('alertGameSuggestBox').style.display='none',200)">
+              <div id="alertGameSuggestBox" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--panel);border:1px solid var(--border);border-radius:6px;max-height:320px;overflow-y:auto;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,0.4)"></div>
+            </div>
+            <input type="number" id="alertTarget" placeholder="Target £" step="0.01" style="background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit">
+            <input type="email" id="alertEmailPro" placeholder="Email" style="background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit">
+            <button onclick="addPriceAlert()" class="connect-btn" style="padding:10px 18px;font-size:12px">Add</button>
+          </div>
+          <div id="priceAlertsList" style="margin-top:14px"></div>
+        </div>
+      </div>
+
+      <div class="section" style="padding:0;margin-bottom:20px">
+        <div class="section-head"><h3 style="font-size:15px">Wishlist Sync</h3></div>
+        <div class="sidebar-card">
+          <p style="color:var(--dim);font-size:13px;margin-bottom:14px">One wishlist across every store. Prices monitored continuously.</p>
+          <div style="display:flex;gap:10px;margin-bottom:12px;position:relative">
+            <div style="flex:1;position:relative">
+              <input type="text" id="wishlistInput" placeholder="Start typing a game..." autocomplete="off" style="width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit" oninput="wishlistSuggest(this)" onkeydown="wishlistSuggestKey(event)" onblur="setTimeout(()=>document.getElementById('wishlistSuggestBox').style.display='none',200)">
+              <div id="wishlistSuggestBox" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--panel);border:1px solid var(--border);border-radius:6px;max-height:320px;overflow-y:auto;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,0.4)"></div>
+            </div>
+            <button onclick="addWishlist()" class="connect-btn" style="padding:10px 20px;font-size:13px">Add</button>
+          </div>
+          <div id="wishlistItems"></div>
+        </div>
+      </div>
+
+      <div class="section" style="padding:0;margin-bottom:20px">
+        <div class="section-head"><h3 style="font-size:15px">Custom URL &amp; Themes</h3></div>
+        <div class="sidebar-card">
+          <div style="margin-bottom:18px">
+            <div style="font-size:12px;color:var(--dim);margin-bottom:8px;letter-spacing:1px;text-transform:uppercase">Custom URL</div>
+            <div style="display:flex;gap:8px">
+              <div style="background:var(--panel2);padding:10px 12px;border-radius:5px;font-family:'Courier New',monospace;font-size:12px;color:var(--dim);flex-shrink:0">rupertweb.com/u/</div>
+              <input type="text" id="customUrlInput" placeholder="your-name" style="flex:1;background:var(--panel2);border:1px solid var(--border);border-radius:5px;padding:10px 12px;color:var(--text);font-size:13px;font-family:inherit" maxlength="20">
+              <button onclick="saveCustomUrl()" class="connect-btn" style="padding:10px 18px;font-size:12px">Save</button>
+            </div>
+            <div id="customUrlResult" style="font-size:12px;margin-top:8px"></div>
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--dim);margin-bottom:8px;letter-spacing:1px;text-transform:uppercase">Profile Theme</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button onclick="setTheme('dark')" class="theme-btn" data-theme="dark" style="background:linear-gradient(135deg,#0a0e1a,#1a2340)">Dark</button>
+              <button onclick="setTheme('light')" class="theme-btn" data-theme="light" style="background:linear-gradient(135deg,#f5f2e8,#e8e1ce);color:#1a1a1a">Light</button>
+              <button onclick="setTheme('gold')" class="theme-btn" data-theme="gold" style="background:linear-gradient(135deg,#2a1f0a,#5a3f18)">Gold</button>
+              <button onclick="setTheme('retro')" class="theme-btn" data-theme="retro" style="background:linear-gradient(135deg,#2d0a2d,#4a1440)">Retro</button>
+              <button onclick="setTheme('neon')" class="theme-btn" data-theme="neon" style="background:linear-gradient(135deg,#0f0020,#2a0a4a)">Neon</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section" style="padding:0;margin-bottom:20px">
+        <div class="section-head"><h3 style="font-size:15px">Weekly Digest</h3></div>
+        <div class="sidebar-card">
+          <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Every Sunday: best deals on games like yours, the week's free game, 3 new releases with 90%+ reviews, price drops on your wishlist.</p>
+          <div style="display:flex;gap:10px">
+            <input type="email" id="digestEmail" placeholder="you@example.com" style="flex:1;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit">
+            <button onclick="subscribeDigest()" class="connect-btn" style="padding:10px 24px;font-size:13px">Subscribe</button>
+          </div>
+          <div id="digestResult" style="margin-top:12px;font-size:13px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- PRICE HISTORY -->
   <div class="section">
@@ -613,30 +722,6 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
         <button onclick="copyProfileUrl()" class="connect-btn" style="padding:6px 14px;font-size:11px">Copy</button>
       </div>
 
-      <!-- PRO: Custom URL -->
-      <div style="background:rgba(200,241,53,0.05);border:1px solid rgba(200,241,53,0.2);border-radius:6px;padding:14px;margin-bottom:14px">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="background:var(--accent);color:#000;font-size:10px;font-weight:700;padding:3px 8px;border-radius:3px;letter-spacing:1px">PRO</span><span style="font-size:13px;font-weight:600">Custom URL</span></div>
-        <p style="font-size:12px;color:var(--dim);margin-bottom:10px">Replace your Steam ID with a name of your choice.</p>
-        <div style="display:flex;gap:8px">
-          <div style="background:var(--panel2);padding:10px 12px;border-radius:5px;font-family:'Courier New',monospace;font-size:12px;color:var(--dim);flex-shrink:0">${location.origin}/u/</div>
-          <input type="text" id="customUrlInput" placeholder="your-name" style="flex:1;background:var(--panel2);border:1px solid var(--border);border-radius:5px;padding:10px 12px;color:var(--text);font-size:13px;font-family:inherit" maxlength="20" pattern="[a-z0-9-]+">
-          <button onclick="saveCustomUrl()" class="connect-btn" style="padding:10px 18px;font-size:12px">Save</button>
-        </div>
-        <div id="customUrlResult" style="font-size:12px;margin-top:8px"></div>
-      </div>
-
-      <!-- PRO: Theme -->
-      <div style="background:rgba(200,241,53,0.05);border:1px solid rgba(200,241,53,0.2);border-radius:6px;padding:14px">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="background:var(--accent);color:#000;font-size:10px;font-weight:700;padding:3px 8px;border-radius:3px;letter-spacing:1px">PRO</span><span style="font-size:13px;font-weight:600">Profile Theme</span></div>
-        <p style="font-size:12px;color:var(--dim);margin-bottom:10px">Change how your public profile looks.</p>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button onclick="setTheme('dark')" class="theme-btn" data-theme="dark" style="background:linear-gradient(135deg,#0a0e1a,#1a2340);">Dark</button>
-          <button onclick="setTheme('light')" class="theme-btn" data-theme="light" style="background:linear-gradient(135deg,#f5f2e8,#e8e1ce);color:#1a1a1a">Light</button>
-          <button onclick="setTheme('gold')" class="theme-btn" data-theme="gold" style="background:linear-gradient(135deg,#2a1f0a,#5a3f18);">Gold</button>
-          <button onclick="setTheme('retro')" class="theme-btn" data-theme="retro" style="background:linear-gradient(135deg,#2d0a2d,#4a1440);">Retro</button>
-          <button onclick="setTheme('neon')" class="theme-btn" data-theme="neon" style="background:linear-gradient(135deg,#0f0020,#2a0a4a);">Neon</button>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -645,40 +730,6 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
   .theme-btn:hover{transform:translateY(-1px)}
   .theme-btn.active{border-color:var(--accent)}
   </style>
-
-  <!-- PRO: Price Alerts -->
-  <div class="section">
-    <div class="section-head"><h2>Price Drop Alerts <span style="background:rgba(200,241,53,0.15);color:var(--accent);font-size:10px;padding:3px 8px;border-radius:3px;letter-spacing:1px;margin-left:8px">PRO</span></h2></div>
-    <div class="sidebar-card">
-      <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Set target prices. We check every hour and email you the instant a game drops below your target on any store.</p>
-      <div style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:10px;margin-bottom:10px">
-        <div style="position:relative">
-          <input type="text" id="alertGameInput" placeholder="Game title" autocomplete="off" style="width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit" oninput="alertGameSuggest(this)" onkeydown="alertGameSuggestKey(event)" onblur="setTimeout(()=>document.getElementById('alertGameSuggestBox').style.display='none',200)">
-          <div id="alertGameSuggestBox" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--panel);border:1px solid var(--border);border-radius:6px;max-height:320px;overflow-y:auto;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,0.4)"></div>
-        </div>
-        <input type="number" id="alertTarget" placeholder="Target £" step="0.01" style="background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit">
-        <input type="email" id="alertEmailPro" placeholder="Email" style="background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit">
-        <button onclick="addPriceAlert()" class="connect-btn" style="padding:10px 18px;font-size:12px">Add</button>
-      </div>
-      <div id="priceAlertsList" style="margin-top:14px"></div>
-    </div>
-  </div>
-
-  <!-- PRO: Wishlist Sync -->
-  <div class="section">
-    <div class="section-head"><h2>Wishlist Sync <span style="background:rgba(200,241,53,0.15);color:var(--accent);font-size:10px;padding:3px 8px;border-radius:3px;letter-spacing:1px;margin-left:8px">PRO</span></h2></div>
-    <div class="sidebar-card">
-      <p style="color:var(--dim);font-size:13px;margin-bottom:14px">One wishlist across every store. Prices monitored continuously. Weekly email digest of biggest drops.</p>
-      <div style="display:flex;gap:10px;margin-bottom:12px;position:relative">
-        <div style="flex:1;position:relative">
-          <input type="text" id="wishlistInput" placeholder="Start typing a game..." autocomplete="off" style="width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit" oninput="wishlistSuggest(this)" onkeydown="wishlistSuggestKey(event)" onblur="setTimeout(()=>document.getElementById('wishlistSuggestBox').style.display='none',200)">
-          <div id="wishlistSuggestBox" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--panel);border:1px solid var(--border);border-radius:6px;max-height:320px;overflow-y:auto;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,0.4)"></div>
-        </div>
-        <button onclick="addWishlist()" class="connect-btn" style="padding:10px 20px;font-size:13px">Add</button>
-      </div>
-      <div id="wishlistItems"></div>
-    </div>
-  </div>
 
   <!-- GAME JOURNAL -->
   <div class="section">
@@ -707,11 +758,6 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
       <div id="journalList" style="margin-top:16px"></div>
     </div>
   </div>
-
-  <!-- SPEND ANALYTICS (PRO) -->
-  <div class="section">
-    <div class="section-head"><h2>Spend Analytics <span style="background:rgba(200,241,53,0.15);color:var(--accent);font-size:10px;padding:3px 8px;border-radius:3px;letter-spacing:1px;margin-left:8px;vertical-align:middle">PRO</span></h2></div>
-    <div id="spendPanel" class="sidebar-card"><div class="empty"><span class="loading"></span> Calculating what you spent...</div></div>
   </div>
 
   <!-- STEAM DNA -->
@@ -756,19 +802,6 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
     </div>
   </div>
 
-  <!-- WEEKLY DIGEST -->
-  <div class="section">
-    <div class="section-head"><h2>Weekly Digest — By Email</h2></div>
-    <div class="sidebar-card">
-      <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Every Sunday: best deals on games like yours, the week's free game, 3 new releases with 90%+ reviews, price drops on your wishlist.</p>
-      <div style="display:flex;gap:10px">
-        <input type="email" id="digestEmail" placeholder="you@example.com" style="flex:1;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit">
-        <button onclick="subscribeDigest()" class="connect-btn" style="padding:10px 24px;font-size:13px">Subscribe</button>
-      </div>
-      <div id="digestResult" style="margin-top:12px;font-size:13px"></div>
-    </div>
-  </div>
-
   <!-- FPS ESTIMATOR -->
   <div class="section">
     <div class="section-head"><h2>FPS Estimator — Will it run?</h2></div>
@@ -807,22 +840,6 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
     </div>
   </div>
 
-  <!-- PRICE ALERTS -->
-  <div class="section">
-    <div class="section-head">
-      <h2>Price Drop Alerts <span style="background:rgba(200,241,53,0.15);color:var(--accent);font-size:10px;padding:3px 8px;border-radius:3px;letter-spacing:1px;margin-left:8px">PRO</span></h2>
-    </div>
-    <div class="sidebar-card">
-      <p style="color:var(--dim);font-size:13px;margin-bottom:16px">Get emailed the moment a game drops below your target price on any store.</p>
-      <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;margin-bottom:10px">
-        <input type="text" id="alertGame" placeholder="Game title" style="background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit">
-        <input type="number" id="alertPrice" placeholder="Target £" step="0.01" style="background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit">
-        <input type="email" id="alertEmail" placeholder="Your email" style="background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit">
-      </div>
-      <button onclick="createPriceAlert()" class="connect-btn" style="width:100%">Set alert</button>
-      <div id="alertResult" style="margin-top:12px;font-size:13px"></div>
-    </div>
-  </div>
 </div>
 
 <div class="view" id="view-leaderboards">
@@ -919,10 +936,6 @@ document.querySelectorAll('.nav-tab').forEach(tab => {
       renderJournal();
       updateProfileUrl();
       initProFeatures();
-      if (!STATE.utilityLoaded) {
-        loadSpendAnalytics();
-        STATE.utilityLoaded = true;
-      }
     }
     if (view === 'library') {
       if (!STATE.achLoaded && STATE.games?.length) { loadAchievements(); STATE.achLoaded = true; }
@@ -1910,12 +1923,43 @@ function updateProfileUrl() {
   box.textContent = `${location.origin}/u/${base}${q}`;
 }
 function initProFeatures() {
-  renderPriceAlerts();
-  renderWishlist();
-  loadActiveTheme();
-  const savedCustom = localStorage.getItem('questlog_custom_url');
-  const input = document.getElementById('customUrlInput');
-  if (input && savedCustom) input.value = savedCustom;
+  renderProHub();
+  if (isProActive()) {
+    renderPriceAlerts();
+    renderWishlist();
+    loadActiveTheme();
+    const savedCustom = localStorage.getItem('questlog_custom_url');
+    const input = document.getElementById('customUrlInput');
+    if (input && savedCustom) input.value = savedCustom;
+    if (!STATE.spendLoaded) { loadSpendAnalytics(); STATE.spendLoaded = true; }
+  }
+}
+
+function isProActive() { return localStorage.getItem('questlog_pro') === '1'; }
+
+function renderProHub() {
+  const gated = document.getElementById('proHubGated');
+  const unlocked = document.getElementById('proHubUnlocked');
+  if (!gated || !unlocked) return;
+  const active = isProActive();
+  gated.style.display = active ? 'none' : 'block';
+  unlocked.style.display = active ? 'block' : 'none';
+}
+
+function togglePro() {
+  const now = isProActive();
+  if (now) {
+    localStorage.removeItem('questlog_pro');
+  } else {
+    localStorage.setItem('questlog_pro', '1');
+  }
+  renderProHub();
+  initProFeatures();
+  updateProfileUrl();
+}
+
+function upgradeToPro() {
+  alert('Stripe checkout coming soon. For now, click "Preview Pro (demo)" to try Pro features locally.');
 }
 function copyProfileUrl() {
   if (!STATE.sid) return;
