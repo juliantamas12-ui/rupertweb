@@ -870,10 +870,90 @@ async function recommendBuy(url) {
     if (catEntry) r.tags = catEntry.tags;
   }
 
+  // ══ LIVE CATALOG EXPANSION ══
+  // Pull ~10 pages of CheapShark's best-rated games to get up to 600 live entries
+  // that already pass the quality bar (450+ reviews, 70%+ rating).
+  try {
+    const pages = await Promise.all([0,1,2,3,4,5,6,7,8,9].map(p =>
+      fetchJSON(`https://www.cheapshark.com/api/1.0/deals?pageSize=60&pageNumber=${p}&sortBy=Reviews&steamRating=70&onSale=0`).catch(() => [])
+    ));
+    const liveRaw = pages.flat();
+    // Dedupe by steamAppID (keep the cheapest deal per game)
+    const byApp = {};
+    for (const d of liveRaw) {
+      const appid = parseInt(d.steamAppID);
+      if (!appid) continue;
+      const revs = d.steamRatingCount ? parseInt(d.steamRatingCount) : 0;
+      const rate = d.steamRatingPercent ? parseInt(d.steamRatingPercent) : 0;
+      if (revs < 450 || rate < 70) continue;
+      if (owned.has(appid)) continue;
+      if (isJunkTitle(d.title)) continue;
+      const prev = byApp[appid];
+      if (!prev || parseFloat(d.salePrice) < parseFloat(prev.salePrice)) byApp[appid] = d;
+    }
+    // Title-based tag inference for CheapShark entries (so genre filters still match)
+    const KW_TAGS = [
+      [/\b(survival|survive)\b/i, ['survival']],
+      [/\b(simulator|simulation|tycoon|manager|hospital|campus)\b/i, ['simulation','management']],
+      [/\b(farming|farm|harvest|stardew|coral)\b/i, ['farming','cosy','relaxing']],
+      [/\b(rogue|roguelike|roguelite)\b/i, ['roguelike','indie']],
+      [/\b(horror|scary|phasmophobia|outlast|amnesia)\b/i, ['horror']],
+      [/\b(racing|race|drive|rally|f1|forza|gran turismo)\b/i, ['racing']],
+      [/\b(strategy|total war|civilization|xcom|stellaris|crusader|paradox)\b/i, ['strategy']],
+      [/\b(fight|tekken|street fighter|mortal kombat|guilty gear)\b/i, ['fighting']],
+      [/\b(puzzle|escape|portal|obra dinn|talos|tunic)\b/i, ['puzzle','indie']],
+      [/\b(platform|metroidvania|celeste|hollow knight|ori|cuphead)\b/i, ['platformer','indie','metroidvania']],
+      [/\b(co-?op|coop|together|party)\b/i, ['coop','multiplayer']],
+      [/\b(fps|shooter|call of duty|battlefield|cs:?go|cs:?2|valorant|counter-strike|doom|halo|battleroyale|battle royale)\b/i, ['fps','shooter']],
+      [/\b(open world|sandbox|minecraft|terraria)\b/i, ['openworld','sandbox']],
+      [/\b(rpg|role[- ]playing|final fantasy|persona|yakuza|souls|fromsoftware|elden|dark souls|sekiro|bloodborne|mass effect|dragon age|skyrim|witcher|pillars|divinity|baldur)\b/i, ['rpg','story']],
+      [/\b(story|narrative|adventure|point[- ]and[- ]click|telltale|life is strange|detroit|heavy rain)\b/i, ['story']],
+      [/\b(cosy|cozy|relaxing|chill|cute|anim(als?|e?\s*crossing)|pokemon|palia)\b/i, ['cosy','relaxing']],
+      [/\b(space|sci-?fi|starfield|mass effect|outer wilds|stellaris|warhammer|halo)\b/i, ['scifi']],
+      [/\b(medieval|knight|castle|viking|kingdom|crusader|stronghold)\b/i, ['medieval','historical']],
+      [/\b(cyberpunk|cyber|neon)\b/i, ['cyberpunk','scifi']],
+      [/\b(stealth|assassin|hitman|dishonored|thief)\b/i, ['stealth']],
+      [/\b(mmo|world of warcraft|ffxiv|final fantasy xiv|new world|guild wars|lost ark|runescape)\b/i, ['mmo','rpg']],
+      [/\b(tower defense|td\b|bloons)\b/i, ['strategy']],
+      [/\b(deck(?:[- ]?builder)?|slay the spire|balatro|inscryption)\b/i, ['roguelike','deckbuilder','indie']],
+      [/\b(free)\b/i, ['free']],
+    ];
+
+    function inferTags(title) {
+      const out = new Set(['indie']);  // fallback so it shows under "Indie" at least
+      for (const [re, tags] of KW_TAGS) {
+        if (re.test(title)) tags.forEach(t => out.add(t));
+      }
+      return [...out];
+    }
+
+    // Add any not already in recs
+    const existing = new Set(recs.map(r => r.appid));
+    for (const d of Object.values(byApp)) {
+      const appid = parseInt(d.steamAppID);
+      if (existing.has(appid)) continue;
+      recs.push({
+        reason: 'Highly rated by players',
+        game: d.title,
+        appid,
+        img: `https://cdn.cloudflare.steamstatic.com/steam/apps/${appid}/header.jpg`,
+        sub: `${d.steamRatingPercent}% positive (${parseInt(d.steamRatingCount).toLocaleString()} reviews)`,
+        buy: true,
+        tags: inferTags(d.title),
+        // Pre-fill price/review from CheapShark so frontend filters work immediately
+        price: parseFloat(d.salePrice) > 0 ? `£${d.salePrice}` : 'Free',
+        discounted: parseFloat(d.savings) > 1,
+        reviewScore: parseInt(d.steamRatingPercent),
+        reviewLabel: d.steamRatingText,
+        reviewCount: parseInt(d.steamRatingCount),
+      });
+    }
+  } catch {}
+
   // Enrich with price + reviews + player count (parallel, first 60 to stay under CPU budget)
-  // Enrich as many as possible without blowing past Cloudflare CPU limits.
-  // Each iteration does 3 parallel fetches so 90 = ~270 total requests.
-  const toEnrich = recs.slice(0, 90);
+  // Enrich only entries that don't already have review/price data (manual catalog ones).
+  // CheapShark-sourced entries arrive pre-enriched so we save hundreds of API calls.
+  const toEnrich = recs.filter(r => !r.reviewScore).slice(0, 60);
   await Promise.all(toEnrich.map(async r => {
     try {
       const [details, reviews, pc] = await Promise.all([
