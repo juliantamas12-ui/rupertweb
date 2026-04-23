@@ -71,8 +71,9 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
 .game-title{font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:4px}
 .game-meta{font-size:11px;color:var(--dim);display:flex;justify-content:space-between;align-items:center}
 
-.rec-card{background:linear-gradient(135deg,var(--panel) 0%,#1a2340 100%);border:1px solid rgba(200,241,53,0.2);border-radius:10px;padding:18px;display:flex;gap:16px;align-items:center;margin-bottom:10px;cursor:pointer;transition:all 0.2s}
-.rec-card:hover{border-color:rgba(200,241,53,0.5)}
+.rec-card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:18px;display:flex;gap:16px;align-items:center;margin-bottom:10px;cursor:pointer;transition:all 0.2s}
+.rec-card:hover{border-color:var(--accent);background:var(--panel2)}
+
 .rec-cover{width:100px;aspect-ratio:460/215;flex-shrink:0;border-radius:6px;background-size:cover;background-position:center;background-color:var(--panel2)}
 .rec-info{flex:1;min-width:0}
 .rec-reason{font-size:10px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;margin-bottom:4px}
@@ -105,7 +106,7 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
 .leaderboard-row-me{background:rgba(200,241,53,0.05)}
 .pro-badge{display:inline-block;background:rgba(200,241,53,0.15);color:var(--accent);font-size:9px;font-weight:700;letter-spacing:1px;padding:2px 6px;border-radius:3px;margin-left:6px}
 
-.pricing-banner{background:linear-gradient(135deg,#1a2340,#0f1f3a);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between}
+.pricing-banner{background:var(--panel2);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between}
 .pricing-banner-text h3{font-size:16px;margin-bottom:4px}
 .pricing-banner-text p{font-size:12px;color:var(--dim)}
 .pricing-banner .connect-btn{padding:10px 20px;font-size:13px}
@@ -1250,7 +1251,7 @@ async function loadGameOfDay() {
     const r = await fetch('/api/game-of-the-day');
     const g = await r.json();
     document.getElementById('gameOfDay').innerHTML = `
-      <div class="rec-card" onclick="window.open('${g.url}','_blank')" style="background:linear-gradient(135deg,var(--panel) 0%,#1a2340 100%);border:1px solid rgba(200,241,53,0.3)">
+      <div class="rec-card" onclick="window.open('${g.url}','_blank')" style="border:1px solid var(--accent)">
         <div class="rec-cover" style="background-image:url('${g.img}')"></div>
         <div class="rec-info">
           <div class="rec-reason">${new Date(g.date||Date.now()).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})}</div>
@@ -1721,7 +1722,7 @@ async function whatToPlay(mood) {
     const r = await api(`/api/what-to-play?mood=${mood}`);
     if (r.error) { el.innerHTML = `<div class="error">${r.error}</div>`; return; }
     el.innerHTML = `
-      <div onclick="openSteam(${r.appid})" style="cursor:pointer;background:linear-gradient(135deg,var(--panel2),#1a2340);border:1px solid var(--accent);border-radius:10px;overflow:hidden;display:flex;gap:16px;padding:16px;align-items:center">
+      <div onclick="openSteam(${r.appid})" style="cursor:pointer;background:var(--panel2);border:1px solid var(--accent);border-radius:10px;overflow:hidden;display:flex;gap:16px;padding:16px;align-items:center">
         <div style="width:140px;aspect-ratio:460/215;background:url('${r.img}') center/cover;border-radius:6px;flex-shrink:0"></div>
         <div style="flex:1">
           <div style="font-size:11px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;margin-bottom:6px">Play this ←</div>
