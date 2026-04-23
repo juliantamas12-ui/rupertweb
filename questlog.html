@@ -536,8 +536,11 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
     <div class="section-head"><h2>Price History</h2></div>
     <div class="sidebar-card">
       <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Check if a game is actually cheap right now — or if it's usually this price.</p>
-      <div style="display:flex;gap:10px">
-        <input type="text" id="priceHistoryInput" placeholder="Game title" style="flex:1;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit" onkeydown="if(event.key==='Enter') checkPriceHistory()">
+      <div style="display:flex;gap:10px;position:relative">
+        <div style="flex:1;position:relative">
+          <input type="text" id="priceHistoryInput" placeholder="Start typing a game title..." autocomplete="off" style="width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit" oninput="priceSuggest(this)" onkeydown="priceSuggestKey(event)" onblur="setTimeout(()=>document.getElementById('priceSuggestBox').style.display='none',200)">
+          <div id="priceSuggestBox" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--panel);border:1px solid var(--border);border-radius:6px;max-height:320px;overflow-y:auto;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,0.4)"></div>
+        </div>
         <button onclick="checkPriceHistory()" class="connect-btn" style="padding:10px 20px;font-size:13px">Check</button>
       </div>
       <div id="priceHistoryResult" style="margin-top:16px"></div>
@@ -549,8 +552,11 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
     <div class="section-head"><h2>Reviews — All Sources</h2></div>
     <div class="sidebar-card">
       <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Steam + Metacritic at a glance. Want critics' verdict AND player sentiment.</p>
-      <div style="display:flex;gap:10px">
-        <input type="text" id="reviewsInput" placeholder="Game title" style="flex:1;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit" onkeydown="if(event.key==='Enter') compareReviews()">
+      <div style="display:flex;gap:10px;position:relative">
+        <div style="flex:1;position:relative">
+          <input type="text" id="reviewsInput" placeholder="Start typing a game title..." autocomplete="off" style="width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit" oninput="reviewSuggest(this)" onkeydown="reviewSuggestKey(event)" onblur="setTimeout(()=>document.getElementById('reviewSuggestBox').style.display='none',200)">
+          <div id="reviewSuggestBox" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--panel);border:1px solid var(--border);border-radius:6px;max-height:320px;overflow-y:auto;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,0.4)"></div>
+        </div>
         <button onclick="compareReviews()" class="connect-btn" style="padding:10px 20px;font-size:13px">Compare</button>
       </div>
       <div id="reviewsCompareResult" style="margin-top:16px"></div>
@@ -636,8 +642,11 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
     <div class="section-head"><h2>Wishlist Sync <span style="background:rgba(200,241,53,0.15);color:var(--accent);font-size:10px;padding:3px 8px;border-radius:3px;letter-spacing:1px;margin-left:8px">PRO</span></h2></div>
     <div class="sidebar-card">
       <p style="color:var(--dim);font-size:13px;margin-bottom:14px">One wishlist across every store. Prices monitored continuously. Weekly email digest of biggest drops.</p>
-      <div style="display:flex;gap:10px;margin-bottom:12px">
-        <input type="text" id="wishlistInput" placeholder="Add a game" style="flex:1;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit" onkeydown="if(event.key==='Enter') addWishlist()">
+      <div style="display:flex;gap:10px;margin-bottom:12px;position:relative">
+        <div style="flex:1;position:relative">
+          <input type="text" id="wishlistInput" placeholder="Start typing a game..." autocomplete="off" style="width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit" oninput="wishlistSuggest(this)" onkeydown="wishlistSuggestKey(event)" onblur="setTimeout(()=>document.getElementById('wishlistSuggestBox').style.display='none',200)">
+          <div id="wishlistSuggestBox" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--panel);border:1px solid var(--border);border-radius:6px;max-height:320px;overflow-y:auto;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,0.4)"></div>
+        </div>
         <button onclick="addWishlist()" class="connect-btn" style="padding:10px 20px;font-size:13px">Add</button>
       </div>
       <div id="wishlistItems"></div>
@@ -1592,6 +1601,112 @@ async function refreshNowPlaying() {
     `).join('');
   } catch (e) { el.innerHTML = `<div class="error">${e.message}</div>`; }
 }
+
+// ───── GAME TITLE AUTOCOMPLETE ─────
+const _suggestCache = {};
+let _suggestTimers = {};
+let _suggestIdx = {};
+
+async function _fetchSuggestions(term) {
+  if (_suggestCache[term]) return _suggestCache[term];
+  try {
+    const r = await fetch(`https://www.cheapshark.com/api/1.0/games?title=${encodeURIComponent(term)}&limit=8`);
+    const data = await r.json();
+    _suggestCache[term] = data || [];
+    return _suggestCache[term];
+  } catch { return []; }
+}
+
+function _renderSuggest(boxId, inputId, results, onClick) {
+  const box = document.getElementById(boxId);
+  if (!box) return;
+  if (!results.length) { box.style.display = 'none'; return; }
+  box.innerHTML = results.map((r, i) => `
+    <div class="suggest-item" data-idx="${i}" onmousedown="event.preventDefault();${onClick}(${i})" style="display:flex;gap:10px;align-items:center;padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);transition:background 0.1s" onmouseover="this.style.background='var(--panel2)'" onmouseout="this.style.background='transparent'">
+      <img src="${r.thumb||''}" style="width:60px;height:28px;object-fit:cover;border-radius:3px;flex-shrink:0">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.external}</div>
+        ${r.cheapest ? `<div style="font-size:11px;color:var(--dim)">from $${r.cheapest}</div>` : ''}
+      </div>
+    </div>`).join('');
+  box.style.display = 'block';
+  _suggestIdx[boxId] = -1;
+}
+
+function _makeSuggest(inputId, boxId, cacheKey, onPick) {
+  return {
+    oninput(input) {
+      const v = input.value.trim();
+      if (v.length < 2) { document.getElementById(boxId).style.display = 'none'; return; }
+      clearTimeout(_suggestTimers[boxId]);
+      _suggestTimers[boxId] = setTimeout(async () => {
+        const results = await _fetchSuggestions(v);
+        _suggestCache['_last_'+boxId] = results;
+        _renderSuggest(boxId, inputId, results, onPick);
+      }, 250);
+    },
+    onkey(e) {
+      const box = document.getElementById(boxId);
+      if (box.style.display === 'none') {
+        if (e.key === 'Enter') { e.preventDefault(); window[cacheKey+'Trigger'](); }
+        return;
+      }
+      const items = box.querySelectorAll('.suggest-item');
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        _suggestIdx[boxId] = Math.min((_suggestIdx[boxId]||-1)+1, items.length-1);
+        items.forEach((el,i) => el.style.background = i===_suggestIdx[boxId] ? 'var(--panel2)' : 'transparent');
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        _suggestIdx[boxId] = Math.max((_suggestIdx[boxId]||0)-1, 0);
+        items.forEach((el,i) => el.style.background = i===_suggestIdx[boxId] ? 'var(--panel2)' : 'transparent');
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (_suggestIdx[boxId] >= 0) {
+          window[onPick](_suggestIdx[boxId]);
+        } else {
+          box.style.display = 'none';
+          window[cacheKey+'Trigger']();
+        }
+      } else if (e.key === 'Escape') {
+        box.style.display = 'none';
+      }
+    }
+  };
+}
+
+// PRICE HISTORY suggest bindings
+function priceSuggest(input) { _makeSuggest('priceHistoryInput','priceSuggestBox','priceHistory','pickPriceSuggest').oninput(input); }
+function priceSuggestKey(e) { _makeSuggest('priceHistoryInput','priceSuggestBox','priceHistory','pickPriceSuggest').onkey(e); }
+function pickPriceSuggest(idx) {
+  const r = _suggestCache['_last_priceSuggestBox']?.[idx]; if (!r) return;
+  document.getElementById('priceHistoryInput').value = r.external;
+  document.getElementById('priceSuggestBox').style.display = 'none';
+  checkPriceHistory();
+}
+window.priceHistoryTrigger = () => checkPriceHistory();
+
+// REVIEWS suggest bindings
+function reviewSuggest(input) { _makeSuggest('reviewsInput','reviewSuggestBox','reviews','pickReviewSuggest').oninput(input); }
+function reviewSuggestKey(e) { _makeSuggest('reviewsInput','reviewSuggestBox','reviews','pickReviewSuggest').onkey(e); }
+function pickReviewSuggest(idx) {
+  const r = _suggestCache['_last_reviewSuggestBox']?.[idx]; if (!r) return;
+  document.getElementById('reviewsInput').value = r.external;
+  document.getElementById('reviewSuggestBox').style.display = 'none';
+  compareReviews();
+}
+window.reviewsTrigger = () => compareReviews();
+
+// WISHLIST suggest bindings
+function wishlistSuggest(input) { _makeSuggest('wishlistInput','wishlistSuggestBox','wishlist','pickWishlistSuggest').oninput(input); }
+function wishlistSuggestKey(e) { _makeSuggest('wishlistInput','wishlistSuggestBox','wishlist','pickWishlistSuggest').onkey(e); }
+function pickWishlistSuggest(idx) {
+  const r = _suggestCache['_last_wishlistSuggestBox']?.[idx]; if (!r) return;
+  document.getElementById('wishlistInput').value = r.external;
+  document.getElementById('wishlistSuggestBox').style.display = 'none';
+  addWishlist();
+}
+window.wishlistTrigger = () => addWishlist();
 
 // ───── PRICE HISTORY ─────
 async function checkPriceHistory() {
