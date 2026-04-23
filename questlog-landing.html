@@ -121,14 +121,53 @@ footer a{color:var(--dim);margin:0 12px}
 footer a:hover{color:var(--text)}
 
 @media(max-width:900px){
-  nav{padding:14px 20px}
+  nav{padding:14px 20px;gap:8px}
   .nav-links{display:none}
+  .nav-cta{margin-left:auto}
+  .nav-cta .btn{padding:8px 14px;font-size:12px}
   .hero{padding:60px 20px 40px}
   .screenshot-wrap{padding:0 20px 60px}
   .section{padding:60px 20px}
   .features,.steps,.pricing{grid-template-columns:1fr}
   .ss-grid{grid-template-columns:1fr 1fr}
   .ss-games{grid-template-columns:1fr 1fr 1fr}
+  .hero h1{font-size:40px}
+  .hero p{font-size:15px}
+  .btn-xl{padding:13px 24px;font-size:14px}
+}
+
+@media(max-width:640px){
+  nav{padding:10px 14px}
+  .logo{font-size:16px}
+  .nav-cta{gap:6px}
+  .nav-cta .btn{padding:6px 10px;font-size:11px}
+  .nav-cta .btn-ghost{display:none}
+  .hero{padding:40px 16px 30px}
+  .hero-badge{font-size:10px;padding:5px 10px}
+  .hero h1{font-size:32px;letter-spacing:-1px}
+  .hero p{font-size:14px}
+  .hero-ctas{flex-direction:column;width:100%}
+  .hero-ctas a{width:100%}
+  .hero-trust{flex-direction:column;gap:8px;font-size:12px}
+  .screenshot-wrap{padding:0 16px 40px}
+  .screenshot-body{padding:14px}
+  .ss-grid{grid-template-columns:1fr 1fr;gap:8px}
+  .ss-stat{padding:10px}
+  .ss-stat-val{font-size:18px}
+  .ss-games{grid-template-columns:1fr 1fr}
+  .section{padding:48px 16px}
+  .section-head h2{font-size:28px}
+  .feature{padding:20px}
+  .pricing-wrap{padding:48px 16px}
+  .plan{padding:22px}
+  .plan-price{font-size:40px}
+  .proof{padding:28px 20px}
+  .proof-quote{font-size:17px}
+  .cta-section{padding:60px 16px}
+  .cta-section h2{font-size:28px}
+  footer{padding:28px 16px}
+  footer a{display:inline-block;padding:4px 6px}
+  input,select,textarea{font-size:16px !important}
 }
 </style>
 </head>
