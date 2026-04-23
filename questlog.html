@@ -1684,34 +1684,6 @@ async function subscribeDigest() {
   } catch (e) { document.getElementById('digestResult').innerHTML = `<div class="error">${e.message}</div>`; }
 }
 
-// ───── CURATOR ─────
-async function askCurator() {
-  const q = document.getElementById('curatorInput').value.trim();
-  if (!q) return;
-  const el = document.getElementById('curatorResult');
-  el.innerHTML = '<div class="empty"><span class="loading"></span> Searching the catalog...</div>';
-  try {
-    const r = await fetch(`/api/curator?q=${encodeURIComponent(q)}`);
-    const d = await r.json();
-    if (d.error) { el.innerHTML = `<div class="error">${d.error}</div>`; return; }
-    if (!d.results?.length) { el.innerHTML = '<div class="empty">No matches. Try a different description.</div>'; return; }
-    const detected = Object.entries(d.detected).filter(([k,v]) => v).map(([k]) => k).join(', ');
-    el.innerHTML = `
-      ${detected ? `<div style="font-size:11px;color:var(--dim);margin-bottom:10px">Detected: <span style="color:var(--accent)">${detected}</span></div>` : ''}
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">
-        ${d.results.map(r => `
-          <div onclick="window.open('${r.dealLink}','_blank')" style="cursor:pointer;background:var(--panel2);border-radius:6px;overflow:hidden">
-            <div style="aspect-ratio:460/215;background:url('${r.thumb}') center/cover"></div>
-            <div style="padding:10px">
-              <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.title}</div>
-              <div style="font-size:11px;color:var(--dim);margin-top:2px">${r.storeName} · <span style="color:var(--accent);font-weight:600">$${r.price.toFixed(2)}</span>${r.savings>0 ? ' -'+r.savings+'%' : ''}</div>
-              ${r.steamRating ? `<div style="font-size:10px;color:${r.steamRating>=85?'var(--accent)':'#d5e65c'};margin-top:2px">${r.steamRating}% ★ ${r.steamLabel||''}</div>` : ''}
-            </div>
-          </div>
-        `).join('')}
-      </div>`;
-  } catch (e) { el.innerHTML = `<div class="error">${e.message}</div>`; }
-}
 
 // ───── WHAT SHOULD I PLAY ─────
 async function whatToPlay(mood) {
@@ -2319,76 +2291,6 @@ async function loadSpendAnalytics() {
   } catch (e) { el.innerHTML = `<div class="error">${e.message}</div>`; }
 }
 
-// ───── STEAM WRAPPED CARD ─────
-async function generateWrappedCard() {
-  if (!STATE.sid) return;
-  const el = document.getElementById('wrappedCardResult');
-  el.innerHTML = '<div class="empty"><span class="loading"></span></div>';
-  try {
-    const w = await api('/api/wrapped');
-    const canvas = document.createElement('canvas');
-    canvas.width = 1080; canvas.height = 1350;
-    const ctx = canvas.getContext('2d');
-
-    // Background
-    const grad = ctx.createLinearGradient(0, 0, 0, 1350);
-    grad.addColorStop(0, '#0a0e1a'); grad.addColorStop(1, '#1a2340');
-    ctx.fillStyle = grad; ctx.fillRect(0, 0, 1080, 1350);
-
-    // Accent dot + text
-    ctx.fillStyle = '#c8f135'; ctx.beginPath(); ctx.arc(60, 90, 12, 0, Math.PI*2); ctx.fill();
-    ctx.font = 'bold 34px Helvetica, Arial'; ctx.fillStyle = '#fff';
-    ctx.fillText('QuestLog', 90, 102);
-
-    ctx.font = '20px Helvetica'; ctx.fillStyle = 'rgba(232,236,244,0.5)';
-    ctx.fillText('STEAM WRAPPED — ' + new Date().getFullYear(), 60, 140);
-
-    // User name
-    ctx.font = 'bold 72px Helvetica'; ctx.fillStyle = '#fff';
-    ctx.fillText(STATE.profile?.name || 'Gamer', 60, 240);
-
-    // Headline stats
-    ctx.font = 'bold 120px Helvetica'; ctx.fillStyle = '#c8f135';
-    ctx.fillText(w.totalHours.toLocaleString(), 60, 420);
-    ctx.font = '28px Helvetica'; ctx.fillStyle = 'rgba(232,236,244,0.7)';
-    ctx.fillText('HOURS PLAYED', 60, 460);
-
-    ctx.font = 'bold 72px Helvetica'; ctx.fillStyle = '#fff';
-    ctx.fillText(w.totalGames + ' games', 60, 560);
-    ctx.font = '20px Helvetica'; ctx.fillStyle = 'rgba(232,236,244,0.5)';
-    ctx.fillText(w.untouched + ' never touched', 60, 590);
-
-    // Top 5 labels
-    ctx.font = 'bold 22px Helvetica'; ctx.fillStyle = '#c8f135';
-    ctx.fillText('MOST PLAYED', 60, 700);
-
-    // Top 5 entries
-    ctx.font = 'bold 36px Helvetica'; ctx.fillStyle = '#fff';
-    w.top5.slice(0, 5).forEach((g, i) => {
-      const y = 760 + i * 80;
-      ctx.font = 'bold 28px Helvetica';
-      ctx.fillStyle = '#c8f135';
-      ctx.fillText(`#${i+1}`, 60, y);
-      ctx.font = 'bold 30px Helvetica';
-      ctx.fillStyle = '#fff';
-      ctx.fillText(g.name, 130, y);
-      ctx.font = '22px Helvetica';
-      ctx.fillStyle = 'rgba(232,236,244,0.5)';
-      ctx.fillText(`${g.hours}h`, 880, y);
-    });
-
-    // Footer
-    ctx.font = '18px Helvetica'; ctx.fillStyle = 'rgba(232,236,244,0.3)';
-    ctx.fillText('rupertweb.com/questlog.html', 60, 1280);
-    ctx.fillText(new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}), 800, 1280);
-
-    // Render the canvas as image + download link
-    const dataUrl = canvas.toDataURL('image/png');
-    el.innerHTML = `
-      <img src="${dataUrl}" style="width:100%;border-radius:8px;margin-bottom:12px">
-      <a href="${dataUrl}" download="questlog-wrapped.png" class="connect-btn" style="display:block;text-align:center;text-decoration:none">Download PNG</a>`;
-  } catch (e) { el.innerHTML = `<div class="error">${e.message}</div>`; }
-}
 
 async function estimateFPS() {
   const gpu = document.getElementById('fpsGpu').value.trim();
@@ -2438,28 +2340,6 @@ fetch('/api/gpu-list').then(r => r.json()).then(d => {
   if (list && d.gpus) list.innerHTML = d.gpus.map(g => `<option>${g}</option>`).join('');
 }).catch(() => {});
 
-async function createPriceAlert() {
-  const gameTitle = document.getElementById('alertGame').value.trim();
-  const targetPrice = parseFloat(document.getElementById('alertPrice').value);
-  const email = document.getElementById('alertEmail').value.trim();
-  if (!gameTitle || !targetPrice || !email) { document.getElementById('alertResult').innerHTML = '<div class="error">All fields required</div>'; return; }
-
-  try {
-    const r = await fetch('/api/price-alert', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ gameTitle, targetPrice, email, sid: STATE.sid }),
-    });
-    const d = await r.json();
-    if (d.ok) {
-      document.getElementById('alertResult').innerHTML = '<div style="color:var(--accent)">✓ Alert set. You\'ll get an email when it drops.</div>';
-      document.getElementById('alertGame').value = '';
-      document.getElementById('alertPrice').value = '';
-    } else {
-      document.getElementById('alertResult').innerHTML = `<div class="error">${d.error || 'Failed'}</div>`;
-    }
-  } catch (e) { document.getElementById('alertResult').innerHTML = `<div class="error">${e.message}</div>`; }
-}
 
 // ═════ NEW RELEASES ═════
 
