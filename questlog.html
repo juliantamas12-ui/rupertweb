@@ -1667,13 +1667,17 @@ const _suggestCache = {};
 let _suggestTimers = {};
 let _suggestIdx = {};
 
+const _JUNK_RE = /\b(hentai|waifu|nsfw|sex|sexy|porn|erotic|nudist|boobs|anime\s*girl|girl\s*simulator|femboy|lewd|bikini\s*girls|yaoi|yuri|h-game|ero|dating\s*sim|uncensored|milf|futa|succubus|onee|sakura|demo|soundtrack|artbook)\b/i;
+
 async function _fetchSuggestions(term) {
   if (_suggestCache[term]) return _suggestCache[term];
   try {
-    const r = await fetch(`https://www.cheapshark.com/api/1.0/games?title=${encodeURIComponent(term)}&limit=8`);
+    const r = await fetch(`https://www.cheapshark.com/api/1.0/games?title=${encodeURIComponent(term)}&limit=15`);
     const data = await r.json();
-    _suggestCache[term] = data || [];
-    return _suggestCache[term];
+    // Filter out junk titles
+    const clean = (data || []).filter(g => g.external && !_JUNK_RE.test(g.external)).slice(0, 8);
+    _suggestCache[term] = clean;
+    return clean;
   } catch { return []; }
 }
 

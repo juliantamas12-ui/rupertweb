@@ -91,6 +91,16 @@ async function fetchJSON(url) {
   return r.json();
 }
 
+// ═════ UNIVERSAL JUNK FILTER ═════
+// Used everywhere: deals, search, curator, new releases, buy recs
+const JUNK_PATTERNS = /\b(hentai|waifu|nsfw|sex|sexy|porn|erotic|nudist|boobs|anime\s*girl|girl\s*simulator|femboy|lewd|bikini\s*girls|yaoi|yuri|h-game|ero|dating\s*sim|visual\s*novel|uncensored|milf|futa|succubus|onee\s*chan|sakura\s*[a-z]+)\b/i;
+const JUNK_META_PATTERNS = /\b(demo|soundtrack|ost|dlc\s*$|artbook|wallpaper|test|prototype|beta\s*$)\b/i;
+
+function isJunkTitle(title) {
+  if (!title) return false;
+  return JUNK_PATTERNS.test(title) || JUNK_META_PATTERNS.test(title);
+}
+
 // ════════════════════════════════════════════════════════
 // STEAM ENDPOINTS
 // ════════════════════════════════════════════════════════
@@ -1683,7 +1693,7 @@ async function curator(url) {
     const rate = d.steamRatingPercent ? parseInt(d.steamRatingPercent) : 0;
     if (revs < 500 || rate < 70) return false;
     const t = (d.title || '').toLowerCase();
-    if (/\bhentai|\bwaifu|\bsex|\bnsfw|\bdemo\b|\bsoundtrack\b/.test(t)) return false;
+    if (isJunkTitle(t)) return false;
     return true;
   });
 
@@ -2091,7 +2101,7 @@ async function newReleases(url) {
       default:            source = data.new_releases;
     }
 
-    const items = (source?.items || []).slice(0, 40);
+    const items = (source?.items || []).filter(it => !isJunkTitle(it.name)).slice(0, 40);
 
     // Enrich with reviews in parallel
     const enriched = await Promise.all(items.map(async it => {
@@ -2191,7 +2201,7 @@ async function upcomingReleases() {
   if (validated.length < 12) {
     try {
       const feed = await fetchJSON('https://store.steampowered.com/api/featuredcategories?cc=us&l=en');
-      const steamItems = (feed.coming_soon?.items || []).slice(0, 20);
+      const steamItems = (feed.coming_soon?.items || []).filter(it => !isJunkTitle(it.name)).slice(0, 20);
       for (const it of steamItems) {
         if (validated.find(v => v.appid === it.id)) continue;
         validated.push({
@@ -2242,7 +2252,7 @@ async function freeGames() {
     const epic = await fetchJSON(
       'https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions?locale=en-US&country=US&allowCountries=US'
     );
-    const elements = epic?.data?.Catalog?.searchStore?.elements || [];
+    const elements = (epic?.data?.Catalog?.searchStore?.elements || []).filter(e => !isJunkTitle(e.title));
     for (const g of elements) {
       const promos = g.promotions?.promotionalOffers?.[0]?.promotionalOffers?.[0];
       const upcoming = g.promotions?.upcomingPromotionalOffers?.[0]?.promotionalOffers?.[0];
@@ -2275,7 +2285,7 @@ async function freeGames() {
   // ── STEAM free weekends & permanently free (via CheapShark, enriched with real Steam reviews)
   try {
     const steamDeals = await fetchJSON('https://www.cheapshark.com/api/1.0/deals?storeID=1&upperPrice=0&sortBy=Reviews&pageSize=30');
-    const freeOnes = (steamDeals || []).filter(d => parseFloat(d.salePrice) === 0);
+    const freeOnes = (steamDeals || []).filter(d => parseFloat(d.salePrice) === 0 && !isJunkTitle(d.title));
 
     // Parallel fetch full reviews for top 20 to get label + count
     await Promise.all(freeOnes.slice(0, 20).map(async d => {
@@ -2307,7 +2317,7 @@ async function freeGames() {
   // ── GOG free games (via their storefront API)
   try {
     const gog = await fetchJSON('https://catalog.gog.com/v1/catalog?limit=48&order=desc%3Atrending&price=between%3A0%2C0&productType=in%3Agame%2Cpack&page=1');
-    const gogGames = gog?.products || [];
+    const gogGames = (gog?.products || []).filter(g => !isJunkTitle(g.title));
     for (const g of gogGames.slice(0, 20)) {
       // GOG storeLink is a full relative path like '/game/slug-name'
       // Fallback: build from slug if storeLink missing
@@ -2383,9 +2393,7 @@ async function getDeals(url) {
     if (rating < 60) return false;
     // Drop joke/bad titles patterns
     const t = (d.title || '').toLowerCase();
-    if (/\bhentai\b|\bwaifu\b|\bgirl ?simulator\b|\bsex\b|\bnsfw\b|\bboobs\b|\bnudist\b/.test(t)) return false;
-    // Drop demos/DLC tracked separately
-    if (/\bdemo\b|\bsoundtrack\b|\bost\b(\s|$)/.test(t)) return false;
+    if (isJunkTitle(t)) return false;
     return true;
   });
 
@@ -2430,8 +2438,9 @@ async function getDeals(url) {
 async function searchDeal(url) {
   const title = url.searchParams.get('title');
   if (!title) return jsonResponse({ error: 'title required' }, 400);
-  const data = await fetchJSON(`https://www.cheapshark.com/api/1.0/games?title=${encodeURIComponent(title)}&limit=5`);
-  const results = await Promise.all((data || []).slice(0, 3).map(async g => {
+  const data = await fetchJSON(`https://www.cheapshark.com/api/1.0/games?title=${encodeURIComponent(title)}&limit=10`);
+  const filtered = (data || []).filter(g => !isJunkTitle(g.external));
+  const results = await Promise.all(filtered.slice(0, 3).map(async g => {
     const detail = await fetchJSON(`https://www.cheapshark.com/api/1.0/games?id=${g.gameID}`).catch(() => ({}));
     const deals = (detail.deals || []).map(d => ({
       storeID: d.storeID,
