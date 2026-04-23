@@ -628,7 +628,10 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
     <div class="sidebar-card">
       <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Set target prices. We check every hour and email you the instant a game drops below your target on any store.</p>
       <div style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:10px;margin-bottom:10px">
-        <input type="text" id="alertGameInput" placeholder="Game title" style="background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit">
+        <div style="position:relative">
+          <input type="text" id="alertGameInput" placeholder="Game title" autocomplete="off" style="width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit" oninput="alertGameSuggest(this)" onkeydown="alertGameSuggestKey(event)" onblur="setTimeout(()=>document.getElementById('alertGameSuggestBox').style.display='none',200)">
+          <div id="alertGameSuggestBox" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--panel);border:1px solid var(--border);border-radius:6px;max-height:320px;overflow-y:auto;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,0.4)"></div>
+        </div>
         <input type="number" id="alertTarget" placeholder="Target £" step="0.01" style="background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit">
         <input type="email" id="alertEmailPro" placeholder="Email" style="background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit">
         <button onclick="addPriceAlert()" class="connect-btn" style="padding:10px 18px;font-size:12px">Add</button>
@@ -659,7 +662,10 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
     <div class="sidebar-card">
       <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Log sessions and write notes on games you've finished. Saved in your browser.</p>
       <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-bottom:10px">
-        <input type="text" id="journalGame" placeholder="Game title" style="background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit">
+        <div style="position:relative">
+          <input type="text" id="journalGame" placeholder="Game title" autocomplete="off" style="width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit" oninput="journalSuggest(this)" onkeydown="journalSuggestKey(event)" onblur="setTimeout(()=>document.getElementById('journalSuggestBox').style.display='none',200)">
+          <div id="journalSuggestBox" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--panel);border:1px solid var(--border);border-radius:6px;max-height:320px;overflow-y:auto;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,0.4)"></div>
+        </div>
         <select id="journalRating" style="background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit">
           <option value="">Rating...</option>
           <option>10/10 — Masterpiece</option>
@@ -684,16 +690,6 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
     <div id="spendPanel" class="sidebar-card"><div class="empty"><span class="loading"></span> Calculating what you spent...</div></div>
   </div>
 
-  <!-- STEAM WRAPPED SHARE CARD -->
-  <div class="section">
-    <div class="section-head"><h2>Steam Wrapped — Share Your Stats</h2></div>
-    <div class="sidebar-card">
-      <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Generate a shareable image of your year. Download as PNG.</p>
-      <button onclick="generateWrappedCard()" class="connect-btn" style="width:100%">Generate Card</button>
-      <div id="wrappedCardResult" style="margin-top:16px"></div>
-    </div>
-  </div>
-
   <!-- STEAM DNA -->
   <div class="section">
     <div class="section-head"><h2>Your Steam DNA</h2></div>
@@ -705,8 +701,11 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
     <div class="section-head"><h2>How Long to Beat</h2></div>
     <div class="sidebar-card">
       <p style="color:var(--dim);font-size:13px;margin-bottom:14px">How many hours does this game actually take? Main story vs completionist.</p>
-      <div style="display:flex;gap:10px;margin-bottom:16px">
-        <input type="text" id="hltbInput" placeholder="Game title" style="flex:1;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit" onkeydown="if(event.key==='Enter') checkHLTB()">
+      <div style="display:flex;gap:10px;margin-bottom:16px;position:relative">
+        <div style="flex:1;position:relative">
+          <input type="text" id="hltbInput" placeholder="Start typing a game title..." autocomplete="off" style="width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit" oninput="hltbSuggest(this)" onkeydown="hltbSuggestKey(event)" onblur="setTimeout(()=>document.getElementById('hltbSuggestBox').style.display='none',200)">
+          <div id="hltbSuggestBox" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--panel);border:1px solid var(--border);border-radius:6px;max-height:320px;overflow-y:auto;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,0.4)"></div>
+        </div>
         <button onclick="checkHLTB()" class="connect-btn" style="padding:10px 20px;font-size:13px">Check</button>
       </div>
       <div id="hltbResult"></div>
@@ -764,10 +763,11 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
             <option>8</option><option selected>16</option><option>32</option><option>64</option><option>96</option><option>128</option>
           </select>
         </div>
-        <div>
+        <div style="position:relative">
           <label style="font-size:11px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px">Game</label>
-          <input list="gameList" id="fpsGame" placeholder="e.g. Cyberpunk 2077" style="width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit">
-          <datalist id="gameList">
+          <input type="text" id="fpsGame" placeholder="Start typing..." autocomplete="off" style="width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit" oninput="fpsGameSuggest(this)" onkeydown="fpsGameSuggestKey(event)" onblur="setTimeout(()=>document.getElementById('fpsGameSuggestBox').style.display='none',200)">
+          <div id="fpsGameSuggestBox" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--panel);border:1px solid var(--border);border-radius:6px;max-height:320px;overflow-y:auto;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,0.4)"></div>
+          <datalist id="gameList" style="display:none">
             <option>Cyberpunk 2077</option><option>Alan Wake 2</option><option>Black Myth: Wukong</option>
             <option>Red Dead Redemption 2</option><option>Elden Ring</option><option>Counter-Strike 2</option>
             <option>Sea of Thieves</option><option>Baldur's Gate 3</option><option>Hogwarts Legacy</option>
@@ -1675,6 +1675,27 @@ function _makeSuggest(inputId, boxId, cacheKey, onPick) {
   };
 }
 
+// HLTB suggest bindings
+function hltbSuggest(input) { _makeSuggest('hltbInput','hltbSuggestBox','hltb','pickHltbSuggest').oninput(input); }
+function hltbSuggestKey(e) { _makeSuggest('hltbInput','hltbSuggestBox','hltb','pickHltbSuggest').onkey(e); }
+function pickHltbSuggest(idx) {
+  const r = _suggestCache['_last_hltbSuggestBox']?.[idx]; if (!r) return;
+  document.getElementById('hltbInput').value = r.external;
+  document.getElementById('hltbSuggestBox').style.display = 'none';
+  checkHLTB();
+}
+window.hltbTrigger = () => checkHLTB();
+
+// FPS GAME suggest bindings
+function fpsGameSuggest(input) { _makeSuggest('fpsGame','fpsGameSuggestBox','fpsGame','pickFpsGameSuggest').oninput(input); }
+function fpsGameSuggestKey(e) { _makeSuggest('fpsGame','fpsGameSuggestBox','fpsGame','pickFpsGameSuggest').onkey(e); }
+function pickFpsGameSuggest(idx) {
+  const r = _suggestCache['_last_fpsGameSuggestBox']?.[idx]; if (!r) return;
+  document.getElementById('fpsGame').value = r.external;
+  document.getElementById('fpsGameSuggestBox').style.display = 'none';
+}
+window.fpsGameTrigger = () => estimateFPS();
+
 // PRICE HISTORY suggest bindings
 function priceSuggest(input) { _makeSuggest('priceHistoryInput','priceSuggestBox','priceHistory','pickPriceSuggest').oninput(input); }
 function priceSuggestKey(e) { _makeSuggest('priceHistoryInput','priceSuggestBox','priceHistory','pickPriceSuggest').onkey(e); }
@@ -1707,6 +1728,26 @@ function pickWishlistSuggest(idx) {
   addWishlist();
 }
 window.wishlistTrigger = () => addWishlist();
+
+// PRICE ALERT input suggest
+function alertGameSuggest(input) { _makeSuggest('alertGameInput','alertGameSuggestBox','alertGame','pickAlertGameSuggest').oninput(input); }
+function alertGameSuggestKey(e) { _makeSuggest('alertGameInput','alertGameSuggestBox','alertGame','pickAlertGameSuggest').onkey(e); }
+function pickAlertGameSuggest(idx) {
+  const r = _suggestCache['_last_alertGameSuggestBox']?.[idx]; if (!r) return;
+  document.getElementById('alertGameInput').value = r.external;
+  document.getElementById('alertGameSuggestBox').style.display = 'none';
+}
+window.alertGameTrigger = () => {};
+
+// JOURNAL input suggest
+function journalSuggest(input) { _makeSuggest('journalGame','journalSuggestBox','journal','pickJournalSuggest').oninput(input); }
+function journalSuggestKey(e) { _makeSuggest('journalGame','journalSuggestBox','journal','pickJournalSuggest').onkey(e); }
+function pickJournalSuggest(idx) {
+  const r = _suggestCache['_last_journalSuggestBox']?.[idx]; if (!r) return;
+  document.getElementById('journalGame').value = r.external;
+  document.getElementById('journalSuggestBox').style.display = 'none';
+}
+window.journalTrigger = () => {};
 
 // ───── PRICE HISTORY ─────
 async function checkPriceHistory() {
