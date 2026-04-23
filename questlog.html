@@ -20,6 +20,7 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:16px 3
 .nav-tab{padding:8px 16px;font-size:13px;color:var(--dim);background:transparent;border:none;border-radius:4px;cursor:pointer;transition:all 0.15s;font-family:inherit}
 .nav-tab:hover{color:var(--text);background:var(--panel)}
 .nav-tab.active{color:var(--accent);background:var(--panel2)}
+.nav-tab-pro{display:none}
 .nav-user{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--dim)}
 .nav-user-avatar{width:28px;height:28px;border-radius:50%;background-size:cover}
 
@@ -143,6 +144,7 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
     <button class="nav-tab" data-view="utility">Utility</button>
     <button class="nav-tab" data-view="news">News</button>
     <button class="nav-tab" data-view="leaderboards">Leaderboards</button>
+    <button class="nav-tab nav-tab-pro" data-view="pro" id="navTabPro" onclick="goToPro()"><span style="background:var(--accent);color:#000;font-weight:800;font-size:9px;padding:2px 6px;border-radius:2px;letter-spacing:1px;margin-right:4px;vertical-align:middle">PRO</span>Hub</button>
   </div>
   <div class="nav-user" id="navUser" style="display:none">
     <div class="nav-user-avatar" id="userAvatar"></div>
@@ -1949,10 +1951,21 @@ function renderProHub() {
   const gated = document.getElementById('proHubGated');
   const unlocked = document.getElementById('proHubUnlocked');
   const navBadge = document.getElementById('proBadgeNav');
+  const navTabPro = document.getElementById('navTabPro');
   const active = isProActive();
   if (gated) gated.style.display = active ? 'none' : 'block';
   if (unlocked) unlocked.style.display = active ? 'block' : 'none';
   if (navBadge) navBadge.style.display = active ? 'inline-block' : 'none';
+  if (navTabPro) navTabPro.style.display = active ? 'inline-flex' : 'none';
+}
+
+function goToPro() {
+  // Switch to Utility tab and scroll to the Pro Hub
+  document.querySelector('[data-view="utility"]').click();
+  setTimeout(() => {
+    const hub = document.getElementById('proHub');
+    if (hub) hub.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
 }
 
 function togglePro() {
