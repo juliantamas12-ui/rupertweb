@@ -267,19 +267,7 @@ const SCHOOL_TASKS = [
     "status": "upcoming"
   },
   {
-    "title": "Test_A1_Kap 11_Meine Stadt",
-    "due": "",
-    "subject": "",
-    "status": "upcoming"
-  },
-  {
     "title": "Math 7 (HW/Review)",
-    "due": "",
-    "subject": "",
-    "status": "upcoming"
-  },
-  {
-    "title": "Submit Coursework",
     "due": "",
     "subject": "",
     "status": "upcoming"
@@ -297,7 +285,19 @@ const SCHOOL_TASKS = [
     "status": "upcoming"
   },
   {
+    "title": "Submit Coursework",
+    "due": "",
+    "subject": "",
+    "status": "upcoming"
+  },
+  {
     "title": "Substitution 5: Complete the tasks on the slides",
+    "due": "",
+    "subject": "",
+    "status": "upcoming"
+  },
+  {
+    "title": "Math 8: Volume of Prisms and Cylinders",
     "due": "",
     "subject": "",
     "status": "upcoming"
@@ -309,7 +309,19 @@ const SCHOOL_TASKS = [
     "status": "upcoming"
   },
   {
+    "title": "HW Science 7",
+    "due": "",
+    "subject": "",
+    "status": "upcoming"
+  },
+  {
     "title": "Upload weeks 19 - 22 work",
+    "due": "",
+    "subject": "",
+    "status": "upcoming"
+  },
+  {
+    "title": "Math 8: Unit 6 Test",
     "due": "",
     "subject": "",
     "status": "upcoming"
