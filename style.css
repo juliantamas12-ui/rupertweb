@@ -176,6 +176,7 @@ body {
 .tag--geopolitics{ background: #1e1f14; color: #d4c850; }
 .tag--philosophy { background: #1a1426; color: #b09ee0; }
 .tag--politics   { background: #261418; color: #e07070; }
+.tag--economics  { background: #14261f; color: #70e0b5; }
 
 .essay-card__date {
   font-family: var(--mono);

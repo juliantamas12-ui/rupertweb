@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Long Depression: How a Viennese Bank Failure in 1873 Broke the World for Twenty-Three Years",
+    date: "2026-04-23",
+    category: "Economics",
+    excerpt: "On 9 May 1873, a Friday, the Vienna Stock Exchange opened at its usual hour and by noon had stopped functioning. Within four months, the panic had crossed the Atlantic, taken down Jay Cooke & Company, and forced the NYSE to shut its doors for the first time in its history. The economic crisis that followed lasted until 1896. People at the time called it the Great Depression — they stopped only after 1929 gave them a worse one to name...",
+    url: "essays/2026-04-23-the-long-depression-how-a-viennese-bank-failure-in-1873-broke.html"
+  },
+  {
     title: "The Man Who Invented Containment and Spent Forty Years Watching It Go Wrong",
     date: "2026-04-22",
     category: "History",
