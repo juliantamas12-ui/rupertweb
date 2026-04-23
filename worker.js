@@ -50,6 +50,7 @@ export default {
       if (p === '/api/curator')                                        return curator(url);
       if (p === '/api/reviews-compare')                                return reviewsCompare(url);
       if (p.startsWith('/u/'))                                         return publicProfile(url);
+      if (p === '/api/spend-analytics')                                return spendAnalytics(url);
       if (p === '/api/deals')                                         return getDeals(url);
       if (p === '/api/deal-search')                                   return searchDeal(url);
       if (p === '/api/my-deals')                                      return myDeals(url);
@@ -1756,6 +1757,77 @@ async function reviewsCompare(url) {
 // ════════════════════════════════════════════════════════
 // PUBLIC PROFILES  — /u/{name-or-sid}
 // ════════════════════════════════════════════════════════
+
+// ════════════════════════════════════════════════════════
+// SPEND ANALYTICS — estimated money spent + cost per hour
+// ════════════════════════════════════════════════════════
+
+async function spendAnalytics(url) {
+  const sid = url.searchParams.get('sid'); if (!sid) return jsonResponse({ error: 'sid required' }, 400);
+
+  const data = await fetchJSON(
+    `https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${STEAM_KEY}&steamid=${sid}&include_appinfo=1&include_played_free_games=1`
+  );
+  if (!data?.response?.games) return jsonResponse({ error: 'privacy' }, 403);
+  const games = data.response.games;
+
+  // Fetch price for top 30 games by hours (costs too much otherwise)
+  const topByHours = [...games]
+    .filter(g => g.playtime_forever > 0)
+    .sort((a,b) => (b.playtime_forever||0) - (a.playtime_forever||0))
+    .slice(0, 40);
+
+  const prices = await Promise.all(topByHours.map(async g => {
+    try {
+      const d = await fetchJSON(`https://store.steampowered.com/api/appdetails?appids=${g.appid}&cc=gb&l=en&filters=price_overview,basic`);
+      const info = d?.[g.appid]?.data;
+      if (!info) return null;
+      const p = info.is_free ? 0 : (info.price_overview?.initial ? info.price_overview.initial / 100 : null);
+      return { ...g, price: p, isFree: info.is_free };
+    } catch { return null; }
+  }));
+
+  const gamesWithPrices = prices.filter(p => p && p.price !== null);
+
+  const totalSpend = gamesWithPrices.reduce((s, g) => s + (g.price || 0), 0);
+  const totalHours = gamesWithPrices.reduce((s, g) => s + (g.playtime_forever || 0) / 60, 0);
+  const untouched = games.filter(g => !g.playtime_forever).length;
+  const wastedSpend = gamesWithPrices.filter(g => !g.playtime_forever).reduce((s, g) => s + (g.price || 0), 0);
+
+  // Per-game cost efficiency
+  const perGame = gamesWithPrices
+    .filter(g => g.price > 0 && g.playtime_forever > 0)
+    .map(g => ({
+      appid: g.appid,
+      name: g.name,
+      price: g.price,
+      hours: Math.round(g.playtime_forever / 60),
+      costPerHour: g.price / (g.playtime_forever / 60),
+      img: `https://cdn.cloudflare.steamstatic.com/steam/apps/${g.appid}/header.jpg`,
+    }));
+
+  const bestValue = [...perGame].sort((a,b) => a.costPerHour - b.costPerHour).slice(0, 5);
+  const worstValue = [...perGame].sort((a,b) => b.costPerHour - a.costPerHour).slice(0, 5);
+  const mostExpensive = [...gamesWithPrices]
+    .filter(g => g.price)
+    .sort((a,b) => (b.price||0) - (a.price||0))
+    .slice(0, 5)
+    .map(g => ({ appid: g.appid, name: g.name, price: g.price, hours: Math.round(g.playtime_forever/60), img: `https://cdn.cloudflare.steamstatic.com/steam/apps/${g.appid}/header.jpg` }));
+
+  return jsonResponse({
+    estimatedSpend: Math.round(totalSpend),
+    untouchedCount: untouched,
+    wastedSpendEstimate: Math.round(wastedSpend),
+    totalHours: Math.round(totalHours),
+    averageCostPerHour: totalHours > 0 ? Math.round(totalSpend / totalHours * 100) / 100 : 0,
+    bestValue,
+    worstValue,
+    mostExpensive,
+    analysedGames: gamesWithPrices.length,
+    totalGames: games.length,
+    note: `Analysed top ${gamesWithPrices.length} games by hours. Spend estimates use current Steam prices, not what you actually paid.`,
+  });
+}
 
 async function publicProfile(url) {
   // Accept either a Steam ID or a vanity URL segment

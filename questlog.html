@@ -610,6 +610,12 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
     </div>
   </div>
 
+  <!-- SPEND ANALYTICS (PRO) -->
+  <div class="section">
+    <div class="section-head"><h2>Spend Analytics <span style="background:rgba(200,241,53,0.15);color:var(--accent);font-size:10px;padding:3px 8px;border-radius:3px;letter-spacing:1px;margin-left:8px;vertical-align:middle">PRO</span></h2></div>
+    <div id="spendPanel" class="sidebar-card"><div class="empty"><span class="loading"></span> Calculating what you spent...</div></div>
+  </div>
+
   <!-- STEAM WRAPPED SHARE CARD -->
   <div class="section">
     <div class="section-head"><h2>Steam Wrapped — Share Your Stats</h2></div>
@@ -798,6 +804,7 @@ document.querySelectorAll('.nav-tab').forEach(tab => {
         loadBacklog();
         loadFinishThis();
         loadSteamDNA();
+        loadSpendAnalytics();
         STATE.moreLoaded = true;
       }
     }
@@ -1664,6 +1671,53 @@ function renderJournal() {
       ${e.note ? `<div style="font-size:13px;color:var(--dim);margin-top:6px;white-space:pre-wrap">${e.note}</div>` : ''}
       <div style="font-size:10px;color:var(--dim);margin-top:6px;letter-spacing:1px">${new Date(e.date).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'})}</div>
     </div>`).join('');
+}
+
+// ───── SPEND ANALYTICS ─────
+async function loadSpendAnalytics() {
+  if (!STATE.sid) return;
+  const el = document.getElementById('spendPanel');
+  try {
+    const r = await api('/api/spend-analytics');
+    if (r.error) { el.innerHTML = `<div class="error">${r.error}</div>`; return; }
+    const wastedPct = r.estimatedSpend > 0 ? Math.round((r.wastedSpendEstimate / r.estimatedSpend) * 100) : 0;
+    el.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:24px">
+        <div style="background:var(--panel2);border-radius:8px;padding:16px;text-align:center">
+          <div style="font-size:28px;font-weight:800;color:var(--accent);line-height:1">£${r.estimatedSpend.toLocaleString()}</div>
+          <div style="font-size:10px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-top:6px">Estimated Spend</div>
+        </div>
+        <div style="background:var(--panel2);border-radius:8px;padding:16px;text-align:center">
+          <div style="font-size:28px;font-weight:800;color:#ff9e42;line-height:1">£${r.wastedSpendEstimate.toLocaleString()}</div>
+          <div style="font-size:10px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-top:6px">Wasted on Untouched (${wastedPct}%)</div>
+        </div>
+        <div style="background:var(--panel2);border-radius:8px;padding:16px;text-align:center">
+          <div style="font-size:28px;font-weight:800;line-height:1">£${r.averageCostPerHour.toFixed(2)}</div>
+          <div style="font-size:10px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-top:6px">Avg Cost / Hour</div>
+        </div>
+        <div style="background:var(--panel2);border-radius:8px;padding:16px;text-align:center">
+          <div style="font-size:28px;font-weight:800;line-height:1">${r.totalHours.toLocaleString()}h</div>
+          <div style="font-size:10px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-top:6px">Total Hours</div>
+        </div>
+      </div>
+
+      <h3 style="font-size:12px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Best Value (lowest cost/hour)</h3>
+      ${r.bestValue.map(g => `
+        <div onclick="openSteam(${g.appid})" style="cursor:pointer;display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+          <div style="width:80px;aspect-ratio:460/215;background:url('${g.img}') center/cover;border-radius:4px;flex-shrink:0"></div>
+          <div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${g.name}</div><div style="font-size:11px;color:var(--dim)">£${g.price} — ${g.hours}h — <span style="color:var(--accent)">£${g.costPerHour.toFixed(3)}/hour</span></div></div>
+        </div>`).join('')}
+
+      <h3 style="font-size:12px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin:24px 0 10px">Worst Value (highest cost/hour)</h3>
+      ${r.worstValue.map(g => `
+        <div onclick="openSteam(${g.appid})" style="cursor:pointer;display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+          <div style="width:80px;aspect-ratio:460/215;background:url('${g.img}') center/cover;border-radius:4px;flex-shrink:0"></div>
+          <div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${g.name}</div><div style="font-size:11px;color:var(--dim)">£${g.price} — ${g.hours}h — <span style="color:#ff9e42">£${g.costPerHour.toFixed(2)}/hour</span></div></div>
+        </div>`).join('')}
+
+      <p style="font-size:11px;color:var(--dim);margin-top:16px;font-style:italic">${r.note}</p>
+    `;
+  } catch (e) { el.innerHTML = `<div class="error">${e.message}</div>`; }
 }
 
 // ───── STEAM WRAPPED CARD ─────
