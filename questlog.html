@@ -112,6 +112,13 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
 .view.active{display:block}
 
 .empty{text-align:center;padding:40px;color:var(--dim);font-size:13px}
+
+/* Sub-tabs */
+.sub-view{display:none}
+.sub-view.active{display:block}
+.sub-tab{background:transparent;color:var(--dim);border:1px solid var(--border);padding:8px 16px;border-radius:100px;font-size:12px;font-family:inherit;cursor:pointer;transition:all 0.15s;font-weight:500;flex-shrink:0}
+.sub-tab:hover{color:var(--text);border-color:rgba(200,241,53,0.3)}
+.sub-tab.active{background:var(--accent);color:#000;border-color:var(--accent);font-weight:700}
 .error{background:rgba(255,80,80,0.1);border:1px solid rgba(255,80,80,0.3);color:#ff9090;padding:14px;border-radius:8px;font-size:13px;margin-bottom:20px}
 
 @media(max-width:900px){
@@ -295,6 +302,19 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
 </div>
 
 <div class="view" id="view-deals">
+
+  <!-- SUB-TAB BAR -->
+  <div class="sub-tab-bar" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--border);overflow-x:auto">
+    <button class="sub-tab active" data-sub="for-you" onclick="switchSubTab('deals','for-you')">For You</button>
+    <button class="sub-tab" data-sub="top" onclick="switchSubTab('deals','top')">Top Deals</button>
+    <button class="sub-tab" data-sub="search" onclick="switchSubTab('deals','search')">Search</button>
+    <button class="sub-tab" data-sub="free" onclick="switchSubTab('deals','free')">Free Now</button>
+    <button class="sub-tab" data-sub="new" onclick="switchSubTab('deals','new')">New Releases</button>
+    <button class="sub-tab" data-sub="soon" onclick="switchSubTab('deals','soon')">Coming Soon</button>
+  </div>
+
+  <!-- ── FOR YOU ── -->
+  <div class="sub-view active" data-sub="for-you">
   <div class="section">
     <div class="section-head">
       <h2>Deals For You — Games You Don't Own</h2>
@@ -302,7 +322,10 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
     </div>
     <div id="myDealsList"><div class="empty"><span class="loading"></span> Finding deals on games you don't own...</div></div>
   </div>
+  </div>
 
+  <!-- ── TOP DEALS ── -->
+  <div class="sub-view" data-sub="top">
   <div class="section">
     <div class="section-head">
       <h2>Top Deals Right Now — All Stores</h2>
@@ -355,7 +378,10 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
 
     <div id="allDealsList"><div class="empty"><span class="loading"></span> Loading deals...</div></div>
   </div>
+  </div>
 
+  <!-- ── SEARCH ── -->
+  <div class="sub-view" data-sub="search">
   <div class="section">
     <div class="section-head">
       <h2>Search Any Game Across All Stores</h2>
@@ -369,8 +395,10 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
     </div>
     <div id="dealSearchResults"></div>
   </div>
+  </div>
 
-  <!-- FREE GAMES SUB-SECTION -->
+  <!-- ── FREE NOW ── -->
+  <div class="sub-view" data-sub="free">
   <div class="section">
     <div class="section-head">
       <h2>Currently Free</h2>
@@ -399,8 +427,10 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
     </div>
     <div id="freeGog"><div class="empty"><span class="loading"></span> Loading…</div></div>
   </div>
+  </div>
 
-  <!-- NEW RELEASES SUB-SECTION -->
+  <!-- ── NEW RELEASES ── -->
+  <div class="sub-view" data-sub="new">
   <div class="section">
     <div class="section-head">
       <h2>New Releases</h2>
@@ -409,13 +439,17 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
     <p style="color:var(--dim);font-size:13px;margin-bottom:16px">Fresh games hitting Steam right now. Only shown when reviews pass the 150-user mark.</p>
     <div id="newReleasesList"><div class="empty"><span class="loading"></span> Loading new releases...</div></div>
   </div>
+  </div>
 
+  <!-- ── COMING SOON ── -->
+  <div class="sub-view" data-sub="soon">
   <div class="section">
     <div class="section-head">
       <h2>Coming Soon — Most Anticipated</h2>
     </div>
     <p style="color:var(--dim);font-size:13px;margin-bottom:16px">Games launching in the next few weeks. Wishlist them now.</p>
     <div id="upcomingList"><div class="empty"><span class="loading"></span> Loading upcoming...</div></div>
+  </div>
   </div>
 </div>
 
@@ -847,6 +881,21 @@ function openSteam(appid) {
   }
 }
 
+function switchSubTab(viewKey, sub) {
+  const container = document.getElementById('view-' + viewKey);
+  if (!container) return;
+  container.querySelectorAll('.sub-tab').forEach(b => b.classList.toggle('active', b.dataset.sub === sub));
+  container.querySelectorAll('.sub-view').forEach(v => v.classList.toggle('active', v.dataset.sub === sub));
+  // Lazy-load data if the sub-view hasn't been populated
+  if (viewKey === 'deals') {
+    if (sub === 'for-you' && !STATE.dealsForYouLoaded) { loadMyDeals(); STATE.dealsForYouLoaded = true; }
+    if (sub === 'top' && !STATE.dealsTopLoaded) { loadAllDeals(); STATE.dealsTopLoaded = true; }
+    if (sub === 'free' && !STATE.dealsFreeLoaded) { loadFreeGames(); STATE.dealsFreeLoaded = true; }
+    if (sub === 'new' && !STATE.dealsNewLoaded) { loadNewReleases(); STATE.dealsNewLoaded = true; }
+    if (sub === 'soon' && !STATE.dealsSoonLoaded) { loadUpcoming(); STATE.dealsSoonLoaded = true; }
+  }
+}
+
 document.querySelectorAll('.nav-tab').forEach(tab => {
   tab.addEventListener('click', () => {
     const view = tab.dataset.view;
@@ -857,9 +906,9 @@ document.querySelectorAll('.nav-tab').forEach(tab => {
     // Lazy-load views
     if (view === 'recs' && !STATE.recsLoaded) { loadRecs(); loadBuyRecs(); }
     if (view === 'deals' && !STATE.dealsLoaded) {
-      loadMyDeals(); loadAllDeals();
-      loadFreeGames();
-      loadNewReleases(); loadUpcoming();
+      // Only load the currently active sub-tab on first open
+      loadMyDeals();
+      STATE.dealsForYouLoaded = true;
       STATE.dealsLoaded = true;
     }
     if (view === 'news' && !STATE.newsLoaded) loadNews();
