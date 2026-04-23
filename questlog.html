@@ -1935,7 +1935,14 @@ function initProFeatures() {
   }
 }
 
-function isProActive() { return localStorage.getItem('questlog_pro') === '1'; }
+// Owner + a whitelist of Steam IDs that get auto-Pro
+const PRO_WHITELIST = new Set([
+  '76561199040427763', // Julian (owner)
+]);
+function isProActive() {
+  if (STATE.sid && PRO_WHITELIST.has(STATE.sid)) return true;
+  return localStorage.getItem('questlog_pro') === '1';
+}
 
 function renderProHub() {
   const gated = document.getElementById('proHubGated');
