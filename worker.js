@@ -40,6 +40,7 @@ export default {
       if (p === '/api/price-alert' && request.method === 'POST')      return createPriceAlert(request);
       if (p === '/api/fps-estimate')                                  return fpsEstimate(url);
       if (p === '/api/gpu-list')                                      return jsonResponse({ gpus: Object.keys(GPU_SCORES).sort() });
+      if (p === '/api/missing-games')                                 return missingGames();
       if (p === '/api/steam-dna')                                     return steamDNA(url);
       if (p === '/api/hltb')                                          return howLongToBeat(url);
       if (p === '/api/subscribe-digest' && request.method === 'POST') return subscribeDigest(request);
@@ -885,7 +886,7 @@ async function recommendBuy(url) {
       if (!appid) continue;
       const revs = d.steamRatingCount ? parseInt(d.steamRatingCount) : 0;
       const rate = d.steamRatingPercent ? parseInt(d.steamRatingPercent) : 0;
-      if (revs < 450 || rate < 70) continue;
+      if (revs < 5000 || rate < 70) continue;
       if (owned.has(appid)) continue;
       if (isJunkTitle(d.title)) continue;
       const prev = byApp[appid];
@@ -1664,16 +1665,111 @@ function normalizeGame(name) {
   return null;
 }
 
+// GPU names commonly found in Steam requirements, mapped to approximate demand score.
+// Higher required GPU = higher game demand score.
+const STEAM_GPU_DEMAND = {
+  // Entry
+  'GTX 650':70, 'GTX 660':75, 'GTX 670':80, 'GTX 680':85, 'GTX 750':60, 'GTX 750 TI':65,
+  'GTX 760':85, 'GTX 770':95, 'GTX 780':110, 'GTX 780 TI':130,
+  'GTX 950':70, 'GTX 960':85, 'GTX 970':110, 'GTX 980':130, 'GTX 980 TI':160,
+  // Pascal
+  'GTX 1050':80, 'GTX 1050 TI':95, 'GTX 1060':120, 'GTX 1070':150, 'GTX 1070 TI':160,
+  'GTX 1080':180, 'GTX 1080 TI':220,
+  // Turing
+  'GTX 1650':100, 'GTX 1660':120, 'GTX 1660 TI':140, 'GTX 1660 SUPER':135,
+  'RTX 2060':160, 'RTX 2060 SUPER':180, 'RTX 2070':190, 'RTX 2070 SUPER':210,
+  'RTX 2080':230, 'RTX 2080 SUPER':250, 'RTX 2080 TI':280,
+  // Ampere
+  'RTX 3050':150, 'RTX 3060':180, 'RTX 3060 TI':210, 'RTX 3070':240,
+  'RTX 3070 TI':260, 'RTX 3080':290, 'RTX 3080 TI':320, 'RTX 3090':340, 'RTX 3090 TI':360,
+  // Ada
+  'RTX 4060':200, 'RTX 4060 TI':230, 'RTX 4070':270, 'RTX 4070 SUPER':290,
+  'RTX 4070 TI':310, 'RTX 4070 TI SUPER':330, 'RTX 4080':360, 'RTX 4080 SUPER':380, 'RTX 4090':450,
+  // AMD RX
+  'RX 480':110, 'RX 580':120, 'RX 590':130,
+  'RX 5600':140, 'RX 5700':170, 'RX 5700 XT':190,
+  'RX 6600':170, 'RX 6600 XT':200, 'RX 6700 XT':240, 'RX 6800':280,
+  'RX 6800 XT':310, 'RX 6900 XT':340,
+  'RX 7600':180, 'RX 7700 XT':240, 'RX 7800 XT':290, 'RX 7900 XT':350, 'RX 7900 XTX':400,
+};
+
+// In-memory cache of inferred demands (reset on worker cold start, OK for this purpose)
+const inferredDemandCache = {};
+// Missing-game request log
+const missingGameLog = [];
+
+function extractRequirementsGPU(html) {
+  if (!html) return null;
+  // Look for 'Recommended' block first, fall back to 'Minimum'
+  const recMatch = html.match(/Recommended[\s\S]{0,2000}/i);
+  const minMatch = html.match(/Minimum[\s\S]{0,2000}/i);
+  const block = recMatch ? recMatch[0] : (minMatch ? minMatch[0] : html.substring(0, 3000));
+
+  // Try to find a GPU name in the block. Check known names from our demand table.
+  const upper = block.toUpperCase();
+  let best = null;
+  for (const gpu of Object.keys(STEAM_GPU_DEMAND).sort((a,b) => b.length - a.length)) {
+    if (upper.includes(gpu)) { best = gpu; break; }
+  }
+  return best;
+}
+
+async function inferDemandFromSteam(gameName) {
+  if (inferredDemandCache[gameName]) return inferredDemandCache[gameName];
+
+  try {
+    // Step 1: find the appid via Steam's store search
+    const search = await fetchJSON(
+      `https://store.steampowered.com/api/storesearch/?term=${encodeURIComponent(gameName)}&l=english&cc=us`
+    );
+    const first = search?.items?.[0];
+    if (!first?.id) return null;
+    const appid = first.id;
+    const matchedName = first.name;
+
+    // Step 2: pull store details to get system requirements
+    const details = await fetchJSON(
+      `https://store.steampowered.com/api/appdetails?appids=${appid}&l=english&filters=basic,pc_requirements`
+    );
+    const data = details?.[appid]?.data;
+    if (!data) return null;
+    const reqHtml = (data.pc_requirements?.recommended || '') + ' ' + (data.pc_requirements?.minimum || '');
+    const gpu = extractRequirementsGPU(reqHtml);
+    if (!gpu) return null;
+    const score = STEAM_GPU_DEMAND[gpu];
+    const result = { score, source: 'steam-req', matchedName, appid, detectedGPU: gpu };
+    inferredDemandCache[gameName] = result;
+    return result;
+  } catch (e) {
+    return null;
+  }
+}
+
 async function fpsEstimate(url) {
   const gpu = url.searchParams.get('gpu');
   const ramGB = parseInt(url.searchParams.get('ram') || '16');
   const gameName = url.searchParams.get('game');
 
   const gpuKey = normalizeGPU(gpu);
-  const game = normalizeGame(gameName);
+  let game = normalizeGame(gameName);
 
   if (!gpuKey) return jsonResponse({ error: 'GPU not recognised', suggestions: Object.keys(GPU_SCORES).slice(0, 10) }, 400);
-  if (!game)   return jsonResponse({ error: 'Game not in our database', suggestions: Object.keys(GAME_DEMAND).slice(0, 12) }, 400);
+
+  // Fallback: infer game demand from Steam system requirements if not in curated DB
+  let inferredFrom = null;
+  if (!game && gameName) {
+    const inferred = await inferDemandFromSteam(gameName);
+    if (inferred) {
+      game = { name: inferred.matchedName, score: inferred.score };
+      inferredFrom = inferred;
+    }
+  }
+
+  if (!game) {
+    // Log the miss
+    if (missingGameLog.length < 500 && gameName) missingGameLog.push({ query: gameName, time: Date.now() });
+    return jsonResponse({ error: 'Game not in our database', suggestions: Object.keys(GAME_DEMAND).slice(0, 12) }, 400);
+  }
 
   const score = GPU_SCORES[gpuKey];
 
@@ -1718,7 +1814,16 @@ async function fpsEstimate(url) {
     gameDemand: game.score,
     estimates,
     verdict: scoreToVerdict(score, game.score),
+    inferred: inferredFrom ? { source: 'steam-req', gpu: inferredFrom.detectedGPU } : null,
   });
+}
+
+// Admin endpoint: see what games people are asking for that aren't in the DB
+async function missingGames() {
+  const counts = {};
+  for (const m of missingGameLog) counts[m.query.toLowerCase()] = (counts[m.query.toLowerCase()] || 0) + 1;
+  const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]).slice(0, 50);
+  return jsonResponse({ total: missingGameLog.length, topMissing: sorted });
 }
 
 function scoreToVerdict(gpuScore, gameScore) {

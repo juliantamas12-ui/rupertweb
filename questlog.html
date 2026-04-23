@@ -2412,6 +2412,7 @@ async function estimateFPS() {
       <div style="background:var(--panel2);border:1px solid ${verdictColor}44;border-radius:8px;padding:18px;margin-bottom:16px">
         <div style="font-size:10px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:6px">Verdict</div>
         <div style="font-size:18px;font-weight:700;color:${verdictColor};margin-bottom:4px">${d.verdict}</div>
+        ${d.inferred ? `<div style="font-size:11px;color:var(--dim);margin-bottom:4px">⚠ Inferred from Steam requirements (recommended GPU: ${d.inferred.gpu}) — less accurate than our curated data</div>` : ''}
         <div style="font-size:12px;color:var(--dim)">${d.gpu} · ${d.ram}GB RAM · ${d.game}</div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
