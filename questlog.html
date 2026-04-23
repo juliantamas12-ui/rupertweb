@@ -131,11 +131,9 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
   <div class="nav-tabs" id="navTabs" style="display:none">
     <button class="nav-tab active" data-view="more">Home</button>
     <button class="nav-tab" data-view="library">Library</button>
-    <button class="nav-tab" data-view="recs">Recommendations</button>
     <button class="nav-tab" data-view="deals">Deals</button>
-    <button class="nav-tab" data-view="free">Free Now</button>
-    <button class="nav-tab" data-view="new">New Releases</button>
-    <button class="nav-tab" data-view="achievements">Achievements</button>
+    <button class="nav-tab" data-view="recs">Discover</button>
+    <button class="nav-tab" data-view="utility">Utility</button>
     <button class="nav-tab" data-view="news">News</button>
     <button class="nav-tab" data-view="leaderboards">Leaderboards</button>
   </div>
@@ -222,6 +220,18 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
   <div class="section">
     <div class="section-head"><h2>Most Played (All Time)</h2></div>
     <div class="game-grid" id="mostPlayed"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <h2>Achievement Progress</h2>
+      <span class="link" style="cursor:default;font-size:12px;color:var(--dim)">Click a game for details</span>
+    </div>
+    <div class="sidebar-card" id="achGameList"><div class="empty"><span class="loading"></span> Loading achievements...</div></div>
+  </div>
+  <div class="section" id="achDetail" style="display:none">
+    <div class="section-head"><h2 id="achDetailTitle">—</h2></div>
+    <div class="sidebar-card" id="achDetailList"></div>
   </div>
 </div>
 
@@ -350,44 +360,20 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
     <div class="section-head">
       <h2>Search Any Game Across All Stores</h2>
     </div>
-    <div style="display:flex;gap:10px;margin-bottom:16px">
-      <input type="text" id="dealSearchInput" placeholder="e.g. Baldur's Gate 3" style="flex:1;background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit" onkeydown="if(event.key==='Enter')searchDeal()">
+    <div style="display:flex;gap:10px;margin-bottom:16px;position:relative">
+      <div style="flex:1;position:relative">
+        <input type="text" id="dealSearchInput" placeholder="Start typing a game..." autocomplete="off" style="width:100%;background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit" oninput="dealSearchSuggest(this)" onkeydown="dealSearchSuggestKey(event)" onblur="setTimeout(()=>document.getElementById('dealSearchSuggestBox').style.display='none',200)">
+        <div id="dealSearchSuggestBox" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--panel);border:1px solid var(--border);border-radius:6px;max-height:320px;overflow-y:auto;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,0.4)"></div>
+      </div>
       <button onclick="searchDeal()" class="connect-btn" style="padding:10px 20px;font-size:13px">Search</button>
     </div>
     <div id="dealSearchResults"></div>
   </div>
-</div>
 
-<div class="view" id="view-new">
+  <!-- FREE GAMES SUB-SECTION -->
   <div class="section">
     <div class="section-head">
-      <h2>New Releases</h2>
-      <button class="link" onclick="loadNewReleases()">Refresh →</button>
-    </div>
-    <p style="color:var(--dim);font-size:13px;margin-bottom:16px">Fresh games hitting Steam right now. Enriched with live review scores.</p>
-
-    <div id="newReleasesList"><div class="empty"><span class="loading"></span> Loading new releases...</div></div>
-  </div>
-
-  <div class="section">
-    <div class="section-head">
-      <h2>Coming Soon</h2>
-    </div>
-    <p style="color:var(--dim);font-size:13px;margin-bottom:16px">Games launching in the next few weeks. Wishlist them now.</p>
-    <div id="upcomingList"><div class="empty"><span class="loading"></span> Loading upcoming...</div></div>
-  </div>
-</div>
-
-<style>
-.new-filter-btn{background:var(--panel);color:var(--dim);border:1px solid var(--border);padding:7px 14px;border-radius:100px;font-size:12px;font-family:inherit;cursor:pointer;transition:all 0.15s;font-weight:500}
-.new-filter-btn:hover{border-color:rgba(200,241,53,0.4);color:var(--text)}
-.new-filter-btn.active{background:var(--accent);color:#000;border-color:var(--accent);font-weight:700}
-</style>
-
-<div class="view" id="view-free">
-  <div class="section">
-    <div class="section-head">
-      <h2>Currently Free — Grab Them Before They're Gone</h2>
+      <h2>Currently Free</h2>
       <button class="link" onclick="loadFreeGames()">Refresh →</button>
     </div>
     <p style="color:var(--dim);font-size:13px;margin-bottom:20px">Free games across Epic, Steam, GOG. Claim them and they're yours to keep.</p>
@@ -395,39 +381,45 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
 
   <div class="section">
     <div class="section-head">
-      <h2 style="display:flex;align-items:center;gap:10px"><span style="background:#2a2a2a;color:#fff;padding:3px 10px;border-radius:4px;font-size:11px">EPIC GAMES</span> Weekly Free</h2>
+      <h2 style="display:flex;align-items:center;gap:10px;font-size:14px"><span style="background:#2a2a2a;color:#fff;padding:3px 10px;border-radius:4px;font-size:11px">EPIC GAMES</span> Weekly Free</h2>
     </div>
     <div id="freeEpic"><div class="empty"><span class="loading"></span> Loading…</div></div>
   </div>
 
   <div class="section">
     <div class="section-head">
-      <h2 style="display:flex;align-items:center;gap:10px"><span style="background:#1b2838;color:#66c0f4;padding:3px 10px;border-radius:4px;font-size:11px">STEAM</span> Free Games & Free Weekends</h2>
+      <h2 style="display:flex;align-items:center;gap:10px;font-size:14px"><span style="background:#1b2838;color:#66c0f4;padding:3px 10px;border-radius:4px;font-size:11px">STEAM</span> Free Games & Free Weekends</h2>
     </div>
     <div id="freeSteam"><div class="empty"><span class="loading"></span> Loading…</div></div>
   </div>
 
   <div class="section">
     <div class="section-head">
-      <h2 style="display:flex;align-items:center;gap:10px"><span style="background:#86328a;color:#fff;padding:3px 10px;border-radius:4px;font-size:11px">GOG</span> Free Games</h2>
+      <h2 style="display:flex;align-items:center;gap:10px;font-size:14px"><span style="background:#86328a;color:#fff;padding:3px 10px;border-radius:4px;font-size:11px">GOG</span> Free Games</h2>
     </div>
     <div id="freeGog"><div class="empty"><span class="loading"></span> Loading…</div></div>
   </div>
-</div>
 
-<div class="view" id="view-achievements">
+  <!-- NEW RELEASES SUB-SECTION -->
   <div class="section">
     <div class="section-head">
-      <h2>Achievement Progress by Game</h2>
-      <span class="link" style="cursor:default">Click a game for details</span>
+      <h2>New Releases</h2>
+      <button class="link" onclick="loadNewReleases()">Refresh →</button>
     </div>
-    <div class="sidebar-card" id="achGameList"><div class="empty"><span class="loading"></span> Loading achievements...</div></div>
+    <p style="color:var(--dim);font-size:13px;margin-bottom:16px">Fresh games hitting Steam right now. Only shown when reviews pass the 150-user mark.</p>
+    <div id="newReleasesList"><div class="empty"><span class="loading"></span> Loading new releases...</div></div>
   </div>
-  <div class="section" id="achDetail" style="display:none">
-    <div class="section-head"><h2 id="achDetailTitle">—</h2></div>
-    <div class="sidebar-card" id="achDetailList"></div>
+
+  <div class="section">
+    <div class="section-head">
+      <h2>Coming Soon — Most Anticipated</h2>
+    </div>
+    <p style="color:var(--dim);font-size:13px;margin-bottom:16px">Games launching in the next few weeks. Wishlist them now.</p>
+    <div id="upcomingList"><div class="empty"><span class="loading"></span> Loading upcoming...</div></div>
   </div>
 </div>
+
+
 
 <div class="view" id="view-news">
   <div class="section">
@@ -439,6 +431,11 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
 </div>
 
 <div class="view" id="view-more">
+  <div id="homeGreeting" style="margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--border)">
+    <h1 style="font-size:28px;font-weight:800;letter-spacing:-0.5px;margin-bottom:4px">Welcome back<span id="homeGreetingName"></span>.</h1>
+    <p style="color:var(--dim);font-size:14px">Here's what's worth your time today.</p>
+  </div>
+
   <!-- GAME OF THE DAY -->
   <div class="section">
     <div class="section-head">
@@ -530,6 +527,12 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
     <div class="section-head"><h2>Friends Now Playing</h2></div>
     <div id="nowPlayingPanel" class="sidebar-card"><div class="empty">Add friends to see who's online.</div></div>
   </div>
+
+</div>
+
+<!-- ───── UTILITY TAB ───── -->
+<div class="view" id="view-utility">
+  <p style="color:var(--dim);font-size:14px;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--border)">Tools for research, price hunting, profile management, and pro features. Everything here is ad-hoc — use it when you need it.</p>
 
   <!-- PRICE HISTORY -->
   <div class="section">
@@ -853,29 +856,40 @@ document.querySelectorAll('.nav-tab').forEach(tab => {
     document.getElementById('view-' + view).classList.add('active');
     // Lazy-load views
     if (view === 'recs' && !STATE.recsLoaded) { loadRecs(); loadBuyRecs(); }
-    if (view === 'deals' && !STATE.dealsLoaded) { loadMyDeals(); loadAllDeals(); STATE.dealsLoaded = true; }
-    if (view === 'free' && !STATE.freeLoaded) { loadFreeGames(); STATE.freeLoaded = true; }
-    if (view === 'new' && !STATE.newLoaded) { loadNewReleases(); loadUpcoming(); STATE.newLoaded = true; }
+    if (view === 'deals' && !STATE.dealsLoaded) {
+      loadMyDeals(); loadAllDeals();
+      loadFreeGames();
+      loadNewReleases(); loadUpcoming();
+      STATE.dealsLoaded = true;
+    }
     if (view === 'news' && !STATE.newsLoaded) loadNews();
-    if (view === 'achievements' && !STATE.achLoaded) loadAchievements();
+
     if (view === 'leaderboards' && !STATE.lbLoaded) loadLeaderboards();
     if (view === 'more') {
       renderFriends();
-      renderChallengeUI();
       renderGameNightUI();
-      renderJournal();
       refreshNowPlaying();
-      updateProfileUrl();
-      initProFeatures();
       if (!STATE.moreLoaded) {
         loadGameOfDay();
         loadWrapped();
         loadBacklog();
         loadFinishThis();
         loadSteamDNA();
-        loadSpendAnalytics();
         STATE.moreLoaded = true;
       }
+    }
+    if (view === 'utility') {
+      renderChallengeUI();
+      renderJournal();
+      updateProfileUrl();
+      initProFeatures();
+      if (!STATE.utilityLoaded) {
+        loadSpendAnalytics();
+        STATE.utilityLoaded = true;
+      }
+    }
+    if (view === 'library') {
+      if (!STATE.achLoaded && STATE.games?.length) { loadAchievements(); STATE.achLoaded = true; }
     }
   });
 });
@@ -949,11 +963,8 @@ function showDashboard() {
   if (homeTab) {
     homeTab.classList.add('active');
     renderFriends();
-    renderChallengeUI();
     renderGameNightUI();
-    renderJournal();
     refreshNowPlaying();
-    updateProfileUrl();
     if (!STATE.moreLoaded) {
       loadGameOfDay();
       loadWrapped();
@@ -964,8 +975,6 @@ function showDashboard() {
     }
   }
   document.getElementById('navTabs').style.display = 'flex';
-  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  document.querySelector('[data-view="library"]').classList.add('active');
 }
 
 function disconnect() {
@@ -1027,6 +1036,8 @@ function renderDashboard() {
   // Nav user
   document.getElementById('userAvatar').style.backgroundImage = `url('${profile.avatar}')`;
   document.getElementById('userName').textContent = profile.name;
+  const greet = document.getElementById('homeGreetingName');
+  if (greet) greet.textContent = ', ' + (profile.name || '').split(' ')[0];
 
   // Stats
   document.getElementById('statGames').textContent = gameCount.toLocaleString();
@@ -1728,6 +1739,17 @@ function pickWishlistSuggest(idx) {
   addWishlist();
 }
 window.wishlistTrigger = () => addWishlist();
+
+// DEAL SEARCH suggest
+function dealSearchSuggest(input) { _makeSuggest('dealSearchInput','dealSearchSuggestBox','dealSearch','pickDealSearchSuggest').oninput(input); }
+function dealSearchSuggestKey(e) { _makeSuggest('dealSearchInput','dealSearchSuggestBox','dealSearch','pickDealSearchSuggest').onkey(e); }
+function pickDealSearchSuggest(idx) {
+  const r = _suggestCache['_last_dealSearchSuggestBox']?.[idx]; if (!r) return;
+  document.getElementById('dealSearchInput').value = r.external;
+  document.getElementById('dealSearchSuggestBox').style.display = 'none';
+  searchDeal();
+}
+window.dealSearchTrigger = () => searchDeal();
 
 // PRICE ALERT input suggest
 function alertGameSuggest(input) { _makeSuggest('alertGameInput','alertGameSuggestBox','alertGame','pickAlertGameSuggest').oninput(input); }
