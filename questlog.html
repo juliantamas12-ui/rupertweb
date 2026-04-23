@@ -129,7 +129,8 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
 <nav>
   <div class="logo"><span class="logo-dot"></span>QuestLog</div>
   <div class="nav-tabs" id="navTabs" style="display:none">
-    <button class="nav-tab active" data-view="library">Library</button>
+    <button class="nav-tab active" data-view="more">Home</button>
+    <button class="nav-tab" data-view="library">Library</button>
     <button class="nav-tab" data-view="recs">Recommendations</button>
     <button class="nav-tab" data-view="deals">Deals</button>
     <button class="nav-tab" data-view="free">Free Now</button>
@@ -137,7 +138,6 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
     <button class="nav-tab" data-view="achievements">Achievements</button>
     <button class="nav-tab" data-view="news">News</button>
     <button class="nav-tab" data-view="leaderboards">Leaderboards</button>
-    <button class="nav-tab" data-view="more">More</button>
   </div>
   <div class="nav-user" id="navUser" style="display:none">
     <div class="nav-user-avatar" id="userAvatar"></div>
@@ -733,10 +733,28 @@ async function connectSteam() {
 
 function showDashboard() {
   document.getElementById('view-landing').classList.remove('active');
-  document.getElementById('view-library').classList.add('active');
+  document.getElementById('view-more').classList.add('active');  // More (Home) is now the default
   document.getElementById('navUser').style.display = 'flex';
   const t = document.getElementById('steamAppToggle');
   if (t) t.checked = STATE.useSteamApp;
+  // Fire the tab-switch load hook for Home view
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  const homeTab = document.querySelector('[data-view="more"]');
+  if (homeTab) {
+    homeTab.classList.add('active');
+    // Trigger the same lazy-load that tab-click does
+    renderFriends();
+    renderChallengeUI();
+    renderGameNightUI();
+    if (!STATE.moreLoaded) {
+      loadGameOfDay();
+      loadWrapped();
+      loadBacklog();
+      loadFinishThis();
+      loadSteamDNA();
+      STATE.moreLoaded = true;
+    }
+  }
   document.getElementById('navTabs').style.display = 'flex';
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   document.querySelector('[data-view="library"]').classList.add('active');
