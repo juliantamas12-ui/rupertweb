@@ -746,6 +746,22 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
     <div id="dnaPanel" class="sidebar-card"><div class="empty"><span class="loading"></span></div></div>
   </div>
 
+  <!-- QUEST GUIDES -->
+  <div class="section">
+    <div class="section-head"><h2>Quest Guides &amp; Walkthroughs</h2></div>
+    <div class="sidebar-card">
+      <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Stuck on a quest? Type a game and we'll pull together the best walkthroughs, wiki, and video guides in one click.</p>
+      <div style="display:flex;gap:10px;position:relative">
+        <div style="flex:1;position:relative">
+          <input type="text" id="guideInput" placeholder="Start typing a game title..." autocomplete="off" style="width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit" oninput="guideSuggest(this)" onkeydown="guideSuggestKey(event)" onblur="setTimeout(()=>document.getElementById('guideSuggestBox').style.display='none',200)">
+          <div id="guideSuggestBox" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--panel);border:1px solid var(--border);border-radius:6px;max-height:320px;overflow-y:auto;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,0.4)"></div>
+        </div>
+        <button onclick="findGuides()" class="connect-btn" style="padding:10px 20px;font-size:13px">Find</button>
+      </div>
+      <div id="guideResults" style="margin-top:16px"></div>
+    </div>
+  </div>
+
   <!-- HOW LONG TO BEAT -->
   <div class="section">
     <div class="section-head"><h2>How Long to Beat</h2></div>
@@ -1810,6 +1826,51 @@ function _makeSuggest(inputId, boxId, cacheKey, onPick) {
       }
     }
   };
+}
+
+// GUIDE suggest + finder
+function guideSuggest(input) { _makeSuggest('guideInput','guideSuggestBox','guide','pickGuideSuggest').oninput(input); }
+function guideSuggestKey(e) { _makeSuggest('guideInput','guideSuggestBox','guide','pickGuideSuggest').onkey(e); }
+function pickGuideSuggest(idx) {
+  const r = _suggestCache['_last_guideSuggestBox']?.[idx]; if (!r) return;
+  document.getElementById('guideInput').value = r.external;
+  document.getElementById('guideSuggestBox').style.display = 'none';
+  findGuides();
+}
+window.guideTrigger = () => findGuides();
+
+function findGuides() {
+  const title = document.getElementById('guideInput').value.trim();
+  const el = document.getElementById('guideResults');
+  if (!title) { el.innerHTML = ''; return; }
+  const q = encodeURIComponent(title);
+  const links = [
+    { label: 'Walkthrough videos', url: `https://www.youtube.com/results?search_query=${encodeURIComponent(title + ' walkthrough')}`, source: 'YouTube', desc: 'Top-rated video playthroughs, quest-by-quest' },
+    { label: 'Boss/quest guides', url: `https://www.youtube.com/results?search_query=${encodeURIComponent(title + ' boss guide')}`, source: 'YouTube', desc: 'Specific boss fights, hard quests, hidden areas' },
+    { label: 'Fandom Wiki', url: `https://www.google.com/search?q=${q}+site%3Afandom.com`, source: 'Fandom', desc: 'Community wiki — items, locations, NPCs' },
+    { label: 'Fextralife Wiki', url: `https://www.google.com/search?q=${q}+site%3Afextralife.com`, source: 'Fextralife', desc: 'Best for Souls-likes, RPGs (builds, drops)' },
+    { label: 'IGN Wiki & Guide', url: `https://www.google.com/search?q=${q}+site%3Aign.com%2Fwikis`, source: 'IGN', desc: 'Structured walkthroughs with screenshots' },
+    { label: 'PCGamingWiki', url: `https://www.pcgamingwiki.com/w/index.php?search=${q}`, source: 'PCGamingWiki', desc: 'Technical issues, mods, fixes, config' },
+    { label: 'Steam Community Guides', url: `https://steamcommunity.com/app/search?text=${q}&sectionid=guide`, source: 'Steam', desc: 'Player-written strategy guides' },
+    { label: 'GameFAQs', url: `https://gamefaqs.gamespot.com/search?game=${q}`, source: 'GameFAQs', desc: 'Classic text walkthroughs (often the most complete)' },
+    { label: 'Reddit discussions', url: `https://www.reddit.com/search/?q=${encodeURIComponent(title + ' tips')}`, source: 'Reddit', desc: 'Live player discussion, tips, spoilers flagged' },
+  ];
+
+  el.innerHTML = `
+    <div style="font-size:11px;color:var(--dim);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">Guides for <span style="color:var(--accent)">${title}</span></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px">
+      ${links.map(l => `
+        <a href="${l.url}" target="_blank" rel="noopener" style="display:block;padding:14px;background:var(--panel2);border:1px solid var(--border);border-radius:8px;text-decoration:none;color:var(--text);transition:all 0.15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <span style="background:var(--accent);color:#000;font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;letter-spacing:1px">${l.source.toUpperCase()}</span>
+            <span style="font-weight:600;font-size:14px">${l.label}</span>
+          </div>
+          <div style="font-size:12px;color:var(--dim);line-height:1.4">${l.desc}</div>
+          <div style="font-size:11px;color:var(--accent);margin-top:8px">Open →</div>
+        </a>
+      `).join('')}
+    </div>
+  `;
 }
 
 // HLTB suggest bindings
