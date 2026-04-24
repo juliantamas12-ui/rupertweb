@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Line Two Men Drew in 1494 That Still Runs Through South America",
+    date: "2026-04-24",
+    category: "History",
+    excerpt: "On 7 June 1494, in a small Castilian town called Tordesillas, representatives of the Spanish and Portuguese crowns signed a treaty dividing the entire non-European world between their two kingdoms. Columbus had returned from his first voyage sixteen months earlier. No European had yet set foot on the South American mainland. The two negotiators were drawing a boundary through territories whose shape, size, and inhabitants they could not even guess at. And the boundary stuck...",
+    url: "essays/2026-04-24-the-line-two-men-drew-in-1494-that-still-runs-through-south-ame.html"
+  },
+  {
     title: "The Long Depression: How a Viennese Bank Failure in 1873 Broke the World for Twenty-Three Years",
     date: "2026-04-23",
     category: "Economics",
