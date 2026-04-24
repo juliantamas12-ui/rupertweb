@@ -2781,7 +2781,6 @@ async function loadNews() {
   }
 
   allNews.sort((a, b) => b.date - a.date);
-  const el = document.getElementById('newsFeed');
 
   if (!allNews.length) { el.innerHTML = '<div class="empty">No news available.</div>'; return; }
 
