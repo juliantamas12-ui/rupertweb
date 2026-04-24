@@ -274,37 +274,13 @@ const SCHOOL_TASKS = [
     "status": "upcoming"
   },
   {
-    "title": "Math 7 (HW/Review)",
-    "due": "",
-    "subject": "",
-    "status": "upcoming"
-  },
-  {
-    "title": "Math 7 (Summative)",
-    "due": "",
-    "subject": "",
-    "status": "upcoming"
-  },
-  {
-    "title": "Substition work 2: Complete the tasks on the slides",
+    "title": "Math 8: Volume of Prisms and Cylinders",
     "due": "",
     "subject": "",
     "status": "upcoming"
   },
   {
     "title": "Submit Coursework",
-    "due": "",
-    "subject": "",
-    "status": "upcoming"
-  },
-  {
-    "title": "Substitution 5: Complete the tasks on the slides",
-    "due": "",
-    "subject": "",
-    "status": "upcoming"
-  },
-  {
-    "title": "Math 8: Volume of Prisms and Cylinders",
     "due": "",
     "subject": "",
     "status": "upcoming"
@@ -346,7 +322,19 @@ const SCHOOL_TASKS = [
     "status": "upcoming"
   },
   {
+    "title": "Math 7 (Summative)",
+    "due": "",
+    "subject": "",
+    "status": "upcoming"
+  },
+  {
     "title": "Test Science 7",
+    "due": "",
+    "subject": "",
+    "status": "upcoming"
+  },
+  {
+    "title": "SEMESTER 2 SCIENCE EXAM",
     "due": "",
     "subject": "",
     "status": "upcoming"
