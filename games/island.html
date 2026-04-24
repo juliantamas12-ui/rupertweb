@@ -8057,6 +8057,10 @@ function drawGroundLoot(ctx, camX, camY) {
 }
 
 function render(ctx, minimapCtx) {
+  if (!state._debugLogged) {
+    state._debugLogged = true;
+    console.log('[DBG] render called. running:', state.running, 'underground:', state.underground, 'cutscenePlaying:', state.cutscenePlaying, 'mapRows:', state.map?.length, 'row0cols:', state.map?.[0]?.length, 'player:', state.player?.x, state.player?.y, 'cam:', state.cam?.x, state.cam?.y, 'canvas:', ctx.canvas.width, ctx.canvas.height);
+  }
   const p = state.player;
   const canvas = ctx.canvas;
 
