@@ -178,6 +178,9 @@ canvas#c{pointer-events:none}
 .inv-slot-themed .count{color:#e8d490;font-size:14px;font-weight:700;font-family:'Courier New'}
 
 /* ── OVERLAY (start/death) ── */
+#overlay{position:fixed;inset:0;background:radial-gradient(ellipse at center,rgba(28,10,4,0.98) 0%,rgba(8,4,2,0.99) 100%);z-index:200;display:none!important;flex-direction:column;align-items:center;justify-content:center;color:#f0e0b0;pointer-events:all;touch-action:manipulation}
+#overlay h1{color:#c8d060;font-size:26px;letter-spacing:6px;margin-bottom:8px;text-shadow:0 0 28px rgba(200,210,50,0.35);font-family:'Cinzel',serif;font-weight:600}
+#overlay .subtitle{color:#8a7030;font-size:11px;letter-spacing:4px;margin-bottom:30px;font-family:'Lato',sans-serif}
 .slide-box{
   max-width:560px;text-align:center;padding:22px 32px;
   background:
@@ -211,10 +214,14 @@ canvas#c{pointer-events:none}
 #controls-hint{position:fixed;bottom:60px;left:10px;font-size:10px;line-height:1.8;pointer-events:none;z-index:5;font-family:'Lato',sans-serif;background:rgba(240,224,176,0.15);padding:6px 10px;border:1px solid rgba(200,168,100,0.3);border-radius:8px;color:rgba(240,224,176,0.6)}
 @media(max-width:767px){#controls-hint{display:none}}
 /* ── FORCE-HIDE START SCREENS & MOBILE UI ON DESKTOP ── */
-#char-creator,@media(min-width:768px){#touch-controls,#joystick-zone,#btn-zone,#joystick-canvas{display:none !important}}
+#char-creator,#overlay{display:none !important}
+@media(min-width:768px){#touch-controls,#joystick-zone,#btn-zone,#joystick-canvas{display:none !important}}
 @media(min-width:769px){#touch-controls{display:none !important}#joystick-zone{display:none !important}#btn-zone{display:none !important}#joystick-canvas{display:none !important}}
 
 /* ── CHARACTER CREATOR ── */
+#char-creator{position:fixed;inset:0;background:rgba(20,8,2,0.98);z-index:250;display:none!important;flex-direction:column;align-items:center;justify-content:center;color:#f0e0b0;font-family:'Lato',sans-serif;pointer-events:all;touch-action:manipulation;overflow:hidden}
+#char-creator h1{color:#e8d49a;font-family:'Cinzel',serif;font-size:22px;letter-spacing:6px;margin-bottom:4px;text-shadow:0 0 20px rgba(200,168,100,0.4)}
+#char-creator .cc-sub{color:#a08040;font-family:'Lato',sans-serif;font-size:11px;letter-spacing:4px;margin-bottom:28px}
 .cc-card{background:linear-gradient(160deg,#3d2010 0%,#2a1508 100%);border:2px solid #8b6020;box-shadow:inset 0 1px 0 rgba(255,220,100,0.1);padding:20px 28px;display:flex;gap:32px;align-items:flex-start;max-width:640px;width:100%;border-radius:14px}
 .cc-preview-wrap{display:flex;flex-direction:column;align-items:center;gap:8px}
 #cc-preview{image-rendering:pixelated;border:2px solid #8b6020;background:#1a0c04;border-radius:6px}
@@ -409,6 +416,8 @@ canvas#c{pointer-events:none}
 // ISLAND SURVIVAL v4 — Full game state and constants
 // ============================================================
 
+// Global overlay dismiss - called by HTML onclick attributes
+function startScreenClick(){['char-creator','overlay','start-screen'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.cssText='display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;';});}
 
 const TSIZE = 16;
 const MSIZE = 150;
@@ -484,8 +493,6 @@ const state = {
       bone_spear:0, crystal_blade:0, crystal_torch:0,
       // Tribal loot
       tribal_weapon:0,
-      // Trapping
-      snare_trap:0,
       // Underground artifacts
       artifact_shard:0,
       // Volcanic forge drop
@@ -554,11 +561,6 @@ const state = {
   eruptionDuration: 0,     // frames remaining in active eruption
   lavaBombs: [],           // [{x, y, vx, vy, life, maxLife, landed, landTimer}]
 
-  // === LIGHTNING STORM SYSTEM ===
-  lightningBolts: [],      // active on-screen lightning bolts [{x, y, life, maxLife, segs}]
-  lightningTimer: 600,     // countdown frames before next lightning check
-  lightningFlash: 0,       // brief screen-flash frames after a strike
-
   // === STORM SURGE EVENT ===
   surgePhase: 0,           // 0=dormant, 1=warning, 2=active, 3=receding
   surgeTimer: 60*60*(5 + Math.random()*4), // first surge in 5-9 in-game minutes
@@ -611,20 +613,10 @@ const state = {
   birdTimer: 0,
   footprints: [], // fading beach footprints
 
-  // === FIREFLIES: nocturnal jungle atmosphere ===
-  fireflies: [],        // active firefly particles [{x,y,vx,vy,phase,glowSpeed,hue,life,maxLife}]
-  fireflyTimer: 0,      // frame counter for spawn cadence
-
   // === BIOLUMINESCENT NIGHT EVENT ===
   bioNightTimer: 60*60*(7 + Math.random()*5), // first event in 7-12 in-game minutes
   bioNightActive: false,
   bioNightDuration: 0, // frames remaining
-
-  // === BLOOD MOON EVENT ===
-  bloodMoonTimer: 60*60*(12 + Math.random()*8), // first blood moon in 12-20 in-game minutes
-  bloodMoonActive: false,
-  bloodMoonDuration: 0, // frames remaining
-  bloodMoonPhase: 0,    // 0=rising(fade-in), 1=full, 2=fading
 
   // Crafting tech tiers
   craftingTier: 0, // 0=Stone Age, 1=Volcanic Age, 2=Deep Sea Age
@@ -2982,7 +2974,7 @@ const ACHIEVEMENTS = [
   try {
     state.unlockedAchievements = new Set(JSON.parse(localStorage.getItem('island_achievements')||'[]'));
     state.deathGhosts = JSON.parse(localStorage.getItem('island_deaths')||'[]').slice(0,5);
-  } catch(e){_logError('catch',e);}
+  } catch(e) {}
 })();
 
 function calculateScore() {
@@ -3006,7 +2998,7 @@ function saveRunToLeaderboard(score, endingType) {
     runs.push({ score, ending: endingType, days: state.day, ts: Date.now() });
     runs.sort((a,b) => b.score - a.score);
     localStorage.setItem('island_runs', JSON.stringify(runs.slice(0,5)));
-  } catch(e){_logError('catch',e);}
+  } catch(e) {}
 }
 
 function renderLeaderboard() {
@@ -3300,7 +3292,7 @@ function updateEnemies() {
     }
 
     // Campfire repels shadow warriors
-    const campfires = _getPlacedCampfires();
+    const campfires = state.objects.filter(o => o.placed && o.type === 'campfire');
     const nearCampfire = campfires.some(cf => Math.hypot(p.x-cf.x, p.y-cf.y) < 80);
     const shadowBlockedByCampfire = e.type === 'shadow' && nearCampfire && dist < 60;
 
@@ -3323,8 +3315,7 @@ function updateEnemies() {
         const tdx = targetX - e.x, tdy = targetY - e.y;
         const td = Math.sqrt(tdx*tdx+tdy*tdy);
         const stormBoost = (state.season === 2 && state.isNight) ? 1.25 : 1;
-        const bloodMoonBoost = state.bloodMoonActive && state.bloodMoonPhase === 1 ? 1.35 : 1;
-        const spd = e.spd * (e.type==='shadow' && state.isNight ? 1.3 : 1) * stormBoost * bloodMoonBoost;
+        const spd = e.spd * (e.type==='shadow' && state.isNight ? 1.3 : 1) * stormBoost;
         moveX = td > 0 ? e.x + tdx/td * spd : e.x;
         moveY = td > 0 ? e.y + tdy/td * spd : e.y;
       }
@@ -3384,7 +3375,6 @@ function updateEnemies() {
       if (dist < attackR && e.attackTimer > 80 && !e.fleeing && e.scatterTimer <= 0 && !state.invincible) {
         e.attackTimer = 0;
         let dmg = e.type==='chief' ? 8 : (e.type==='shadow'?3:3);
-        if (state.bloodMoonActive && state.bloodMoonPhase === 1) dmg = Math.ceil(dmg * 1.25);
         if (state._volcanicArmorActive) dmg = Math.round(dmg * 0.7);
         p.hp = Math.max(0, p.hp - dmg);
         p.hitFlash = 8;
@@ -3509,29 +3499,14 @@ function updateEnemies() {
         for (const d of dropTable) { acc += d.weight; if (roll < acc) { chosen = d; break; } }
         if (chosen) {
           if (!state.groundLoot) state.groundLoot = [];
-          const bloodMoonBonus = state.bloodMoonActive && state.bloodMoonPhase === 1;
-          const dropQty = bloodMoonBonus ? chosen.qty + 1 : chosen.qty;
           state.groundLoot.push({
             x: e.x + (Math.random()-0.5)*12,
             y: e.y + (Math.random()-0.5)*12,
             item: chosen.item,
-            qty: dropQty,
+            qty: chosen.qty,
             life: 900, // ~15 seconds at 60fps
             bobPhase: Math.random() * Math.PI * 2,
           });
-          // Blood moon always drops an extra rare item
-          if (bloodMoonBonus && Math.random() < 0.55) {
-            const moonDrops = ['stone','wood','volcanic_stone','vine','coconut'];
-            const extraItem = moonDrops[Math.floor(Math.random()*moonDrops.length)];
-            state.groundLoot.push({
-              x: e.x + (Math.random()-0.5)*20,
-              y: e.y + (Math.random()-0.5)*20,
-              item: extraItem,
-              qty: 1,
-              life: 900,
-              bobPhase: Math.random() * Math.PI * 2,
-            });
-          }
         }
       }
       return e.dyingTimer > 0;
@@ -4485,7 +4460,7 @@ window.SFX = (() => {
       gainNode.gain.exponentialRampToValueAtTime(0.001, c.currentTime + dur);
       osc.start(c.currentTime);
       osc.stop(c.currentTime + dur);
-    } catch(e){_logError('catch',e);}
+    } catch(e) {}
   }
 
   function _noise(gainVal, dur, filterFreq) {
@@ -4509,7 +4484,7 @@ window.SFX = (() => {
       gainNode.connect(c.destination);
       src.start();
       src.stop(c.currentTime + dur);
-    } catch(e){_logError('catch',e);}
+    } catch(e) {}
   }
 
   return {
@@ -4654,13 +4629,6 @@ window.SFX = (() => {
       _osc('triangle', 128, 0.08, 2.0, 105);      // mid warmth
       setTimeout(() => _osc('sine', 80, 0.2, 1.5, 65), 400);  // short second blast
       setTimeout(() => _osc('sine', 160, 0.07, 1.2, 130), 500);
-    },
-
-    // Snare trap spring — sharp wooden snap + vine twang
-    trapSnap() {
-      _noise(0.28, 0.06, 2200);                   // dry crack
-      _osc('square', 520, 0.08, 0.04, 180);       // wood impact
-      setTimeout(() => _osc('triangle', 340, 0.06, 0.18, 120), 40); // vine twang decay
     }
   };
 })();
@@ -4783,7 +4751,7 @@ window.AMBIENT = (() => {
     try {
       gainNode.gain.cancelScheduledValues(_actx.currentTime);
       gainNode.gain.setTargetAtTime(target, _actx.currentTime, duration);
-    } catch(e){_logError('catch',e);}
+    } catch(e) {}
   }
 
   // Call each frame from the game loop — pass proximity values 0..1
@@ -4852,8 +4820,8 @@ function playSynth({type='sine', freq=440, decay=0.3, pitchDrop, pitchRise, vol=
     gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + decay);
     osc.start(ac.currentTime);
     osc.stop(ac.currentTime + decay + 0.05);
-    setTimeout(() => { try { ac.close(); } catch(e){_logError('catch',e);} }, (decay + 0.1) * 1000);
-  } catch(e){_logError('catch',e);}
+    setTimeout(() => { try { ac.close(); } catch(e){} }, (decay + 0.1) * 1000);
+  } catch(e) {}
 }
 
 // Add synthesized sounds to SFX
@@ -4913,7 +4881,7 @@ window.DRUMS = (() => {
       ng.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.03);
       ns.connect(ng); ng.connect(_gainNode || c.destination);
       ns.start(); ns.stop(c.currentTime + 0.04);
-    } catch(e){_logError('catch',e);}
+    } catch(e) {}
   }
 
   // Patterns: array of [beat offset (0-1 within bar), freq, gain, dur]
@@ -4964,7 +4932,7 @@ window.DRUMS = (() => {
     if (_gainNode) {
       try {
         _gainNode.gain.setTargetAtTime(desiredGain, getCtx().currentTime, 1.5);
-      } catch(e){_logError('catch',e);}
+      } catch(e) {}
     }
   }
 
@@ -5003,36 +4971,6 @@ SFX.frenzyActivate = () => {
   playSynth({type:'sawtooth', freq:80, decay:0.6, pitchRise:3.0, vol:0.25});
   setTimeout(() => playSynth({type:'square', freq:220, decay:0.4, pitchRise:1.5, vol:0.18}), 120);
   setTimeout(() => playSynth({type:'sine', freq:880, decay:0.5, vol:0.12}), 300);
-};
-
-// Blood Moon rises — deep ominous drone + distant howl
-SFX.bloodMoonRise = () => {
-  // Low rumble drone
-  playSynth({type:'sine', freq:55, decay:2.2, pitchRise:0.08, vol:0.28});
-  // Mid howl sweep
-  setTimeout(() => playSynth({type:'triangle', freq:140, decay:1.4, pitchRise:0.6, vol:0.18}), 300);
-  // High eerie overtone
-  setTimeout(() => playSynth({type:'sine', freq:440, decay:0.9, pitchDrop:0.3, vol:0.10}), 900);
-  // Second howl echo
-  setTimeout(() => playSynth({type:'triangle', freq:110, decay:1.2, pitchRise:0.5, vol:0.13}), 1400);
-};
-
-// Blood Moon fades — brief descending tone
-SFX.bloodMoonFade = () => {
-  playSynth({type:'sine', freq:220, decay:1.8, pitchDrop:0.8, vol:0.15});
-};
-
-// Lightning strike — instant electric crack + rolling thunder boom
-SFX.lightningStrike = function() {
-  // Instantaneous high-freq crack
-  playSynth({type:'sawtooth', freq:1200, decay:0.04, pitchDrop:0.08, vol:0.55});
-  playSynth({type:'square',   freq:440,  decay:0.03, pitchDrop:0.05, vol:0.35});
-  // Rolling thunder ~80ms later
-  setTimeout(() => {
-    playSynth({type:'sine',     freq:58,  decay:3.0, pitchDrop:0.30, vol:0.45});
-    playSynth({type:'sine',     freq:38,  decay:2.2, pitchDrop:0.35, vol:0.30});
-    playSynth({type:'triangle', freq:90,  decay:1.5, pitchDrop:0.40, vol:0.18});
-  }, 80);
 };
 
 // ============================================================
@@ -5108,89 +5046,6 @@ function drawRain(ctx) {
 // ============================================================
 
 window.keys = {};
-// === ERROR RING BUFFER (diagnostic) ===
-// Previously many catch(e) blocks were silent. They now log here.
-window._islandErrors = window._islandErrors || [];
-window._logError = function(where, e) {
-  try {
-    const entry = {
-      where: String(where).slice(0, 60),
-      msg: (e && e.message ? String(e.message) : String(e)).slice(0, 200),
-      stack: (e && e.stack ? String(e.stack) : '').split('\n').slice(0, 3).join(' | ').slice(0, 300),
-      t: Date.now(),
-      frame: (typeof state !== 'undefined' && state && state.frameCount) || 0
-    };
-    window._islandErrors.push(entry);
-    if (window._islandErrors.length > 200) window._islandErrors.shift();
-  } catch (_) { /* never throw from logger */ }
-};
-// Inspect with: window._islandErrors in console
-// === OBJECT INDEX CACHE (performance) ===
-// Auto-invalidates when state.objects is mutated. Version-based so assignment
-// (state.objects = state.objects.filter(...)) also invalidates.
-state._objectsCacheVersion = 0;
-state._objectsCache = null;
-function _invalidateObjectsCache() { state._objectsCacheVersion++; state._objectsCache = null; }
-// Patch push/splice/pop to auto-invalidate
-(function() {
-  if (!state.objects.__cacheInstrumented) {
-    const origPush = state.objects.push;
-    state.objects.push = function() { _invalidateObjectsCache(); return origPush.apply(this, arguments); };
-    const origSplice = state.objects.splice;
-    state.objects.splice = function() { _invalidateObjectsCache(); return origSplice.apply(this, arguments); };
-    const origPop = state.objects.pop;
-    state.objects.pop = function() { _invalidateObjectsCache(); return origPop.apply(this, arguments); };
-    const origShift = state.objects.shift;
-    state.objects.shift = function() { _invalidateObjectsCache(); return origShift.apply(this, arguments); };
-    state.objects.__cacheInstrumented = true;
-  }
-})();
-// NOTE: assignments (state.objects = arr) DON'T preserve the instrumentation.
-// _getObjectsCache() handles this by checking a fingerprint too.
-function _getObjectsCache() {
-  // Fast path: cache valid if version+length+first match
-  const arr = state.objects;
-  if (!arr.__cacheInstrumented) {
-    // Re-instrument after assignment
-    _invalidateObjectsCache();
-    const origPush = arr.push;
-    arr.push = function() { _invalidateObjectsCache(); return origPush.apply(this, arguments); };
-    const origSplice = arr.splice;
-    arr.splice = function() { _invalidateObjectsCache(); return origSplice.apply(this, arguments); };
-    const origPop = arr.pop;
-    arr.pop = function() { _invalidateObjectsCache(); return origPop.apply(this, arguments); };
-    const origShift = arr.shift;
-    arr.shift = function() { _invalidateObjectsCache(); return origShift.apply(this, arguments); };
-    arr.__cacheInstrumented = true;
-  }
-  if (state._objectsCache && state._objectsCache._v === state._objectsCacheVersion && state._objectsCache._len === arr.length) {
-    return state._objectsCache;
-  }
-  const placed = [];
-  const placedByType = {};
-  for (let i = 0; i < arr.length; i++) {
-    const o = arr[i];
-    if (o && o.placed) {
-      placed.push(o);
-      const t = o.type;
-      if (!placedByType[t]) placedByType[t] = [];
-      placedByType[t].push(o);
-    }
-  }
-  state._objectsCache = { _v: state._objectsCacheVersion, _len: arr.length, placed, placedByType };
-  return state._objectsCache;
-}
-function _getPlacedCampfires() {
-  return _getObjectsCache().placedByType['campfire'] || [];
-}
-function _getPlacedObjects() {
-  return _getObjectsCache().placed;
-}
-function _getPlacedByType(t) {
-  return _getObjectsCache().placedByType[t] || [];
-}
-
-
 let mx = 0, my = 0;
 let mouseDown = false;
 
@@ -5639,29 +5494,6 @@ function handleInteract() {
         spawnParticles(obj.x, obj.y, '#3dd6d0', 4);
         SFX.pickup && SFX.pickup();
         gainSkill && gainSkill('building'); // small skill tick
-        updateUI();
-        return;
-      }
-    }
-  }
-
-  // Snare trap: collect triggered catch
-  for (let i = state.objects.length-1; i >= 0; i--) {
-    const obj = state.objects[i];
-    if (obj.placed && obj.type === 'snare_trap' && obj._trapTriggered) {
-      const d = Math.hypot(p.x-obj.x, p.y-obj.y);
-      if (d < reach) {
-        const meatQty = 1 + Math.floor(Math.random() * 2); // 1-2 raw meat
-        p.inv.raw_meat = (p.inv.raw_meat||0) + meatQty;
-        addFloatingText(obj.x, obj.y-24, '+'+meatQty+' RAW MEAT', '#c0520a');
-        showMsg('TRAP COLLECTED — cook the meat at a campfire!', '#c0520a');
-        spawnParticles(obj.x, obj.y, '#c0520a', 5);
-        SFX.pickup && SFX.pickup();
-        // Reset trap for reuse
-        obj._trapTriggered = false;
-        obj._trapTimer = 0;
-        if (typeof gainSkill === 'function') gainSkill('combat'); // hunting = combat xp
-        if (state.runStats) state.runStats.itemsCollected++;
         updateUI();
         return;
       }
@@ -6871,7 +6703,6 @@ const BUILD_ITEMS = [
   {id:'forge',     label:'FORGE',     cost:{stone:8,wood:3},  desc:'Craft fire weapons'},
   {id:'smoker',    label:'SMOKER',    cost:{stone:3,wood:2},  desc:'Slows food decay'},
   {id:'vessel',    label:'VESSEL',    cost:{wood:2,stone:2},  desc:'Collects rain water'},
-  {id:'snare_trap',label:'SNARE TRAP',cost:{wood:2,vine:1},   desc:'Place in jungle — catches boars for raw meat'},
 ];
 
 const CRAFT_ITEMS = [
@@ -6912,9 +6743,6 @@ const CRAFT_ITEMS = [
   // Volcanic forge tier — post-eruption loot
   {id:'magma_hammer',    label:'MAGMA HAMMER',  cost:{magma_shard:3,volcanic_stone:2},  desc:'45 dmg — ground slam stuns all enemies within 80px', requiredTier:1},
 ];
-
-// ── PLACED STRUCTURES (BUILD MENU items) ──
-// snare_trap is intentionally listed here as a build item (placed in world)
 
 function openBuildMenu() {
   state.buildMode = !state.buildMode;
@@ -7642,16 +7470,6 @@ function drawItemIcon(ctx, item, x, y, size) {
       ctx.fillStyle = '#5a3c1e';
       ctx.fillRect(Math.round(cx-3), y+s-6, 6, 4);
       break;
-    case 'snare_trap':
-      // Icon: crossed sticks with vine loop
-      ctx.strokeStyle = '#6b3d1e'; ctx.lineWidth = Math.max(2, s/12); ctx.lineCap = 'round';
-      ctx.beginPath(); ctx.moveTo(x+4, y+s-4); ctx.lineTo(x+s-4, y+4); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(x+s-4, y+s-4); ctx.lineTo(x+4, y+4); ctx.stroke();
-      ctx.strokeStyle = '#4a8a2a'; ctx.lineWidth = Math.max(1.5, s/14);
-      ctx.beginPath(); ctx.ellipse(cx, cy, s*0.28, s*0.2, 0, 0, Math.PI*2); ctx.stroke();
-      ctx.fillStyle = '#cc3322';
-      ctx.beginPath(); ctx.arc(cx, cy, Math.max(2, s/9), 0, Math.PI*2); ctx.fill();
-      break;
     default:
       ctx.fillStyle = '#a08040'; ctx.font = `${Math.round(s*0.3)}px Courier New`; ctx.textAlign = 'center';
       ctx.fillText(item.substring(0,3).toUpperCase(), cx, cy+4);
@@ -7979,38 +7797,6 @@ function drawPlacedObject(ctx, obj, sx, sy) {
         px(ctx, '#3dd6d0', sx-6, sy+1, 12, 6);
       }
       break;
-    case 'snare_trap': {
-      // Wooden snare: crossed sticks + vine loop on ground
-      const triggered = obj._trapTriggered;
-      // Ground shadow
-      ctx.fillStyle = 'rgba(0,0,0,0.18)';
-      ctx.beginPath(); ctx.ellipse(sx, sy+4, 12, 5, 0, 0, Math.PI*2); ctx.fill();
-      if (triggered) {
-        // Triggered: flat collapsed sticks, glowing meat loot
-        px(ctx, '#7a5c2e', sx-9, sy+1, 18, 3);
-        px(ctx, '#8B6914', sx-2, sy-1, 4, 6);
-        // Blinking "!" loot indicator
-        if (Math.floor(state.frameCount / 20) % 2 === 0) {
-          ctx.fillStyle = '#c8f135'; ctx.font = 'bold 11px Courier New'; ctx.textAlign = 'center';
-          ctx.fillText('!', sx, sy - 10); ctx.textAlign = 'left';
-        }
-      } else {
-        // Set trap: two crossed sticks
-        ctx.save();
-        ctx.translate(sx, sy);
-        ctx.strokeStyle = '#6b3d1e'; ctx.lineWidth = 3; ctx.lineCap = 'round';
-        ctx.beginPath(); ctx.moveTo(-8, 6); ctx.lineTo(8, -8); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(8, 6); ctx.lineTo(-8, -8); ctx.stroke();
-        // Vine loop
-        ctx.strokeStyle = '#4a8a2a'; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.ellipse(0, 0, 7, 5, 0, 0, Math.PI*2); ctx.stroke();
-        // Small bait berry
-        ctx.fillStyle = '#cc3322';
-        ctx.beginPath(); ctx.arc(0, 0, 2.5, 0, Math.PI*2); ctx.fill();
-        ctx.restore();
-      }
-      break;
-    }
   }
 }
 
@@ -8028,7 +7814,7 @@ function drawMinimap(minimapCtx) {
 
   // Placed objects
   mc.fillStyle = '#c8f135';
-  _getPlacedObjects().forEach(o => {
+  state.objects.filter(o=>o.placed).forEach(o => {
     mc.fillRect(o.x/TSIZE*scale-1, o.y/TSIZE*scale-1, 3, 3);
   });
 
@@ -8213,40 +7999,6 @@ const GROUND_LOOT_COLORS = {
   stone:'#aaa', wood:'#c8a060', coconut:'#6a8a30', fruit:'#e8a040',
   vine:'#3a8a20', volcanic_stone:'#ff6600', tribal_weapon:'#cc4422'
 };
-// ============================================================
-// SNARE TRAP SYSTEM
-// ============================================================
-function updateSnareTraps() {
-  if (!state.running || state.underground) return;
-  const traps = state.objects.filter(o => o.placed && o.type === 'snare_trap' && !o._trapTriggered);
-  if (traps.length === 0) return;
-
-  traps.forEach(trap => {
-    trap._trapTimer = (trap._trapTimer || 0) + 1;
-    // Check every 600 frames (10s real time)
-    if (trap._trapTimer % 600 !== 0) return;
-
-    // Higher chance if a boar is nearby
-    const nearBoar = state.creatures.some(c => c.type === 'boar' && Math.hypot(c.x - trap.x, c.y - trap.y) < 220);
-    const triggerChance = nearBoar ? 0.65 : 0.12;
-
-    if (Math.random() < triggerChance) {
-      trap._trapTriggered = true;
-      trap._trapTimer = 0;
-      // Remove the boar that walked in (if any nearby)
-      if (nearBoar) {
-        const boarIdx = state.creatures.findIndex(c => c.type === 'boar' && Math.hypot(c.x - trap.x, c.y - trap.y) < 220);
-        if (boarIdx !== -1) state.creatures.splice(boarIdx, 1);
-      }
-      SFX.trapSnap && SFX.trapSnap();
-      spawnParticles(trap.x, trap.y, '#c0520a', 6);
-      addFloatingText(trap.x, trap.y - 28, 'SNAP! Press E to collect', '#c8f135');
-      showMsg('SNARE TRAP TRIGGERED — Press E nearby to collect meat', '#c0520a');
-      state.screenShake = Math.max(state.screenShake, 2);
-    }
-  });
-}
-
 function updateGroundLoot() {
   if (!state.groundLoot) { state.groundLoot = []; return; }
   if (state.underground) return; // no surface loot while caving
@@ -8665,7 +8417,7 @@ function render(ctx, minimapCtx) {
   });
 
   // Placed objects
-  _getPlacedObjects().forEach(obj => {
+  state.objects.filter(o=>o.placed).forEach(obj => {
     const sx = obj.x - camX, sy = obj.y - camY;
     if (sx < -50 || sx > canvas.width+50) return;
     drawPlacedObject(ctx, obj, sx, sy);
@@ -9068,7 +8820,7 @@ function render(ctx, minimapCtx) {
 
   // Campfire glow at night — warm golden radius, brighter when player is nearby
   if (state.isNight) {
-    _getPlacedCampfires().forEach(cf => {
+    state.objects.filter(o => o.placed && o.type === 'campfire').forEach(cf => {
       const cfsx = cf.x - camX, cfsy = cf.y - camY;
       if (cfsx < -140 || cfsx > canvas.width+140) return;
       const nearPlayer = Math.hypot(state.player.x - cf.x, state.player.y - cf.y) < 120;
@@ -9148,58 +8900,6 @@ function render(ctx, minimapCtx) {
     nightGrd.addColorStop(1, `rgba(0,8,10,${darkness*0.7})`);
     ctx.fillStyle = nightGrd;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-  }
-
-  // Fireflies — drawn after night overlay so their glow shows through the dark
-  drawFireflies(ctx, camX, camY);
-
-  // === BLOOD MOON VISUAL OVERLAY ===
-  if (state.bloodMoonActive) {
-    // Alpha based on phase: fade in (phase 0), full (phase 1), fade out (phase 2)
-    const totalDuration = state.DAY_FRAMES * 0.45;
-    const elapsed = totalDuration - state.bloodMoonDuration;
-    let bmAlpha;
-    if (state.bloodMoonPhase === 0) {
-      bmAlpha = Math.min(1, elapsed / (60 * 4)) * 0.18; // fade in over 4s
-    } else if (state.bloodMoonPhase === 2) {
-      bmAlpha = Math.max(0, state.bloodMoonDuration / (60 * 5)) * 0.18; // fade out over 5s
-    } else {
-      const pulse = 0.015 * Math.sin(state.frameCount * 0.04); // gentle pulse
-      bmAlpha = 0.18 + pulse;
-    }
-    // Deep crimson overlay
-    ctx.fillStyle = `rgba(160,0,0,${bmAlpha})`;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    // Blood moon disk in upper-right sky
-    const moonX = canvas.width * 0.82;
-    const moonY = canvas.height * 0.12;
-    const moonR = 22 + 4 * Math.sin(state.frameCount * 0.03);
-    const moonGrd = ctx.createRadialGradient(moonX, moonY, 2, moonX, moonY, moonR * 2.5);
-    moonGrd.addColorStop(0, `rgba(220,60,30,${bmAlpha * 5.5})`);
-    moonGrd.addColorStop(0.35, `rgba(180,20,10,${bmAlpha * 3.5})`);
-    moonGrd.addColorStop(1, 'rgba(80,0,0,0)');
-    ctx.fillStyle = moonGrd;
-    ctx.beginPath();
-    ctx.arc(moonX, moonY, moonR * 2.5, 0, Math.PI * 2);
-    ctx.fill();
-    // Solid moon circle
-    ctx.fillStyle = `rgba(200,50,20,${Math.min(0.95, bmAlpha * 6)})`;
-    ctx.beginPath();
-    ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
-    ctx.fill();
-    // Moon craters
-    ctx.fillStyle = `rgba(140,20,10,${Math.min(0.9, bmAlpha * 5)})`;
-    ctx.beginPath(); ctx.arc(moonX - 6, moonY + 4, 5, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(moonX + 7, moonY - 5, 3, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(moonX + 2, moonY + 8, 4, 0, Math.PI*2); ctx.fill();
-    // Screen-edge blood drip vignette
-    if (state.bloodMoonPhase === 1) {
-      const vigGrd = ctx.createRadialGradient(canvas.width/2, canvas.height/2, canvas.height * 0.3, canvas.width/2, canvas.height/2, canvas.height * 0.85);
-      vigGrd.addColorStop(0, 'rgba(0,0,0,0)');
-      vigGrd.addColorStop(1, `rgba(80,0,0,${0.22 + 0.06 * Math.sin(state.frameCount * 0.04)})`);
-      ctx.fillStyle = vigGrd;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }
   }
 
   // Volcano heat shimmer (subtle, only very close)
@@ -9565,9 +9265,6 @@ function render(ctx, minimapCtx) {
   window._rainCanvasH = canvas.height;
   drawRain(ctx);
 
-  // Lightning bolts during storms (drawn after rain, before HUD)
-  drawLightning(ctx, camX, camY);
-
   // Floating damage numbers
   updateFloatingTexts();
   drawFloatingTexts(ctx, camX, camY);
@@ -9691,7 +9388,7 @@ function render(ctx, minimapCtx) {
       const _existing = JSON.parse(localStorage.getItem('island_deaths') || '[]');
       _existing.unshift(_deathData);
       localStorage.setItem('island_deaths', JSON.stringify(_existing.slice(0, 5)));
-    } catch(e2){_logError('catch',e2);}
+    } catch(e2) {}
     state.deathGhosts = [_deathData, ...(state.deathGhosts||[])].slice(0,5);
     // Clear inventory (keep equipped tools by zeroing consumables)
     const keepKeys = ['axe','pickaxe','sword','spear','fire_axe','fire_spear','torch','fishing_rod'];
@@ -10147,44 +9844,6 @@ function updateDayNight() {
     }
   }
 
-  // === BLOOD MOON EVENT TICK ===
-  if (!state.bloodMoonActive) {
-    state.bloodMoonTimer = (state.bloodMoonTimer || 1) - 1;
-    // Only trigger at night, not during eruption, bio night, surge, or storm
-    const forecast = (state.weatherForecast && state.weatherForecastIdx !== undefined)
-      ? state.weatherForecast[state.weatherForecastIdx] : 'clear';
-    if (state.bloodMoonTimer <= 0 && state.isNight && state.eruptionPhase === 0
-        && !state.bioNightActive && state.surgePhase === 0
-        && forecast !== 'storm' && state.day >= 3) {
-      state.bloodMoonActive = true;
-      state.bloodMoonPhase = 0; // rising
-      state.bloodMoonDuration = state.DAY_FRAMES * 0.45; // most of a night
-      state.bloodMoonTimer = state.DAY_FRAMES * (10 + Math.random() * 8); // next blood moon
-      showMsg('BLOOD MOON RISES — the beasts grow restless', '#cc2222');
-      addFloatingText(state.player.x, state.player.y - 60, 'BLOOD MOON', '#cc2222');
-      SFX.bloodMoonRise && SFX.bloodMoonRise();
-    } else if (state.bloodMoonTimer <= 0) {
-      state.bloodMoonTimer = state.DAY_FRAMES * (3 + Math.random() * 4); // retry sooner
-    }
-  } else {
-    state.bloodMoonDuration--;
-    // Phase transitions for smooth fade
-    const totalDuration = state.DAY_FRAMES * 0.45;
-    const elapsed = totalDuration - state.bloodMoonDuration;
-    if (elapsed < 60 * 4) state.bloodMoonPhase = 0; // first 4s rising
-    else if (state.bloodMoonDuration < 60 * 5) state.bloodMoonPhase = 2; // last 5s fading
-    else state.bloodMoonPhase = 1; // full blood moon
-    // End conditions
-    if (state.bloodMoonDuration <= 0 || !state.isNight) {
-      if (state.bloodMoonActive && state.bloodMoonPhase !== 2) {
-        SFX.bloodMoonFade && SFX.bloodMoonFade();
-        showMsg('The blood moon fades', '#883333');
-      }
-      state.bloodMoonActive = false;
-      state.bloodMoonPhase = 0;
-    }
-  }
-
   if (prevNight && !state.isNight) {
     // Dawn — remove bats
     state.creatures = state.creatures.filter(c => c.type !== 'bat');
@@ -10493,126 +10152,6 @@ function updateBirdsAndFootprints() {
     if (state.footprints.length > 80) state.footprints.shift();
   }
   state.footprints = state.footprints.filter(fp => { fp.life--; return fp.life > 0; });
-}
-
-// === FIREFLIES — nocturnal jungle atmosphere ===
-// Spawns gentle glowing points near the player at night when in/near jungle.
-// Pure visual polish. No gameplay effect. Capped at 28 for performance.
-function updateFireflies() {
-  if (state.underground) { state.fireflies.length = 0; return; }
-  const p = state.player;
-  if (!p) return;
-
-  // Spawn only at night (or bioluminescent night event). Purge quickly at dawn.
-  const isNightish = state.isNight || state.bioNightActive;
-  if (!isNightish) {
-    // Fade out during day
-    if (state.fireflies.length > 0) {
-      state.fireflies.forEach(f => { if (f.life > 30) f.life = 30; });
-    }
-  }
-
-  // Check if player is in/near jungle — fireflies prefer vegetation
-  const ptile = getTile(p.x, p.y);
-  const nearJungle = (ptile === T.JUNGLE_LIGHT || ptile === T.JUNGLE_DARK || ptile === T.BEACH);
-  const spawnCap = state.bioNightActive ? 40 : 28;
-
-  // Spawn cadence: every ~25 frames at night in jungle, slower elsewhere
-  state.fireflyTimer++;
-  const spawnEvery = nearJungle ? 22 : 70;
-  if (isNightish && nearJungle && state.fireflies.length < spawnCap && state.fireflyTimer >= spawnEvery) {
-    state.fireflyTimer = 0;
-    // Spawn 1-3 fireflies in a ring 80-220px around player
-    const burst = 1 + Math.floor(Math.random() * 2);
-    for (let i = 0; i < burst; i++) {
-      const ang = Math.random() * Math.PI * 2;
-      const r = 80 + Math.random() * 140;
-      const fx = p.x + Math.cos(ang) * r;
-      const fy = p.y + Math.sin(ang) * r;
-      // Only spawn in jungle/beach tiles — not in water/lava
-      const ft = getTile(fx, fy);
-      if (ft !== T.JUNGLE_LIGHT && ft !== T.JUNGLE_DARK && ft !== T.BEACH) continue;
-      state.fireflies.push({
-        x: fx, y: fy,
-        vx: (Math.random() - 0.5) * 0.25,
-        vy: (Math.random() - 0.5) * 0.25,
-        phase: Math.random() * Math.PI * 2,
-        glowSpeed: 0.04 + Math.random() * 0.05,
-        hue: Math.random() < 0.15 ? 'teal' : (Math.random() < 0.3 ? 'amber' : 'gold'),
-        life: 420 + Math.floor(Math.random() * 300),
-        maxLife: 600
-      });
-    }
-  }
-
-  // Update each firefly
-  const dt = state.dt || 1;
-  state.fireflies = state.fireflies.filter(f => {
-    // Gentle drift with occasional direction change
-    if (Math.random() < 0.02) {
-      f.vx = (Math.random() - 0.5) * 0.3;
-      f.vy = (Math.random() - 0.5) * 0.3;
-    }
-    f.x += f.vx * dt;
-    f.y += f.vy * dt;
-    f.phase += f.glowSpeed * dt;
-    f.life -= dt;
-
-    // Avoid drifting into water — bounce back
-    const ft = getTile(f.x, f.y);
-    if (ft === T.DEEP_OCEAN || ft === T.SHALLOW_WATER || ft === T.LAVA) {
-      f.vx = -f.vx; f.vy = -f.vy;
-      f.x += f.vx * 2; f.y += f.vy * 2;
-    }
-
-    // Cull if too far from camera (performance)
-    const dx = f.x - (state.cam.x + window.innerWidth / 2);
-    const dy = f.y - (state.cam.y + window.innerHeight / 2);
-    if (dx*dx + dy*dy > 900 * 900) return false;
-
-    return f.life > 0;
-  });
-}
-
-function drawFireflies(ctx, camX, camY) {
-  if (!state.fireflies || state.fireflies.length === 0) return;
-  ctx.save();
-  ctx.globalCompositeOperation = 'lighter';
-  for (let i = 0; i < state.fireflies.length; i++) {
-    const f = state.fireflies[i];
-    const sx = f.x - camX, sy = f.y - camY;
-    if (sx < -30 || sx > canvas.width + 30 || sy < -30 || sy > canvas.height + 30) continue;
-    // Flicker: sinusoidal glow + small random jitter
-    const glow = 0.45 + 0.55 * Math.abs(Math.sin(f.phase));
-    // Fade in/out at life boundaries
-    const lifeFade = Math.min(1, f.life / 90) * Math.min(1, (f.maxLife - f.life) / 60 + 0.3);
-    const alpha = glow * lifeFade;
-    // Color by hue
-    let core, halo;
-    if (f.hue === 'teal') {
-      core = `rgba(180,255,240,${alpha})`;
-      halo = `rgba(80,200,220,${alpha * 0.35})`;
-    } else if (f.hue === 'amber') {
-      core = `rgba(255,210,140,${alpha})`;
-      halo = `rgba(255,150,60,${alpha * 0.35})`;
-    } else {
-      core = `rgba(255,245,170,${alpha})`;
-      halo = `rgba(220,200,80,${alpha * 0.35})`;
-    }
-    // Soft halo
-    ctx.fillStyle = halo;
-    ctx.beginPath();
-    ctx.arc(sx, sy, 5, 0, Math.PI * 2);
-    ctx.fill();
-    // Brighter inner halo
-    ctx.fillStyle = core;
-    ctx.beginPath();
-    ctx.arc(sx, sy, 2.2, 0, Math.PI * 2);
-    ctx.fill();
-    // Pixel-sharp core
-    ctx.fillRect(Math.round(sx) - 1, Math.round(sy) - 1, 2, 2);
-  }
-  ctx.restore();
 }
 
 function updateCrabs() {
@@ -12706,15 +12245,7 @@ function updateUI() {
     }
   }
   const wiEl=document.getElementById('weather-icon');
-  let wiText = state.weatherRain ? 'STORM' : (state.player.torch ? 'TORCH' : '') + (fcStr ? ' ['+fcStr+']' : '');
-  if (state.bloodMoonActive) {
-    const bmLabel = state.bloodMoonPhase === 0 ? 'BLOOD MOON RISING' : (state.bloodMoonPhase === 2 ? 'BLOOD MOON FADING' : 'BLOOD MOON');
-    wiText = bmLabel + (wiText ? '  ' + wiText : '');
-    if (wiEl) { wiEl.style.color = '#cc3333'; wiEl.style.textShadow = '0 0 6px rgba(200,30,30,0.7)'; }
-  } else {
-    if (wiEl) { wiEl.style.color = '#7ab0c0'; wiEl.style.textShadow = 'none'; }
-  }
-  if(wiEl) wiEl.textContent = wiText;
+  if(wiEl) wiEl.textContent=state.weatherRain?'STORM':(state.player.torch?'TORCH':'') + (fcStr ? ' ['+fcStr+']' : '');
 
   // Bounty Hunt HUD badge
   let bountyEl = document.getElementById('bounty-hud');
@@ -12854,9 +12385,9 @@ window.addEventListener('DOMContentLoaded', () => {
   state.killStreak = 0; state.killStreakTimer = 0; state.frenzyActive = false; state.frenzyTimer = 0;
   state.dailyBounty = null; state.dailyBountyDay = 0;
   try { state.deathGhosts = JSON.parse(localStorage.getItem('island_deaths')||'[]').slice(0,5); } catch(e) { state.deathGhosts = []; }
-  try { state.unlockedAchievements = new Set(JSON.parse(localStorage.getItem('island_achievements')||'[]')); } catch(e){_logError('catch',e);}
+  try { state.unlockedAchievements = new Set(JSON.parse(localStorage.getItem('island_achievements')||'[]')); } catch(e) {}
   try { state.discoveredRecipes = new Set(JSON.parse(localStorage.getItem('island_recipes')||'[]')); } catch(e) { state.discoveredRecipes = new Set(); }
-  try { const sk = JSON.parse(localStorage.getItem('island_skills')||'null'); if(sk) state.skills = sk; } catch(e){_logError('catch',e);}
+  try { const sk = JSON.parse(localStorage.getItem('island_skills')||'null'); if(sk) state.skills = sk; } catch(e) {}
   genMap(); genObjects();
   state.underground = false;
   state.caveMapGenerated = false;
@@ -12880,6 +12411,11 @@ window.addEventListener('DOMContentLoaded', () => {
   setTimeout(() => {
     if (state.day === 1) showMsg('SAFE BEACH — Gather resources and prepare before venturing into the jungle', '#c8f135');
   }, 2000);
+  // Nuclear option: hide all possible overlay elements
+  ['char-creator','overlay','start-screen'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.style.cssText = 'display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;'; }
+  });
   // Prevent scroll/zoom on canvas
   canvas.addEventListener('touchstart', e => e.preventDefault(), {passive: false});
   canvas.addEventListener('touchmove', e => e.preventDefault(), {passive: false});
@@ -13413,179 +12949,10 @@ function drawBonePile(ctx, tsx, tsy, size) {
 // END SHIP/CAVE SYSTEMS
 // ============================================================
 
-// ============================================================
-// LIGHTNING STRIKE SYSTEM — only fires during storm weather
-// ============================================================
-
-function updateLightning() {
-  if (!state.running || state.underground) return;
-  const forecast = (state.weatherForecast && state.weatherForecastIdx !== undefined)
-    ? state.weatherForecast[state.weatherForecastIdx] : 'clear';
-  // Active during storm forecast OR during rain in storm season
-  const isStormy = (forecast === 'storm') || (state.weatherRain && state.season === 2);
-
-  // Decay existing bolts
-  state.lightningBolts = state.lightningBolts.filter(b => { b.life--; return b.life > 0; });
-  if (state.lightningFlash > 0) state.lightningFlash--;
-
-  if (!isStormy) return;
-
-  // Cooldown between strikes (15-40 real seconds during storm)
-  if (state.lightningTimer > 0) { state.lightningTimer--; return; }
-  // Low-probability gate so not every storm frame fires
-  if (Math.random() > 0.018) return;
-
-  // Reset cooldown for next strike
-  state.lightningTimer = 60 * (15 + Math.random() * 25);
-
-  const p = state.player;
-  const strikeWX = p.x + (Math.random() - 0.5) * 720;
-  const strikeWY = p.y + (Math.random() - 0.5) * 520;
-
-  // Build zigzag bolt path from high above to ground
-  const segCount = 8 + Math.floor(Math.random() * 5);
-  const segs = [];
-  let sx2 = strikeWX + (Math.random() - 0.5) * 60;
-  let sy2 = strikeWY - 400;
-  for (let li = 0; li <= segCount; li++) {
-    const t = li / segCount;
-    const nx2 = strikeWX + (Math.random() - 0.5) * (80 * (1 - t * 0.6));
-    const ny2 = strikeWY - 400 + t * 440;
-    segs.push({ x: sx2, y: sy2, nx: nx2, ny: ny2 });
-    sx2 = nx2; sy2 = ny2;
-  }
-  state.lightningBolts.push({ x: strikeWX, y: strikeWY, life: 14, maxLife: 14, segs });
-  state.lightningFlash = 7;
-
-  SFX.lightningStrike && SFX.lightningStrike();
-  state.screenShake = Math.max(state.screenShake, 9);
-
-  // Damage enemies within 80px of strike point
-  const _ltTargets = [
-    ...state.enemies,
-    ...(state.chief ? [state.chief] : []),
-    ...(state.raid || []),
-    ...state.creatures.filter(c => c.type !== 'crab'),
-    ...(state.bountyHunterActive && state.bountyHunter ? [state.bountyHunter] : []),
-  ];
-  let _ltHit = false;
-  _ltTargets.forEach(e => {
-    if (Math.hypot(e.x - strikeWX, e.y - strikeWY) < 80) {
-      e.hp -= 30;
-      if (e.hitFlash !== undefined) e.hitFlash = 12;
-      addFloatingText(e.x, e.y - 20, '-30 LIGHTNING!', '#aaccff');
-      spawnParticles(e.x, e.y, '#aaccff', 8);
-      _ltHit = true;
-    }
-  });
-  if (_ltHit) showMsg('LIGHTNING STRIKE — enemy hit!', '#aaccff');
-
-  // Player damage if very close to strike
-  const _ltPlayerDist = Math.hypot(p.x - strikeWX, p.y - strikeWY);
-  if (_ltPlayerDist < 60) {
-    const _ltDmg = 22;
-    p.hp = Math.max(0, p.hp - _ltDmg);
-    p.hitFlash = 12;
-    addFloatingText(p.x, p.y - 30, '-22 LIGHTNING!', '#aaccff');
-    showMsg('STRUCK BY LIGHTNING! Find shelter!', '#aaccff');
-    state.lastDamageCause = 'lightning strike';
-    if (state.runStats) state.runStats.damageTaken += _ltDmg;
-    SFX.hurt && SFX.hurt();
-    if (navigator.vibrate) navigator.vibrate([40, 20, 80]);
-  } else if (_ltPlayerDist < 240) {
-    showMsg('Lightning crackles nearby — seek cover!', '#8899cc');
-  }
-
-  // Leave a brief fire tile at the strike point
-  if (!state.fireTiles) state.fireTiles = [];
-  state.fireTiles.push({ x: strikeWX, y: strikeWY, timer: 240 });
-  // 35% chance to ignite a second tile (simulates a tree or brush catching)
-  if (Math.random() < 0.35) {
-    state.fireTiles.push({
-      x: strikeWX + (Math.random() - 0.5) * 36,
-      y: strikeWY + (Math.random() - 0.5) * 36,
-      timer: 300,
-    });
-  }
-  spawnParticles(strikeWX, strikeWY, '#ffffff', 16);
-  spawnParticles(strikeWX, strikeWY, '#aaccff', 10);
-}
-
-function drawLightning(ctx, camX, camY) {
-  if (!state.lightningBolts || state.lightningBolts.length === 0) {
-    // Still draw flash even if bolt already faded
-    if (state.lightningFlash > 0) {
-      const fa = (state.lightningFlash / 7) * 0.55;
-      ctx.fillStyle = `rgba(210,225,255,${fa})`;
-      ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    }
-    return;
-  }
-  ctx.save();
-  state.lightningBolts.forEach(bolt => {
-    const alpha = bolt.life / bolt.maxLife;
-    const bsx = bolt.x - camX;
-    const bsy = bolt.y - camY;
-    if (bsx < -500 || bsx > ctx.canvas.width + 500) return;
-
-    // Wide glowing outer pass
-    ctx.lineWidth = 7;
-    ctx.strokeStyle = `rgba(160,185,255,${alpha * 0.45})`;
-    ctx.shadowColor = `rgba(100,150,255,${alpha * 0.85})`;
-    ctx.shadowBlur = 24;
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    bolt.segs.forEach((seg, i) => {
-      if (i === 0) ctx.moveTo(seg.x - camX, seg.y - camY);
-      ctx.lineTo(seg.nx - camX, seg.ny - camY);
-    });
-    ctx.stroke();
-
-    // Bright white inner core
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = `rgba(230,242,255,${alpha * 0.95})`;
-    ctx.shadowBlur = 10;
-    ctx.beginPath();
-    bolt.segs.forEach((seg, i) => {
-      if (i === 0) ctx.moveTo(seg.x - camX, seg.y - camY);
-      ctx.lineTo(seg.nx - camX, seg.ny - camY);
-    });
-    ctx.stroke();
-
-    // Radial glow at ground impact point
-    ctx.shadowBlur = 0;
-    const grd = ctx.createRadialGradient(bsx, bsy, 0, bsx, bsy, 42);
-    grd.addColorStop(0, `rgba(200,220,255,${alpha * 0.80})`);
-    grd.addColorStop(0.5, `rgba(120,160,255,${alpha * 0.35})`);
-    grd.addColorStop(1, 'rgba(80,120,255,0)');
-    ctx.fillStyle = grd;
-    ctx.beginPath();
-    ctx.arc(bsx, bsy, 42, 0, Math.PI * 2);
-    ctx.fill();
-  });
-  ctx.shadowBlur = 0;
-  ctx.restore();
-
-  // Full-screen white flash overlay
-  if (state.lightningFlash > 0) {
-    const fa = (state.lightningFlash / 7) * 0.55;
-    ctx.fillStyle = `rgba(210,225,255,${fa})`;
-    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-  }
-}
-
 function gameLoopWithUI() {
   if (!state.running && !state.cutscenePlaying) return;
   requestAnimationFrame(gameLoopWithUI);
-  if (document.hidden) { state._lastFrameTime = 0; return; }
-  // === DELTA TIME TRACKING ===
-  // state.dt is a multiplier: 1.0 = 60fps target. Use for time-scaled updates.
-  // frameCount logic is unchanged to avoid regressions; use dt where fidelity matters.
-  const _now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
-  if (!state._lastFrameTime) state._lastFrameTime = _now;
-  const _rawDt = (_now - state._lastFrameTime) / 16.67;
-  state.dt = Math.min(3.0, Math.max(0.25, _rawDt || 1));
-  state._lastFrameTime = _now;
+  if (document.hidden) return;
   // Smooth zoom lerp
   if (!state.zoom) state.zoom = 1.8;
   if (!state.targetZoom) state.targetZoom = 1.8;
@@ -13630,16 +12997,13 @@ function gameLoopWithUI() {
   if (state.frameCount % 5 === 0) updateNPCCompanions();
   if (state.frameCount % 2 === 0) updateWorldEvents();
   updateBirdsAndFootprints();
-  if (state.frameCount % 2 === 0) updateFireflies();
   updateRain();
-  updateLightning();
   if (state.frameCount % 4 === 0) updateCrabs();
   if (state.frameCount % 30 === 0 && typeof updateSeaCreatures === "function") updateSeaCreatures();
   updateLivingIsland();
   if (state.frameCount % 2 === 0) updateCanoes();
   updateCaveCreatures();
   updateGroundLoot();
-  updateSnareTraps();
   // === AMBIENT AUDIO UPDATE (every 6 frames to keep it cheap) ===
   if (state.frameCount % 6 === 0) {
     try {
@@ -13650,7 +13014,7 @@ function gameLoopWithUI() {
       const _isBeach = _tile === T.BEACH;
       const _oceanVol = _isWater ? 1.0 : (_isBeach ? 0.55 : 0.15);
       // Fire proximity: 1.0 if very close to any placed campfire
-      const _campfires = _getPlacedCampfires();
+      const _campfires = state.objects.filter(o => o.placed && o.type === 'campfire');
       const _minFireDist = _campfires.length > 0
         ? Math.min(..._campfires.map(cf => Math.hypot(_ap.x - cf.x, _ap.y - cf.y)))
         : Infinity;
@@ -13672,7 +13036,7 @@ function gameLoopWithUI() {
       const _cricketLocationMult = _isWater ? 0.0 : (_isBeach ? 0.2 : (_isJungle ? 1.0 : 0.65));
       const _cricketVol = _nightIntensity * _cricketLocationMult;
       AMBIENT.update(_oceanVol, _fireVol, _windVol, _cricketVol);
-    } catch(e){_logError('catch',e);}
+    } catch(e) {}
   }
   // === TRIBAL DRUMS: update every 30 frames ===
   if (state.frameCount % 30 === 0) {
@@ -13681,7 +13045,7 @@ function gameLoopWithUI() {
       const _vdist = Math.hypot(state.player.x - _vx, state.player.y - _vy);
       const _villageProx = Math.max(0, Math.min(1, 1 - (_vdist - 80) / 640)); // 0 at 720px, 1 at 80px
       DRUMS.update(_villageProx, state.isNight);
-    } catch(e){_logError('catch',e);}
+    } catch(e) {}
   }
   // Handle canoe-targeted projectiles
   updateCanoeProjectiles();
@@ -13700,14 +13064,14 @@ function gameLoopWithUI() {
     ACHIEVEMENTS.forEach(ach => {
       if (!state.unlockedAchievements.has(ach.id) && ach.check(state)) {
         state.unlockedAchievements.add(ach.id);
-        try { localStorage.setItem('island_achievements', JSON.stringify([...state.unlockedAchievements])); } catch(e){_logError('catch',e);}
+        try { localStorage.setItem('island_achievements', JSON.stringify([...state.unlockedAchievements])); } catch(e) {}
         showMsg('ACHIEVEMENT: ' + ach.name + ' \u2014 ' + ach.desc, '#c8f135');
         SFX.achievement && SFX.achievement();
       }
     });
     // Save recipes and skills
-    try { localStorage.setItem('island_recipes', JSON.stringify([...(state.discoveredRecipes||[])])); } catch(e){_logError('catch',e);}
-    try { localStorage.setItem('island_skills', JSON.stringify(state.skills||{})); } catch(e){_logError('catch',e);}
+    try { localStorage.setItem('island_recipes', JSON.stringify([...(state.discoveredRecipes||[])])); } catch(e) {}
+    try { localStorage.setItem('island_skills', JSON.stringify(state.skills||{})); } catch(e) {}
     // Run recipe discovery check periodically
     checkRecipeDiscovery();
   }
