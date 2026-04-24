@@ -8266,6 +8266,7 @@ function render(ctx, minimapCtx) {
   // DEBUG one-shot
   if (!state._rendered) {
     state._rendered = true;
+    console.log('[DBG2] entering tile loop. sx0/sx1:', sx0, sx1, 'sy0/sy1:', sy0, sy1, 'tile at 75,110:', state.map?.[110]?.[75], 'tile at sy0,sx0:', state.map?.[sy0]?.[sx0], 'TILE_COLORS defined:', typeof TILE_COLORS !== 'undefined');
     console.log('DEBUG render:', {
       hasMap: !!state.map,
       mapLen: state.map?.length,
