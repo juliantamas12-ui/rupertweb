@@ -547,6 +547,7 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
   <div class="section">
     <div class="section-head">
       <h2>News From Your Top Games</h2>
+      <button class="link" onclick="loadNews()">Refresh →</button>
     </div>
     <div class="sidebar-card" id="newsFeed"><div class="empty"><span class="loading"></span> Fetching news...</div></div>
   </div>
@@ -1008,7 +1009,11 @@ document.querySelectorAll('.nav-tab').forEach(tab => {
       STATE.dealsForYouLoaded = true;
       STATE.dealsLoaded = true;
     }
-    if (view === 'news' && !STATE.newsLoaded) loadNews();
+    if (view === 'news') {
+      // Auto-refresh if more than 24 hours old (or never loaded)
+      const age = Date.now() - (STATE.newsLoadedAt || 0);
+      if (!STATE.newsLoaded || age > 24 * 3600 * 1000) loadNews();
+    }
 
     if (view === 'leaderboards' && !STATE.lbLoaded) loadLeaderboards();
     if (view === 'more') {
@@ -2759,6 +2764,9 @@ function renderBuyRecs() {
 
 async function loadNews() {
   STATE.newsLoaded = true;
+  STATE.newsLoadedAt = Date.now();
+  const el = document.getElementById('newsFeed');
+  if (el) el.innerHTML = '<div class="empty"><span class="loading"></span> Fetching news…</div>';
   const topGames = STATE.games.slice(0, 5);
   const allNews = [];
 
