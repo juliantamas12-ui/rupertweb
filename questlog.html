@@ -2072,6 +2072,7 @@ function initProFeatures() {
 // Owner + a whitelist of Steam IDs that get auto-Pro
 const PRO_WHITELIST = new Set([
   '76561199040427763', // Julian (owner)
+  '76561199473348194', // NIXO
 ]);
 function isProActive() {
   if (STATE.sid && PRO_WHITELIST.has(STATE.sid)) return true;
