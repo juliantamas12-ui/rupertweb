@@ -363,6 +363,24 @@ const STEAM = {
    ══════════════════════════════════════════════════════════════ */
 const PROJECTS = [
   {
+    name: "QuestLog",
+    url: "https://rupertweb.com/questlog.html",
+    desc: "Gaming command center. Steam library, deals across 20+ stores, free games, price history, FPS estimator, spend analytics, friend comparisons. Free tier + Pro upgrade.",
+    tags: ["Cloudflare Workers", "Steam API", "CheapShark", "Resend"]
+  },
+  {
+    name: "FleetWatch",
+    url: "https://rupertweb.com/yachts-pro.html",
+    desc: "Real-time tracker for 11 superyachts. AIS position polling, port arrival alerts, photo galleries, live fleet activity panel. Signup with tiered plans.",
+    tags: ["Cron", "SerpAPI", "VesselFinder", "Telegram"]
+  },
+  {
+    name: "Juan Pelotes University",
+    url: "https://rupertweb.com/jpu.html",
+    desc: "Full brand and website for a fictional coastal research university on Isabela Island, Galapagos. Academic design, leadership bios, Drug Inspection department lore.",
+    tags: ["HTML", "CSS", "Schema.org", "SEO"]
+  },
+  {
     name: "Rupert Web",
     url: "https://rupertweb.com",
     desc: "Personal command center and life dashboard. The page you are currently looking at.",
@@ -379,7 +397,7 @@ const PROJECTS = [
 const LIFE_STATS = [
   { label: "Games on Steam", value: 49, unit: "games" },
   { label: "Hours in Sea of Thieves", value: 2221, unit: "h" },
-  { label: "Projects shipped", value: 1, unit: "live" },
+  { label: "Projects shipped", value: 4, unit: "live" },
 ];
 
 
