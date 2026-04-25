@@ -589,6 +589,80 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
     <div id="finishThisPanel"><div class="empty"><span class="loading"></span></div></div>
   </div>
 
+  <!-- PERSONAL QUESTS -->
+  <div class="section">
+    <div class="section-head"><h2>Your Quests</h2></div>
+    <div class="sidebar-card">
+      <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Track personal goals across games. "Finish Witcher 3", "100% Hollow Knight", whatever. Saved in your browser.</p>
+      <div style="display:grid;grid-template-columns:2fr 2fr 1fr auto;gap:8px;margin-bottom:12px">
+        <input type="text" id="questGame" placeholder="Game" style="background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit">
+        <input type="text" id="questGoal" placeholder="Goal (e.g. 100% achievements)" style="background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit">
+        <input type="date" id="questDeadline" style="background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit">
+        <button onclick="addQuest()" class="connect-btn" style="padding:10px 18px;font-size:12px">Add</button>
+      </div>
+      <div id="questsList"></div>
+    </div>
+  </div>
+
+  <!-- BACKLOG QUEUE -->
+  <div class="section">
+    <div class="section-head"><h2>Up Next — Priority Queue</h2></div>
+    <div class="sidebar-card">
+      <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Drag to reorder. Sorted by what you'll play next. Time estimates from HLTB where available.</p>
+      <div style="display:flex;gap:8px;margin-bottom:12px;position:relative">
+        <div style="flex:1;position:relative">
+          <input type="text" id="queueInput" placeholder="Add a game to your queue..." autocomplete="off" style="width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit" oninput="queueSuggest(this)" onkeydown="queueSuggestKey(event)" onblur="setTimeout(()=>document.getElementById('queueSuggestBox').style.display='none',200)">
+          <div id="queueSuggestBox" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--panel);border:1px solid var(--border);border-radius:6px;max-height:320px;overflow-y:auto;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,0.4)"></div>
+        </div>
+        <button onclick="addQueue()" class="connect-btn" style="padding:10px 18px;font-size:13px">Add</button>
+      </div>
+      <div id="queueList"></div>
+    </div>
+  </div>
+
+  <!-- WEEKLY RETROSPECTIVE -->
+  <div class="section">
+    <div class="section-head"><h2>This Week</h2></div>
+    <div id="retroPanel" class="sidebar-card"><div class="empty"><span class="loading"></span></div></div>
+  </div>
+
+  <!-- STREAK -->
+  <div class="section">
+    <div class="section-head"><h2>Play Streak</h2></div>
+    <div id="streakPanel" class="sidebar-card"><div class="empty"><span class="loading"></span></div></div>
+  </div>
+
+  <!-- GENRE GAPS -->
+  <div class="section">
+    <div class="section-head"><h2>Genre Gaps</h2></div>
+    <div id="genreGapPanel" class="sidebar-card"><div class="empty"><span class="loading"></span></div></div>
+  </div>
+
+  <!-- DEMO RADAR -->
+  <div class="section">
+    <div class="section-head">
+      <h2>Demo Radar</h2>
+      <span class="link" style="cursor:default;font-size:12px;color:var(--dim)">Free demos to try</span>
+    </div>
+    <div id="demoRadarPanel" class="sidebar-card"><div class="empty"><span class="loading"></span></div></div>
+  </div>
+
+  <!-- TWITCH STREAMS -->
+  <div class="section">
+    <div class="section-head"><h2>Watch Live</h2></div>
+    <div class="sidebar-card">
+      <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Find someone streaming a game right now. Skip stuck moments by watching live.</p>
+      <div style="display:flex;gap:8px;position:relative">
+        <div style="flex:1;position:relative">
+          <input type="text" id="twitchInput" placeholder="Game title" autocomplete="off" style="width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit" oninput="twitchSuggest(this)" onkeydown="twitchSuggestKey(event)" onblur="setTimeout(()=>document.getElementById('twitchSuggestBox').style.display='none',200)">
+          <div id="twitchSuggestBox" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--panel);border:1px solid var(--border);border-radius:6px;max-height:320px;overflow-y:auto;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,0.4)"></div>
+        </div>
+        <button onclick="openTwitch()" class="connect-btn" style="padding:10px 20px;font-size:13px">Find streams</button>
+      </div>
+      <div id="twitchResult" style="margin-top:14px"></div>
+    </div>
+  </div>
+
   <!-- FRIENDS LIST + COMPARE -->
   <div class="section">
     <div class="section-head"><h2>Friends</h2></div>
@@ -1036,12 +1110,18 @@ document.querySelectorAll('.nav-tab').forEach(tab => {
       renderFriends();
       renderGameNightUI();
       refreshNowPlaying();
+      renderQuests();
+      renderQueue();
       if (!STATE.moreLoaded) {
         loadGameOfDay();
         loadWrapped();
         loadBacklog();
         loadFinishThis();
         loadSteamDNA();
+        loadRetrospective();
+        loadStreak();
+        loadGenreGaps();
+        loadDemoRadar();
         STATE.moreLoaded = true;
       }
     }
@@ -2309,6 +2389,310 @@ async function renderWishlist() {
         <button onclick="removeWishlist('${item.gameID}')" style="background:transparent;color:var(--dim);border:none;cursor:pointer;font-size:16px">×</button>
       </div>`;
   }).join('');
+}
+
+// ───── PERSONAL QUESTS ─────
+function getQuests() { try { return JSON.parse(localStorage.getItem('questlog_quests') || '[]'); } catch { return []; } }
+function saveQuests(q) { localStorage.setItem('questlog_quests', JSON.stringify(q)); }
+function addQuest() {
+  const game = document.getElementById('questGame').value.trim();
+  const goal = document.getElementById('questGoal').value.trim();
+  const deadline = document.getElementById('questDeadline').value;
+  if (!game || !goal) { alert('Game and goal required'); return; }
+  const q = getQuests();
+  q.unshift({ id: Date.now(), game, goal, deadline, started: Date.now(), done: false });
+  saveQuests(q);
+  document.getElementById('questGame').value = '';
+  document.getElementById('questGoal').value = '';
+  document.getElementById('questDeadline').value = '';
+  renderQuests();
+}
+function toggleQuest(id) {
+  const q = getQuests();
+  const item = q.find(x => x.id === id);
+  if (item) item.done = !item.done;
+  saveQuests(q);
+  renderQuests();
+}
+function removeQuest(id) {
+  if (!confirm('Remove this quest?')) return;
+  saveQuests(getQuests().filter(x => x.id !== id));
+  renderQuests();
+}
+function renderQuests() {
+  const el = document.getElementById('questsList');
+  if (!el) return;
+  const list = getQuests();
+  if (!list.length) { el.innerHTML = '<div class="empty" style="text-align:left;padding:8px 0;font-size:12px">No quests yet. Pick a game and a goal.</div>'; return; }
+  el.innerHTML = list.map(q => {
+    const daysLeft = q.deadline ? Math.ceil((new Date(q.deadline).getTime() - Date.now()) / 86400000) : null;
+    const overdue = daysLeft !== null && daysLeft < 0 && !q.done;
+    const colour = q.done ? 'var(--accent)' : overdue ? '#ff5a5a' : 'var(--text)';
+    return `
+      <div style="display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+        <input type="checkbox" ${q.done ? 'checked' : ''} onchange="toggleQuest(${q.id})" style="accent-color:var(--accent);width:18px;height:18px;cursor:pointer">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;font-size:13px;color:${colour};${q.done ? 'text-decoration:line-through;opacity:0.5' : ''}">${q.game} — ${q.goal}</div>
+          ${q.deadline ? `<div style="font-size:11px;color:${overdue ? '#ff5a5a' : 'var(--dim)'}">${overdue ? `Overdue by ${-daysLeft}d` : daysLeft === 0 ? 'Due today' : daysLeft > 0 ? `${daysLeft} days left` : ''}</div>` : ''}
+        </div>
+        <button onclick="removeQuest(${q.id})" style="background:transparent;color:var(--dim);border:none;cursor:pointer;font-size:16px">×</button>
+      </div>`;
+  }).join('');
+}
+
+// ───── BACKLOG QUEUE ─────
+function getQueue() { try { return JSON.parse(localStorage.getItem('questlog_queue') || '[]'); } catch { return []; } }
+function saveQueue(q) { localStorage.setItem('questlog_queue', JSON.stringify(q)); }
+function queueSuggest(input) { _makeSuggest('queueInput','queueSuggestBox','queue','pickQueueSuggest').oninput(input); }
+function queueSuggestKey(e) { _makeSuggest('queueInput','queueSuggestBox','queue','pickQueueSuggest').onkey(e); }
+function pickQueueSuggest(idx) {
+  const r = _suggestCache['_last_queueSuggestBox']?.[idx]; if (!r) return;
+  document.getElementById('queueInput').value = r.external;
+  document.getElementById('queueSuggestBox').style.display = 'none';
+  addQueue();
+}
+window.queueTrigger = () => addQueue();
+async function addQueue() {
+  const title = document.getElementById('queueInput').value.trim();
+  if (!title) return;
+  const q = getQueue();
+  if (q.find(x => x.title.toLowerCase() === title.toLowerCase())) { alert('Already in queue'); return; }
+  // Try HLTB lookup
+  let hours = null;
+  try {
+    const r = await fetch(`/api/hltb?title=${encodeURIComponent(title)}`);
+    const d = await r.json();
+    if (d && !d.error) hours = d.mainStory;
+  } catch {}
+  q.push({ id: Date.now(), title, hours, added: Date.now() });
+  saveQueue(q);
+  document.getElementById('queueInput').value = '';
+  renderQueue();
+}
+function moveQueue(id, dir) {
+  const q = getQueue();
+  const i = q.findIndex(x => x.id === id);
+  if (i < 0) return;
+  const j = i + dir;
+  if (j < 0 || j >= q.length) return;
+  [q[i], q[j]] = [q[j], q[i]];
+  saveQueue(q);
+  renderQueue();
+}
+function removeQueue(id) {
+  if (!confirm('Remove from queue?')) return;
+  saveQueue(getQueue().filter(x => x.id !== id));
+  renderQueue();
+}
+function renderQueue() {
+  const el = document.getElementById('queueList');
+  if (!el) return;
+  const q = getQueue();
+  if (!q.length) { el.innerHTML = '<div class="empty" style="text-align:left;padding:8px 0;font-size:12px">Queue is empty. Add games above.</div>'; return; }
+  const totalHours = q.reduce((s, x) => s + (x.hours || 0), 0);
+  el.innerHTML = `
+    <div style="font-size:11px;color:var(--dim);margin-bottom:10px;letter-spacing:1px">${q.length} games · ~${Math.round(totalHours)}h total</div>
+    ${q.map((x, i) => `
+      <div style="display:flex;gap:12px;align-items:center;padding:10px 12px;background:var(--panel2);border-radius:6px;margin-bottom:6px">
+        <div style="font-weight:800;color:var(--accent);width:24px">#${i+1}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${x.title}</div>
+          <div style="font-size:11px;color:var(--dim)">${x.hours ? `~${x.hours}h main story` : 'Time unknown'}</div>
+        </div>
+        <button onclick="moveQueue(${x.id},-1)" ${i === 0 ? 'disabled' : ''} style="background:transparent;color:var(--dim);border:none;cursor:pointer;font-size:14px;padding:2px 6px;${i === 0 ? 'opacity:0.3;cursor:not-allowed' : ''}">↑</button>
+        <button onclick="moveQueue(${x.id},1)" ${i === q.length-1 ? 'disabled' : ''} style="background:transparent;color:var(--dim);border:none;cursor:pointer;font-size:14px;padding:2px 6px;${i === q.length-1 ? 'opacity:0.3;cursor:not-allowed' : ''}">↓</button>
+        <button onclick="removeQueue(${x.id})" style="background:transparent;color:var(--dim);border:none;cursor:pointer;font-size:14px;padding:2px 6px">×</button>
+      </div>
+    `).join('')}
+  `;
+}
+
+// ───── WEEKLY RETROSPECTIVE ─────
+async function loadRetrospective() {
+  if (!STATE.sid) return;
+  const el = document.getElementById('retroPanel');
+  if (!el) return;
+  try {
+    const r = await fetch(`/api/steam/recent?sid=${STATE.sid}`);
+    const d = await r.json();
+    const games = d.games || [];
+    const totalHours = games.reduce((s, g) => s + (g.hoursTwoWeeks || 0), 0);
+    const top = games.sort((a,b) => b.hoursTwoWeeks - a.hoursTwoWeeks).slice(0, 5);
+    if (totalHours === 0) {
+      el.innerHTML = '<div class="empty" style="text-align:left;font-size:13px">You haven\'t played anything in the last 2 weeks. Time to fire up Steam.</div>';
+      return;
+    }
+    el.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px">
+        <div style="background:var(--panel2);padding:14px;border-radius:6px;text-align:center">
+          <div style="font-size:24px;font-weight:800;color:var(--accent)">${Math.round(totalHours)}h</div>
+          <div style="font-size:10px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-top:4px">Past 2 weeks</div>
+        </div>
+        <div style="background:var(--panel2);padding:14px;border-radius:6px;text-align:center">
+          <div style="font-size:24px;font-weight:800">${games.length}</div>
+          <div style="font-size:10px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-top:4px">Games played</div>
+        </div>
+      </div>
+      <h3 style="font-size:11px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Top games this fortnight</h3>
+      ${top.map(g => `
+        <div style="display:flex;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+          <div style="width:80px;aspect-ratio:460/215;background:url('${g.img}') center/cover;border-radius:4px"></div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${g.name}</div>
+            <div style="font-size:11px;color:var(--dim)">${g.hoursTwoWeeks}h · ${g.totalHours}h total</div>
+          </div>
+          <button onclick="openSteam(${g.appid})" style="background:var(--accent);color:#000;border:none;padding:5px 10px;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer">Play</button>
+        </div>
+      `).join('')}
+    `;
+  } catch (e) { el.innerHTML = `<div class="error">${e.message}</div>`; }
+}
+
+// ───── STREAK TRACKER ─────
+function loadStreak() {
+  if (!STATE.sid) return;
+  const el = document.getElementById('streakPanel');
+  if (!el) return;
+  // Compute streak from local history of "recent activity" snapshots
+  const today = new Date().toISOString().slice(0, 10);
+  const history = JSON.parse(localStorage.getItem('questlog_streak_' + STATE.sid) || '{}');
+  const recentTotal = (STATE.games || []).reduce((s, g) => s + (g.hoursTwoWeeks || 0), 0);
+  if (!history[today]) { history[today] = recentTotal; localStorage.setItem('questlog_streak_' + STATE.sid, JSON.stringify(history)); }
+  // Streak = consecutive days where we recorded activity
+  const days = Object.keys(history).sort().reverse();
+  let streak = 0;
+  for (let i = 0; i < days.length; i++) {
+    const expected = new Date(); expected.setDate(expected.getDate() - i);
+    if (days[i] === expected.toISOString().slice(0, 10) && history[days[i]] > 0) streak++;
+    else break;
+  }
+  // Find most-neglected game (longest gap since play)
+  const neglected = (STATE.games || [])
+    .filter(g => g.hours > 5 && g.hoursTwoWeeks === 0 && g.lastPlayed)
+    .sort((a, b) => a.lastPlayed - b.lastPlayed)
+    .slice(0, 3);
+
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px">
+      <div style="background:var(--panel2);padding:18px;border-radius:6px;text-align:center">
+        <div style="font-size:32px;font-weight:800;color:var(--accent);line-height:1">${streak}</div>
+        <div style="font-size:10px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-top:4px">Day streak</div>
+      </div>
+      <div style="background:var(--panel2);padding:18px;border-radius:6px;text-align:center">
+        <div style="font-size:32px;font-weight:800;line-height:1">${days.length}</div>
+        <div style="font-size:10px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-top:4px">Days tracked</div>
+      </div>
+    </div>
+    ${neglected.length > 0 ? `
+      <h3 style="font-size:11px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Long-neglected favourites</h3>
+      ${neglected.map(g => {
+        const days = g.lastPlayed ? Math.floor((Date.now()/1000 - g.lastPlayed) / 86400) : '?';
+        return `
+          <div style="display:flex;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+            <div style="width:80px;aspect-ratio:460/215;background:url('${g.img}') center/cover;border-radius:4px"></div>
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${g.name}</div>
+              <div style="font-size:11px;color:var(--dim)">${g.hours}h played · ${days}d ago</div>
+            </div>
+          </div>`;
+      }).join('')}
+    ` : ''}
+    <p style="font-size:11px;color:var(--dim);margin-top:14px;font-style:italic">Streak counts days you check QuestLog with active Steam playtime.</p>
+  `;
+}
+
+// ───── GENRE GAPS ─────
+function loadGenreGaps() {
+  if (!STATE.sid || !STATE.games) return;
+  const el = document.getElementById('genreGapPanel');
+  if (!el) return;
+  // Use SteamDNA's genre map (already in worker)
+  const games = STATE.games;
+  const byGenre = { RPG: 0, Strategy: 0, FPS: 0, Adventure: 0, Roguelike: 0, Racing: 0, Indie: 0 };
+  // Rough heuristic from game names
+  const genreKeywords = {
+    RPG: /witcher|elder scrolls|fallout|baldur|divinity|persona|yakuza|dragon age|mass effect|skyrim|kingdom come/i,
+    Strategy: /civilization|total war|stellaris|hearts of iron|crusader kings|xcom|age of empires/i,
+    FPS: /counter-?strike|call of duty|battlefield|doom|cs2|cs:?go|valorant|overwatch|titanfall|destiny/i,
+    Adventure: /uncharted|tomb raider|red dead|grand theft|witcher|assassin|spider-?man|horizon/i,
+    Roguelike: /hades|slay the spire|risk of rain|enter the gungeon|dead cells|binding of isaac|noita/i,
+    Racing: /forza|gran turismo|f1|need for speed|dirt|wrc|burnout|trackmania/i,
+    Indie: /hollow knight|celeste|stardew|undertale|cuphead|terraria|minecraft|factorio/i,
+  };
+  for (const g of games) {
+    for (const [genre, re] of Object.entries(genreKeywords)) {
+      if (re.test(g.name)) byGenre[genre] += g.hours || 0;
+    }
+  }
+  const total = Object.values(byGenre).reduce((s, h) => s + h, 0);
+  const gaps = Object.entries(byGenre).filter(([_, h]) => h < total * 0.05).map(([g]) => g);
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-bottom:16px">
+      ${Object.entries(byGenre).map(([g, h]) => `
+        <div style="background:var(--panel2);padding:10px;border-radius:6px;text-align:center;${h < 5 ? 'opacity:0.5;border:1px dashed var(--border)' : ''}">
+          <div style="font-size:18px;font-weight:800;color:${h < 5 ? '#ff9e42' : 'var(--accent)'}">${Math.round(h)}h</div>
+          <div style="font-size:10px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-top:4px">${g}</div>
+        </div>
+      `).join('')}
+    </div>
+    ${gaps.length ? `<p style="font-size:13px;color:var(--dim);line-height:1.5">You barely play <strong style="color:#ff9e42">${gaps.join(', ')}</strong>. Try one. The Discover tab can suggest options if you filter by these genres.</p>` : '<p style="font-size:13px;color:var(--dim)">You\'ve got pretty even spread across genres.</p>'}
+  `;
+}
+
+// ───── DEMO RADAR ─────
+async function loadDemoRadar() {
+  const el = document.getElementById('demoRadarPanel');
+  if (!el) return;
+  el.innerHTML = '<div class="empty"><span class="loading"></span> Finding demos...</div>';
+  try {
+    // Steam Featured > 'specials' or 'new_releases' often surface demos. Search store for free titles labelled "Demo".
+    // Easiest: hit Steam search HTML page. We can't scrape it directly so route via SteamSpy genre filter
+    const r = await fetch(`https://store.steampowered.com/api/featuredcategories?cc=us&l=en`);
+    const d = await r.json();
+    const all = [...(d.new_releases?.items || []), ...(d.coming_soon?.items || [])];
+    const demos = all.filter(it => /demo/i.test(it.name)).slice(0, 8);
+    if (!demos.length) { el.innerHTML = '<div class="empty" style="font-size:13px">No demos in the current Steam Featured feed. <a href="https://store.steampowered.com/demos" target="_blank" style="color:var(--accent)">Browse all demos on Steam →</a></div>'; return; }
+    el.innerHTML = demos.map(g => `
+      <div onclick="openSteam(${g.id})" style="display:flex;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer">
+        <div style="width:120px;aspect-ratio:460/215;background:url('${g.large_capsule_image || g.header_image}') center/cover;border-radius:4px"></div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${g.name}</div>
+          <div style="font-size:11px;color:var(--accent)">FREE DEMO</div>
+        </div>
+      </div>
+    `).join('');
+  } catch (e) {
+    el.innerHTML = `<div class="empty" style="font-size:13px"><a href="https://store.steampowered.com/demos" target="_blank" style="color:var(--accent)">Browse demos on Steam →</a></div>`;
+  }
+}
+
+// ───── TWITCH ─────
+function twitchSuggest(input) { _makeSuggest('twitchInput','twitchSuggestBox','twitch','pickTwitchSuggest').oninput(input); }
+function twitchSuggestKey(e) { _makeSuggest('twitchInput','twitchSuggestBox','twitch','pickTwitchSuggest').onkey(e); }
+function pickTwitchSuggest(idx) {
+  const r = _suggestCache['_last_twitchSuggestBox']?.[idx]; if (!r) return;
+  document.getElementById('twitchInput').value = r.external;
+  document.getElementById('twitchSuggestBox').style.display = 'none';
+  openTwitch();
+}
+window.twitchTrigger = () => openTwitch();
+function openTwitch() {
+  const title = document.getElementById('twitchInput').value.trim();
+  if (!title) return;
+  const url = `https://www.twitch.tv/directory/category/${encodeURIComponent(title.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,''))}`;
+  document.getElementById('twitchResult').innerHTML = `
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <a href="${url}" target="_blank" rel="noopener" style="flex:1;background:var(--panel2);padding:12px;border-radius:6px;text-decoration:none;color:var(--text);min-width:160px">
+        <div style="font-size:11px;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Twitch</div>
+        <div style="font-size:13px;font-weight:600">Live streamers playing ${title}</div>
+        <div style="font-size:11px;color:var(--dim);margin-top:6px">Open Twitch →</div>
+      </a>
+      <a href="https://www.youtube.com/results?search_query=${encodeURIComponent(title + ' gameplay live')}" target="_blank" rel="noopener" style="flex:1;background:var(--panel2);padding:12px;border-radius:6px;text-decoration:none;color:var(--text);min-width:160px">
+        <div style="font-size:11px;color:#ff5a5a;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">YouTube</div>
+        <div style="font-size:13px;font-weight:600">Live + recent ${title} videos</div>
+        <div style="font-size:11px;color:var(--dim);margin-top:6px">Open YouTube →</div>
+      </a>
+    </div>`;
 }
 
 // ───── SPEND ANALYTICS ─────
