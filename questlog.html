@@ -589,10 +589,10 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
     <div id="finishThisPanel"><div class="empty"><span class="loading"></span></div></div>
   </div>
 
-  <!-- PERSONAL QUESTS -->
+  <!-- PERSONAL QUESTS (PRO) -->
   <div class="section">
-    <div class="section-head"><h2>Your Quests</h2></div>
-    <div class="sidebar-card">
+    <div class="section-head"><h2>Your Quests <span style="background:rgba(200,241,53,0.15);color:var(--accent);font-size:10px;padding:3px 8px;border-radius:3px;letter-spacing:1px;margin-left:8px">PRO</span></h2></div>
+    <div class="sidebar-card" id="questsCard">
       <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Track personal goals across games. "Finish Witcher 3", "100% Hollow Knight", whatever. Saved in your browser.</p>
       <div style="display:grid;grid-template-columns:2fr 2fr 1fr auto;gap:8px;margin-bottom:12px">
         <input type="text" id="questGame" placeholder="Game" style="background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit">
@@ -604,10 +604,10 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
     </div>
   </div>
 
-  <!-- BACKLOG QUEUE -->
+  <!-- BACKLOG QUEUE (PRO) -->
   <div class="section">
-    <div class="section-head"><h2>Up Next — Priority Queue</h2></div>
-    <div class="sidebar-card">
+    <div class="section-head"><h2>Up Next — Priority Queue <span style="background:rgba(200,241,53,0.15);color:var(--accent);font-size:10px;padding:3px 8px;border-radius:3px;letter-spacing:1px;margin-left:8px">PRO</span></h2></div>
+    <div class="sidebar-card" id="queueCard">
       <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Drag to reorder. Sorted by what you'll play next. Time estimates from HLTB where available.</p>
       <div style="display:flex;gap:8px;margin-bottom:12px;position:relative">
         <div style="flex:1;position:relative">
@@ -632,9 +632,9 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
     <div id="streakPanel" class="sidebar-card"><div class="empty"><span class="loading"></span></div></div>
   </div>
 
-  <!-- GENRE GAPS -->
+  <!-- GENRE GAPS (PRO) -->
   <div class="section">
-    <div class="section-head"><h2>Genre Gaps</h2></div>
+    <div class="section-head"><h2>Genre Gaps <span style="background:rgba(200,241,53,0.15);color:var(--accent);font-size:10px;padding:3px 8px;border-radius:3px;letter-spacing:1px;margin-left:8px">PRO</span></h2></div>
     <div id="genreGapPanel" class="sidebar-card"><div class="empty"><span class="loading"></span></div></div>
   </div>
 
@@ -2419,7 +2419,35 @@ function removeQuest(id) {
   saveQuests(getQuests().filter(x => x.id !== id));
   renderQuests();
 }
+function gateProSection(cardId, name) {
+  const card = document.getElementById(cardId);
+  if (!card) return false;
+  if (isProActive()) { card.style.opacity = ''; card.style.pointerEvents = ''; return true; }
+  card.innerHTML = `
+    <div style="text-align:center;padding:24px 12px">
+      <span style="background:var(--accent);color:#000;font-size:10px;font-weight:800;padding:4px 10px;border-radius:3px;letter-spacing:1.5px">PRO</span>
+      <p style="font-size:14px;color:var(--text);margin:14px 0 6px;font-weight:600">${name} is a Pro feature</p>
+      <p style="font-size:12px;color:var(--dim);margin-bottom:18px">Unlock with Pro — £4.99/month, cancel anytime.</p>
+      <button class="connect-btn" onclick="document.querySelector('[data-view=\\'pro\\']')?.click()" style="padding:10px 22px;font-size:12px">View Pro →</button>
+    </div>`;
+  return false;
+}
+
 function renderQuests() {
+  if (!gateProSection('questsCard','Personal Quests')) return;
+  // Pro user — restore the original markup if it was previously gated
+  const card = document.getElementById('questsCard');
+  if (!document.getElementById('questsList')) {
+    card.innerHTML = `
+      <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Track personal goals across games.</p>
+      <div style="display:grid;grid-template-columns:2fr 2fr 1fr auto;gap:8px;margin-bottom:12px">
+        <input type="text" id="questGame" placeholder="Game" style="background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit">
+        <input type="text" id="questGoal" placeholder="Goal" style="background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit">
+        <input type="date" id="questDeadline" style="background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit">
+        <button onclick="addQuest()" class="connect-btn" style="padding:10px 18px;font-size:12px">Add</button>
+      </div>
+      <div id="questsList"></div>`;
+  }
   const el = document.getElementById('questsList');
   if (!el) return;
   const list = getQuests();
@@ -2485,6 +2513,20 @@ function removeQueue(id) {
   renderQueue();
 }
 function renderQueue() {
+  if (!gateProSection('queueCard','Backlog Priority Queue')) return;
+  const card = document.getElementById('queueCard');
+  if (!document.getElementById('queueList')) {
+    card.innerHTML = `
+      <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Drag-rank what you'll play next.</p>
+      <div style="display:flex;gap:8px;margin-bottom:12px;position:relative">
+        <div style="flex:1;position:relative">
+          <input type="text" id="queueInput" placeholder="Add a game to your queue..." autocomplete="off" style="width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit" oninput="queueSuggest(this)" onkeydown="queueSuggestKey(event)" onblur="setTimeout(()=>document.getElementById('queueSuggestBox').style.display='none',200)">
+          <div id="queueSuggestBox" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--panel);border:1px solid var(--border);border-radius:6px;max-height:320px;overflow-y:auto;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,0.4)"></div>
+        </div>
+        <button onclick="addQueue()" class="connect-btn" style="padding:10px 18px;font-size:13px">Add</button>
+      </div>
+      <div id="queueList"></div>`;
+  }
   const el = document.getElementById('queueList');
   if (!el) return;
   const q = getQueue();
@@ -2603,6 +2645,7 @@ function loadStreak() {
 
 // ───── GENRE GAPS ─────
 function loadGenreGaps() {
+  if (!gateProSection('genreGapPanel','Genre Gaps')) return;
   if (!STATE.sid || !STATE.games) return;
   const el = document.getElementById('genreGapPanel');
   if (!el) return;
