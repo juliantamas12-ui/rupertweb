@@ -620,15 +620,15 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
     </div>
   </div>
 
-  <!-- WEEKLY RETROSPECTIVE -->
+  <!-- WEEKLY RETROSPECTIVE (PRO) -->
   <div class="section">
-    <div class="section-head"><h2>This Week</h2></div>
+    <div class="section-head"><h2>This Week <span style="background:rgba(200,241,53,0.15);color:var(--accent);font-size:10px;padding:3px 8px;border-radius:3px;letter-spacing:1px;margin-left:8px">PRO</span></h2></div>
     <div id="retroPanel" class="sidebar-card"><div class="empty"><span class="loading"></span></div></div>
   </div>
 
-  <!-- STREAK -->
+  <!-- STREAK (PRO) -->
   <div class="section">
-    <div class="section-head"><h2>Play Streak</h2></div>
+    <div class="section-head"><h2>Play Streak <span style="background:rgba(200,241,53,0.15);color:var(--accent);font-size:10px;padding:3px 8px;border-radius:3px;letter-spacing:1px;margin-left:8px">PRO</span></h2></div>
     <div id="streakPanel" class="sidebar-card"><div class="empty"><span class="loading"></span></div></div>
   </div>
 
@@ -638,19 +638,19 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
     <div id="genreGapPanel" class="sidebar-card"><div class="empty"><span class="loading"></span></div></div>
   </div>
 
-  <!-- DEMO RADAR -->
+  <!-- DEMO RADAR (PRO) -->
   <div class="section">
     <div class="section-head">
-      <h2>Demo Radar</h2>
+      <h2>Demo Radar <span style="background:rgba(200,241,53,0.15);color:var(--accent);font-size:10px;padding:3px 8px;border-radius:3px;letter-spacing:1px;margin-left:8px">PRO</span></h2>
       <span class="link" style="cursor:default;font-size:12px;color:var(--dim)">Free demos to try</span>
     </div>
     <div id="demoRadarPanel" class="sidebar-card"><div class="empty"><span class="loading"></span></div></div>
   </div>
 
-  <!-- TWITCH STREAMS -->
+  <!-- TWITCH STREAMS (PRO) -->
   <div class="section">
-    <div class="section-head"><h2>Watch Live</h2></div>
-    <div class="sidebar-card">
+    <div class="section-head"><h2>Watch Live <span style="background:rgba(200,241,53,0.15);color:var(--accent);font-size:10px;padding:3px 8px;border-radius:3px;letter-spacing:1px;margin-left:8px">PRO</span></h2></div>
+    <div class="sidebar-card" id="twitchCard">
       <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Find someone streaming a game right now. Skip stuck moments by watching live.</p>
       <div style="display:flex;gap:8px;position:relative">
         <div style="flex:1;position:relative">
@@ -1112,6 +1112,7 @@ document.querySelectorAll('.nav-tab').forEach(tab => {
       refreshNowPlaying();
       renderQuests();
       renderQueue();
+      gateProSection('twitchCard','Watch Live');
       if (!STATE.moreLoaded) {
         loadGameOfDay();
         loadWrapped();
@@ -2551,6 +2552,7 @@ function renderQueue() {
 
 // ───── WEEKLY RETROSPECTIVE ─────
 async function loadRetrospective() {
+  if (!gateProSection('retroPanel','This Week')) return;
   if (!STATE.sid) return;
   const el = document.getElementById('retroPanel');
   if (!el) return;
@@ -2592,6 +2594,7 @@ async function loadRetrospective() {
 
 // ───── STREAK TRACKER ─────
 function loadStreak() {
+  if (!gateProSection('streakPanel','Play Streak')) return;
   if (!STATE.sid) return;
   const el = document.getElementById('streakPanel');
   if (!el) return;
@@ -2684,6 +2687,7 @@ function loadGenreGaps() {
 
 // ───── DEMO RADAR ─────
 async function loadDemoRadar() {
+  if (!gateProSection('demoRadarPanel','Demo Radar')) return;
   const el = document.getElementById('demoRadarPanel');
   if (!el) return;
   el.innerHTML = '<div class="empty"><span class="loading"></span> Finding demos...</div>';
