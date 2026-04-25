@@ -579,6 +579,22 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
     <div id="finishThisPanel"><div class="empty"><span class="loading"></span></div></div>
   </div>
 
+  <!-- WATCH LIVE -->
+  <div class="section">
+    <div class="section-head"><h2>Watch Live</h2></div>
+    <div class="sidebar-card">
+      <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Find someone streaming a game right now. Skip stuck moments by watching live.</p>
+      <div style="display:flex;gap:8px;position:relative">
+        <div style="flex:1;position:relative">
+          <input type="text" id="twitchInput" placeholder="Game title" autocomplete="off" style="width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit" oninput="twitchSuggest(this)" onkeydown="twitchSuggestKey(event)" onblur="setTimeout(()=>document.getElementById('twitchSuggestBox').style.display='none',200)">
+          <div id="twitchSuggestBox" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--panel);border:1px solid var(--border);border-radius:6px;max-height:320px;overflow-y:auto;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,0.4)"></div>
+        </div>
+        <button onclick="openTwitch()" class="connect-btn" style="padding:10px 20px;font-size:13px">Find streams</button>
+      </div>
+      <div id="twitchResult" style="margin-top:14px"></div>
+    </div>
+  </div>
+
   <!-- FRIENDS LIST + COMPARE -->
   <div class="section">
     <div class="section-head"><h2>Friends</h2></div>
@@ -921,21 +937,6 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
         <div id="demoRadarPanel" class="sidebar-card"><div class="empty"><span class="loading"></span></div></div>
       </div>
 
-      <!-- TWITCH STREAMS (PRO) -->
-      <div class="section">
-        <div class="section-head"><h2>Watch Live <span style="background:rgba(200,241,53,0.15);color:var(--accent);font-size:10px;padding:3px 8px;border-radius:3px;letter-spacing:1px;margin-left:8px">PRO</span></h2></div>
-        <div class="sidebar-card" id="twitchCard">
-          <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Find someone streaming a game right now. Skip stuck moments by watching live.</p>
-          <div style="display:flex;gap:8px;position:relative">
-            <div style="flex:1;position:relative">
-              <input type="text" id="twitchInput" placeholder="Game title" autocomplete="off" style="width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit" oninput="twitchSuggest(this)" onkeydown="twitchSuggestKey(event)" onblur="setTimeout(()=>document.getElementById('twitchSuggestBox').style.display='none',200)">
-              <div id="twitchSuggestBox" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--panel);border:1px solid var(--border);border-radius:6px;max-height:320px;overflow-y:auto;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,0.4)"></div>
-            </div>
-            <button onclick="openTwitch()" class="connect-btn" style="padding:10px 20px;font-size:13px">Find streams</button>
-          </div>
-          <div id="twitchResult" style="margin-top:14px"></div>
-        </div>
-      </div>
 
       <div class="section" style="padding:0;margin-bottom:20px">
         <div class="section-head"><h3 style="font-size:15px">Spend Analytics</h3></div>
