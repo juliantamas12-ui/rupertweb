@@ -281,19 +281,13 @@ const SCHOOL_TASKS = [
     "status": "upcoming"
   },
   {
-    "title": "Math 8: Volume of Prisms and Cylinders",
+    "title": "Math 8: Volume of Cones and Pyramids",
     "due": "",
     "subject": "",
     "status": "upcoming"
   },
   {
-    "title": "Submit Coursework",
-    "due": "",
-    "subject": "",
-    "status": "upcoming"
-  },
-  {
-    "title": "Substitution work 6: Complete the work on the slides",
+    "title": "Math 7 (HW)",
     "due": "",
     "subject": "",
     "status": "upcoming"
@@ -306,6 +300,24 @@ const SCHOOL_TASKS = [
   },
   {
     "title": "Upload weeks 19 - 22 work",
+    "due": "",
+    "subject": "",
+    "status": "upcoming"
+  },
+  {
+    "title": "Submit Coursework",
+    "due": "",
+    "subject": "",
+    "status": "upcoming"
+  },
+  {
+    "title": "HW: Questions on Vesuvius",
+    "due": "",
+    "subject": "",
+    "status": "upcoming"
+  },
+  {
+    "title": "Vocabulary Quiz §10",
     "due": "",
     "subject": "",
     "status": "upcoming"
