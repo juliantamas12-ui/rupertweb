@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Yam: How the Mongols Invented the State by Accident",
+    date: "2026-04-25",
+    category: "History",
+    excerpt: "The standard story of the modern state is a European one — medieval kings, Italian city-states, Westphalia, the Napoleonic prefecture. The state, we are told, is something Europe slowly and painfully figured out between 1300 and 1800. This is wrong. The infrastructure that makes a modern state possible — the ability of a centre to receive accurate information from a periphery faster than the periphery can rebel — was invented in 1234 by a Mongol named Ögedei, on the steppe, for reasons that had nothing to do with governance...",
+    url: "essays/2026-04-25-the-yam-how-the-mongols-invented-the-state-by-accident.html"
+  },
+  {
     title: "The Line Two Men Drew in 1494 That Still Runs Through South America",
     date: "2026-04-24",
     category: "History",
