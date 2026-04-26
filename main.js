@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The War That Killed a Country: Paraguay, 1864-1870",
+    date: "2026-04-26",
+    category: "History",
+    excerpt: "Between 1864 and 1870, the Republic of Paraguay fought a war against Brazil, Argentina, and Uruguay simultaneously, and lost. The losing was not the unusual part. The unusual part is what the loss looked like. By the time the Paraguayan dictator Francisco Solano López was speared to death on a riverbank at Cerro Corá in March 1870, somewhere between half and two-thirds of the country's pre-war population was dead. Most credible modern estimates put the male population loss at around ninety percent. Not ninety percent of soldiers. Ninety percent of men...",
+    url: "essays/2026-04-26-the-war-that-killed-a-country-paraguay-1864-1870.html"
+  },
+  {
     title: "The Yam: How the Mongols Invented the State by Accident",
     date: "2026-04-25",
     category: "History",
