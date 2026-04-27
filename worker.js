@@ -5,6 +5,11 @@ const DEFAULT_STEAM_ID = null; // no default — each user provides their own
 const RESEND_KEY = 're_dNyaesf8_GH99GVk3N5u45x6RuA1LCSR8';
 const OWNER_EMAIL = 'julian.tamas12@gmail.com';
 
+// VAPID for web push notifications
+const VAPID_PUBLIC = 'BL6xSk_4wHzUF_8AYnJJOrJnhv0dlpe9nnI5B6vCI1kfWp8bvZ2tuf3Ittb_mKxwIEz9Z1woclj8KiVGZkRxKeA';
+// In-memory subscriber list — resets on worker cold start. Replace with KV when QUESTLOG_KV exists.
+const pushSubs = new Map();
+
 // Xbox / Microsoft OAuth (to be populated once registered)
 const XBOX_CLIENT_ID     = 'PENDING';
 const XBOX_CLIENT_SECRET = 'PENDING';
@@ -19,6 +24,10 @@ export default {
 
     try {
       if (p === '/api/fleet-signup' && request.method === 'POST')     return handleFleetSignup(request);
+      if (p === '/api/push/vapid-key')                                return jsonResponse({ key: VAPID_PUBLIC });
+      if (p === '/api/push/subscribe' && request.method === 'POST')   return pushSubscribe(request);
+      if (p === '/api/push/unsubscribe' && request.method === 'POST') return pushUnsubscribe(request);
+      if (p === '/api/achievement-of-day')                            return achievementOfDay(url);
       if (p === '/api/steam/profile')                                 return steamProfile(url);
       if (p === '/api/steam/games')                                   return steamGames(url);
       if (p === '/api/steam/recent')                                  return steamRecent(url);
@@ -4139,4 +4148,94 @@ async function handleFleetSignup(request) {
   });
 
   return jsonResponse({ ok: true });
+}
+
+// ════════════════════════════════════════════════════════
+// PUSH NOTIFICATIONS
+// ════════════════════════════════════════════════════════
+
+async function pushSubscribe(request) {
+  try {
+    const { sid, subscription, prefs } = await request.json();
+    if (!sid || !subscription?.endpoint) return jsonResponse({ error: 'sid + subscription required' }, 400);
+    pushSubs.set(sid, { subscription, prefs: prefs || { priceAlerts: true, freeGames: true, achievementOfDay: true }, registered: Date.now() });
+    return jsonResponse({ ok: true, count: pushSubs.size });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
+  }
+}
+
+async function pushUnsubscribe(request) {
+  try {
+    const { sid } = await request.json();
+    if (!sid) return jsonResponse({ error: 'sid required' }, 400);
+    pushSubs.delete(sid);
+    return jsonResponse({ ok: true });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// ACHIEVEMENT OF THE DAY
+// ════════════════════════════════════════════════════════
+
+async function achievementOfDay(url) {
+  const sid = url.searchParams.get('sid');
+  if (!sid) return jsonResponse({ error: 'sid required' }, 400);
+
+  // Pull library
+  const games = await fetchJSON(
+    `https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${STEAM_KEY}&steamid=${sid}&include_appinfo=1`
+  );
+  const list = (games?.response?.games || []).filter(g => g.playtime_forever > 0).slice(0, 30);
+  if (!list.length) return jsonResponse({ error: 'No played games found' }, 404);
+
+  // Deterministic per-user-per-day pick
+  const today = new Date().toISOString().slice(0, 10);
+  const seed = (sid + today).split('').reduce((s, c) => s + c.charCodeAt(0), 0);
+  const game = list[seed % list.length];
+
+  // Pull achievement schema + player progress + global percentages in parallel
+  try {
+    const [schema, player, global] = await Promise.all([
+      fetchJSON(`https://api.steampowered.com/ISteamUserStats/GetSchemaForGame/v2/?key=${STEAM_KEY}&appid=${game.appid}&l=english`),
+      fetchJSON(`https://api.steampowered.com/ISteamUserStats/GetPlayerAchievements/v1/?key=${STEAM_KEY}&steamid=${sid}&appid=${game.appid}`),
+      fetchJSON(`https://api.steampowered.com/ISteamUserStats/GetGlobalAchievementPercentagesForApp/v2/?gameid=${game.appid}`),
+    ]);
+
+    const all = schema?.game?.availableGameStats?.achievements || [];
+    const playerMap = Object.fromEntries((player?.playerstats?.achievements || []).map(a => [a.apiname, a.achieved]));
+    const globalMap = Object.fromEntries((global?.achievementpercentages?.achievements || []).map(a => [a.name, parseFloat(a.percent)]));
+
+    // Find achievements: not yet unlocked, sort by global rarity (rarer = more interesting)
+    const candidates = all
+      .filter(a => !playerMap[a.name])
+      .map(a => ({ ...a, globalPct: globalMap[a.name] || 0 }))
+      .filter(a => a.globalPct > 1) // skip near-impossible
+      .sort((a, b) => a.globalPct - b.globalPct);
+
+    if (!candidates.length) return jsonResponse({ error: 'No achievements left to unlock' }, 404);
+
+    // Pick deterministically: middle-rarity for variety
+    const pick = candidates[Math.min(candidates.length - 1, seed % Math.min(candidates.length, 10))];
+
+    return jsonResponse({
+      game: game.name,
+      gameAppId: game.appid,
+      gameImg: `https://cdn.cloudflare.steamstatic.com/steam/apps/${game.appid}/header.jpg`,
+      achievement: {
+        name: pick.displayName || pick.name,
+        description: pick.description || '',
+        icon: pick.icon,
+        iconGray: pick.icongray,
+        globalPct: Math.round(pick.globalPct * 100) / 100,
+        rarity: pick.globalPct < 5 ? 'Ultra Rare' : pick.globalPct < 10 ? 'Rare' : pick.globalPct < 30 ? 'Uncommon' : 'Common',
+      },
+      guideUrl: `https://www.google.com/search?q=${encodeURIComponent(`${game.name} ${pick.displayName} achievement guide`)}`,
+      youtubeUrl: `https://www.youtube.com/results?search_query=${encodeURIComponent(`${game.name} ${pick.displayName} how to`)}`,
+    });
+  } catch (e) {
+    return jsonResponse({ error: 'Achievement data unavailable for this game', game: game.name }, 500);
+  }
 }

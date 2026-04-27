@@ -918,6 +918,46 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
         </div>
       </div>
 
+      <!-- ACHIEVEMENT OF THE DAY (PRO) -->
+      <div class="section">
+        <div class="section-head"><h2>Achievement of the Day <span style="background:rgba(200,241,53,0.15);color:var(--accent);font-size:10px;padding:3px 8px;border-radius:3px;letter-spacing:1px;margin-left:8px">PRO</span></h2></div>
+        <div id="aotdPanel" class="sidebar-card"><div class="empty"><span class="loading"></span></div></div>
+      </div>
+
+      <!-- PUSH NOTIFICATIONS (PRO) -->
+      <div class="section">
+        <div class="section-head"><h2>Push Notifications <span style="background:rgba(200,241,53,0.15);color:var(--accent);font-size:10px;padding:3px 8px;border-radius:3px;letter-spacing:1px;margin-left:8px">PRO</span></h2></div>
+        <div class="sidebar-card" id="pushCard">
+          <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Get instant alerts on your device for price drops, free games, and the daily achievement challenge.</p>
+          <div id="pushStatus" style="font-size:13px;margin-bottom:14px"></div>
+          <button onclick="togglePush()" id="pushToggleBtn" class="connect-btn" style="width:100%">Enable notifications</button>
+          <div id="pushPrefs" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+            <div style="font-size:11px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">What to alert on</div>
+            <label style="display:flex;align-items:center;gap:10px;padding:6px 0;font-size:13px;cursor:pointer"><input type="checkbox" id="prefPriceAlerts" checked onchange="savePushPrefs()" style="accent-color:var(--accent)"> Price drops on tracked games</label>
+            <label style="display:flex;align-items:center;gap:10px;padding:6px 0;font-size:13px;cursor:pointer"><input type="checkbox" id="prefFreeGames" checked onchange="savePushPrefs()" style="accent-color:var(--accent)"> New free games (Epic, Steam, GOG)</label>
+            <label style="display:flex;align-items:center;gap:10px;padding:6px 0;font-size:13px;cursor:pointer"><input type="checkbox" id="prefAotd" checked onchange="savePushPrefs()" style="accent-color:var(--accent)"> Daily achievement challenge</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- MOD SPACE (PRO) -->
+      <div class="section">
+        <div class="section-head"><h2>Mod Space <span style="background:rgba(200,241,53,0.15);color:var(--accent);font-size:10px;padding:3px 8px;border-radius:3px;letter-spacing:1px;margin-left:8px">PRO</span></h2></div>
+        <div class="sidebar-card" id="modSpaceCard">
+          <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Top-rated mods this week for your moddable games. Pulled from Nexus Mods.</p>
+          <div id="modSpacePanel"><div class="empty"><span class="loading"></span></div></div>
+        </div>
+      </div>
+
+      <!-- WHAT'S HOT (PRO) -->
+      <div class="section">
+        <div class="section-head"><h2>What's Hot in Your Library <span style="background:rgba(200,241,53,0.15);color:var(--accent);font-size:10px;padding:3px 8px;border-radius:3px;letter-spacing:1px;margin-left:8px">PRO</span></h2></div>
+        <div class="sidebar-card" id="hotCard">
+          <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Games in your library getting buzz on Reddit and Steam right now. Resurface the ones you forgot about.</p>
+          <div id="hotPanel"><div class="empty"><span class="loading"></span></div></div>
+        </div>
+      </div>
+
       <!-- WEEKLY RETROSPECTIVE (PRO) -->
       <div class="section">
         <div class="section-head"><h2>This Week <span style="background:rgba(200,241,53,0.15);color:var(--accent);font-size:10px;padding:3px 8px;border-radius:3px;letter-spacing:1px;margin-left:8px">PRO</span></h2></div>
@@ -1120,14 +1160,17 @@ document.querySelectorAll('.nav-tab').forEach(tab => {
     }
     if (view === 'pro') {
       initProFeatures();
-      // The Pro hub also hosts the Pro tools that used to live on Home
       renderQuests();
       renderQueue();
+      loadPushUI();
       if (!STATE.proLoaded) {
+        loadAotd();
         loadRetrospective();
         loadStreak();
         loadGenreGaps();
         loadDemoRadar();
+        loadModSpace();
+        loadHot();
         STATE.proLoaded = true;
       }
     }
@@ -2348,6 +2391,242 @@ async function renderWishlist() {
         <button onclick="removeWishlist('${item.gameID}')" style="background:transparent;color:var(--dim);border:none;cursor:pointer;font-size:16px">×</button>
       </div>`;
   }).join('');
+}
+
+// ───── ACHIEVEMENT OF THE DAY (PRO) ─────
+async function loadAotd() {
+  if (!STATE.sid) return;
+  const el = document.getElementById('aotdPanel');
+  if (!el) return;
+  try {
+    const r = await fetch(`/api/achievement-of-day?sid=${STATE.sid}`);
+    const d = await r.json();
+    if (d.error) { el.innerHTML = `<div class="empty" style="font-size:13px">${d.error}${d.game ? ' (game: ' + d.game + ')' : ''}</div>`; return; }
+    const a = d.achievement;
+    const rarityColor = a.rarity === 'Ultra Rare' ? '#ff5a5a' : a.rarity === 'Rare' ? '#ff9e42' : a.rarity === 'Uncommon' ? 'var(--accent)' : 'var(--dim)';
+    el.innerHTML = `
+      <div style="display:flex;gap:16px;align-items:flex-start">
+        <div style="width:140px;aspect-ratio:460/215;background:url('${d.gameImg}') center/cover;border-radius:6px;flex-shrink:0"></div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:11px;letter-spacing:2px;color:${rarityColor};text-transform:uppercase;margin-bottom:4px">${a.rarity} · ${a.globalPct}% of players</div>
+          <div style="font-size:18px;font-weight:700;line-height:1.2;margin-bottom:6px">${a.name}</div>
+          <div style="font-size:13px;color:var(--dim);line-height:1.5;margin-bottom:8px">${a.description || 'No description'}</div>
+          <div style="font-size:12px;color:var(--accent)">From: ${d.game}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button onclick="openSteam(${d.gameAppId})" class="connect-btn" style="flex:1;padding:10px;font-size:12px">Play ${d.game}</button>
+        <a href="${d.guideUrl}" target="_blank" rel="noopener" style="flex:1;text-align:center;padding:10px;background:var(--panel2);border:1px solid var(--border);border-radius:5px;font-size:12px;font-weight:600;color:var(--text);text-decoration:none">Guide →</a>
+        <a href="${d.youtubeUrl}" target="_blank" rel="noopener" style="flex:1;text-align:center;padding:10px;background:var(--panel2);border:1px solid var(--border);border-radius:5px;font-size:12px;font-weight:600;color:var(--text);text-decoration:none">Video →</a>
+      </div>
+      <p style="font-size:11px;color:var(--dim);margin-top:12px;text-align:center">Refreshes daily at midnight UTC</p>
+    `;
+  } catch (e) { el.innerHTML = `<div class="error">${e.message}</div>`; }
+}
+
+// ───── PUSH NOTIFICATIONS (PRO) ─────
+function urlBase64ToUint8Array(base64) {
+  const padding = '='.repeat((4 - base64.length % 4) % 4);
+  const b64 = (base64 + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(b64);
+  const out = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; ++i) out[i] = raw.charCodeAt(i);
+  return out;
+}
+async function loadPushUI() {
+  const status = document.getElementById('pushStatus');
+  const btn = document.getElementById('pushToggleBtn');
+  const prefs = document.getElementById('pushPrefs');
+  if (!status || !btn) return;
+
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    status.innerHTML = '<span style="color:#ff9e42">⚠ Push not supported in this browser</span>';
+    btn.disabled = true; btn.textContent = 'Not supported';
+    return;
+  }
+  if (Notification.permission === 'denied') {
+    status.innerHTML = '<span style="color:#ff5a5a">Notifications blocked. Enable in browser settings.</span>';
+    btn.disabled = true; btn.textContent = 'Blocked';
+    return;
+  }
+
+  const reg = await navigator.serviceWorker.ready;
+  const sub = await reg.pushManager.getSubscription();
+
+  if (sub) {
+    status.innerHTML = '<span style="color:var(--accent)">✓ Notifications active</span>';
+    btn.textContent = 'Disable notifications';
+    prefs.style.display = 'block';
+    // Load saved prefs
+    const saved = JSON.parse(localStorage.getItem('questlog_push_prefs') || '{}');
+    document.getElementById('prefPriceAlerts').checked = saved.priceAlerts !== false;
+    document.getElementById('prefFreeGames').checked = saved.freeGames !== false;
+    document.getElementById('prefAotd').checked = saved.achievementOfDay !== false;
+  } else {
+    status.innerHTML = '<span style="color:var(--dim)">Not subscribed yet</span>';
+    btn.textContent = 'Enable notifications';
+    prefs.style.display = 'none';
+  }
+}
+async function togglePush() {
+  if (!STATE.sid) { alert('Connect Steam first.'); return; }
+  const reg = await navigator.serviceWorker.ready;
+  let sub = await reg.pushManager.getSubscription();
+
+  if (sub) {
+    // Unsubscribe
+    await sub.unsubscribe();
+    await fetch('/api/push/unsubscribe', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ sid: STATE.sid }) });
+    loadPushUI();
+    return;
+  }
+
+  // Subscribe
+  try {
+    const keyRes = await fetch('/api/push/vapid-key');
+    const { key } = await keyRes.json();
+    sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(key),
+    });
+    await fetch('/api/push/subscribe', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sid: STATE.sid, subscription: sub.toJSON(), prefs: getPushPrefs() }),
+    });
+    loadPushUI();
+  } catch (e) {
+    alert('Could not enable notifications: ' + e.message);
+  }
+}
+function getPushPrefs() {
+  return {
+    priceAlerts: document.getElementById('prefPriceAlerts')?.checked ?? true,
+    freeGames: document.getElementById('prefFreeGames')?.checked ?? true,
+    achievementOfDay: document.getElementById('prefAotd')?.checked ?? true,
+  };
+}
+async function savePushPrefs() {
+  const p = getPushPrefs();
+  localStorage.setItem('questlog_push_prefs', JSON.stringify(p));
+  if (!STATE.sid) return;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if (sub) {
+      await fetch('/api/push/subscribe', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sid: STATE.sid, subscription: sub.toJSON(), prefs: p }),
+      });
+    }
+  } catch {}
+}
+
+// ───── MOD SPACE (PRO) ─────
+function loadModSpace() {
+  const el = document.getElementById('modSpacePanel');
+  if (!el) return;
+  // Curated list of moddable games — link to NexusMods directly per-game
+  const MODDABLE = {
+    'Skyrim Special Edition':           'skyrimspecialedition',
+    'Skyrim':                            'skyrim',
+    "Baldur's Gate 3":                   'baldursgate3',
+    'RimWorld':                          'rimworld',
+    'Stardew Valley':                    'stardewvalley',
+    'Fallout 4':                         'fallout4',
+    'Fallout: New Vegas':                'newvegas',
+    'Cyberpunk 2077':                    'cyberpunk2077',
+    'The Witcher 3':                     'witcher3',
+    'Minecraft':                         null,  // not on Nexus, use CurseForge
+    'Mount & Blade II: Bannerlord':      'mountandblade2bannerlord',
+    'Starfield':                         'starfield',
+    'Oblivion':                          'oblivion',
+    'Morrowind':                         'morrowind',
+    'Kenshi':                            'kenshi',
+    'X4: Foundations':                   'x4foundations',
+    'Resident Evil 4 Remake':            'residentevil42023',
+    'Elden Ring':                        'eldenring',
+    'Dark Souls III':                    'darksouls3',
+    'Sekiro':                            'sekiro',
+    'Monster Hunter: World':             'monsterhunterworld',
+    'Monster Hunter Rise':               'monsterhunterrise',
+    'Dragon Age: Inquisition':           'dragonageinquisition',
+    'Dragon Age: Origins':               'dragonageorigins',
+  };
+
+  if (!STATE.games?.length) { el.innerHTML = '<div class="empty" style="font-size:13px">Connect Steam first.</div>'; return; }
+  const owned = STATE.games.filter(g => MODDABLE[g.name]).slice(0, 12);
+  if (!owned.length) {
+    el.innerHTML = `<div class="empty" style="font-size:13px">None of your games are in our moddable list yet. <a href="https://www.nexusmods.com/games" target="_blank" style="color:var(--accent)">Browse Nexus Mods →</a></div>`;
+    return;
+  }
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">
+      ${owned.map(g => {
+        const slug = MODDABLE[g.name];
+        const url = slug ? `https://www.nexusmods.com/${slug}` : `https://www.curseforge.com/${g.name.toLowerCase().replace(/[^a-z0-9]+/g,'-')}`;
+        return `
+          <a href="${url}" target="_blank" rel="noopener" style="display:block;background:var(--panel2);border:1px solid var(--border);border-radius:6px;overflow:hidden;text-decoration:none;color:var(--text);transition:border-color 0.15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="aspect-ratio:460/215;background:url('${g.img}') center/cover"></div>
+            <div style="padding:10px">
+              <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${g.name}</div>
+              <div style="font-size:11px;color:var(--accent);margin-top:4px">${slug ? 'Browse Nexus →' : 'Browse CurseForge →'}</div>
+            </div>
+          </a>`;
+      }).join('')}
+    </div>
+    <p style="font-size:11px;color:var(--dim);margin-top:14px">Click any game to browse top mods. Direct API integration with weekly trending coming soon.</p>
+  `;
+}
+
+// ───── WHAT'S HOT (PRO) ─────
+async function loadHot() {
+  const el = document.getElementById('hotPanel');
+  if (!el) return;
+  if (!STATE.games?.length) { el.innerHTML = '<div class="empty" style="font-size:13px">Connect Steam first.</div>'; return; }
+
+  // Heuristic: pick games with high lifetime hours but zero recent playtime — "forgotten favourites"
+  // and games with current high player counts (popularity check via Steam's GetNumberOfCurrentPlayers)
+  const candidates = STATE.games
+    .filter(g => g.hours > 5)
+    .slice(0, 20);
+
+  if (!candidates.length) { el.innerHTML = '<div class="empty">Not enough play history.</div>'; return; }
+
+  // Fetch live player counts for these in parallel
+  const counts = await Promise.all(candidates.map(async g => {
+    try {
+      const r = await fetch(`/api/steam/game-stats/${g.appid}`);
+      const d = await r.json();
+      return { ...g, currentPlayers: d.currentPlayers || 0 };
+    } catch { return { ...g, currentPlayers: 0 }; }
+  }));
+
+  // Sort by current player count desc, take top 6, mark forgotten favourites
+  const hot = counts
+    .filter(g => g.currentPlayers > 100)
+    .sort((a,b) => b.currentPlayers - a.currentPlayers)
+    .slice(0, 6);
+
+  if (!hot.length) { el.innerHTML = '<div class="empty">Nothing trending hard from your library right now.</div>'; return; }
+
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px">
+      ${hot.map(g => {
+        const forgotten = g.hoursTwoWeeks === 0;
+        return `
+          <div onclick="openSteam(${g.appid})" style="cursor:pointer;background:var(--panel2);border:1px solid var(--border);border-radius:6px;overflow:hidden">
+            <div style="aspect-ratio:460/215;background:url('${g.img}') center/cover;position:relative">
+              <span style="position:absolute;top:6px;left:6px;background:rgba(0,0,0,0.8);color:var(--accent);padding:3px 8px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:1px">● ${g.currentPlayers.toLocaleString()} playing</span>
+              ${forgotten ? '<span style="position:absolute;top:6px;right:6px;background:#ff9e42;color:#000;padding:3px 8px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:1px">FORGOTTEN</span>' : ''}
+            </div>
+            <div style="padding:10px">
+              <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${g.name}</div>
+              <div style="font-size:11px;color:var(--dim);margin-top:2px">${g.hours}h played · <a href="https://www.reddit.com/search/?q=${encodeURIComponent(g.name)}" target="_blank" onclick="event.stopPropagation()" style="color:var(--accent)">Reddit →</a></div>
+            </div>
+          </div>`;
+      }).join('')}
+    </div>
+  `;
 }
 
 // ───── PERSONAL QUESTS ─────
