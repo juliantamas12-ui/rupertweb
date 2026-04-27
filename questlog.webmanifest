@@ -1,0 +1,33 @@
+{
+  "name": "QuestLog — Your Gaming Command Center",
+  "short_name": "QuestLog",
+  "description": "Connect Steam, track achievements, get smart game recommendations, find quest guides, see leaderboards.",
+  "start_url": "/questlog.html",
+  "scope": "/questlog.html",
+  "id": "/questlog.html",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0a0e1a",
+  "theme_color": "#0a0e1a",
+  "categories": ["games", "entertainment", "utilities"],
+  "icons": [
+    {
+      "src": "/icons/questlog-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/questlog-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/questlog-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

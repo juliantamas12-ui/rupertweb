@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>QuestLog — Your Gaming Command Center</title>
 <meta name="description" content="Connect Steam, track achievements, get smart game recommendations, find quest guides, see leaderboards.">
+<link rel="manifest" href="/questlog.webmanifest">
+<meta name="theme-color" content="#0a0e1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="QuestLog">
+<link rel="apple-touch-icon" href="/icons/questlog-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icons/questlog-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/icons/questlog-512.png">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -3374,6 +3382,32 @@ localStorage.removeItem('questlog_xbox_xuid');
     const savedTheme = localStorage.getItem('questlog_theme');
     if (savedTheme && typeof applyTheme === 'function') applyTheme(savedTheme);
   }
+}
+</script>
+
+<script>
+// PWA: register service worker (silently no-op on unsupported browsers / file://)
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('/questlog-sw.js', { scope: '/' })
+      .then(function (reg) {
+        // Auto-refresh page when a new SW takes control after an update.
+        if (reg && reg.addEventListener) {
+          reg.addEventListener('updatefound', function () {
+            var nw = reg.installing;
+            if (!nw) return;
+            nw.addEventListener('statechange', function () {
+              if (nw.state === 'activated' && navigator.serviceWorker.controller) {
+                // Soft reload so users see the latest deploy without a hard refresh.
+                // Skip if user is mid-action — only reload if hidden tab.
+                if (document.visibilityState === 'hidden') location.reload();
+              }
+            });
+          });
+        }
+      })
+      .catch(function (err) { console.warn('[pwa] sw register failed', err); });
+  });
 }
 </script>
 
