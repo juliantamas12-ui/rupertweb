@@ -2294,23 +2294,67 @@ function applyTheme(theme) {
   applyCornerStyle();
 }
 
-function applyDensity() {
-  const d = localStorage.getItem('questlog_density') || 'normal';
-  const root = document.documentElement;
-  if (d === 'compact')  { root.style.setProperty('--density-pad', '8px'); root.style.setProperty('--density-gap', '6px'); }
-  else if (d === 'spacious') { root.style.setProperty('--density-pad', '20px'); root.style.setProperty('--density-gap', '16px'); }
-  else { root.style.setProperty('--density-pad', '14px'); root.style.setProperty('--density-gap', '10px'); }
+function injectStyleOverrides() {
+  const density = localStorage.getItem('questlog_density') || 'normal';
+  const corners = localStorage.getItem('questlog_corners') || 'rounded';
+  let css = '';
+
+  if (density === 'compact') {
+    css += `
+      main{padding:14px 18px}
+      .section{margin-bottom:18px}
+      .stat-card{padding:10px}
+      .sidebar-card{padding:10px}
+      .game-card .game-body{padding:6px 8px}
+      .rec-card{padding:10px;gap:10px;margin-bottom:6px}
+      .game-grid{gap:8px}
+      .nav-tab{padding:5px 10px}
+      .pillar{padding:18px 14px}
+      .feature{padding:16px}
+      .leaderboard-table th,.leaderboard-table td{padding:5px 4px}
+    `;
+  } else if (density === 'spacious') {
+    css += `
+      main{padding:32px 40px}
+      .section{margin-bottom:42px}
+      .stat-card{padding:24px}
+      .sidebar-card{padding:24px}
+      .game-card .game-body{padding:14px 18px}
+      .rec-card{padding:24px;gap:22px;margin-bottom:14px}
+      .game-grid{gap:20px}
+      .nav-tab{padding:11px 20px}
+      .pillar{padding:36px 30px}
+      .feature{padding:36px}
+      .leaderboard-table th,.leaderboard-table td{padding:14px 10px}
+    `;
+  }
+
+  let radius = '6px';
+  if (corners === 'sharp') radius = '0';
+  else if (corners === 'pill') radius = '16px';
+  css += `
+    .connect-btn,.sid-input,.stat-card,.game-card,.rec-card,.sidebar-card,.feature-card,.feature,.kit-card,.plan,.empty,.error,.theme-btn,.density-btn,.corner-btn,.mood-btn,.sub-tab,.nav-tab,.btn,.btn-portal,.btn-primary,.btn-ghost,.btn-xl{border-radius:${radius} !important}
+    button:not([class*='btn']):not([class*='-btn']){border-radius:${radius} !important}
+    .game-img,.rec-cover,.ach-icon,.nav-user-avatar{border-radius:${corners === 'pill' ? radius : (corners === 'sharp' ? '0' : '6px')} !important}
+    input[type=text],input[type=email],input[type=number],input[type=date],input[type=color],input[type=search],input[type=password],select,textarea{border-radius:${radius} !important}
+  `;
+
+  let s = document.getElementById('user-style-overrides');
+  if (!s) {
+    s = document.createElement('style');
+    s.id = 'user-style-overrides';
+    document.head.appendChild(s);
+  }
+  s.textContent = css;
 }
+
+function applyDensity() { injectStyleOverrides(); }
+function applyCornerStyle() { injectStyleOverrides(); }
 function applyFontSize() {
-  const s = localStorage.getItem('questlog_fontsize') || '100';
-  document.documentElement.style.fontSize = s + '%';
-}
-function applyCornerStyle() {
-  const c = localStorage.getItem('questlog_corners') || 'rounded';
-  const root = document.documentElement;
-  if (c === 'sharp')   root.style.setProperty('--radius', '0');
-  else if (c === 'pill') root.style.setProperty('--radius', '14px');
-  else root.style.setProperty('--radius', '6px');
+  const pct = parseInt(localStorage.getItem('questlog_fontsize') || '100', 10);
+  // Apply zoom on body — scales every fixed-px element including the design system.
+  // Avoids re-styling every CSS rule.
+  document.body.style.zoom = (pct / 100).toString();
 }
 
 function renderThemeButtons() {
