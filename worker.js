@@ -7,6 +7,12 @@ const OWNER_EMAIL = 'julian.tamas12@gmail.com';
 
 // VAPID for web push notifications
 const VAPID_PUBLIC = 'BL6xSk_4wHzUF_8AYnJJOrJnhv0dlpe9nnI5B6vCI1kfWp8bvZ2tuf3Ittb_mKxwIEz9Z1woclj8KiVGZkRxKeA';
+
+// Stripe — set when Julian provides keys. checkoutPriceId is the recurring price ID for Pro £4.99/mo.
+const STRIPE_SECRET_KEY = '';
+const STRIPE_PRICE_ID   = '';
+const STRIPE_SUCCESS_URL = 'https://rupertweb.com/questlog.html?pro=success';
+const STRIPE_CANCEL_URL  = 'https://rupertweb.com/questlog.html?pro=cancel';
 // In-memory subscriber list — resets on worker cold start. Replace with KV when QUESTLOG_KV exists.
 const pushSubs = new Map();
 
@@ -21,11 +27,14 @@ export default {
 
     try {
       if (p === '/api/fleet-signup' && request.method === 'POST')     return handleFleetSignup(request);
+      if (p === '/api/checkout' && request.method === 'POST')         return checkout(request);
+      if (p === '/api/stripe/webhook' && request.method === 'POST')   return stripeWebhook(request);
       if (p === '/api/push/vapid-key')                                return jsonResponse({ key: VAPID_PUBLIC });
       if (p === '/api/push/subscribe' && request.method === 'POST')   return pushSubscribe(request);
       if (p === '/api/push/unsubscribe' && request.method === 'POST') return pushUnsubscribe(request);
       if (p === '/api/achievement-of-day')                            return achievementOfDay(url);
       if (p === '/api/steam/profile')                                 return steamProfile(url);
+      if (p === '/api/steam/resolve-vanity')                          return steamResolveVanity(url);
       if (p === '/api/steam/games')                                   return steamGames(url);
       if (p === '/api/steam/recent')                                  return steamRecent(url);
       if (p.startsWith('/api/steam/achievements/'))                   return steamAchievements(url, p);
@@ -108,6 +117,20 @@ function isJunkTitle(title) {
 // ════════════════════════════════════════════════════════
 // STEAM ENDPOINTS
 // ════════════════════════════════════════════════════════
+
+async function steamResolveVanity(url) {
+  const v = url.searchParams.get('vanity');
+  if (!v) return jsonResponse({ error: 'vanity required' }, 400);
+  try {
+    const data = await fetchJSON(`https://api.steampowered.com/ISteamUser/ResolveVanityURL/v1/?key=${STEAM_KEY}&vanityurl=${encodeURIComponent(v)}`);
+    if (data?.response?.success === 1 && data.response.steamid) {
+      return jsonResponse({ steamid: data.response.steamid });
+    }
+    return jsonResponse({ error: 'Vanity URL not found' }, 404);
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
+  }
+}
 
 async function steamProfile(url) {
   const sid = url.searchParams.get('sid'); if (!sid) return jsonResponse({ error: 'sid required' }, 400);
@@ -4030,5 +4053,59 @@ async function achievementOfDay(url) {
     });
   } catch (e) {
     return jsonResponse({ error: 'Achievement data unavailable for this game', game: game.name }, 500);
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// STRIPE (scaffolding — activates when keys are filled in above)
+// ════════════════════════════════════════════════════════
+
+async function checkout(request) {
+  if (!STRIPE_SECRET_KEY || !STRIPE_PRICE_ID) {
+    return jsonResponse({ notReady: true });
+  }
+  try {
+    const { sid, profile } = await request.json();
+    if (!sid) return jsonResponse({ error: 'sid required' }, 400);
+
+    const params = new URLSearchParams();
+    params.set('mode', 'subscription');
+    params.set('line_items[0][price]', STRIPE_PRICE_ID);
+    params.set('line_items[0][quantity]', '1');
+    params.set('success_url', STRIPE_SUCCESS_URL);
+    params.set('cancel_url', STRIPE_CANCEL_URL);
+    params.set('client_reference_id', sid);
+    params.set('subscription_data[metadata][steamid]', sid);
+    if (profile) params.set('subscription_data[metadata][profile]', profile);
+
+    const r = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${STRIPE_SECRET_KEY}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: params.toString(),
+    });
+    const d = await r.json();
+    if (!r.ok) return jsonResponse({ error: d?.error?.message || 'Stripe error' }, 500);
+    return jsonResponse({ url: d.url });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
+  }
+}
+
+// Stripe webhook handler — fires on subscription created/updated/deleted.
+// Used to flip Pro status server-side. Persistent storage requires KV.
+async function stripeWebhook(request) {
+  if (!STRIPE_SECRET_KEY) return jsonResponse({ notReady: true });
+  // TODO when KV is wired: verify signature, then store/remove Pro status
+  // for the steamid in webhook event metadata.
+  // For now, log and ack so Stripe doesn't retry.
+  try {
+    const body = await request.text();
+    console.log('[stripe]', body.slice(0, 500));
+    return new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
   }
 }

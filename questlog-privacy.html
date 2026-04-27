@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Privacy Policy — QuestLog</title>
+<style>
+body{background:#0a0e1a;color:#e8ecf4;font-family:'Helvetica Neue',Arial,sans-serif;line-height:1.7;padding:40px 24px;max-width:780px;margin:0 auto}
+h1{font-size:32px;font-weight:800;margin-bottom:8px}
+.eyebrow{font-size:11px;letter-spacing:3px;color:rgba(232,236,244,0.5);text-transform:uppercase;margin-bottom:6px}
+h2{font-size:20px;margin:32px 0 12px;color:#c8f135}
+h3{font-size:15px;margin:20px 0 6px}
+p,li{color:rgba(232,236,244,0.85);font-size:15px}
+ul{padding-left:20px;margin:8px 0 14px}
+li{margin:4px 0}
+a{color:#c8f135}
+.updated{color:rgba(232,236,244,0.5);font-size:12px;margin-bottom:24px;letter-spacing:1px}
+nav{margin-bottom:32px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.08)}
+nav a{font-size:13px;text-decoration:none;margin-right:18px}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px}
+th,td{padding:10px 12px;border:1px solid rgba(255,255,255,0.1);text-align:left;vertical-align:top}
+th{background:rgba(255,255,255,0.04);color:#c8f135;font-weight:600;font-size:12px;letter-spacing:1px;text-transform:uppercase}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/questlog.html">← Back to QuestLog</a>
+  <a href="/questlog-terms.html">Terms of Service</a>
+</nav>
+
+<div class="eyebrow">QuestLog</div>
+<h1>Privacy Policy</h1>
+<div class="updated">Last updated: 27 April 2026</div>
+
+<p>This policy explains what data QuestLog collects and how we use it. Short version: <strong>we collect very little, never sell your data, and most of what you do is stored only on your own device.</strong></p>
+
+<h2>What We Collect</h2>
+<table>
+  <tr><th>Data</th><th>Source</th><th>Where Stored</th></tr>
+  <tr><td>Your Steam ID (the 17-digit number)</td><td>You enter it</td><td>Your browser only</td></tr>
+  <tr><td>Public Steam profile (avatar, name, level, country)</td><td>Steam Web API</td><td>Your browser only — never our server</td></tr>
+  <tr><td>Owned games + hours played</td><td>Steam Web API</td><td>Your browser only</td></tr>
+  <tr><td>Achievement data per game</td><td>Steam Web API</td><td>Your browser only</td></tr>
+  <tr><td>Email address (only if you sign up for Pro or notifications)</td><td>You provide it</td><td>Stripe (for billing) + Resend (for emails)</td></tr>
+  <tr><td>Push notification subscription (if enabled)</td><td>Your browser</td><td>Cloudflare Workers KV</td></tr>
+  <tr><td>Friend list, Game Journal, Quests, Queue, Wishlist</td><td>You add them</td><td>Your browser only</td></tr>
+  <tr><td>Theme &amp; UI preferences</td><td>You set them</td><td>Your browser only</td></tr>
+</table>
+
+<h2>What We DON'T Collect</h2>
+<ul>
+  <li>Your Steam password (we never see it; we don't ask for it)</li>
+  <li>Your real name (unless you type it into a public profile)</li>
+  <li>Your IP address beyond standard server logs (Cloudflare retains them briefly for abuse prevention)</li>
+  <li>Behavioural advertising data — we don't run ads</li>
+  <li>Cross-site tracking cookies</li>
+</ul>
+
+<h2>How We Use Your Data</h2>
+<ul>
+  <li><strong>To show you your own gaming dashboard.</strong> Your Steam ID is used to fetch public Steam data on demand each session.</li>
+  <li><strong>To send notifications you opted in to.</strong> Push subscriptions are used only to deliver alerts you turned on.</li>
+  <li><strong>To bill Pro subscribers.</strong> Email and payment info pass through Stripe, who handles cards. We never see your full card number.</li>
+  <li><strong>To send service emails.</strong> Pro confirmation, the weekly digest if you opted in, and price drop alerts. No marketing without explicit consent.</li>
+</ul>
+
+<h2>Third Parties That See Some of Your Data</h2>
+<table>
+  <tr><th>Service</th><th>What They See</th><th>Why</th></tr>
+  <tr><td>Steam (Valve)</td><td>API requests for your public profile</td><td>To pull library/achievement data</td></tr>
+  <tr><td>Cloudflare</td><td>Standard request logs</td><td>To host and protect the site</td></tr>
+  <tr><td>Stripe</td><td>Email + payment info (Pro only)</td><td>To process subscriptions</td></tr>
+  <tr><td>Resend</td><td>Email address (only if you signed up for emails)</td><td>To deliver emails</td></tr>
+  <tr><td>SteamSpy / CheapShark / Nexus Mods</td><td>Nothing about you personally</td><td>Public game data we display</td></tr>
+</table>
+
+<h2>Cookies &amp; Local Storage</h2>
+<p>QuestLog does not use third-party advertising cookies. We use your browser's localStorage to remember your settings, Steam ID, friends list, and journal entries. If you clear your browser data, this is wiped — by design, that's the only place it lives.</p>
+
+<h2>Public Profile Pages</h2>
+<p>If you generate a public profile URL (rupertweb.com/u/yourname), it shows data already public on your Steam profile. You can pick a custom slug. Anyone with the URL can view it. There is no profile page until you generate one.</p>
+
+<h2>Your Rights</h2>
+<ul>
+  <li><strong>Disconnect at any time.</strong> Click Disconnect in the top-right. All localStorage data is wiped immediately.</li>
+  <li><strong>Cancel Pro at any time.</strong> Through Stripe's billing portal.</li>
+  <li><strong>Delete your push subscription.</strong> Disable notifications in QuestLog Pro Hub or in your browser settings.</li>
+  <li><strong>Request data deletion.</strong> Email <a href="mailto:julian.tamas12@gmail.com">julian.tamas12@gmail.com</a>. We will delete any server-side records (push subs, billing) within 14 days.</li>
+  <li><strong>Under GDPR/UK GDPR/CCPA</strong>, you have rights to access, correct, port, and delete your data. Use the email above to exercise them.</li>
+</ul>
+
+<h2>Children</h2>
+<p>The Service is not directed at children under 13 and does not knowingly collect data from them. If you are a parent and believe your child has provided us data, contact us and we will delete it.</p>
+
+<h2>Data Retention</h2>
+<p>We retain push notification subscriptions until you disable them or unsubscribe. Pro billing records are kept for 7 years for tax purposes (Stripe handles this). We don't keep server logs of your Steam ID requests beyond standard Cloudflare retention (~24 hours).</p>
+
+<h2>Security</h2>
+<p>We use HTTPS everywhere. Push subscriptions use VAPID. Pro payments are processed by Stripe (PCI-DSS Level 1). We don't store passwords because we don't have any.</p>
+
+<h2>Changes</h2>
+<p>If we materially change this policy, we'll update the date at the top and announce on the QuestLog landing page. Active Pro subscribers will get an email.</p>
+
+<h2>Contact</h2>
+<p>Privacy questions, deletion requests, or concerns: <a href="mailto:julian.tamas12@gmail.com">julian.tamas12@gmail.com</a></p>
+
+</body>
+</html>

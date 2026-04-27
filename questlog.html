@@ -205,6 +205,13 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
   #proHubGated{padding:20px !important}
   #proHubGated h2{font-size:22px !important}
   #proHubGated > div:nth-child(4){grid-template-columns:1fr 1fr !important}
+  /* Pro hub customisation pickers */
+  #themeButtons{grid-template-columns:repeat(auto-fill,minmax(90px,1fr)) !important;gap:5px !important}
+  .density-btn,.corner-btn{padding:9px 6px !important;font-size:11px !important}
+  /* Sign-in wizard: full screen on mobile */
+  #sidWizard > div{margin:8px auto !important;padding:18px !important}
+  #sidWizard h2{font-size:18px !important}
+  #sidWizard h3{font-size:14px !important}
   /* Deals filter selects: stack */
   #view-deals select{min-width:120px;flex:1}
   /* FPS estimator: stack fields */
@@ -243,6 +250,7 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
   <div class="nav-user" id="navUser" style="display:none">
     <div class="nav-user-avatar" id="userAvatar"></div>
     <span id="userName">—</span>
+    <button id="installPwaBtn" onclick="triggerInstall()" style="display:none;background:var(--accent);color:#000;border:none;padding:5px 10px;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;margin-left:10px" title="Install QuestLog as an app">↓ Install</button>
     <label style="font-size:11px;color:var(--dim);display:flex;align-items:center;gap:5px;cursor:pointer;margin-left:12px" title="Open games in Steam app instead of browser">
       <input type="checkbox" id="steamAppToggle" onchange="toggleSteamApp(this.checked)" style="accent-color:var(--accent);cursor:pointer"> Steam app
     </label>
@@ -266,17 +274,66 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
           Connect Steam
         </button>
       </div>
-      <div class="sid-label" style="margin-top:0">Find yours at <a href="https://steamidfinder.com" target="_blank" style="color:var(--accent)">steamidfinder.com</a></div>
+      <button onclick="openSteamIdWizard()" style="background:transparent;border:none;color:var(--accent);font-size:12px;text-decoration:underline;cursor:pointer;margin-top:6px;font-family:inherit">Don't know your Steam ID? Walk me through it →</button>
 
-      <details style="margin-top:20px;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:14px 18px;max-width:520px;text-align:left">
-        <summary style="cursor:pointer;font-size:13px;font-weight:600;color:var(--accent)">How to sign in (read this)</summary>
-        <ol style="margin-top:12px;padding-left:18px;font-size:13px;color:var(--dim);line-height:1.7">
-          <li><strong style="color:var(--text)">Make your Steam profile public.</strong> Go to <a href="https://steamcommunity.com/my/edit/settings" target="_blank" style="color:var(--accent)">Steam → Edit Profile → Privacy Settings</a>. Set <em>My profile</em>, <em>Game details</em>, AND <em>Owned games</em> to <strong style="color:var(--accent)">Public</strong>. If any of these are Friends-only or Private, this will NOT work.</li>
-          <li><strong style="color:var(--text)">Find your Steam ID.</strong> Go to <a href="https://steamidfinder.com" target="_blank" style="color:var(--accent)">steamidfinder.com</a>, paste your profile URL, copy the 17-digit number that starts with <code style="background:var(--panel2);padding:1px 6px;border-radius:3px;color:var(--accent)">7656...</code></li>
-          <li><strong style="color:var(--text)">Paste it above and hit Connect.</strong> Your library will load in a couple of seconds.</li>
-        </ol>
-        <p style="margin-top:12px;font-size:12px;color:var(--dim);border-top:1px solid var(--border);padding-top:10px">Not working? 99% of the time it's because "Owned games" privacy is still private. That's the one most people forget.</p>
-      </details>
+      <!-- Steam ID Wizard Modal -->
+      <div id="sidWizard" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;padding:20px;overflow-y:auto" onclick="if(event.target===this) closeSteamIdWizard()">
+        <div style="max-width:580px;margin:30px auto;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:32px;position:relative">
+          <button onclick="closeSteamIdWizard()" style="position:absolute;top:14px;right:14px;background:transparent;color:var(--dim);border:none;font-size:24px;cursor:pointer;line-height:1">×</button>
+
+          <h2 style="font-size:20px;font-weight:800;margin-bottom:6px">Connect your Steam account</h2>
+          <p style="color:var(--dim);font-size:13px;margin-bottom:24px">Two steps. Takes 60 seconds. We never see your password.</p>
+
+          <!-- Step 1 -->
+          <div style="margin-bottom:28px;padding-bottom:22px;border-bottom:1px solid var(--border)">
+            <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:14px">
+              <div style="width:28px;height:28px;border-radius:50%;background:var(--accent);color:#000;display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0">1</div>
+              <div>
+                <h3 style="font-size:15px;font-weight:700;margin-bottom:4px">Make your Steam profile public</h3>
+                <p style="color:var(--dim);font-size:13px;line-height:1.5">Steam hides your library by default. We need three settings flipped to <strong style="color:var(--accent)">Public</strong>.</p>
+              </div>
+            </div>
+            <a href="https://steamcommunity.com/my/edit/settings" target="_blank" rel="noopener" class="connect-btn" style="display:block;text-align:center;padding:12px;font-size:13px;margin-bottom:14px;text-decoration:none">Open Steam privacy settings →</a>
+            <div style="background:var(--panel2);border-radius:6px;padding:14px;font-size:12px;color:var(--text);line-height:1.6">
+              On that page, set ALL THREE to Public:
+              <ul style="margin:8px 0 0 18px;color:var(--dim)">
+                <li><strong style="color:var(--text)">My profile</strong></li>
+                <li><strong style="color:var(--text)">Game details</strong></li>
+                <li><strong style="color:var(--text)">My total playtime</strong> (uncheck "Always keep my total playtime private")</li>
+              </ul>
+              <p style="margin-top:8px;color:#ff9e42;font-size:11px">⚠ The third one is the one most people miss.</p>
+            </div>
+          </div>
+
+          <!-- Step 2 -->
+          <div style="margin-bottom:24px">
+            <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:14px">
+              <div style="width:28px;height:28px;border-radius:50%;background:var(--accent);color:#000;display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0">2</div>
+              <div>
+                <h3 style="font-size:15px;font-weight:700;margin-bottom:4px">Get your Steam ID</h3>
+                <p style="color:var(--dim);font-size:13px;line-height:1.5">Two ways. The first is faster.</p>
+              </div>
+            </div>
+
+            <div style="background:var(--panel2);border-radius:6px;padding:14px;margin-bottom:10px">
+              <div style="font-size:12px;font-weight:700;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Option A — Vanity URL</div>
+              <p style="color:var(--dim);font-size:12px;line-height:1.5;margin-bottom:10px">If your Steam profile URL looks like <code style="background:var(--panel);padding:2px 6px;border-radius:3px;color:var(--accent)">steamcommunity.com/id/<strong>YOURNAME</strong></code>, paste just <strong style="color:var(--text)">YOURNAME</strong> below. We'll convert it.</p>
+              <div style="display:flex;gap:6px">
+                <input type="text" id="vanityInput" placeholder="e.g. mrwhale12" style="flex:1;background:var(--panel);border:1px solid var(--border);border-radius:5px;padding:9px 12px;color:var(--text);font-size:13px;font-family:inherit">
+                <button onclick="resolveVanity()" class="connect-btn" style="padding:9px 16px;font-size:12px">Convert</button>
+              </div>
+              <div id="vanityResult" style="font-size:12px;margin-top:8px"></div>
+            </div>
+
+            <div style="background:var(--panel2);border-radius:6px;padding:14px">
+              <div style="font-size:12px;font-weight:700;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Option B — 17-digit number</div>
+              <p style="color:var(--dim);font-size:12px;line-height:1.5">If your URL looks like <code style="background:var(--panel);padding:2px 6px;border-radius:3px;color:var(--accent)">steamcommunity.com/profiles/76561...</code>, copy the 17-digit number. Or use <a href="https://steamidfinder.com" target="_blank" style="color:var(--accent)">steamidfinder.com</a> to find it from any profile URL.</p>
+            </div>
+          </div>
+
+          <button onclick="closeSteamIdWizard()" class="connect-btn" style="width:100%;padding:14px;font-size:13px">I've got my Steam ID — close this</button>
+        </div>
+      </div>
 
     </div>
 
@@ -2180,8 +2237,30 @@ function togglePro() {
   updateProfileUrl();
 }
 
-function upgradeToPro() {
-  alert('Stripe checkout coming soon. For now, click "Preview Pro (demo)" to try Pro features locally.');
+async function upgradeToPro() {
+  if (!STATE.sid) {
+    alert('Connect your Steam account first so we can attach Pro to your profile.');
+    return;
+  }
+  try {
+    const r = await fetch('/api/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sid: STATE.sid, profile: STATE.profile?.name || '' }),
+    });
+    const d = await r.json();
+    if (d.url) {
+      window.location.href = d.url;
+      return;
+    }
+    if (d.notReady) {
+      alert('Pro launches very soon — the Stripe checkout is being finalised. Try the "Preview Pro (demo)" button below to explore Pro features in the meantime.');
+      return;
+    }
+    alert('Could not start checkout: ' + (d.error || 'unknown error'));
+  } catch (e) {
+    alert('Checkout unavailable right now. ' + e.message);
+  }
 }
 function copyProfileUrl() {
   if (!STATE.sid) return;
@@ -2534,6 +2613,25 @@ async function renderWishlist() {
         <button onclick="removeWishlist('${item.gameID}')" style="background:transparent;color:var(--dim);border:none;cursor:pointer;font-size:16px">×</button>
       </div>`;
   }).join('');
+}
+
+// ───── STEAM ID WIZARD ─────
+function openSteamIdWizard()  { document.getElementById('sidWizard').style.display = 'block'; }
+function closeSteamIdWizard() { document.getElementById('sidWizard').style.display = 'none'; }
+async function resolveVanity() {
+  const v = document.getElementById('vanityInput').value.trim();
+  const out = document.getElementById('vanityResult');
+  if (!v) return;
+  out.innerHTML = '<span style="color:var(--dim)">Looking up…</span>';
+  try {
+    const r = await fetch(`/api/steam/resolve-vanity?vanity=${encodeURIComponent(v)}`);
+    const d = await r.json();
+    if (d.steamid) {
+      out.innerHTML = `<span style="color:var(--accent)">✓ Your Steam ID: <strong>${d.steamid}</strong></span><br><button onclick="document.getElementById('sidInput').value='${d.steamid}'; closeSteamIdWizard(); connectSteam()" class="connect-btn" style="margin-top:8px;padding:10px 16px;font-size:12px">Use this and connect</button>`;
+    } else {
+      out.innerHTML = '<span style="color:#ff5a5a">Not found. Make sure the vanity name is exact.</span>';
+    }
+  } catch (e) { out.innerHTML = `<span style="color:#ff5a5a">${e.message}</span>`; }
 }
 
 // ───── ACHIEVEMENT OF THE DAY (PRO) ─────
@@ -3768,6 +3866,28 @@ if (savedTheme && typeof applyTheme === 'function') applyTheme(savedTheme);
 </script>
 
 <script>
+// PWA: capture install prompt for our custom button
+let _deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  _deferredInstallPrompt = e;
+  const btn = document.getElementById('installPwaBtn');
+  if (btn) btn.style.display = 'inline-flex';
+});
+window.addEventListener('appinstalled', () => {
+  _deferredInstallPrompt = null;
+  const btn = document.getElementById('installPwaBtn');
+  if (btn) btn.style.display = 'none';
+});
+function triggerInstall() {
+  if (!_deferredInstallPrompt) {
+    alert('Install option unavailable here. Use your browser\'s "Install app" or "Add to Home Screen" menu.');
+    return;
+  }
+  _deferredInstallPrompt.prompt();
+  _deferredInstallPrompt.userChoice.then(() => { _deferredInstallPrompt = null; });
+}
+
 // PWA: register service worker (silently no-op on unsupported browsers / file://)
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   window.addEventListener('load', function () {
@@ -3792,6 +3912,15 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   });
 }
 </script>
+
+<footer style="max-width:1400px;margin:48px auto 0;padding:24px 32px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;font-size:11px;color:var(--dim);letter-spacing:1px">
+  <div>QuestLog © 2026 · Not affiliated with Valve or Steam</div>
+  <div style="display:flex;gap:18px">
+    <a href="/questlog-terms.html" style="color:var(--dim);text-decoration:none">Terms</a>
+    <a href="/questlog-privacy.html" style="color:var(--dim);text-decoration:none">Privacy</a>
+    <a href="mailto:julian.tamas12@gmail.com" style="color:var(--dim);text-decoration:none">Contact</a>
+  </div>
+</footer>
 
 </body>
 </html>
