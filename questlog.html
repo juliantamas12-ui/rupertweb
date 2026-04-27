@@ -2958,15 +2958,15 @@ async function loadSpendAnalytics() {
     el.innerHTML = `
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:24px">
         <div style="background:var(--panel2);border-radius:8px;padding:16px;text-align:center">
-          <div style="font-size:28px;font-weight:800;color:var(--accent);line-height:1">£${r.estimatedSpend.toLocaleString()}</div>
+          <div style="font-size:28px;font-weight:800;color:var(--accent);line-height:1">$${r.estimatedSpend.toLocaleString()}</div>
           <div style="font-size:10px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-top:6px">Estimated Spend</div>
         </div>
         <div style="background:var(--panel2);border-radius:8px;padding:16px;text-align:center">
-          <div style="font-size:28px;font-weight:800;color:#ff9e42;line-height:1">£${r.wastedSpendEstimate.toLocaleString()}</div>
+          <div style="font-size:28px;font-weight:800;color:#ff9e42;line-height:1">$${r.wastedSpendEstimate.toLocaleString()}</div>
           <div style="font-size:10px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-top:6px">Wasted on Untouched (${wastedPct}%)</div>
         </div>
         <div style="background:var(--panel2);border-radius:8px;padding:16px;text-align:center">
-          <div style="font-size:28px;font-weight:800;line-height:1">£${r.averageCostPerHour.toFixed(2)}</div>
+          <div style="font-size:28px;font-weight:800;line-height:1">$${r.averageCostPerHour.toFixed(2)}</div>
           <div style="font-size:10px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-top:6px">Avg Cost / Hour</div>
         </div>
         <div style="background:var(--panel2);border-radius:8px;padding:16px;text-align:center">
@@ -2979,14 +2979,14 @@ async function loadSpendAnalytics() {
       ${r.bestValue.map(g => `
         <div onclick="openSteam(${g.appid})" style="cursor:pointer;display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
           <div style="width:80px;aspect-ratio:460/215;background:url('${g.img}') center/cover;border-radius:4px;flex-shrink:0"></div>
-          <div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${g.name}</div><div style="font-size:11px;color:var(--dim)">£${g.price} — ${g.hours}h — <span style="color:var(--accent)">£${g.costPerHour.toFixed(3)}/hour</span></div></div>
+          <div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${g.name}</div><div style="font-size:11px;color:var(--dim)">$${g.price} — ${g.hours}h — <span style="color:var(--accent)">$${g.costPerHour.toFixed(3)}/hour</span></div></div>
         </div>`).join('')}
 
       <h3 style="font-size:12px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin:24px 0 10px">Worst Value (highest cost/hour)</h3>
       ${r.worstValue.map(g => `
         <div onclick="openSteam(${g.appid})" style="cursor:pointer;display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
           <div style="width:80px;aspect-ratio:460/215;background:url('${g.img}') center/cover;border-radius:4px;flex-shrink:0"></div>
-          <div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${g.name}</div><div style="font-size:11px;color:var(--dim)">£${g.price} — ${g.hours}h — <span style="color:#ff9e42">£${g.costPerHour.toFixed(2)}/hour</span></div></div>
+          <div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${g.name}</div><div style="font-size:11px;color:var(--dim)">$${g.price} — ${g.hours}h — <span style="color:#ff9e42">$${g.costPerHour.toFixed(2)}/hour</span></div></div>
         </div>`).join('')}
 
       <p style="font-size:11px;color:var(--dim);margin-top:16px;font-style:italic">${r.note}</p>

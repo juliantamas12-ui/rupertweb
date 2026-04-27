@@ -3303,7 +3303,7 @@ async function spendAnalytics(url) {
 
   const prices = await Promise.all(topByHours.map(async g => {
     try {
-      const d = await fetchJSON(`https://store.steampowered.com/api/appdetails?appids=${g.appid}&cc=gb&l=en&filters=price_overview,basic`);
+      const d = await fetchJSON(`https://store.steampowered.com/api/appdetails?appids=${g.appid}&cc=us&l=en&filters=price_overview,basic`);
       const info = d?.[g.appid]?.data;
       if (!info) return null;
       const p = info.is_free ? 0 : (info.price_overview?.initial ? info.price_overview.initial / 100 : null);
