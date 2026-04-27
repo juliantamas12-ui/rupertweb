@@ -10,10 +10,7 @@ const VAPID_PUBLIC = 'BL6xSk_4wHzUF_8AYnJJOrJnhv0dlpe9nnI5B6vCI1kfWp8bvZ2tuf3Itt
 // In-memory subscriber list — resets on worker cold start. Replace with KV when QUESTLOG_KV exists.
 const pushSubs = new Map();
 
-// Xbox / Microsoft OAuth (to be populated once registered)
-const XBOX_CLIENT_ID     = 'PENDING';
-const XBOX_CLIENT_SECRET = 'PENDING';
-const XBOX_REDIRECT_URI  = 'https://rupertweb.com/api/xbox/callback';
+
 
 export default {
   async fetch(request, env) {
@@ -57,17 +54,14 @@ export default {
       if (p === '/api/price-history')                                  return priceHistory(url);
       if (p === '/api/now-playing')                                    return nowPlaying(url);
       if (p === '/api/what-to-play')                                   return whatToPlay(url);
-      if (p === '/api/curator')                                        return curator(url);
+
       if (p === '/api/reviews-compare')                                return reviewsCompare(url);
       if (p.startsWith('/u/'))                                         return publicProfile(url);
       if (p === '/api/spend-analytics')                                return spendAnalytics(url);
       if (p === '/api/deals')                                         return getDeals(url);
       if (p === '/api/deal-search')                                   return searchDeal(url);
       if (p === '/api/my-deals')                                      return myDeals(url);
-      if (p === '/api/xbox/login')                                    return xboxLogin();
-      if (p === '/api/xbox/callback')                                 return xboxCallback(url);
-      if (p === '/api/xbox/games')                                    return xboxGames(url);
-      if (p === '/api/xbox/profile')                                  return xboxProfile(url);
+
     } catch (e) {
       return jsonResponse({ error: e.message }, 500);
     }
@@ -3139,99 +3133,6 @@ async function whatToPlay(url) {
 }
 
 // ════════════════════════════════════════════════════════
-// CURATOR BOT  — parse natural language query, filter catalog
-// ════════════════════════════════════════════════════════
-
-async function curator(url) {
-  const q = (url.searchParams.get('q') || '').toLowerCase();
-  if (!q) return jsonResponse({ error: 'query required' }, 400);
-
-  // Parse signals from the query
-  const signals = {
-    price: null,       // max price in GBP
-    discount: false,   // wants on sale
-    free: false,
-    coop: /\b(co-?op|coop|together|friends|multi(player)?|with (a )?friend)\b/.test(q),
-    story: /\bstory|narrative|plot|single[- ]?player\b/.test(q),
-    short: /\bshort|quick|under \d+ ?h|brief|bite[- ]?size/.test(q),
-    long: /\blong|huge|massive|100\+|hundreds\b/.test(q),
-    chill: /\bchill|cosy|cozy|relax|peaceful|calm\b/.test(q),
-    intense: /\bintense|hard|difficult|challeng|punishing|hardcore\b/.test(q),
-    openworld: /\bopen[- ]?world|sandbox|explore\b/.test(q),
-    indie: /\bindie\b/.test(q),
-    roguelike: /\brogue(like|lite)?\b/.test(q),
-    horror: /\bhorror|scary|spooky\b/.test(q),
-    rpg: /\brpg|role[- ]?playing\b/.test(q),
-    fps: /\bfps|shooter|shoot/.test(q),
-    racing: /\brac(e|ing)|driv(e|ing)|car\b/.test(q),
-    strategy: /\bstrateg|4x|rts|turn[- ]?based\b/.test(q),
-    fighting: /\bfight(ing)?\b/.test(q),
-    cosy: /\bcosy|cozy|cute|farming\b/.test(q),
-  };
-  // Price extraction: "under £20", "less than 15", "£10"
-  const priceMatch = q.match(/(?:under|less than|below|for|at most) ?\u00a3?(\d+)/) || q.match(/\u00a3(\d+)/);
-  if (priceMatch) signals.price = parseFloat(priceMatch[1]);
-  if (/\b(free|f2p|free[- ]?to[- ]?play)\b/.test(q)) signals.free = true;
-  if (/\b(deal|sale|discount|on sale|cheap)\b/.test(q)) signals.discount = true;
-
-  // Map signals to tag requirements for the catalog
-  const needTags = [];
-  if (signals.coop) needTags.push('coop');
-  if (signals.story) needTags.push('story');
-  if (signals.openworld) needTags.push('openworld');
-  if (signals.indie) needTags.push('indie');
-  if (signals.roguelike) needTags.push('roguelike');
-  if (signals.horror) needTags.push('horror');
-  if (signals.rpg) needTags.push('rpg');
-  if (signals.fps) needTags.push('fps','shooter');
-  if (signals.racing) needTags.push('racing');
-  if (signals.strategy) needTags.push('strategy','turnbased');
-  if (signals.fighting) needTags.push('fighting');
-  if (signals.cosy) needTags.push('cosy','farming','relaxing');
-  if (signals.chill) needTags.push('cosy','relaxing','indie');
-  if (signals.intense) needTags.push('souls','hardcore');
-
-  // Use CheapShark as catalog — real pricing + reviews
-  const params = new URLSearchParams();
-  params.set('pageSize', '60');
-  params.set('sortBy', signals.discount ? 'Savings' : 'Deal Rating');
-  params.set('steamRating', '75');
-  if (signals.discount) params.set('onSale', '1');
-  if (signals.free) { params.set('upperPrice', '0'); params.set('lowerPrice', '0'); }
-  else if (signals.price) params.set('upperPrice', String(Math.ceil(signals.price * 1.2)));
-
-  const raw = await fetchJSON(`https://www.cheapshark.com/api/1.0/deals?${params}`);
-  // Filter: require enough reviews and filter junk
-  let filtered = (raw || []).filter(d => {
-    const revs = d.steamRatingCount ? parseInt(d.steamRatingCount) : 0;
-    const rate = d.steamRatingPercent ? parseInt(d.steamRatingPercent) : 0;
-    if (revs < 500 || rate < 70) return false;
-    const t = (d.title || '').toLowerCase();
-    if (isJunkTitle(t)) return false;
-    return true;
-  });
-
-  return jsonResponse({
-    query: q,
-    detected: signals,
-    matchedTags: needTags,
-    results: filtered.slice(0, 15).map(d => ({
-      gameID: d.gameID,
-      title: d.title,
-      thumb: d.thumb,
-      price: parseFloat(d.salePrice),
-      retailPrice: parseFloat(d.normalPrice),
-      savings: Math.round(parseFloat(d.savings)),
-      steamRating: d.steamRatingPercent ? parseInt(d.steamRatingPercent) : null,
-      steamLabel: d.steamRatingText,
-      storeID: d.storeID,
-      storeName: STORE_NAMES[d.storeID] || '',
-      dealLink: `https://www.cheapshark.com/redirect?dealID=${d.dealID}`,
-    })),
-  });
-}
-
-// ════════════════════════════════════════════════════════
 // REVIEWS COMPARE  — Steam + Metacritic in one view
 // ════════════════════════════════════════════════════════
 
@@ -4007,114 +3908,6 @@ async function myDeals(url) {
 
   return jsonResponse({ deals: unowned });
 }
-
-// ════════════════════════════════════════════════════════
-// XBOX OAUTH + API
-// ════════════════════════════════════════════════════════
-
-function xboxLogin() {
-  if (XBOX_CLIENT_ID === 'PENDING') {
-    return jsonResponse({ error: 'Xbox integration not yet configured. Admin needs to register Microsoft app.' }, 503);
-  }
-  const authUrl = `https://login.live.com/oauth20_authorize.srf?client_id=${XBOX_CLIENT_ID}&response_type=code&approval_prompt=auto&scope=Xboxlive.signin+Xboxlive.offline_access&redirect_uri=${encodeURIComponent(XBOX_REDIRECT_URI)}`;
-  return new Response(null, { status: 302, headers: { Location: authUrl, ...corsHeaders() } });
-}
-
-async function xboxCallback(url) {
-  const code = url.searchParams.get('code');
-  if (!code) return jsonResponse({ error: 'No auth code' }, 400);
-
-  // Step 1: Exchange code for Microsoft access token
-  const tokenRes = await fetch('https://login.live.com/oauth20_token.srf', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      client_id: XBOX_CLIENT_ID,
-      client_secret: XBOX_CLIENT_SECRET,
-      code,
-      grant_type: 'authorization_code',
-      redirect_uri: XBOX_REDIRECT_URI,
-    }),
-  });
-  const tokenData = await tokenRes.json();
-  const accessToken = tokenData.access_token;
-  if (!accessToken) return jsonResponse({ error: 'Token exchange failed', detail: tokenData }, 500);
-
-  // Step 2: Authenticate with Xbox Live
-  const xblRes = await fetch('https://user.auth.xboxlive.com/user/authenticate', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'x-xbl-contract-version': '1' },
-    body: JSON.stringify({
-      RelyingParty: 'http://auth.xboxlive.com',
-      TokenType: 'JWT',
-      Properties: { AuthMethod: 'RPS', SiteName: 'user.auth.xboxlive.com', RpsTicket: 'd=' + accessToken },
-    }),
-  });
-  const xblData = await xblRes.json();
-  const xblToken = xblData.Token;
-  const userHash = xblData.DisplayClaims?.xui?.[0]?.uhs;
-
-  // Step 3: XSTS token
-  const xstsRes = await fetch('https://xsts.auth.xboxlive.com/xsts/authorize', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-    body: JSON.stringify({
-      RelyingParty: 'http://xboxlive.com',
-      TokenType: 'JWT',
-      Properties: { SandboxId: 'RETAIL', UserTokens: [xblToken] },
-    }),
-  });
-  const xstsData = await xstsRes.json();
-  const xstsToken = xstsData.Token;
-  const xuid = xstsData.DisplayClaims?.xui?.[0]?.xid;
-
-  // Redirect back to QuestLog with token (client stores it)
-  const authHeader = `XBL3.0 x=${userHash};${xstsToken}`;
-  const redirectTo = `/questlog.html?xbox_token=${encodeURIComponent(authHeader)}&xuid=${xuid}`;
-  return new Response(null, { status: 302, headers: { Location: redirectTo } });
-}
-
-async function xboxProfile(url) {
-  const token = url.searchParams.get('token');
-  const xuid = url.searchParams.get('xuid');
-  if (!token || !xuid) return jsonResponse({ error: 'Missing token or xuid' }, 400);
-
-  const r = await fetch(`https://profile.xboxlive.com/users/xuid(${xuid})/profile/settings?settings=Gamertag,GameDisplayPicRaw,Gamerscore`, {
-    headers: { Authorization: token, 'x-xbl-contract-version': '2', Accept: 'application/json' },
-  });
-  const data = await r.json();
-  const settings = Object.fromEntries((data.profileUsers?.[0]?.settings || []).map(s => [s.id, s.value]));
-  return jsonResponse({
-    xuid,
-    gamertag: settings.Gamertag,
-    avatar: settings.GameDisplayPicRaw,
-    gamerscore: parseInt(settings.Gamerscore || 0),
-  });
-}
-
-async function xboxGames(url) {
-  const token = url.searchParams.get('token');
-  const xuid = url.searchParams.get('xuid');
-  if (!token || !xuid) return jsonResponse({ error: 'Missing token or xuid' }, 400);
-
-  const r = await fetch(`https://titlehub.xboxlive.com/users/xuid(${xuid})/titles/titlehistory/decoration/GamePass,Achievement,Image,Stats`, {
-    headers: { Authorization: token, 'x-xbl-contract-version': '2', Accept: 'application/json', 'Accept-Language': 'en-US' },
-  });
-  const data = await r.json();
-  const titles = (data.titles || []).map(t => ({
-    titleId: t.titleId,
-    name: t.name,
-    lastPlayed: t.titleHistory?.lastTimePlayed,
-    gamerscore: t.achievement?.currentGamerscore || 0,
-    totalGamerscore: t.achievement?.totalGamerscore || 0,
-    achievements: t.achievement?.currentAchievements || 0,
-    totalAchievements: t.achievement?.totalAchievements || 0,
-    img: t.displayImage,
-  }));
-  titles.sort((a, b) => new Date(b.lastPlayed || 0) - new Date(a.lastPlayed || 0));
-  return jsonResponse({ count: titles.length, games: titles });
-}
-
 // ════════════════════════════════════════════════════════
 // FLEETWATCH SIGNUP (existing)
 // ════════════════════════════════════════════════════════

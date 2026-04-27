@@ -1119,11 +1119,6 @@ function toggleSteamApp(on) {
   STATE.useSteamApp = on;
   localStorage.setItem('questlog_useapp', on ? '1' : '0');
 }
-function steamUrl(appid) {
-  // If Steam-app mode is on, try steam:// first. Browsers will gracefully fall back.
-  if (STATE.useSteamApp) return `steam://store/${appid}`;
-  return `https://store.steampowered.com/app/${appid}`;
-}
 function openSteam(appid) {
   if (STATE.useSteamApp) {
     // Try steam:// — if no Steam client, attempt a browser fallback after short delay
@@ -1546,44 +1541,6 @@ async function compareFriendBySid(friendSid, friendName) {
   } catch (e) { document.getElementById('friendCompareResult').innerHTML = `<div class="error">${e.message}</div>`; }
 }
 
-async function compareFriend() {
-  const friendSid = document.getElementById('friendSidInput').value.trim();
-  if (!friendSid.match(/^7656\d{13}$/)) { alert('Invalid Steam ID'); return; }
-  document.getElementById('compareSection').style.display = 'block';
-  document.getElementById('compareTitle').textContent = 'Comparison';
-  document.getElementById('friendCompareResult').innerHTML = '<div class="empty"><span class="loading"></span> Comparing...</div>';
-  try {
-    const r = await fetch(`/api/compare-friend?sid=${STATE.sid}&friendSid=${friendSid}`);
-    const d = await r.json();
-    if (d.error) { document.getElementById('friendCompareResult').innerHTML = `<div class="error">${d.error}</div>`; return; }
-    document.getElementById('friendCompareResult').innerHTML = `
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
-        <div style="background:var(--panel2);border-radius:8px;padding:16px;text-align:center">
-          <div style="width:56px;height:56px;border-radius:50%;background:url('${d.me.avatar}') center/cover;margin:0 auto 10px"></div>
-          <div style="font-weight:700;margin-bottom:8px">${d.me.name}</div>
-          <div style="font-size:12px;color:var(--dim)">${d.me.games} games · ${d.me.hours.toLocaleString()}h</div>
-        </div>
-        <div style="background:var(--panel2);border-radius:8px;padding:16px;text-align:center">
-          <div style="width:56px;height:56px;border-radius:50%;background:url('${d.them.avatar}') center/cover;margin:0 auto 10px"></div>
-          <div style="font-weight:700;margin-bottom:8px">${d.them.name}</div>
-          <div style="font-size:12px;color:var(--dim)">${d.them.games} games · ${d.them.hours.toLocaleString()}h</div>
-        </div>
-      </div>
-      <h3 style="font-size:13px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Games You Both Own</h3>
-      ${d.shared.length === 0 ? '<p style="color:var(--dim)">No overlap. Wow.</p>' : d.shared.map(g => `
-        <div style="display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
-          <div style="width:80px;aspect-ratio:460/215;background:url('${g.img}') center/cover;border-radius:4px;flex-shrink:0"></div>
-          <div style="flex:1"><div style="font-weight:600;font-size:13px">${g.name}</div><div style="font-size:11px;color:var(--dim)">You: ${g.meHours}h · Them: ${g.themHours}h</div></div>
-        </div>
-      `).join('')}
-      ${d.theirRecommendations.length ? `<h3 style="font-size:13px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin:20px 0 10px">They Play (You Don't Own)</h3>${d.theirRecommendations.map(g => `
-        <div style="display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="openSteam(${g.appid})">
-          <div style="width:80px;aspect-ratio:460/215;background:url('${g.img}') center/cover;border-radius:4px;flex-shrink:0"></div>
-          <div style="flex:1"><div style="font-weight:600;font-size:13px">${g.name}</div><div style="font-size:11px;color:var(--dim)">They've played ${g.hours}h — might be worth a look</div></div>
-        </div>`).join('')}` : ''}
-    `;
-  } catch (e) { document.getElementById('friendCompareResult').innerHTML = `<div class="error">${e.message}</div>`; }
-}
 
 // ───── STEAM DNA ─────
 async function loadSteamDNA() {
@@ -2799,19 +2756,6 @@ function removeQuest(id) {
   saveQuests(getQuests().filter(x => x.id !== id));
   renderQuests();
 }
-function gateProSection(cardId, name) {
-  const card = document.getElementById(cardId);
-  if (!card) return false;
-  if (isProActive()) { card.style.opacity = ''; card.style.pointerEvents = ''; return true; }
-  card.innerHTML = `
-    <div style="text-align:center;padding:24px 12px">
-      <span style="background:var(--accent);color:#000;font-size:10px;font-weight:800;padding:4px 10px;border-radius:3px;letter-spacing:1.5px">PRO</span>
-      <p style="font-size:14px;color:var(--text);margin:14px 0 6px;font-weight:600">${name} is a Pro feature</p>
-      <p style="font-size:12px;color:var(--dim);margin-bottom:18px">Unlock with Pro — £4.99/month, cancel anytime.</p>
-      <button class="connect-btn" onclick="document.querySelector('[data-view=\\'pro\\']')?.click()" style="padding:10px 22px;font-size:12px">View Pro →</button>
-    </div>`;
-  return false;
-}
 
 function renderQuests() {
   const el = document.getElementById('questsList');
@@ -3190,13 +3134,6 @@ fetch('/api/gpu-list').then(r => r.json()).then(d => {
 
 STATE.newFilter = 'popular';
 
-function setNewFilter(f) {
-  STATE.newFilter = f;
-  document.querySelectorAll('.new-filter-btn').forEach(b => {
-    b.classList.toggle('active', b.dataset.filter === f);
-  });
-  loadNewReleases();
-}
 
 function renderNewReleaseCard(g) {
   const scoreColour = g.review?.score >= 85 ? 'var(--accent)' : g.review?.score >= 70 ? '#d5e65c' : g.review?.score >= 50 ? '#ff9e42' : '#ff5a5a';
@@ -3771,39 +3708,19 @@ function relativeTime(ms) {
   return new Date(ms).toLocaleDateString();
 }
 
-// Steam-only sign-in flow — cleanup any leftover Xbox tokens
+// Steam-only sign-in flow — cleanup any leftover Xbox tokens from previous version
 localStorage.removeItem('questlog_xbox_token');
 localStorage.removeItem('questlog_xbox_xuid');
-{
-  if (false) {
-    // Rehydrate by calling the callback handler with URL params simulation
-    (async () => {
-      try {
-        const profile = await fetch(`/api/xbox/profile?token=${encodeURIComponent(xboxToken)}&xuid=${xboxXuid}`).then(r => r.json());
-        if (profile.error) throw new Error(profile.error);
-        const games = await fetch(`/api/xbox/games?token=${encodeURIComponent(xboxToken)}&xuid=${xboxXuid}`).then(r => r.json());
-        STATE.profile = { name: profile.gamertag, avatar: profile.avatar, level: profile.gamerscore + ' G', platform: 'xbox' };
-        STATE.games = games.games.map(g => ({ appid: g.titleId, name: g.name, hours: 0, hoursTwoWeeks: 0, gamerscore: g.gamerscore, totalGamerscore: g.totalGamerscore, img: g.img, platform: 'xbox' }));
-        STATE.gameCount = games.count;
-        renderDashboard();
-        showDashboard();
-      } catch {
-        localStorage.removeItem('questlog_xbox_token');
-        localStorage.removeItem('questlog_xbox_xuid');
-      }
-    })();
-  } else {
-    // Auto-connect saved Steam session
-    const savedSid = localStorage.getItem('questlog_sid');
-    if (savedSid) {
-      document.getElementById('sidInput').value = savedSid;
-      connectSteam();
-    }
-    // Apply saved theme on load (works even without Pro — saved in localStorage)
-    const savedTheme = localStorage.getItem('questlog_theme');
-    if (savedTheme && typeof applyTheme === 'function') applyTheme(savedTheme);
-  }
+
+// Auto-connect saved Steam session
+const savedSid = localStorage.getItem('questlog_sid');
+if (savedSid) {
+  document.getElementById('sidInput').value = savedSid;
+  connectSteam();
 }
+// Apply saved theme on load (works even without Pro — saved in localStorage)
+const savedTheme = localStorage.getItem('questlog_theme');
+if (savedTheme && typeof applyTheme === 'function') applyTheme(savedTheme);
 </script>
 
 <script>
