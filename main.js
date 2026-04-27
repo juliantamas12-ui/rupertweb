@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Two Men Thrown Out a Window Who Killed a Third of Germany",
+    date: "2026-04-27",
+    category: "History",
+    excerpt: "On 23 May 1618, a group of Bohemian Protestant nobles entered Prague Castle, seized two Catholic regents named Slavata and Martinitz along with their secretary Fabricius, dragged them across a council chamber, and threw all three out of a third-storey window. They survived. The Catholics later said angels caught them. The Protestants said they landed in a dung heap. What is not in dispute is that this minor act of political theatre set off a war that lasted thirty years and killed a third of Germany...",
+    url: "essays/2026-04-27-the-two-men-thrown-out-a-window-who-killed-a-third-of-germany.html"
+  },
+  {
     title: "The War That Killed a Country: Paraguay, 1864-1870",
     date: "2026-04-26",
     category: "History",
