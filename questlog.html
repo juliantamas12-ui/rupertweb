@@ -243,7 +243,6 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
     <button class="nav-tab" data-view="deals">Deals</button>
     <button class="nav-tab" data-view="recs">Discover</button>
     <button class="nav-tab" data-view="utility">Utility</button>
-    <button class="nav-tab" data-view="news">News</button>
     <button class="nav-tab" data-view="leaderboards">Leaderboards</button>
     <button class="nav-tab nav-tab-pro" data-view="pro" id="navTabPro" onclick="goToPro()"><span style="background:var(--accent);color:#000;font-weight:800;font-size:9px;padding:2px 6px;border-radius:2px;letter-spacing:1px;margin-right:4px;vertical-align:middle">PRO</span>Hub</button>
   </div>
@@ -597,16 +596,6 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
 </div>
 
 
-
-<div class="view" id="view-news">
-  <div class="section">
-    <div class="section-head">
-      <h2>News From Your Top Games</h2>
-      <button class="link" onclick="loadNews()">Refresh →</button>
-    </div>
-    <div class="sidebar-card" id="newsFeed"><div class="empty"><span class="loading"></span> Fetching news...</div></div>
-  </div>
-</div>
 
 <div class="view" id="view-more">
   <div id="homeGreeting" style="margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--border)">
@@ -1223,11 +1212,7 @@ document.querySelectorAll('.nav-tab').forEach(tab => {
       STATE.dealsForYouLoaded = true;
       STATE.dealsLoaded = true;
     }
-    if (view === 'news') {
-      // Auto-refresh if more than 24 hours old (or never loaded)
-      const age = Date.now() - (STATE.newsLoadedAt || 0);
-      if (!STATE.newsLoaded || age > 24 * 3600 * 1000) loadNews();
-    }
+
 
     if (view === 'leaderboards' && !STATE.lbLoaded) loadLeaderboards();
     if (view === 'more') {
