@@ -206,10 +206,17 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
   /* Form inputs: prevent iOS zoom on focus */
   input,select,textarea{font-size:16px !important}
   /* Pro hub feature cards */
-  #proHub .section{padding:0}
-  #proHubGated{padding:20px !important}
+  #proHub{max-width:100%;overflow-x:hidden}
+  #proHub .section{padding:0;max-width:100%}
+  #proHub .sidebar-card{max-width:100%;box-sizing:border-box;padding:14px}
+  #proHubGated{padding:20px !important;max-width:100%}
   #proHubGated h2{font-size:22px !important}
   #proHubGated > div:nth-child(4){grid-template-columns:1fr 1fr !important}
+  /* Forms in Pro hub: stack columns on mobile */
+  #proHubUnlocked [style*="grid-template-columns:2fr 2fr 1fr auto"]{grid-template-columns:1fr !important;gap:8px !important}
+  #proHubUnlocked [style*="grid-template-columns:2fr 1fr 1fr auto"]{grid-template-columns:1fr !important;gap:8px !important}
+  #proHubUnlocked [style*="grid-template-columns:2fr 1fr 1fr"]{grid-template-columns:1fr !important;gap:8px !important}
+  #proHubUnlocked input,#proHubUnlocked select,#proHubUnlocked textarea{width:100% !important;box-sizing:border-box}
   /* Pro hub customisation pickers */
   #themeButtons{grid-template-columns:repeat(auto-fill,minmax(90px,1fr)) !important;gap:5px !important}
   .density-btn,.corner-btn{padding:9px 6px !important;font-size:11px !important}
@@ -217,6 +224,11 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
   #sidWizard > div{margin:8px auto !important;padding:18px !important}
   #sidWizard h2{font-size:18px !important}
   #sidWizard h3{font-size:14px !important}
+  /* Custom URL row: stack */
+  #proHubUnlocked [style*="display:flex;gap:8px"]:has(input[id="customUrlInput"]){flex-wrap:wrap}
+  #proHubUnlocked [style*="display:flex;gap:8px"]:has(input[id="customAccent"]){flex-wrap:wrap}
+  /* Body: prevent any horizontal scroll */
+  body{overflow-x:hidden}
   /* Deals filter selects: stack */
   #view-deals select{min-width:120px;flex:1}
   /* FPS estimator: stack fields */
