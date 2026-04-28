@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>QuestLog — Your Gaming Command Center</title>
+<title>QuestLog</title>
 <meta name="description" content="Connect Steam, track achievements, get smart game recommendations, find quest guides, see leaderboards.">
 <link rel="manifest" href="/questlog.webmanifest">
 <meta name="theme-color" content="#0a0e1a">
@@ -21,7 +21,12 @@
 }
 body{background:var(--bg);color:var(--text);font-family:'Inter','Helvetica Neue',Arial,sans-serif;line-height:1.5;min-height:100vh}
 
-nav{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:24px;padding:14px 32px;border-bottom:1px solid var(--border);position:sticky;top:0;background:color-mix(in srgb, var(--bg) 92%, transparent);backdrop-filter:blur(12px);z-index:100;min-height:60px}
+nav{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:24px;padding:14px 32px;border-bottom:1px solid var(--border);position:sticky;top:env(titlebar-area-y, 0);background:color-mix(in srgb, var(--bg) 92%, transparent);backdrop-filter:blur(12px);z-index:100;min-height:60px;-webkit-app-region:drag}
+nav button,nav a,nav input,nav .nav-tabs,nav .nav-user{-webkit-app-region:no-drag}
+/* When running as PWA with window-controls-overlay, reserve space for traffic lights */
+@media (display-mode: window-controls-overlay) {
+  nav{padding-left:env(titlebar-area-x, 32px);padding-right:calc(env(titlebar-area-width, 100%) * 0 + 140px)}
+}
 .logo{font-size:18px;font-weight:800;letter-spacing:-0.5px;color:var(--text);display:flex;align-items:center;gap:10px;line-height:1}
 .logo-dot{width:8px;height:8px;background:var(--accent);border-radius:50%;box-shadow:0 0 12px var(--accent);flex-shrink:0}
 .nav-tabs{display:flex;gap:2px;justify-content:center;align-items:center;flex-wrap:wrap}
