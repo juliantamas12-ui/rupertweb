@@ -302,7 +302,7 @@ const SCHOOL_TASKS = [
     "status": "upcoming"
   },
   {
-    "title": "Math 8: Volume of Cones and Pyramids",
+    "title": "HW: Questions on Vesuvius",
     "due": "",
     "subject": "",
     "status": "upcoming"
@@ -314,13 +314,13 @@ const SCHOOL_TASKS = [
     "status": "upcoming"
   },
   {
-    "title": "HW Science 7",
+    "title": "Math 8: Volume of Spheres MathSpace",
     "due": "",
     "subject": "",
     "status": "upcoming"
   },
   {
-    "title": "Upload weeks 19 - 22 work",
+    "title": "HW Science 7",
     "due": "",
     "subject": "",
     "status": "upcoming"
@@ -332,7 +332,7 @@ const SCHOOL_TASKS = [
     "status": "upcoming"
   },
   {
-    "title": "HW: Questions on Vesuvius",
+    "title": "Vocabulary Slideshow #2",
     "due": "",
     "subject": "",
     "status": "upcoming"
