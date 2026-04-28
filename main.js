@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Sunday Mass Assassination That Made the Medici Untouchable",
+    date: "2026-04-28",
+    category: "History",
+    excerpt: "On Sunday, 26 April 1478, during High Mass at the Cathedral of Santa Maria del Fiore in Florence, two priests pulled daggers from beneath their robes and attacked Lorenzo de' Medici at the moment of the elevation of the Host. Giuliano died on the cathedral floor with nineteen wounds. Lorenzo, slashed across the neck, vaulted the altar rail and survived. This is usually told as a thriller. It is also one of the cleanest examples in European history of how a botched assassination entrenches the regime it was meant to destroy...",
+    url: "essays/2026-04-28-the-sunday-mass-assassination-that-made-the-medici-untouchable.html"
+  },
+  {
     title: "The Two Men Thrown Out a Window Who Killed a Third of Germany",
     date: "2026-04-27",
     category: "History",
