@@ -13,8 +13,36 @@ const STRIPE_SECRET_KEY = '';
 const STRIPE_PRICE_ID   = '';
 const STRIPE_SUCCESS_URL = 'https://rupertweb.com/questlog.html?pro=success';
 const STRIPE_CANCEL_URL  = 'https://rupertweb.com/questlog.html?pro=cancel';
-// In-memory subscriber list — resets on worker cold start. Replace with KV when QUESTLOG_KV exists.
-const pushSubs = new Map();
+
+// KV helpers — use Cloudflare KV when bound, fall back to in-memory Map for local dev
+const _memoryStore = new Map();
+async function kvGet(env, key) {
+  if (env?.QUESTLOG_KV) {
+    const v = await env.QUESTLOG_KV.get(key);
+    return v ? JSON.parse(v) : null;
+  }
+  return _memoryStore.get(key) || null;
+}
+async function kvPut(env, key, value, ttl) {
+  const json = JSON.stringify(value);
+  if (env?.QUESTLOG_KV) {
+    const opts = ttl ? { expirationTtl: ttl } : undefined;
+    await env.QUESTLOG_KV.put(key, json, opts);
+  } else {
+    _memoryStore.set(key, value);
+  }
+}
+async function kvDelete(env, key) {
+  if (env?.QUESTLOG_KV) await env.QUESTLOG_KV.delete(key);
+  else _memoryStore.delete(key);
+}
+async function kvList(env, prefix) {
+  if (env?.QUESTLOG_KV) {
+    const r = await env.QUESTLOG_KV.list({ prefix });
+    return r.keys.map(k => k.name);
+  }
+  return [..._memoryStore.keys()].filter(k => k.startsWith(prefix));
+}
 
 
 
@@ -28,10 +56,15 @@ export default {
     try {
       if (p === '/api/fleet-signup' && request.method === 'POST')     return handleFleetSignup(request);
       if (p === '/api/checkout' && request.method === 'POST')         return checkout(request);
-      if (p === '/api/stripe/webhook' && request.method === 'POST')   return stripeWebhook(request);
+      if (p === '/api/stripe/webhook' && request.method === 'POST')   return stripeWebhook(request, env);
+      if (p === '/api/pro-status')                                    return proStatus(url, env);
       if (p === '/api/push/vapid-key')                                return jsonResponse({ key: VAPID_PUBLIC });
-      if (p === '/api/push/subscribe' && request.method === 'POST')   return pushSubscribe(request);
-      if (p === '/api/push/unsubscribe' && request.method === 'POST') return pushUnsubscribe(request);
+      if (p === '/api/push/subscribe' && request.method === 'POST')   return pushSubscribe(request, env);
+      if (p === '/api/push/unsubscribe' && request.method === 'POST') return pushUnsubscribe(request, env);
+      if (p === '/api/wishlist' && request.method === 'GET')          return wishlistGet(url, env);
+      if (p === '/api/wishlist' && request.method === 'POST')         return wishlistPut(request, env);
+      if (p === '/api/journal' && request.method === 'GET')           return journalGet(url, env);
+      if (p === '/api/journal' && request.method === 'POST')          return journalPut(request, env);
       if (p === '/api/achievement-of-day')                            return achievementOfDay(url);
       if (p === '/api/steam/profile')                                 return steamProfile(url);
       if (p === '/api/steam/resolve-vanity')                          return steamResolveVanity(url);
@@ -3970,23 +4003,63 @@ async function handleFleetSignup(request) {
 // PUSH NOTIFICATIONS
 // ════════════════════════════════════════════════════════
 
-async function pushSubscribe(request) {
+async function pushSubscribe(request, env) {
   try {
     const { sid, subscription, prefs } = await request.json();
     if (!sid || !subscription?.endpoint) return jsonResponse({ error: 'sid + subscription required' }, 400);
-    pushSubs.set(sid, { subscription, prefs: prefs || { priceAlerts: true, freeGames: true, achievementOfDay: true }, registered: Date.now() });
-    return jsonResponse({ ok: true, count: pushSubs.size });
+    await kvPut(env, `push:${sid}`, {
+      subscription,
+      prefs: prefs || { priceAlerts: true, freeGames: true, achievementOfDay: true },
+      registered: Date.now(),
+    });
+    return jsonResponse({ ok: true });
   } catch (e) {
     return jsonResponse({ error: e.message }, 500);
   }
 }
 
-async function pushUnsubscribe(request) {
+async function pushUnsubscribe(request, env) {
   try {
     const { sid } = await request.json();
     if (!sid) return jsonResponse({ error: 'sid required' }, 400);
-    pushSubs.delete(sid);
+    await kvDelete(env, `push:${sid}`);
     return jsonResponse({ ok: true });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
+  }
+}
+
+// Cross-device wishlist sync
+async function wishlistGet(url, env) {
+  const sid = url.searchParams.get('sid');
+  if (!sid) return jsonResponse({ error: 'sid required' }, 400);
+  const data = await kvGet(env, `wishlist:${sid}`);
+  return jsonResponse({ items: data || [] });
+}
+async function wishlistPut(request, env) {
+  try {
+    const { sid, items } = await request.json();
+    if (!sid || !Array.isArray(items)) return jsonResponse({ error: 'sid + items required' }, 400);
+    await kvPut(env, `wishlist:${sid}`, items);
+    return jsonResponse({ ok: true, count: items.length });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
+  }
+}
+
+// Cross-device journal sync
+async function journalGet(url, env) {
+  const sid = url.searchParams.get('sid');
+  if (!sid) return jsonResponse({ error: 'sid required' }, 400);
+  const data = await kvGet(env, `journal:${sid}`);
+  return jsonResponse({ entries: data || [] });
+}
+async function journalPut(request, env) {
+  try {
+    const { sid, entries } = await request.json();
+    if (!sid || !Array.isArray(entries)) return jsonResponse({ error: 'sid + entries required' }, 400);
+    await kvPut(env, `journal:${sid}`, entries);
+    return jsonResponse({ ok: true, count: entries.length });
   } catch (e) {
     return jsonResponse({ error: e.message }, 500);
   }
@@ -4095,17 +4168,43 @@ async function checkout(request) {
 }
 
 // Stripe webhook handler — fires on subscription created/updated/deleted.
-// Used to flip Pro status server-side. Persistent storage requires KV.
-async function stripeWebhook(request) {
+// Persists Pro state to KV keyed by Steam ID.
+async function stripeWebhook(request, env) {
   if (!STRIPE_SECRET_KEY) return jsonResponse({ notReady: true });
-  // TODO when KV is wired: verify signature, then store/remove Pro status
-  // for the steamid in webhook event metadata.
-  // For now, log and ack so Stripe doesn't retry.
   try {
     const body = await request.text();
-    console.log('[stripe]', body.slice(0, 500));
+    let event;
+    try { event = JSON.parse(body); } catch { return jsonResponse({ error: 'invalid JSON' }, 400); }
+
+    const type = event.type;
+    const obj = event.data?.object || {};
+    const sid = obj.metadata?.steamid || obj.client_reference_id;
+
+    if (sid) {
+      if (type === 'customer.subscription.created' ||
+          type === 'customer.subscription.updated' ||
+          type === 'checkout.session.completed') {
+        await kvPut(env, `pro:${sid}`, {
+          active: true,
+          since: Date.now(),
+          subscriptionId: obj.id || obj.subscription || null,
+          customerId: obj.customer || null,
+          status: obj.status || 'active',
+        });
+      } else if (type === 'customer.subscription.deleted') {
+        await kvDelete(env, `pro:${sid}`);
+      }
+    }
     return new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } });
   } catch (e) {
     return jsonResponse({ error: e.message }, 500);
   }
+}
+
+// Public endpoint — client checks if a Steam ID has active Pro
+async function proStatus(url, env) {
+  const sid = url.searchParams.get('sid');
+  if (!sid) return jsonResponse({ active: false });
+  const data = await kvGet(env, `pro:${sid}`);
+  return jsonResponse({ active: !!data?.active, since: data?.since });
 }

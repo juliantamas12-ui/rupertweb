@@ -1317,6 +1317,7 @@ async function connectSteam() {
     STATE.totalHours = games.totalHours;
     renderDashboard();
     showDashboard();
+    checkServerPro();  // confirm Pro from KV (whitelisted users skip this)
   } catch (e) {
     alert(
       "Couldn't connect.\n\n" +
@@ -2208,7 +2209,22 @@ const PRO_WHITELIST = new Set([
 ]);
 function isProActive() {
   if (STATE.sid && PRO_WHITELIST.has(STATE.sid)) return true;
+  if (STATE.serverProActive) return true;
   return localStorage.getItem('questlog_pro') === '1';
+}
+
+// Verify Pro state with the server once we know the user's Steam ID.
+// Used by Stripe-paid Pro accounts where Stripe webhook wrote Pro state to KV.
+async function checkServerPro() {
+  if (!STATE.sid) return;
+  try {
+    const r = await fetch(`/api/pro-status?sid=${STATE.sid}`);
+    const d = await r.json();
+    if (d.active) {
+      STATE.serverProActive = true;
+      renderProHub();
+    }
+  } catch {}
 }
 
 function renderProHub() {
