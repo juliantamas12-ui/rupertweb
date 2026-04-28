@@ -111,6 +111,18 @@ nav.scrolled{border-bottom-color:var(--border)}
 .proof-quote{font-size:22px;font-weight:600;line-height:1.4;margin-bottom:20px}
 .proof-author{color:var(--dim);font-size:13px}
 
+/* FAQ */
+.faq-list{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+.faq-item{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:0;overflow:hidden;transition:border-color 0.15s}
+.faq-item[open]{border-color:rgba(200,241,53,0.25)}
+.faq-item summary{padding:18px 22px;cursor:pointer;font-weight:600;font-size:15px;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.faq-item summary::-webkit-details-marker{display:none}
+.faq-item summary::after{content:'+';color:var(--accent);font-size:22px;font-weight:300;line-height:1;transition:transform 0.2s}
+.faq-item[open] summary::after{content:'–'}
+.faq-item summary:hover{color:var(--accent)}
+.faq-item p{padding:0 22px 20px;color:var(--dim);font-size:14px;line-height:1.7}
+.faq-item p a{color:var(--accent);text-decoration:underline}
+
 /* CTA */
 .cta-section{padding:100px 40px;text-align:center;background:linear-gradient(180deg,transparent 0%,rgba(200,241,53,0.05) 100%)}
 .cta-section h2{font-size:clamp(32px,5vw,52px);font-weight:800;letter-spacing:-1px;margin-bottom:16px}
@@ -363,12 +375,13 @@ footer a:hover{color:var(--text)}
         <li>Curator bot (natural language search)</li>
         <li>New releases + most anticipated feed</li>
         <li>FPS estimator</li>
-        <li>3 friends max</li>
-        <li>1 price alert</li>
+        <li>Friend comparison (libraries, hours, achievements)</li>
+        <li>Price alerts (weekly digest)</li>
         <li class="no">Spend analytics</li>
-        <li class="no">Unlimited price drop alerts</li>
-        <li class="no">Custom profile URL + theme</li>
-        <li class="no">Pro badge</li>
+        <li class="no">Instant push notifications</li>
+        <li class="no">Achievement of the Day</li>
+        <li class="no">Mod Space + What's Hot</li>
+        <li class="no">12 themes + custom accent</li>
       </ul>
       <a href="/questlog.html" class="btn btn-ghost" style="border:1px solid var(--border)">Get started</a>
     </div>
@@ -380,12 +393,12 @@ footer a:hover{color:var(--text)}
       <div class="plan-tagline">For gamers who actually hunt deals.</div>
       <ul class="plan-features">
         <li>Everything in Free</li>
-        <li><strong>Spend Analytics</strong> — see exactly how much you've spent, cost per hour, best/worst value games</li>
-        <li><strong>Unlimited price alerts</strong> — we email you the instant a game hits your target on any store</li>
-        <li><strong>Unlimited friends</strong> — compare against as many as you want</li>
-        <li><strong>Wishlist sync</strong> — one wishlist across Steam, Epic, GOG, Humble</li>
-        <li><strong>Custom profile URL</strong> — <code>/u/your-name</code> instead of Steam ID</li>
-        <li><strong>Profile themes</strong> — dark, light, gold, retro</li>
+        <li><strong>Spend Analytics</strong> — total spent, cost per hour, best/worst value games in your library</li>
+        <li><strong>Instant push notifications</strong> — price drops, free games, friend activity hit your phone the moment they happen</li>
+        <li><strong>Achievement of the Day</strong> — daily rare-achievement challenge picked from your library, refreshed at midnight</li>
+        <li><strong>Mod Space</strong> — top weekly mods from Nexus for Skyrim, BG3, RimWorld, Stardew, Cyberpunk and more</li>
+        <li><strong>What's Hot in Your Library</strong> — see which of your games are trending right now on Reddit + Steam</li>
+        <li><strong>12 themes + custom accent colour</strong> — density, corner style, font size all configurable</li>
         <li><strong>Pro badge</strong> on your profile</li>
         <li><strong>Priority updates</strong> — 5min deal refresh vs 60min</li>
       </ul>
@@ -393,6 +406,44 @@ footer a:hover{color:var(--text)}
     </div>
   </div>
 </div>
+
+<!-- FAQ -->
+<section class="section" id="faq">
+  <div class="section-head">
+    <div class="section-eyebrow">FAQ</div>
+    <h2>Questions you'd reasonably ask.</h2>
+  </div>
+  <div class="faq-list">
+    <details class="faq-item">
+      <summary>Do I need a Steam account?</summary>
+      <p>Yes. QuestLog is built around your Steam library — that's how it knows your games, hours, achievements, and friends. Your Steam profile needs to be set to public (we walk you through that on first sign-in).</p>
+    </details>
+    <details class="faq-item">
+      <summary>Do you store my password?</summary>
+      <p>No. We never see your Steam password. Sign-in uses Steam's public Web API with your Steam ID — that's a public number, not a credential. We don't ask for any password.</p>
+    </details>
+    <details class="faq-item">
+      <summary>What about Xbox / PlayStation / Epic?</summary>
+      <p>Steam first. Cross-store deals already cover Epic, GOG, Humble, Fanatical and 16 others, so wishlists across stores work today. Native Xbox / PSN library import is on the roadmap.</p>
+    </details>
+    <details class="faq-item">
+      <summary>Can I cancel Pro any time?</summary>
+      <p>Yes. One click in account settings. No contracts, no "call to cancel" nonsense. You keep Pro until the end of the period you've already paid for, then drop back to Free with all your data intact.</p>
+    </details>
+    <details class="faq-item">
+      <summary>Will it work on my phone?</summary>
+      <p>QuestLog is a PWA — install it from your browser and it works like a native app. Push notifications, offline shell, home-screen icon, the lot. iOS, Android and desktop all supported.</p>
+    </details>
+    <details class="faq-item">
+      <summary>How accurate are the price alerts?</summary>
+      <p>We poll 20+ stores hourly on Free, every 5 minutes on Pro. Free gets a weekly digest; Pro gets a push notification the moment a target price hits. Historic lows are tracked, so we'll flag if a current sale is the cheapest it's ever been.</p>
+    </details>
+    <details class="faq-item">
+      <summary>Who built this?</summary>
+      <p>One person, in public. Bug reports and feature requests at <a href="mailto:julian.tamas12@gmail.com">julian.tamas12@gmail.com</a> get read and usually replied to the same day.</p>
+    </details>
+  </div>
+</section>
 
 <!-- CTA -->
 <section class="cta-section">
@@ -405,6 +456,7 @@ footer a:hover{color:var(--text)}
   <div style="margin-bottom:16px">
     <a href="#features">Features</a>
     <a href="#pricing">Pricing</a>
+    <a href="#faq">FAQ</a>
     <a href="/questlog.html">Sign in</a>
     <a href="/questlog-terms.html">Terms</a>
     <a href="/questlog-privacy.html">Privacy</a>
