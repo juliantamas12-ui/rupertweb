@@ -309,19 +309,7 @@ const SCHOOL_TASKS = [
     "status": "upcoming"
   },
   {
-    "title": "HW: Questions on Vesuvius",
-    "due": "",
-    "subject": "",
-    "status": "upcoming"
-  },
-  {
-    "title": "Math 7 (HW)",
-    "due": "",
-    "subject": "",
-    "status": "upcoming"
-  },
-  {
-    "title": "Math 8: Volume of Spheres MathSpace",
+    "title": "Valerio and Julian present the sonnet !",
     "due": "",
     "subject": "",
     "status": "upcoming"
@@ -334,6 +322,18 @@ const SCHOOL_TASKS = [
   },
   {
     "title": "Submit Coursework",
+    "due": "",
+    "subject": "",
+    "status": "upcoming"
+  },
+  {
+    "title": "Math 8: Composite Solid SA and Volume",
+    "due": "",
+    "subject": "",
+    "status": "upcoming"
+  },
+  {
+    "title": "Math 7 (HW)",
     "due": "",
     "subject": "",
     "status": "upcoming"
