@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Cossack Who Built Modern Russia By Failing",
+    date: "2026-04-29",
+    category: "History",
+    excerpt: "In September 1773, a semi-literate Don Cossack named Yemelyan Pugachev declared himself to be the assassinated Tsar Peter III, miraculously alive, and called on the peasants of the Urals and the Volga to rise. Within nine months he commanded an army of perhaps a hundred thousand. By January 1775 he had been hauled back to the capital in an iron cage. The Pugachev rebellion is the moment Russia's ruling class decided, irrevocably, that the empire could not be reformed from above without being destroyed from below — and built the institutions of nineteenth-century autocracy specifically to ensure that 1773 would never happen again...",
+    url: "essays/2026-04-29-the-cossack-who-built-modern-russia-by-failing.html"
+  },
+  {
     title: "The Sunday Mass Assassination That Made the Medici Untouchable",
     date: "2026-04-28",
     category: "History",
