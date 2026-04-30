@@ -103,12 +103,45 @@ export default {
       if (p === '/api/deals')                                         return getDeals(url);
       if (p === '/api/deal-search')                                   return searchDeal(url);
       if (p === '/api/my-deals')                                      return myDeals(url);
+      if (p === '/api/alerts')                                        return getAlerts(url, env);
+      if (p === '/api/cron-status')                                   return cronStatus(env);
 
     } catch (e) {
       return jsonResponse({ error: e.message }, 500);
     }
 
     return env.ASSETS.fetch(request);
+  },
+
+  // Cloudflare scheduled handler — invoked by cron triggers in wrangler.toml.
+  // Hourly trigger: runs the wishlist price-watch sweep. Daily 00:00 trigger:
+  // also rotates the Achievement-of-the-Day cache stamp. Each job is wrapped
+  // in try/catch so a single failure can't break the next run.
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil((async () => {
+      const startedAt = Date.now();
+      const cron = event.cron || '';
+      const log = { startedAt, cron, jobs: {} };
+      try {
+        const r = await runWishlistPriceWatch(env);
+        log.jobs.priceWatch = r;
+      } catch (e) {
+        log.jobs.priceWatch = { error: e.message };
+      }
+      // Daily midnight (UTC) tick — refresh Achievement-of-the-Day stamp so
+      // clients can detect a new day without comparing strings.
+      if (cron.startsWith('0 0 ')) {
+        try {
+          await kvPut(env, 'aotd:day-stamp', { day: new Date().toISOString().slice(0,10), at: Date.now() });
+          log.jobs.aotdRotation = { ok: true };
+        } catch (e) {
+          log.jobs.aotdRotation = { error: e.message };
+        }
+      }
+      log.finishedAt = Date.now();
+      log.durationMs = log.finishedAt - startedAt;
+      try { await kvPut(env, 'cron:lastRun', log, 60 * 60 * 24 * 14); } catch {}
+    })());
   }
 };
 
@@ -4207,4 +4240,112 @@ async function proStatus(url, env) {
   if (!sid) return jsonResponse({ active: false });
   const data = await kvGet(env, `pro:${sid}`);
   return jsonResponse({ active: !!data?.active, since: data?.since });
+}
+
+// ════════════════════════════════════════════════════════
+// SCHEDULED JOBS  (invoked by Cloudflare cron triggers)
+// ════════════════════════════════════════════════════════
+
+// Wishlist price-watch sweep.
+//   1. List every push:* subscriber.
+//   2. For each, load wishlist:${sid} from KV.
+//   3. Hit Steam appdetails for each appid, pluck price + discount.
+//   4. If a discount appeared (and we haven't already recorded it for that
+//      app within the last 7 days), prepend a record to alerts:${sid}.
+//   5. Cap aggressively so a single run can't blow the worker CPU/sub-request
+//      budget. Excess users are simply picked up on the next hourly tick.
+//
+// Web Push *delivery* is a separate step (needs VAPID private key + RFC 8291
+// payload encryption); for now the alerts queue is consumed by the QuestLog
+// frontend via /api/alerts so users see drops the next time they open the app.
+const PRICE_WATCH_USER_CAP = 50;
+const PRICE_WATCH_ITEMS_PER_USER = 20;
+const ALERT_DEDUPE_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+const ALERTS_TTL_SECONDS = 30 * 24 * 60 * 60;
+
+async function runWishlistPriceWatch(env) {
+  if (!env?.QUESTLOG_KV) return { skipped: 'no-kv' };
+  const stats = { users: 0, scanned: 0, alerts: 0, errors: 0 };
+
+  const subscriberKeys = await kvList(env, 'push:');
+  const sids = subscriberKeys.map(k => k.slice('push:'.length)).slice(0, PRICE_WATCH_USER_CAP);
+  stats.users = sids.length;
+
+  for (const sid of sids) {
+    try {
+      const wishlist = await kvGet(env, `wishlist:${sid}`);
+      if (!Array.isArray(wishlist) || !wishlist.length) continue;
+
+      // Wishlist entries can be objects {appid,...} or raw appids — handle both.
+      const appids = wishlist
+        .map(it => (typeof it === 'object' ? (it.appid || it.id) : it))
+        .filter(Boolean)
+        .slice(0, PRICE_WATCH_ITEMS_PER_USER);
+
+      const existingAlerts = (await kvGet(env, `alerts:${sid}`)) || [];
+      const recentByApp = new Map();
+      for (const a of existingAlerts) {
+        if (a?.appid && a?.at && Date.now() - a.at < ALERT_DEDUPE_WINDOW_MS) {
+          recentByApp.set(String(a.appid), a);
+        }
+      }
+
+      const newAlerts = [];
+      for (const appid of appids) {
+        try {
+          stats.scanned++;
+          const data = await fetchJSON(
+            `https://store.steampowered.com/api/appdetails?appids=${appid}&cc=gb&l=en&filters=basic,price_overview`
+          );
+          const entry = data?.[String(appid)];
+          if (!entry?.success) continue;
+          const po = entry.data?.price_overview;
+          const discount = po?.discount_percent || 0;
+          if (discount <= 0) continue;
+          if (recentByApp.has(String(appid))) continue;
+
+          newAlerts.push({
+            appid,
+            name: entry.data?.name || `App ${appid}`,
+            discount,
+            initial: po.initial_formatted || null,
+            final: po.final_formatted || null,
+            initialCents: po.initial,
+            finalCents: po.final,
+            currency: po.currency,
+            header: `https://cdn.cloudflare.steamstatic.com/steam/apps/${appid}/header.jpg`,
+            url: `https://store.steampowered.com/app/${appid}/`,
+            at: Date.now(),
+          });
+        } catch (e) {
+          stats.errors++;
+        }
+      }
+
+      if (newAlerts.length) {
+        // Newest first, cap at 50 stored alerts per user.
+        const merged = [...newAlerts, ...existingAlerts].slice(0, 50);
+        await kvPut(env, `alerts:${sid}`, merged, ALERTS_TTL_SECONDS);
+        stats.alerts += newAlerts.length;
+      }
+    } catch (e) {
+      stats.errors++;
+    }
+  }
+  return stats;
+}
+
+// Public read endpoint for the QuestLog frontend to surface stored alerts.
+async function getAlerts(url, env) {
+  const sid = url.searchParams.get('sid');
+  if (!sid) return jsonResponse({ error: 'sid required' }, 400);
+  const alerts = (await kvGet(env, `alerts:${sid}`)) || [];
+  return jsonResponse({ alerts });
+}
+
+// Diagnostic endpoint — lets us see when the cron last ran and what it did.
+async function cronStatus(env) {
+  const last = await kvGet(env, 'cron:lastRun');
+  const stamp = await kvGet(env, 'aotd:day-stamp');
+  return jsonResponse({ lastRun: last, aotdDayStamp: stamp });
 }

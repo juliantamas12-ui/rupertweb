@@ -11,3 +11,9 @@ binding = "ASSETS"
 [[kv_namespaces]]
 binding = "QUESTLOG_KV"
 id = "62cc592058cd4e0d9e28e662d651791a"
+
+# Cron triggers — invoke worker.js scheduled() handler.
+# Hourly: wishlist price-watch sweep (writes alerts:${sid} for QuestLog Pro users).
+# Daily 00:00 UTC: also rotates the Achievement-of-the-Day day stamp.
+[triggers]
+crons = ["0 * * * *", "0 0 * * *"]
