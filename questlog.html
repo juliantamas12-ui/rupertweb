@@ -2584,18 +2584,36 @@ function applyThemeMode(mode) {
     html[data-theme-mode='gamer'] .sidebar-card::before,
     html[data-theme-mode='gamer'] .feature::before{ display:none !important }
 
-    /* Nuke ALL inline panel backgrounds inside sections — these are
-       inner containers using inline styles like background:var(--panel)/--panel2. */
-    html[data-theme-mode='gamer'] .section [style*='background:var(--panel)'],
-    html[data-theme-mode='gamer'] .section [style*='background:var(--panel2)'],
-    html[data-theme-mode='gamer'] .section [style*='background: var(--panel)'],
-    html[data-theme-mode='gamer'] .section [style*='background: var(--panel2)']{
+    /* Nuke ALL inline panel backgrounds globally — inner containers using
+       inline styles like background:var(--panel)/--panel2 leak the base blue. */
+    html[data-theme-mode='gamer'] [style*='background:var(--panel)'],
+    html[data-theme-mode='gamer'] [style*='background:var(--panel2)'],
+    html[data-theme-mode='gamer'] [style*='background: var(--panel)'],
+    html[data-theme-mode='gamer'] [style*='background: var(--panel2)']{
       background:transparent !important;
       border-color:rgba(255,255,255,0.06) !important;
       box-shadow:none !important;
     }
     /* Strip rounded inline border-radius on these inner containers */
     html[data-theme-mode='gamer'] [style*='border-radius']{ border-radius:0 !important }
+
+    /* Override the .connect-btn Steam-blue gradient (used for inline action
+       buttons like "Check" and "Compare" inside Utility tab) */
+    html[data-theme-mode='gamer'] .connect-btn{
+      background:var(--accent) !important;
+      color:#0a0a0a !important;
+      box-shadow:none !important;
+      text-shadow:none !important;
+      border:none !important;
+      font-weight:600 !important;
+      letter-spacing:2px !important;
+      text-transform:uppercase !important;
+    }
+    html[data-theme-mode='gamer'] .connect-btn:hover{
+      background:#ff8a30 !important;
+      box-shadow:none !important;
+    }
+    html[data-theme-mode='gamer'] .connect-btn:active{ transform:none !important }
 
     /* Stat cards — strip the box, keep just a number + label */
     html[data-theme-mode='gamer'] .stat-card{
