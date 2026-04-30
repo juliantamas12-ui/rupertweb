@@ -146,7 +146,7 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
 .btn-ghost:hover,.btn:hover{border-color:var(--accent);color:var(--accent)}
 .landing-features{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:80px auto 0;max-width:1000px}
 /* ── FEATURE BLOCKS (DESIGN.md spec) ── No card. Hairline-top zone, eyebrow + body. */
-.feature-card{background:transparent;border:none;border-top:1px solid var(--border);border-radius:0 !important;padding:24px 0;text-align:left}
+.feature-card{background:transparent;border:none;border-radius:0 !important;padding:24px 0;text-align:left}
 .feature-icon{font-size:28px;margin-bottom:12px}
 .feature-card h3{font-size:14px;font-weight:700;margin-bottom:6px}
 .feature-card p{font-size:12px;color:var(--dim);line-height:1.5}
@@ -162,20 +162,17 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
 
 /* ── METRIC CLUSTER (DESIGN.md spec) ──
    Replaces .stat-card. No box, no border, no fill. Just instrument label,
-   big mono digit, optional micro delta. Grouped horizontally as a cluster
-   with a single 2px accent rule on the leftmost item. */
-.stats-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-bottom:32px;border-left:2px solid var(--accent)}
-.stat-card{background:transparent;border:none;border-left:1px solid var(--border);border-radius:0 !important;padding:8px 22px}
-.stat-card:first-child{border-left:none}
+   big mono digit, optional micro delta. Spaced apart by gap, not dividers. */
+.stats-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:32px;margin-bottom:32px}
+.stat-card{background:transparent;border:none;border-radius:0 !important;padding:0}
 .stat-label{font-size:10px;letter-spacing:3px;color:var(--dim);text-transform:uppercase;margin-bottom:10px;font-weight:500}
 .stat-value{font-size:32px;font-weight:500;color:var(--text-bright);line-height:1;font-family:'JetBrains Mono','IBM Plex Mono',monospace;letter-spacing:-1px}
 .stat-sub{font-size:11px;color:var(--dim);margin-top:6px;letter-spacing:0.5px}
 
 /* ── ZONES & SECTION HEADS (DESIGN.md spec) ──
-   Each .section is a zone separated by space + a hairline. The hero pattern
-   is: eyebrow label, big italic headline, optional strapline, accent stripe. */
-.section{margin:0;padding:48px 0;border-top:1px solid var(--border);position:relative}
-main > .section:first-of-type{border-top:none;padding-top:8px}
+   Zones separated by whitespace alone. No hairlines unless absolutely needed. */
+.section{margin:0;padding:40px 0;border:none;position:relative}
+main > .section:first-of-type{padding-top:8px}
 .section-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:24px;padding-bottom:0;border-bottom:none;gap:24px;flex-wrap:wrap}
 .section-head h2,.section-head h3{font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text);position:relative;padding-left:0;margin:0}
 .section-head h2::before,.section-head h3::before{content:none;display:none}
@@ -203,8 +200,8 @@ main > .section:first-of-type{border-top:none;padding-top:8px}
 .game-meta{font-size:10px;color:var(--dim);display:flex;justify-content:space-between;align-items:center;letter-spacing:1.5px;text-transform:uppercase;font-family:'JetBrains Mono',monospace}
 
 /* ── REC ROW (DESIGN.md spec) ── Hairline list item, accent left bar on hover. */
-.rec-card{background:transparent;border:none;border-bottom:1px solid var(--border);border-left:2px solid transparent;border-radius:0 !important;padding:16px 18px 16px 22px;display:flex;gap:16px;align-items:center;margin-bottom:0;cursor:pointer;transition:border-color 0.12s, background 0.12s}
-.rec-card:hover{border-left-color:var(--accent);background:rgba(255,255,255,0.02);box-shadow:none}
+.rec-card{background:transparent;border:none;border-left:2px solid transparent;border-radius:0 !important;padding:14px 18px 14px 22px;display:flex;gap:16px;align-items:center;margin-bottom:0;cursor:pointer;transition:border-color 0.12s, background 0.12s}
+.rec-card:hover{border-left-color:var(--accent);background:rgba(255,255,255,0.025);box-shadow:none}
 
 .rec-cover{width:100px;aspect-ratio:460/215;flex-shrink:0;border-radius:6px;background-size:cover;background-position:center;background-color:var(--panel2)}
 .rec-info{flex:1;min-width:0}
@@ -215,7 +212,7 @@ main > .section:first-of-type{border-top:none;padding-top:8px}
 
 /* ── SIDEBAR BLOCK (DESIGN.md spec) ── Stripped of box. Section-heading style label + content. */
 .sidebar-card{background:transparent;border:none;border-radius:0 !important;padding:0;margin-bottom:32px;position:relative}
-.sidebar-card + .sidebar-card{padding-top:24px;border-top:1px solid var(--border)}
+.sidebar-card + .sidebar-card{padding-top:0}
 .sidebar-card h3{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--dim);margin-bottom:14px}
 .news-item{padding:10px 0;border-bottom:1px solid var(--border);font-size:12px;line-height:1.5}
 .news-item:last-child{border-bottom:none}
@@ -240,7 +237,7 @@ main > .section:first-of-type{border-top:none;padding-top:8px}
 .leaderboard-row-me{background:rgba(200,241,53,0.05)}
 .pro-badge{display:inline-block;background:transparent;color:var(--accent);font-size:9px;font-weight:700;letter-spacing:2px;padding:2px 6px;border:1px solid var(--accent);border-radius:0 !important;margin-left:8px;text-transform:uppercase}
 
-.pricing-banner{background:transparent;border:none;border-top:1px solid var(--border);border-bottom:1px solid var(--border);border-radius:0 !important;padding:24px 0;margin-bottom:32px;display:flex;align-items:center;justify-content:space-between;gap:24px}
+.pricing-banner{background:transparent;border:none;border-radius:0 !important;padding:8px 0 32px;margin-bottom:0;display:flex;align-items:center;justify-content:space-between;gap:24px}
 .pricing-banner-text h3{font-size:16px;margin-bottom:4px}
 .pricing-banner-text p{font-size:12px;color:var(--dim)}
 .pricing-banner .connect-btn{padding:10px 20px;font-size:13px}
