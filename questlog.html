@@ -145,14 +145,13 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
 .landing h1 span{color:var(--accent)}
 .landing p{font-size:17px;color:var(--dim);max-width:520px;margin:0 auto 36px}
 /* ── BUTTONS (DESIGN.md spec) ──
-   Primary: filled --accent, sharp, tracked uppercase, ONE per zone.
-   Outline: 1px border, transparent fill.
-   Ghost text-link: --accent text, underline on hover. */
-.connect-btn,.btn-primary{background:var(--accent);color:#000;padding:0 22px;height:40px;border-radius:0 !important;font-weight:700;font-size:12px;border:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:background 0.12s, color 0.12s;font-family:inherit;letter-spacing:1.5px;text-transform:uppercase;box-shadow:none;text-shadow:none;line-height:1}
+   Steam-flat: flat fill, sentence case, modest tracking. No gradients.
+   Primary: filled --accent. Outline: 1px border, transparent fill. */
+.connect-btn,.btn-primary{background:var(--accent);color:#000;padding:0 18px;height:36px;border-radius:0 !important;font-weight:600;font-size:13px;border:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:background 0.12s, color 0.12s;font-family:inherit;letter-spacing:0.3px;text-transform:none;box-shadow:none;text-shadow:none;line-height:1}
 .connect-btn:hover,.btn-primary:hover{background:var(--accent2);color:#fff;box-shadow:none}
 .connect-btn:active,.btn-primary:active{transform:translateY(1px)}
 .connect-btn svg,.btn-primary svg{width:16px;height:16px}
-.btn-ghost,.btn{background:transparent;color:var(--text);padding:0 22px;height:40px;border-radius:0 !important;font-weight:700;font-size:12px;border:1px solid rgba(255,255,255,0.18);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:border-color 0.12s, color 0.12s;font-family:inherit;letter-spacing:1.5px;text-transform:uppercase;line-height:1}
+.btn-ghost,.btn{background:transparent;color:var(--text);padding:0 18px;height:36px;border-radius:0 !important;font-weight:600;font-size:13px;border:1px solid rgba(255,255,255,0.18);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:border-color 0.12s, color 0.12s;font-family:inherit;letter-spacing:0.3px;text-transform:none;line-height:1}
 .btn-ghost:hover,.btn:hover{border-color:var(--accent);color:var(--accent)}
 .landing-features{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:80px auto 0;max-width:1000px}
 /* ── FEATURE BLOCKS (DESIGN.md spec) ── No card. Hairline-top zone, eyebrow + body. */
@@ -202,6 +201,13 @@ main > .section:first-of-type{padding-top:8px}
 .eyebrow{display:flex;align-items:center;gap:10px;font-size:10px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--dim);margin-bottom:10px;font-family:'JetBrains Mono','IBM Plex Mono',monospace}
 .eyebrow .num{color:var(--accent);font-weight:700}
 .eyebrow .bar{display:inline-block;width:24px;height:1px;background:var(--accent)}
+
+/* ── SECTION HIERARCHY (Steam pages use big titles + readable subtitles) ──
+   In Pro Hub each section’s descriptive text is real content not metadata,
+   so it gets bumped up. Keeps page from looking like a wall of greys. */
+.section-head h2,.section-head h3{font-size:18px !important;font-weight:700 !important;letter-spacing:0.3px !important;text-transform:none !important;color:var(--text-bright) !important}
+.sidebar-card > p:first-of-type{font-size:14px !important;color:var(--text) !important;line-height:1.55 !important;margin-bottom:18px !important;opacity:0.85}
+.empty{font-size:14px !important;color:var(--dim) !important}
 
 /* ── SPEC PLATE ── mono-numeric instrument row, separated by hairline pipes */
 .spec{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-family:'JetBrains Mono','IBM Plex Mono',monospace;font-size:11px;letter-spacing:1px;color:var(--dim);text-transform:uppercase}
@@ -2674,12 +2680,15 @@ function applyThemeMode(mode) {
     }
     html[data-theme-mode='gamer'] .btn-primary,
     html[data-theme-mode='gamer'] .connect-btn{
-      background:linear-gradient(180deg,#67c1f5 0%,#417a9b 100%) !important;
-      color:#fff !important;
+      background:#3d6b8d !important;
+      color:#e8f0f7 !important;
+      font-weight:600 !important;
+      letter-spacing:0.3px !important;
+      text-transform:none !important;
     }
     html[data-theme-mode='gamer'] .btn-primary:hover,
     html[data-theme-mode='gamer'] .connect-btn:hover{
-      background:linear-gradient(180deg,#7fcfff 0%,#4d8db3 100%) !important;
+      background:#4a8fc1 !important;
       color:#fff !important;
     }
     html[data-theme-mode='gamer'] *::-webkit-scrollbar-thumb{
