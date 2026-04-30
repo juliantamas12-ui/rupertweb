@@ -208,6 +208,32 @@ main > .section:first-of-type{padding-top:8px}
 .sidebar-card > p:first-of-type{font-size:14px !important;color:var(--text) !important;line-height:1.55 !important;margin-bottom:18px !important;opacity:0.85}
 .empty{font-size:14px !important;color:var(--dim) !important}
 
+/* ── PRO HUB DESKTOP DENSITY ──
+   On wide screens, pair sections into a 2-column grid so the right half
+   isn't dead space. Insights + Quests sub-tabs benefit most. */
+@media(min-width:1100px){
+  #proHubUnlocked .sub-view[data-sub="insights"],
+  #proHubUnlocked .sub-view[data-sub="quests"]{
+    display:none;
+  }
+  #proHubUnlocked .sub-view[data-sub="insights"].active,
+  #proHubUnlocked .sub-view[data-sub="quests"].active{
+    display:grid !important;
+    grid-template-columns:1fr 1fr;
+    gap:48px 56px;
+    align-items:start;
+  }
+  #proHubUnlocked .sub-view[data-sub="insights"] > .eyebrow,
+  #proHubUnlocked .sub-view[data-sub="quests"] > .eyebrow{
+    grid-column:1 / -1;
+  }
+  #proHubUnlocked .sub-view[data-sub="insights"] > .section,
+  #proHubUnlocked .sub-view[data-sub="quests"] > .section{
+    margin-bottom:0;
+    padding:0;
+  }
+}
+
 /* ── SPEC PLATE ── mono-numeric instrument row, separated by hairline pipes */
 .spec{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-family:inherit;font-size:12px;letter-spacing:0;color:var(--dim);text-transform:none}
 .spec .item{display:inline-flex;gap:8px;align-items:baseline}
@@ -246,7 +272,7 @@ main > .section:first-of-type{padding-top:8px}
 .rec-action{background:var(--accent);color:#000;padding:8px 14px;border-radius:5px;font-size:12px;font-weight:700;border:none;cursor:pointer;flex-shrink:0;font-family:inherit}
 
 /* ── SIDEBAR BLOCK (DESIGN.md spec) ── Stripped of box. Section-heading style label + content. */
-.sidebar-card{background:transparent;border:none;border-radius:0 !important;padding:0;margin-bottom:32px;position:relative}
+.sidebar-card{background:transparent;border:none;border-radius:0 !important;padding:0;margin-bottom:32px;position:relative;width:100%;max-width:none}
 .sidebar-card + .sidebar-card{padding-top:0}
 .sidebar-card h3{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--dim);margin-bottom:14px}
 .news-item{padding:10px 0;border-bottom:1px solid var(--border);font-size:12px;line-height:1.5}
@@ -3374,14 +3400,17 @@ function loadStreak() {
     .slice(0, 3);
 
   el.innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px">
-      <div style="background:var(--panel2);padding:18px;border-radius:6px;text-align:center">
-        <div style="font-size:32px;font-weight:800;color:var(--accent);line-height:1">${streak}</div>
-        <div style="font-size:10px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-top:4px">Day streak</div>
+    <div style="display:flex;gap:48px;align-items:flex-end;margin-bottom:24px;flex-wrap:wrap">
+      <div>
+        <div style="font-size:64px;font-weight:300;color:var(--accent);line-height:1;letter-spacing:-2px">${streak}</div>
+        <div style="font-size:11px;color:var(--dim);letter-spacing:1px;margin-top:6px">Day streak</div>
       </div>
-      <div style="background:var(--panel2);padding:18px;border-radius:6px;text-align:center">
-        <div style="font-size:32px;font-weight:800;line-height:1">${days.length}</div>
-        <div style="font-size:10px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-top:4px">Days tracked</div>
+      <div>
+        <div style="font-size:64px;font-weight:300;color:var(--text-bright);line-height:1;letter-spacing:-2px">${days.length}</div>
+        <div style="font-size:11px;color:var(--dim);letter-spacing:1px;margin-top:6px">Days tracked</div>
+      </div>
+      <div style="flex:1;min-width:200px">
+        <div style="font-size:11px;color:var(--dim);letter-spacing:1px;margin-bottom:8px">Streak counts days you check QuestLog with active Steam playtime.</div>
       </div>
     </div>
     ${neglected.length > 0 ? `
