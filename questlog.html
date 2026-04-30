@@ -1082,6 +1082,76 @@ main > .section:first-of-type{padding-top:8px}
         <button onclick="togglePro()" style="background:transparent;color:var(--dim);border:1px solid var(--border);padding:6px 12px;border-radius:4px;font-size:11px;cursor:pointer;font-family:inherit">Disable demo</button>
       </div>
 
+      <!-- CUSTOMIZATION (PRO) — promoted to top per Julian's request -->
+      <div class="section" style="padding:0;margin-bottom:20px">
+        <div class="section-head"><h3 style="font-size:15px">Custom URL &amp; Themes</h3></div>
+        <div class="sidebar-card">
+          <div style="margin-bottom:18px">
+            <div style="font-size:12px;color:var(--dim);margin-bottom:8px;letter-spacing:1px;text-transform:uppercase">Custom URL</div>
+            <div style="display:flex;gap:8px">
+              <div style="background:var(--panel2);padding:10px 12px;border-radius:5px;font-family:'Courier New',monospace;font-size:12px;color:var(--dim);flex-shrink:0">rupertweb.com/u/</div>
+              <input type="text" id="customUrlInput" placeholder="your-name" style="flex:1;background:var(--panel2);border:1px solid var(--border);border-radius:5px;padding:10px 12px;color:var(--text);font-size:13px;font-family:inherit" maxlength="20">
+              <button onclick="saveCustomUrl()" class="connect-btn" style="padding:10px 18px;font-size:12px">Save</button>
+            </div>
+            <div id="customUrlResult" style="font-size:12px;margin-top:8px"></div>
+          </div>
+          <div style="margin-bottom:18px">
+            <div style="font-size:12px;color:var(--dim);margin-bottom:8px;letter-spacing:1px;text-transform:uppercase">Theme</div>
+            <div id="themeButtons" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px"></div>
+          </div>
+          <div style="margin-bottom:18px">
+            <div style="font-size:12px;color:var(--dim);margin-bottom:8px;letter-spacing:1px;text-transform:uppercase">Custom Accent Color</div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="color" id="customAccent" value="#c8f135" onchange="setCustomAccent(this.value)" style="width:50px;height:40px;border:1px solid var(--border);border-radius:5px;cursor:pointer;background:var(--panel2)">
+              <input type="text" id="customAccentHex" placeholder="#c8f135" maxlength="7" oninput="if(/^#[0-9a-fA-F]{6}$/.test(this.value)) {document.getElementById('customAccent').value=this.value; setCustomAccent(this.value);}" style="flex:1;background:var(--panel2);border:1px solid var(--border);border-radius:5px;padding:10px 12px;color:var(--text);font-size:13px;font-family:'Courier New',monospace">
+              <button onclick="clearCustomAccent()" style="background:transparent;color:var(--dim);border:1px solid var(--border);padding:10px 14px;border-radius:5px;font-size:12px;cursor:pointer;font-family:inherit">Reset</button>
+            </div>
+            <p style="font-size:11px;color:var(--dim);margin-top:6px">Override the theme's accent with your own colour. Applies everywhere instantly.</p>
+          </div>
+          <div style="margin-bottom:18px">
+            <div style="font-size:12px;color:var(--dim);margin-bottom:8px;letter-spacing:1px;text-transform:uppercase">Density</div>
+            <div style="display:flex;gap:6px">
+              <button onclick="setDensity('compact')" class="density-btn" data-density="compact">Compact</button>
+              <button onclick="setDensity('normal')" class="density-btn" data-density="normal">Normal</button>
+              <button onclick="setDensity('spacious')" class="density-btn" data-density="spacious">Spacious</button>
+            </div>
+          </div>
+          <div style="margin-bottom:18px">
+            <div style="font-size:12px;color:var(--dim);margin-bottom:8px;letter-spacing:1px;text-transform:uppercase">Corner Style</div>
+            <div style="display:flex;gap:6px">
+              <button onclick="setCorners('sharp')" class="corner-btn" data-corners="sharp">Sharp</button>
+              <button onclick="setCorners('rounded')" class="corner-btn" data-corners="rounded">Rounded</button>
+              <button onclick="setCorners('pill')" class="corner-btn" data-corners="pill">Pill</button>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--dim);margin-bottom:8px;letter-spacing:1px;text-transform:uppercase">Font Size</div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <input type="range" id="fontSizeSlider" min="85" max="125" step="5" value="100" oninput="document.getElementById('fontSizeLabel').textContent=this.value+'%'" onchange="setFontSize(this.value)" style="flex:1;accent-color:var(--accent)">
+              <span id="fontSizeLabel" style="min-width:50px;text-align:right;font-size:12px;color:var(--dim);font-family:'Courier New',monospace">100%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PRICE DROP ALERTS (PRO) — promoted to top per Julian's request -->
+      <div class="section" style="padding:0;margin-bottom:20px">
+        <div class="section-head"><h3 style="font-size:15px">Price Drop Alerts</h3></div>
+        <div class="sidebar-card">
+          <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Set target prices. We check every hour and email you the instant a game drops below your target on any store.</p>
+          <div style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:10px;margin-bottom:10px">
+            <div style="position:relative">
+              <input type="text" id="alertGameInput" placeholder="Game title" autocomplete="off" style="width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit" oninput="alertGameSuggest(this)" onkeydown="alertGameSuggestKey(event)" onblur="setTimeout(()=>document.getElementById('alertGameSuggestBox').style.display='none',200)">
+              <div id="alertGameSuggestBox" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--panel);border:1px solid var(--border);border-radius:6px;max-height:320px;overflow-y:auto;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,0.4)"></div>
+            </div>
+            <input type="number" id="alertTarget" placeholder="Target £" step="0.01" style="background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit">
+            <input type="email" id="alertEmailPro" placeholder="Email" style="background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit">
+            <button onclick="addPriceAlert()" class="connect-btn" style="padding:10px 18px;font-size:12px">Add</button>
+          </div>
+          <div id="priceAlertsList" style="margin-top:14px"></div>
+        </div>
+      </div>
+
       <!-- PERSONAL QUESTS (PRO) -->
       <div class="section">
         <div class="section-head"><h2>Your Quests <span style="background:rgba(200,241,53,0.15);color:var(--accent);font-size:10px;padding:3px 8px;border-radius:3px;letter-spacing:1px;margin-left:8px">PRO</span></h2></div>
@@ -1187,23 +1257,6 @@ main > .section:first-of-type{padding-top:8px}
       </div>
 
       <div class="section" style="padding:0;margin-bottom:20px">
-        <div class="section-head"><h3 style="font-size:15px">Price Drop Alerts</h3></div>
-        <div class="sidebar-card">
-          <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Set target prices. We check every hour and email you the instant a game drops below your target on any store.</p>
-          <div style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:10px;margin-bottom:10px">
-            <div style="position:relative">
-              <input type="text" id="alertGameInput" placeholder="Game title" autocomplete="off" style="width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit" oninput="alertGameSuggest(this)" onkeydown="alertGameSuggestKey(event)" onblur="setTimeout(()=>document.getElementById('alertGameSuggestBox').style.display='none',200)">
-              <div id="alertGameSuggestBox" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--panel);border:1px solid var(--border);border-radius:6px;max-height:320px;overflow-y:auto;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,0.4)"></div>
-            </div>
-            <input type="number" id="alertTarget" placeholder="Target £" step="0.01" style="background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit">
-            <input type="email" id="alertEmailPro" placeholder="Email" style="background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit">
-            <button onclick="addPriceAlert()" class="connect-btn" style="padding:10px 18px;font-size:12px">Add</button>
-          </div>
-          <div id="priceAlertsList" style="margin-top:14px"></div>
-        </div>
-      </div>
-
-      <div class="section" style="padding:0;margin-bottom:20px">
         <div class="section-head"><h3 style="font-size:15px">Wishlist Sync</h3></div>
         <div class="sidebar-card">
           <p style="color:var(--dim);font-size:13px;margin-bottom:14px">One wishlist across every store. Prices monitored continuously.</p>
@@ -1215,61 +1268,6 @@ main > .section:first-of-type{padding-top:8px}
             <button onclick="addWishlist()" class="connect-btn" style="padding:10px 20px;font-size:13px">Add</button>
           </div>
           <div id="wishlistItems"></div>
-        </div>
-      </div>
-
-      <div class="section" style="padding:0;margin-bottom:20px">
-        <div class="section-head"><h3 style="font-size:15px">Custom URL &amp; Themes</h3></div>
-        <div class="sidebar-card">
-          <div style="margin-bottom:18px">
-            <div style="font-size:12px;color:var(--dim);margin-bottom:8px;letter-spacing:1px;text-transform:uppercase">Custom URL</div>
-            <div style="display:flex;gap:8px">
-              <div style="background:var(--panel2);padding:10px 12px;border-radius:5px;font-family:'Courier New',monospace;font-size:12px;color:var(--dim);flex-shrink:0">rupertweb.com/u/</div>
-              <input type="text" id="customUrlInput" placeholder="your-name" style="flex:1;background:var(--panel2);border:1px solid var(--border);border-radius:5px;padding:10px 12px;color:var(--text);font-size:13px;font-family:inherit" maxlength="20">
-              <button onclick="saveCustomUrl()" class="connect-btn" style="padding:10px 18px;font-size:12px">Save</button>
-            </div>
-            <div id="customUrlResult" style="font-size:12px;margin-top:8px"></div>
-          </div>
-          <div style="margin-bottom:18px">
-            <div style="font-size:12px;color:var(--dim);margin-bottom:8px;letter-spacing:1px;text-transform:uppercase">Theme</div>
-            <div id="themeButtons" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px"></div>
-          </div>
-
-          <div style="margin-bottom:18px">
-            <div style="font-size:12px;color:var(--dim);margin-bottom:8px;letter-spacing:1px;text-transform:uppercase">Custom Accent Color</div>
-            <div style="display:flex;gap:8px;align-items:center">
-              <input type="color" id="customAccent" value="#c8f135" onchange="setCustomAccent(this.value)" style="width:50px;height:40px;border:1px solid var(--border);border-radius:5px;cursor:pointer;background:var(--panel2)">
-              <input type="text" id="customAccentHex" placeholder="#c8f135" maxlength="7" oninput="if(/^#[0-9a-fA-F]{6}$/.test(this.value)) {document.getElementById('customAccent').value=this.value; setCustomAccent(this.value);}" style="flex:1;background:var(--panel2);border:1px solid var(--border);border-radius:5px;padding:10px 12px;color:var(--text);font-size:13px;font-family:'Courier New',monospace">
-              <button onclick="clearCustomAccent()" style="background:transparent;color:var(--dim);border:1px solid var(--border);padding:10px 14px;border-radius:5px;font-size:12px;cursor:pointer;font-family:inherit">Reset</button>
-            </div>
-            <p style="font-size:11px;color:var(--dim);margin-top:6px">Override the theme's accent with your own colour. Applies everywhere instantly.</p>
-          </div>
-
-          <div style="margin-bottom:18px">
-            <div style="font-size:12px;color:var(--dim);margin-bottom:8px;letter-spacing:1px;text-transform:uppercase">Density</div>
-            <div style="display:flex;gap:6px">
-              <button onclick="setDensity('compact')" class="density-btn" data-density="compact">Compact</button>
-              <button onclick="setDensity('normal')" class="density-btn" data-density="normal">Normal</button>
-              <button onclick="setDensity('spacious')" class="density-btn" data-density="spacious">Spacious</button>
-            </div>
-          </div>
-
-          <div style="margin-bottom:18px">
-            <div style="font-size:12px;color:var(--dim);margin-bottom:8px;letter-spacing:1px;text-transform:uppercase">Corner Style</div>
-            <div style="display:flex;gap:6px">
-              <button onclick="setCorners('sharp')" class="corner-btn" data-corners="sharp">Sharp</button>
-              <button onclick="setCorners('rounded')" class="corner-btn" data-corners="rounded">Rounded</button>
-              <button onclick="setCorners('pill')" class="corner-btn" data-corners="pill">Pill</button>
-            </div>
-          </div>
-
-          <div>
-            <div style="font-size:12px;color:var(--dim);margin-bottom:8px;letter-spacing:1px;text-transform:uppercase">Font Size</div>
-            <div style="display:flex;gap:6px;align-items:center">
-              <input type="range" id="fontSizeSlider" min="85" max="125" step="5" value="100" oninput="document.getElementById('fontSizeLabel').textContent=this.value+'%'" onchange="setFontSize(this.value)" style="flex:1;accent-color:var(--accent)">
-              <span id="fontSizeLabel" style="min-width:50px;text-align:right;font-size:12px;color:var(--dim);font-family:'Courier New',monospace">100%</span>
-            </div>
-          </div>
         </div>
       </div>
 
