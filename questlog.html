@@ -135,11 +135,16 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
 
 .dashboard{display:grid;grid-template-columns:1fr 320px;gap:24px}
 
-.stats-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
-.stat-card{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:18px}
-.stat-label{font-size:10px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:8px}
-.stat-value{font-size:24px;font-weight:800;color:var(--text);line-height:1}
-.stat-sub{font-size:11px;color:var(--dim);margin-top:4px}
+/* ── METRIC CLUSTER (DESIGN.md spec) ──
+   Replaces .stat-card. No box, no border, no fill. Just instrument label,
+   big mono digit, optional micro delta. Grouped horizontally as a cluster
+   with a single 2px accent rule on the leftmost item. */
+.stats-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-bottom:32px;border-left:2px solid var(--accent)}
+.stat-card{background:transparent;border:none;border-left:1px solid var(--border);border-radius:0 !important;padding:8px 22px}
+.stat-card:first-child{border-left:none}
+.stat-label{font-size:10px;letter-spacing:3px;color:var(--dim);text-transform:uppercase;margin-bottom:10px;font-weight:500}
+.stat-value{font-size:32px;font-weight:500;color:var(--text-bright);line-height:1;font-family:'JetBrains Mono','IBM Plex Mono',monospace;letter-spacing:-1px}
+.stat-sub{font-size:11px;color:var(--dim);margin-top:6px;letter-spacing:0.5px}
 
 /* ── ZONES & SECTION HEADS (DESIGN.md spec) ──
    Each .section is a zone separated by space + a hairline. The hero pattern
