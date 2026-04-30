@@ -194,13 +194,12 @@ main > .section:first-of-type{padding-top:8px}
 .section-head .link{font-size:11px;color:var(--dim);text-decoration:none;cursor:pointer;background:none;border:none;font-family:inherit;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;transition:color 0.12s}
 .section-head .link:hover{color:var(--accent)}
 
-/* ── INSTRUMENT EYEBROW (DESIGN.md "editorial" rhythm) ──
-   A small numbered or labelled eyebrow that sits above headings to give the
-   page Ferrari-magazine pacing. Use sparingly — only on the first heading of
-   a sub-tab and on hero zones. */
-.eyebrow{display:flex;align-items:center;gap:10px;font-size:10px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--dim);margin-bottom:10px;font-family:'JetBrains Mono','IBM Plex Mono',monospace}
-.eyebrow .num{color:var(--accent);font-weight:700}
-.eyebrow .bar{display:inline-block;width:24px;height:1px;background:var(--accent)}
+/* ── SECTION EYEBROW ──
+   A subtle accent label that sits above headings. Same font as the rest of
+   the UI — no typewriter mono, no over-tracking. */
+.eyebrow{display:flex;align-items:center;gap:10px;font-size:11px;font-weight:600;letter-spacing:0.5px;text-transform:none;color:var(--accent);margin-bottom:8px;font-family:inherit}
+.eyebrow .num{display:none}
+.eyebrow .bar{display:none}
 
 /* ── SECTION HIERARCHY (Steam pages use big titles + readable subtitles) ──
    In Pro Hub each section’s descriptive text is real content not metadata,
@@ -210,7 +209,7 @@ main > .section:first-of-type{padding-top:8px}
 .empty{font-size:14px !important;color:var(--dim) !important}
 
 /* ── SPEC PLATE ── mono-numeric instrument row, separated by hairline pipes */
-.spec{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-family:'JetBrains Mono','IBM Plex Mono',monospace;font-size:11px;letter-spacing:1px;color:var(--dim);text-transform:uppercase}
+.spec{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-family:inherit;font-size:12px;letter-spacing:0;color:var(--dim);text-transform:none}
 .spec .item{display:inline-flex;gap:8px;align-items:baseline}
 .spec .item .v{color:var(--text-bright);font-weight:700;font-size:13px;letter-spacing:0}
 .spec .sep{display:inline-block;width:1px;height:14px;background:var(--border)}
@@ -218,9 +217,8 @@ main > .section:first-of-type{padding-top:8px}
 /* ── STRIPE ── the Ferrari accent bar; sits flush-left under headlines */
 .stripe{display:block;width:60px;height:2px;background:var(--accent);margin:6px 0 18px}
 
-/* ── ZONE END MARKER ── a tiny dotted lane at the end of a zone for closure */
-.lane-end{display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--dim);text-transform:uppercase;margin:32px 0 0}
-.lane-end::before,.lane-end::after{content:'';flex:1;height:1px;background:var(--border)}
+/* lane-end markers retired — too typewriter */
+.lane-end{display:none}
 
 /* ── GAME TILE (DESIGN.md spec) ──
    Cover image dominates. No border, no fill. Title in 14/600.
@@ -778,7 +776,7 @@ main > .section:first-of-type{padding-top:8px}
       </div>
       <p style="font-size:12px;color:var(--dim);margin:0;letter-spacing:0.3px">Price alerts · Rare achievement guides · Push notifications · Custom themes · £4.99/mo</p>
     </div>
-    <button class="btn-primary" onclick="document.querySelector('[data-view=&quot;pro&quot;]')?.click()" style="padding:0 28px;height:44px;font-size:12px;letter-spacing:2px;font-weight:700;text-transform:uppercase;display:inline-flex;align-items:center;gap:8px;flex-shrink:0">
+    <button class="btn-primary" onclick="document.querySelector('[data-view=&quot;pro&quot;]')?.click()" style="padding:0 24px;height:40px;font-size:13px;letter-spacing:0.3px;font-weight:600;text-transform:none;display:inline-flex;align-items:center;gap:8px;flex-shrink:0">
       Upgrade <span style="font-size:14px">→</span>
     </button>
   </div>
@@ -1149,7 +1147,7 @@ main > .section:first-of-type{padding-top:8px}
 
       <!-- CUSTOMIZATION (PRO) -->
       <div class="section" style="padding:0;margin-bottom:20px">
-        <div class="eyebrow"><span class="num">01</span><span class="bar"></span><span>Identity</span></div>
+        <div class="eyebrow">Identity</div>
         <div class="section-head"><h3 style="font-size:15px">Custom URL &amp; Themes</h3></div>
         <div class="sidebar-card">
           <div style="margin-bottom:18px">
@@ -1200,8 +1198,6 @@ main > .section:first-of-type{padding-top:8px}
         </div>
       </div>
 
-      <div class="lane-end">END OF CUSTOMIZE</div>
-
       </div><!-- /sub-view customize -->
 
       <!-- ===== ALERTS ===== -->
@@ -1209,7 +1205,7 @@ main > .section:first-of-type{padding-top:8px}
 
       <!-- PRICE DROP ALERTS (PRO) -->
       <div class="section" style="padding:0;margin-bottom:32px">
-        <div class="eyebrow"><span class="num">01</span><span class="bar"></span><span>Price Watch</span></div>
+        <div class="eyebrow">Price Watch</div>
         <div class="section-head"><h3 style="font-size:15px">Price Drop Alerts</h3></div>
         <div class="sidebar-card">
           <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Set target prices. We check every hour and email you the instant a game drops below your target on any store.</p>
@@ -1228,7 +1224,7 @@ main > .section:first-of-type{padding-top:8px}
 
       <!-- PUSH NOTIFICATIONS (PRO) — moved into ALERTS sub-tab -->
       <div class="section">
-        <div class="eyebrow"><span class="num">02</span><span class="bar"></span><span>Live Alerts</span></div>
+        <div class="eyebrow">Live Alerts</div>
         <div class="section-head"><h2>Push Notifications <span style="background:rgba(200,241,53,0.15);color:var(--accent);font-size:10px;padding:3px 8px;border-radius:3px;letter-spacing:1px;margin-left:8px">PRO</span></h2></div>
         <div class="sidebar-card" id="pushCard">
           <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Get instant alerts on your device for price drops, free games, and the daily achievement challenge.</p>
@@ -1245,7 +1241,7 @@ main > .section:first-of-type{padding-top:8px}
 
       <!-- WEEKLY DIGEST (moved into ALERTS too) -->
       <div class="section" style="padding:0;margin-bottom:20px">
-        <div class="eyebrow"><span class="num">03</span><span class="bar"></span><span>Newsletter</span></div>
+        <div class="eyebrow">Newsletter</div>
         <div class="section-head"><h3 style="font-size:15px">Weekly Digest</h3></div>
         <div class="sidebar-card">
           <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Every Sunday: best deals on games like yours, the week's free game, 3 new releases with 90%+ reviews, price drops on your wishlist.</p>
@@ -1257,8 +1253,6 @@ main > .section:first-of-type{padding-top:8px}
         </div>
       </div>
 
-      <div class="lane-end">END OF ALERTS</div>
-
       </div><!-- /sub-view alerts -->
 
       <!-- ===== QUESTS & GOALS ===== -->
@@ -1266,7 +1260,7 @@ main > .section:first-of-type{padding-top:8px}
 
       <!-- PERSONAL QUESTS (PRO) -->
       <div class="section">
-        <div class="eyebrow"><span class="num">01</span><span class="bar"></span><span>Goals</span></div>
+        <div class="eyebrow">Goals</div>
         <div class="section-head"><h2>Your Quests <span style="background:rgba(200,241,53,0.15);color:var(--accent);font-size:10px;padding:3px 8px;border-radius:3px;letter-spacing:1px;margin-left:8px">PRO</span></h2></div>
         <div class="sidebar-card" id="questsCard">
           <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Track personal goals across games. "Finish Witcher 3", "100% Hollow Knight", whatever. Saved in your browser.</p>
@@ -1317,14 +1311,12 @@ main > .section:first-of-type{padding-top:8px}
         <div id="demoRadarPanel" class="sidebar-card"><div class="empty"><span class="loading"></span></div></div>
       </div>
 
-      <div class="lane-end">END OF QUESTS</div>
-
       </div><!-- /sub-view quests -->
 
       <!-- ===== INSIGHTS ===== -->
       <div class="sub-view" data-sub="insights">
 
-      <div class="eyebrow" style="margin-bottom:14px"><span class="num">01</span><span class="bar"></span><span>Discovery</span></div>
+      <div class="eyebrow" style="margin-bottom:14px">Discovery</div>
       <!-- MOD SPACE (PRO) -->
       <div class="section">
         <div class="section-head"><h2>Mod Space <span style="background:rgba(200,241,53,0.15);color:var(--accent);font-size:10px;padding:3px 8px;border-radius:3px;letter-spacing:1px;margin-left:8px">PRO</span></h2></div>
@@ -1375,8 +1367,6 @@ main > .section:first-of-type{padding-top:8px}
           <div id="wishlistItems"></div>
         </div>
       </div>
-
-      <div class="lane-end">END OF INSIGHTS</div>
 
       </div><!-- /sub-view insights -->
     </div>
