@@ -7,7 +7,7 @@
 <meta name="description" content="Connect Steam, track achievements, get smart game recommendations, find quest guides, see leaderboards.">
 <link rel="canonical" href="https://rupertweb.com/questlog.html">
 <link rel="manifest" href="/questlog.webmanifest">
-<meta name="theme-color" content="#0a0e1a">
+<meta name="theme-color" content="#f5f2e8">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="QuestLog">
@@ -2307,7 +2307,7 @@ function updateProfileUrl() {
   const box = document.getElementById('profileUrl');
   if (!box || !STATE.sid) return;
   const customUrl = localStorage.getItem('questlog_custom_url');
-  const theme = localStorage.getItem('questlog_theme') || 'dark';
+  const theme = localStorage.getItem('questlog_theme') || 'light';
   const isPro = localStorage.getItem('questlog_pro') === '1';
   const base = customUrl || STATE.sid;
   const params = [];
@@ -2677,7 +2677,7 @@ function setCustomAccent(hex) {
 function clearCustomAccent() {
   localStorage.removeItem('questlog_custom_accent');
   document.getElementById('customAccentHex').value = '';
-  applyTheme(localStorage.getItem('questlog_theme') || 'dark');
+  applyTheme(localStorage.getItem('questlog_theme') || 'light');
 }
 
 function setDensity(d) {
@@ -2714,7 +2714,7 @@ function setTheme(theme) {
 }
 
 function loadActiveTheme() {
-  const saved = localStorage.getItem('questlog_theme') || 'dark';
+  const saved = localStorage.getItem('questlog_theme') || 'light';
   document.querySelectorAll('.theme-btn').forEach(b => b.classList.toggle('active', b.dataset.theme === saved));
   applyTheme(saved);
   // Re-sync the customisation controls so they reflect saved state
@@ -4083,8 +4083,8 @@ if (savedSid) {
   connectSteam();
 }
 // Apply saved theme on load (works even without Pro — saved in localStorage)
-const savedTheme = localStorage.getItem('questlog_theme');
-if (savedTheme && typeof applyTheme === 'function') applyTheme(savedTheme);
+const savedTheme = localStorage.getItem('questlog_theme') || 'light';
+if (typeof applyTheme === 'function') applyTheme(savedTheme);
 
 // Shrink nav on scroll
 (function(){
