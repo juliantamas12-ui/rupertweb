@@ -82,7 +82,13 @@ button,input,select,textarea,.connect-btn,.btn-primary,.btn-ghost{border-radius:
 .game-card,.rec-card{border-radius:0 !important}
 .game-img,.rec-cover{border-radius:0 !important}
 
-nav{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:24px;padding:14px 32px;border-bottom:1px solid var(--border);position:sticky;top:env(titlebar-area-y, 0);background:linear-gradient(180deg,#171a21 0%,#0e1419 100%);box-shadow:0 1px 0 rgba(255,255,255,0.04), 0 -2px 0 #4a8fc1 inset;z-index:100;min-height:60px;-webkit-app-region:drag}
+nav{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:24px;padding:14px 32px;border-bottom:1px solid var(--border);position:sticky;top:env(titlebar-area-y, 0);background:linear-gradient(180deg,#171a21 0%,#0e1419 100%);box-shadow:0 1px 0 rgba(255,255,255,0.04), 0 -2px 0 #4a8fc1 inset;z-index:100;min-height:60px;-webkit-app-region:drag;transition:padding 0.2s ease-out, min-height 0.2s ease-out, gap 0.2s ease-out}
+nav.shrunk{padding:6px 24px;min-height:44px;gap:16px}
+nav.shrunk .logo{font-size:14px;letter-spacing:0.4px}
+nav.shrunk .logo-dot{width:7px;height:7px}
+nav.shrunk .nav-tab{padding:5px 10px;height:28px;font-size:12px}
+nav.shrunk .nav-user-avatar{width:22px;height:22px}
+nav.shrunk .nav-user{font-size:12px;gap:8px}
 nav button,nav a,nav input,nav .nav-tabs,nav .nav-user{-webkit-app-region:no-drag}
 /* When running as PWA with window-controls-overlay, reserve space for traffic lights */
 @media (display-mode: window-controls-overlay) {
@@ -4252,6 +4258,22 @@ if (savedSid) {
 // Apply saved theme on load (works even without Pro — saved in localStorage)
 const savedTheme = localStorage.getItem('questlog_theme');
 if (savedTheme && typeof applyTheme === 'function') applyTheme(savedTheme);
+
+// Shrink nav on scroll
+(function(){
+  const nav = document.querySelector('nav');
+  if (!nav) return;
+  let ticking = false;
+  function update(){
+    const y = window.scrollY || window.pageYOffset || 0;
+    nav.classList.toggle('shrunk', y > 60);
+    ticking = false;
+  }
+  window.addEventListener('scroll', () => {
+    if (!ticking) { requestAnimationFrame(update); ticking = true; }
+  }, { passive: true });
+  update();
+})();
 </script>
 
 <script>
