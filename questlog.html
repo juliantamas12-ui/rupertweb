@@ -1526,7 +1526,7 @@ function renderGames(id, gs) {
   if (!gs.length) { el.innerHTML = '<div class="empty">No games yet.</div>'; return; }
   el.innerHTML = gs.map(g => `
     <div class="game-card" onclick="openSteam(${g.appid})">
-      <div class="game-img" style="background-image:url('${g.img || ''}')">
+      <div class="game-img" style="${g.img ? `background-image:url('${g.img}')` : ''}">
         <div class="game-hours">${g.hours}h</div>
       </div>
       <div class="game-body">
