@@ -493,14 +493,6 @@ main > .section:first-of-type{padding-top:8px}
 </div>
 
 <div class="view" id="view-library">
-  <div class="pricing-banner">
-    <div class="pricing-banner-text">
-      <h3>You're on Free · Upgrade to QuestLog Pro</h3>
-      <p>Price alerts · Rare achievement guides · Session journal · £4.99/mo</p>
-    </div>
-    <button class="connect-btn" style="padding:10px 20px;font-size:13px" onclick="alert('Pro upgrade coming with Stripe integration')">Upgrade</button>
-  </div>
-
   <div class="stats-strip">
     <div class="stat-card"><div class="stat-label">Games Owned</div><div class="stat-value" id="statGames">—</div><div class="stat-sub">in Steam library</div></div>
     <div class="stat-card"><div class="stat-label">Total Hours</div><div class="stat-value" id="statHours">—</div><div class="stat-sub">lifetime played</div></div>
@@ -748,6 +740,20 @@ main > .section:first-of-type{padding-top:8px}
   <div id="homeGreeting" style="margin-bottom:18px">
     <h1 style="font-size:28px;font-weight:800;letter-spacing:-0.5px;margin-bottom:4px;color:var(--text)">Welcome back<span id="homeGreetingName"></span>.</h1>
     <p style="color:var(--dim);font-size:14px">Here's what's worth your time today.</p>
+  </div>
+
+  <!-- Pro upgrade banner — hidden when user is already Pro -->
+  <div id="homeProBanner" class="pricing-banner" style="display:flex;align-items:center;justify-content:space-between;gap:24px;padding:18px 22px;margin-bottom:24px;background:linear-gradient(135deg,rgba(102,193,245,0.06) 0%,rgba(102,193,245,0.02) 100%);border:1px solid rgba(102,193,245,0.18);border-radius:0 !important">
+    <div class="pricing-banner-text" style="display:flex;flex-direction:column;gap:4px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="background:var(--accent);color:#0a0a0a;font-size:9px;font-weight:800;padding:3px 8px;border-radius:0;letter-spacing:1.5px">PRO</span>
+        <h3 style="font-size:15px;margin:0;font-weight:700;color:var(--text-bright)">You're on Free · Upgrade to QuestLog Pro</h3>
+      </div>
+      <p style="font-size:12px;color:var(--dim);margin:0;letter-spacing:0.3px">Price alerts · Rare achievement guides · Push notifications · Custom themes · £4.99/mo</p>
+    </div>
+    <button class="btn-primary" onclick="document.querySelector('[data-view=&quot;pro&quot;]')?.click()" style="padding:0 28px;height:44px;font-size:12px;letter-spacing:2px;font-weight:700;text-transform:uppercase;display:inline-flex;align-items:center;gap:8px;flex-shrink:0">
+      Upgrade <span style="font-size:14px">→</span>
+    </button>
   </div>
 
   <div class="sub-tab-bar" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:24px;overflow-x:auto">
@@ -2428,6 +2434,9 @@ function renderProHub() {
   if (unlocked) unlocked.style.display = active ? 'block' : 'none';
   if (navBadge) navBadge.style.display = active ? 'inline-block' : 'none';
   if (navTabPro) navTabPro.classList.toggle('show', active);
+  // Hide the home upgrade banner once user is Pro
+  const homeBanner = document.getElementById('homeProBanner');
+  if (homeBanner) homeBanner.style.display = active ? 'none' : 'flex';
 }
 
 function goToPro() {
