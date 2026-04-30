@@ -194,12 +194,70 @@ main > .section:first-of-type{padding-top:8px}
 .section-head .link{font-size:11px;color:var(--dim);text-decoration:none;cursor:pointer;background:none;border:none;font-family:inherit;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;transition:color 0.12s}
 .section-head .link:hover{color:var(--accent)}
 
-/* ── SECTION EYEBROW ──
-   A subtle accent label that sits above headings. Same font as the rest of
-   the UI — no typewriter mono, no over-tracking. */
+/* ── SECTION EYEBROW ── small accent label above headings. */
 .eyebrow{display:flex;align-items:center;gap:10px;font-size:11px;font-weight:600;letter-spacing:0.5px;text-transform:none;color:var(--accent);margin-bottom:8px;font-family:inherit}
 .eyebrow .num{display:none}
 .eyebrow .bar{display:none}
+
+/* ── PAGE AMBIENCE (Linear/Stripe-style mood orbs) ──
+   Two giant accent-tinted blurred radial gradients that sit behind the page,
+   far below the content. Adds atmosphere without distracting. */
+.view{position:relative}
+.view::before,.view::after{
+  content:'';position:absolute;inset:auto;pointer-events:none;z-index:-1;
+  width:520px;height:520px;border-radius:50%;
+  filter:blur(120px);opacity:0.25;
+}
+.view::before{top:-80px;left:-200px;background:radial-gradient(circle,var(--accent),transparent 70%)}
+.view::after{top:600px;right:-200px;background:radial-gradient(circle,var(--accent2),transparent 70%);opacity:0.15}
+body{position:relative;overflow-x:hidden}
+
+/* ── EDITORIAL SECTION CHAPTER (Apple/Tesla product-page style) ──
+   A large faded number sits behind the section title, drawing the eye and
+   giving the page rhythm. Wraps a normal section. */
+.chapter{position:relative;padding:48px 0 12px}
+.chapter > .chapter-num{
+  position:absolute;top:-8px;left:-12px;
+  font-size:clamp(80px,14vw,180px);font-weight:800;line-height:1;
+  color:var(--text-bright);opacity:0.04;letter-spacing:-6px;
+  pointer-events:none;user-select:none;font-family:inherit;
+  z-index:0;
+}
+.chapter > *:not(.chapter-num){position:relative;z-index:1}
+.chapter h2.chapter-title{
+  font-size:clamp(28px,3.5vw,40px);font-weight:800;letter-spacing:-1px;
+  margin:0 0 8px;color:var(--text-bright);line-height:1.05;
+}
+.chapter p.chapter-lede{
+  font-size:15px;color:var(--dim);max-width:60ch;line-height:1.55;
+  margin:0 0 28px;
+}
+.chapter .chapter-stripe{
+  display:block;width:48px;height:2px;background:var(--accent);
+  margin:0 0 28px;
+}
+
+/* ── STAT RIBBON ── horizontal mono row of live numbers, used as a divider
+   between chapters. */
+.stat-ribbon{
+  display:flex;gap:48px;flex-wrap:wrap;align-items:baseline;
+  padding:18px 0;margin:24px 0;
+  border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+}
+.stat-ribbon .ribbon-item{display:flex;flex-direction:column;gap:4px}
+.stat-ribbon .v{font-size:22px;font-weight:300;color:var(--text-bright);font-family:'JetBrains Mono',monospace;letter-spacing:-0.5px;line-height:1}
+.stat-ribbon .l{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);font-weight:600}
+
+/* ── DUO ROW ── puts two short sections side-by-side on wide screens */
+@media(min-width:1100px){
+  .duo{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:start}
+  .duo > .section{margin-bottom:0;padding:0}
+}
+
+/* ── INTERACTIVE FILTER PILLS ── give the static button rows life */
+.mood-btn{transition:transform 0.15s, color 0.15s, border-color 0.15s !important}
+.mood-btn:hover{transform:translateY(-2px)}
+.mood-btn:active{transform:translateY(0)}
 
 /* ── SECTION HIERARCHY (Steam pages use big titles + readable subtitles) ──
    In Pro Hub each section’s descriptive text is real content not metadata,
@@ -788,10 +846,22 @@ main > .section:first-of-type{padding-top:8px}
 
 
 <div class="view" id="view-more">
-  <div id="homeGreeting" style="margin-bottom:18px">
-    <h1 style="font-size:28px;font-weight:800;letter-spacing:-0.5px;margin-bottom:4px;color:var(--text)">Welcome back<span id="homeGreetingName"></span>.</h1>
-    <p style="color:var(--dim);font-size:14px">Here's what's worth your time today.</p>
+  <!-- Editorial masthead -->
+  <div id="homeGreeting" style="margin:8px 0 28px;position:relative">
+    <div id="homeMastheadDate" style="font-size:11px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;font-weight:600"></div>
+    <h1 style="font-size:clamp(36px,5vw,56px);font-weight:800;letter-spacing:-2px;line-height:0.95;margin:0 0 12px;color:var(--text-bright)">Welcome back<span id="homeGreetingName" style="color:var(--accent)"></span>.</h1>
+    <p style="color:var(--dim);font-size:16px;max-width:60ch;margin:0 0 18px;line-height:1.5">Here's what's worth your time today — picked from your library, your friends, and the corners of Steam you forgot to check.</p>
+    <span style="display:block;width:48px;height:2px;background:var(--accent)"></span>
   </div>
+  <script>
+    (function(){
+      var d=new Date();
+      var months=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+      var days=['SUN','MON','TUE','WED','THU','FRI','SAT'];
+      var el=document.getElementById('homeMastheadDate');
+      if(el) el.textContent=days[d.getDay()]+' · '+d.getDate()+' '+months[d.getMonth()]+' '+d.getFullYear()+' · ISSUE '+(Math.floor((d-new Date(d.getFullYear(),0,1))/86400000)+1);
+    })();
+  </script>
 
   <!-- Pro upgrade banner — hidden when user is already Pro -->
   <div id="homeProBanner" class="pricing-banner" style="display:flex;align-items:center;justify-content:space-between;gap:24px;padding:18px 22px;margin-bottom:24px;background:linear-gradient(135deg,rgba(102,193,245,0.06) 0%,rgba(102,193,245,0.02) 100%);border:1px solid rgba(102,193,245,0.18);border-radius:0 !important">
@@ -817,24 +887,32 @@ main > .section:first-of-type{padding-top:8px}
   <div class="sub-view active" data-sub="today">
 
   <!-- GAME OF THE DAY -->
-  <div class="section">
-    <div class="section-head">
-      <h2>Game of the Day</h2>
-      <span class="link" style="cursor:default">Fresh pick daily</span>
+  <div class="chapter">
+    <div class="chapter-num">01</div>
+    <div class="section">
+      <div class="section-head">
+        <h2>Game of the Day</h2>
+        <span class="link" style="cursor:default">Fresh pick daily</span>
+      </div>
+      <div id="gameOfDay"><div class="empty"><span class="loading"></span></div></div>
     </div>
-    <div id="gameOfDay"><div class="empty"><span class="loading"></span></div></div>
   </div>
 
   <!-- FINISH THIS -->
-  <div class="section">
-    <div class="section-head">
-      <h2>Finish This</h2>
-      <button class="link" onclick="loadFinishThis()">New pick</button>
+  <div class="chapter">
+    <div class="chapter-num">02</div>
+    <div class="section">
+      <div class="section-head">
+        <h2>Finish This</h2>
+        <button class="link" onclick="loadFinishThis()">New pick</button>
+      </div>
+      <div id="finishThisPanel"><div class="empty"><span class="loading"></span></div></div>
     </div>
-    <div id="finishThisPanel"><div class="empty"><span class="loading"></span></div></div>
   </div>
 
-  <!-- WHAT SHOULD I PLAY (moved up from later) -->
+  <!-- WHAT SHOULD I PLAY -->
+  <div class="chapter">
+    <div class="chapter-num">03</div>
   <div class="section">
     <div class="section-head"><h2>What Should I Play?</h2></div>
     <div class="sidebar-card">
@@ -850,10 +928,13 @@ main > .section:first-of-type{padding-top:8px}
       <div id="whatToPlayResult"></div>
     </div>
   </div>
+  </div>
 
   <style>.mood-btn{background:var(--panel2);color:var(--text);border:1px solid var(--border);padding:8px 16px;border-radius:100px;font-size:12px;font-family:inherit;cursor:pointer;transition:all 0.15s}.mood-btn:hover{border-color:var(--accent);color:var(--accent)}</style>
 
   <!-- WATCH LIVE -->
+  <div class="chapter">
+    <div class="chapter-num">04</div>
   <div class="section">
     <div class="section-head"><h2>Watch Live</h2></div>
     <div class="sidebar-card">
@@ -867,6 +948,7 @@ main > .section:first-of-type{padding-top:8px}
       </div>
       <div id="twitchResult" style="margin-top:14px"></div>
     </div>
+  </div>
   </div>
 
   </div><!-- /sub-view today -->
@@ -933,10 +1015,17 @@ main > .section:first-of-type{padding-top:8px}
 
 <!-- ───── UTILITY TAB ───── -->
 <div class="view" id="view-utility">
-  <p style="color:var(--dim);font-size:14px;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--border)">Research tools, price hunting, profile management.</p>
-
+  <div class="chapter" style="padding-top:8px">
+    <div class="chapter-num">UTIL</div>
+    <div class="eyebrow">Toolkit</div>
+    <h2 class="chapter-title">The workshop.</h2>
+    <span class="chapter-stripe"></span>
+    <p class="chapter-lede">Research tools, price hunting, walkthroughs, and the journal you'll fill with thoughts about games you actually finished.</p>
+  </div>
 
   <!-- PRICE HISTORY -->
+  <div class="chapter">
+    <div class="chapter-num">01</div>
   <div class="section">
     <div class="section-head"><h2>Price History</h2></div>
     <div class="sidebar-card">
@@ -951,8 +1040,11 @@ main > .section:first-of-type{padding-top:8px}
       <div id="priceHistoryResult" style="margin-top:16px"></div>
     </div>
   </div>
+  </div>
 
   <!-- REVIEWS COMPARE -->
+  <div class="chapter">
+    <div class="chapter-num">02</div>
   <div class="section">
     <div class="section-head"><h2>Reviews — All Sources</h2></div>
     <div class="sidebar-card">
@@ -967,7 +1059,12 @@ main > .section:first-of-type{padding-top:8px}
       <div id="reviewsCompareResult" style="margin-top:16px"></div>
     </div>
   </div>
+  </div>
 
+  <!-- DUO ROW: Library Filters + Public Profile -->
+  <div class="chapter">
+    <div class="chapter-num">03</div>
+  <div class="duo">
   <!-- LIBRARY FILTERS: Controller / Deck -->
   <div class="section">
     <div class="section-head"><h2>Library Filters</h2></div>
@@ -996,6 +1093,8 @@ main > .section:first-of-type{padding-top:8px}
 
     </div>
   </div>
+  </div><!-- /duo -->
+  </div><!-- /chapter -->
 
   <style>
   .theme-btn{color:#fff;border:2px solid transparent;padding:14px 18px;border-radius:6px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s;min-width:80px}
@@ -1007,6 +1106,8 @@ main > .section:first-of-type{padding-top:8px}
   </style>
 
   <!-- GAME JOURNAL -->
+  <div class="chapter">
+    <div class="chapter-num">04</div>
   <div class="section">
     <div class="section-head"><h2>Game Journal</h2></div>
     <div class="sidebar-card">
@@ -1033,8 +1134,11 @@ main > .section:first-of-type{padding-top:8px}
       <div id="journalList" style="margin-top:16px"></div>
     </div>
   </div>
+  </div>
 
   <!-- QUEST GUIDES -->
+  <div class="chapter">
+    <div class="chapter-num">05</div>
   <div class="section">
     <div class="section-head"><h2>Quest Guides &amp; Walkthroughs</h2></div>
     <div class="sidebar-card">
@@ -1049,8 +1153,11 @@ main > .section:first-of-type{padding-top:8px}
       <div id="guideResults" style="margin-top:16px"></div>
     </div>
   </div>
+  </div>
 
   <!-- HOW LONG TO BEAT -->
+  <div class="chapter">
+    <div class="chapter-num">06</div>
   <div class="section">
     <div class="section-head"><h2>How Long to Beat</h2></div>
     <div class="sidebar-card">
@@ -1065,8 +1172,12 @@ main > .section:first-of-type{padding-top:8px}
       <div id="hltbResult"></div>
     </div>
   </div>
+  </div>
 
-  <!-- BACKLOG CHALLENGE -->
+  <!-- BACKLOG CHALLENGE + GAME NIGHT (duo) -->
+  <div class="chapter">
+    <div class="chapter-num">07</div>
+  <div class="duo">
   <div class="section">
     <div class="section-head"><h2>Backlog Challenge</h2></div>
     <div class="sidebar-card">
@@ -1081,12 +1192,16 @@ main > .section:first-of-type{padding-top:8px}
     <div class="sidebar-card">
       <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Find co-op games all your friends own. Pick who's in, we'll show what to play.</p>
       <div id="gameNightPanel"></div>
-      <button onclick="findGameNight()" class="connect-btn" style="width:100%;margin-top:12px">Find games for tonight</button>
+      <button onclick="findGameNight()" class="connect-btn" style="margin-top:12px;padding:0 28px;height:42px;min-width:240px">Find games for tonight</button>
       <div id="gameNightResult" style="margin-top:16px"></div>
     </div>
   </div>
+  </div>
+  </div>
 
   <!-- FPS ESTIMATOR -->
+  <div class="chapter">
+    <div class="chapter-num">08</div>
   <div class="section">
     <div class="section-head"><h2>FPS Estimator — Will it run?</h2></div>
     <div class="sidebar-card">
@@ -1122,6 +1237,7 @@ main > .section:first-of-type{padding-top:8px}
       <button onclick="estimateFPS()" class="btn-primary" style="padding:0 28px;height:42px;min-width:200px;font-size:12px">Estimate FPS</button>
       <div id="fpsResult" style="margin-top:16px"></div>
     </div>
+  </div>
   </div>
 
 </div>
