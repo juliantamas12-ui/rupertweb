@@ -82,28 +82,30 @@ button,input,select,textarea,.connect-btn,.btn-primary,.btn-ghost{border-radius:
 .game-card,.rec-card{border-radius:0 !important}
 .game-img,.rec-cover{border-radius:0 !important}
 
-nav{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:24px;padding:14px 32px;border-bottom:1px solid var(--border);position:sticky;top:env(titlebar-area-y, 0);background:linear-gradient(180deg,#171a21 0%,#0e1419 100%);box-shadow:0 1px 0 rgba(255,255,255,0.04), 0 -2px 0 #4a8fc1 inset;z-index:100;min-height:60px;-webkit-app-region:drag;transition:padding 0.2s ease-out, min-height 0.2s ease-out, gap 0.2s ease-out}
-nav.shrunk{padding:6px 24px;min-height:44px;gap:16px}
-nav.shrunk .logo{font-size:14px;letter-spacing:0.4px}
-nav.shrunk .logo-dot{width:7px;height:7px}
-nav.shrunk .nav-tab{padding:5px 10px;height:28px;font-size:12px}
-nav.shrunk .nav-user-avatar{width:22px;height:22px}
+/* ── NAV (DESIGN.md spec) ──
+   56px tall, deep bg fill, single hairline below. Logo + tabs + user cluster.
+   Palette-agnostic — only --bg-deep, --border, --accent, --text, --dim. */
+nav{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:32px;padding:0 32px;border-bottom:1px solid var(--border);position:sticky;top:env(titlebar-area-y, 0);background:var(--bg-deep, #06080c);box-shadow:none;z-index:100;height:56px;min-height:56px;-webkit-app-region:drag;transition:height 0.2s ease-out, padding 0.2s ease-out;flex-wrap:nowrap}
+nav.shrunk{height:44px;min-height:44px;padding:0 24px}
+nav.shrunk .logo{font-size:14px}
+nav.shrunk .nav-tab{font-size:12px;height:44px}
+nav.shrunk .nav-user-avatar{width:24px;height:24px}
 nav.shrunk .nav-user{font-size:12px;gap:8px}
 nav button,nav a,nav input,nav .nav-tabs,nav .nav-user{-webkit-app-region:no-drag}
 /* When running as PWA with window-controls-overlay, reserve space for traffic lights */
 @media (display-mode: window-controls-overlay) {
   nav{padding-left:env(titlebar-area-x, 32px);padding-right:calc(env(titlebar-area-width, 100%) * 0 + 140px)}
 }
-.logo{font-size:18px;font-weight:900;letter-spacing:0.5px;color:var(--text-bright);display:flex;align-items:center;gap:10px;line-height:1;text-transform:uppercase}
-.logo-dot{width:10px;height:10px;background:var(--accent);box-shadow:0 0 14px var(--accent);flex-shrink:0;border-radius:0;transform:rotate(45deg)}
-.nav-tabs{display:flex;gap:2px;justify-content:center;align-items:center;flex-wrap:wrap}
-.nav-tab{padding:8px 14px;font-size:13px;color:var(--dim);background:transparent;border:none;border-radius:0 !important;cursor:pointer;transition:all 0.15s;font-family:inherit;line-height:1;display:inline-flex;align-items:center;gap:4px;height:34px;white-space:nowrap;font-weight:500;letter-spacing:0.3px;text-transform:uppercase}
-.nav-tab:hover{color:var(--text-bright);background:var(--panel)}
-.nav-tab.active{color:var(--text-bright);background:var(--panel-hover);border-bottom:2px solid var(--accent) !important}
+.logo{font-size:16px;font-weight:700;letter-spacing:1px;color:var(--text-bright);display:flex;align-items:center;gap:10px;line-height:1;text-transform:uppercase;font-family:inherit}
+.logo-dot{width:8px;height:8px;background:var(--accent);box-shadow:none;flex-shrink:0;border-radius:0;transform:none}
+.nav-tabs{display:flex;gap:0;justify-content:center;align-items:stretch;flex-wrap:nowrap;height:100%}
+.nav-tab{padding:0 16px;font-size:13px;color:var(--dim);background:transparent !important;border:none;border-radius:0 !important;cursor:pointer;transition:color 0.12s, border-color 0.12s;font-family:inherit;line-height:1;display:inline-flex;align-items:center;gap:6px;height:56px;white-space:nowrap;font-weight:700;letter-spacing:1px;text-transform:uppercase;border-bottom:2px solid transparent}
+.nav-tab:hover{color:var(--text-bright);background:transparent !important}
+.nav-tab.active{color:var(--accent);background:transparent !important;border-bottom:2px solid var(--accent) !important}
 .nav-tab-pro{display:none !important}
 .nav-tab-pro.show{display:inline-flex !important}
-.nav-user{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--dim);line-height:1;white-space:nowrap}
-.nav-user-avatar{width:28px;height:28px;border-radius:50%;background-size:cover;background-position:center;flex-shrink:0}
+.nav-user{display:flex;align-items:center;gap:12px;font-size:13px;color:var(--dim);line-height:1;white-space:nowrap}
+.nav-user-avatar{width:32px;height:32px;border-radius:50%;background-size:cover;background-position:center;flex-shrink:0}
 
 main{padding:24px 32px;max-width:1400px;margin:0 auto}
 
@@ -139,11 +141,21 @@ main{padding:24px 32px;max-width:1400px;margin:0 auto}
 .stat-value{font-size:24px;font-weight:800;color:var(--text);line-height:1}
 .stat-sub{font-size:11px;color:var(--dim);margin-top:4px}
 
-.section{margin-bottom:32px}
-.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid var(--border)}
-.section-head h2{font-size:13px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text);position:relative;padding-left:14px}
-.section-head h2::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:4px;height:14px;background:var(--accent);box-shadow:0 0 8px rgba(102,192,244,0.6)}
-.section-head .link{font-size:12px;color:var(--dim);text-decoration:none;cursor:pointer;background:none;border:none;font-family:inherit}
+/* ── ZONES & SECTION HEADS (DESIGN.md spec) ──
+   Each .section is a zone separated by space + a hairline. The hero pattern
+   is: eyebrow label, big italic headline, optional strapline, accent stripe. */
+.section{margin:0;padding:48px 0;border-top:1px solid var(--border);position:relative}
+main > .section:first-of-type{border-top:none;padding-top:8px}
+.section-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:24px;padding-bottom:0;border-bottom:none;gap:24px;flex-wrap:wrap}
+.section-head h2,.section-head h3{font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text);position:relative;padding-left:0;margin:0}
+.section-head h2::before,.section-head h3::before{content:none;display:none}
+/* Hero variant — opt-in via .section-head.hero. Big italic headline + accent stripe. */
+.section-head.hero{display:block;margin-bottom:32px}
+.section-head.hero .eyebrow{display:block;font-size:11px;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:var(--dim);margin-bottom:14px}
+.section-head.hero h1,.section-head.hero h2{font-size:clamp(28px,4vw,40px);font-weight:800;font-style:italic;letter-spacing:-1.5px;line-height:1.05;text-transform:none;color:var(--text-bright);margin:0 0 18px}
+.section-head.hero .strapline{font-size:14px;color:var(--dim);max-width:60ch;line-height:1.5;margin:0 0 20px}
+.section-head.hero::after{content:'';display:block;width:60px;height:2px;background:var(--accent)}
+.section-head .link{font-size:11px;color:var(--dim);text-decoration:none;cursor:pointer;background:none;border:none;font-family:inherit;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;transition:color 0.12s}
 .section-head .link:hover{color:var(--accent)}
 
 .game-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px}
@@ -2429,6 +2441,23 @@ const THEMES = {
   gamerlux:   { label:'Gamer',      free:false, bg:'#1b2838', panel:'#16202d', panel2:'#1a2735', accent:'#67c1f5', accent2:'#417a9b', text:'#c7d5e0', dim:'rgba(199,213,224,0.5)',       border:'rgba(255,255,255,0.06)', mode:'gamer' },
 };
 
+// Shade a hex colour by amount (-1..1). Negative darkens, positive lightens.
+function _shadeHex(hex, amt) {
+  if (!/^#[0-9a-f]{6}$/i.test(hex)) return hex;
+  const n = parseInt(hex.slice(1), 16);
+  let r = (n >> 16) & 0xff, g = (n >> 8) & 0xff, b = n & 0xff;
+  if (amt < 0) {
+    r = Math.max(0, Math.round(r * (1 + amt)));
+    g = Math.max(0, Math.round(g * (1 + amt)));
+    b = Math.max(0, Math.round(b * (1 + amt)));
+  } else {
+    r = Math.min(255, Math.round(r + (255 - r) * amt));
+    g = Math.min(255, Math.round(g + (255 - g) * amt));
+    b = Math.min(255, Math.round(b + (255 - b) * amt));
+  }
+  return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+}
+
 // User-customisable accent colour overrides the theme's accent
 function applyAccentOverride() {
   const accent = localStorage.getItem('questlog_custom_accent');
@@ -2457,6 +2486,9 @@ function applyTheme(theme) {
   root.style.setProperty('--text', t.text);
   root.style.setProperty('--dim', t.dim);
   root.style.setProperty('--border', t.border);
+  // Derive --bg-deep (nav fill) by darkening --bg ~25% — keeps nav legible on every palette
+  root.style.setProperty('--bg-deep', _shadeHex(t.bg, -0.25));
+  root.style.setProperty('--text-bright', t.text === '#1a1a1a' ? '#000' : '#fff');
   // Theme-mode hooks — drives the gamer-minimalist overlay (typography, formatting, layout)
   if (t.mode) root.setAttribute('data-theme-mode', t.mode);
   else root.removeAttribute('data-theme-mode');
