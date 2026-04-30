@@ -3700,27 +3700,10 @@ async function upcomingReleases() {
     }
   }));
 
+  // ONLY return curated, hype-vetted entries. No Steam-feed top-up — each game must
+  // have a deliberate reason explaining why it's worth watching. Drops anything
+  // without a known following or news cycle.
   const validated = items.filter(Boolean);
-
-  // Top up with Steam's own "coming_soon" feed if we don't have enough
-  if (validated.length < 12) {
-    try {
-      const feed = await fetchJSON('https://store.steampowered.com/api/featuredcategories?cc=us&l=en');
-      const steamItems = (feed.coming_soon?.items || []).filter(it => !isJunkTitle(it.name)).slice(0, 20);
-      for (const it of steamItems) {
-        if (validated.find(v => v.appid === it.id)) continue;
-        validated.push({
-          appid: it.id,
-          name: it.name,
-          reason: 'Upcoming on Steam',
-          img: it.large_capsule_image || `https://cdn.cloudflare.steamstatic.com/steam/apps/${it.id}/header.jpg`,
-          url: `https://store.steampowered.com/app/${it.id}`,
-          releaseDate: it.original_release_string || 'TBA',
-        });
-        if (validated.length >= 20) break;
-      }
-    } catch {}
-  }
 
   return jsonResponse({ items: validated });
 }
