@@ -2479,191 +2479,205 @@ function applyThemeMode(mode) {
   if (mode !== 'gamer') { s.textContent = ''; return; }
   s.textContent = `
     /* ───── GAMER MINIMALIST ─────
-       Steam library DNA + Apex Legends typography. Sharp edges,
-       angular highlights, uppercase tracked headings, mono-numerics,
-       orange charge accents over deep gunmetal panels. */
+       Less is more. No boxes, no panels, no gradients. Just
+       breathing room, tracked uppercase headings, mono numerics,
+       and a single orange spark where it counts. */
     html[data-theme-mode='gamer'] body{
-      background:
-        radial-gradient(ellipse at top, rgba(255,108,0,0.08) 0%, transparent 50%),
-        radial-gradient(ellipse at bottom right, rgba(102,192,244,0.05) 0%, transparent 50%),
-        var(--bg) !important;
-      font-family:'Rajdhani','Motiva Sans','Inter',sans-serif;
-      letter-spacing:0.2px;
+      background:var(--bg) !important;
+      font-family:'Rajdhani','Inter','Motiva Sans',sans-serif;
+      letter-spacing:0.1px;
     }
-    html[data-theme-mode='gamer'] .mono,
-    html[data-theme-mode='gamer'] [class*='stat-num'],
-    html[data-theme-mode='gamer'] [class*='stat-value'],
-    html[data-theme-mode='gamer'] .stat-card .stat-num{
-      font-family:'JetBrains Mono','IBM Plex Mono',monospace !important;
-      font-feature-settings:'tnum' 1,'zero' 1;
-    }
-    /* Sharp everywhere — kill rounding entirely */
+
+    /* Sharp everywhere */
     html[data-theme-mode='gamer'] *,
     html[data-theme-mode='gamer'] *::before,
     html[data-theme-mode='gamer'] *::after{ border-radius:0 !important }
-    html[data-theme-mode='gamer'] .nav-user-avatar,
-    html[data-theme-mode='gamer'] .game-img,
-    html[data-theme-mode='gamer'] .rec-cover,
-    html[data-theme-mode='gamer'] .ach-icon{ border-radius:0 !important }
 
-    /* Heading typography — Apex/Steam tracked uppercase */
+    /* Numbers — always tabular mono */
+    html[data-theme-mode='gamer'] .mono,
+    html[data-theme-mode='gamer'] [class*='stat-num'],
+    html[data-theme-mode='gamer'] [class*='stat-value']{
+      font-family:'JetBrains Mono',monospace !important;
+      font-feature-settings:'tnum' 1,'zero' 1;
+    }
+
+    /* Headings — thin, tracked, uppercase. No bullets, no underlines. */
     html[data-theme-mode='gamer'] h1,
     html[data-theme-mode='gamer'] h2,
     html[data-theme-mode='gamer'] h3,
     html[data-theme-mode='gamer'] .section-head h2,
     html[data-theme-mode='gamer'] .section-head h3{
       text-transform:uppercase;
-      letter-spacing:1.4px;
-      font-weight:800;
+      letter-spacing:2.5px;
+      font-weight:600;
       font-family:'Rajdhani','Inter',sans-serif;
+      color:var(--text) !important;
     }
-    html[data-theme-mode='gamer'] .logo{ letter-spacing:3px; font-weight:900 }
+    html[data-theme-mode='gamer'] .section-head{
+      border:none !important;
+      padding-bottom:4px !important;
+      margin-bottom:18px !important;
+    }
+    html[data-theme-mode='gamer'] .logo{ letter-spacing:3px; font-weight:700 }
     html[data-theme-mode='gamer'] .logo-dot{
       background:var(--accent) !important;
-      box-shadow:0 0 14px var(--accent), 0 0 28px var(--accent) !important;
+      box-shadow:none !important;
       transform:rotate(45deg);
     }
 
-    /* Nav — angled active marker, hard underline, tracked tabs */
+    /* Nav — flat, no inner shadow, just a hairline */
     html[data-theme-mode='gamer'] nav{
-      background:linear-gradient(180deg,#0d1117 0%,#06080c 100%) !important;
-      border-bottom:1px solid rgba(255,108,0,0.15) !important;
-      box-shadow:0 1px 0 rgba(255,108,0,0.05), 0 -2px 0 rgba(255,108,0,0.4) inset !important;
+      background:#06080c !important;
+      border-bottom:1px solid rgba(255,255,255,0.04) !important;
+      box-shadow:none !important;
     }
     html[data-theme-mode='gamer'] .nav-tab{
       text-transform:uppercase;
       letter-spacing:2px;
       font-size:11px;
-      font-weight:700;
-      position:relative;
+      font-weight:600;
+      color:var(--dim) !important;
+      background:transparent !important;
+    }
+    html[data-theme-mode='gamer'] .nav-tab:hover{
+      color:var(--text) !important;
+      background:transparent !important;
     }
     html[data-theme-mode='gamer'] .nav-tab.active{
       background:transparent !important;
       color:var(--accent) !important;
-      border-bottom:2px solid var(--accent) !important;
-      text-shadow:0 0 14px rgba(255,108,0,0.6);
+      border-bottom:1px solid var(--accent) !important;
+      text-shadow:none !important;
     }
-    html[data-theme-mode='gamer'] .nav-tab.active::before{
-      content:'';position:absolute;left:0;top:0;width:8px;height:8px;
-      background:var(--accent);clip-path:polygon(0 0,100% 0,0 100%);
-    }
+    html[data-theme-mode='gamer'] .nav-tab.active::before{ display:none !important }
 
-    /* Panels — chamfered top-left + orange edge */
-    html[data-theme-mode='gamer'] .section,
+    /* Panels — NO BOXES. Just whitespace and a thin top hairline. */
+    html[data-theme-mode='gamer'] .section{
+      background:transparent !important;
+      border:none !important;
+      border-top:1px solid rgba(255,255,255,0.05) !important;
+      clip-path:none !important;
+      padding:24px 0 !important;
+      margin:0 !important;
+      position:static !important;
+    }
+    html[data-theme-mode='gamer'] .section::before{ display:none !important }
+    html[data-theme-mode='gamer'] main > .section:first-of-type{ border-top:none !important }
+
     html[data-theme-mode='gamer'] .sidebar-card,
     html[data-theme-mode='gamer'] .feature,
-    html[data-theme-mode='gamer'] .feature-card,
-    html[data-theme-mode='gamer'] .stat-card{
-      background:linear-gradient(180deg,var(--panel) 0%,var(--panel2) 100%) !important;
-      border:1px solid rgba(255,108,0,0.12) !important;
-      position:relative;
-      clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px);
+    html[data-theme-mode='gamer'] .feature-card{
+      background:transparent !important;
+      border:none !important;
+      clip-path:none !important;
+      padding:14px 0 !important;
     }
-    html[data-theme-mode='gamer'] .section::before,
-    html[data-theme-mode='gamer'] .sidebar-card::before{
-      content:'';position:absolute;top:0;left:12px;width:60px;height:2px;
-      background:var(--accent);box-shadow:0 0 12px var(--accent);
-    }
+    html[data-theme-mode='gamer'] .sidebar-card::before,
+    html[data-theme-mode='gamer'] .feature::before{ display:none !important }
+
+    /* Stat cards — strip the box, keep just a number + label */
     html[data-theme-mode='gamer'] .stat-card{
-      border-left:3px solid var(--accent) !important;
+      background:transparent !important;
+      border:none !important;
+      border-left:2px solid var(--accent) !important;
+      clip-path:none !important;
+      padding:6px 14px !important;
+      box-shadow:none !important;
     }
     html[data-theme-mode='gamer'] .stat-card:hover{
-      border-color:var(--accent) !important;
-      box-shadow:0 0 0 1px var(--accent), 0 0 22px rgba(255,108,0,0.2);
-      transform:translateY(-1px);
+      box-shadow:none !important;
+      transform:none !important;
     }
     html[data-theme-mode='gamer'] .stat-num,
     html[data-theme-mode='gamer'] .stat-card div[style*='font-size:24px'],
     html[data-theme-mode='gamer'] .stat-card div[style*='font-size:28px'],
     html[data-theme-mode='gamer'] .stat-card div[style*='font-size:32px']{
-      color:var(--accent) !important;
-      text-shadow:0 0 18px rgba(255,108,0,0.45);
+      color:var(--text) !important;
+      text-shadow:none !important;
       font-family:'JetBrains Mono',monospace !important;
-      font-weight:700;
-      letter-spacing:0;
+      font-weight:500;
+      letter-spacing:-0.5px;
     }
 
-    /* Section heads — hex bullet + hard underline */
-    html[data-theme-mode='gamer'] .section-head{
-      border-bottom:1px solid rgba(255,108,0,0.2);
-      padding-bottom:10px;
-      margin-bottom:14px;
-      position:relative;
-    }
-    html[data-theme-mode='gamer'] .section-head h2::before,
-    html[data-theme-mode='gamer'] .section-head h3::before{
-      content:'\\25C6';color:var(--accent);margin-right:10px;font-size:0.7em;
-      text-shadow:0 0 10px var(--accent);
+    /* Pillars — also flat */
+    html[data-theme-mode='gamer'] .pillar{
+      background:transparent !important;
+      border:none !important;
+      border-top:1px solid rgba(255,255,255,0.05) !important;
+      clip-path:none !important;
+      padding:28px 0 !important;
     }
 
-    /* Buttons — angled cut + hard glow */
+    /* Buttons — thin outline, no slants, no glow */
     html[data-theme-mode='gamer'] .btn,
     html[data-theme-mode='gamer'] .btn-primary,
+    html[data-theme-mode='gamer'] .btn-ghost,
     html[data-theme-mode='gamer'] .connect-btn,
     html[data-theme-mode='gamer'] .btn-portal,
     html[data-theme-mode='gamer'] .btn-xl{
       text-transform:uppercase !important;
       letter-spacing:2px !important;
-      font-weight:700 !important;
-      clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%);
+      font-weight:600 !important;
+      font-size:12px !important;
+      clip-path:none !important;
       transition:all 0.12s ease-out;
+      box-shadow:none !important;
+      text-shadow:none !important;
     }
     html[data-theme-mode='gamer'] .btn-primary,
     html[data-theme-mode='gamer'] .connect-btn{
-      background:linear-gradient(180deg,#ff8a30 0%,#cc4400 100%) !important;
-      color:#fff !important;
-      box-shadow:0 0 0 1px rgba(255,255,255,0.1) inset, 0 4px 14px rgba(255,108,0,0.3) !important;
-      text-shadow:0 1px 0 rgba(0,0,0,0.4);
+      background:var(--accent) !important;
+      color:#0a0a0a !important;
+      border:none !important;
     }
     html[data-theme-mode='gamer'] .btn-primary:hover,
     html[data-theme-mode='gamer'] .connect-btn:hover{
-      background:linear-gradient(180deg,#ffaa55 0%,#ee5500 100%) !important;
-      box-shadow:0 0 0 1px rgba(255,255,255,0.15) inset, 0 0 18px rgba(255,108,0,0.6) !important;
-      transform:translateY(-1px);
+      background:#ff8a30 !important;
+      transform:none !important;
+      box-shadow:none !important;
     }
-    html[data-theme-mode='gamer'] .btn-ghost{
+    html[data-theme-mode='gamer'] .btn-ghost,
+    html[data-theme-mode='gamer'] .btn{
       background:transparent !important;
-      border:1px solid var(--accent) !important;
+      border:1px solid rgba(255,255,255,0.12) !important;
+      color:var(--text) !important;
+    }
+    html[data-theme-mode='gamer'] .btn-ghost:hover,
+    html[data-theme-mode='gamer'] .btn:hover{
+      border-color:var(--accent) !important;
       color:var(--accent) !important;
-    }
-    html[data-theme-mode='gamer'] .btn-ghost:hover{
-      background:rgba(255,108,0,0.1) !important;
-      box-shadow:0 0 12px rgba(255,108,0,0.3);
+      background:transparent !important;
+      box-shadow:none !important;
     }
 
-    /* Game cards — hard shutter on hover, bottom orange bar */
+    /* Game cards — image-led, almost no chrome */
     html[data-theme-mode='gamer'] .game-card{
-      background:var(--panel) !important;
-      border:1px solid transparent !important;
-      position:relative;
-      transition:all 0.15s ease-out;
-      overflow:hidden;
+      background:transparent !important;
+      border:none !important;
+      transition:opacity 0.15s ease-out;
     }
-    html[data-theme-mode='gamer'] .game-card::after{
-      content:'';position:absolute;left:0;bottom:0;height:2px;width:0;
-      background:var(--accent);box-shadow:0 0 12px var(--accent);
-      transition:width 0.2s ease-out;
-    }
+    html[data-theme-mode='gamer'] .game-card::after{ display:none !important }
     html[data-theme-mode='gamer'] .game-card:hover{
-      border-color:rgba(255,108,0,0.3) !important;
-      transform:translateY(-2px);
-      box-shadow:0 6px 24px rgba(0,0,0,0.5);
+      border:none !important;
+      transform:none !important;
+      box-shadow:none !important;
+      opacity:0.85;
     }
-    html[data-theme-mode='gamer'] .game-card:hover::after{ width:100% }
 
-    /* Rec/result cards */
+    /* Rec cards — horizontal rule separators only */
     html[data-theme-mode='gamer'] .rec-card{
-      background:linear-gradient(180deg,var(--panel) 0%,var(--panel2) 100%) !important;
-      border:1px solid rgba(255,108,0,0.08) !important;
-      border-left:3px solid transparent !important;
-      transition:all 0.15s ease-out;
+      background:transparent !important;
+      border:none !important;
+      border-bottom:1px solid rgba(255,255,255,0.05) !important;
+      transition:none !important;
     }
     html[data-theme-mode='gamer'] .rec-card:hover{
-      border-left-color:var(--accent) !important;
-      transform:translateX(2px);
+      background:rgba(255,255,255,0.02) !important;
+      border-left:none !important;
+      transform:none !important;
     }
 
-    /* Tables — Steam Deck style */
+    /* Tables */
     html[data-theme-mode='gamer'] table,
     html[data-theme-mode='gamer'] .leaderboard-table{
       border-collapse:collapse;
@@ -2671,20 +2685,20 @@ function applyThemeMode(mode) {
     }
     html[data-theme-mode='gamer'] th{
       text-transform:uppercase !important;
-      letter-spacing:1.5px !important;
-      font-size:11px !important;
-      color:var(--accent) !important;
-      border-bottom:1px solid rgba(255,108,0,0.3) !important;
+      letter-spacing:2px !important;
+      font-size:10px !important;
+      font-weight:600 !important;
+      color:var(--dim) !important;
+      border-bottom:1px solid rgba(255,255,255,0.08) !important;
     }
     html[data-theme-mode='gamer'] tr{
-      border-bottom:1px solid rgba(255,255,255,0.04) !important;
+      border-bottom:1px solid rgba(255,255,255,0.03) !important;
     }
     html[data-theme-mode='gamer'] tr:hover{
-      background:rgba(255,108,0,0.04) !important;
+      background:rgba(255,255,255,0.02) !important;
     }
-    html[data-theme-mode='gamer'] td{ font-family:inherit }
 
-    /* Form inputs — sharp slot look */
+    /* Inputs — invisible until focused */
     html[data-theme-mode='gamer'] input[type=text],
     html[data-theme-mode='gamer'] input[type=email],
     html[data-theme-mode='gamer'] input[type=number],
@@ -2693,77 +2707,99 @@ function applyThemeMode(mode) {
     html[data-theme-mode='gamer'] select,
     html[data-theme-mode='gamer'] textarea,
     html[data-theme-mode='gamer'] .sid-input{
-      background:rgba(0,0,0,0.4) !important;
-      border:1px solid rgba(255,108,0,0.18) !important;
+      background:transparent !important;
+      border:none !important;
+      border-bottom:1px solid rgba(255,255,255,0.12) !important;
       color:var(--text) !important;
       font-family:'JetBrains Mono',monospace !important;
-      letter-spacing:0.5px !important;
-      transition:all 0.15s;
+      letter-spacing:0.3px !important;
+      padding-left:2px !important;
+      padding-right:2px !important;
+      transition:border-color 0.15s;
     }
     html[data-theme-mode='gamer'] input:focus,
     html[data-theme-mode='gamer'] select:focus,
     html[data-theme-mode='gamer'] textarea:focus,
     html[data-theme-mode='gamer'] .sid-input:focus{
       outline:none !important;
-      border-color:var(--accent) !important;
-      box-shadow:0 0 0 1px var(--accent), 0 0 14px rgba(255,108,0,0.3) !important;
+      border-bottom-color:var(--accent) !important;
+      box-shadow:none !important;
     }
 
-    /* Sub-tabs — hard pill killers */
+    /* Sub-tabs — hairline underline only */
     html[data-theme-mode='gamer'] .sub-tab{
       text-transform:uppercase !important;
-      letter-spacing:1.5px !important;
+      letter-spacing:2px !important;
       font-size:11px !important;
-      font-weight:700 !important;
-      border:1px solid transparent !important;
+      font-weight:600 !important;
+      border:none !important;
+      border-bottom:1px solid transparent !important;
       background:transparent !important;
       color:var(--dim) !important;
+      padding:6px 0 !important;
+      margin-right:18px !important;
     }
     html[data-theme-mode='gamer'] .sub-tab.active{
-      background:rgba(255,108,0,0.1) !important;
-      border-color:var(--accent) !important;
+      background:transparent !important;
+      border-bottom-color:var(--accent) !important;
       color:var(--accent) !important;
     }
     html[data-theme-mode='gamer'] .sub-tab:hover:not(.active){
       color:var(--text) !important;
-      border-color:rgba(255,108,0,0.2) !important;
+      border:none !important;
+      border-bottom:1px solid transparent !important;
     }
 
-    /* Pillars / hero blocks */
-    html[data-theme-mode='gamer'] .pillar{
-      background:linear-gradient(180deg,var(--panel) 0%,var(--panel2) 100%) !important;
-      border:1px solid rgba(255,108,0,0.1) !important;
-      clip-path:polygon(16px 0,100% 0,100% calc(100% - 16px),calc(100% - 16px) 100%,0 100%,0 16px);
-    }
-
-    /* Landing — keep punchy hero typography */
+    /* Landing — huge type, nothing else */
     html[data-theme-mode='gamer'] .landing h1{
-      letter-spacing:-1px;
+      letter-spacing:-0.5px;
       text-transform:uppercase;
+      font-weight:700;
     }
     html[data-theme-mode='gamer'] .landing h1 span{
       color:var(--accent) !important;
       -webkit-text-fill-color:var(--accent) !important;
-      text-shadow:0 0 24px rgba(255,108,0,0.4);
+      text-shadow:none !important;
     }
     html[data-theme-mode='gamer'] .landing-badge{
-      background:rgba(255,108,0,0.08) !important;
+      background:transparent !important;
       border:1px solid rgba(255,108,0,0.3) !important;
       color:var(--accent) !important;
       letter-spacing:4px !important;
+      font-weight:500 !important;
     }
 
-    /* Theme toggle — accent select on the picker too */
+    /* Theme picker — simple outline on active */
     html[data-theme-mode='gamer'] .theme-btn.active{
-      box-shadow:0 0 0 1px var(--accent), 0 0 14px rgba(255,108,0,0.4) !important;
+      box-shadow:0 0 0 1px var(--accent) !important;
     }
 
-    /* Scrollbar — orange thumb */
+    /* Pro badges — subtle */
+    html[data-theme-mode='gamer'] [class*='pro-badge'],
+    html[data-theme-mode='gamer'] .badge-pro{
+      background:transparent !important;
+      border:1px solid var(--accent) !important;
+      color:var(--accent) !important;
+      font-size:9px !important;
+      letter-spacing:2px !important;
+      font-weight:600 !important;
+    }
+
+    /* Scrollbar — minimal, almost invisible until hover */
     html[data-theme-mode='gamer'] *::-webkit-scrollbar-thumb{
-      background:rgba(255,108,0,0.4) !important;
+      background:rgba(255,255,255,0.06) !important;
     }
     html[data-theme-mode='gamer'] *::-webkit-scrollbar-thumb:hover{
-      background:var(--accent) !important;
+      background:rgba(255,108,0,0.5) !important;
+    }
+
+    /* Generic "empty"/info blocks — strip box */
+    html[data-theme-mode='gamer'] .empty,
+    html[data-theme-mode='gamer'] .error{
+      background:transparent !important;
+      border:none !important;
+      border-left:2px solid var(--accent) !important;
+      padding:8px 14px !important;
     }
   `;
 }
