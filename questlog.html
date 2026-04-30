@@ -2426,7 +2426,7 @@ const THEMES = {
   monochrome: { label:'Monochrome', free:false, bg:'#0a0a0a', panel:'#141414', panel2:'#1c1c1c', accent:'#ffffff', accent2:'#aaaaaa', text:'#f0f0f0', dim:'rgba(240,240,240,0.5)',       border:'rgba(255,255,255,0.08)' },
   royal:      { label:'Royal',      free:false, bg:'#0a0a1f', panel:'#0f1030', panel2:'#1a1a45', accent:'#a070ff', accent2:'#7848cc', text:'#e8e0ff', dim:'rgba(232,224,255,0.6)',       border:'rgba(160,112,255,0.18)' },
   ocean:      { label:'Ocean',      free:false, bg:'#040c1a', panel:'#0a1830', panel2:'#102448', accent:'#42b8e0', accent2:'#2880a8', text:'#dff0ff', dim:'rgba(223,240,255,0.6)',       border:'rgba(66,184,224,0.18)' },
-  gamerlux:   { label:'Gamer',      free:false, bg:'#06080c', panel:'#0d1117', panel2:'#161c24', accent:'#ff6c00', accent2:'#cc4400', text:'#e8edf3', dim:'rgba(232,237,243,0.55)',       border:'rgba(255,108,0,0.18)', mode:'gamer' },
+  gamerlux:   { label:'Gamer',      free:false, bg:'#1b2838', panel:'#16202d', panel2:'#1a2735', accent:'#67c1f5', accent2:'#417a9b', text:'#c7d5e0', dim:'rgba(199,213,224,0.5)',       border:'rgba(255,255,255,0.06)', mode:'gamer' },
 };
 
 // User-customisable accent colour overrides the theme's accent
@@ -2478,20 +2478,24 @@ function applyThemeMode(mode) {
   }
   if (mode !== 'gamer') { s.textContent = ''; return; }
   s.textContent = `
-    /* ───── GAMER MINIMALIST ─────
-       Less is more. No boxes, no panels, no gradients. Just
-       breathing room, tracked uppercase headings, mono numerics,
-       and a single orange spark where it counts. */
+    /* ───── GAMER MODE ─────
+       Faithful to the Steam desktop client. Deep navy, plain
+       Motiva Sans, blue accent, lots of whitespace, no boxes
+       around content rows. */
     html[data-theme-mode='gamer'] body{
       background:var(--bg) !important;
-      font-family:'Rajdhani','Inter','Motiva Sans',sans-serif;
-      letter-spacing:0.1px;
+      font-family:'Motiva Sans','Inter',sans-serif;
+      letter-spacing:0;
     }
 
-    /* Sharp everywhere */
+    /* Tiny rounding only — Steam uses 2-3px on tiles */
     html[data-theme-mode='gamer'] *,
     html[data-theme-mode='gamer'] *::before,
-    html[data-theme-mode='gamer'] *::after{ border-radius:0 !important }
+    html[data-theme-mode='gamer'] *::after{ border-radius:2px !important }
+    html[data-theme-mode='gamer'] .game-img,
+    html[data-theme-mode='gamer'] .rec-cover,
+    html[data-theme-mode='gamer'] .game-card{ border-radius:3px !important }
+    html[data-theme-mode='gamer'] .nav-user-avatar{ border-radius:50% !important }
 
     /* Numbers — always tabular mono */
     html[data-theme-mode='gamer'] .mono,
@@ -2501,22 +2505,20 @@ function applyThemeMode(mode) {
       font-feature-settings:'tnum' 1,'zero' 1;
     }
 
-    /* Headings — thin, tracked, uppercase. No bullets, no underlines. */
-    html[data-theme-mode='gamer'] h1,
-    html[data-theme-mode='gamer'] h2,
-    html[data-theme-mode='gamer'] h3,
+    /* Headings — Steam Title Case, normal weight, no tracking */
     html[data-theme-mode='gamer'] .section-head h2,
     html[data-theme-mode='gamer'] .section-head h3{
-      text-transform:uppercase;
-      letter-spacing:2.5px;
-      font-weight:600;
-      font-family:'Rajdhani','Inter',sans-serif;
-      color:var(--text) !important;
+      text-transform:none !important;
+      letter-spacing:0 !important;
+      font-weight:400 !important;
+      font-family:'Motiva Sans','Inter',sans-serif !important;
+      color:#fff !important;
       padding-left:0 !important;
+      font-size:18px !important;
     }
     html[data-theme-mode='gamer'] .section-head{
       border:none !important;
-      padding-bottom:4px !important;
+      padding-bottom:0 !important;
       margin-bottom:14px !important;
     }
     /* Kill the cyan bar before section-head h2 */
@@ -2525,35 +2527,44 @@ function applyThemeMode(mode) {
       display:none !important;
       content:none !important;
     }
-    html[data-theme-mode='gamer'] .logo{ letter-spacing:3px; font-weight:700 }
+    html[data-theme-mode='gamer'] .logo{
+      letter-spacing:1px !important;
+      font-weight:700 !important;
+      font-family:'Motiva Sans','Inter',sans-serif !important;
+    }
     html[data-theme-mode='gamer'] .logo-dot{
       background:var(--accent) !important;
       box-shadow:none !important;
-      transform:rotate(45deg);
+      transform:none !important;
+      border-radius:50% !important;
     }
 
-    /* Nav — flat, no inner shadow, just a hairline */
+    /* Nav — Steam client style: deep navy, plain uppercase tabs,
+       blue underline on active. */
     html[data-theme-mode='gamer'] nav{
-      background:#06080c !important;
-      border-bottom:1px solid rgba(255,255,255,0.04) !important;
+      background:#171a21 !important;
+      border-bottom:1px solid rgba(0,0,0,0.4) !important;
       box-shadow:none !important;
     }
     html[data-theme-mode='gamer'] .nav-tab{
-      text-transform:uppercase;
-      letter-spacing:2px;
-      font-size:11px;
-      font-weight:600;
-      color:var(--dim) !important;
+      text-transform:uppercase !important;
+      letter-spacing:0.6px !important;
+      font-size:14px !important;
+      font-weight:700 !important;
+      color:#b8b6b4 !important;
       background:transparent !important;
+      padding:8px 4px !important;
+      margin:0 10px !important;
+      border-bottom:2px solid transparent !important;
     }
     html[data-theme-mode='gamer'] .nav-tab:hover{
-      color:var(--text) !important;
+      color:#fff !important;
       background:transparent !important;
     }
     html[data-theme-mode='gamer'] .nav-tab.active{
       background:transparent !important;
       color:var(--accent) !important;
-      border-bottom:1px solid var(--accent) !important;
+      border-bottom:2px solid var(--accent) !important;
       text-shadow:none !important;
     }
     html[data-theme-mode='gamer'] .nav-tab.active::before{ display:none !important }
@@ -2597,23 +2608,7 @@ function applyThemeMode(mode) {
     /* Strip rounded inline border-radius on these inner containers */
     html[data-theme-mode='gamer'] [style*='border-radius']{ border-radius:0 !important }
 
-    /* Override the .connect-btn Steam-blue gradient (used for inline action
-       buttons like "Check" and "Compare" inside Utility tab) */
-    html[data-theme-mode='gamer'] .connect-btn{
-      background:var(--accent) !important;
-      color:#0a0a0a !important;
-      box-shadow:none !important;
-      text-shadow:none !important;
-      border:none !important;
-      font-weight:600 !important;
-      letter-spacing:2px !important;
-      text-transform:uppercase !important;
-    }
-    html[data-theme-mode='gamer'] .connect-btn:hover{
-      background:#ff8a30 !important;
-      box-shadow:none !important;
-    }
-    html[data-theme-mode='gamer'] .connect-btn:active{ transform:none !important }
+
 
     /* Stat cards — strip the box, keep just a number + label */
     html[data-theme-mode='gamer'] .stat-card{
@@ -2621,7 +2616,7 @@ function applyThemeMode(mode) {
       border:none !important;
       border-left:2px solid var(--accent) !important;
       clip-path:none !important;
-      padding:6px 14px !important;
+      padding:4px 14px !important;
       box-shadow:none !important;
     }
     html[data-theme-mode='gamer'] .stat-card:hover{
@@ -2632,10 +2627,10 @@ function applyThemeMode(mode) {
     html[data-theme-mode='gamer'] .stat-card div[style*='font-size:24px'],
     html[data-theme-mode='gamer'] .stat-card div[style*='font-size:28px'],
     html[data-theme-mode='gamer'] .stat-card div[style*='font-size:32px']{
-      color:var(--text) !important;
+      color:#fff !important;
       text-shadow:none !important;
-      font-family:'JetBrains Mono',monospace !important;
-      font-weight:500;
+      font-family:'Motiva Sans','Inter',sans-serif !important;
+      font-weight:300 !important;
       letter-spacing:-0.5px;
     }
 
@@ -2648,7 +2643,7 @@ function applyThemeMode(mode) {
       padding:28px 0 !important;
     }
 
-    /* Buttons — thin outline, no slants, no glow */
+    /* Buttons — Steam client gradient on primary, thin outline pill on ghosts */
     html[data-theme-mode='gamer'] .btn,
     html[data-theme-mode='gamer'] .btn-primary,
     html[data-theme-mode='gamer'] .btn-ghost,
@@ -2656,36 +2651,39 @@ function applyThemeMode(mode) {
     html[data-theme-mode='gamer'] .btn-portal,
     html[data-theme-mode='gamer'] .btn-xl{
       text-transform:uppercase !important;
-      letter-spacing:2px !important;
-      font-weight:600 !important;
+      letter-spacing:0.5px !important;
+      font-weight:700 !important;
       font-size:12px !important;
       clip-path:none !important;
-      transition:all 0.12s ease-out;
-      box-shadow:none !important;
+      transition:all 0.15s ease-out;
       text-shadow:none !important;
+      font-family:'Motiva Sans','Inter',sans-serif !important;
     }
     html[data-theme-mode='gamer'] .btn-primary,
     html[data-theme-mode='gamer'] .connect-btn{
-      background:var(--accent) !important;
-      color:#0a0a0a !important;
+      background:linear-gradient(180deg,#67c1f5 0%,#417a9b 100%) !important;
+      color:#fff !important;
       border:none !important;
+      box-shadow:0 0 0 1px rgba(255,255,255,0.06) inset !important;
+      padding:10px 20px !important;
     }
     html[data-theme-mode='gamer'] .btn-primary:hover,
     html[data-theme-mode='gamer'] .connect-btn:hover{
-      background:#ff8a30 !important;
+      background:linear-gradient(180deg,#7fcfff 0%,#4d8db3 100%) !important;
       transform:none !important;
-      box-shadow:none !important;
+      box-shadow:0 0 0 1px rgba(255,255,255,0.12) inset !important;
+      color:#fff !important;
     }
     html[data-theme-mode='gamer'] .btn-ghost,
     html[data-theme-mode='gamer'] .btn{
       background:transparent !important;
-      border:1px solid rgba(255,255,255,0.12) !important;
+      border:1px solid rgba(255,255,255,0.18) !important;
       color:var(--text) !important;
     }
     html[data-theme-mode='gamer'] .btn-ghost:hover,
     html[data-theme-mode='gamer'] .btn:hover{
       border-color:var(--accent) !important;
-      color:var(--accent) !important;
+      color:#fff !important;
       background:transparent !important;
       box-shadow:none !important;
     }
@@ -2773,17 +2771,17 @@ function applyThemeMode(mode) {
       box-shadow:0 8px 24px rgba(0,0,0,0.6) !important;
     }
 
-    /* Sub-tabs — hairline underline only */
+    /* Sub-tabs — Steam style: plain text with blue underline on active */
     html[data-theme-mode='gamer'] .sub-tab{
       text-transform:uppercase !important;
-      letter-spacing:2px !important;
-      font-size:11px !important;
-      font-weight:600 !important;
+      letter-spacing:0.5px !important;
+      font-size:13px !important;
+      font-weight:700 !important;
       border:none !important;
-      border-bottom:1px solid transparent !important;
+      border-bottom:2px solid transparent !important;
       background:transparent !important;
-      color:var(--dim) !important;
-      padding:6px 0 !important;
+      color:#b8b6b4 !important;
+      padding:6px 4px !important;
       margin-right:18px !important;
     }
     html[data-theme-mode='gamer'] .sub-tab.active{
@@ -2792,15 +2790,15 @@ function applyThemeMode(mode) {
       color:var(--accent) !important;
     }
     html[data-theme-mode='gamer'] .sub-tab:hover:not(.active){
-      color:var(--text) !important;
+      color:#fff !important;
       border:none !important;
-      border-bottom:1px solid transparent !important;
+      border-bottom:2px solid transparent !important;
     }
 
-    /* Landing — huge type, nothing else */
+    /* Landing — keep big hero type, Steam-blue accent */
     html[data-theme-mode='gamer'] .landing h1{
       letter-spacing:-0.5px;
-      text-transform:uppercase;
+      text-transform:none !important;
       font-weight:700;
     }
     html[data-theme-mode='gamer'] .landing h1 span{
@@ -2810,9 +2808,9 @@ function applyThemeMode(mode) {
     }
     html[data-theme-mode='gamer'] .landing-badge{
       background:transparent !important;
-      border:1px solid rgba(255,108,0,0.3) !important;
+      border:1px solid rgba(103,193,245,0.3) !important;
       color:var(--accent) !important;
-      letter-spacing:4px !important;
+      letter-spacing:2px !important;
       font-weight:500 !important;
     }
 
@@ -2827,17 +2825,17 @@ function applyThemeMode(mode) {
       background:transparent !important;
       border:1px solid var(--accent) !important;
       color:var(--accent) !important;
-      font-size:9px !important;
-      letter-spacing:2px !important;
-      font-weight:600 !important;
+      font-size:10px !important;
+      letter-spacing:1px !important;
+      font-weight:700 !important;
     }
 
-    /* Scrollbar — minimal, almost invisible until hover */
+    /* Scrollbar — Steam style */
     html[data-theme-mode='gamer'] *::-webkit-scrollbar-thumb{
-      background:rgba(255,255,255,0.06) !important;
+      background:#3d4450 !important;
     }
     html[data-theme-mode='gamer'] *::-webkit-scrollbar-thumb:hover{
-      background:rgba(255,108,0,0.5) !important;
+      background:#67c1f5 !important;
     }
 
     /* Generic "empty"/info blocks — strip box */
