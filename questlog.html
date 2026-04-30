@@ -99,6 +99,16 @@ button,input,select,textarea,.connect-btn,.btn-primary,.btn-ghost{border-radius:
 [style*='border:1px solid var(--border)']{
   border-color:var(--border) !important;
 }
+/* Kill ALL inline horizontal/vertical separator hairlines — zones use whitespace */
+[style*='border-top:1px solid var(--border)'],
+[style*='border-bottom:1px solid var(--border)'],
+[style*='border-left:1px solid var(--border)'],
+[style*='border-right:1px solid var(--border)']{
+  border-top:none !important;
+  border-bottom:none !important;
+  border-left:none !important;
+  border-right:none !important;
+}
 
 /* ── NAV (DESIGN.md spec) ──
    56px tall, deep bg fill, single hairline below. Logo + tabs + user cluster.
