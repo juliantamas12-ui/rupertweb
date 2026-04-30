@@ -7,7 +7,7 @@
 <meta name="description" content="Connect Steam, track achievements, get smart game recommendations, find quest guides, see leaderboards.">
 <link rel="canonical" href="https://rupertweb.com/questlog.html">
 <link rel="manifest" href="/questlog.webmanifest">
-<meta name="theme-color" content="#f5f2e8">
+<meta name="theme-color" content="#1b2838">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="QuestLog">
@@ -2307,7 +2307,7 @@ function updateProfileUrl() {
   const box = document.getElementById('profileUrl');
   if (!box || !STATE.sid) return;
   const customUrl = localStorage.getItem('questlog_custom_url');
-  const theme = localStorage.getItem('questlog_theme') || 'light';
+  const theme = localStorage.getItem('questlog_theme') || 'gamerlux';
   const isPro = localStorage.getItem('questlog_pro') === '1';
   const base = customUrl || STATE.sid;
   const params = [];
@@ -2483,7 +2483,7 @@ const THEMES = {
   monochrome: { label:'Monochrome', free:false, bg:'#0a0a0a', panel:'#141414', panel2:'#1c1c1c', accent:'#ffffff', accent2:'#aaaaaa', text:'#f0f0f0', dim:'rgba(240,240,240,0.5)',       border:'rgba(255,255,255,0.08)' },
   royal:      { label:'Royal',      free:false, bg:'#0a0a1f', panel:'#0f1030', panel2:'#1a1a45', accent:'#a070ff', accent2:'#7848cc', text:'#e8e0ff', dim:'rgba(232,224,255,0.6)',       border:'rgba(160,112,255,0.18)' },
   ocean:      { label:'Ocean',      free:false, bg:'#040c1a', panel:'#0a1830', panel2:'#102448', accent:'#42b8e0', accent2:'#2880a8', text:'#dff0ff', dim:'rgba(223,240,255,0.6)',       border:'rgba(66,184,224,0.18)' },
-  gamerlux:   { label:'Gamer',      free:false, bg:'#1b2838', panel:'#16202d', panel2:'#1a2735', accent:'#67c1f5', accent2:'#417a9b', text:'#c7d5e0', dim:'rgba(199,213,224,0.5)',       border:'rgba(255,255,255,0.06)', mode:'gamer' },
+  gamerlux:   { label:'Gamer',      free:true,  bg:'#1b2838', panel:'#16202d', panel2:'#1a2735', accent:'#67c1f5', accent2:'#417a9b', text:'#c7d5e0', dim:'rgba(199,213,224,0.5)',       border:'rgba(255,255,255,0.06)', mode:'gamer' },
 };
 
 // Shade a hex colour by amount (-1..1). Negative darkens, positive lightens.
@@ -2677,7 +2677,7 @@ function setCustomAccent(hex) {
 function clearCustomAccent() {
   localStorage.removeItem('questlog_custom_accent');
   document.getElementById('customAccentHex').value = '';
-  applyTheme(localStorage.getItem('questlog_theme') || 'light');
+  applyTheme(localStorage.getItem('questlog_theme') || 'gamerlux');
 }
 
 function setDensity(d) {
@@ -2714,7 +2714,7 @@ function setTheme(theme) {
 }
 
 function loadActiveTheme() {
-  const saved = localStorage.getItem('questlog_theme') || 'light';
+  const saved = localStorage.getItem('questlog_theme') || 'gamerlux';
   document.querySelectorAll('.theme-btn').forEach(b => b.classList.toggle('active', b.dataset.theme === saved));
   applyTheme(saved);
   // Re-sync the customisation controls so they reflect saved state
@@ -4083,7 +4083,7 @@ if (savedSid) {
   connectSteam();
 }
 // Apply saved theme on load (works even without Pro — saved in localStorage)
-const savedTheme = localStorage.getItem('questlog_theme') || 'light';
+const savedTheme = localStorage.getItem('questlog_theme') || 'gamerlux';
 if (typeof applyTheme === 'function') applyTheme(savedTheme);
 
 // Shrink nav on scroll
