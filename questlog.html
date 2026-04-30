@@ -2496,6 +2496,22 @@ function applyThemeMode(mode) {
     html[data-theme-mode='gamer'] .rec-cover,
     html[data-theme-mode='gamer'] .game-card{ border-radius:3px !important }
     html[data-theme-mode='gamer'] .nav-user-avatar{ border-radius:50% !important }
+    /* Kill rounding on the nav tabs at the very top (override user-style-overrides) */
+    html[data-theme-mode='gamer'] .nav-tab{ border-radius:0 !important }
+
+    /* Nuke ALL inline backgrounds globally — every leftover blue panel
+       container, badge box, gradient inset etc. Only the deliberate buttons
+       and nav header are allowed coloured backgrounds (re-enabled below). */
+    html[data-theme-mode='gamer'] [style*='background']:not(nav):not(.btn-primary):not(.connect-btn):not(.nav-tab):not(.logo-dot):not(.game-img):not(.rec-cover):not(.nav-user-avatar):not([class*='badge']):not([class*='Badge']){
+      background:transparent !important;
+      background-color:transparent !important;
+      background-image:none !important;
+    }
+    /* Strip rounded inline border-radius and inline borders on inner containers */
+    html[data-theme-mode='gamer'] [style*='border-radius']{ border-radius:0 !important }
+    html[data-theme-mode='gamer'] [style*='border:1px solid var(--border)']{
+      border-color:rgba(255,255,255,0.06) !important;
+    }
 
     /* Numbers — always tabular mono */
     html[data-theme-mode='gamer'] .mono,
@@ -2545,29 +2561,52 @@ function applyThemeMode(mode) {
       background:#171a21 !important;
       border-bottom:1px solid rgba(0,0,0,0.4) !important;
       box-shadow:none !important;
+      flex-wrap:nowrap !important;
     }
-    html[data-theme-mode='gamer'] .nav-tab{
+    html[data-theme-mode='gamer'] .nav-tabs{
+      flex-wrap:nowrap !important;
+      gap:0 !important;
+    }
+    html[data-theme-mode='gamer'] .nav-tab,
+    html[data-theme-mode='gamer'] nav .nav-tab,
+    html[data-theme-mode='gamer'] nav button.nav-tab{
       text-transform:uppercase !important;
       letter-spacing:0.6px !important;
-      font-size:14px !important;
+      font-size:13px !important;
       font-weight:700 !important;
       color:#b8b6b4 !important;
       background:transparent !important;
       padding:8px 4px !important;
-      margin:0 10px !important;
+      margin:0 12px !important;
+      border-radius:0 !important;
       border-bottom:2px solid transparent !important;
+      box-shadow:none !important;
     }
     html[data-theme-mode='gamer'] .nav-tab:hover{
       color:#fff !important;
       background:transparent !important;
     }
-    html[data-theme-mode='gamer'] .nav-tab.active{
+    html[data-theme-mode='gamer'] .nav-tab.active,
+    html[data-theme-mode='gamer'] nav .nav-tab.active,
+    html[data-theme-mode='gamer'] nav button.nav-tab.active{
       background:transparent !important;
       color:var(--accent) !important;
       border-bottom:2px solid var(--accent) !important;
+      border-radius:0 !important;
       text-shadow:none !important;
+      box-shadow:none !important;
     }
     html[data-theme-mode='gamer'] .nav-tab.active::before{ display:none !important }
+    /* PRO badge inside the nav-tab — keep accent fill, kill rounding/box */
+    html[data-theme-mode='gamer'] .nav-tab span{
+      background:var(--accent) !important;
+      color:#0a0a0a !important;
+      border-radius:2px !important;
+      font-weight:700 !important;
+      font-size:9px !important;
+      padding:2px 5px !important;
+      letter-spacing:1px !important;
+    }
 
     /* Panels — NO BOXES. Just whitespace and a thin top hairline. */
     html[data-theme-mode='gamer'] .section{
@@ -2594,19 +2633,6 @@ function applyThemeMode(mode) {
     }
     html[data-theme-mode='gamer'] .sidebar-card::before,
     html[data-theme-mode='gamer'] .feature::before{ display:none !important }
-
-    /* Nuke ALL inline panel backgrounds globally — inner containers using
-       inline styles like background:var(--panel)/--panel2 leak the base blue. */
-    html[data-theme-mode='gamer'] [style*='background:var(--panel)'],
-    html[data-theme-mode='gamer'] [style*='background:var(--panel2)'],
-    html[data-theme-mode='gamer'] [style*='background: var(--panel)'],
-    html[data-theme-mode='gamer'] [style*='background: var(--panel2)']{
-      background:transparent !important;
-      border-color:rgba(255,255,255,0.06) !important;
-      box-shadow:none !important;
-    }
-    /* Strip rounded inline border-radius on these inner containers */
-    html[data-theme-mode='gamer'] [style*='border-radius']{ border-radius:0 !important }
 
 
 
