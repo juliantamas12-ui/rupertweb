@@ -1976,8 +1976,8 @@ async function whatToPlay(mood) {
     const r = await api(`/api/what-to-play?mood=${mood}`);
     if (r.error) { el.innerHTML = `<div class="error">${r.error}</div>`; return; }
     el.innerHTML = `
-      <div onclick="openSteam(${r.appid})" style="cursor:pointer;background:var(--panel2);border:1px solid var(--accent);border-radius:10px;overflow:hidden;display:flex;gap:16px;padding:16px;align-items:center">
-        <div style="width:140px;aspect-ratio:460/215;background:url('${r.img}') center/cover;border-radius:6px;flex-shrink:0"></div>
+      <div onclick="openSteam(${r.appid})" class="rec-card" style="cursor:pointer;border-left:2px solid var(--accent)">
+        <div class="rec-cover" style="background-image:url('${r.img}')"></div>
         <div style="flex:1">
           <div style="font-size:11px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;margin-bottom:6px">Play this ←</div>
           <div style="font-size:18px;font-weight:700;margin-bottom:4px">${r.name}</div>
