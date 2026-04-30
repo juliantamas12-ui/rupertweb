@@ -170,17 +170,23 @@ main > .section:first-of-type{border-top:none;padding-top:8px}
 .section-head .link{font-size:11px;color:var(--dim);text-decoration:none;cursor:pointer;background:none;border:none;font-family:inherit;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;transition:color 0.12s}
 .section-head .link:hover{color:var(--accent)}
 
-.game-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px}
-.game-card{background:var(--panel);border:1px solid var(--border);overflow:hidden;cursor:pointer;transition:all 0.15s;position:relative}
-.game-card:hover{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent), 0 0 18px rgba(102,192,244,0.3)}
-.game-img{width:100%;aspect-ratio:460/215;background:var(--panel2);background-size:cover;background-position:center;position:relative}
-.game-hours{position:absolute;bottom:6px;right:6px;background:rgba(0,0,0,0.8);color:var(--accent);font-size:10px;font-weight:700;padding:3px 8px;border-radius:3px}
-.game-body{padding:10px 12px}
-.game-title{font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:4px}
-.game-meta{font-size:11px;color:var(--dim);display:flex;justify-content:space-between;align-items:center}
+/* ── GAME TILE (DESIGN.md spec) ──
+   Cover image dominates. No border, no fill. Title in 14/600.
+   Metadata in mono uppercase. Hover = title gains accent underline. */
+.game-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:24px 18px}
+.game-card{background:transparent;border:none;overflow:visible;cursor:pointer;transition:opacity 0.12s;position:relative;border-radius:0 !important}
+.game-card:hover{border:none;box-shadow:none;opacity:1}
+.game-card:hover .game-title{color:var(--accent);background-image:linear-gradient(var(--accent),var(--accent));background-size:100% 1px;background-repeat:no-repeat;background-position:0 100%}
+.game-img{width:100%;aspect-ratio:460/215;background:rgba(0,0,0,0.3);background-size:cover;background-position:center;position:relative;border-radius:0 !important;transition:filter 0.12s}
+.game-card:hover .game-img{filter:brightness(1.05)}
+.game-hours{position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,0.85);color:var(--accent);font-size:10px;font-weight:700;padding:3px 8px;border-radius:0 !important;letter-spacing:1px;font-family:'JetBrains Mono',monospace}
+.game-body{padding:12px 0 0}
+.game-title{font-size:14px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:6px;transition:color 0.12s, background 0.12s;display:inline-block;max-width:100%;padding-bottom:1px}
+.game-meta{font-size:10px;color:var(--dim);display:flex;justify-content:space-between;align-items:center;letter-spacing:1.5px;text-transform:uppercase;font-family:'JetBrains Mono',monospace}
 
-.rec-card{background:linear-gradient(90deg,var(--panel) 0%,var(--panel2) 100%);border:1px solid var(--border);border-left:3px solid transparent;border-radius:0 !important;padding:14px 18px;display:flex;gap:16px;align-items:center;margin-bottom:6px;cursor:pointer;transition:all 0.12s}
-.rec-card:hover{border-left-color:var(--accent);background:linear-gradient(90deg,var(--panel-hover) 0%,var(--panel2) 100%);box-shadow:inset 0 0 0 1px rgba(102,192,244,0.15)}
+/* ── REC ROW (DESIGN.md spec) ── Hairline list item, accent left bar on hover. */
+.rec-card{background:transparent;border:none;border-bottom:1px solid var(--border);border-left:2px solid transparent;border-radius:0 !important;padding:16px 18px 16px 22px;display:flex;gap:16px;align-items:center;margin-bottom:0;cursor:pointer;transition:border-color 0.12s, background 0.12s}
+.rec-card:hover{border-left-color:var(--accent);background:rgba(255,255,255,0.02);box-shadow:none}
 
 .rec-cover{width:100px;aspect-ratio:460/215;flex-shrink:0;border-radius:6px;background-size:cover;background-position:center;background-color:var(--panel2)}
 .rec-info{flex:1;min-width:0}
