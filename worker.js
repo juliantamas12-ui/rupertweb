@@ -244,7 +244,8 @@ async function steamGames(url) {
     hours: Math.round((g.playtime_forever || 0) / 60 * 10) / 10,
     hoursTwoWeeks: Math.round((g.playtime_2weeks || 0) / 60 * 10) / 10,
     lastPlayed: g.rtime_last_played,
-    img: g.img_icon_url ? `https://cdn.cloudflare.steamstatic.com/steam/apps/${g.appid}/header.jpg` : null,
+    // header.jpg is served by Steam for every published app regardless of img_icon_url
+    img: `https://cdn.cloudflare.steamstatic.com/steam/apps/${g.appid}/header.jpg`,
   }));
 
   // Sort by hours desc
