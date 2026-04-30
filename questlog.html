@@ -745,10 +745,19 @@ main > .section:first-of-type{padding-top:8px}
 
 
 <div class="view" id="view-more">
-  <div id="homeGreeting" style="margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--border)">
+  <div id="homeGreeting" style="margin-bottom:18px">
     <h1 style="font-size:28px;font-weight:800;letter-spacing:-0.5px;margin-bottom:4px;color:var(--text)">Welcome back<span id="homeGreetingName"></span>.</h1>
     <p style="color:var(--dim);font-size:14px">Here's what's worth your time today.</p>
   </div>
+
+  <div class="sub-tab-bar" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:24px;overflow-x:auto">
+    <button class="sub-tab active" data-sub="today" onclick="switchSubTab('more','today')">Today</button>
+    <button class="sub-tab" data-sub="stats" onclick="switchSubTab('more','stats')">Your Stats</button>
+    <button class="sub-tab" data-sub="friends" onclick="switchSubTab('more','friends')">Friends</button>
+  </div>
+
+  <!-- ===== TODAY ===== -->
+  <div class="sub-view active" data-sub="today">
 
   <!-- GAME OF THE DAY -->
   <div class="section">
@@ -759,18 +768,6 @@ main > .section:first-of-type{padding-top:8px}
     <div id="gameOfDay"><div class="empty"><span class="loading"></span></div></div>
   </div>
 
-  <!-- YEAR IN GAMES -->
-  <div class="section">
-    <div class="section-head"><h2>Year in Games — Your Stats</h2></div>
-    <div id="wrappedPanel" class="sidebar-card"><div class="empty"><span class="loading"></span></div></div>
-  </div>
-
-  <!-- BACKLOG ESTIMATE -->
-  <div class="section">
-    <div class="section-head"><h2>Your Backlog Reality Check</h2></div>
-    <div id="backlogPanel" class="sidebar-card"><div class="empty"><span class="loading"></span></div></div>
-  </div>
-
   <!-- FINISH THIS -->
   <div class="section">
     <div class="section-head">
@@ -779,6 +776,25 @@ main > .section:first-of-type{padding-top:8px}
     </div>
     <div id="finishThisPanel"><div class="empty"><span class="loading"></span></div></div>
   </div>
+
+  <!-- WHAT SHOULD I PLAY (moved up from later) -->
+  <div class="section">
+    <div class="section-head"><h2>What Should I Play?</h2></div>
+    <div class="sidebar-card">
+      <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Stuck choosing? Pick a mood and we'll pick from your library.</p>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px">
+        <button onclick="whatToPlay('any')" class="mood-btn">Any</button>
+        <button onclick="whatToPlay('chill')" class="mood-btn">Chill</button>
+        <button onclick="whatToPlay('intense')" class="mood-btn">Intense</button>
+        <button onclick="whatToPlay('story')" class="mood-btn">Story</button>
+        <button onclick="whatToPlay('quick')" class="mood-btn">Quick Session</button>
+        <button onclick="whatToPlay('multiplayer')" class="mood-btn">Multiplayer</button>
+      </div>
+      <div id="whatToPlayResult"></div>
+    </div>
+  </div>
+
+  <style>.mood-btn{background:var(--panel2);color:var(--text);border:1px solid var(--border);padding:8px 16px;border-radius:100px;font-size:12px;font-family:inherit;cursor:pointer;transition:all 0.15s}.mood-btn:hover{border-color:var(--accent);color:var(--accent)}</style>
 
   <!-- WATCH LIVE -->
   <div class="section">
@@ -795,6 +811,34 @@ main > .section:first-of-type{padding-top:8px}
       <div id="twitchResult" style="margin-top:14px"></div>
     </div>
   </div>
+
+  </div><!-- /sub-view today -->
+
+  <!-- ===== STATS ===== -->
+  <div class="sub-view" data-sub="stats">
+
+  <!-- YEAR IN GAMES -->
+  <div class="section">
+    <div class="section-head"><h2>Year in Games — Your Stats</h2></div>
+    <div id="wrappedPanel" class="sidebar-card"><div class="empty"><span class="loading"></span></div></div>
+  </div>
+
+  <!-- BACKLOG ESTIMATE -->
+  <div class="section">
+    <div class="section-head"><h2>Your Backlog Reality Check</h2></div>
+    <div id="backlogPanel" class="sidebar-card"><div class="empty"><span class="loading"></span></div></div>
+  </div>
+
+  <!-- STEAM DNA (moved from Utility) -->
+  <div class="section">
+    <div class="section-head"><h2>Your Steam DNA</h2></div>
+    <div id="dnaPanel" class="sidebar-card"><div class="empty"><span class="loading"></span></div></div>
+  </div>
+
+  </div><!-- /sub-view stats -->
+
+  <!-- ===== FRIENDS ===== -->
+  <div class="sub-view" data-sub="friends">
 
   <!-- FRIENDS LIST + COMPARE -->
   <div class="section">
@@ -820,30 +864,13 @@ main > .section:first-of-type{padding-top:8px}
     </div>
   </div>
 
-  <!-- WHAT SHOULD I PLAY -->
-  <div class="section">
-    <div class="section-head"><h2>What Should I Play?</h2></div>
-    <div class="sidebar-card">
-      <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Stuck choosing? Pick a mood and we'll pick from your library.</p>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px">
-        <button onclick="whatToPlay('any')" class="mood-btn">Any</button>
-        <button onclick="whatToPlay('chill')" class="mood-btn">Chill</button>
-        <button onclick="whatToPlay('intense')" class="mood-btn">Intense</button>
-        <button onclick="whatToPlay('story')" class="mood-btn">Story</button>
-        <button onclick="whatToPlay('quick')" class="mood-btn">Quick Session</button>
-        <button onclick="whatToPlay('multiplayer')" class="mood-btn">Multiplayer</button>
-      </div>
-      <div id="whatToPlayResult"></div>
-    </div>
-  </div>
-
-  <style>.mood-btn{background:var(--panel2);color:var(--text);border:1px solid var(--border);padding:8px 16px;border-radius:100px;font-size:12px;font-family:inherit;cursor:pointer;transition:all 0.15s}.mood-btn:hover{border-color:var(--accent);color:var(--accent)}</style>
-
   <!-- NOW PLAYING FEED -->
   <div class="section">
     <div class="section-head"><h2>Friends Now Playing</h2></div>
     <div id="nowPlayingPanel" class="sidebar-card"><div class="empty">Add friends to see who's online.</div></div>
   </div>
+
+  </div><!-- /sub-view friends -->
 
 </div>
 
@@ -948,12 +975,6 @@ main > .section:first-of-type{padding-top:8px}
       <button onclick="addJournal()" class="connect-btn" style="width:100%">Save entry</button>
       <div id="journalList" style="margin-top:16px"></div>
     </div>
-  </div>
-
-  <!-- STEAM DNA -->
-  <div class="section">
-    <div class="section-head"><h2>Your Steam DNA</h2></div>
-    <div id="dnaPanel" class="sidebar-card"><div class="empty"><span class="loading"></span></div></div>
   </div>
 
   <!-- QUEST GUIDES -->
@@ -1083,7 +1104,17 @@ main > .section:first-of-type{padding-top:8px}
         <button onclick="togglePro()" style="background:transparent;color:var(--dim);border:1px solid var(--border);padding:6px 12px;border-radius:4px;font-size:11px;cursor:pointer;font-family:inherit">Disable demo</button>
       </div>
 
-      <!-- CUSTOMIZATION (PRO) — promoted to top per Julian's request -->
+      <div class="sub-tab-bar" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:24px;overflow-x:auto">
+        <button class="sub-tab active" data-sub="customize" onclick="switchSubTab('pro','customize')">Customize</button>
+        <button class="sub-tab" data-sub="alerts" onclick="switchSubTab('pro','alerts')">Alerts</button>
+        <button class="sub-tab" data-sub="quests" onclick="switchSubTab('pro','quests')">Quests &amp; Goals</button>
+        <button class="sub-tab" data-sub="insights" onclick="switchSubTab('pro','insights')">Insights</button>
+      </div>
+
+      <!-- ===== CUSTOMIZE ===== -->
+      <div class="sub-view active" data-sub="customize">
+
+      <!-- CUSTOMIZATION (PRO) -->
       <div class="section" style="padding:0;margin-bottom:20px">
         <div class="section-head"><h3 style="font-size:15px">Custom URL &amp; Themes</h3></div>
         <div class="sidebar-card">
@@ -1135,7 +1166,12 @@ main > .section:first-of-type{padding-top:8px}
         </div>
       </div>
 
-      <!-- PRICE DROP ALERTS (PRO) — promoted to top per Julian's request -->
+      </div><!-- /sub-view customize -->
+
+      <!-- ===== ALERTS ===== -->
+      <div class="sub-view" data-sub="alerts">
+
+      <!-- PRICE DROP ALERTS (PRO) -->
       <div class="section" style="padding:0;margin-bottom:20px">
         <div class="section-head"><h3 style="font-size:15px">Price Drop Alerts</h3></div>
         <div class="sidebar-card">
@@ -1152,6 +1188,40 @@ main > .section:first-of-type{padding-top:8px}
           <div id="priceAlertsList" style="margin-top:14px"></div>
         </div>
       </div>
+
+      <!-- PUSH NOTIFICATIONS (PRO) — moved into ALERTS sub-tab -->
+      <div class="section">
+        <div class="section-head"><h2>Push Notifications <span style="background:rgba(200,241,53,0.15);color:var(--accent);font-size:10px;padding:3px 8px;border-radius:3px;letter-spacing:1px;margin-left:8px">PRO</span></h2></div>
+        <div class="sidebar-card" id="pushCard">
+          <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Get instant alerts on your device for price drops, free games, and the daily achievement challenge.</p>
+          <div id="pushStatus" style="font-size:13px;margin-bottom:14px"></div>
+          <button onclick="togglePush()" id="pushToggleBtn" class="connect-btn" style="width:100%">Enable notifications</button>
+          <div id="pushPrefs" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+            <div style="font-size:11px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">What to alert on</div>
+            <label style="display:flex;align-items:center;gap:10px;padding:6px 0;font-size:13px;cursor:pointer"><input type="checkbox" id="prefPriceAlerts" checked onchange="savePushPrefs()" style="accent-color:var(--accent)"> Price drops on tracked games</label>
+            <label style="display:flex;align-items:center;gap:10px;padding:6px 0;font-size:13px;cursor:pointer"><input type="checkbox" id="prefFreeGames" checked onchange="savePushPrefs()" style="accent-color:var(--accent)"> New free games (Epic, Steam, GOG)</label>
+            <label style="display:flex;align-items:center;gap:10px;padding:6px 0;font-size:13px;cursor:pointer"><input type="checkbox" id="prefAotd" checked onchange="savePushPrefs()" style="accent-color:var(--accent)"> Daily achievement challenge</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- WEEKLY DIGEST (moved into ALERTS too) -->
+      <div class="section" style="padding:0;margin-bottom:20px">
+        <div class="section-head"><h3 style="font-size:15px">Weekly Digest</h3></div>
+        <div class="sidebar-card">
+          <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Every Sunday: best deals on games like yours, the week's free game, 3 new releases with 90%+ reviews, price drops on your wishlist.</p>
+          <div style="display:flex;gap:10px">
+            <input type="email" id="digestEmail" placeholder="you@example.com" style="flex:1;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit">
+            <button onclick="subscribeDigest()" class="connect-btn" style="padding:10px 24px;font-size:13px">Subscribe</button>
+          </div>
+          <div id="digestResult" style="margin-top:12px;font-size:13px"></div>
+        </div>
+      </div>
+
+      </div><!-- /sub-view alerts -->
+
+      <!-- ===== QUESTS & GOALS ===== -->
+      <div class="sub-view" data-sub="quests">
 
       <!-- PERSONAL QUESTS (PRO) -->
       <div class="section">
@@ -1190,21 +1260,25 @@ main > .section:first-of-type{padding-top:8px}
         <div id="aotdPanel" class="sidebar-card"><div class="empty"><span class="loading"></span></div></div>
       </div>
 
-      <!-- PUSH NOTIFICATIONS (PRO) -->
+      <!-- STREAK (PRO) -->
       <div class="section">
-        <div class="section-head"><h2>Push Notifications <span style="background:rgba(200,241,53,0.15);color:var(--accent);font-size:10px;padding:3px 8px;border-radius:3px;letter-spacing:1px;margin-left:8px">PRO</span></h2></div>
-        <div class="sidebar-card" id="pushCard">
-          <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Get instant alerts on your device for price drops, free games, and the daily achievement challenge.</p>
-          <div id="pushStatus" style="font-size:13px;margin-bottom:14px"></div>
-          <button onclick="togglePush()" id="pushToggleBtn" class="connect-btn" style="width:100%">Enable notifications</button>
-          <div id="pushPrefs" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
-            <div style="font-size:11px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">What to alert on</div>
-            <label style="display:flex;align-items:center;gap:10px;padding:6px 0;font-size:13px;cursor:pointer"><input type="checkbox" id="prefPriceAlerts" checked onchange="savePushPrefs()" style="accent-color:var(--accent)"> Price drops on tracked games</label>
-            <label style="display:flex;align-items:center;gap:10px;padding:6px 0;font-size:13px;cursor:pointer"><input type="checkbox" id="prefFreeGames" checked onchange="savePushPrefs()" style="accent-color:var(--accent)"> New free games (Epic, Steam, GOG)</label>
-            <label style="display:flex;align-items:center;gap:10px;padding:6px 0;font-size:13px;cursor:pointer"><input type="checkbox" id="prefAotd" checked onchange="savePushPrefs()" style="accent-color:var(--accent)"> Daily achievement challenge</label>
-          </div>
-        </div>
+        <div class="section-head"><h2>Play Streak <span style="background:rgba(200,241,53,0.15);color:var(--accent);font-size:10px;padding:3px 8px;border-radius:3px;letter-spacing:1px;margin-left:8px">PRO</span></h2></div>
+        <div id="streakPanel" class="sidebar-card"><div class="empty"><span class="loading"></span></div></div>
       </div>
+
+      <!-- DEMO RADAR (PRO) -->
+      <div class="section">
+        <div class="section-head">
+          <h2>Demo Radar <span style="background:rgba(200,241,53,0.15);color:var(--accent);font-size:10px;padding:3px 8px;border-radius:3px;letter-spacing:1px;margin-left:8px">PRO</span></h2>
+          <span class="link" style="cursor:default;font-size:12px;color:var(--dim)">Free demos to try</span>
+        </div>
+        <div id="demoRadarPanel" class="sidebar-card"><div class="empty"><span class="loading"></span></div></div>
+      </div>
+
+      </div><!-- /sub-view quests -->
+
+      <!-- ===== INSIGHTS ===== -->
+      <div class="sub-view" data-sub="insights">
 
       <!-- MOD SPACE (PRO) -->
       <div class="section">
@@ -1230,28 +1304,13 @@ main > .section:first-of-type{padding-top:8px}
         <div id="retroPanel" class="sidebar-card"><div class="empty"><span class="loading"></span></div></div>
       </div>
 
-      <!-- STREAK (PRO) -->
-      <div class="section">
-        <div class="section-head"><h2>Play Streak <span style="background:rgba(200,241,53,0.15);color:var(--accent);font-size:10px;padding:3px 8px;border-radius:3px;letter-spacing:1px;margin-left:8px">PRO</span></h2></div>
-        <div id="streakPanel" class="sidebar-card"><div class="empty"><span class="loading"></span></div></div>
-      </div>
-
       <!-- GENRE GAPS (PRO) -->
       <div class="section">
         <div class="section-head"><h2>Genre Gaps <span style="background:rgba(200,241,53,0.15);color:var(--accent);font-size:10px;padding:3px 8px;border-radius:3px;letter-spacing:1px;margin-left:8px">PRO</span></h2></div>
         <div id="genreGapPanel" class="sidebar-card"><div class="empty"><span class="loading"></span></div></div>
       </div>
 
-      <!-- DEMO RADAR (PRO) -->
-      <div class="section">
-        <div class="section-head">
-          <h2>Demo Radar <span style="background:rgba(200,241,53,0.15);color:var(--accent);font-size:10px;padding:3px 8px;border-radius:3px;letter-spacing:1px;margin-left:8px">PRO</span></h2>
-          <span class="link" style="cursor:default;font-size:12px;color:var(--dim)">Free demos to try</span>
-        </div>
-        <div id="demoRadarPanel" class="sidebar-card"><div class="empty"><span class="loading"></span></div></div>
-      </div>
-
-
+      <!-- SPEND ANALYTICS -->
       <div class="section" style="padding:0;margin-bottom:20px">
         <div class="section-head"><h3 style="font-size:15px">Spend Analytics</h3></div>
         <div id="spendPanel" class="sidebar-card"><div class="empty"><span class="loading"></span> Calculating what you spent...</div></div>
@@ -1272,17 +1331,7 @@ main > .section:first-of-type{padding-top:8px}
         </div>
       </div>
 
-      <div class="section" style="padding:0;margin-bottom:20px">
-        <div class="section-head"><h3 style="font-size:15px">Weekly Digest</h3></div>
-        <div class="sidebar-card">
-          <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Every Sunday: best deals on games like yours, the week's free game, 3 new releases with 90%+ reviews, price drops on your wishlist.</p>
-          <div style="display:flex;gap:10px">
-            <input type="email" id="digestEmail" placeholder="you@example.com" style="flex:1;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit">
-            <button onclick="subscribeDigest()" class="connect-btn" style="padding:10px 24px;font-size:13px">Subscribe</button>
-          </div>
-          <div id="digestResult" style="margin-top:12px;font-size:13px"></div>
-        </div>
-      </div>
+      </div><!-- /sub-view insights -->
     </div>
   </div>
 </div>
@@ -1330,6 +1379,8 @@ function switchSubTab(viewKey, sub) {
   if (!container) return;
   container.querySelectorAll('.sub-tab').forEach(b => b.classList.toggle('active', b.dataset.sub === sub));
   container.querySelectorAll('.sub-view').forEach(v => v.classList.toggle('active', v.dataset.sub === sub));
+  // Scroll to top when switching sub-tab — prevents the empty-page jump Julian saw
+  window.scrollTo({ top: 0, behavior: 'instant' });
   // Lazy-load data if the sub-view hasn't been populated
   if (viewKey === 'deals') {
     if (sub === 'for-you' && !STATE.dealsForYouLoaded) { loadMyDeals(); STATE.dealsForYouLoaded = true; }
@@ -1337,6 +1388,18 @@ function switchSubTab(viewKey, sub) {
     if (sub === 'free' && !STATE.dealsFreeLoaded) { loadFreeGames(); STATE.dealsFreeLoaded = true; }
     if (sub === 'new' && !STATE.dealsNewLoaded) { loadNewReleases(); STATE.dealsNewLoaded = true; }
     if (sub === 'soon' && !STATE.dealsSoonLoaded) { loadUpcoming(); STATE.dealsSoonLoaded = true; }
+  }
+  if (viewKey === 'more') {
+    if (sub === 'stats' && STATE.sid) {
+      // Re-fire loaders if their panel is empty (handles first switch after data ready)
+      if (document.querySelector('#wrappedPanel .loading')) loadWrapped();
+      if (document.querySelector('#backlogPanel .loading')) loadBacklog();
+      if (document.querySelector('#dnaPanel .loading')) loadSteamDNA();
+    }
+    if (sub === 'friends') refreshNowPlaying();
+  }
+  if (viewKey === 'pro') {
+    if (sub === 'customize') renderThemeButtons();
   }
 }
 
