@@ -3108,15 +3108,17 @@ async function priceHistory(url) {
     if (!search?.[0]) return jsonResponse({ error: 'Game not found' }, 404);
     const g = search[0];
     const detail = await fetchJSON(`https://www.cheapshark.com/api/1.0/games?id=${g.gameID}`);
-    const deals = (detail.deals || []).map(d => ({
-      storeID: d.storeID,
-      storeName: STORE_NAMES[d.storeID] || `Store ${d.storeID}`,
-      price: parseFloat(d.price),
-      retailPrice: parseFloat(d.retailPrice),
-      savings: Math.round(parseFloat(d.savings)),
-      dealID: d.dealID,
-      dealLink: `https://www.cheapshark.com/redirect?dealID=${d.dealID}`,
-    })).sort((a,b) => a.price - b.price);
+    const deals = (detail.deals || [])
+      .filter(d => !BLOCKED_STORE_IDS.has(String(d.storeID)))
+      .map(d => ({
+        storeID: d.storeID,
+        storeName: STORE_NAMES[d.storeID] || `Store ${d.storeID}`,
+        price: parseFloat(d.price),
+        retailPrice: parseFloat(d.retailPrice),
+        savings: Math.round(parseFloat(d.savings)),
+        dealID: d.dealID,
+        dealLink: `https://www.cheapshark.com/redirect?dealID=${d.dealID}`,
+      })).sort((a,b) => a.price - b.price);
 
     return jsonResponse({
       gameID: g.gameID,
@@ -3850,6 +3852,12 @@ const STORE_NAMES = {
   '31': 'AllYouPlay', '32': 'DLGamer', '34': 'Noctre', '35': 'DreamGame',
 };
 
+// Stores that block users via Cloudflare WAF / region-lock aggressively.
+// We exclude these from deal results so users never get redirected to a 'Sorry, blocked' page.
+// User reported GameBillet (23) blocking on 2026-04-30. Others are pre-emptive based on common
+// reports: 2Game, Noctre, DreamGame, AllYouPlay, DLGamer, Gamesload all WAF-block frequently.
+const BLOCKED_STORE_IDS = new Set(['23', '24', '28', '31', '32', '34', '35']);
+
 async function getDeals(url) {
   // Params: minRating (Steam %), maxPrice, sortBy (Deal Rating / Savings / Price / Recent), storeID
   const params = new URLSearchParams();
@@ -3874,6 +3882,8 @@ async function getDeals(url) {
   // Skip if no steam rating at all, or if review count is tiny.
   const MIN_REVIEWS = parseInt(url.searchParams.get('minReviews') || '500');
   const cleaned = raw.filter(d => {
+    // Drop stores that WAF-block users (they redirect to Cloudflare 'Sorry, blocked' pages)
+    if (BLOCKED_STORE_IDS.has(String(d.storeID))) return false;
     const revCount = d.steamRatingCount ? parseInt(d.steamRatingCount) : 0;
     const rating = d.steamRatingPercent ? parseInt(d.steamRatingPercent) : 0;
     // Need both: enough reviews to not be asset flip, and rating > 60%
@@ -3930,15 +3940,17 @@ async function searchDeal(url) {
   const filtered = (data || []).filter(g => !isJunkTitle(g.external));
   const results = await Promise.all(filtered.slice(0, 3).map(async g => {
     const detail = await fetchJSON(`https://www.cheapshark.com/api/1.0/games?id=${g.gameID}`).catch(() => ({}));
-    const deals = (detail.deals || []).map(d => ({
-      storeID: d.storeID,
-      storeName: STORE_NAMES[d.storeID] || `Store ${d.storeID}`,
-      price: parseFloat(d.price),
-      retailPrice: parseFloat(d.retailPrice),
-      savings: Math.round(parseFloat(d.savings)),
-      dealID: d.dealID,
-      dealLink: `https://www.cheapshark.com/redirect?dealID=${d.dealID}`,
-    })).sort((a, b) => a.price - b.price);
+    const deals = (detail.deals || [])
+      .filter(d => !BLOCKED_STORE_IDS.has(String(d.storeID)))
+      .map(d => ({
+        storeID: d.storeID,
+        storeName: STORE_NAMES[d.storeID] || `Store ${d.storeID}`,
+        price: parseFloat(d.price),
+        retailPrice: parseFloat(d.retailPrice),
+        savings: Math.round(parseFloat(d.savings)),
+        dealID: d.dealID,
+        dealLink: `https://www.cheapshark.com/redirect?dealID=${d.dealID}`,
+      })).sort((a, b) => a.price - b.price);
     return {
       gameID: g.gameID,
       title: g.external,
@@ -3963,6 +3975,7 @@ async function myDeals(url) {
   // Get global top deals, then filter out games user already owns
   const deals = await fetchJSON('https://www.cheapshark.com/api/1.0/deals?pageSize=60&sortBy=Deal%20Rating&steamRating=75&upperPrice=40');
   const unowned = (deals || [])
+    .filter(d => !BLOCKED_STORE_IDS.has(String(d.storeID)))
     .filter(d => !d.steamAppID || !ownedIds.has(parseInt(d.steamAppID)))
     .slice(0, 30)
     .map(d => ({
