@@ -2512,11 +2512,18 @@ function applyThemeMode(mode) {
       font-weight:600;
       font-family:'Rajdhani','Inter',sans-serif;
       color:var(--text) !important;
+      padding-left:0 !important;
     }
     html[data-theme-mode='gamer'] .section-head{
       border:none !important;
       padding-bottom:4px !important;
-      margin-bottom:18px !important;
+      margin-bottom:14px !important;
+    }
+    /* Kill the cyan bar before section-head h2 */
+    html[data-theme-mode='gamer'] .section-head h2::before,
+    html[data-theme-mode='gamer'] .section-head h3::before{
+      display:none !important;
+      content:none !important;
     }
     html[data-theme-mode='gamer'] .logo{ letter-spacing:3px; font-weight:700 }
     html[data-theme-mode='gamer'] .logo-dot{
@@ -2570,10 +2577,25 @@ function applyThemeMode(mode) {
       background:transparent !important;
       border:none !important;
       clip-path:none !important;
-      padding:14px 0 !important;
+      padding:0 !important;
+      margin-bottom:0 !important;
+      box-shadow:none !important;
     }
     html[data-theme-mode='gamer'] .sidebar-card::before,
     html[data-theme-mode='gamer'] .feature::before{ display:none !important }
+
+    /* Nuke ALL inline panel backgrounds inside sections — these are
+       inner containers using inline styles like background:var(--panel)/--panel2. */
+    html[data-theme-mode='gamer'] .section [style*='background:var(--panel)'],
+    html[data-theme-mode='gamer'] .section [style*='background:var(--panel2)'],
+    html[data-theme-mode='gamer'] .section [style*='background: var(--panel)'],
+    html[data-theme-mode='gamer'] .section [style*='background: var(--panel2)']{
+      background:transparent !important;
+      border-color:rgba(255,255,255,0.06) !important;
+      box-shadow:none !important;
+    }
+    /* Strip rounded inline border-radius on these inner containers */
+    html[data-theme-mode='gamer'] [style*='border-radius']{ border-radius:0 !important }
 
     /* Stat cards — strip the box, keep just a number + label */
     html[data-theme-mode='gamer'] .stat-card{
@@ -2698,24 +2720,25 @@ function applyThemeMode(mode) {
       background:rgba(255,255,255,0.02) !important;
     }
 
-    /* Inputs — invisible until focused */
+    /* Inputs — invisible until focused. Also override inline styles. */
     html[data-theme-mode='gamer'] input[type=text],
     html[data-theme-mode='gamer'] input[type=email],
     html[data-theme-mode='gamer'] input[type=number],
     html[data-theme-mode='gamer'] input[type=search],
     html[data-theme-mode='gamer'] input[type=password],
+    html[data-theme-mode='gamer'] input[type=date],
     html[data-theme-mode='gamer'] select,
     html[data-theme-mode='gamer'] textarea,
     html[data-theme-mode='gamer'] .sid-input{
       background:transparent !important;
       border:none !important;
-      border-bottom:1px solid rgba(255,255,255,0.12) !important;
+      border-bottom:1px solid rgba(255,255,255,0.15) !important;
       color:var(--text) !important;
       font-family:'JetBrains Mono',monospace !important;
       letter-spacing:0.3px !important;
-      padding-left:2px !important;
-      padding-right:2px !important;
+      padding:8px 2px !important;
       transition:border-color 0.15s;
+      box-shadow:none !important;
     }
     html[data-theme-mode='gamer'] input:focus,
     html[data-theme-mode='gamer'] select:focus,
@@ -2724,6 +2747,12 @@ function applyThemeMode(mode) {
       outline:none !important;
       border-bottom-color:var(--accent) !important;
       box-shadow:none !important;
+    }
+    /* Suggestion dropdowns — plain dark sheet */
+    html[data-theme-mode='gamer'] [id*='SuggestBox']{
+      background:#0d1117 !important;
+      border:1px solid rgba(255,255,255,0.08) !important;
+      box-shadow:0 8px 24px rgba(0,0,0,0.6) !important;
     }
 
     /* Sub-tabs — hairline underline only */
