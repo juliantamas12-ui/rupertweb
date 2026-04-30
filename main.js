@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Two Weeks in 1923 That Killed the League of Nations",
+    date: "2026-04-30",
+    category: "History",
+    excerpt: "On 27 August 1923, an Italian general named Enrico Tellini and four members of his staff were ambushed and murdered on the Greek side of the Greek-Albanian border. Mussolini, ten months into office and looking for exactly this kind of opportunity, gave Athens a 24-hour ultimatum and bombarded Corfu when they refused. This episode is filed somewhere between the Ruhr Crisis and the Locarno Treaties as post-war detritus. It deserves to be filed as the moment the League of Nations died, twelve years before everyone agrees it died, and as the prototype for every subsequent piece of fascist foreign policy that would eventually destroy the European order...",
+    url: "essays/2026-04-30-the-two-weeks-in-1923-that-killed-the-league-of-nations.html"
+  },
+  {
     title: "The Cossack Who Built Modern Russia By Failing",
     date: "2026-04-29",
     category: "History",
