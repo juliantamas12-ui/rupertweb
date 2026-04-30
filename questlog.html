@@ -76,11 +76,29 @@ body::-webkit-scrollbar-track,*::-webkit-scrollbar-track{background:var(--bg-dee
 body::-webkit-scrollbar-thumb,*::-webkit-scrollbar-thumb{background:var(--panel2);border:2px solid var(--bg);border-radius:0}
 body::-webkit-scrollbar-thumb:hover{background:var(--accent2)}
 
-/* Sharp edges — minimal radius. Steam uses tiny radii. */
-button,input,select,textarea,.connect-btn,.btn-primary,.btn-ghost{border-radius:2px !important}
-.section,.sidebar-card,.stat-card,.feature-card,.feature,.kit-card,.plan,.empty,.error,.theme-btn,.density-btn,.corner-btn,.mood-btn,.sub-tab,.nav-tab,.btn,.btn-portal,.btn-xl{border-radius:2px !important}
+/* Sharp edges per DESIGN.md — zero radius, no exceptions except avatars. */
+button,input,select,textarea,.connect-btn,.btn-primary,.btn-ghost{border-radius:0 !important}
+.section,.sidebar-card,.stat-card,.feature-card,.feature,.kit-card,.plan,.empty,.error,.theme-btn,.density-btn,.corner-btn,.mood-btn,.sub-tab,.nav-tab,.btn,.btn-portal,.btn-xl{border-radius:0 !important}
 .game-card,.rec-card{border-radius:0 !important}
 .game-img,.rec-cover{border-radius:0 !important}
+
+/* ── GLOBAL ZONE-BLOCK SWEEP (DESIGN.md spec) ──
+   Strip inline panel backgrounds + rounded corners on inner containers across
+   every page section. Replaces card-shaped boxes with the zone-block pattern
+   (hairline-top + padding). Applies to ALL themes, not just gamer mode. */
+[style*='background:var(--panel)'],
+[style*='background:var(--panel2)'],
+[style*='background: var(--panel)'],
+[style*='background: var(--panel2)']{
+  background:transparent !important;
+  background-color:transparent !important;
+}
+[style*='border-radius']:not(.nav-user-avatar):not([class*='avatar']):not(input[type=color]):not(.loading){
+  border-radius:0 !important;
+}
+[style*='border:1px solid var(--border)']{
+  border-color:var(--border) !important;
+}
 
 /* ── NAV (DESIGN.md spec) ──
    56px tall, deep bg fill, single hairline below. Logo + tabs + user cluster.
@@ -2963,13 +2981,15 @@ function injectStyleOverrides() {
     `;
   }
 
-  let radius = '6px';
-  if (corners === 'sharp') radius = '0';
-  else if (corners === 'pill') radius = '16px';
+  // DESIGN.md mandates sharp 0-radius. The corners preference is kept for back-compat
+  // but only the avatar stays rounded.
+  let radius = '0';
+  if (corners === 'pill') radius = '0'; // pill no longer supported — forced sharp
   css += `
     .connect-btn,.sid-input,.stat-card,.game-card,.rec-card,.sidebar-card,.feature-card,.feature,.kit-card,.plan,.empty,.error,.theme-btn,.density-btn,.corner-btn,.mood-btn,.sub-tab,.nav-tab,.btn,.btn-portal,.btn-primary,.btn-ghost,.btn-xl{border-radius:${radius} !important}
     button:not([class*='btn']):not([class*='-btn']){border-radius:${radius} !important}
-    .game-img,.rec-cover,.ach-icon,.nav-user-avatar{border-radius:${corners === 'pill' ? radius : (corners === 'sharp' ? '0' : '6px')} !important}
+    .game-img,.rec-cover,.ach-icon{border-radius:${radius} !important}
+    .nav-user-avatar{border-radius:50% !important}
     input[type=text],input[type=email],input[type=number],input[type=date],input[type=color],input[type=search],input[type=password],select,textarea{border-radius:${radius} !important}
   `;
 
