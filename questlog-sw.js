@@ -5,7 +5,7 @@
  *   - Offline fallback: serves last cached questlog.html when offline
  * Bump VERSION on breaking cache shape changes.
  */
-const VERSION = 'questlog-v3-2026-04-30';
+const VERSION = 'questlog-v4-2026-04-30';
 const STATIC_CACHE = `${VERSION}-static`;
 const RUNTIME_CACHE = `${VERSION}-runtime`;
 

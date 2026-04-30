@@ -2,15 +2,22 @@
   "name": "QuestLog",
   "short_name": "QuestLog",
   "description": "Your gaming command center. Steam stats, deals, achievements, recommendations.",
-  "start_url": "/questlog.html",
-  "scope": "/questlog.html",
-  "id": "/questlog.html",
+  "start_url": "/questlog.html?source=pwa",
+  "scope": "/",
+  "id": "https://rupertweb.com/questlog",
+  "lang": "en-GB",
+  "dir": "ltr",
   "display": "standalone",
-  "display_override": ["window-controls-overlay", "standalone"],
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "orientation": "any",
-  "background_color": "#0a0e1a",
-  "theme_color": "#0a0e1a",
+  "background_color": "#1b2838",
+  "theme_color": "#1b2838",
+  "prefer_related_applications": false,
   "categories": ["games", "entertainment", "utilities"],
+  "launch_handler": {
+    "client_mode": ["focus-existing", "auto"]
+  },
+  "handle_links": "preferred",
   "icons": [
     {
       "src": "/icons/questlog-192.png",
@@ -29,6 +36,35 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/questlog-og.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "QuestLog dashboard"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Library",
+      "short_name": "Library",
+      "url": "/questlog.html#library",
+      "icons": [{ "src": "/icons/questlog-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Deals",
+      "short_name": "Deals",
+      "url": "/questlog.html#deals",
+      "icons": [{ "src": "/icons/questlog-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Pro Hub",
+      "short_name": "Pro",
+      "url": "/questlog.html#pro",
+      "icons": [{ "src": "/icons/questlog-192.png", "sizes": "192x192" }]
     }
   ]
 }
