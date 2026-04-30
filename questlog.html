@@ -259,6 +259,16 @@ body{position:relative;overflow-x:hidden}
 .mood-btn:hover{transform:translateY(-2px)}
 .mood-btn:active{transform:translateY(0)}
 
+/* ── SMOOTH FONT-SIZE ZOOM ── transition the body so the slider feels buttery */
+body{transition:zoom 0.18s ease-out, transform 0.18s ease-out}
+
+/* ── RANGE SLIDER (custom thumb + track) ── */
+input[type=range]{-webkit-appearance:none;appearance:none;height:6px;background:var(--panel2);border-radius:3px;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);border:2px solid var(--bg);box-shadow:0 0 0 1px var(--accent);cursor:grab;transition:transform 0.12s}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.15)}
+input[type=range]::-webkit-slider-thumb:active{cursor:grabbing;transform:scale(1.05)}
+input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--accent);border:2px solid var(--bg);box-shadow:0 0 0 1px var(--accent);cursor:grab}
+
 /* ── SECTION HIERARCHY (Steam pages use big titles + readable subtitles) ──
    In Pro Hub each section’s descriptive text is real content not metadata,
    so it gets bumped up. Keeps page from looking like a wall of greys. */
@@ -1333,11 +1343,25 @@ body{position:relative;overflow-x:hidden}
             </div>
           </div>
 
+          <div style="margin-bottom:18px">
+            <div style="font-size:12px;color:var(--dim);margin-bottom:8px;letter-spacing:1px;text-transform:uppercase">Corner Style</div>
+            <div style="display:flex;gap:6px">
+              <button onclick="setCorners('sharp')" class="corner-btn" data-corners="sharp">Sharp</button>
+              <button onclick="setCorners('soft')" class="corner-btn" data-corners="soft">Soft</button>
+              <button onclick="setCorners('round')" class="corner-btn" data-corners="round">Round</button>
+            </div>
+          </div>
+
           <div>
-            <div style="font-size:12px;color:var(--dim);margin-bottom:8px;letter-spacing:1px;text-transform:uppercase">Font Size</div>
-            <div style="display:flex;gap:6px;align-items:center">
-              <input type="range" id="fontSizeSlider" min="85" max="125" step="5" value="100" oninput="document.getElementById('fontSizeLabel').textContent=this.value+'%'" onchange="setFontSize(this.value)" style="flex:1;accent-color:var(--accent)">
-              <span id="fontSizeLabel" style="min-width:50px;text-align:right;font-size:12px;color:var(--dim);font-family:'Courier New',monospace">100%</span>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <span style="font-size:12px;color:var(--dim);letter-spacing:1px;text-transform:uppercase">Font Size</span>
+              <span id="fontSizeLabel" style="font-size:14px;color:var(--accent);font-weight:700;font-family:'JetBrains Mono',monospace;letter-spacing:0;font-variant-numeric:tabular-nums">100%</span>
+            </div>
+            <input type="range" id="fontSizeSlider" min="75" max="150" step="1" value="100"
+              oninput="document.getElementById('fontSizeLabel').textContent=this.value+'%';setFontSize(this.value)"
+              style="width:100%;accent-color:var(--accent)">
+            <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:10px;color:var(--dim);font-family:'JetBrains Mono',monospace;letter-spacing:0">
+              <span>75%</span><span>100%</span><span>150%</span>
             </div>
           </div>
         </div>
@@ -2920,14 +2944,17 @@ function injectStyleOverrides() {
     `;
   }
 
-  // DESIGN.md mandates sharp 0-radius. The corners preference is kept for back-compat
-  // but only the avatar stays rounded.
+  // Corner radius: sharp (0), soft (6), round (14). Avatars always 50%.
   let radius = '0';
-  if (corners === 'pill') radius = '0'; // pill no longer supported — forced sharp
+  if (corners === 'soft') radius = '6px';
+  else if (corners === 'round') radius = '14px';
+  // Cards/tiles use a slightly smaller radius than buttons for hierarchy
+  const tileRadius = corners === 'round' ? '10px' : (corners === 'soft' ? '4px' : '0');
   css += `
-    .connect-btn,.sid-input,.stat-card,.game-card,.rec-card,.sidebar-card,.feature-card,.feature,.kit-card,.plan,.empty,.error,.theme-btn,.density-btn,.corner-btn,.mood-btn,.sub-tab,.nav-tab,.btn,.btn-portal,.btn-primary,.btn-ghost,.btn-xl{border-radius:${radius} !important}
+    .connect-btn,.btn-primary,.btn-ghost,.btn,.btn-portal,.btn-xl,.sid-input,.theme-btn,.density-btn,.corner-btn,.mood-btn{border-radius:${radius} !important}
+    .stat-card,.game-card,.rec-card,.sidebar-card,.feature-card,.feature,.kit-card,.plan,.empty,.error,.sub-tab{border-radius:${tileRadius} !important}
     button:not([class*='btn']):not([class*='-btn']){border-radius:${radius} !important}
-    .game-img,.rec-cover,.ach-icon{border-radius:${radius} !important}
+    .game-img,.rec-cover,.ach-icon{border-radius:${tileRadius} !important}
     .nav-user-avatar{border-radius:50% !important}
     input[type=text],input[type=email],input[type=number],input[type=date],input[type=color],input[type=search],input[type=password],select,textarea{border-radius:${radius} !important}
   `;
@@ -2944,10 +2971,21 @@ function injectStyleOverrides() {
 function applyDensity() { injectStyleOverrides(); }
 function applyCornerStyle() { injectStyleOverrides(); }
 function applyFontSize() {
-  const pct = parseInt(localStorage.getItem('questlog_fontsize') || '100', 10);
-  // Apply zoom on body — scales every fixed-px element including the design system.
-  // Avoids re-styling every CSS rule.
-  document.body.style.zoom = (pct / 100).toString();
+  const pct = parseFloat(localStorage.getItem('questlog_fontsize') || '100');
+  // Use CSS zoom for live smooth scaling. Backed by a transition for buttery feel.
+  // Falls back to transform:scale on browsers that don't honour zoom (Firefox).
+  const ratio = pct / 100;
+  if ('zoom' in document.body.style || /chrome|safari|edg/i.test(navigator.userAgent)) {
+    document.body.style.zoom = ratio.toString();
+    document.body.style.transform = '';
+    document.body.style.transformOrigin = '';
+    document.body.style.width = '';
+  } else {
+    document.body.style.zoom = '';
+    document.body.style.transform = `scale(${ratio})`;
+    document.body.style.transformOrigin = 'top left';
+    document.body.style.width = (100 / ratio) + '%';
+  }
 }
 
 function renderThemeButtons() {
