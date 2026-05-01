@@ -380,9 +380,11 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
 .sub-view{display:none}
 .sub-view.active{display:block}
 /* ── SUB-TABS (DESIGN.md spec) ── Plain uppercase text + accent underline. No pills. */
-.sub-tab{background:transparent;color:var(--dim);border:none;border-bottom:2px solid transparent;padding:8px 0;border-radius:0 !important;font-size:13px;font-family:inherit;cursor:pointer;transition:color 0.12s, border-color 0.12s;font-weight:700;flex-shrink:0;letter-spacing:1px;text-transform:uppercase;margin-right:28px}
-.sub-tab:hover{color:var(--text);border-bottom-color:transparent}
-.sub-tab.active{background:transparent;color:var(--accent);border-bottom-color:var(--accent)}
+/* Sub-tabs: when sharp/soft mode they're underline-only;
+   when round mode they get a full outline pill so the radius reads correctly. */
+.sub-tab{background:transparent;color:var(--dim);border:2px solid transparent;padding:8px 14px;font-size:13px;font-family:inherit;cursor:pointer;transition:color 0.12s, border-color 0.12s, background 0.12s;font-weight:700;flex-shrink:0;letter-spacing:1px;text-transform:uppercase;margin-right:8px;line-height:1.1}
+.sub-tab:hover{color:var(--text)}
+.sub-tab.active{background:transparent;color:var(--accent);border-color:var(--accent)}
 .error{background:transparent;border:none;border-left:2px solid #ff5050;color:#ff9090;padding:10px 16px;border-radius:0 !important;font-size:13px;margin-bottom:20px}
 
 /* Tablet & narrow desktop */
