@@ -1523,6 +1523,14 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
       </div>
 
       <div class="section" style="padding:0;margin-bottom:20px">
+        <div class="section-head"><h3 style="font-size:15px">Recent Price Drops</h3></div>
+        <div class="sidebar-card">
+          <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Drops we've spotted on your wishlist in the last 30 days. Checked hourly.</p>
+          <div id="recentDropsList"><div class="empty" style="text-align:left;font-size:12px;padding:8px 0">Add games to your wishlist below — drops will appear here automatically.</div></div>
+        </div>
+      </div>
+
+      <div class="section" style="padding:0;margin-bottom:20px">
         <div class="section-head"><h3 style="font-size:15px">Wishlist Sync</h3></div>
         <div class="sidebar-card">
           <p style="color:var(--dim);font-size:13px;margin-bottom:14px">One wishlist across every store. Prices monitored continuously.</p>
@@ -2590,6 +2598,7 @@ function initProFeatures() {
   if (isProActive()) {
     renderPriceAlerts();
     renderWishlist();
+    renderRecentDrops();
     renderThemeButtons();
     loadActiveTheme();
     const savedCustom = localStorage.getItem('questlog_custom_url');
@@ -3172,6 +3181,53 @@ async function renderWishlist() {
         <button onclick="removeWishlist('${item.gameID}')" style="background:transparent;color:var(--dim);border:none;cursor:pointer;font-size:16px">×</button>
       </div>`;
   }).join('');
+}
+
+// ───── RECENT PRICE DROPS (server-detected, /api/alerts) ─────
+async function renderRecentDrops() {
+  const el = document.getElementById('recentDropsList');
+  if (!el || !STATE.sid) return;
+  try {
+    const r = await fetch(`/api/alerts?sid=${encodeURIComponent(STATE.sid)}`);
+    const d = await r.json();
+    const list = Array.isArray(d.alerts) ? d.alerts : [];
+    if (!list.length) {
+      el.innerHTML = '<div class="empty" style="text-align:left;font-size:12px;padding:8px 0">No drops spotted yet. We check your wishlist hourly.</div>';
+      return;
+    }
+    const fmt = (n, cur) => {
+      const sym = cur === 'GBP' ? '£' : cur === 'USD' ? '$' : cur === 'EUR' ? '€' : '';
+      const v = (typeof n === 'number') ? (n / 100).toFixed(2) : '';
+      return v ? `${sym}${v}` : '';
+    };
+    const ago = ts => {
+      const s = Math.max(1, Math.floor((Date.now() - ts) / 1000));
+      if (s < 3600) return `${Math.floor(s/60)}m ago`;
+      if (s < 86400) return `${Math.floor(s/3600)}h ago`;
+      return `${Math.floor(s/86400)}d ago`;
+    };
+    el.innerHTML = list.slice(0, 12).map(a => {
+      const name = (a.name || '').replace(/[<>&"']/g, c => ({ '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;' }[c]));
+      const cur = a.currency || 'USD';
+      const final = fmt(a.final, cur);
+      const initial = fmt(a.initial, cur);
+      const pct = (typeof a.discount_percent === 'number') ? a.discount_percent : 0;
+      const img = a.header_image || '';
+      const url = a.store_url || '#';
+      return `
+      <div style="display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+        ${img ? `<div style="width:80px;aspect-ratio:460/215;background:url('${img}') center/cover;border-radius:4px;flex-shrink:0"></div>` : ''}
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</div>
+          <div style="font-size:11px;color:var(--dim)">Now: <strong style="color:var(--accent)">${final}</strong>${initial ? ` <span style="text-decoration:line-through;opacity:0.6">${initial}</span>` : ''} · ${ago(a.ts || Date.now())}</div>
+        </div>
+        <span style="background:rgba(200,241,53,0.15);color:var(--accent);padding:3px 8px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:1px">-${pct}%</span>
+        <a href="${url}" target="_blank" rel="noopener" style="background:var(--accent);color:#000;padding:6px 12px;border-radius:4px;font-size:11px;font-weight:700;text-decoration:none">Buy</a>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    el.innerHTML = '<div class="empty" style="text-align:left;font-size:12px;padding:8px 0;color:#ff5a5a">Could not load recent drops.</div>';
+  }
 }
 
 // ───── STEAM ID WIZARD ─────
