@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Bribe That Bought Three Centuries: Sekigahara and the Defection of Kobayakawa Hideaki",
+    date: "2026-05-01",
+    category: "History",
+    excerpt: "On the morning of 21 October 1600, in a fog-bound mountain pass in central Japan, around 160,000 men were arranged for battle in what every commander believed would decide the future of the country. By mid-afternoon it had, but not in the way the larger army expected. The Battle of Sekigahara is taught as the founding event of the Tokugawa Shogunate — the regime that would rule Japan for the next 268 years. What it actually was, on the day, was a coin flip resolved by a single defection. The defector was nineteen years old, had been bribed for months, and at the critical hour sat on a hill called Matsuo and refused to move until Ieyasu's arquebusiers shot at his own position to remind him of the deal...",
+    url: "essays/2026-05-01-the-bribe-that-bought-three-centuries-sekigahara-and-the-defection-of-kobayakawa-hideaki.html"
+  },
+  {
     title: "The Two Weeks in 1923 That Killed the League of Nations",
     date: "2026-04-30",
     category: "History",
