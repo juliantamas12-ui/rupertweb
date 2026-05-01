@@ -323,25 +323,13 @@ const SCHOOL_TASKS = [
     "status": "upcoming"
   },
   {
-    "title": "Valerio and Julian present the sonnet !",
-    "due": "",
-    "subject": "",
-    "status": "upcoming"
-  },
-  {
-    "title": "HW Science 7",
+    "title": "Math 8: Composite Solid SA and Volume",
     "due": "",
     "subject": "",
     "status": "upcoming"
   },
   {
     "title": "Submit Coursework",
-    "due": "",
-    "subject": "",
-    "status": "upcoming"
-  },
-  {
-    "title": "Math 8: Composite Solid SA and Volume",
     "due": "",
     "subject": "",
     "status": "upcoming"
