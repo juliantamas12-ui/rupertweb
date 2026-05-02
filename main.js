@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Coup That Almost Wasn't: Why Operation Ajax Failed Before It Succeeded",
+    date: "2026-05-02",
+    category: "History",
+    excerpt: "The standard story of the 1953 Iranian coup is a story of American omnipotence — a clean CIA operation, the founding myth of covert action. Almost none of it is correct. The coup that actually happened in August 1953 was not Operation Ajax. The real plan failed completely on the night of 15 August: the conspiracy had been penetrated, Colonel Nassiri was arrested delivering the firman, the Shah fled to Rome, and Washington cabled Kermit Roosevelt to abort. He didn't. What followed was a salvage job by one officer who disobeyed his recall order, $1 million in unmarked notes, and a hired mob from the south Tehran bazaars...",
+    url: "essays/2026-05-02-the-coup-that-almost-wasnt-why-operation-ajax-failed-before-it-succeeded.html"
+  },
+  {
     title: "The Bribe That Bought Three Centuries: Sekigahara and the Defection of Kobayakawa Hideaki",
     date: "2026-05-01",
     category: "History",
