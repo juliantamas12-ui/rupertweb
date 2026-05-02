@@ -4282,7 +4282,10 @@ async function runWishlistPriceWatch(env) {
       const existingAlerts = (await kvGet(env, `alerts:${sid}`)) || [];
       const recentByApp = new Map();
       for (const a of existingAlerts) {
-        if (a?.appid && a?.at && Date.now() - a.at < ALERT_DEDUPE_WINDOW_MS) {
+        // Accept both new-shape (ts) and any legacy-shape records (at) so a
+        // mid-flight schema change doesn't double-fire alerts after deploy.
+        const stamp = a?.ts ?? a?.at;
+        if (a?.appid && stamp && Date.now() - stamp < ALERT_DEDUPE_WINDOW_MS) {
           recentByApp.set(String(a.appid), a);
         }
       }
@@ -4301,18 +4304,20 @@ async function runWishlistPriceWatch(env) {
           if (discount <= 0) continue;
           if (recentByApp.has(String(appid))) continue;
 
+          // Field names mirror what questlog.html's renderRecentDrops() reads.
+          // initial/final are kept in cents (the frontend divides by 100).
           newAlerts.push({
             appid,
             name: entry.data?.name || `App ${appid}`,
-            discount,
-            initial: po.initial_formatted || null,
-            final: po.final_formatted || null,
-            initialCents: po.initial,
-            finalCents: po.final,
+            discount_percent: discount,
+            initial: po.initial,
+            final: po.final,
+            initial_formatted: po.initial_formatted || null,
+            final_formatted: po.final_formatted || null,
             currency: po.currency,
-            header: `https://cdn.cloudflare.steamstatic.com/steam/apps/${appid}/header.jpg`,
-            url: `https://store.steampowered.com/app/${appid}/`,
-            at: Date.now(),
+            header_image: `https://cdn.cloudflare.steamstatic.com/steam/apps/${appid}/header.jpg`,
+            store_url: `https://store.steampowered.com/app/${appid}/`,
+            ts: Date.now(),
           });
         } catch (e) {
           stats.errors++;

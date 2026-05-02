@@ -43,19 +43,28 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  /* Raycast-inspired */
-  --bg:#000000;
-  --panel:#0a0a0a;
-  --panel2:#141414;
-  --border:rgba(255,255,255,0.06);
-  --accent:#FF6363;
-  --accent2:#FF65A3;
-  --text:#FFFFFF;
-  --dim:rgba(255,255,255,0.55);
-  --gradient-pink:linear-gradient(135deg,#FF6363 0%,#FF65A3 100%);
-  --gradient-warm:linear-gradient(135deg,#FFB800 0%,#FF6363 100%);
+  /* GAMER MINIMALIST — Steam-inspired */
+  --bg:#0e1419;
+  --bg-deep:#080b0e;
+  --panel:#16202d;
+  --panel2:#1f2933;
+  --panel-hover:#2a3f5f;
+  --border:rgba(102,192,244,0.08);
+  --accent:#66c0f4;
+  --accent-bright:#9ed7ff;
+  --accent2:#1b75bb;
+  --accent-orange:#ff6c00;
+  --accent-warning:#fcb41e;
+  --text:#c7d5e0;
+  --text-bright:#ffffff;
+  --dim:rgba(199,213,224,0.55);
+  --gradient-steam:linear-gradient(135deg,#66c0f4 0%,#1b75bb 100%);
+  --gradient-apex:linear-gradient(135deg,#ff6c00 0%,#ff3f00 100%);
 }
-body{background:var(--bg);color:var(--text);font-family:'Inter','Helvetica Neue',Arial,sans-serif;line-height:1.6;overflow-x:hidden;letter-spacing:-0.01em}
+body{background:var(--bg);color:var(--text);font-family:'Motiva Sans','Inter','Helvetica Neue',Arial,sans-serif;line-height:1.5;overflow-x:hidden;letter-spacing:0;font-size:14px}
+
+/* Sharp edges, Steam style */
+button,input,select,textarea{border-radius:2px !important}
 a{color:inherit;text-decoration:none}
 
 /* NAV */
@@ -81,7 +90,7 @@ nav.scrolled{border-bottom-color:var(--border)}
 .hero-badge .dot{width:6px;height:6px;background:var(--accent);border-radius:50%;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
 .hero h1{font-size:clamp(42px,7vw,76px);font-weight:800;letter-spacing:-2px;line-height:1.05;margin-bottom:24px}
-.hero h1 span{background:var(--gradient-pink);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero h1 span{background:var(--gradient-steam);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .hero p{font-size:19px;color:var(--dim);max-width:620px;margin:0 auto 40px}
 .hero-ctas{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:40px}
 .btn-xl{padding:16px 32px;font-size:16px;font-weight:700}
