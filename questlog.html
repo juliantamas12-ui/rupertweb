@@ -422,12 +422,16 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
 
 /* Phone */
 @media(max-width:640px){
-  nav{padding:8px 10px}
-  .logo{font-size:14px}
+  nav{padding:8px 10px 0;gap:8px}
+  .logo{font-size:14px;flex:0 0 auto}
   #proBadgeNav{font-size:8px;padding:2px 5px}
-  .nav-user{order:2;margin-left:auto;font-size:11px}
-  .nav-user span{display:none}
-  .nav-user label{font-size:10px}
+  /* User cluster on its own line so logo + tabs aren't crowded */
+  .nav-user{order:2;margin-left:auto;font-size:11px;flex-shrink:0;gap:8px;align-items:center}
+  /* Hide non-essentials on phones: Steam app toggle + name */
+  .nav-user span,.nav-user label{display:none !important}
+  .nav-user-avatar{width:22px;height:22px}
+  /* Disconnect button stays but compacted */
+  .nav-user button{padding:4px 8px !important;font-size:10px !important;height:auto !important;letter-spacing:0.3px !important}
   .nav-tab{padding:6px 10px;font-size:11px}
   main{padding:10px}
   .stats-strip{grid-template-columns:1fr 1fr}
@@ -1360,7 +1364,8 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
               <span id="fontSizeLabel" style="font-size:14px;color:var(--accent);font-weight:700;font-family:'JetBrains Mono',monospace;letter-spacing:0;font-variant-numeric:tabular-nums">100%</span>
             </div>
             <input type="range" id="fontSizeSlider" min="75" max="150" step="1" value="100"
-              oninput="document.getElementById('fontSizeLabel').textContent=this.value+'%';setFontSize(this.value)"
+              oninput="document.getElementById('fontSizeLabel').textContent=this.value+'%'"
+              onchange="setFontSize(this.value)"
               style="width:100%;accent-color:var(--accent)">
             <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:10px;color:var(--dim);font-family:'JetBrains Mono',monospace;letter-spacing:0">
               <span>75%</span><span>100%</span><span>150%</span>
