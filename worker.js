@@ -3904,7 +3904,20 @@ async function getDeals(url) {
     }
   }
 
-  const deals = Object.values(byGame).map(d => ({
+  // Title-level dedupe — CheapShark occasionally returns the same game under
+  // multiple gameIDs (region splits, edition splits). Strip edition suffixes and dedupe.
+  const byTitle = {};
+  for (const d of Object.values(byGame)) {
+    const key = (d.title || '').toLowerCase()
+      .replace(/\s+/g,' ')
+      .replace(/\b(deluxe|ultimate|premium|gold|legendary|complete|definitive|goty|game of the year|edition|standard)\b/g,'')
+      .replace(/[^a-z0-9 ]+/g,'')
+      .trim();
+    if (!key) continue;
+    if (!byTitle[key] || parseFloat(d.salePrice) < parseFloat(byTitle[key].salePrice)) byTitle[key] = d;
+  }
+
+  const deals = Object.values(byTitle).map(d => ({
     dealID:         d.dealID,
     gameID:         d.gameID,
     title:          d.title,
@@ -3972,14 +3985,39 @@ async function myDeals(url) {
   );
   const ownedIds = new Set((games?.response?.games || []).map(g => g.appid));
 
-  // Get global top deals, then filter out games user already owns
+  // Get global top deals, then filter out games user already owns and dedupe.
   const deals = await fetchJSON('https://www.cheapshark.com/api/1.0/deals?pageSize=60&sortBy=Deal%20Rating&steamRating=75&upperPrice=40');
-  const unowned = (deals || [])
+  const candidates = (deals || [])
     .filter(d => !BLOCKED_STORE_IDS.has(String(d.storeID)))
     .filter(d => !d.steamAppID || !ownedIds.has(parseInt(d.steamAppID)))
+    .filter(d => !isJunkTitle(d.title));
+
+  // Dedupe by gameID first (same game across stores) keeping the cheapest sale.
+  const byGame = {};
+  for (const d of candidates) {
+    const key = d.gameID;
+    if (!byGame[key] || parseFloat(d.salePrice) < parseFloat(byGame[key].salePrice)) byGame[key] = d;
+  }
+
+  // Second-pass dedupe by normalised title (CheapShark sometimes lists the same game
+  // under two separate gameIDs — e.g. regional variants, re-listings, edition splits).
+  const byTitle = {};
+  for (const d of Object.values(byGame)) {
+    const key = (d.title || '').toLowerCase()
+      .replace(/\s+/g,' ')
+      .replace(/\b(deluxe|ultimate|premium|gold|legendary|complete|definitive|goty|game of the year|edition|standard)\b/g,'')
+      .replace(/[^a-z0-9 ]+/g,'')
+      .trim();
+    if (!key) continue;
+    if (!byTitle[key] || parseFloat(d.salePrice) < parseFloat(byTitle[key].salePrice)) byTitle[key] = d;
+  }
+
+  const unowned = Object.values(byTitle)
+    .sort((a, b) => parseFloat(b.dealRating || 0) - parseFloat(a.dealRating || 0))
     .slice(0, 30)
     .map(d => ({
       dealID: d.dealID,
+      gameID: d.gameID,
       title: d.title,
       storeID: d.storeID,
       storeName: STORE_NAMES[d.storeID] || `Store ${d.storeID}`,
