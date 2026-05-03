@@ -4282,7 +4282,12 @@ async function proStatus(url, env) {
 // ════════════════════════════════════════════════════════
 
 // Wishlist price-watch sweep.
-//   1. List every push:* subscriber.
+//   1. List every sid that has *either* a push:* subscription *or* a
+//      wishlist:* entry. We can't only look at push subscribers — at
+//      soft-launch almost no one will have granted notification permission
+//      yet, so the in-app /api/alerts feed (Recent Price Drops panel) would
+//      sit empty for everyone. Free users who synced a wishlist still see
+//      drops in-app; push delivery will layer on top later.
 //   2. For each, load wishlist:${sid} from KV.
 //   3. Hit Steam appdetails for each appid, pluck price + discount.
 //   4. If a discount appeared (and we haven't already recorded it for that
@@ -4302,8 +4307,15 @@ async function runWishlistPriceWatch(env) {
   if (!env?.QUESTLOG_KV) return { skipped: 'no-kv' };
   const stats = { users: 0, scanned: 0, alerts: 0, errors: 0 };
 
-  const subscriberKeys = await kvList(env, 'push:');
-  const sids = subscriberKeys.map(k => k.slice('push:'.length)).slice(0, PRICE_WATCH_USER_CAP);
+  // Union push subscribers + wishlist owners, dedup by sid.
+  const [pushKeys, wishlistKeys] = await Promise.all([
+    kvList(env, 'push:'),
+    kvList(env, 'wishlist:'),
+  ]);
+  const sidSet = new Set();
+  for (const k of pushKeys) sidSet.add(k.slice('push:'.length));
+  for (const k of wishlistKeys) sidSet.add(k.slice('wishlist:'.length));
+  const sids = [...sidSet].filter(Boolean).slice(0, PRICE_WATCH_USER_CAP);
   stats.users = sids.length;
 
   for (const sid of sids) {
