@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Afternoon That Ended the German Hyperinflation: How a Fictional Currency Saved the Weimar Republic",
+    date: "2026-05-03",
+    category: "Economics",
+    excerpt: "The German hyperinflation of 1923 is usually told as a parable about fiat currency, central bank discipline, and the need for hard money. This is the wrong lesson. The hyperinflation ended on the afternoon of 15 November 1923, when Hjalmar Schacht introduced a currency backed by nothing, redeemable for nothing, whose collateral was an imaginary mortgage on land the issuing entity did not own. It worked instantly. The Rentenmark was a confidence trick — and the lesson is not about monetary mechanics but about class war waged through the printing press, and what it actually takes to end one...",
+    url: "essays/2026-05-03-the-afternoon-that-ended-the-german-hyperinflation.html"
+  },
+  {
     title: "The Coup That Almost Wasn't: Why Operation Ajax Failed Before It Succeeded",
     date: "2026-05-02",
     category: "History",
