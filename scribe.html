@@ -458,6 +458,26 @@ function renderResearch(d) {
     html.push(section('From Wikipedia', `<p style="font-family:'Crimson Text',serif;font-size:17px;line-height:1.65">${escapeHtml(w.extract)}</p>`));
   }
 
+  if (s?.replyOdds) {
+    const o = s.replyOdds;
+    const pct = Math.max(0, Math.min(100, parseInt(o.percent) || 0));
+    const verdictColor = pct >= 50 ? '#2a7a2a' : pct >= 25 ? '#8b6c1c' : pct >= 10 ? '#c8732a' : '#8b1c1c';
+    const verdictLabel = (o.verdict || 'unknown').replace(/-/g,' ').toUpperCase();
+    html.push(`
+      <div style="display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:center;padding:24px;background:${verdictColor}10;border:1px solid ${verdictColor}40;margin-bottom:24px">
+        <div style="text-align:center">
+          <div style="font-family:'Crimson Text',serif;font-size:64px;font-weight:600;color:${verdictColor};line-height:1;letter-spacing:-2px">${pct}<span style="font-size:32px;opacity:0.6">%</span></div>
+          <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:${verdictColor};font-weight:700;margin-top:6px">${verdictLabel}</div>
+        </div>
+        <div>
+          <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--ink-soft);font-weight:700;margin-bottom:8px">Reply odds</div>
+          <p style="font-family:'Crimson Text',serif;font-size:16px;line-height:1.55;margin-bottom:10px">${escapeHtml(o.reasoning || '')}</p>
+          ${o.channelAdvice ? `<div style="font-size:13px;color:var(--ink);padding-top:10px;border-top:1px dashed var(--rule)"><b style="color:var(--accent)">Best channel:</b> ${escapeHtml(o.channelAdvice)}</div>` : ''}
+        </div>
+      </div>
+    `);
+  }
+
   if (s?.warmHook) {
     html.push(section('Letter hook', `<div class="q-block">${escapeHtml(s.warmHook)}</div>`));
   }

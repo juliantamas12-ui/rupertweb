@@ -4530,10 +4530,16 @@ async function anthropicSynthesis(key, name, signals) {
   "contradictions": ["1-3 things they have publicly said that contradict each other or seem inconsistent - these make great questions"],
   "obscureQuotes": ["2-3 specific quotes from interviews/letters that are NOT widely cited, with rough year and source"],
   "candidateQuestions": ["3 deep questions you could ask them - each must be unanswerable by ChatGPT, force opinion or regret, and reference something specific to their life"],
-  "warmHook": "One specific, obscure thing about them the kids could open the letter with - a deal, a year, a phrase they used"
+  "warmHook": "One specific, obscure thing about them the kids could open the letter with - a deal, a year, a phrase they used",
+  "replyOdds": {
+    "percent": <integer 0-100, your honest estimate of how likely they are to reply to a well-crafted hand-written letter from two 14-year-olds with deep research and 3 questions>,
+    "verdict": "one of: very-likely | likely | possible | long-shot | almost-no",
+    "reasoning": "2-3 sentences. Factor in: how publicly accessible they are, whether they have engaged with young writers before, how busy they are now, whether they reply to mail at all, whether the question style fits their persona. Be honest, not optimistic.",
+    "channelAdvice": "best route to actually reach them: 'physical letter to office', 'email via assistant', 'cold X DM', 'introduction via parent network', 'do not bother', etc."
+  }
 }
 
-Return ONLY the JSON, no markdown fences. Be factual - if you cannot find evidence for a claim, omit it.
+Return ONLY the JSON, no markdown fences. Be factual - if you cannot find evidence for a claim, omit it. Be skeptical on replyOdds - most billionaires never reply to cold mail; default to long-shot unless there is real evidence they engage with strangers.
 
 RAW SIGNALS:
 ${JSON.stringify(signals, null, 2)}`;
