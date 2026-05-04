@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════
-   RUPERT WEB — main.js
+   RUPERT WEB - main.js
    All data lives here. Edit the arrays below to update the
    dashboard. No framework, no build step.
    ═══════════════════════════════════════════════════════════ */
@@ -21,7 +21,7 @@ setInterval(updateClock, 1000);
 
 
 /* ══════════════════════════════════════════════════════════════
-   DATA — ESSAYS
+   DATA - ESSAYS
    Add objects to this array to add essay cards.
    Fields: title, date (YYYY-MM-DD), category, excerpt
    Categories: 'History' | 'Geopolitics' | 'Philosophy' | 'Politics'
@@ -31,28 +31,28 @@ const ESSAYS = [
     title: "The Bluff at Portsmouth: How Sergei Witte Won a Peace Russia Had Already Lost",
     date: "2026-05-04",
     category: "History",
-    excerpt: "By the summer of 1905 the Russian Empire had no business being at the negotiating table on equal terms. Its Pacific fleet had been sunk, its Baltic fleet annihilated at Tsushima in forty minutes, its army driven out of Mukden, and St Petersburg was in open revolution. Yet Russia walked out of Portsmouth having conceded almost nothing she had not already lost in fact, and Japan walked out with riots in Tokyo. The man responsible was Sergei Witte, sent to New Hampshire because nobody else wanted the job. What he did there was the most successful diplomatic bluff of the twentieth century — and the mechanics tell you something durable about how peace settlements actually work...",
+    excerpt: "By the summer of 1905 the Russian Empire had no business being at the negotiating table on equal terms. Its Pacific fleet had been sunk, its Baltic fleet annihilated at Tsushima in forty minutes, its army driven out of Mukden, and St Petersburg was in open revolution. Yet Russia walked out of Portsmouth having conceded almost nothing she had not already lost in fact, and Japan walked out with riots in Tokyo. The man responsible was Sergei Witte, sent to New Hampshire because nobody else wanted the job. What he did there was the most successful diplomatic bluff of the twentieth century - and the mechanics tell you something durable about how peace settlements actually work...",
     url: "essays/2026-05-04-the-bluff-at-portsmouth-how-sergei-witte-won-a-peace-russia-had-already-lost.html"
   },
   {
     title: "The Afternoon That Ended the German Hyperinflation: How a Fictional Currency Saved the Weimar Republic",
     date: "2026-05-03",
     category: "Economics",
-    excerpt: "The German hyperinflation of 1923 is usually told as a parable about fiat currency, central bank discipline, and the need for hard money. This is the wrong lesson. The hyperinflation ended on the afternoon of 15 November 1923, when Hjalmar Schacht introduced a currency backed by nothing, redeemable for nothing, whose collateral was an imaginary mortgage on land the issuing entity did not own. It worked instantly. The Rentenmark was a confidence trick — and the lesson is not about monetary mechanics but about class war waged through the printing press, and what it actually takes to end one...",
+    excerpt: "The German hyperinflation of 1923 is usually told as a parable about fiat currency, central bank discipline, and the need for hard money. This is the wrong lesson. The hyperinflation ended on the afternoon of 15 November 1923, when Hjalmar Schacht introduced a currency backed by nothing, redeemable for nothing, whose collateral was an imaginary mortgage on land the issuing entity did not own. It worked instantly. The Rentenmark was a confidence trick - and the lesson is not about monetary mechanics but about class war waged through the printing press, and what it actually takes to end one...",
     url: "essays/2026-05-03-the-afternoon-that-ended-the-german-hyperinflation.html"
   },
   {
     title: "The Coup That Almost Wasn't: Why Operation Ajax Failed Before It Succeeded",
     date: "2026-05-02",
     category: "History",
-    excerpt: "The standard story of the 1953 Iranian coup is a story of American omnipotence — a clean CIA operation, the founding myth of covert action. Almost none of it is correct. The coup that actually happened in August 1953 was not Operation Ajax. The real plan failed completely on the night of 15 August: the conspiracy had been penetrated, Colonel Nassiri was arrested delivering the firman, the Shah fled to Rome, and Washington cabled Kermit Roosevelt to abort. He didn't. What followed was a salvage job by one officer who disobeyed his recall order, $1 million in unmarked notes, and a hired mob from the south Tehran bazaars...",
+    excerpt: "The standard story of the 1953 Iranian coup is a story of American omnipotence - a clean CIA operation, the founding myth of covert action. Almost none of it is correct. The coup that actually happened in August 1953 was not Operation Ajax. The real plan failed completely on the night of 15 August: the conspiracy had been penetrated, Colonel Nassiri was arrested delivering the firman, the Shah fled to Rome, and Washington cabled Kermit Roosevelt to abort. He didn't. What followed was a salvage job by one officer who disobeyed his recall order, $1 million in unmarked notes, and a hired mob from the south Tehran bazaars...",
     url: "essays/2026-05-02-the-coup-that-almost-wasnt-why-operation-ajax-failed-before-it-succeeded.html"
   },
   {
     title: "The Bribe That Bought Three Centuries: Sekigahara and the Defection of Kobayakawa Hideaki",
     date: "2026-05-01",
     category: "History",
-    excerpt: "On the morning of 21 October 1600, in a fog-bound mountain pass in central Japan, around 160,000 men were arranged for battle in what every commander believed would decide the future of the country. By mid-afternoon it had, but not in the way the larger army expected. The Battle of Sekigahara is taught as the founding event of the Tokugawa Shogunate — the regime that would rule Japan for the next 268 years. What it actually was, on the day, was a coin flip resolved by a single defection. The defector was nineteen years old, had been bribed for months, and at the critical hour sat on a hill called Matsuo and refused to move until Ieyasu's arquebusiers shot at his own position to remind him of the deal...",
+    excerpt: "On the morning of 21 October 1600, in a fog-bound mountain pass in central Japan, around 160,000 men were arranged for battle in what every commander believed would decide the future of the country. By mid-afternoon it had, but not in the way the larger army expected. The Battle of Sekigahara is taught as the founding event of the Tokugawa Shogunate - the regime that would rule Japan for the next 268 years. What it actually was, on the day, was a coin flip resolved by a single defection. The defector was nineteen years old, had been bribed for months, and at the critical hour sat on a hill called Matsuo and refused to move until Ieyasu's arquebusiers shot at his own position to remind him of the deal...",
     url: "essays/2026-05-01-the-bribe-that-bought-three-centuries-sekigahara-and-the-defection-of-kobayakawa-hideaki.html"
   },
   {
@@ -66,7 +66,7 @@ const ESSAYS = [
     title: "The Cossack Who Built Modern Russia By Failing",
     date: "2026-04-29",
     category: "History",
-    excerpt: "In September 1773, a semi-literate Don Cossack named Yemelyan Pugachev declared himself to be the assassinated Tsar Peter III, miraculously alive, and called on the peasants of the Urals and the Volga to rise. Within nine months he commanded an army of perhaps a hundred thousand. By January 1775 he had been hauled back to the capital in an iron cage. The Pugachev rebellion is the moment Russia's ruling class decided, irrevocably, that the empire could not be reformed from above without being destroyed from below — and built the institutions of nineteenth-century autocracy specifically to ensure that 1773 would never happen again...",
+    excerpt: "In September 1773, a semi-literate Don Cossack named Yemelyan Pugachev declared himself to be the assassinated Tsar Peter III, miraculously alive, and called on the peasants of the Urals and the Volga to rise. Within nine months he commanded an army of perhaps a hundred thousand. By January 1775 he had been hauled back to the capital in an iron cage. The Pugachev rebellion is the moment Russia's ruling class decided, irrevocably, that the empire could not be reformed from above without being destroyed from below - and built the institutions of nineteenth-century autocracy specifically to ensure that 1773 would never happen again...",
     url: "essays/2026-04-29-the-cossack-who-built-modern-russia-by-failing.html"
   },
   {
@@ -94,7 +94,7 @@ const ESSAYS = [
     title: "The Yam: How the Mongols Invented the State by Accident",
     date: "2026-04-25",
     category: "History",
-    excerpt: "The standard story of the modern state is a European one — medieval kings, Italian city-states, Westphalia, the Napoleonic prefecture. The state, we are told, is something Europe slowly and painfully figured out between 1300 and 1800. This is wrong. The infrastructure that makes a modern state possible — the ability of a centre to receive accurate information from a periphery faster than the periphery can rebel — was invented in 1234 by a Mongol named Ögedei, on the steppe, for reasons that had nothing to do with governance...",
+    excerpt: "The standard story of the modern state is a European one - medieval kings, Italian city-states, Westphalia, the Napoleonic prefecture. The state, we are told, is something Europe slowly and painfully figured out between 1300 and 1800. This is wrong. The infrastructure that makes a modern state possible - the ability of a centre to receive accurate information from a periphery faster than the periphery can rebel - was invented in 1234 by a Mongol named Ögedei, on the steppe, for reasons that had nothing to do with governance...",
     url: "essays/2026-04-25-the-yam-how-the-mongols-invented-the-state-by-accident.html"
   },
   {
@@ -108,7 +108,7 @@ const ESSAYS = [
     title: "The Long Depression: How a Viennese Bank Failure in 1873 Broke the World for Twenty-Three Years",
     date: "2026-04-23",
     category: "Economics",
-    excerpt: "On 9 May 1873, a Friday, the Vienna Stock Exchange opened at its usual hour and by noon had stopped functioning. Within four months, the panic had crossed the Atlantic, taken down Jay Cooke & Company, and forced the NYSE to shut its doors for the first time in its history. The economic crisis that followed lasted until 1896. People at the time called it the Great Depression — they stopped only after 1929 gave them a worse one to name...",
+    excerpt: "On 9 May 1873, a Friday, the Vienna Stock Exchange opened at its usual hour and by noon had stopped functioning. Within four months, the panic had crossed the Atlantic, taken down Jay Cooke & Company, and forced the NYSE to shut its doors for the first time in its history. The economic crisis that followed lasted until 1896. People at the time called it the Great Depression - they stopped only after 1929 gave them a worse one to name...",
     url: "essays/2026-04-23-the-long-depression-how-a-viennese-bank-failure-in-1873-broke.html"
   },
   {
@@ -122,7 +122,7 @@ const ESSAYS = [
     title: "The Silver That Killed an Empire: Potosí, the Ming, and the First Global Crisis",
     date: "2026-04-21",
     category: "History",
-    excerpt: "In 1545, an indigenous llama herder named Diego Huallpa slipped on a mountainside in what is now Bolivia, grabbed a shrub to steady himself, and pulled up roots coated in raw silver. The mountain was Cerro Rico — the Rich Hill — and within a decade it had become the most valuable piece of real estate on Earth...",
+    excerpt: "In 1545, an indigenous llama herder named Diego Huallpa slipped on a mountainside in what is now Bolivia, grabbed a shrub to steady himself, and pulled up roots coated in raw silver. The mountain was Cerro Rico - the Rich Hill - and within a decade it had become the most valuable piece of real estate on Earth...",
     url: "essays/2026-04-21-the-silver-that-killed-an-empire-potosi-the-ming-and-the-firs.html"
   },
   {
@@ -136,14 +136,14 @@ const ESSAYS = [
     title: "The Forgotten Theorist Who Understood Power Better Than Anyone",
     date: "2026-04-18",
     category: "History",
-    excerpt: "In 1377, a North African scholar named Ibn Khaldun sat in a remote fortress in what is now Algeria and wrote what he called a mere introduction to a larger history. That introduction — the Muqaddimah — turned out to be one of the most extraordinary w...",
+    excerpt: "In 1377, a North African scholar named Ibn Khaldun sat in a remote fortress in what is now Algeria and wrote what he called a mere introduction to a larger history. That introduction - the Muqaddimah - turned out to be one of the most extraordinary w...",
     url: "essays/2026-04-18-the-forgotten-theorist-who-understood-power-better-than-anyo.html"
   },
   {
     title: "The Line That Wasn't: Sykes-Picot and the Convenient Myth of the Artificial Border",
     date: "2026-04-17",
     category: "History",
-    excerpt: "Ask almost anyone why the Middle East is unstable and you will hear the same answer delivered with great confidence: the Sykes-Picot Agreement. In 1916, the story goes, two imperial bureaucrats — a British diplomat named Mark Sykes and a French one n...",
+    excerpt: "Ask almost anyone why the Middle East is unstable and you will hear the same answer delivered with great confidence: the Sykes-Picot Agreement. In 1916, the story goes, two imperial bureaucrats - a British diplomat named Mark Sykes and a French one n...",
     url: "essays/2026-04-17-the-line-that-wasnt-sykes-picot-and-the-convenient-myth-of-t.html"
   },
   {
@@ -157,7 +157,7 @@ const ESSAYS = [
     title: "The Year the World Ended: The Bronze Age Collapse and the Fragility of Complex Systems",
     date: "2026-04-15",
     category: "History",
-    excerpt: "Around 1200 BCE, something extraordinary happened. In the space of roughly fifty years — less than a human lifetime — virtually every major civilization in the Eastern Mediterranean ceased to exist. The Hittite Empire, which had battled Egypt to a st...",
+    excerpt: "Around 1200 BCE, something extraordinary happened. In the space of roughly fifty years - less than a human lifetime - virtually every major civilization in the Eastern Mediterranean ceased to exist. The Hittite Empire, which had battled Egypt to a st...",
     url: "essays/2026-04-15-the-year-the-world-ended-the-bronze-age-collapse-and-the-fra.html"
   },
   {
@@ -171,21 +171,21 @@ const ESSAYS = [
     title: "This is usually taught as a story about imperialism. It should also be taught as a story about law.",
     date: "2026-04-13",
     category: "History",
-    excerpt: "The Cartographers of Conquest: How the Berlin Conference Invented Modern International Law — and Why That Should Disturb You...",
+    excerpt: "The Cartographers of Conquest: How the Berlin Conference Invented Modern International Law - and Why That Should Disturb You...",
     url: "essays/2026-04-13-this-is-usually-taught-as-a-story-about-imperialism-it-shoul.html"
   },
   {
     title: "The Venetian Republic and the Art of Institutional Survival",
     date: "2026-04-12",
     category: "History",
-    excerpt: "For a thousand years — from the late seventh century to 1797 — the Republic of Venice governed itself without a revolution, without a successful coup, and without a single monarch. That alone should make it one of the most studied political entities ...",
+    excerpt: "For a thousand years - from the late seventh century to 1797 - the Republic of Venice governed itself without a revolution, without a successful coup, and without a single monarch. That alone should make it one of the most studied political entities ...",
     url: "essays/2026-04-12-the-venetian-republic-and-the-art-of-institutional-survival.html"
   },
   {
     title: "The Thousand-Year Republic: How Venice Made Tyranny Structurally Impossible",
     date: "2026-04-11",
     category: "History",
-    excerpt: "The Venetian Republic lasted from 697 to 1797 — 1,100 years without a successful internal revolution, without a coup, without a strongman seizing permanent power. For comparison, the Roman Republic endured about five centuries before Caesar crossed t...",
+    excerpt: "The Venetian Republic lasted from 697 to 1797 - 1,100 years without a successful internal revolution, without a coup, without a strongman seizing permanent power. For comparison, the Roman Republic endured about five centuries before Caesar crossed t...",
     url: "essays/2026-04-11-the-thousand-year-republic-how-venice-made-tyranny-structura.html"
   },
   {
@@ -213,14 +213,14 @@ const ESSAYS = [
     title: "The Peace That Worked: What the Congress of Vienna Gets Right That Versailles Got Wrong",
     date: "2026-04-07",
     category: "History",
-    excerpt: "Everyone learns about Versailles. It is the cautionary tale of modern diplomatic history — the vindictive peace that humiliated Germany, wrecked the Weimar Republic, and handed Hitler his grievances pre-packaged. The lesson taught in classrooms is mo...",
+    excerpt: "Everyone learns about Versailles. It is the cautionary tale of modern diplomatic history - the vindictive peace that humiliated Germany, wrecked the Weimar Republic, and handed Hitler his grievances pre-packaged. The lesson taught in classrooms is mo...",
     url: "essays/2026-04-07-the-peace-that-worked-what-the-congress-of-vienna-gets-right.html"
   },
   {
     title: "The Westphalian Myth: How a Peace Treaty Became the World's Most Useful Fiction",
     date: "2026-04-06",
     category: "History",
-    excerpt: "In 1648, two treaties signed in the German cities of Osnabrück and Münster ended thirty years of catastrophic religious warfare in Europe. Hundreds of thousands were dead. The Holy Roman Empire — that peculiar, multi-layered constitutional structure ...",
+    excerpt: "In 1648, two treaties signed in the German cities of Osnabrück and Münster ended thirty years of catastrophic religious warfare in Europe. Hundreds of thousands were dead. The Holy Roman Empire - that peculiar, multi-layered constitutional structure ...",
     url: "essays/2026-04-06-the-westphalian-myth-how-a-peace-treaty-became-the-worlds-mo.html"
   },
   {
@@ -234,35 +234,35 @@ const ESSAYS = [
     title: "The Ransom of Freedom: Haiti's Independence Debt and the Architecture of Permanent Underdevelopment",
     date: "2026-04-04",
     category: "History",
-    excerpt: "In 1804, Haiti became the first nation born of a successful slave revolt. The enslaved population of Saint-Domingue — France's most profitable colony, producing roughly 40 percent of Europe's sugar and more than half its coffee — had fought for thirt...",
+    excerpt: "In 1804, Haiti became the first nation born of a successful slave revolt. The enslaved population of Saint-Domingue - France's most profitable colony, producing roughly 40 percent of Europe's sugar and more than half its coffee - had fought for thirt...",
     url: "essays/2026-04-04-the-ransom-of-freedom-haitis-independence-debt-and-the-archi.html"
   },
   {
     title: "Haiti, 1804: The Revolution the Enlightenment Could Not Afford",
     date: "2026-04-03",
     category: "History",
-    excerpt: "The French Revolution is taught as the opening chapter of the modern world. Liberty, equality, fraternity — the universalist creed that would eventually expand across the globe. What is almost never taught in the same breath is what happened when a g...",
+    excerpt: "The French Revolution is taught as the opening chapter of the modern world. Liberty, equality, fraternity - the universalist creed that would eventually expand across the globe. What is almost never taught in the same breath is what happened when a g...",
     url: "essays/2026-04-03-haiti-1804-the-revolution-the-enlightenment-could-not-afford.html"
   },
   {
     title: "Asabiyyah: The Forgotten Theory That Explains Why Empires Die",
     date: "2026-04-02",
     category: "History",
-    excerpt: "Ibn Khaldun (1332-1406) was a North African jurist, historian, and diplomat who wrote the Muqaddimah — an introduction to his universal history that turned out to be one of the most original works of social philosophy ever produced. He was writing in...",
+    excerpt: "Ibn Khaldun (1332-1406) was a North African jurist, historian, and diplomat who wrote the Muqaddimah - an introduction to his universal history that turned out to be one of the most original works of social philosophy ever produced. He was writing in...",
     url: "essays/2026-04-02-asabiyyah-the-forgotten-theory-that-explains-why-empires-die.html"
   },
   {
     title: "The Myth of the Westphalian Order: Why the \"Rules-Based International System\" Never Actually Existed",
     date: "2026-04-01",
     category: "History",
-    excerpt: "The phrase \"rules-based international order\" gets invoked constantly — by Western diplomats, think-tank scholars, editorial boards. It is used to describe something worth defending, a structure of norms and institutions that constrains state behaviou...",
+    excerpt: "The phrase \"rules-based international order\" gets invoked constantly - by Western diplomats, think-tank scholars, editorial boards. It is used to describe something worth defending, a structure of norms and institutions that constrains state behaviou...",
     url: "essays/2026-04-01-the-myth-of-the-westphalian-order-why-the-rules-based-intern.html"
   },
   {
     title: "The Ideology That Wasn't: Realpolitik and the Molotov-Ribbentrop Pact",
     date: "2026-03-31",
     category: "History",
-    excerpt: "In August 1939, the two most ideologically opposed regimes in modern history signed a non-aggression pact. Nazi Germany and the Soviet Union — one built on racial supremacism and violent anti-communism, the other on proletarian internationalism and v...",
+    excerpt: "In August 1939, the two most ideologically opposed regimes in modern history signed a non-aggression pact. Nazi Germany and the Soviet Union - one built on racial supremacism and violent anti-communism, the other on proletarian internationalism and v...",
     url: "essays/2026-03-31-the-ideology-that-wasnt-realpolitik-and-the-molotov-ribbentr.html"
   },
   {
@@ -283,28 +283,28 @@ const ESSAYS = [
     title: "The Revolution France Wanted to Forget: Haiti, 1804, and the Limits of Enlightenment",
     date: "2026-03-28",
     category: "History",
-    excerpt: "The French Revolution is taught as the great rupture of modernity — Liberty, Equality, Fraternity proclaimed from the barricades of Paris. Less discussed is what happened when the enslaved people of Saint-Domingue took those words seriously....",
+    excerpt: "The French Revolution is taught as the great rupture of modernity - Liberty, Equality, Fraternity proclaimed from the barricades of Paris. Less discussed is what happened when the enslaved people of Saint-Domingue took those words seriously....",
     url: "essays/2026-03-28-the-revolution-france-wanted-to-forget-haiti-1804-and-the-li.html"
   },
   {
     title: "The Iron Law of the Ruling Class: Pareto, Mosca, and Why Democracies Don't Rule Themselves",
     date: "2026-03-27",
     category: "History",
-    excerpt: "Every few years, somewhere in the Western world, a politician rises on a wave of anti-establishment fury. They promise to give power back to the people. They win. And within a term or two, they are the establishment — governing much as their predeces...",
+    excerpt: "Every few years, somewhere in the Western world, a politician rises on a wave of anti-establishment fury. They promise to give power back to the people. They win. And within a term or two, they are the establishment - governing much as their predeces...",
     url: "essays/2026-03-27-the-iron-law-of-the-ruling-class-pareto-mosca-and-why-democr.html"
   },
   {
     title: "The Lights Go Out: The Bronze Age Collapse and What It Teaches About Systemic Fragility",
     date: "2026-03-26",
     category: "History",
-    excerpt: "Around 1200 BC, within the span of roughly fifty years, almost every major civilization in the Eastern Mediterranean ceased to exist. The Hittite Empire — which had fought Egypt to a standstill at Kadesh and negotiated the oldest known peace treaty i...",
+    excerpt: "Around 1200 BC, within the span of roughly fifty years, almost every major civilization in the Eastern Mediterranean ceased to exist. The Hittite Empire - which had fought Egypt to a standstill at Kadesh and negotiated the oldest known peace treaty i...",
     url: "essays/2026-03-26-the-lights-go-out-the-bronze-age-collapse-and-what-it-teache.html"
   },
   {
     title: "The Ransom of Haiti: How a Nation Paid for Its Own Freedom",
     date: "2026-03-25",
     category: "History",
-    excerpt: "In 1825, the most successful slave revolution in history was extorted. Haiti — the first Black republic, born from the blood of men and women who had burned the plantations of Saint-Domingue and defeated Napoleon's best generals — agreed to pay Franc...",
+    excerpt: "In 1825, the most successful slave revolution in history was extorted. Haiti - the first Black republic, born from the blood of men and women who had burned the plantations of Saint-Domingue and defeated Napoleon's best generals - agreed to pay Franc...",
     url: "essays/2026-03-25-the-ransom-of-haiti-how-a-nation-paid-for-its-own-freedom.html"
   },
   {
@@ -318,7 +318,7 @@ const ESSAYS = [
     title: "The Melian Dialogue and the Lie at the Heart of International Order",
     date: "2026-03-23",
     category: "Geopolitics",
-    excerpt: "In 416 BC Athens massacred the island of Melos and delivered the most honest speech in diplomatic history. The strong do what they can, the weak suffer what they must. Every UN resolution since is a response to this — and none have been adequate.",
+    excerpt: "In 416 BC Athens massacred the island of Melos and delivered the most honest speech in diplomatic history. The strong do what they can, the weak suffer what they must. Every UN resolution since is a response to this - and none have been adequate.",
     url: "essays/2026-03-23-melian-dialogue.html"
   },
   {
@@ -326,13 +326,13 @@ const ESSAYS = [
     date: "2026-03-22",
     category: "History",
     excerpt: "Ibn Khaldun sat in a desert fortress in 14th-century Algeria and wrote the introduction to a history of the world. That introduction turned out to be more important than anything written in the five centuries since. Western intellectual tradition has largely ignored him. This is a mistake.",
-    url: null  // full text not recovered — available from next run onwards
+    url: null  // full text not recovered - available from next run onwards
   },
 ];
 
 
 /* ══════════════════════════════════════════════════════════════
-   DATA — SCHOOL (ManageBac)
+   DATA - SCHOOL (ManageBac)
    Add objects to this array to add tasks.
    Fields: subject, title, due (YYYY-MM-DD), status ('pending'|'done')
    ══════════════════════════════════════════════════════════════ */
@@ -413,7 +413,7 @@ const SCHOOL_TASKS = [
 
 
 /* ══════════════════════════════════════════════════════════════
-   DATA — STEAM
+   DATA - STEAM
    Will be populated via Steam API later.
    Edit these fields manually in the meantime.
    ══════════════════════════════════════════════════════════════ */
@@ -427,7 +427,7 @@ const STEAM = {
 
 
 /* ══════════════════════════════════════════════════════════════
-   DATA — PROJECTS
+   DATA - PROJECTS
    Add objects to this array to add project cards.
    Fields: name, url (optional), desc, tags (array of strings)
    ══════════════════════════════════════════════════════════════ */
@@ -466,7 +466,7 @@ const PROJECTS = [
 
 
 /* ══════════════════════════════════════════════════════════════
-   DATA — LIFE STATS
+   DATA - LIFE STATS
    Add objects to this array for custom counters.
    Fields: label, value (string|number), unit (optional string)
    ══════════════════════════════════════════════════════════════ */
@@ -478,7 +478,7 @@ const LIFE_STATS = [
 
 
 /* ═══════════════════════════════════════════════════════════
-   RENDER FUNCTIONS — do not edit unless changing structure
+   RENDER FUNCTIONS - do not edit unless changing structure
    ═══════════════════════════════════════════════════════════ */
 
 /* Helper */

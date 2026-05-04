@@ -1,20 +1,20 @@
-// rupertweb Worker — handles API endpoints + static assets
+// rupertweb Worker - handles API endpoints + static assets
 
 const STEAM_KEY = '7E0FBB2D8E9A19B0F40556A78A6B9C47';
-const DEFAULT_STEAM_ID = null; // no default — each user provides their own
+const DEFAULT_STEAM_ID = null; // no default - each user provides their own
 const RESEND_KEY = 're_dNyaesf8_GH99GVk3N5u45x6RuA1LCSR8';
 const OWNER_EMAIL = 'julian.tamas12@gmail.com';
 
 // VAPID for web push notifications
 const VAPID_PUBLIC = 'BL6xSk_4wHzUF_8AYnJJOrJnhv0dlpe9nnI5B6vCI1kfWp8bvZ2tuf3Ittb_mKxwIEz9Z1woclj8KiVGZkRxKeA';
 
-// Stripe — set when Julian provides keys. checkoutPriceId is the recurring price ID for Pro £4.99/mo.
+// Stripe - set when Julian provides keys. checkoutPriceId is the recurring price ID for Pro £4.99/mo.
 const STRIPE_SECRET_KEY = '';
 const STRIPE_PRICE_ID   = '';
 const STRIPE_SUCCESS_URL = 'https://rupertweb.com/questlog.html?pro=success';
 const STRIPE_CANCEL_URL  = 'https://rupertweb.com/questlog.html?pro=cancel';
 
-// KV helpers — use Cloudflare KV when bound, fall back to in-memory Map for local dev
+// KV helpers - use Cloudflare KV when bound, fall back to in-memory Map for local dev
 const _memoryStore = new Map();
 async function kvGet(env, key) {
   if (env?.QUESTLOG_KV) {
@@ -114,7 +114,7 @@ export default {
     return env.ASSETS.fetch(request);
   },
 
-  // Cloudflare scheduled handler — invoked by cron triggers in wrangler.toml.
+  // Cloudflare scheduled handler - invoked by cron triggers in wrangler.toml.
   // Hourly trigger: runs the wishlist price-watch sweep. Daily 00:00 trigger:
   // also rotates the Achievement-of-the-Day cache stamp. Each job is wrapped
   // in try/catch so a single failure can't break the next run.
@@ -129,7 +129,7 @@ export default {
       } catch (e) {
         log.jobs.priceWatch = { error: e.message };
       }
-      // Daily midnight (UTC) tick — refresh Achievement-of-the-Day stamp so
+      // Daily midnight (UTC) tick - refresh Achievement-of-the-Day stamp so
       // clients can detect a new day without comparing strings.
       if (cron.startsWith('0 0 ')) {
         try {
@@ -386,7 +386,7 @@ async function recommend(url) {
       game: b.name,
       appid: b.appid,
       img: `https://cdn.cloudflare.steamstatic.com/steam/apps/${b.appid}/header.jpg`,
-      sub: `You played ${Math.round(b.playtime_forever/60*10)/10}h — worth giving it another shot`,
+      sub: `You played ${Math.round(b.playtime_forever/60*10)/10}h - worth giving it another shot`,
     });
   }
 
@@ -411,14 +411,14 @@ async function recommend(url) {
       game: t.name,
       appid: t.appid,
       img: `https://cdn.cloudflare.steamstatic.com/steam/apps/${t.appid}/header.jpg`,
-      sub: `${Math.round(t.playtime_forever/60)}h lifetime — check for a new update`,
+      sub: `${Math.round(t.playtime_forever/60)}h lifetime - check for a new update`,
     });
   }
 
   return jsonResponse({ recommendations: recs.slice(0, 4) });
 }
 
-// Games to BUY — large curated pool with genre tags
+// Games to BUY - large curated pool with genre tags
 async function recommendBuy(url) {
   const sid = url.searchParams.get('sid'); if (!sid) return jsonResponse({ error: 'sid required' }, 400);
   const games = await fetchJSON(
@@ -430,7 +430,7 @@ async function recommendBuy(url) {
     .sort((a, b) => (b.playtime_forever || 0) - (a.playtime_forever || 0))
     .slice(0, 5);
 
-  // Tag-based similarity — match your owned-games' tags to the CATALOG
+  // Tag-based similarity - match your owned-games' tags to the CATALOG
   const TAG_MAP = {
     1172620: ['multiplayer', 'pirate', 'adventure', 'openworld', 'coop'],   // Sea of Thieves
     730:     ['fps', 'competitive', 'shooter', 'tactical', 'multiplayer'],  // CS2
@@ -471,7 +471,7 @@ async function recommendBuy(url) {
     271590:  ['openworld', 'action', 'story', 'crime'],                     // GTA V
   };
 
-  // Big catalog — 80+ games, each with tags for matching
+  // Big catalog - 80+ games, each with tags for matching
   const CATALOG = [
     // RPGs
     { appid: 1086940, name: "Baldur's Gate 3",           tags: ['rpg','story','turnbased','fantasy'],        reason: 'Game of the Year 2023, still peak RPG' },
@@ -945,7 +945,7 @@ async function recommendBuy(url) {
     }
   }
 
-  // Rest of catalog — anything not already recommended, not owned
+  // Rest of catalog - anything not already recommended, not owned
   for (const c of CATALOG) {
     if (!owned.has(c.appid) && !recs.find(r => r.appid === c.appid)) {
       recs.push({
@@ -1104,7 +1104,7 @@ async function gameDetails(path) {
     return jsonResponse({
       appid,
       name: info.name,
-      price: info.is_free ? 'Free' : (info.price_overview?.final_formatted || '—'),
+      price: info.is_free ? 'Free' : (info.price_overview?.final_formatted || '-'),
       discount: info.price_overview?.discount_percent || 0,
       description: info.short_description,
       genres: (info.genres || []).map(g => g.description),
@@ -1140,10 +1140,10 @@ async function steamReviews(path) {
       appid,
       score: total > 0 ? Math.round(positive / total * 100) : 0,
       total,
-      label: r.review_score_desc || '—',
+      label: r.review_score_desc || '-',
     });
   } catch {
-    return jsonResponse({ appid, score: 0, total: 0, label: '—' });
+    return jsonResponse({ appid, score: 0, total: 0, label: '-' });
   }
 }
 
@@ -1249,11 +1249,11 @@ async function compareFriend(url) {
 }
 
 async function gameOfTheDay(url) {
-  // Deterministic by date — everyone gets the same pick today
+  // Deterministic by date - everyone gets the same pick today
   const today = new Date().toISOString().slice(0, 10);
   const seed = [...today].reduce((s, c) => s + c.charCodeAt(0), 0);
 
-  // Curated list of "must play" games — appids verified
+  // Curated list of "must play" games - appids verified
   const CURATED = [
     { appid: 1086940, name: "Baldur's Gate 3",   reason: 'The RPG that revived the whole genre' },
     { appid: 1145360, name: 'Hades',              reason: 'Roguelike with soul' },
@@ -1294,7 +1294,7 @@ async function gameOfTheDay(url) {
       date: today,
       img: `https://cdn.cloudflare.steamstatic.com/steam/apps/${pick.appid}/header.jpg`,
       url: `https://store.steampowered.com/app/${pick.appid}`,
-      price: info?.is_free ? 'Free' : (info?.price_overview?.final_formatted || '—'),
+      price: info?.is_free ? 'Free' : (info?.price_overview?.final_formatted || '-'),
       discount: info?.price_overview?.discount_percent || 0,
       review: r && r.total_reviews > 0 ? {
         score: Math.round(r.total_positive / r.total_reviews * 100),
@@ -1388,7 +1388,7 @@ const GPU_SCORES = {
   'RX 6700 XT': 185, 'RX 6650 XT': 150, 'RX 6600 XT': 140, 'RX 6600': 120, 'RX 6500 XT': 70,
   // Intel Arc
   'Arc B580': 200, 'Arc A770': 150, 'Arc A750': 130, 'Arc A580': 110,
-  // Steam Deck (LCD + OLED) — approximate GPU score. 800p native target.
+  // Steam Deck (LCD + OLED) - approximate GPU score. 800p native target.
   'Steam Deck': 60, 'Steam Deck OLED': 65,
   // ROG Ally / Legion Go handhelds
   'ROG Ally': 85, 'ROG Ally X': 95, 'Legion Go': 90, 'MSI Claw': 75,
@@ -2079,12 +2079,12 @@ function scoreToVerdict(gpuScore, gameScore) {
   if (ratio > 1.3) return 'Runs great at 1440p ultra.';
   if (ratio > 1) return 'Solid 1080p/1440p experience.';
   if (ratio > 0.7) return 'Playable at 1080p medium-high.';
-  if (ratio > 0.4) return 'Struggles — drop to 1080p low.';
+  if (ratio > 0.4) return 'Struggles - drop to 1080p low.';
   return 'Not recommended for this GPU.';
 }
 
 // ════════════════════════════════════════════════════════
-// STEAM DNA — analyse library, build taste profile
+// STEAM DNA - analyse library, build taste profile
 // ════════════════════════════════════════════════════════
 
 // Rough genre keyword map for games we know about
@@ -2206,7 +2206,7 @@ async function steamDNA(url) {
 // HOW LONG TO BEAT
 // ════════════════════════════════════════════════════════
 
-// Curated dataset — popular games' HLTB times (hours).
+// Curated dataset - popular games' HLTB times (hours).
 // Keys are lowercase, stripped of punctuation to match loosely.
 // Data sourced from HowLongToBeat.com community averages.
 const HLTB_DATA = {
@@ -2584,7 +2584,7 @@ const HLTB_DATA = {
   'guild wars 2':                { mainStory: 80,  mainExtra: 200, completionist: 500 },
   'runescape':                   { mainStory: 100, mainExtra: 300, completionist: 2000 },
 
-  // Recent 2024–2026 releases
+  // Recent 2024-2026 releases
   'wukong':                      { mainStory: 40,  mainExtra: 55,  completionist: 70 },
   'concord':                     { mainStory: 5,   mainExtra: 10,  completionist: 25 },
   'silent hill 2 remake':        { mainStory: 15,  mainExtra: 20,  completionist: 30 },
@@ -3097,7 +3097,7 @@ const HLTB_DATA = {
 };
 
 // ════════════════════════════════════════════════════════
-// PRICE HISTORY  — via CheapShark cheapestEver
+// PRICE HISTORY  - via CheapShark cheapestEver
 // ════════════════════════════════════════════════════════
 
 async function priceHistory(url) {
@@ -3140,7 +3140,7 @@ async function priceHistory(url) {
 }
 
 // ════════════════════════════════════════════════════════
-// NOW PLAYING  — show what friends are playing right now
+// NOW PLAYING  - show what friends are playing right now
 // ════════════════════════════════════════════════════════
 
 async function nowPlaying(url) {
@@ -3164,7 +3164,7 @@ async function nowPlaying(url) {
 }
 
 // ════════════════════════════════════════════════════════
-// WHAT SHOULD I PLAY  — mood-based library picker
+// WHAT SHOULD I PLAY  - mood-based library picker
 // ════════════════════════════════════════════════════════
 
 async function whatToPlay(url) {
@@ -3226,7 +3226,7 @@ async function whatToPlay(url) {
 }
 
 // ════════════════════════════════════════════════════════
-// REVIEWS COMPARE  — Steam + Metacritic in one view
+// REVIEWS COMPARE  - Steam + Metacritic in one view
 // ════════════════════════════════════════════════════════
 
 async function reviewsCompare(url) {
@@ -3273,11 +3273,11 @@ async function reviewsCompare(url) {
 }
 
 // ════════════════════════════════════════════════════════
-// PUBLIC PROFILES  — /u/{name-or-sid}
+// PUBLIC PROFILES  - /u/{name-or-sid}
 // ════════════════════════════════════════════════════════
 
 // ════════════════════════════════════════════════════════
-// SPEND ANALYTICS — estimated money spent + cost per hour
+// SPEND ANALYTICS - estimated money spent + cost per hour
 // ════════════════════════════════════════════════════════
 
 async function spendAnalytics(url) {
@@ -3390,7 +3390,7 @@ async function publicProfile(url) {
   const html = `<!doctype html><html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${p.personaname} on QuestLog</title>
-<meta property="og:title" content="${p.personaname} — ${totalHours.toLocaleString()}h on Steam">
+<meta property="og:title" content="${p.personaname} - ${totalHours.toLocaleString()}h on Steam">
 <meta property="og:description" content="${g.length} games owned. Top: ${top5.map(t=>t.name).slice(0,3).join(' · ')}">
 <meta property="og:image" content="${p.avatarfull}">
 <style>
@@ -3458,10 +3458,10 @@ async function howLongToBeat(url) {
 }
 
 // ════════════════════════════════════════════════════════
-// GAME NIGHT — find co-op games everyone in a group owns
+// GAME NIGHT - find co-op games everyone in a group owns
 // ════════════════════════════════════════════════════════
 
-// Games known to support co-op/multiplayer — quick whitelist for matching
+// Games known to support co-op/multiplayer - quick whitelist for matching
 const COOP_WHITELIST = new Set([
   1172620, 730, 570, 440, 1174180, 271590, 252490, 578080, 582010, 553850,
   892970, 2767030, 2073850, 1172470, 1238810, 1938090, 252950, 242760, 1326470,
@@ -3647,7 +3647,7 @@ async function newReleases(url) {
 }
 
 async function upcomingReleases() {
-  // MOST ANTICIPATED upcoming games — verified Steam appids only.
+  // MOST ANTICIPATED upcoming games - verified Steam appids only.
   // Criteria: not yet released, top wishlisted / most-talked-about games.
   // GTA VI, Ghost of Yōtei, Perfect Dark excluded because they're not on Steam.
   const HYPE = [
@@ -3703,7 +3703,7 @@ async function upcomingReleases() {
     }
   }));
 
-  // ONLY return curated, hype-vetted entries. No Steam-feed top-up — each game must
+  // ONLY return curated, hype-vetted entries. No Steam-feed top-up - each game must
   // have a deliberate reason explaining why it's worth watching. Drops anything
   // without a known following or news cycle.
   const validated = items.filter(Boolean);
@@ -3712,7 +3712,7 @@ async function upcomingReleases() {
 }
 
 // ════════════════════════════════════════════════════════
-// FREE GAMES TRACKER — Epic, Steam, Prime Gaming, GOG
+// FREE GAMES TRACKER - Epic, Steam, Prime Gaming, GOG
 // ════════════════════════════════════════════════════════
 
 async function freeGames() {
@@ -3842,7 +3842,7 @@ async function freeGames() {
 }
 
 // ════════════════════════════════════════════════════════
-// GAME DEAL HUNTER (via CheapShark — free, aggregates 20+ stores)
+// GAME DEAL HUNTER (via CheapShark - free, aggregates 20+ stores)
 // ════════════════════════════════════════════════════════
 
 const STORE_NAMES = {
@@ -3896,7 +3896,7 @@ async function getDeals(url) {
     return true;
   });
 
-  // Dedupe by gameID (same game on multiple stores — keep cheapest)
+  // Dedupe by gameID (same game on multiple stores - keep cheapest)
   const byGame = {};
   for (const d of cleaned) {
     const key = d.gameID;
@@ -3905,7 +3905,7 @@ async function getDeals(url) {
     }
   }
 
-  // Title-level dedupe — CheapShark occasionally returns the same game under
+  // Title-level dedupe - CheapShark occasionally returns the same game under
   // multiple gameIDs (region splits, edition splits). Strip edition suffixes and dedupe.
   const byTitle = {};
   for (const d of Object.values(byGame)) {
@@ -4001,7 +4001,7 @@ async function myDeals(url) {
   }
 
   // Second-pass dedupe by normalised title (CheapShark sometimes lists the same game
-  // under two separate gameIDs — e.g. regional variants, re-listings, edition splits).
+  // under two separate gameIDs - e.g. regional variants, re-listings, edition splits).
   const byTitle = {};
   for (const d of Object.values(byGame)) {
     const key = (d.title || '').toLowerCase()
@@ -4046,8 +4046,8 @@ async function handleFleetSignup(request) {
     <div style="font-family:Arial,sans-serif;max-width:540px;margin:0 auto;padding:20px">
       <h2 style="color:#0d1e3d;border-bottom:2px solid #c8a020;padding-bottom:8px">New FleetWatch Signup</h2>
       <table style="width:100%;border-collapse:collapse">
-        <tr><td style="padding:8px;font-weight:bold;color:#666">Name</td><td style="padding:8px">${data.name || '—'}</td></tr>
-        <tr><td style="padding:8px;font-weight:bold;color:#666">Email</td><td style="padding:8px">${data.email || '—'}</td></tr>
+        <tr><td style="padding:8px;font-weight:bold;color:#666">Name</td><td style="padding:8px">${data.name || '-'}</td></tr>
+        <tr><td style="padding:8px;font-weight:bold;color:#666">Email</td><td style="padding:8px">${data.email || '-'}</td></tr>
         <tr><td style="padding:8px;font-weight:bold;color:#666">Plan</td><td style="padding:8px"><strong style="color:#c8a020">${plan}</strong></td></tr>
         <tr><td style="padding:8px;font-weight:bold;color:#666">Vessels</td><td style="padding:8px">${vessels}</td></tr>
         <tr><td style="padding:8px;font-weight:bold;color:#666">Time</td><td style="padding:8px">${new Date().toUTCString()}</td></tr>
@@ -4199,7 +4199,7 @@ async function achievementOfDay(url) {
 }
 
 // ════════════════════════════════════════════════════════
-// STRIPE (scaffolding — activates when keys are filled in above)
+// STRIPE (scaffolding - activates when keys are filled in above)
 // ════════════════════════════════════════════════════════
 
 async function checkout(request) {
@@ -4236,7 +4236,7 @@ async function checkout(request) {
   }
 }
 
-// Stripe webhook handler — fires on subscription created/updated/deleted.
+// Stripe webhook handler - fires on subscription created/updated/deleted.
 // Persists Pro state to KV keyed by Steam ID.
 async function stripeWebhook(request, env) {
   if (!STRIPE_SECRET_KEY) return jsonResponse({ notReady: true });
@@ -4270,7 +4270,7 @@ async function stripeWebhook(request, env) {
   }
 }
 
-// Public endpoint — client checks if a Steam ID has active Pro
+// Public endpoint - client checks if a Steam ID has active Pro
 async function proStatus(url, env) {
   const sid = url.searchParams.get('sid');
   if (!sid) return jsonResponse({ active: false });
@@ -4284,7 +4284,7 @@ async function proStatus(url, env) {
 
 // Wishlist price-watch sweep.
 //   1. List every sid that has *either* a push:* subscription *or* a
-//      wishlist:* entry. We can't only look at push subscribers — at
+//      wishlist:* entry. We can't only look at push subscribers - at
 //      soft-launch almost no one will have granted notification permission
 //      yet, so the in-app /api/alerts feed (Recent Price Drops panel) would
 //      sit empty for everyone. Free users who synced a wishlist still see
@@ -4304,7 +4304,7 @@ const PRICE_WATCH_ITEMS_PER_USER = 20;
 const ALERT_DEDUPE_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 const ALERTS_TTL_SECONDS = 30 * 24 * 60 * 60;
 
-// opts: { onlySid?: string } — when onlySid is set, sweep just that one user
+// opts: { onlySid?: string } - when onlySid is set, sweep just that one user
 // (used by /api/cron/run-now for on-demand smoke tests and Pro "refresh now"
 // affordances). When omitted, sweeps the full union as the hourly cron does.
 async function runWishlistPriceWatch(env, opts = {}) {
@@ -4340,7 +4340,7 @@ async function runWishlistPriceWatch(env, opts = {}) {
         continue;
       }
 
-      // Wishlist entries can be objects {appid,...} or raw appids — handle both.
+      // Wishlist entries can be objects {appid,...} or raw appids - handle both.
       const appids = wishlist
         .map(it => (typeof it === 'object' ? (it.appid || it.id) : it))
         .filter(Boolean)
@@ -4433,7 +4433,7 @@ async function getAlerts(url, env) {
   return jsonResponse({ alerts });
 }
 
-// Diagnostic endpoint — lets us see when the cron last ran and what it did.
+// Diagnostic endpoint - lets us see when the cron last ran and what it did.
 async function cronStatus(env) {
   const last = await kvGet(env, 'cron:lastRun');
   const stamp = await kvGet(env, 'aotd:day-stamp');

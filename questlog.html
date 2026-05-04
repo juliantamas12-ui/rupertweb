@@ -19,18 +19,18 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="QuestLog">
 <meta property="og:url" content="https://rupertweb.com/questlog.html">
-<meta property="og:title" content="QuestLog — Your Gaming Command Center">
-<meta property="og:description" content="Stop using 5 tabs to manage your gaming life. Connect Steam once — deals, free games, achievements, rankings, all in one place.">
+<meta property="og:title" content="QuestLog - Your Gaming Command Center">
+<meta property="og:description" content="Stop using 5 tabs to manage your gaming life. Connect Steam once - deals, free games, achievements, rankings, all in one place.">
 <meta property="og:image" content="https://rupertweb.com/questlog-og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="QuestLog — Your Gaming Command Center">
+<meta property="og:image:alt" content="QuestLog - Your Gaming Command Center">
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="QuestLog — Your Gaming Command Center">
-<meta name="twitter:description" content="Stop using 5 tabs to manage your gaming life. Connect Steam once — deals, free games, achievements, rankings, all in one place.">
+<meta name="twitter:title" content="QuestLog - Your Gaming Command Center">
+<meta name="twitter:description" content="Stop using 5 tabs to manage your gaming life. Connect Steam once - deals, free games, achievements, rankings, all in one place.">
 <meta name="twitter:image" content="https://rupertweb.com/questlog-og.png">
-<meta name="twitter:image:alt" content="QuestLog — Your Gaming Command Center">
+<meta name="twitter:image:alt" content="QuestLog - Your Gaming Command Center">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -40,7 +40,7 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  /* GAMER MINIMALIST — inspired by Steam, Steam Deck, Apex Legends.
+  /* GAMER MINIMALIST - inspired by Steam, Steam Deck, Apex Legends.
      Deep blue-black backgrounds, electric Steam-blue + Apex-orange accents,
      no rounded corners on important UI, big imagery dominates. */
   --bg:#0e1419;            /* Steam library background */
@@ -58,7 +58,7 @@
   --accent-orange:#ff6c00;  /* Apex orange */
   --accent-warning:#fcb41e; /* Steam achievement gold */
   --accent-success:#5ba32b; /* Steam green */
-  --text:#c7d5e0;           /* Steam body text — not pure white */
+  --text:#c7d5e0;           /* Steam body text - not pure white */
   --text-bright:#ffffff;
   --dim:rgba(199,213,224,0.55);
   --dim2:rgba(199,213,224,0.25);
@@ -76,7 +76,7 @@ body::-webkit-scrollbar-track,*::-webkit-scrollbar-track{background:var(--bg-dee
 body::-webkit-scrollbar-thumb,*::-webkit-scrollbar-thumb{background:var(--panel2);border:2px solid var(--bg);border-radius:0}
 body::-webkit-scrollbar-thumb:hover{background:var(--accent2)}
 
-/* Sharp edges per DESIGN.md — zero radius, no exceptions except avatars. */
+/* Sharp edges per DESIGN.md - zero radius, no exceptions except avatars. */
 button,input,select,textarea,.connect-btn,.btn-primary,.btn-ghost{border-radius:0 !important}
 .section,.sidebar-card,.stat-card,.feature-card,.feature,.kit-card,.plan,.empty,.error,.theme-btn,.density-btn,.corner-btn,.mood-btn,.sub-tab,.nav-tab,.btn,.btn-portal,.btn-xl{border-radius:0 !important}
 .game-card,.rec-card{border-radius:0 !important}
@@ -99,7 +99,7 @@ button,input,select,textarea,.connect-btn,.btn-primary,.btn-ghost{border-radius:
 [style*='border:1px solid var(--border)']{
   border-color:var(--border) !important;
 }
-/* Kill ALL inline horizontal/vertical separator hairlines — zones use whitespace */
+/* Kill ALL inline horizontal/vertical separator hairlines - zones use whitespace */
 [style*='border-top:1px solid var(--border)'],
 [style*='border-bottom:1px solid var(--border)'],
 [style*='border-left:1px solid var(--border)'],
@@ -112,7 +112,7 @@ button,input,select,textarea,.connect-btn,.btn-primary,.btn-ghost{border-radius:
 
 /* ── NAV (DESIGN.md spec) ──
    56px tall, deep bg fill, single hairline below. Logo + tabs + user cluster.
-   Palette-agnostic — only --bg-deep, --border, --accent, --text, --dim. */
+   Palette-agnostic - only --bg-deep, --border, --accent, --text, --dim. */
 nav{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:32px;padding:0 32px;border-bottom:1px solid var(--border);position:sticky;top:env(titlebar-area-y, 0);background:var(--bg-deep, #06080c);box-shadow:none;z-index:100;height:56px;min-height:56px;-webkit-app-region:drag;transition:height 0.2s ease-out, padding 0.2s ease-out;flex-wrap:nowrap}
 nav.shrunk{height:44px;min-height:44px;padding:0 24px}
 nav.shrunk .logo{font-size:14px}
@@ -127,7 +127,7 @@ nav button,nav a,nav input,nav .nav-tabs,nav .nav-user{-webkit-app-region:no-dra
 .logo{font-size:16px;font-weight:700;letter-spacing:1px;color:var(--text-bright);display:flex;align-items:center;gap:10px;line-height:1;text-transform:uppercase;font-family:inherit}
 .logo-dot{width:8px;height:8px;background:var(--accent);box-shadow:none;flex-shrink:0;border-radius:0;transform:none}
 .nav-tabs{display:flex;gap:0;justify-content:center;align-items:stretch;flex-wrap:nowrap;height:100%}
-/* Nav-tabs are structural — always sharp regardless of user corner preference */
+/* Nav-tabs are structural - always sharp regardless of user corner preference */
 .nav-tab,.nav-tab.active{border-radius:0 !important}
 .nav-tab{padding:0 16px;font-size:13px;color:var(--dim);background:transparent !important;border:none;cursor:pointer;transition:color 0.12s, border-color 0.12s;font-family:inherit;line-height:1;display:inline-flex;align-items:center;gap:6px;height:56px;white-space:nowrap;font-weight:700;letter-spacing:1px;text-transform:uppercase;border-bottom:2px solid transparent}
 .nav-tab:hover{color:var(--text-bright);background:transparent !important}
@@ -187,7 +187,7 @@ main > .section:first-of-type{padding-top:8px}
 .section-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:24px;padding-bottom:0;border-bottom:none;gap:24px;flex-wrap:wrap}
 .section-head h2,.section-head h3{font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text);position:relative;padding-left:0;margin:0}
 .section-head h2::before,.section-head h3::before{content:none;display:none}
-/* Hero variant — opt-in via .section-head.hero. Big italic headline + accent stripe. */
+/* Hero variant - opt-in via .section-head.hero. Big italic headline + accent stripe. */
 .section-head.hero{display:block;margin-bottom:32px}
 .section-head.hero .eyebrow{display:block;font-size:11px;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:var(--dim);margin-bottom:14px}
 .section-head.hero h1,.section-head.hero h2{font-size:clamp(28px,4vw,40px);font-weight:800;font-style:italic;letter-spacing:-1.5px;line-height:1.05;text-transform:none;color:var(--text-bright);margin:0 0 18px}
@@ -313,7 +313,7 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
 /* ── STRIPE ── the Ferrari accent bar; sits flush-left under headlines */
 .stripe{display:block;width:60px;height:2px;background:var(--accent);margin:6px 0 18px}
 
-/* lane-end markers retired — too typewriter */
+/* lane-end markers retired - too typewriter */
 .lane-end{display:none}
 
 /* ── GAME TILE (DESIGN.md spec) ──
@@ -522,7 +522,7 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
   </div>
   <div class="nav-user" id="navUser" style="display:none">
     <div class="nav-user-avatar" id="userAvatar"></div>
-    <span id="userName">—</span>
+    <span id="userName">-</span>
     <button id="installPwaBtn" onclick="triggerInstall()" style="display:none;background:var(--accent);color:#000;border:none;padding:5px 10px;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;margin-left:10px" title="Install QuestLog as an app">↓ Install</button>
     <label style="font-size:11px;color:var(--dim);display:flex;align-items:center;gap:5px;cursor:pointer;margin-left:12px" title="Open games in Steam app instead of browser">
       <input type="checkbox" id="steamAppToggle" onchange="toggleSteamApp(this.checked)" style="accent-color:var(--accent);cursor:pointer"> Steam app
@@ -589,7 +589,7 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
             </div>
 
             <div style="background:var(--panel2);border-radius:6px;padding:14px;margin-bottom:10px">
-              <div style="font-size:12px;font-weight:700;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Option A — Vanity URL</div>
+              <div style="font-size:12px;font-weight:700;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Option A - Vanity URL</div>
               <p style="color:var(--dim);font-size:12px;line-height:1.5;margin-bottom:10px">If your Steam profile URL looks like <code style="background:var(--panel);padding:2px 6px;border-radius:3px;color:var(--accent)">steamcommunity.com/id/<strong>YOURNAME</strong></code>, paste just <strong style="color:var(--text)">YOURNAME</strong> below. We'll convert it.</p>
               <div style="display:flex;gap:6px">
                 <input type="text" id="vanityInput" placeholder="e.g. mrwhale12" style="flex:1;background:var(--panel);border:1px solid var(--border);border-radius:5px;padding:9px 12px;color:var(--text);font-size:13px;font-family:inherit">
@@ -599,12 +599,12 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
             </div>
 
             <div style="background:var(--panel2);border-radius:6px;padding:14px">
-              <div style="font-size:12px;font-weight:700;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Option B — 17-digit number</div>
+              <div style="font-size:12px;font-weight:700;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Option B - 17-digit number</div>
               <p style="color:var(--dim);font-size:12px;line-height:1.5">If your URL looks like <code style="background:var(--panel);padding:2px 6px;border-radius:3px;color:var(--accent)">steamcommunity.com/profiles/76561...</code>, copy the 17-digit number. Or use <a href="https://steamidfinder.com" target="_blank" style="color:var(--accent)">steamidfinder.com</a> to find it from any profile URL.</p>
             </div>
           </div>
 
-          <button onclick="closeSteamIdWizard()" class="connect-btn" style="width:100%;padding:14px;font-size:13px">I've got my Steam ID — close this</button>
+          <button onclick="closeSteamIdWizard()" class="connect-btn" style="width:100%;padding:14px;font-size:13px">I've got my Steam ID - close this</button>
         </div>
       </div>
 
@@ -621,10 +621,10 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
 
 <div class="view" id="view-library">
   <div class="stats-strip">
-    <div class="stat-card"><div class="stat-label">Games Owned</div><div class="stat-value" id="statGames">—</div><div class="stat-sub">in Steam library</div></div>
-    <div class="stat-card"><div class="stat-label">Total Hours</div><div class="stat-value" id="statHours">—</div><div class="stat-sub">lifetime played</div></div>
-    <div class="stat-card"><div class="stat-label">Level</div><div class="stat-value" id="statLevel">—</div><div class="stat-sub">Steam profile</div></div>
-    <div class="stat-card"><div class="stat-label">Last 2 Weeks</div><div class="stat-value" id="stat2Weeks">—</div><div class="stat-sub">hours played</div></div>
+    <div class="stat-card"><div class="stat-label">Games Owned</div><div class="stat-value" id="statGames">-</div><div class="stat-sub">in Steam library</div></div>
+    <div class="stat-card"><div class="stat-label">Total Hours</div><div class="stat-value" id="statHours">-</div><div class="stat-sub">lifetime played</div></div>
+    <div class="stat-card"><div class="stat-label">Level</div><div class="stat-value" id="statLevel">-</div><div class="stat-sub">Steam profile</div></div>
+    <div class="stat-card"><div class="stat-label">Last 2 Weeks</div><div class="stat-value" id="stat2Weeks">-</div><div class="stat-sub">hours played</div></div>
   </div>
 
   <div class="section">
@@ -645,7 +645,7 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
     <div class="sidebar-card" id="achGameList"><div class="empty"><span class="loading"></span> Loading achievements...</div></div>
   </div>
   <div class="section" id="achDetail" style="display:none">
-    <div class="section-head"><h2 id="achDetailTitle">—</h2></div>
+    <div class="section-head"><h2 id="achDetailTitle">-</h2></div>
     <div class="sidebar-card" id="achDetailList"></div>
   </div>
 </div>
@@ -653,7 +653,7 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
 <div class="view" id="view-recs">
   <div class="section">
     <div class="section-head">
-      <h2>Play Tonight — From Your Library</h2>
+      <h2>Play Tonight - From Your Library</h2>
       <button class="link" onclick="loadRecs()">Refresh →</button>
     </div>
     <div id="recList"><div class="empty"><span class="loading"></span> Generating recommendations...</div></div>
@@ -661,7 +661,7 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
 
   <div class="section">
     <div class="section-head">
-      <h2>Games to Buy — Based on What You Play</h2>
+      <h2>Games to Buy - Based on What You Play</h2>
       <button class="link" onclick="loadBuyRecs()">Refresh →</button>
     </div>
 
@@ -725,7 +725,7 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
   <div class="sub-view active" data-sub="for-you">
   <div class="section">
     <div class="section-head">
-      <h2>Deals For You — Games You Don't Own</h2>
+      <h2>Deals For You - Games You Don't Own</h2>
       <button class="link" onclick="loadMyDeals()">Refresh →</button>
     </div>
     <div id="myDealsList"><div class="empty"><span class="loading"></span> Finding deals on games you don't own...</div></div>
@@ -736,7 +736,7 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
   <div class="sub-view" data-sub="top">
   <div class="section">
     <div class="section-head">
-      <h2>Top Deals Right Now — All Stores</h2>
+      <h2>Top Deals Right Now - All Stores</h2>
       <button class="link" onclick="loadAllDeals()">Refresh →</button>
     </div>
 
@@ -865,10 +865,10 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
 
 <div class="view" id="view-more">
   <!-- Editorial masthead -->
-  <div id="homeGreeting" style="margin:8px 0 28px;position:relative">
-    <div id="homeMastheadDate" style="font-size:11px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;font-weight:600"></div>
+  <div id="homeGreeting" style="margin:0 0 24px;position:relative">
+    <div id="homeMastheadDate" style="font-size:11px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;font-weight:600"></div>
     <h1 style="font-size:clamp(36px,5vw,56px);font-weight:800;letter-spacing:-2px;line-height:0.95;margin:0 0 12px;color:var(--text-bright)">Welcome back<span id="homeGreetingName" style="color:var(--accent)"></span>.</h1>
-    <p style="color:var(--dim);font-size:16px;max-width:60ch;margin:0 0 18px;line-height:1.5">Here's what's worth your time today — picked from your library, your friends, and the corners of Steam you forgot to check.</p>
+    <p style="color:var(--dim);font-size:16px;max-width:60ch;margin:0 0 18px;line-height:1.5">Here's what's worth your time today - picked from your library, your friends, and the corners of Steam you forgot to check.</p>
     <span style="display:block;width:48px;height:2px;background:var(--accent)"></span>
   </div>
   <script>
@@ -881,7 +881,7 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
     })();
   </script>
 
-  <!-- Pro upgrade banner — hidden when user is already Pro -->
+  <!-- Pro upgrade banner - hidden when user is already Pro -->
   <div id="homeProBanner" class="pricing-banner" style="display:flex;align-items:center;justify-content:space-between;gap:24px;padding:18px 22px;margin-bottom:24px;background:linear-gradient(135deg,rgba(102,193,245,0.06) 0%,rgba(102,193,245,0.02) 100%);border:1px solid rgba(102,193,245,0.18);border-radius:0 !important">
     <div class="pricing-banner-text" style="display:flex;flex-direction:column;gap:4px">
       <div style="display:flex;align-items:center;gap:10px">
@@ -976,7 +976,7 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
 
   <!-- YEAR IN GAMES -->
   <div class="section">
-    <div class="section-head"><h2>Year in Games — Your Stats</h2></div>
+    <div class="section-head"><h2>Year in Games - Your Stats</h2></div>
     <div id="wrappedPanel" class="sidebar-card"><div class="empty"><span class="loading"></span></div></div>
   </div>
 
@@ -1047,7 +1047,7 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
   <div class="section">
     <div class="section-head"><h2>Price History</h2></div>
     <div class="sidebar-card">
-      <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Check if a game is actually cheap right now — or if it's usually this price.</p>
+      <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Check if a game is actually cheap right now - or if it's usually this price.</p>
       <div style="display:flex;gap:10px;position:relative">
         <div style="flex:1;position:relative">
           <input type="text" id="priceHistoryInput" placeholder="Start typing a game title..." autocomplete="off" style="width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit" oninput="priceSuggest(this)" onkeydown="priceSuggestKey(event)" onblur="setTimeout(()=>document.getElementById('priceSuggestBox').style.display='none',200)">
@@ -1064,7 +1064,7 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
   <div class="chapter">
     <div class="chapter-num">02</div>
   <div class="section">
-    <div class="section-head"><h2>Reviews — All Sources</h2></div>
+    <div class="section-head"><h2>Reviews - All Sources</h2></div>
     <div class="sidebar-card">
       <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Steam + Metacritic at a glance. Want critics' verdict AND player sentiment.</p>
       <div style="display:flex;gap:10px;position:relative">
@@ -1137,14 +1137,14 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
         </div>
         <select id="journalRating" style="background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit">
           <option value="">Rating...</option>
-          <option>10/10 — Masterpiece</option>
-          <option>9/10 — Excellent</option>
-          <option>8/10 — Great</option>
-          <option>7/10 — Good</option>
-          <option>6/10 — Decent</option>
-          <option>5/10 — Mid</option>
-          <option>4/10 — Flawed</option>
-          <option>3/10 or below — Bad</option>
+          <option>10/10 - Masterpiece</option>
+          <option>9/10 - Excellent</option>
+          <option>8/10 - Great</option>
+          <option>7/10 - Good</option>
+          <option>6/10 - Decent</option>
+          <option>5/10 - Mid</option>
+          <option>4/10 - Flawed</option>
+          <option>3/10 or below - Bad</option>
         </select>
       </div>
       <textarea id="journalNote" placeholder="Notes..." style="width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit;resize:vertical;min-height:72px;margin-bottom:10px"></textarea>
@@ -1221,10 +1221,10 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
   <div class="chapter">
     <div class="chapter-num">08</div>
   <div class="section">
-    <div class="section-head"><h2>FPS Estimator — Will it run?</h2></div>
+    <div class="section-head"><h2>FPS Estimator - Will it run?</h2></div>
     <div class="sidebar-card">
       <p style="color:var(--dim);font-size:13px;margin-bottom:6px">Check how a game will run on your hardware. Enter GPU + RAM + game, we estimate FPS at every resolution/settings combo.</p>
-      <p style="color:#ff9e42;font-size:11px;margin-bottom:16px;display:flex;align-items:center;gap:6px"><span>⚠</span> Estimates are not 100% accurate — rough ballpark, typically within ±20-30%. CPU, drivers, DLSS/FSR, and specific scenes can vary the real result.</p>
+      <p style="color:#ff9e42;font-size:11px;margin-bottom:16px;display:flex;align-items:center;gap:6px"><span>⚠</span> Estimates are not 100% accurate - rough ballpark, typically within ±20-30%. CPU, drivers, DLSS/FSR, and specific scenes can vary the real result.</p>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px">
         <div>
           <label style="font-size:11px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px">GPU</label>
@@ -1280,7 +1280,7 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
         <div style="background:var(--panel2);padding:14px;border-radius:8px"><div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:4px">Weekly Digest</div><div style="font-size:11px;color:var(--dim);line-height:1.5">Sunday email with deals on games you care about.</div></div>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <button class="connect-btn" onclick="upgradeToPro()" style="padding:14px 28px;font-size:13px;font-weight:700">Upgrade to Pro — £4.99/mo</button>
+        <button class="connect-btn" onclick="upgradeToPro()" style="padding:14px 28px;font-size:13px;font-weight:700">Upgrade to Pro - £4.99/mo</button>
         <button onclick="togglePro()" style="background:transparent;color:var(--dim);border:1px solid var(--border);padding:14px 20px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit">Preview Pro (demo)</button>
       </div>
     </div>
@@ -1400,7 +1400,7 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
         </div>
       </div>
 
-      <!-- PUSH NOTIFICATIONS (PRO) — moved into ALERTS sub-tab -->
+      <!-- PUSH NOTIFICATIONS (PRO) - moved into ALERTS sub-tab -->
       <div class="section">
         <div class="eyebrow">Live Alerts</div>
         <div class="section-head"><h2>Push Notifications <span style="background:rgba(200,241,53,0.15);color:var(--accent);font-size:10px;padding:3px 8px;border-radius:3px;letter-spacing:1px;margin-left:8px">PRO</span></h2></div>
@@ -1454,7 +1454,7 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
 
       <!-- BACKLOG QUEUE (PRO) -->
       <div class="section">
-        <div class="section-head"><h2>Up Next — Priority Queue <span style="background:rgba(200,241,53,0.15);color:var(--accent);font-size:10px;padding:3px 8px;border-radius:3px;letter-spacing:1px;margin-left:8px">PRO</span></h2></div>
+        <div class="section-head"><h2>Up Next - Priority Queue <span style="background:rgba(200,241,53,0.15);color:var(--accent);font-size:10px;padding:3px 8px;border-radius:3px;letter-spacing:1px;margin-left:8px">PRO</span></h2></div>
         <div class="sidebar-card" id="queueCard">
           <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Drag to reorder. Sorted by what you'll play next. Time estimates from HLTB where available.</p>
           <div style="display:flex;gap:8px;margin-bottom:12px;position:relative">
@@ -1535,7 +1535,7 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
         <div class="section-head"><h3 style="font-size:15px">Recent Price Drops</h3></div>
         <div class="sidebar-card">
           <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Drops we've spotted on your wishlist in the last 30 days. Checked hourly.</p>
-          <div id="recentDropsList"><div class="empty" style="text-align:left;font-size:12px;padding:8px 0">Add games to your wishlist below — drops will appear here automatically.</div></div>
+          <div id="recentDropsList"><div class="empty" style="text-align:left;font-size:12px;padding:8px 0">Add games to your wishlist below - drops will appear here automatically.</div></div>
         </div>
       </div>
 
@@ -1561,7 +1561,7 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
 
 <div class="view" id="view-leaderboards">
   <div class="section">
-    <div class="section-head"><h2>Your Top Games — Live Player Counts</h2></div>
+    <div class="section-head"><h2>Your Top Games - Live Player Counts</h2></div>
     <div class="sidebar-card" id="playerCounts"><div class="empty"><span class="loading"></span> Checking Steam servers...</div></div>
   </div>
   <div class="section">
@@ -1584,7 +1584,7 @@ function toggleSteamApp(on) {
 }
 function openSteam(appid) {
   if (STATE.useSteamApp) {
-    // Try steam:// — if no Steam client, attempt a browser fallback after short delay
+    // Try steam:// - if no Steam client, attempt a browser fallback after short delay
     const t = Date.now();
     window.location.href = `steam://store/${appid}`;
     setTimeout(() => {
@@ -1602,7 +1602,7 @@ function switchSubTab(viewKey, sub) {
   if (!container) return;
   container.querySelectorAll('.sub-tab').forEach(b => b.classList.toggle('active', b.dataset.sub === sub));
   container.querySelectorAll('.sub-view').forEach(v => v.classList.toggle('active', v.dataset.sub === sub));
-  // Scroll to top when switching sub-tab — prevents the empty-page jump Julian saw
+  // Scroll to top when switching sub-tab - prevents the empty-page jump Julian saw
   window.scrollTo({ top: 0, behavior: 'instant' });
   // Lazy-load data if the sub-view hasn't been populated
   if (viewKey === 'deals') {
@@ -1713,7 +1713,7 @@ async function connectSteam() {
         'Go to Steam → right-click your username → Profile → Edit Profile → Privacy Settings.\n\n' +
         'Set BOTH of these to Public:\n' +
         '• Game details\n' +
-        '• Owned games  (scroll down — this is a SEPARATE setting)\n\n' +
+        '• Owned games  (scroll down - this is a SEPARATE setting)\n\n' +
         'Save and try again.'
       );
       return;
@@ -1792,7 +1792,7 @@ function renderDashboard() {
   // Stats
   document.getElementById('statGames').textContent = gameCount.toLocaleString();
   document.getElementById('statHours').textContent = totalHours.toLocaleString();
-  document.getElementById('statLevel').textContent = profile.level || '—';
+  document.getElementById('statLevel').textContent = profile.level || '-';
   const recentHours = games.reduce((s, g) => s + (g.hoursTwoWeeks || 0), 0);
   document.getElementById('stat2Weeks').textContent = Math.round(recentHours * 10) / 10 + 'h';
 
@@ -2104,7 +2104,7 @@ function renderChallengeUI() {
   const ch = getChallenge();
 
   if (!ch) {
-    // New challenge picker — show backlog games
+    // New challenge picker - show backlog games
     if (!STATE.games || !STATE.games.length) { el.innerHTML = '<div class="empty">Connect Steam to start a challenge.</div>'; return; }
     const backlog = STATE.games.filter(g => (g.hours || 0) < 5).slice(0, 20);
     el.innerHTML = `
@@ -2122,7 +2122,7 @@ function renderChallengeUI() {
       <button onclick="startChallenge()" class="btn-primary" style="padding:0 28px;height:42px;min-width:240px;font-size:12px" id="startChallengeBtn" disabled>Start 30-Day Challenge</button>
     `;
   } else {
-    // Existing challenge — show progress
+    // Existing challenge - show progress
     const daysLeft = Math.max(0, Math.ceil((ch.endDate - Date.now()) / 86400000));
     el.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
@@ -2266,7 +2266,7 @@ async function whatToPlay(mood) {
         <div style="flex:1">
           <div style="font-size:11px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;margin-bottom:6px">Play this ←</div>
           <div style="font-size:18px;font-weight:700;margin-bottom:4px">${r.name}</div>
-          <div style="font-size:12px;color:var(--dim)">${r.hoursPlayed > 0 ? `${r.hoursPlayed}h played — return to it` : 'Never played — time to start'}</div>
+          <div style="font-size:12px;color:var(--dim)">${r.hoursPlayed > 0 ? `${r.hoursPlayed}h played - return to it` : 'Never played - time to start'}</div>
           <div style="font-size:11px;color:var(--dim);margin-top:8px">Picked from ${r.totalCandidates} ${mood==='any'?'games':mood+' games'}</div>
         </div>
       </div>`;
@@ -2393,7 +2393,7 @@ function findGuides() {
   const links = [
     { label: 'Walkthrough videos', url: `https://www.youtube.com/results?search_query=${encodeURIComponent(title + ' walkthrough')}`, source: 'YouTube', desc: 'Top-rated video playthroughs, quest-by-quest' },
     { label: 'Boss/quest guides', url: `https://www.youtube.com/results?search_query=${encodeURIComponent(title + ' boss guide')}`, source: 'YouTube', desc: 'Specific boss fights, hard quests, hidden areas' },
-    { label: 'Fandom Wiki', url: `https://www.google.com/search?q=${q}+site%3Afandom.com`, source: 'Fandom', desc: 'Community wiki — items, locations, NPCs' },
+    { label: 'Fandom Wiki', url: `https://www.google.com/search?q=${q}+site%3Afandom.com`, source: 'Fandom', desc: 'Community wiki - items, locations, NPCs' },
     { label: 'Fextralife Wiki', url: `https://www.google.com/search?q=${q}+site%3Afextralife.com`, source: 'Fextralife', desc: 'Best for Souls-likes, RPGs (builds, drops)' },
     { label: 'IGN Wiki & Guide', url: `https://www.google.com/search?q=${q}+site%3Aign.com%2Fwikis`, source: 'IGN', desc: 'Structured walkthroughs with screenshots' },
     { label: 'PCGamingWiki', url: `https://www.pcgamingwiki.com/w/index.php?search=${q}`, source: 'PCGamingWiki', desc: 'Technical issues, mods, fixes, config' },
@@ -2690,7 +2690,7 @@ async function upgradeToPro() {
       return;
     }
     if (d.notReady) {
-      alert('Pro launches very soon — the Stripe checkout is being finalised. Try the "Preview Pro (demo)" button below to explore Pro features in the meantime.');
+      alert('Pro launches very soon - the Stripe checkout is being finalised. Try the "Preview Pro (demo)" button below to explore Pro features in the meantime.');
       return;
     }
     alert('Could not start checkout: ' + (d.error || 'unknown error'));
@@ -2806,7 +2806,7 @@ function applyAccentOverride() {
   }
 }
 
-// Custom background colour override — same pattern as accent.
+// Custom background colour override - same pattern as accent.
 // Recomputes --panel / --panel2 / --bg-deep / --text-bright relative to the chosen bg
 // so the rest of the UI still reads correctly on a custom palette.
 function applyBgOverride() {
@@ -2814,7 +2814,7 @@ function applyBgOverride() {
   if (!bg || !/^#[0-9a-f]{6}$/i.test(bg)) return;
   const root = document.documentElement;
   root.style.setProperty('--bg', bg);
-  // Derive related surfaces. If the bg is light, lighten panels by 5–10%; if dark, darken.
+  // Derive related surfaces. If the bg is light, lighten panels by 5-10%; if dark, darken.
   const r = parseInt(bg.slice(1,3),16), g = parseInt(bg.slice(3,5),16), b = parseInt(bg.slice(5,7),16);
   const luma = (0.299*r + 0.587*g + 0.114*b) / 255;
   const isLight = luma > 0.5;
@@ -2848,7 +2848,7 @@ function clearCustomBg() {
 
 function applyTheme(theme) {
   const t = THEMES[theme] || THEMES.dark;
-  // Free users can only use free themes — silently downgrade
+  // Free users can only use free themes - silently downgrade
   if (!t.free && !isProActive()) {
     return applyTheme('dark');
   }
@@ -2861,10 +2861,10 @@ function applyTheme(theme) {
   root.style.setProperty('--text', t.text);
   root.style.setProperty('--dim', t.dim);
   root.style.setProperty('--border', t.border);
-  // Derive --bg-deep (nav fill) by darkening --bg ~25% — keeps nav legible on every palette
+  // Derive --bg-deep (nav fill) by darkening --bg ~25% - keeps nav legible on every palette
   root.style.setProperty('--bg-deep', _shadeHex(t.bg, -0.25));
   root.style.setProperty('--text-bright', t.text === '#1a1a1a' ? '#000' : '#fff');
-  // Theme-mode hooks — drives the gamer-minimalist overlay (typography, formatting, layout)
+  // Theme-mode hooks - drives the gamer-minimalist overlay (typography, formatting, layout)
   if (t.mode) root.setAttribute('data-theme-mode', t.mode);
   else root.removeAttribute('data-theme-mode');
   applyAccentOverride();
@@ -2875,7 +2875,7 @@ function applyTheme(theme) {
   applyThemeMode(t.mode || null);
 }
 
-// Gamer-minimalist mode: ships extra CSS that changes typography, formatting and layout —
+// Gamer-minimalist mode: ships extra CSS that changes typography, formatting and layout -
 // not just colours. Inspired by Steam, Apex Legends, and Steam Deck UI.
 function applyThemeMode(mode) {
   let s = document.getElementById('theme-mode-overrides');
@@ -2885,7 +2885,7 @@ function applyThemeMode(mode) {
     document.head.appendChild(s);
   }
   if (mode !== 'gamer') { s.textContent = ''; return; }
-  // Gamer mode is now thin — the base CSS already follows DESIGN.md.
+  // Gamer mode is now thin - the base CSS already follows DESIGN.md.
   // Only the truly Steam-specific cosmetics live here.
   s.textContent = `
     /* ─── GAMER MODE ─── Steam client cosmetics layered over the
@@ -2916,7 +2916,7 @@ function applyThemeMode(mode) {
       background:var(--accent) !important;
     }
 
-    /* Numbers — always tabular mono */
+    /* Numbers - always tabular mono */
     html[data-theme-mode='gamer'] .mono,
     html[data-theme-mode='gamer'] [class*='stat-num'],
     html[data-theme-mode='gamer'] [class*='stat-value']{
@@ -3130,7 +3130,7 @@ function renderPriceAlerts() {
     <div style="display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
       <div style="flex:1;min-width:0">
         <div style="font-weight:600;font-size:13px">${a.game}</div>
-        <div style="font-size:11px;color:var(--dim)">Target: <span style="color:var(--accent)">£${a.target.toFixed(2)}</span> — ${a.email}</div>
+        <div style="font-size:11px;color:var(--dim)">Target: <span style="color:var(--accent)">£${a.target.toFixed(2)}</span> - ${a.email}</div>
       </div>
       <span style="background:rgba(34,204,102,0.15);color:#22cc66;padding:3px 8px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:1px">ACTIVE</span>
       <button onclick="removeAlert(${a.created})" style="background:transparent;color:var(--dim);border:none;cursor:pointer;font-size:16px">×</button>
@@ -3183,7 +3183,7 @@ async function renderWishlist() {
         <div style="width:80px;aspect-ratio:460/215;background:url('${item.thumb}') center/cover;border-radius:4px;flex-shrink:0"></div>
         <div style="flex:1;min-width:0">
           <div style="font-weight:600;font-size:13px">${item.title}</div>
-          <div style="font-size:11px;color:var(--dim)">Now: <strong style="color:${isLow?'var(--accent)':'var(--text)'}">$${(item.cheapest||0).toFixed(2)}</strong>${item.cheapestEver?` · Low: $${item.cheapestEver.toFixed(2)}`:''}${cheapestDeal?` — ${cheapestDeal.storeName}`:''}</div>
+          <div style="font-size:11px;color:var(--dim)">Now: <strong style="color:${isLow?'var(--accent)':'var(--text)'}">$${(item.cheapest||0).toFixed(2)}</strong>${item.cheapestEver?` · Low: $${item.cheapestEver.toFixed(2)}`:''}${cheapestDeal?` - ${cheapestDeal.storeName}`:''}</div>
         </div>
         ${isLow?'<span style="background:rgba(200,241,53,0.15);color:var(--accent);padding:3px 8px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:1px">GOOD DEAL</span>':''}
         ${cheapestDeal?`<a href="${cheapestDeal.dealLink}" target="_blank" style="background:var(--accent);color:#000;padding:6px 12px;border-radius:4px;font-size:11px;font-weight:700;text-decoration:none">Buy</a>`:''}
@@ -3390,7 +3390,7 @@ async function savePushPrefs() {
 function loadModSpace() {
   const el = document.getElementById('modSpacePanel');
   if (!el) return;
-  // Curated list of moddable games — link to NexusMods directly per-game
+  // Curated list of moddable games - link to NexusMods directly per-game
   const MODDABLE = {
     'Skyrim Special Edition':           'skyrimspecialedition',
     'Skyrim':                            'skyrim',
@@ -3449,7 +3449,7 @@ async function loadHot() {
   if (!el) return;
   if (!STATE.games?.length) { el.innerHTML = '<div class="empty" style="font-size:13px">Connect Steam first.</div>'; return; }
 
-  // Heuristic: pick games with high lifetime hours but zero recent playtime — "forgotten favourites"
+  // Heuristic: pick games with high lifetime hours but zero recent playtime - "forgotten favourites"
   // and games with current high player counts (popularity check via Steam's GetNumberOfCurrentPlayers)
   const candidates = STATE.games
     .filter(g => g.hours > 5)
@@ -3536,7 +3536,7 @@ function renderQuests() {
       <div style="display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
         <input type="checkbox" ${q.done ? 'checked' : ''} onchange="toggleQuest(${q.id})" style="accent-color:var(--accent);width:18px;height:18px;cursor:pointer">
         <div style="flex:1;min-width:0">
-          <div style="font-weight:600;font-size:13px;color:${colour};${q.done ? 'text-decoration:line-through;opacity:0.5' : ''}">${q.game} — ${q.goal}</div>
+          <div style="font-weight:600;font-size:13px;color:${colour};${q.done ? 'text-decoration:line-through;opacity:0.5' : ''}">${q.game} - ${q.goal}</div>
           ${q.deadline ? `<div style="font-size:11px;color:${overdue ? '#ff5a5a' : 'var(--dim)'}">${overdue ? `Overdue by ${-daysLeft}d` : daysLeft === 0 ? 'Due today' : daysLeft > 0 ? `${daysLeft} days left` : ''}</div>` : ''}
         </div>
         <button onclick="removeQuest(${q.id})" style="background:transparent;color:var(--dim);border:none;cursor:pointer;font-size:16px">×</button>
@@ -3834,14 +3834,14 @@ async function loadSpendAnalytics() {
       ${r.bestValue.map(g => `
         <div onclick="openSteam(${g.appid})" style="cursor:pointer;display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
           <div style="width:80px;aspect-ratio:460/215;background:url('${g.img}') center/cover;border-radius:4px;flex-shrink:0"></div>
-          <div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${g.name}</div><div style="font-size:11px;color:var(--dim)">$${g.price} — ${g.hours}h — <span style="color:var(--accent)">$${g.costPerHour.toFixed(3)}/hour</span></div></div>
+          <div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${g.name}</div><div style="font-size:11px;color:var(--dim)">$${g.price} - ${g.hours}h - <span style="color:var(--accent)">$${g.costPerHour.toFixed(3)}/hour</span></div></div>
         </div>`).join('')}
 
       <h3 style="font-size:12px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin:24px 0 10px">Worst Value (highest cost/hour)</h3>
       ${r.worstValue.map(g => `
         <div onclick="openSteam(${g.appid})" style="cursor:pointer;display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
           <div style="width:80px;aspect-ratio:460/215;background:url('${g.img}') center/cover;border-radius:4px;flex-shrink:0"></div>
-          <div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${g.name}</div><div style="font-size:11px;color:var(--dim)">$${g.price} — ${g.hours}h — <span style="color:#ff9e42">$${g.costPerHour.toFixed(2)}/hour</span></div></div>
+          <div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${g.name}</div><div style="font-size:11px;color:var(--dim)">$${g.price} - ${g.hours}h - <span style="color:#ff9e42">$${g.costPerHour.toFixed(2)}/hour</span></div></div>
         </div>`).join('')}
 
       <p style="font-size:11px;color:var(--dim);margin-top:16px;font-style:italic">${r.note}</p>
@@ -3872,7 +3872,7 @@ async function estimateFPS() {
       <div style="background:var(--panel2);border:1px solid ${verdictColor}44;border-radius:8px;padding:18px;margin-bottom:16px">
         <div style="font-size:10px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:6px">Verdict</div>
         <div style="font-size:18px;font-weight:700;color:${verdictColor};margin-bottom:4px">${d.verdict}</div>
-        ${d.inferred ? `<div style="font-size:11px;color:var(--dim);margin-bottom:4px">⚠ Inferred from Steam requirements (recommended GPU: ${d.inferred.gpu}) — less accurate than our curated data</div>` : ''}
+        ${d.inferred ? `<div style="font-size:11px;color:var(--dim);margin-bottom:4px">⚠ Inferred from Steam requirements (recommended GPU: ${d.inferred.gpu}) - less accurate than our curated data</div>` : ''}
         <div style="font-size:12px;color:var(--dim)">${d.gpu} · ${d.ram}GB RAM · ${d.game}</div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
@@ -3932,7 +3932,7 @@ async function loadNewReleases() {
     const r = await fetch(`/api/new-releases?filter=${STATE.newFilter || 'popular'}`);
     const data = await r.json();
     const el = document.getElementById('newReleasesList');
-    // Filter: must have at least 150 reviews — excludes shovelware/untested
+    // Filter: must have at least 150 reviews - excludes shovelware/untested
     const filtered = (data.items || []).filter(g => g.review && g.review.count >= 150);
     if (!filtered.length) { el.innerHTML = '<div class="empty">No new releases with enough reviews yet. Check back later.</div>'; return; }
     el.innerHTML = filtered.map(renderNewReleaseCard).join('');
@@ -4134,7 +4134,7 @@ async function searchDeal() {
           <div style="width:120px;aspect-ratio:460/215;background:url('${g.thumb}') center/cover;border-radius:4px;flex-shrink:0"></div>
           <div style="flex:1">
             <div style="font-size:15px;font-weight:700;margin-bottom:4px">${g.title}</div>
-            <div style="font-size:12px;color:var(--dim)">Cheapest now: <strong style="color:var(--accent)">$${g.cheapest.toFixed(2)}</strong> · Historical low: ${g.cheapestEver ? '$' + g.cheapestEver.toFixed(2) : '—'}</div>
+            <div style="font-size:12px;color:var(--dim)">Cheapest now: <strong style="color:var(--accent)">$${g.cheapest.toFixed(2)}</strong> · Historical low: ${g.cheapestEver ? '$' + g.cheapestEver.toFixed(2) : '-'}</div>
           </div>
         </div>
         <table style="width:100%;font-size:13px;border-collapse:collapse">
@@ -4440,12 +4440,12 @@ async function loadLeaderboards() {
           <div class="ach-name">${r.name}</div>
           <div class="ach-desc">${r.hours}h played by you · ${r.reviewScore ? `<span style="color:${scoreColour}">${r.reviewScore}% ★ ${r.reviewLabel || ''}</span>` : 'No reviews'}</div>
         </div>
-        <div class="ach-rarity" style="color:${r.currentPlayers > 10000 ? 'var(--accent)' : 'var(--dim)'}">${r.currentPlayers !== null && r.currentPlayers !== undefined ? r.currentPlayers.toLocaleString() + ' online' : '—'}</div>
+        <div class="ach-rarity" style="color:${r.currentPlayers > 10000 ? 'var(--accent)' : 'var(--dim)'}">${r.currentPlayers !== null && r.currentPlayers !== undefined ? r.currentPlayers.toLocaleString() + ' online' : '-'}</div>
       </div>
     `;
   }).join('');
 
-  // Simple "leaderboard" — your most played games ranked with mock global averages
+  // Simple "leaderboard" - your most played games ranked with mock global averages
   document.getElementById('leaderboard').innerHTML = `
     <thead><tr><th>#</th><th>Game</th><th>Your Hours</th><th>Global Avg</th><th>Your Percentile</th></tr></thead>
     <tbody>
@@ -4477,7 +4477,7 @@ function relativeTime(ms) {
   return new Date(ms).toLocaleDateString();
 }
 
-// Steam-only sign-in flow — cleanup any leftover Xbox tokens from previous version
+// Steam-only sign-in flow - cleanup any leftover Xbox tokens from previous version
 localStorage.removeItem('questlog_xbox_token');
 localStorage.removeItem('questlog_xbox_xuid');
 
@@ -4487,7 +4487,7 @@ if (savedSid) {
   document.getElementById('sidInput').value = savedSid;
   connectSteam();
 }
-// Apply saved theme on load (works even without Pro — saved in localStorage)
+// Apply saved theme on load (works even without Pro - saved in localStorage)
 const savedTheme = localStorage.getItem('questlog_theme') || 'gamerlux';
 if (typeof applyTheme === 'function') applyTheme(savedTheme);
 
@@ -4544,7 +4544,7 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
             nw.addEventListener('statechange', function () {
               if (nw.state === 'activated' && navigator.serviceWorker.controller) {
                 // Soft reload so users see the latest deploy without a hard refresh.
-                // Skip if user is mid-action — only reload if hidden tab.
+                // Skip if user is mid-action - only reload if hidden tab.
                 if (document.visibilityState === 'hidden') location.reload();
               }
             });
