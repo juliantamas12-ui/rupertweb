@@ -127,7 +127,9 @@ nav button,nav a,nav input,nav .nav-tabs,nav .nav-user{-webkit-app-region:no-dra
 .logo{font-size:16px;font-weight:700;letter-spacing:1px;color:var(--text-bright);display:flex;align-items:center;gap:10px;line-height:1;text-transform:uppercase;font-family:inherit}
 .logo-dot{width:8px;height:8px;background:var(--accent);box-shadow:none;flex-shrink:0;border-radius:0;transform:none}
 .nav-tabs{display:flex;gap:0;justify-content:center;align-items:stretch;flex-wrap:nowrap;height:100%}
-.nav-tab{padding:0 16px;font-size:13px;color:var(--dim);background:transparent !important;border:none;border-radius:0 !important;cursor:pointer;transition:color 0.12s, border-color 0.12s;font-family:inherit;line-height:1;display:inline-flex;align-items:center;gap:6px;height:56px;white-space:nowrap;font-weight:700;letter-spacing:1px;text-transform:uppercase;border-bottom:2px solid transparent}
+/* Nav-tabs are structural — always sharp regardless of user corner preference */
+.nav-tab,.nav-tab.active{border-radius:0 !important}
+.nav-tab{padding:0 16px;font-size:13px;color:var(--dim);background:transparent !important;border:none;cursor:pointer;transition:color 0.12s, border-color 0.12s;font-family:inherit;line-height:1;display:inline-flex;align-items:center;gap:6px;height:56px;white-space:nowrap;font-weight:700;letter-spacing:1px;text-transform:uppercase;border-bottom:2px solid transparent}
 .nav-tab:hover{color:var(--text-bright);background:transparent !important}
 .nav-tab.active{color:var(--accent);background:transparent !important;border-bottom:2px solid var(--accent) !important}
 .nav-tab-pro{display:none !important}
@@ -135,7 +137,7 @@ nav button,nav a,nav input,nav .nav-tabs,nav .nav-user{-webkit-app-region:no-dra
 .nav-user{display:flex;align-items:center;gap:12px;font-size:13px;color:var(--dim);line-height:1;white-space:nowrap}
 .nav-user-avatar{width:32px;height:32px;border-radius:50%;background-size:cover;background-position:center;flex-shrink:0}
 
-main{padding:24px 32px;max-width:1400px;margin:0 auto}
+main{padding:14px 32px 32px;max-width:1400px;margin:0 auto}
 
 .landing{text-align:center;padding:80px 20px}
 .landing-badge{display:inline-block;background:rgba(200,241,53,0.1);border:1px solid rgba(200,241,53,0.3);color:var(--accent);font-size:10px;letter-spacing:3px;padding:6px 14px;border-radius:100px;text-transform:uppercase;margin-bottom:24px}
@@ -2969,7 +2971,7 @@ function injectStyleOverrides() {
   css += `
     .connect-btn,.btn-primary,.btn-ghost,.btn,.btn-portal,.btn-xl,.sid-input,.theme-btn,.density-btn,.corner-btn,.mood-btn{border-radius:${radius} !important}
     .stat-card,.game-card,.rec-card,.sidebar-card,.feature-card,.feature,.kit-card,.plan,.empty,.error,.sub-tab{border-radius:${tileRadius} !important}
-    button:not([class*='btn']):not([class*='-btn']){border-radius:${radius} !important}
+    button:not([class*='btn']):not([class*='-btn']):not(.nav-tab):not(.sub-tab){border-radius:${radius} !important}
     .game-img,.rec-cover,.ach-icon{border-radius:${tileRadius} !important}
     .nav-user-avatar{border-radius:50% !important}
     input[type=text],input[type=email],input[type=number],input[type=date],input[type=color],input[type=search],input[type=password],select,textarea{border-radius:${radius} !important}
