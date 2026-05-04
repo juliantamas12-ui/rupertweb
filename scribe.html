@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Scribe — The Billionaire Letters Project</title>
+<meta name="description" content="A private workspace for tracking the billionaire / founder interview project. Targets, questions, drafts, responses.">
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Crimson+Text:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#fafaf7;
+  --paper:#fffef9;
+  --ink:#1a1a1a;
+  --ink-soft:#5a5a55;
+  --rule:rgba(0,0,0,0.08);
+  --accent:#8b1c1c;
+  --accent-soft:rgba(139,28,28,0.08);
+  --shadow:0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03);
+}
+body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,sans-serif;line-height:1.55;font-size:15px;min-height:100vh}
+.serif{font-family:'Crimson Text',Georgia,serif}
+nav{display:flex;align-items:center;justify-content:space-between;padding:18px 32px;border-bottom:1px solid var(--rule);background:var(--paper);position:sticky;top:0;z-index:50}
+nav .logo{font-family:'Crimson Text',Georgia,serif;font-size:22px;font-weight:600;letter-spacing:-0.5px;color:var(--ink)}
+nav .logo span{color:var(--accent);font-style:italic}
+nav .links{display:flex;gap:24px;font-size:13px;color:var(--ink-soft);font-weight:500}
+nav a{color:inherit;text-decoration:none;transition:color 0.15s}
+nav a:hover{color:var(--accent)}
+nav .home-link{font-size:13px;color:var(--ink-soft);text-decoration:none}
+nav .home-link:hover{color:var(--accent)}
+main{max-width:1200px;margin:0 auto;padding:48px 32px 96px}
+
+/* Masthead */
+.masthead{margin-bottom:48px;padding-bottom:32px;border-bottom:2px solid var(--ink)}
+.masthead .kicker{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:16px}
+.masthead h1{font-family:'Crimson Text',Georgia,serif;font-size:clamp(40px,6vw,68px);font-weight:600;line-height:1.05;letter-spacing:-1.5px;margin-bottom:18px;color:var(--ink)}
+.masthead h1 em{font-style:italic;color:var(--accent)}
+.masthead .lede{font-size:18px;color:var(--ink-soft);max-width:64ch;line-height:1.55;font-family:'Crimson Text',Georgia,serif}
+.masthead .meta{display:flex;gap:32px;margin-top:24px;font-size:12px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:1.5px;font-weight:500}
+.masthead .meta b{color:var(--ink);font-weight:600}
+
+/* Section card */
+.card{background:var(--paper);border:1px solid var(--rule);box-shadow:var(--shadow);padding:32px;margin-bottom:32px;position:relative}
+.card .num{position:absolute;top:-14px;left:24px;background:var(--ink);color:var(--paper);font-size:11px;font-weight:700;letter-spacing:2px;padding:4px 10px}
+.card h2{font-family:'Crimson Text',Georgia,serif;font-size:32px;font-weight:600;letter-spacing:-0.5px;margin-bottom:8px;color:var(--ink)}
+.card h2 em{font-style:italic;color:var(--accent)}
+.card .subtitle{font-size:14px;color:var(--ink-soft);margin-bottom:24px;font-style:italic}
+
+/* Two col */
+.row{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-bottom:32px}
+.row.three{grid-template-columns:1fr 1fr 1fr}
+@media(max-width:780px){.row,.row.three{grid-template-columns:1fr}}
+
+/* Lists */
+.target-list{list-style:none}
+.target{display:grid;grid-template-columns:1fr auto auto;gap:14px;padding:14px 0;border-bottom:1px dashed var(--rule);align-items:center}
+.target:last-child{border-bottom:none}
+.target .name{font-weight:600;color:var(--ink);font-size:15px}
+.target .why{font-size:13px;color:var(--ink-soft);margin-top:2px}
+.target .tier{display:inline-block;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:3px 8px;font-weight:700;border:1px solid currentColor}
+.tier-a{color:#2a7a2a}
+.tier-b{color:#8b6c1c}
+.tier-c{color:#5a5a55}
+.target .status{font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:1px;font-weight:600;min-width:80px;text-align:right}
+.status-todo{color:var(--ink-soft)}
+.status-sent{color:#1c7d8b}
+.status-replied{color:#2a7a2a}
+.status-no{color:#8b1c1c}
+
+/* Question architecture */
+.q-block{padding:16px 20px;background:var(--accent-soft);border-left:3px solid var(--accent);margin-bottom:14px;font-family:'Crimson Text',Georgia,serif;font-size:17px;font-style:italic;line-height:1.5}
+
+/* Letter template */
+.letter-paper{background:var(--paper);padding:48px;border:1px solid var(--rule);font-family:'Crimson Text',Georgia,serif;font-size:16px;line-height:1.7;max-width:680px;margin:0 auto;box-shadow:var(--shadow)}
+.letter-paper p{margin-bottom:18px}
+.letter-paper .placeholder{background:#fff5d6;padding:0 4px;color:#8b6c1c;font-style:italic}
+.letter-paper .salutation{margin-bottom:22px}
+.letter-paper .signature{margin-top:32px}
+
+/* Notes panel */
+.notes{background:#fffae6;border:1px solid #e8d989;padding:24px;font-family:'Crimson Text',Georgia,serif;font-size:16px;line-height:1.65}
+.notes h3{font-size:14px;text-transform:uppercase;letter-spacing:2px;color:#8b6c1c;margin-bottom:12px;font-family:'Inter',sans-serif;font-weight:700}
+.notes ul{padding-left:20px;margin:8px 0}
+.notes li{margin-bottom:6px}
+
+/* Inline call-to-action button (for adding ideas) */
+.cta{display:inline-block;background:var(--ink);color:var(--paper);padding:10px 20px;font-size:13px;font-weight:600;text-decoration:none;letter-spacing:0.3px;border:none;cursor:pointer;font-family:inherit;transition:background 0.15s}
+.cta:hover{background:var(--accent)}
+.cta-ghost{background:transparent;color:var(--ink);border:1px solid var(--ink)}
+.cta-ghost:hover{background:var(--ink);color:var(--paper)}
+
+/* Stat ribbon */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;padding:24px 0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);margin-bottom:32px}
+@media(max-width:780px){.stats{grid-template-columns:1fr 1fr}}
+.stat .v{font-family:'Crimson Text',Georgia,serif;font-size:42px;font-weight:600;color:var(--ink);line-height:1}
+.stat .l{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--ink-soft);font-weight:600;margin-top:6px}
+
+/* Idea bin */
+.idea-input{width:100%;padding:14px 16px;background:var(--paper);border:1px solid var(--rule);font-family:inherit;font-size:14px;margin-bottom:10px;resize:vertical;min-height:80px}
+.idea-input:focus{outline:none;border-color:var(--accent)}
+.idea-list{list-style:none;margin-top:18px}
+.idea-item{padding:12px 0;border-bottom:1px dashed var(--rule);display:flex;justify-content:space-between;gap:14px;align-items:flex-start}
+.idea-item:last-child{border-bottom:none}
+.idea-item .text{font-family:'Crimson Text',Georgia,serif;font-size:16px;line-height:1.45}
+.idea-item .ts{font-size:11px;color:var(--ink-soft);white-space:nowrap;margin-left:14px}
+.idea-item .del{background:none;border:none;color:var(--ink-soft);cursor:pointer;font-size:12px;text-decoration:underline}
+.idea-item .del:hover{color:var(--accent)}
+
+footer{max-width:1200px;margin:0 auto;padding:24px 32px;border-top:1px solid var(--rule);font-size:11px;color:var(--ink-soft);text-align:center;letter-spacing:1px;text-transform:uppercase}
+
+/* Print friendly */
+@media print{
+  nav,.cta,footer{display:none}
+  body{background:#fff;color:#000}
+  .card{box-shadow:none;border:1px solid #000;page-break-inside:avoid}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Scribe<span>.</span></div>
+  <div class="links">
+    <a href="#targets">Targets</a>
+    <a href="#questions">Questions</a>
+    <a href="#letter">Letter</a>
+    <a href="#ideas">Ideas</a>
+    <a href="/" class="home-link">← rupertweb</a>
+  </div>
+</nav>
+
+<main>
+
+<!-- MASTHEAD -->
+<div class="masthead">
+  <div class="kicker">A Private Workspace · Issue 01 · 2026</div>
+  <h1>Letters to <em>Builders</em>.</h1>
+  <p class="lede">A research project. Two fourteen-year-olds writing deep, well-prepared letters to founders, investors, and operators they admire — asking the questions that AI cannot answer. Outputs: a podcast feed, a Substack, and eventually a book.</p>
+  <div class="meta">
+    <div><b>Co-authors</b> &nbsp; Julian &amp; Friend</div>
+    <div><b>Status</b> &nbsp; Pre-launch</div>
+    <div><b>Goal</b> &nbsp; 50 letters · 25 replies · 10 interviews</div>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat"><div class="v" id="statTargets">0</div><div class="l">Targets identified</div></div>
+  <div class="stat"><div class="v" id="statSent">0</div><div class="l">Letters sent</div></div>
+  <div class="stat"><div class="v" id="statReplied">0</div><div class="l">Replied</div></div>
+  <div class="stat"><div class="v" id="statIdeas">0</div><div class="l">Ideas captured</div></div>
+</div>
+
+<!-- 01 — TARGETS -->
+<div class="card" id="targets">
+  <span class="num">01 · TARGETS</span>
+  <h2>The <em>List</em>.</h2>
+  <p class="subtitle">Tier A = warm intro available · Tier B = cold but reachable · Tier C = stretch goal.</p>
+
+  <ul class="target-list" id="targetList">
+    <!-- Seed list — edit freely. Stored in localStorage so changes persist on this device. -->
+  </ul>
+
+  <div style="margin-top:20px;display:flex;gap:8px;flex-wrap:wrap">
+    <input id="newTargetName" placeholder="Name + company"   style="flex:1;min-width:180px;padding:10px 14px;border:1px solid var(--rule);font-family:inherit;font-size:14px">
+    <input id="newTargetWhy"  placeholder="Why them (1 line)" style="flex:2;min-width:240px;padding:10px 14px;border:1px solid var(--rule);font-family:inherit;font-size:14px">
+    <select id="newTargetTier" style="padding:10px 14px;border:1px solid var(--rule);font-family:inherit;font-size:14px;background:var(--paper)">
+      <option value="A">Tier A</option>
+      <option value="B" selected>Tier B</option>
+      <option value="C">Tier C</option>
+    </select>
+    <button class="cta" onclick="addTarget()">Add target</button>
+  </div>
+</div>
+
+<!-- 02 — QUESTION ARCHITECTURE -->
+<div class="card" id="questions">
+  <span class="num">02 · QUESTION ARCHITECTURE</span>
+  <h2>The <em>Anatomy</em> of a Letter.</h2>
+  <p class="subtitle">Same skeleton every time. Three questions max. Each must be unanswerable by ChatGPT.</p>
+
+  <div class="row">
+    <div>
+      <h3 style="font-family:'Crimson Text',serif;font-size:20px;margin-bottom:10px;color:var(--ink)"><em>The Five Beats</em></h3>
+      <ol style="font-family:'Crimson Text',serif;font-size:16px;padding-left:22px;line-height:1.65;color:var(--ink-soft)">
+        <li><b style="color:var(--ink)">Hook (2 lines)</b> — who we are, why this letter exists.</li>
+        <li><b style="color:var(--ink)">Proof of research (3-5 lines)</b> — quote one obscure thing they said.</li>
+        <li><b style="color:var(--ink)">Three questions</b> — opinion / contradiction / regret.</li>
+        <li><b style="color:var(--ink)">The output</b> — what we'll do with their answer.</li>
+        <li><b style="color:var(--ink)">Permission to ignore</b> — close graciously.</li>
+      </ol>
+    </div>
+    <div>
+      <h3 style="font-family:'Crimson Text',serif;font-size:20px;margin-bottom:10px;color:var(--ink)"><em>Master Questions</em></h3>
+      <p style="font-size:13px;color:var(--ink-soft);margin-bottom:14px;font-style:italic">Stock pool. Pick one or adapt for each target.</p>
+      <div class="q-block">"What's one thing you believed at 25 you now think is completely wrong?"</div>
+      <div class="q-block">"Name a decision between 14 &amp; 18 that you can directly trace to where you are now."</div>
+      <div class="q-block">"What's the most expensive lesson you've learned that nobody warned you about?"</div>
+      <div class="q-block">"If you could only teach a 14-year-old one mental model, which one — and why?"</div>
+    </div>
+  </div>
+</div>
+
+<!-- 03 — LETTER TEMPLATE -->
+<div class="card" id="letter">
+  <span class="num">03 · TEMPLATE</span>
+  <h2>The <em>Letter</em>.</h2>
+  <p class="subtitle">Print on Crane's stationery, hand-sign in fountain pen, post to office address with SASE enclosed.</p>
+
+  <div class="letter-paper">
+    <p class="salutation">Dear <span class="placeholder">Mr Smith</span>,</p>
+
+    <p>We are <span class="placeholder">Julian Tamas</span> and <span class="placeholder">[friend]</span>. We are fourteen, we are at school in Rome, and we are writing the same letter to <span class="placeholder">fifty</span> founders, investors and operators we admire.</p>
+
+    <p>We chose you because of <span class="placeholder">[one specific, obscure thing — quote them, cite a year, reference a deal/decision they rarely talk about]</span>. Reading that helped us understand <span class="placeholder">[what we took from it]</span>.</p>
+
+    <p>If you have ten minutes, we'd like to ask three questions:</p>
+
+    <p style="padding-left:28px;font-style:italic;color:var(--ink)">
+      <span class="placeholder">1. Question one — opinion-forcing, requires personal reflection.</span><br><br>
+      <span class="placeholder">2. Question two — references something specific from their career.</span><br><br>
+      <span class="placeholder">3. Question three — a regret, contradiction, or "what I would do differently".</span>
+    </p>
+
+    <p>Your answer will be one chapter in a book we are compiling for under-eighteens. You will receive a bound copy when published, and any net royalties will be donated to <span class="placeholder">[a real charity, name it]</span>.</p>
+
+    <p>We have enclosed a stamped reply envelope. We understand you may not have the time, and we are grateful regardless.</p>
+
+    <p class="signature">Yours sincerely,<br><br>Julian Tamas &amp; <span class="placeholder">[Friend]</span><br><span style="font-size:13px;color:var(--ink-soft)">Rome, Italy · julian@scribe-letters.com</span></p>
+  </div>
+
+  <div style="margin-top:24px;text-align:center">
+    <button class="cta" onclick="window.print()">Print this template</button>
+    <a class="cta cta-ghost" href="#letter" onclick="copyLetter();return false;" style="margin-left:8px">Copy as text</a>
+  </div>
+</div>
+
+<!-- 04 — RESEARCH WORKFLOW -->
+<div class="card">
+  <span class="num">04 · RESEARCH WORKFLOW</span>
+  <h2>Two to Three <em>Hours</em> Per Target.</h2>
+  <p class="subtitle">No exceptions. The depth shows in the letter and is the entire reason they reply.</p>
+
+  <ol style="font-family:'Crimson Text',serif;font-size:17px;line-height:1.7;padding-left:24px;color:var(--ink-soft)">
+    <li><b style="color:var(--ink)">Wikipedia + 3 best long-form profiles.</b> &nbsp; The New Yorker, FT Lunch With, Bloomberg Businessweek, Forbes profile.</li>
+    <li><b style="color:var(--ink)">Their podcast appearances.</b> &nbsp; YouTube → search transcripts. Skim the longest one (2h+) at 1.5×.</li>
+    <li><b style="color:var(--ink)">Books and annual letters.</b> &nbsp; Buffett's letters, Howard Marks's memos, anyone's published TED talk.</li>
+    <li><b style="color:var(--ink)">Search "[name] regret" "[name] mistake" "[name] would do differently".</b> &nbsp; The gold lives here.</li>
+    <li><b style="color:var(--ink)">Find the one obscure 2007–2014 interview</b> &nbsp; where they said something they wouldn't say today. That becomes Question 2.</li>
+    <li><b style="color:var(--ink)">Draft three questions.</b> &nbsp; Each unanswerable by AI. Each forces opinion.</li>
+  </ol>
+</div>
+
+<!-- 05 — IDEAS / NOTES -->
+<div class="card" id="ideas">
+  <span class="num">05 · IDEAS</span>
+  <h2>The <em>Notebook</em>.</h2>
+  <p class="subtitle">Anything you and your friend think of — questions, targets, channel ideas, doubts. Saved on this device.</p>
+
+  <textarea id="ideaInput" class="idea-input" placeholder="Drop an idea, a question, a target, a doubt..."></textarea>
+  <button class="cta" onclick="addIdea()">Save idea</button>
+
+  <ul class="idea-list" id="ideaList"></ul>
+</div>
+
+<!-- 06 — NOTES TO SELF -->
+<div class="notes" style="margin-top:32px">
+  <h3>Reminders &amp; Principles</h3>
+  <ul>
+    <li>One ask per letter. Never ask for an interview AND advice AND a meeting.</li>
+    <li>Always include SASE for top-tier targets. £1 extra, 3× reply rate.</li>
+    <li>Track every send + response in the Targets section. Don't double-send.</li>
+    <li>If a target replies, send a thank-you within 24h regardless of usefulness.</li>
+    <li>Build the audience before asking the biggest names. 5–10 yes responses first.</li>
+    <li>Get every reply with a signed release form before quoting in the book.</li>
+  </ul>
+</div>
+
+</main>
+
+<footer>
+  Scribe · Private workspace · Saved locally to this browser
+</footer>
+
+<script>
+// ─── DATA LAYER (localStorage, per-device for now) ───
+const KEY_TARGETS = 'scribe_targets';
+const KEY_IDEAS   = 'scribe_ideas';
+
+const SEED_TARGETS = [
+  { name: 'Patrick Collison · Stripe',                  why: 'Built Stripe at 19. Polymath. Letters-style writer himself.',                   tier: 'B', status: 'todo' },
+  { name: 'Howard Marks · Oaktree',                     why: 'His memos are the gold standard. Likely replies to a thoughtful letter.',       tier: 'B', status: 'todo' },
+  { name: 'Naval Ravikant',                             why: 'Cult following among founders. Reads everything sent to him personally.',       tier: 'B', status: 'todo' },
+  { name: 'Daniel Ek · Spotify',                        why: 'Built it from teen years in Sweden. Identifies with young builders.',           tier: 'C', status: 'todo' },
+  { name: 'Brian Chesky · Airbnb',                      why: 'Designer-founder. Famous for personally answering thoughtful mail.',            tier: 'B', status: 'todo' },
+  { name: 'Marc Andreessen · a16z',                     why: 'Wrote the Wall Street Journal "software is eating the world" essay.',           tier: 'C', status: 'todo' },
+  { name: 'Bernard Arnault · LVMH',                     why: 'Yacht-circuit reachable via parents. Hard but possible.',                       tier: 'A', status: 'todo' },
+  { name: 'Vlad Tenev · Robinhood',                     why: 'Bulgarian-American immigrant founder. May have soft spot for outsider letter.', tier: 'B', status: 'todo' },
+  { name: 'Tobi Lütke · Shopify',                       why: 'Built Shopify from snowboard shop. Active on X, replies to thoughtful DMs.',     tier: 'B', status: 'todo' },
+  { name: 'Sam Altman · OpenAI',                        why: 'Stretch. Wrote essays about teen builders. Worth one cold letter.',             tier: 'C', status: 'todo' },
+];
+
+const $ = id => document.getElementById(id);
+
+function loadTargets() {
+  let t = JSON.parse(localStorage.getItem(KEY_TARGETS) || 'null');
+  if (!t) { t = SEED_TARGETS; saveTargets(t); }
+  return t;
+}
+function saveTargets(t) { localStorage.setItem(KEY_TARGETS, JSON.stringify(t)); }
+
+function loadIdeas() { return JSON.parse(localStorage.getItem(KEY_IDEAS) || '[]'); }
+function saveIdeas(i) { localStorage.setItem(KEY_IDEAS, JSON.stringify(i)); }
+
+function renderTargets() {
+  const t = loadTargets();
+  const list = $('targetList');
+  if (!t.length) { list.innerHTML = '<li style="color:var(--ink-soft);padding:14px 0">No targets yet. Add the first.</li>'; }
+  else {
+    list.innerHTML = t.map((tt, i) => `
+      <li class="target">
+        <div>
+          <div class="name">${escapeHtml(tt.name)}</div>
+          <div class="why">${escapeHtml(tt.why)}</div>
+        </div>
+        <span class="tier tier-${tt.tier.toLowerCase()}">Tier ${tt.tier}</span>
+        <span class="status status-${tt.status}" onclick="cycleStatus(${i})" style="cursor:pointer">${tt.status === 'todo' ? 'To send' : tt.status === 'sent' ? 'Sent' : tt.status === 'replied' ? 'Replied ✓' : 'Declined'}</span>
+      </li>
+    `).join('');
+  }
+  updateStats();
+}
+
+function cycleStatus(i) {
+  const t = loadTargets();
+  const order = ['todo', 'sent', 'replied', 'declined'];
+  const cur = order.indexOf(t[i].status);
+  t[i].status = order[(cur + 1) % order.length];
+  saveTargets(t);
+  renderTargets();
+}
+
+function addTarget() {
+  const name = $('newTargetName').value.trim();
+  const why  = $('newTargetWhy').value.trim();
+  const tier = $('newTargetTier').value;
+  if (!name) return;
+  const t = loadTargets();
+  t.unshift({ name, why: why || '—', tier, status: 'todo' });
+  saveTargets(t);
+  $('newTargetName').value = '';
+  $('newTargetWhy').value = '';
+  renderTargets();
+}
+
+function renderIdeas() {
+  const ideas = loadIdeas();
+  const list = $('ideaList');
+  if (!ideas.length) { list.innerHTML = '<li style="color:var(--ink-soft);padding:14px 0;font-style:italic">Nothing yet — first idea above.</li>'; }
+  else {
+    list.innerHTML = ideas.map((it, i) => `
+      <li class="idea-item">
+        <div class="text">${escapeHtml(it.text)}</div>
+        <div>
+          <span class="ts">${new Date(it.ts).toLocaleDateString('en-GB', { day:'2-digit', month:'short' })}</span>
+          <button class="del" onclick="delIdea(${i})">remove</button>
+        </div>
+      </li>
+    `).join('');
+  }
+  updateStats();
+}
+
+function addIdea() {
+  const text = $('ideaInput').value.trim();
+  if (!text) return;
+  const ideas = loadIdeas();
+  ideas.unshift({ text, ts: Date.now() });
+  saveIdeas(ideas);
+  $('ideaInput').value = '';
+  renderIdeas();
+}
+function delIdea(i) {
+  const ideas = loadIdeas();
+  ideas.splice(i, 1);
+  saveIdeas(ideas);
+  renderIdeas();
+}
+
+function updateStats() {
+  const t = loadTargets();
+  $('statTargets').textContent = t.length;
+  $('statSent').textContent    = t.filter(x => x.status === 'sent' || x.status === 'replied' || x.status === 'declined').length;
+  $('statReplied').textContent = t.filter(x => x.status === 'replied').length;
+  $('statIdeas').textContent   = loadIdeas().length;
+}
+
+function escapeHtml(s) { return s.replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+
+function copyLetter() {
+  const t = document.querySelector('.letter-paper').innerText;
+  navigator.clipboard.writeText(t).then(() => alert('Copied. Paste into Word, replace highlighted bits, print.'));
+}
+
+renderTargets();
+renderIdeas();
+</script>
+
+</body>
+</html>

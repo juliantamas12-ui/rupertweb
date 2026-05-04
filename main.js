@@ -451,6 +451,12 @@ const PROJECTS = [
     tags: ["HTML", "CSS", "Schema.org", "SEO"]
   },
   {
+    name: "Scribe",
+    url: "https://rupertweb.com/scribe.html",
+    desc: "Private workspace for the Letters to Builders project. Two 14-year-olds writing deeply researched letters to founders, investors and operators. Targets, question architecture, letter template, idea bin.",
+    tags: ["Letters", "Interviews", "Research", "Book"]
+  },
+  {
     name: "Rupert Web",
     url: "https://rupertweb.com",
     desc: "Personal command center and life dashboard. The page you are currently looking at.",
