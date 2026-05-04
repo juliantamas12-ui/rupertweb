@@ -5,6 +5,12 @@ const DEFAULT_STEAM_ID = null; // no default - each user provides their own
 const RESEND_KEY = 're_dNyaesf8_GH99GVk3N5u45x6RuA1LCSR8';
 const OWNER_EMAIL = 'julian.tamas12@gmail.com';
 
+// SerpAPI - Google search wrapper. Used by Scribe for billionaire research.
+const SERPAPI_KEY = '4a66be69972b39929f832ad8a7e60731cfaebe34e7b8238c60c485a46952b39e';
+// Optional: Anthropic API key for AI synthesis. Leave empty to fall back to raw search summary.
+// Set via `wrangler secret put ANTHROPIC_KEY` in production.
+const ANTHROPIC_KEY_FALLBACK = '';
+
 // VAPID for web push notifications
 const VAPID_PUBLIC = 'BL6xSk_4wHzUF_8AYnJJOrJnhv0dlpe9nnI5B6vCI1kfWp8bvZ2tuf3Ittb_mKxwIEz9Z1woclj8KiVGZkRxKeA';
 
@@ -105,6 +111,7 @@ export default {
       if (p === '/api/my-deals')                                      return myDeals(url);
       if (p === '/api/alerts')                                        return getAlerts(url, env);
       if (p === '/api/cron-status')                                   return cronStatus(env);
+      if (p === '/api/scribe/research')                               return scribeResearch(url, env);
       if (p === '/api/cron/run-now')                                  return cronRunNow(url, env);
 
     } catch (e) {
@@ -4438,4 +4445,119 @@ async function cronStatus(env) {
   const last = await kvGet(env, 'cron:lastRun');
   const stamp = await kvGet(env, 'aotd:day-stamp');
   return jsonResponse({ lastRun: last, aotdDayStamp: stamp });
+}
+
+// ════════════════════════════════════════════════════════
+// SCRIBE - billionaire research endpoint
+// SerpAPI Google search + Wikipedia + optional Anthropic synthesis
+// to produce a structured research brief for the Letters to Builders project.
+// ════════════════════════════════════════════════════════
+async function scribeResearch(url, env) {
+  const name = (url.searchParams.get('name') || '').trim();
+  if (!name) return jsonResponse({ error: 'name required' }, 400);
+  if (name.length > 80) return jsonResponse({ error: 'name too long' }, 400);
+
+  const cacheKey = `scribe:${name.toLowerCase()}`;
+  const cached = await kvGet(env, cacheKey);
+  if (cached && Date.now() - (cached.fetchedAt || 0) < 7 * 86400000) {
+    return jsonResponse({ ...cached, cached: true });
+  }
+
+  try {
+    const [mainSearch, regretSearch, wisdomSearch, wikiSummary] = await Promise.all([
+      serpSearch(`${name} founder biography career`),
+      serpSearch(`${name} regret OR mistake OR "would do differently"`),
+      serpSearch(`${name} advice young founders OR "younger self"`),
+      fetchWikiSummary(name),
+    ]);
+
+    const rawSignals = {
+      name,
+      wikipedia: wikiSummary,
+      mainResults: (mainSearch.organic_results || []).slice(0, 8).map(r => ({
+        title: r.title, snippet: r.snippet, link: r.link, source: r.displayed_link,
+      })),
+      regretResults: (regretSearch.organic_results || []).slice(0, 5).map(r => ({
+        title: r.title, snippet: r.snippet, link: r.link,
+      })),
+      wisdomResults: (wisdomSearch.organic_results || []).slice(0, 5).map(r => ({
+        title: r.title, snippet: r.snippet, link: r.link,
+      })),
+    };
+
+    const anthropicKey = env?.ANTHROPIC_KEY || ANTHROPIC_KEY_FALLBACK;
+    let synthesis = null;
+    if (anthropicKey) synthesis = await anthropicSynthesis(anthropicKey, name, rawSignals);
+
+    const out = { name, fetchedAt: Date.now(), synthesis, raw: rawSignals };
+    await kvPut(env, cacheKey, out);
+    return jsonResponse(out);
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
+  }
+}
+
+async function serpSearch(q) {
+  const u = new URL('https://serpapi.com/search.json');
+  u.searchParams.set('q', q);
+  u.searchParams.set('api_key', SERPAPI_KEY);
+  u.searchParams.set('engine', 'google');
+  u.searchParams.set('num', '10');
+  return fetchJSON(u.toString());
+}
+
+async function fetchWikiSummary(name) {
+  try {
+    const slug = encodeURIComponent(name.replace(/ /g, '_'));
+    const r = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${slug}`);
+    if (!r.ok) return null;
+    const d = await r.json();
+    return {
+      title: d.title,
+      description: d.description,
+      extract: d.extract,
+      url: d.content_urls?.desktop?.page,
+    };
+  } catch { return null; }
+}
+
+async function anthropicSynthesis(key, name, signals) {
+  const prompt = `You are helping two 14-year-olds research ${name} so they can write a thoughtful letter asking for advice. Below are raw search results. Synthesise them into a structured research brief in JSON with this exact shape:
+
+{
+  "summary": "2-3 sentence overview of who they are and why they matter",
+  "keyDecisions": ["3-5 specific career decisions worth referencing in a letter, with year if possible"],
+  "contradictions": ["1-3 things they have publicly said that contradict each other or seem inconsistent - these make great questions"],
+  "obscureQuotes": ["2-3 specific quotes from interviews/letters that are NOT widely cited, with rough year and source"],
+  "candidateQuestions": ["3 deep questions you could ask them - each must be unanswerable by ChatGPT, force opinion or regret, and reference something specific to their life"],
+  "warmHook": "One specific, obscure thing about them the kids could open the letter with - a deal, a year, a phrase they used"
+}
+
+Return ONLY the JSON, no markdown fences. Be factual - if you cannot find evidence for a claim, omit it.
+
+RAW SIGNALS:
+${JSON.stringify(signals, null, 2)}`;
+
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5',
+        max_tokens: 2000,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
+    if (!r.ok) return null;
+    const data = await r.json();
+    const text = data.content?.[0]?.text || '';
+    const jsonStart = text.indexOf('{');
+    const jsonEnd = text.lastIndexOf('}');
+    if (jsonStart === -1 || jsonEnd === -1) return null;
+    return JSON.parse(text.slice(jsonStart, jsonEnd + 1));
+  } catch { return null; }
 }

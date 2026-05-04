@@ -123,6 +123,7 @@ footer{max-width:1200px;margin:0 auto;padding:24px 32px;border-top:1px solid var
 <nav>
   <div class="logo">Scribe<span>.</span></div>
   <div class="links">
+    <a href="#research">Research</a>
     <a href="#targets">Targets</a>
     <a href="#questions">Questions</a>
     <a href="#letter">Letter</a>
@@ -153,7 +154,22 @@ footer{max-width:1200px;margin:0 auto;padding:24px 32px;border-top:1px solid var
   <div class="stat"><div class="v" id="statIdeas">0</div><div class="l">Ideas captured</div></div>
 </div>
 
-<!-- 01 - TARGETS -->
+<!-- 00 — RESEARCH -->
+<div class="card" id="research">
+  <span class="num">00 · RESEARCH</span>
+  <h2>The <em>Brief</em>.</h2>
+  <p class="subtitle">Type a name. Get a structured profile - bio, key decisions, contradictions, obscure quotes, candidate questions for the letter.</p>
+
+  <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap">
+    <input id="researchName" placeholder="e.g. Patrick Collison, Howard Marks, Bernard Arnault..."
+      style="flex:1;min-width:240px;padding:14px 16px;border:1px solid var(--rule);background:var(--paper);font-family:inherit;font-size:15px"
+      onkeypress="if(event.key==='Enter')doResearch()">
+    <button class="cta" onclick="doResearch()" id="researchBtn">Research</button>
+  </div>
+  <div id="researchResult"></div>
+</div>
+
+<!-- 01 — TARGETS -->
 <div class="card" id="targets">
   <span class="num">01 · TARGETS</span>
   <h2>The <em>List</em>.</h2>
@@ -406,6 +422,79 @@ function copyLetter() {
 
 renderTargets();
 renderIdeas();
+
+// ─── RESEARCH ───
+async function doResearch() {
+  const name = document.getElementById('researchName').value.trim();
+  if (!name) return;
+  const out = document.getElementById('researchResult');
+  const btn = document.getElementById('researchBtn');
+  btn.disabled = true; btn.textContent = 'Researching...';
+  out.innerHTML = '<div style="padding:24px;background:var(--paper);border:1px solid var(--rule);font-family:Crimson Text,serif;font-style:italic;color:var(--ink-soft)">Searching the web, scanning Wikipedia, hunting for obscure quotes... this takes 10-30 seconds.</div>';
+  try {
+    const r = await fetch('/api/scribe/research?name=' + encodeURIComponent(name));
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+    out.innerHTML = renderResearch(d);
+  } catch (e) {
+    out.innerHTML = `<div style="padding:18px;background:#fff0f0;border:1px solid #d99">Error: ${e.message}</div>`;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Research';
+  }
+}
+
+function renderResearch(d) {
+  const s = d.synthesis;
+  const w = d.raw?.wikipedia;
+  const html = [];
+  html.push(`<div style="padding:32px;background:var(--paper);border:1px solid var(--rule);box-shadow:var(--shadow);margin-top:8px">`);
+  html.push(`<div style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:8px">Research Brief${d.cached ? ' · Cached' : ''}</div>`);
+  html.push(`<h2 style="font-family:'Crimson Text',serif;font-size:36px;font-weight:600;letter-spacing:-0.5px;margin-bottom:6px">${escapeHtml(d.name)}</h2>`);
+  if (w?.description) html.push(`<p style="color:var(--ink-soft);font-style:italic;margin-bottom:24px;font-family:'Crimson Text',serif;font-size:17px">${escapeHtml(w.description)}</p>`);
+
+  if (s?.summary) {
+    html.push(section('Summary', `<p style="font-family:'Crimson Text',serif;font-size:17px;line-height:1.65">${escapeHtml(s.summary)}</p>`));
+  } else if (w?.extract) {
+    html.push(section('From Wikipedia', `<p style="font-family:'Crimson Text',serif;font-size:17px;line-height:1.65">${escapeHtml(w.extract)}</p>`));
+  }
+
+  if (s?.warmHook) {
+    html.push(section('Letter hook', `<div class="q-block">${escapeHtml(s.warmHook)}</div>`));
+  }
+
+  if (s?.keyDecisions?.length) {
+    html.push(section('Key decisions', `<ul style="font-family:'Crimson Text',serif;font-size:16px;padding-left:22px;line-height:1.7">${s.keyDecisions.map(x=>`<li>${escapeHtml(x)}</li>`).join('')}</ul>`));
+  }
+
+  if (s?.contradictions?.length) {
+    html.push(section('Contradictions', `<ul style="font-family:'Crimson Text',serif;font-size:16px;padding-left:22px;line-height:1.7;color:var(--ink)">${s.contradictions.map(x=>`<li>${escapeHtml(x)}</li>`).join('')}</ul>`));
+  }
+
+  if (s?.obscureQuotes?.length) {
+    html.push(section('Obscure quotes', s.obscureQuotes.map(q=>`<div class="q-block">“${escapeHtml(q)}”</div>`).join('')));
+  }
+
+  if (s?.candidateQuestions?.length) {
+    html.push(section('Candidate questions', `<ol style="font-family:'Crimson Text',serif;font-size:17px;padding-left:24px;line-height:1.7;font-style:italic">${s.candidateQuestions.map(x=>`<li style="margin-bottom:10px">${escapeHtml(x)}</li>`).join('')}</ol>`));
+  }
+
+  if (!s) {
+    html.push(`<div style="padding:14px;background:#fffae6;border:1px solid #e8d989;font-size:13px;color:#8b6c1c;margin-bottom:18px"><b>AI synthesis not configured.</b> Showing raw search results below. Add an Anthropic API key to the worker for structured analysis.</div>`);
+  }
+
+  // Sources
+  const all = [...(d.raw?.mainResults||[]), ...(d.raw?.regretResults||[]), ...(d.raw?.wisdomResults||[])];
+  if (all.length) {
+    html.push(section('Sources', `<ul style="list-style:none;padding:0;font-family:'Inter',sans-serif;font-size:14px">${all.slice(0,12).map(r=>`<li style="padding:8px 0;border-bottom:1px dashed var(--rule)"><a href="${escapeHtml(r.link)}" target="_blank" style="color:var(--ink);text-decoration:none"><b>${escapeHtml(r.title || '')}</b></a><br><span style="color:var(--ink-soft);font-size:13px">${escapeHtml(r.snippet || '')}</span></li>`).join('')}</ul>`));
+  }
+
+  html.push(`</div>`);
+  return html.join('');
+}
+
+function section(title, body) {
+  return `<div style="margin-bottom:24px"><h3 style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--ink-soft);font-weight:700;margin-bottom:10px;font-family:'Inter',sans-serif">${title}</h3>${body}</div>`;
+}
 </script>
 
 </body>
