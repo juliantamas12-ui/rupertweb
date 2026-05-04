@@ -105,6 +105,7 @@ export default {
       if (p === '/api/my-deals')                                      return myDeals(url);
       if (p === '/api/alerts')                                        return getAlerts(url, env);
       if (p === '/api/cron-status')                                   return cronStatus(env);
+      if (p === '/api/cron/run-now')                                  return cronRunNow(url, env);
 
     } catch (e) {
       return jsonResponse({ error: e.message }, 500);
@@ -4303,25 +4304,41 @@ const PRICE_WATCH_ITEMS_PER_USER = 20;
 const ALERT_DEDUPE_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 const ALERTS_TTL_SECONDS = 30 * 24 * 60 * 60;
 
-async function runWishlistPriceWatch(env) {
+// opts: { onlySid?: string } — when onlySid is set, sweep just that one user
+// (used by /api/cron/run-now for on-demand smoke tests and Pro "refresh now"
+// affordances). When omitted, sweeps the full union as the hourly cron does.
+async function runWishlistPriceWatch(env, opts = {}) {
   if (!env?.QUESTLOG_KV) return { skipped: 'no-kv' };
-  const stats = { users: 0, scanned: 0, alerts: 0, errors: 0 };
+  const stats = { users: 0, scanned: 0, alerts: 0, errors: 0, perSid: [] };
 
-  // Union push subscribers + wishlist owners, dedup by sid.
-  const [pushKeys, wishlistKeys] = await Promise.all([
-    kvList(env, 'push:'),
-    kvList(env, 'wishlist:'),
-  ]);
-  const sidSet = new Set();
-  for (const k of pushKeys) sidSet.add(k.slice('push:'.length));
-  for (const k of wishlistKeys) sidSet.add(k.slice('wishlist:'.length));
-  const sids = [...sidSet].filter(Boolean).slice(0, PRICE_WATCH_USER_CAP);
+  let sids;
+  if (opts.onlySid) {
+    sids = [opts.onlySid];
+  } else {
+    // Union push subscribers + wishlist owners, dedup by sid.
+    const [pushKeys, wishlistKeys] = await Promise.all([
+      kvList(env, 'push:'),
+      kvList(env, 'wishlist:'),
+    ]);
+    const sidSet = new Set();
+    for (const k of pushKeys) sidSet.add(k.slice('push:'.length));
+    for (const k of wishlistKeys) sidSet.add(k.slice('wishlist:'.length));
+    sids = [...sidSet].filter(Boolean).slice(0, PRICE_WATCH_USER_CAP);
+  }
   stats.users = sids.length;
 
   for (const sid of sids) {
+    // Per-sid bookkeeping so cron-status can show *why* a sweep produced what
+    // it did (e.g. users:1, scanned:0 means the one sid had no wishlist data).
+    const sidStat = { sid, wishlistCount: 0, scanned: 0, alerts: 0, errors: 0 };
+    stats.perSid.push(sidStat);
     try {
       const wishlist = await kvGet(env, `wishlist:${sid}`);
-      if (!Array.isArray(wishlist) || !wishlist.length) continue;
+      sidStat.wishlistCount = Array.isArray(wishlist) ? wishlist.length : 0;
+      if (!Array.isArray(wishlist) || !wishlist.length) {
+        sidStat.skipped = 'no-wishlist';
+        continue;
+      }
 
       // Wishlist entries can be objects {appid,...} or raw appids — handle both.
       const appids = wishlist
@@ -4344,6 +4361,7 @@ async function runWishlistPriceWatch(env) {
       for (const appid of appids) {
         try {
           stats.scanned++;
+          sidStat.scanned++;
           const data = await fetchJSON(
             `https://store.steampowered.com/api/appdetails?appids=${appid}&cc=gb&l=en&filters=basic,price_overview`
           );
@@ -4371,6 +4389,7 @@ async function runWishlistPriceWatch(env) {
           });
         } catch (e) {
           stats.errors++;
+          sidStat.errors++;
         }
       }
 
@@ -4379,12 +4398,31 @@ async function runWishlistPriceWatch(env) {
         const merged = [...newAlerts, ...existingAlerts].slice(0, 50);
         await kvPut(env, `alerts:${sid}`, merged, ALERTS_TTL_SECONDS);
         stats.alerts += newAlerts.length;
+        sidStat.alerts += newAlerts.length;
       }
     } catch (e) {
       stats.errors++;
+      sidStat.errors++;
+      sidStat.error = e.message;
     }
   }
   return stats;
+}
+
+// On-demand single-user trigger. Lets a Pro user (and us, during smoke tests)
+// force a wishlist scan without waiting up to an hour for the next hourly
+// cron tick. Self-scoped: only sweeps the sid in the query string, so cost is
+// bounded to one user's PRICE_WATCH_ITEMS_PER_USER subrequests.
+async function cronRunNow(url, env) {
+  const sid = url.searchParams.get('sid');
+  if (!sid) return jsonResponse({ error: 'sid required' }, 400);
+  const startedAt = Date.now();
+  try {
+    const r = await runWishlistPriceWatch(env, { onlySid: sid });
+    return jsonResponse({ ok: true, durationMs: Date.now() - startedAt, ...r });
+  } catch (e) {
+    return jsonResponse({ error: e.message, durationMs: Date.now() - startedAt }, 500);
+  }
 }
 
 // Public read endpoint for the QuestLog frontend to surface stored alerts.
