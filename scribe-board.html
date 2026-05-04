@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Scribe · Board</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:inherit}
+:root{
+  --bg:#0e1015;
+  --panel:#171a21;
+  --panel-2:#1c1f27;
+  --rule:rgba(255,255,255,0.06);
+  --rule-strong:rgba(255,255,255,0.12);
+  --ink:#e6e8ea;
+  --ink-soft:#9ba0a8;
+  --ink-dim:#5b6068;
+  --accent:#ff6c4a;
+  --accent-soft:rgba(255,108,74,0.12);
+  --note-yellow:#f4d04e;
+  --note-pink:#ff9eb5;
+  --note-blue:#6ec3ff;
+  --note-green:#7dd87d;
+  --note-purple:#b58aff;
+}
+body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,sans-serif;font-size:14px;line-height:1.5;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+
+/* HEADER BAR */
+header{display:flex;align-items:center;gap:18px;padding:0 18px;height:48px;border-bottom:1px solid var(--rule);background:var(--panel);flex-shrink:0;z-index:50}
+header .brand{font-weight:700;font-size:14px;letter-spacing:0.3px}
+header .brand span{color:var(--accent)}
+header .crumb{color:var(--ink-soft);font-size:13px}
+header .spacer{flex:1}
+header button{background:transparent;color:var(--ink-soft);border:1px solid var(--rule);height:30px;padding:0 12px;font-size:12px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;border-radius:4px;font-family:inherit}
+header button:hover{color:var(--ink);border-color:var(--rule-strong);background:var(--panel-2)}
+header button.primary{background:var(--accent);color:#0e0e0e;border-color:var(--accent);font-weight:600}
+header button.primary:hover{background:#ff8164;color:#000}
+header .home-link{color:var(--ink-soft);text-decoration:none;font-size:13px}
+header .home-link:hover{color:var(--ink)}
+
+/* TOOLBAR */
+.toolbar{display:flex;align-items:center;gap:6px;padding:10px 18px;border-bottom:1px solid var(--rule);background:var(--panel);flex-shrink:0;flex-wrap:wrap}
+.toolbar .group{display:flex;gap:4px;padding-right:14px;border-right:1px solid var(--rule)}
+.toolbar .group:last-child{border-right:none}
+.toolbar button.tool{background:var(--panel-2);color:var(--ink-soft);border:1px solid var(--rule);height:32px;padding:0 12px;font-size:12px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;border-radius:4px;font-family:inherit}
+.toolbar button.tool:hover{color:var(--ink);border-color:var(--rule-strong)}
+.toolbar button.tool.active{background:var(--accent);color:#0e0e0e;border-color:var(--accent);font-weight:600}
+.toolbar .label{font-size:11px;color:var(--ink-dim);letter-spacing:1px;text-transform:uppercase;margin-right:4px;align-self:center}
+.toolbar .colour-swatch{width:20px;height:20px;border-radius:4px;cursor:pointer;border:2px solid transparent;transition:transform 0.1s}
+.toolbar .colour-swatch:hover{transform:scale(1.15)}
+.toolbar .colour-swatch.active{border-color:var(--ink);transform:scale(1.1)}
+
+/* CANVAS */
+.canvas-wrap{flex:1;position:relative;overflow:hidden;background:
+  radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 0) 0 0/24px 24px,
+  var(--bg)}
+.canvas{position:absolute;inset:0;cursor:default}
+.canvas.tool-text{cursor:text}
+.canvas.tool-note{cursor:crosshair}
+.canvas.tool-rect,.canvas.tool-circle,.canvas.tool-arrow{cursor:crosshair}
+.canvas.tool-pan{cursor:grab}
+.canvas.tool-pan:active{cursor:grabbing}
+
+/* SHAPES (everything is a div positioned absolutely) */
+.item{position:absolute;cursor:move;user-select:none;-webkit-user-select:none}
+.item.editing{cursor:text;user-select:text;-webkit-user-select:text}
+.item.selected{outline:2px dashed var(--accent);outline-offset:4px}
+
+.item.note{background:var(--note-yellow);color:#1a1500;padding:14px 16px;min-width:160px;min-height:120px;font-family:'Inter',sans-serif;font-size:14px;line-height:1.45;box-shadow:0 4px 14px rgba(0,0,0,0.3),0 1px 2px rgba(0,0,0,0.2);border-radius:2px;transform:rotate(-1deg)}
+.item.note.colour-pink{background:var(--note-pink);color:#1f0010}
+.item.note.colour-blue{background:var(--note-blue);color:#001428}
+.item.note.colour-green{background:var(--note-green);color:#0a1f0a}
+.item.note.colour-purple{background:var(--note-purple);color:#1a0030}
+
+.item.text{color:var(--ink);font-size:18px;font-weight:500;padding:6px 10px;min-width:80px;line-height:1.3}
+.item.text.heading{font-size:32px;font-weight:700;letter-spacing:-0.5px}
+.item.text.subhead{font-size:22px;font-weight:600;letter-spacing:-0.2px}
+
+.item.rect{background:transparent;border:2px solid var(--accent);min-width:140px;min-height:90px;border-radius:6px}
+.item.circle{background:transparent;border:2px solid var(--accent);min-width:120px;min-height:120px;border-radius:50%}
+
+.item.arrow{pointer-events:none}
+.item.arrow svg{display:block;overflow:visible}
+.item.arrow .hit{position:absolute;inset:-6px;pointer-events:auto;cursor:move}
+
+.item .resize-handle{position:absolute;right:-6px;bottom:-6px;width:14px;height:14px;background:var(--accent);border-radius:2px;cursor:nwse-resize;display:none}
+.item.selected .resize-handle{display:block}
+
+/* CONTEXT MENU */
+.ctx-menu{position:fixed;background:var(--panel);border:1px solid var(--rule-strong);border-radius:6px;padding:6px;display:none;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,0.5);min-width:160px}
+.ctx-menu.show{display:block}
+.ctx-menu button{display:block;width:100%;text-align:left;padding:8px 12px;background:transparent;color:var(--ink);border:none;cursor:pointer;font-size:13px;border-radius:4px;font-family:inherit}
+.ctx-menu button:hover{background:var(--panel-2)}
+.ctx-menu button.danger{color:#ff7a7a}
+.ctx-menu .ctx-sep{height:1px;background:var(--rule);margin:4px 0}
+.ctx-menu .colour-row{display:flex;gap:6px;padding:6px 12px}
+.ctx-menu .colour-row .colour-swatch{width:18px;height:18px;border-radius:3px;cursor:pointer}
+
+/* SIDEBAR PANEL */
+.side{position:fixed;top:78px;right:14px;width:280px;background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:18px;box-shadow:0 8px 24px rgba(0,0,0,0.4);z-index:40;display:none}
+.side.show{display:block}
+.side h3{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--ink-soft);margin-bottom:12px;font-weight:600}
+.side label{display:flex;align-items:center;gap:10px;padding:8px 0;font-size:13px;color:var(--ink);cursor:pointer;border-bottom:1px solid var(--rule)}
+.side label:last-of-type{border-bottom:none}
+.side input[type=checkbox]{accent-color:var(--accent);width:16px;height:16px}
+.side input[type=time],.side input[type=text],.side select{width:100%;background:var(--panel-2);color:var(--ink);border:1px solid var(--rule);border-radius:4px;padding:8px 10px;font-family:inherit;font-size:13px;margin-top:4px}
+.side button.action{width:100%;background:var(--accent);color:#0e0e0e;border:none;padding:10px;border-radius:4px;font-weight:600;font-size:13px;cursor:pointer;margin-top:14px;font-family:inherit}
+.side button.action:hover{background:#ff8164}
+.side .hint{font-size:11px;color:var(--ink-dim);margin-top:8px;line-height:1.4}
+
+/* HELP HINT */
+.helpbar{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);background:var(--panel);border:1px solid var(--rule);border-radius:20px;padding:8px 18px;font-size:12px;color:var(--ink-soft);box-shadow:0 4px 14px rgba(0,0,0,0.4);display:flex;gap:18px;z-index:30}
+.helpbar kbd{background:var(--panel-2);border:1px solid var(--rule-strong);padding:1px 6px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink)}
+
+/* ZOOM CONTROL */
+.zoom-ctrl{position:fixed;bottom:14px;right:14px;background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:6px;display:flex;gap:2px;z-index:30}
+.zoom-ctrl button{background:transparent;color:var(--ink);border:none;width:30px;height:30px;cursor:pointer;font-size:16px;border-radius:4px;font-family:inherit}
+.zoom-ctrl button:hover{background:var(--panel-2)}
+.zoom-ctrl .lvl{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-soft);align-self:center;padding:0 8px;min-width:50px;text-align:center}
+
+@media(max-width:780px){
+  .toolbar{padding:8px 10px;gap:4px}
+  .toolbar .group{padding-right:8px}
+  .toolbar button.tool{height:30px;padding:0 8px;font-size:11px}
+  .toolbar .label{display:none}
+  header{padding:0 12px;gap:10px}
+  header .crumb{display:none}
+  .helpbar{display:none}
+  .side{top:auto;right:8px;left:8px;width:auto;bottom:60px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">Scribe<span>.</span></div>
+  <div class="crumb">/ Board</div>
+  <a href="/scribe.html" class="home-link">← Workspace</a>
+  <div class="spacer"></div>
+  <button id="btnReminders">⏰ Reminders</button>
+  <button id="btnExport">Export</button>
+  <button id="btnImport">Import</button>
+  <button class="primary" id="btnSave">Save</button>
+</header>
+
+<div class="toolbar">
+  <div class="group">
+    <span class="label">Tool</span>
+    <button class="tool active" data-tool="select" title="Select (V)">⌖ Select</button>
+    <button class="tool" data-tool="pan" title="Pan (H or hold space)">✋ Pan</button>
+  </div>
+  <div class="group">
+    <span class="label">Add</span>
+    <button class="tool" data-tool="text" title="Text (T)">T Text</button>
+    <button class="tool" data-tool="heading" title="Heading">H Heading</button>
+    <button class="tool" data-tool="note" title="Sticky note (N)">📌 Note</button>
+    <button class="tool" data-tool="rect" title="Rectangle (R)">▭ Rect</button>
+    <button class="tool" data-tool="circle" title="Circle (C)">○ Circle</button>
+    <button class="tool" data-tool="arrow" title="Arrow (A)">→ Arrow</button>
+  </div>
+  <div class="group">
+    <span class="label">Note colour</span>
+    <span class="colour-swatch active" data-colour="" style="background:#f4d04e"></span>
+    <span class="colour-swatch" data-colour="pink" style="background:#ff9eb5"></span>
+    <span class="colour-swatch" data-colour="blue" style="background:#6ec3ff"></span>
+    <span class="colour-swatch" data-colour="green" style="background:#7dd87d"></span>
+    <span class="colour-swatch" data-colour="purple" style="background:#b58aff"></span>
+  </div>
+  <div class="group">
+    <button class="tool" id="btnClear" style="color:#ff7a7a">Clear board</button>
+  </div>
+</div>
+
+<div class="canvas-wrap">
+  <div class="canvas tool-select" id="canvas"></div>
+</div>
+
+<!-- CONTEXT MENU -->
+<div class="ctx-menu" id="ctxMenu">
+  <div class="colour-row" id="ctxColours" style="display:none">
+    <span class="colour-swatch" data-colour="" style="background:#f4d04e"></span>
+    <span class="colour-swatch" data-colour="pink" style="background:#ff9eb5"></span>
+    <span class="colour-swatch" data-colour="blue" style="background:#6ec3ff"></span>
+    <span class="colour-swatch" data-colour="green" style="background:#7dd87d"></span>
+    <span class="colour-swatch" data-colour="purple" style="background:#b58aff"></span>
+  </div>
+  <div class="ctx-sep" id="ctxColourSep" style="display:none"></div>
+  <button data-act="bringFront">Bring to front</button>
+  <button data-act="sendBack">Send to back</button>
+  <button data-act="duplicate">Duplicate</button>
+  <div class="ctx-sep"></div>
+  <button data-act="delete" class="danger">Delete</button>
+</div>
+
+<!-- REMINDERS PANEL -->
+<div class="side" id="remindersPanel">
+  <h3>Daily Reminders</h3>
+  <p style="font-size:13px;color:var(--ink-soft);margin-bottom:12px">Get nudged about the project. Browser notifications.</p>
+  <label><input type="checkbox" id="remDaily"> Daily check-in</label>
+  <input type="time" id="remTime" value="19:00">
+  <label><input type="checkbox" id="remResearch"> "Research one target today"</label>
+  <label><input type="checkbox" id="remWrite"> "Draft one letter today"</label>
+  <label><input type="checkbox" id="remFollowup"> "Check for replies"</label>
+  <button class="action" id="remEnable">Enable notifications</button>
+  <p class="hint" id="remStatus">Reminders run while this tab is open. Install Scribe as a PWA from your browser to keep them firing in the background.</p>
+</div>
+
+<div class="helpbar">
+  <span><kbd>V</kbd> Select</span>
+  <span><kbd>T</kbd> Text</span>
+  <span><kbd>N</kbd> Note</span>
+  <span><kbd>R</kbd> Rect</span>
+  <span><kbd>C</kbd> Circle</span>
+  <span><kbd>Del</kbd> Delete</span>
+  <span><kbd>⌘Z</kbd> Undo</span>
+</div>
+
+<div class="zoom-ctrl">
+  <button id="zoomOut" title="Zoom out">−</button>
+  <span class="lvl" id="zoomLvl">100%</span>
+  <button id="zoomIn" title="Zoom in">+</button>
+  <button id="zoomFit" title="Reset" style="font-size:11px">⤢</button>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════
+const STATE = {
+  items: [],
+  tool: 'select',
+  colour: '',
+  selected: null,
+  zoom: 1,
+  pan: { x: 0, y: 0 },
+  isDragging: false,
+  isPanning: false,
+  isResizing: false,
+  dragStart: { x: 0, y: 0 },
+  dragOffset: { x: 0, y: 0 },
+  history: [],
+  historyIndex: -1,
+};
+const KEY = 'scribe_board_v1';
+
+// ═══════════════════════════════════════════════════════════
+// SAVE/LOAD
+// ═══════════════════════════════════════════════════════════
+function load() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) {
+      const data = JSON.parse(raw);
+      STATE.items = data.items || [];
+      STATE.pan = data.pan || { x: 0, y: 0 };
+      STATE.zoom = data.zoom || 1;
+    }
+  } catch {}
+  pushHistory();
+  render();
+}
+function save() {
+  localStorage.setItem(KEY, JSON.stringify({
+    items: STATE.items,
+    pan: STATE.pan,
+    zoom: STATE.zoom,
+    savedAt: Date.now(),
+  }));
+  flashSaved();
+}
+function flashSaved() {
+  const btn = document.getElementById('btnSave');
+  const orig = btn.textContent;
+  btn.textContent = '✓ Saved';
+  btn.style.background = '#7dd87d';
+  setTimeout(() => { btn.textContent = orig; btn.style.background = ''; }, 1200);
+}
+
+function pushHistory() {
+  STATE.history = STATE.history.slice(0, STATE.historyIndex + 1);
+  STATE.history.push(JSON.parse(JSON.stringify(STATE.items)));
+  if (STATE.history.length > 50) STATE.history.shift();
+  STATE.historyIndex = STATE.history.length - 1;
+}
+function undo() {
+  if (STATE.historyIndex <= 0) return;
+  STATE.historyIndex--;
+  STATE.items = JSON.parse(JSON.stringify(STATE.history[STATE.historyIndex]));
+  STATE.selected = null;
+  render();
+}
+function redo() {
+  if (STATE.historyIndex >= STATE.history.length - 1) return;
+  STATE.historyIndex++;
+  STATE.items = JSON.parse(JSON.stringify(STATE.history[STATE.historyIndex]));
+  STATE.selected = null;
+  render();
+}
+
+// ═══════════════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════════════
+const canvas = document.getElementById('canvas');
+
+function render() {
+  canvas.innerHTML = '';
+  for (const item of STATE.items) renderItem(item);
+  updateZoomLabel();
+  applyTransform();
+}
+
+function renderItem(item) {
+  const el = document.createElement('div');
+  el.className = 'item ' + item.kind;
+  el.dataset.id = item.id;
+  if (item.kind === 'note' && item.colour) el.classList.add('colour-' + item.colour);
+  if (item.kind === 'text' && item.variant) el.classList.add(item.variant);
+  if (STATE.selected === item.id) el.classList.add('selected');
+
+  el.style.left = item.x + 'px';
+  el.style.top = item.y + 'px';
+  if (item.w) el.style.width = item.w + 'px';
+  if (item.h) el.style.height = item.h + 'px';
+
+  if (item.kind === 'arrow') {
+    const dx = item.x2 - item.x;
+    const dy = item.y2 - item.y;
+    const len = Math.sqrt(dx*dx + dy*dy);
+    const ang = Math.atan2(dy, dx) * 180 / Math.PI;
+    el.style.left = item.x + 'px';
+    el.style.top = item.y + 'px';
+    el.style.width = len + 'px';
+    el.style.height = '12px';
+    el.style.transform = `rotate(${ang}deg)`;
+    el.style.transformOrigin = '0 50%';
+    el.innerHTML = `<svg width="${len}" height="12" style="overflow:visible">
+      <line x1="0" y1="6" x2="${len-10}" y2="6" stroke="var(--accent)" stroke-width="2"/>
+      <polygon points="${len-10},0 ${len},6 ${len-10},12" fill="var(--accent)"/>
+    </svg><div class="hit"></div>`;
+  } else {
+    el.contentEditable = (item.kind === 'text' || item.kind === 'note') ? 'true' : 'false';
+    el.innerHTML = item.text != null ? escapeText(item.text) : '';
+    if (item.kind === 'rect' || item.kind === 'circle') {
+      el.contentEditable = 'false';
+    }
+    if (STATE.selected === item.id) {
+      const handle = document.createElement('div');
+      handle.className = 'resize-handle';
+      el.appendChild(handle);
+    }
+  }
+
+  canvas.appendChild(el);
+
+  // Live edit binding for text/note
+  if (item.kind === 'text' || item.kind === 'note') {
+    el.addEventListener('blur', () => {
+      const t = el.innerText;
+      if (t !== item.text) { item.text = t; pushHistory(); save(); }
+    });
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') el.blur();
+    });
+  }
+}
+
+function escapeText(t) {
+  return (t || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ═══════════════════════════════════════════════════════════
+// CREATE
+// ═══════════════════════════════════════════════════════════
+let nextId = Date.now();
+function newId() { return ++nextId; }
+
+function createItem(tool, x, y) {
+  const id = newId();
+  const items = {
+    text:    { id, kind: 'text',    x, y, text: 'Type here' },
+    heading: { id, kind: 'text',    variant: 'heading', x, y, text: 'Heading' },
+    subhead: { id, kind: 'text',    variant: 'subhead', x, y, text: 'Subheading' },
+    note:    { id, kind: 'note',    x, y, w: 200, h: 160, text: 'Idea...', colour: STATE.colour },
+    rect:    { id, kind: 'rect',    x, y, w: 180, h: 120 },
+    circle:  { id, kind: 'circle',  x, y, w: 140, h: 140 },
+    arrow:   { id, kind: 'arrow',   x, y, x2: x + 200, y2: y },
+  };
+  const it = items[tool];
+  if (!it) return null;
+  STATE.items.push(it);
+  STATE.selected = id;
+  pushHistory();
+  save();
+  render();
+  // Auto-focus for text editing
+  setTimeout(() => {
+    const el = canvas.querySelector(`[data-id='${id}']`);
+    if (el && (it.kind === 'text' || it.kind === 'note')) {
+      el.focus();
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      window.getSelection().removeAllRanges();
+      window.getSelection().addRange(range);
+    }
+  }, 30);
+  return it;
+}
+
+// ═══════════════════════════════════════════════════════════
+// CANVAS INTERACTIONS
+// ═══════════════════════════════════════════════════════════
+const wrap = document.querySelector('.canvas-wrap');
+
+function applyTransform() {
+  canvas.style.transform = `translate(${STATE.pan.x}px, ${STATE.pan.y}px) scale(${STATE.zoom})`;
+  canvas.style.transformOrigin = '0 0';
+}
+
+function clientToCanvas(cx, cy) {
+  const rect = wrap.getBoundingClientRect();
+  return {
+    x: (cx - rect.left - STATE.pan.x) / STATE.zoom,
+    y: (cy - rect.top - STATE.pan.y) / STATE.zoom,
+  };
+}
+
+wrap.addEventListener('mousedown', onCanvasDown);
+wrap.addEventListener('touchstart', e => {
+  if (e.touches.length === 1) onCanvasDown(e.touches[0]);
+}, { passive: true });
+
+function onCanvasDown(e) {
+  const target = e.target.closest('.item');
+  // Right-click context menu
+  if (e.button === 2) return;
+
+  // Pan tool or middle-click pans
+  if (STATE.tool === 'pan' || e.button === 1 || e.shiftKey) {
+    STATE.isPanning = true;
+    STATE.dragStart = { x: e.clientX - STATE.pan.x, y: e.clientY - STATE.pan.y };
+    return;
+  }
+
+  // Click on existing item
+  if (target) {
+    const id = parseInt(target.dataset.id);
+    const item = STATE.items.find(i => i.id === id);
+    if (!item) return;
+
+    // Resize handle?
+    if (e.target.classList.contains('resize-handle')) {
+      STATE.isResizing = true;
+      STATE.selected = id;
+      STATE.dragStart = { x: e.clientX, y: e.clientY };
+      STATE.dragOffset = { w: item.w || 100, h: item.h || 100 };
+      render();
+      return;
+    }
+
+    STATE.selected = id;
+    STATE.isDragging = true;
+    const p = clientToCanvas(e.clientX, e.clientY);
+    STATE.dragOffset = { x: p.x - item.x, y: p.y - item.y };
+    render();
+    return;
+  }
+
+  // Empty canvas: tool-dependent action
+  const p = clientToCanvas(e.clientX, e.clientY);
+
+  if (STATE.tool === 'select') {
+    STATE.selected = null;
+    render();
+    return;
+  }
+
+  // Create a new item at click point
+  createItem(STATE.tool, p.x - 60, p.y - 20);
+  // Auto-revert to select after creating (Figma-like)
+  setTool('select');
+}
+
+document.addEventListener('mousemove', e => onMove(e));
+document.addEventListener('touchmove', e => {
+  if (e.touches.length === 1) onMove(e.touches[0]);
+}, { passive: true });
+
+function onMove(e) {
+  if (STATE.isPanning) {
+    STATE.pan.x = e.clientX - STATE.dragStart.x;
+    STATE.pan.y = e.clientY - STATE.dragStart.y;
+    applyTransform();
+    return;
+  }
+  if (STATE.isResizing && STATE.selected) {
+    const item = STATE.items.find(i => i.id === STATE.selected);
+    if (!item) return;
+    const dx = (e.clientX - STATE.dragStart.x) / STATE.zoom;
+    const dy = (e.clientY - STATE.dragStart.y) / STATE.zoom;
+    item.w = Math.max(40, STATE.dragOffset.w + dx);
+    item.h = Math.max(40, STATE.dragOffset.h + dy);
+    render();
+    return;
+  }
+  if (STATE.isDragging && STATE.selected) {
+    const item = STATE.items.find(i => i.id === STATE.selected);
+    if (!item) return;
+    const p = clientToCanvas(e.clientX, e.clientY);
+    item.x = p.x - STATE.dragOffset.x;
+    item.y = p.y - STATE.dragOffset.y;
+    if (item.kind === 'arrow') {
+      // Arrow start drag also moves end proportionally? Just drag the start.
+      const dx = item.x - (item.x);
+      // already updated x; keep x2/y2 absolute
+    }
+    render();
+    return;
+  }
+}
+
+document.addEventListener('mouseup', onUp);
+document.addEventListener('touchend', onUp);
+function onUp() {
+  if (STATE.isDragging || STATE.isResizing) {
+    pushHistory();
+    save();
+  }
+  STATE.isDragging = false;
+  STATE.isResizing = false;
+  STATE.isPanning = false;
+}
+
+// Wheel = zoom (with cmd/ctrl) or pan
+wrap.addEventListener('wheel', e => {
+  if (e.ctrlKey || e.metaKey) {
+    e.preventDefault();
+    const oldZoom = STATE.zoom;
+    const factor = e.deltaY < 0 ? 1.1 : 0.9;
+    STATE.zoom = Math.max(0.2, Math.min(3, STATE.zoom * factor));
+    // Zoom toward mouse
+    const rect = wrap.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    STATE.pan.x = mx - (mx - STATE.pan.x) * (STATE.zoom / oldZoom);
+    STATE.pan.y = my - (my - STATE.pan.y) * (STATE.zoom / oldZoom);
+    applyTransform();
+    updateZoomLabel();
+  } else {
+    STATE.pan.x -= e.deltaX;
+    STATE.pan.y -= e.deltaY;
+    applyTransform();
+  }
+}, { passive: false });
+
+// ═══════════════════════════════════════════════════════════
+// CONTEXT MENU
+// ═══════════════════════════════════════════════════════════
+const ctxMenu = document.getElementById('ctxMenu');
+canvas.addEventListener('contextmenu', e => {
+  const target = e.target.closest('.item');
+  if (!target) return;
+  e.preventDefault();
+  const id = parseInt(target.dataset.id);
+  STATE.selected = id;
+  render();
+  const item = STATE.items.find(i => i.id === id);
+  // Show/hide colour row for notes
+  const showColour = item.kind === 'note';
+  document.getElementById('ctxColours').style.display = showColour ? 'flex' : 'none';
+  document.getElementById('ctxColourSep').style.display = showColour ? 'block' : 'none';
+  ctxMenu.style.left = e.clientX + 'px';
+  ctxMenu.style.top = e.clientY + 'px';
+  ctxMenu.classList.add('show');
+});
+document.addEventListener('click', e => {
+  if (!ctxMenu.contains(e.target)) ctxMenu.classList.remove('show');
+});
+ctxMenu.addEventListener('click', e => {
+  const colour = e.target.closest('.colour-swatch');
+  if (colour && STATE.selected) {
+    const item = STATE.items.find(i => i.id === STATE.selected);
+    if (item && item.kind === 'note') { item.colour = colour.dataset.colour; pushHistory(); save(); render(); }
+    ctxMenu.classList.remove('show');
+    return;
+  }
+  const btn = e.target.closest('button[data-act]');
+  if (!btn || !STATE.selected) return;
+  const idx = STATE.items.findIndex(i => i.id === STATE.selected);
+  if (idx === -1) return;
+  switch (btn.dataset.act) {
+    case 'bringFront': {
+      const item = STATE.items.splice(idx, 1)[0];
+      STATE.items.push(item);
+      break;
+    }
+    case 'sendBack': {
+      const item = STATE.items.splice(idx, 1)[0];
+      STATE.items.unshift(item);
+      break;
+    }
+    case 'duplicate': {
+      const item = JSON.parse(JSON.stringify(STATE.items[idx]));
+      item.id = newId();
+      item.x += 24; item.y += 24;
+      STATE.items.push(item);
+      STATE.selected = item.id;
+      break;
+    }
+    case 'delete': {
+      STATE.items.splice(idx, 1);
+      STATE.selected = null;
+      break;
+    }
+  }
+  pushHistory();
+  save();
+  render();
+  ctxMenu.classList.remove('show');
+});
+
+// ═══════════════════════════════════════════════════════════
+// TOOLS
+// ═══════════════════════════════════════════════════════════
+function setTool(tool) {
+  STATE.tool = tool;
+  document.querySelectorAll('.tool').forEach(b => b.classList.toggle('active', b.dataset.tool === tool));
+  canvas.className = 'canvas tool-' + tool;
+}
+document.querySelectorAll('.tool').forEach(btn => {
+  btn.addEventListener('click', () => setTool(btn.dataset.tool));
+});
+
+// Colour swatches in toolbar
+document.querySelectorAll('.toolbar .colour-swatch').forEach(sw => {
+  sw.addEventListener('click', () => {
+    STATE.colour = sw.dataset.colour;
+    document.querySelectorAll('.toolbar .colour-swatch').forEach(s => s.classList.toggle('active', s === sw));
+  });
+});
+
+// ═══════════════════════════════════════════════════════════
+// KEYBOARD
+// ═══════════════════════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.isContentEditable) return;
+  const k = e.key.toLowerCase();
+  if ((e.metaKey || e.ctrlKey) && k === 'z' && !e.shiftKey) { e.preventDefault(); undo(); return; }
+  if ((e.metaKey || e.ctrlKey) && (k === 'y' || (k === 'z' && e.shiftKey))) { e.preventDefault(); redo(); return; }
+  if ((e.metaKey || e.ctrlKey) && k === 's') { e.preventDefault(); save(); return; }
+  switch (k) {
+    case 'v': setTool('select'); break;
+    case 'h': setTool('pan'); break;
+    case 't': setTool('text'); break;
+    case 'n': setTool('note'); break;
+    case 'r': setTool('rect'); break;
+    case 'c': setTool('circle'); break;
+    case 'a': setTool('arrow'); break;
+    case 'delete':
+    case 'backspace':
+      if (STATE.selected) {
+        const i = STATE.items.findIndex(x => x.id === STATE.selected);
+        if (i !== -1) { STATE.items.splice(i, 1); STATE.selected = null; pushHistory(); save(); render(); }
+      }
+      break;
+  }
+});
+
+// ═══════════════════════════════════════════════════════════
+// HEADER BUTTONS
+// ═══════════════════════════════════════════════════════════
+document.getElementById('btnSave').addEventListener('click', save);
+document.getElementById('btnExport').addEventListener('click', () => {
+  const data = JSON.stringify({ items: STATE.items, exportedAt: Date.now() }, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `scribe-board-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+});
+document.getElementById('btnImport').addEventListener('click', () => {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'application/json';
+  input.onchange = async () => {
+    const file = input.files[0];
+    if (!file) return;
+    const text = await file.text();
+    try {
+      const data = JSON.parse(text);
+      if (Array.isArray(data.items)) {
+        if (!confirm('Replace current board with imported items?')) return;
+        STATE.items = data.items;
+        STATE.selected = null;
+        pushHistory();
+        save();
+        render();
+      }
+    } catch (e) { alert('Invalid file: ' + e.message); }
+  };
+  input.click();
+});
+document.getElementById('btnClear').addEventListener('click', () => {
+  if (!STATE.items.length) return;
+  if (!confirm('Clear the entire board? This cannot be undone except by undo.')) return;
+  STATE.items = [];
+  STATE.selected = null;
+  pushHistory();
+  save();
+  render();
+});
+
+// ZOOM
+function updateZoomLabel() {
+  document.getElementById('zoomLvl').textContent = Math.round(STATE.zoom * 100) + '%';
+}
+document.getElementById('zoomIn').addEventListener('click', () => {
+  STATE.zoom = Math.min(3, STATE.zoom * 1.2);
+  applyTransform(); updateZoomLabel();
+});
+document.getElementById('zoomOut').addEventListener('click', () => {
+  STATE.zoom = Math.max(0.2, STATE.zoom / 1.2);
+  applyTransform(); updateZoomLabel();
+});
+document.getElementById('zoomFit').addEventListener('click', () => {
+  STATE.zoom = 1; STATE.pan = { x: 0, y: 0 };
+  applyTransform(); updateZoomLabel();
+});
+
+// ═══════════════════════════════════════════════════════════
+// REMINDERS PANEL
+// ═══════════════════════════════════════════════════════════
+const RKEY = 'scribe_reminders';
+const remPanel = document.getElementById('remindersPanel');
+document.getElementById('btnReminders').addEventListener('click', () => remPanel.classList.toggle('show'));
+document.addEventListener('click', e => {
+  if (!remPanel.contains(e.target) && !e.target.closest('#btnReminders')) remPanel.classList.remove('show');
+});
+
+function loadReminders() {
+  const r = JSON.parse(localStorage.getItem(RKEY) || '{}');
+  document.getElementById('remDaily').checked = r.daily || false;
+  document.getElementById('remResearch').checked = r.research || false;
+  document.getElementById('remWrite').checked = r.write || false;
+  document.getElementById('remFollowup').checked = r.followup || false;
+  document.getElementById('remTime').value = r.time || '19:00';
+  updateRemStatus();
+}
+function saveReminders() {
+  const r = {
+    daily: document.getElementById('remDaily').checked,
+    research: document.getElementById('remResearch').checked,
+    write: document.getElementById('remWrite').checked,
+    followup: document.getElementById('remFollowup').checked,
+    time: document.getElementById('remTime').value,
+    fired: JSON.parse(localStorage.getItem(RKEY) || '{}').fired || {},
+  };
+  localStorage.setItem(RKEY, JSON.stringify(r));
+  updateRemStatus();
+}
+['remDaily','remResearch','remWrite','remFollowup','remTime'].forEach(id => {
+  document.getElementById(id).addEventListener('change', saveReminders);
+});
+document.getElementById('remEnable').addEventListener('click', async () => {
+  if (!('Notification' in window)) { alert('This browser does not support notifications.'); return; }
+  const perm = await Notification.requestPermission();
+  if (perm === 'granted') {
+    new Notification('Scribe reminders enabled', { body: 'You will get a daily nudge at the time you set.' });
+  }
+  updateRemStatus();
+});
+function updateRemStatus() {
+  const el = document.getElementById('remStatus');
+  if (!('Notification' in window)) { el.textContent = 'Browser does not support notifications.'; return; }
+  if (Notification.permission === 'denied') {
+    el.innerHTML = '<span style="color:#ff7a7a">Notifications blocked. Enable in browser settings.</span>';
+  } else if (Notification.permission === 'granted') {
+    el.innerHTML = '<span style="color:#7dd87d">✓ Notifications enabled.</span> Reminders run while this tab is open. Install Scribe as a PWA to keep them firing in the background.';
+  } else {
+    el.textContent = 'Click "Enable notifications" to get reminders. Reminders run while this tab is open.';
+  }
+}
+
+// Check every minute if a daily reminder should fire
+function checkReminders() {
+  if (Notification.permission !== 'granted') return;
+  const r = JSON.parse(localStorage.getItem(RKEY) || '{}');
+  if (!r.daily && !r.research && !r.write && !r.followup) return;
+  const now = new Date();
+  const [hh, mm] = (r.time || '19:00').split(':').map(Number);
+  if (now.getHours() !== hh || now.getMinutes() !== mm) return;
+  const today = now.toISOString().slice(0, 10);
+  if (r.fired && r.fired[today]) return;
+  // Pick a message
+  const msgs = [];
+  if (r.daily) msgs.push({ t: 'Scribe · Daily check-in', b: 'How is the project going? Open the board.' });
+  if (r.research) msgs.push({ t: 'Scribe · Research one target today', b: 'Open the workspace and dig into a name from the list.' });
+  if (r.write) msgs.push({ t: 'Scribe · Draft one letter today', b: 'Even a rough draft. You can polish it tomorrow.' });
+  if (r.followup) msgs.push({ t: 'Scribe · Check for replies', b: 'Inbox + post. Any responses? Update the tracker.' });
+  if (!msgs.length) return;
+  const m = msgs[Math.floor(Math.random() * msgs.length)];
+  try { new Notification(m.t, { body: m.b, icon: '/icons/questlog-192.png', tag: 'scribe-daily' }); } catch {}
+  r.fired = r.fired || {};
+  r.fired[today] = true;
+  localStorage.setItem(RKEY, JSON.stringify(r));
+}
+setInterval(checkReminders, 60000);
+checkReminders();
+
+// ═══════════════════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════════════════
+load();
+loadReminders();
+
+// Seed an empty board with a welcome card if nothing saved
+if (!STATE.items.length) {
+  STATE.items.push(
+    { id: newId(), kind: 'text', variant: 'heading', x: 80, y: 80, text: 'Letters to Builders' },
+    { id: newId(), kind: 'text', variant: 'subhead', x: 80, y: 140, text: 'Project board · drop ideas here' },
+    { id: newId(), kind: 'note', x: 80, y: 220, w: 200, h: 160, text: 'Right-click a note to change colour or delete', colour: '' },
+    { id: newId(), kind: 'note', x: 320, y: 220, w: 200, h: 160, text: 'Drag with mouse, double-click to edit text', colour: 'blue' },
+    { id: newId(), kind: 'note', x: 560, y: 220, w: 200, h: 160, text: 'Press T for text, N for note, R for rect, C for circle', colour: 'green' },
+  );
+  pushHistory();
+  save();
+  render();
+}
+</script>
+
+</body>
+</html>
