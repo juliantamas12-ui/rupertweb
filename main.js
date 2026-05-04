@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Bluff at Portsmouth: How Sergei Witte Won a Peace Russia Had Already Lost",
+    date: "2026-05-04",
+    category: "History",
+    excerpt: "By the summer of 1905 the Russian Empire had no business being at the negotiating table on equal terms. Its Pacific fleet had been sunk, its Baltic fleet annihilated at Tsushima in forty minutes, its army driven out of Mukden, and St Petersburg was in open revolution. Yet Russia walked out of Portsmouth having conceded almost nothing she had not already lost in fact, and Japan walked out with riots in Tokyo. The man responsible was Sergei Witte, sent to New Hampshire because nobody else wanted the job. What he did there was the most successful diplomatic bluff of the twentieth century — and the mechanics tell you something durable about how peace settlements actually work...",
+    url: "essays/2026-05-04-the-bluff-at-portsmouth-how-sergei-witte-won-a-peace-russia-had-already-lost.html"
+  },
+  {
     title: "The Afternoon That Ended the German Hyperinflation: How a Fictional Currency Saved the Weimar Republic",
     date: "2026-05-03",
     category: "Economics",
