@@ -174,9 +174,20 @@ function jsonResponse(obj, status = 200) {
   });
 }
 
+function _redactUrl(u) {
+  try {
+    const url = new URL(u);
+    const params = url.searchParams;
+    for (const k of ['api_key','key','apiKey','token','access_token']) {
+      if (params.has(k)) params.set(k, 'REDACTED');
+    }
+    return url.toString();
+  } catch { return u.replace(/([?&](api_key|key|apiKey|token)=)[^&#]+/gi, '$1REDACTED'); }
+}
+
 async function fetchJSON(url) {
   const r = await fetch(url, { headers: { 'User-Agent': 'QuestLog/1.0' } });
-  if (!r.ok) throw new Error(`HTTP ${r.status} on ${url}`);
+  if (!r.ok) throw new Error(`HTTP ${r.status} on ${_redactUrl(url)}`);
   return r.json();
 }
 
@@ -4469,12 +4480,24 @@ async function scribeResearch(url, env) {
   }
 
   try {
-    const [mainSearch, regretSearch, wisdomSearch, wikiSummary] = await Promise.all([
+    // Each SerpAPI call is independent — if one 429s or fails, keep the others.
+    const settled = await Promise.allSettled([
       serpSearch(`${name} founder biography career`, env),
       serpSearch(`${name} regret OR mistake OR "would do differently"`, env),
       serpSearch(`${name} advice young founders OR "younger self"`, env),
       fetchWikiSummary(name),
     ]);
+    const pick = (s) => (s.status === 'fulfilled' ? s.value : null) || {};
+    const mainSearch = pick(settled[0]);
+    const regretSearch = pick(settled[1]);
+    const wisdomSearch = pick(settled[2]);
+    const wikiSummary = settled[3].status === 'fulfilled' ? settled[3].value : null;
+
+    const serpFailures = settled.slice(0, 3).filter(s => s.status === 'rejected').length;
+    const serpRateLimited = settled.slice(0, 3).some(s => s.status === 'rejected' && /HTTP 429|rate/i.test(String(s.reason)));
+    const warnings = [];
+    if (serpRateLimited) warnings.push('SerpAPI is rate-limited (free plan = 100 searches / month). Wikipedia + AI synthesis still working.');
+    else if (serpFailures > 0) warnings.push(`${serpFailures} of 3 web searches failed. Result is partial.`);
 
     const rawSignals = {
       name,
@@ -4490,12 +4513,22 @@ async function scribeResearch(url, env) {
       })),
     };
 
+    const hasAnySignal = wikiSummary || rawSignals.mainResults.length || rawSignals.regretResults.length || rawSignals.wisdomResults.length;
+    if (!hasAnySignal) {
+      return jsonResponse({
+        name,
+        error: 'No data sources available. SerpAPI rate-limited and Wikipedia returned nothing for this name. Try again later or check the spelling.',
+        warnings,
+      }, 503);
+    }
+
     const anthropicKey = env?.ANTHROPIC_KEY || ANTHROPIC_KEY_FALLBACK;
     let synthesis = null;
     if (anthropicKey) synthesis = await anthropicSynthesis(anthropicKey, name, rawSignals, env);
 
-    const out = { name, fetchedAt: Date.now(), synthesis, raw: rawSignals };
-    await kvPut(env, cacheKey, out);
+    const out = { name, fetchedAt: Date.now(), synthesis, raw: rawSignals, warnings };
+    // Only cache if we got real data (don't cache rate-limited partials for 7 days)
+    if (!serpRateLimited) await kvPut(env, cacheKey, out);
     return jsonResponse(out);
   } catch (e) {
     return jsonResponse({ error: e.message }, 500);

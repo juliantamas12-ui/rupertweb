@@ -452,7 +452,10 @@ function renderResearch(d) {
   html.push(`<div style="padding:32px;background:var(--paper);border:1px solid var(--rule);box-shadow:var(--shadow);margin-top:8px">`);
   html.push(`<div style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:8px">Research Brief${d.cached ? ' · Cached' : ''}</div>`);
   html.push(`<h2 style="font-family:'Crimson Text',serif;font-size:36px;font-weight:600;letter-spacing:-0.5px;margin-bottom:6px">${escapeHtml(d.name)}</h2>`);
-  if (w?.description) html.push(`<p style="color:var(--ink-soft);font-style:italic;margin-bottom:24px;font-family:'Crimson Text',serif;font-size:17px">${escapeHtml(w.description)}</p>`);
+  if (w?.description) html.push(`<p style="color:var(--ink-soft);font-style:italic;margin-bottom:18px;font-family:'Crimson Text',serif;font-size:17px">${escapeHtml(w.description)}</p>`);
+  if (Array.isArray(d.warnings) && d.warnings.length) {
+    html.push(`<div style="padding:12px 14px;background:#fffae6;border-left:3px solid #c8a020;color:#7a5e10;font-size:13px;margin-bottom:18px;font-family:'Inter',sans-serif">${d.warnings.map(escapeHtml).join('<br>')}</div>`);
+  }
 
   if (s?.summary) {
     html.push(section('Summary', `<p style="font-family:'Crimson Text',serif;font-size:17px;line-height:1.65">${escapeHtml(s.summary)}</p>`));
