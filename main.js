@@ -351,7 +351,19 @@ const SCHOOL_TASKS = [
     "status": "upcoming"
   },
   {
-    "title": "Math 8: Composite Solid SA and Volume",
+    "title": "Vocabulary Slideshow #2",
+    "due": "",
+    "subject": "",
+    "status": "upcoming"
+  },
+  {
+    "title": "Classwork Science 7",
+    "due": "",
+    "subject": "",
+    "status": "upcoming"
+  },
+  {
+    "title": "Math 8: Rotating 2-D Shapes",
     "due": "",
     "subject": "",
     "status": "upcoming"
@@ -369,19 +381,13 @@ const SCHOOL_TASKS = [
     "status": "upcoming"
   },
   {
-    "title": "Vocabulary Slideshow #2",
+    "title": "Math 8: Unit 6 Test",
     "due": "",
     "subject": "",
     "status": "upcoming"
   },
   {
     "title": "Vocabulary Quiz §10",
-    "due": "",
-    "subject": "",
-    "status": "upcoming"
-  },
-  {
-    "title": "Math 8: Unit 6 Test",
     "due": "",
     "subject": "",
     "status": "upcoming"
