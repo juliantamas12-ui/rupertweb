@@ -290,17 +290,35 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
   #proHubUnlocked .sub-view[data-sub="quests"].active{
     display:grid !important;
     grid-template-columns:1fr 1fr;
-    gap:48px 56px;
-    align-items:start;
+    gap:32px 0;
+    align-items:stretch;
+    border-top:1px solid var(--border);
+    padding-top:32px;
   }
   #proHubUnlocked .sub-view[data-sub="insights"] > .eyebrow,
   #proHubUnlocked .sub-view[data-sub="quests"] > .eyebrow{
     grid-column:1 / -1;
+    margin-bottom:0;
+    padding-bottom:8px;
   }
+  /* Each section gets its own frame: padding, top hairline, and — if it's in the
+     left column — a vertical hairline on the right edge to separate columns. */
   #proHubUnlocked .sub-view[data-sub="insights"] > .section,
   #proHubUnlocked .sub-view[data-sub="quests"] > .section{
     margin-bottom:0;
-    padding:0;
+    padding:24px 28px;
+    border-top:1px solid var(--border);
+    position:relative;
+  }
+  /* Vertical separator on the LEFT column (every odd .section after eyebrow) */
+  #proHubUnlocked .sub-view[data-sub="insights"] > .section:nth-of-type(odd),
+  #proHubUnlocked .sub-view[data-sub="quests"] > .section:nth-of-type(odd){
+    border-right:1px solid var(--border);
+  }
+  /* Drop the top border for the first row only */
+  #proHubUnlocked .sub-view[data-sub="insights"] > .section:nth-of-type(-n+2),
+  #proHubUnlocked .sub-view[data-sub="quests"] > .section:nth-of-type(-n+2){
+    border-top:none;
   }
 }
 
