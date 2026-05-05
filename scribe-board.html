@@ -10,21 +10,21 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:inherit}
 :root{
-  --bg:#0e1015;
-  --panel:#171a21;
-  --panel-2:#1c1f27;
-  --rule:rgba(255,255,255,0.06);
-  --rule-strong:rgba(255,255,255,0.12);
-  --ink:#e6e8ea;
-  --ink-soft:#9ba0a8;
-  --ink-dim:#5b6068;
+  --bg:#fafafa;
+  --panel:#ffffff;
+  --panel-2:#f4f4f4;
+  --rule:rgba(0,0,0,0.08);
+  --rule-strong:rgba(0,0,0,0.16);
+  --ink:#1a1a1a;
+  --ink-soft:#5a5a5a;
+  --ink-dim:#9a9a9a;
   --accent:#ff6c4a;
-  --accent-soft:rgba(255,108,74,0.12);
-  --note-yellow:#f4d04e;
-  --note-pink:#ff9eb5;
-  --note-blue:#6ec3ff;
-  --note-green:#7dd87d;
-  --note-purple:#b58aff;
+  --accent-soft:rgba(255,108,74,0.10);
+  --note-yellow:#fff7a0;
+  --note-pink:#ffc8d8;
+  --note-blue:#bfe1ff;
+  --note-green:#c5edc5;
+  --note-purple:#d6c2ff;
 }
 body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,sans-serif;font-size:14px;line-height:1.5;height:100vh;overflow:hidden;display:flex;flex-direction:column}
 
@@ -36,8 +36,8 @@ header .crumb{color:var(--ink-soft);font-size:13px}
 header .spacer{flex:1}
 header button{background:transparent;color:var(--ink-soft);border:1px solid var(--rule);height:30px;padding:0 12px;font-size:12px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;border-radius:4px;font-family:inherit}
 header button:hover{color:var(--ink);border-color:var(--rule-strong);background:var(--panel-2)}
-header button.primary{background:var(--accent);color:#0e0e0e;border-color:var(--accent);font-weight:600}
-header button.primary:hover{background:#ff8164;color:#000}
+header button.primary{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
+header button.primary:hover{background:#ff8164;color:#fff}
 header .home-link{color:var(--ink-soft);text-decoration:none;font-size:13px}
 header .home-link:hover{color:var(--ink)}
 
@@ -47,7 +47,7 @@ header .home-link:hover{color:var(--ink)}
 .toolbar .group:last-child{border-right:none}
 .toolbar button.tool{background:var(--panel-2);color:var(--ink-soft);border:1px solid var(--rule);height:32px;padding:0 12px;font-size:12px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;border-radius:4px;font-family:inherit}
 .toolbar button.tool:hover{color:var(--ink);border-color:var(--rule-strong)}
-.toolbar button.tool.active{background:var(--accent);color:#0e0e0e;border-color:var(--accent);font-weight:600}
+.toolbar button.tool.active{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
 .toolbar .label{font-size:11px;color:var(--ink-dim);letter-spacing:1px;text-transform:uppercase;margin-right:4px;align-self:center}
 .toolbar .colour-swatch{width:20px;height:20px;border-radius:4px;cursor:pointer;border:2px solid transparent;transition:transform 0.1s}
 .toolbar .colour-swatch:hover{transform:scale(1.15)}
@@ -55,7 +55,7 @@ header .home-link:hover{color:var(--ink)}
 
 /* CANVAS */
 .canvas-wrap{flex:1;position:relative;overflow:hidden;background:
-  radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 0) 0 0/24px 24px,
+  radial-gradient(circle at 1px 1px, rgba(0,0,0,0.06) 1px, transparent 0) 0 0/24px 24px,
   var(--bg)}
 .canvas{position:absolute;inset:0;cursor:default}
 .canvas.tool-text{cursor:text}
@@ -107,7 +107,7 @@ header .home-link:hover{color:var(--ink)}
 .side label:last-of-type{border-bottom:none}
 .side input[type=checkbox]{accent-color:var(--accent);width:16px;height:16px}
 .side input[type=time],.side input[type=text],.side select{width:100%;background:var(--panel-2);color:var(--ink);border:1px solid var(--rule);border-radius:4px;padding:8px 10px;font-family:inherit;font-size:13px;margin-top:4px}
-.side button.action{width:100%;background:var(--accent);color:#0e0e0e;border:none;padding:10px;border-radius:4px;font-weight:600;font-size:13px;cursor:pointer;margin-top:14px;font-family:inherit}
+.side button.action{width:100%;background:var(--accent);color:#fff;border:none;padding:10px;border-radius:4px;font-weight:600;font-size:13px;cursor:pointer;margin-top:14px;font-family:inherit}
 .side button.action:hover{background:#ff8164}
 .side .hint{font-size:11px;color:var(--ink-dim);margin-top:8px;line-height:1.4}
 
