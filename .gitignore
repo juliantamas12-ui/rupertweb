@@ -1,0 +1,14 @@
+# Cloudflare Worker secrets - local development only
+.dev.vars
+.dev.vars.*
+
+# Wrangler / Cloudflare cache
+.wrangler/
+
+# OS noise
+.DS_Store
+
+# Editor noise
+*.swp
+.idea/
+.vscode/

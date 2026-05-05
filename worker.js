@@ -1,15 +1,23 @@
 // rupertweb Worker - handles API endpoints + static assets
 
-const STEAM_KEY = '7E0FBB2D8E9A19B0F40556A78A6B9C47';
-const DEFAULT_STEAM_ID = null; // no default - each user provides their own
-const RESEND_KEY = 're_dNyaesf8_GH99GVk3N5u45x6RuA1LCSR8';
+// SECRETS: all values come from Cloudflare Worker secrets at runtime.
+// Set with: wrangler secret put STEAM_KEY / RESEND_KEY / SERPAPI_KEY / ANTHROPIC_KEY
+// During local dev with `wrangler dev`, these are loaded from .dev.vars (gitignored).
+// The const values below are FALLBACKS for local dev only. The real prod values are NEVER committed.
+let STEAM_KEY = '';
+let RESEND_KEY = '';
+let SERPAPI_KEY = '';
+const DEFAULT_STEAM_ID = null;
 const OWNER_EMAIL = 'julian.tamas12@gmail.com';
-
-// SerpAPI - Google search wrapper. Used by Scribe for billionaire research.
-const SERPAPI_KEY = '4a66be69972b39929f832ad8a7e60731cfaebe34e7b8238c60c485a46952b39e';
-// Optional: Anthropic API key for AI synthesis. Leave empty to fall back to raw search summary.
-// Set via `wrangler secret put ANTHROPIC_KEY` in production.
 const ANTHROPIC_KEY_FALLBACK = '';
+
+// Resolve env-bound secrets the first time we get a request.
+function _hydrateSecrets(env) {
+  if (!env) return;
+  if (env.STEAM_KEY)    STEAM_KEY    = env.STEAM_KEY;
+  if (env.RESEND_KEY)   RESEND_KEY   = env.RESEND_KEY;
+  if (env.SERPAPI_KEY)  SERPAPI_KEY  = env.SERPAPI_KEY;
+}
 
 // VAPID for web push notifications
 const VAPID_PUBLIC = 'BL6xSk_4wHzUF_8AYnJJOrJnhv0dlpe9nnI5B6vCI1kfWp8bvZ2tuf3Ittb_mKxwIEz9Z1woclj8KiVGZkRxKeA';
@@ -54,6 +62,7 @@ async function kvList(env, prefix) {
 
 export default {
   async fetch(request, env) {
+    _hydrateSecrets(env);
     const url = new URL(request.url);
     const p = url.pathname;
 
@@ -128,6 +137,7 @@ export default {
   // also rotates the Achievement-of-the-Day cache stamp. Each job is wrapped
   // in try/catch so a single failure can't break the next run.
   async scheduled(event, env, ctx) {
+    _hydrateSecrets(env);
     ctx.waitUntil((async () => {
       const startedAt = Date.now();
       const cron = event.cron || '';
