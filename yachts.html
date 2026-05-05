@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Fleet Tracker — Rupert Web</title>
+  <link rel="icon" type="image/svg+xml" href="/icons/favicon-fleet.svg" />
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
@@ -451,7 +453,7 @@
 .vessel-card[data-vessel="RENAISSANCE"] .vessel-photo { background-image: url("https://photos.superyachtapi.com/download/315190/extra-large"); background-size: cover; background-position: center; }
 .vessel-card[data-vessel="KENSHO"] .vessel-photo { background-image: url("https://cdn.boatinternational.com/convert/files/2022/05/eb3a0b50-cd45-11ec-8130-c1169b81b7c5-kensho-credit-VANDERWALT-PRODUCTIONS.jpg/r%5Bwidth%5D=1920/eb3a0b50-cd45-11ec-8130-c1169b81b7c5-kensho-credit-VANDERWALT-PRODUCTIONS.jpg"); background-size: cover; background-position: center; }
 .vessel-card[data-vessel="LEVIATHAN"] .vessel-photo { background-image: url("https://www.oceancoyacht.com/wp-content/uploads/Oceanco_Leviathan_Load-Out_03-scaled.jpg"); background-size: cover; background-position: center; }
-.vessel-card[data-vessel="BARBARA"] .vessel-photo { background-image: url("https://image.yachtcharterfleet.com/w1277/h618/qh/ca/m2/kde021963/vessel/resource/64808/charter-al-mabrukah-yacht.jpg"); background-size: cover; background-position: center; }
+.vessel-card[data-vessel="BARBARA"] .vessel-photo { background-image: url("https://image.yachtcharterfleet.com/w1277/h618/qh/ca/m2/k27675c83/vessel/resource/603774/charter-barbara-yacht.jpg"); background-size: cover; background-position: center; }
 .vessel-card[data-vessel="PROJECT X"] .vessel-photo { background-image: url("https://image.yachtcharterfleet.com/w1277/h618/qh/ca/m2/k2dd9e095/vessel/resource/2103547/project-x-charter-yacht.jpg"); background-size: cover; background-position: center; }
 .vessel-card[data-vessel="CC SUMMER"] .vessel-photo { background-image: url("https://image.yachtcharterfleet.com/w1277/h618/qh/ca/m2/k8a419ee4/vessel/resource/1959454/charter-cc-summer-yacht.jpg"); background-size: cover; background-position: center; }
 </style>
@@ -555,7 +557,7 @@ fetch('/yachts-live.json?' + Date.now())
       { name: 'RENAISSANCE', photo: 'https://photos.superyachtapi.com/download/315190/extra-large', imo: '9880776', mmsi: '319268600', builder: 'Freire Shipyard', year: 2023, length: '112m', slug: 'renaissance', flag: 'Cayman Islands' },
       { name: 'KENSHO', photo: 'https://cdn.boatinternational.com/convert/files/2022/05/eb3a0b50-cd45-11ec-8130-c1169b81b7c5-kensho-credit-VANDERWALT-PRODUCTIONS.jpg/r%5Bwidth%5D=1920/eb3a0b50-cd45-11ec-8130-c1169b81b7c5-kensho-credit-VANDERWALT-PRODUCTIONS.jpg', imo: '9854284', mmsi: '319242300', builder: 'Admiral', year: 2022, length: '75.2m', slug: 'kensho', flag: 'Cayman Islands' },
       { name: 'LEVIATHAN', photo: 'https://www.oceancoyacht.com/wp-content/uploads/Oceanco_Leviathan_Load-Out_03-scaled.jpg', imo: '9921491', mmsi: '319324100', builder: 'Oceanco', year: 2025, length: '111m', slug: 'leviathan', flag: 'Cayman Islands' },
-      { name: 'BARBARA', photo: 'https://image.yachtcharterfleet.com/w1277/h618/qh/ca/m2/kde021963/vessel/resource/64808/charter-al-mabrukah-yacht.jpg', imo: '1012725', mmsi: '319104200', builder: 'Picchiotti', year: 2017, length: '88.5m', slug: 'barbara', flag: 'Cayman Islands' },
+      { name: 'BARBARA', photo: 'https://image.yachtcharterfleet.com/w1277/h618/qh/ca/m2/k27675c83/vessel/resource/603774/charter-barbara-yacht.jpg', imo: '1012725', mmsi: '319104200', builder: 'Oceanco', year: 2017, length: '88.5m', slug: 'barbara', flag: 'Cayman Islands' },
       { name: 'PROJECT X', photo: 'https://image.yachtcharterfleet.com/w1277/h618/qh/ca/m2/k2dd9e095/vessel/resource/2103547/project-x-charter-yacht.jpg', imo: '1010727', mmsi: '229063000', builder: 'Perini Navi', year: 2014, length: '~88m', slug: 'projectx', flag: 'Malta' },
       { name: 'CC SUMMER', photo: 'https://image.yachtcharterfleet.com/w1277/h618/qh/ca/m2/k8a419ee4/vessel/resource/1959454/charter-cc-summer-yacht.jpg', imo: '9807956', mmsi: '538071410', builder: 'Lurssen', year: 2019, length: '95m', slug: 'ccsummer', flag: 'Marshall Islands' },
     ];
