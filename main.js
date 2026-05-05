@@ -624,9 +624,58 @@ function renderLifeStats() {
   });
 }
 
+/* Spend */
+async function renderSpend() {
+  const body = document.getElementById('spend-body');
+  const sub = document.getElementById('spend-sub');
+  if (!body) return;
+  try {
+    const r = await fetch('/api/spend');
+    if (!r.ok) throw new Error('api ' + r.status);
+    const d = await r.json();
+    const fmt = n => '$' + (n || 0).toFixed(4);
+    const today = d.today || {};
+    const todayCost = today.total || 0;
+    const monthCost = d.monthTotal || 0;
+    const weekCost = d.weekTotal || 0;
+
+    const breakdownRows = Object.entries(d.monthBreakdown || {})
+      .sort((a, b) => b[1] - a[1])
+      .map(([k, v]) => {
+        const cnt = (d.monthCount && d.monthCount[k]) || 0;
+        const label = { anthropic: 'Claude (Scribe)', serpapi: 'SerpAPI (Scribe)', resend: 'Resend (emails)' }[k] || k;
+        return `<div style="display:flex;justify-content:space-between;padding:6px 0;font-family:'Space Mono',monospace;font-size:12px;color:#888"><span>${label}<span style="color:#444;margin-left:8px">x${cnt}</span></span><span style="color:#c8f135">${fmt(v)}</span></div>`;
+      }).join('') || '<div style="color:#666;font-family:Space Mono,monospace;font-size:12px">No spend yet.</div>';
+
+    // Sparkline of daily totals (last 14 days)
+    const last14 = (d.days || []).slice(-14);
+    const max = Math.max(0.0001, ...last14.map(x => x.total || 0));
+    const bars = last14.map(x => {
+      const h = Math.max(2, Math.round((x.total || 0) / max * 28));
+      const col = (x.total || 0) > 0 ? '#c8f135' : '#1a1a1a';
+      return `<div title="${x.day}: ${fmt(x.total || 0)}" style="flex:1;height:${h}px;background:${col};opacity:${(x.total||0)>0?1:0.3};border-radius:1px"></div>`;
+    }).join('');
+
+    body.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-bottom:16px">
+        <div><div style="color:#888;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;font-family:'Space Mono',monospace">Today</div><div style="color:#c8f135;font-size:20px;font-weight:700;font-family:'Space Mono',monospace;margin-top:2px">${fmt(todayCost)}</div></div>
+        <div><div style="color:#888;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;font-family:'Space Mono',monospace">7-day</div><div style="color:#fff;font-size:20px;font-weight:700;font-family:'Space Mono',monospace;margin-top:2px">${fmt(weekCost)}</div></div>
+        <div><div style="color:#888;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;font-family:'Space Mono',monospace">30-day</div><div style="color:#fff;font-size:20px;font-weight:700;font-family:'Space Mono',monospace;margin-top:2px">${fmt(monthCost)}</div></div>
+      </div>
+      <div style="display:flex;gap:2px;align-items:flex-end;height:32px;margin-bottom:14px;background:#0a0a0a;padding:2px;border-radius:2px">${bars}</div>
+      <div>${breakdownRows}</div>
+      <div style="margin-top:10px;font-size:10px;color:#444;font-family:'Space Mono',monospace;letter-spacing:0.05em">Estimates only. Actual usage from Anthropic / SerpAPI / Resend dashboards.</div>
+    `;
+    if (sub) sub.textContent = `${fmt(monthCost)} / 30 days`;
+  } catch (e) {
+    body.innerHTML = `<div style="color:#666;font-family:'Space Mono',monospace;font-size:12px">Spend tracking unavailable.</div>`;
+  }
+}
+
 /* Boot */
 renderEssays();
 renderSchool();
 renderSteam();
 renderProjects();
 renderLifeStats();
+renderSpend();

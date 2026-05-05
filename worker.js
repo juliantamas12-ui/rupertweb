@@ -60,7 +60,7 @@ export default {
     if (request.method === 'OPTIONS') return new Response(null, { headers: corsHeaders() });
 
     try {
-      if (p === '/api/fleet-signup' && request.method === 'POST')     return handleFleetSignup(request);
+      if (p === '/api/fleet-signup' && request.method === 'POST')     return handleFleetSignup(request, env);
       if (p === '/api/checkout' && request.method === 'POST')         return checkout(request);
       if (p === '/api/stripe/webhook' && request.method === 'POST')   return stripeWebhook(request, env);
       if (p === '/api/pro-status')                                    return proStatus(url, env);
@@ -91,13 +91,13 @@ export default {
       if (p === '/api/game-of-the-day')                               return gameOfTheDay(url);
       if (p === '/api/finish-this')                                   return finishThis(url);
       if (p === '/api/backlog-estimate')                              return backlogEstimate(url);
-      if (p === '/api/price-alert' && request.method === 'POST')      return createPriceAlert(request);
+      if (p === '/api/price-alert' && request.method === 'POST')      return createPriceAlert(request, env);
       if (p === '/api/fps-estimate')                                  return fpsEstimate(url);
       if (p === '/api/gpu-list')                                      return jsonResponse({ gpus: Object.keys(GPU_SCORES).sort() });
       if (p === '/api/missing-games')                                 return missingGames();
       if (p === '/api/steam-dna')                                     return steamDNA(url);
       if (p === '/api/hltb')                                          return howLongToBeat(url);
-      if (p === '/api/subscribe-digest' && request.method === 'POST') return subscribeDigest(request);
+      if (p === '/api/subscribe-digest' && request.method === 'POST') return subscribeDigest(request, env);
       if (p === '/api/game-night')                                    return gameNight(request, url);
       if (p === '/api/price-history')                                  return priceHistory(url);
       if (p === '/api/now-playing')                                    return nowPlaying(url);
@@ -112,6 +112,7 @@ export default {
       if (p === '/api/alerts')                                        return getAlerts(url, env);
       if (p === '/api/cron-status')                                   return cronStatus(env);
       if (p === '/api/scribe/research')                               return scribeResearch(url, env);
+      if (p === '/api/spend')                                         return spendStatus(url, env);
       if (p === '/api/cron/run-now')                                  return cronRunNow(url, env);
 
     } catch (e) {
@@ -3542,7 +3543,7 @@ async function gameNight(request, url) {
 // WEEKLY DIGEST SUBSCRIBE
 // ════════════════════════════════════════════════════════
 
-async function subscribeDigest(request) {
+async function subscribeDigest(request, env) {
   try {
     const { email, sid } = await request.json();
     if (!email || !email.includes('@')) return jsonResponse({ error: 'valid email required' }, 400);
@@ -3558,6 +3559,7 @@ async function subscribeDigest(request) {
         html: `<p><strong>${email}</strong> subscribed to the QuestLog weekly digest.</p><p>Steam ID: ${sid || 'not provided'}</p>`,
       }),
     });
+    logSpend(env, 'resend', { purpose: 'digest_signup' });
 
     // Confirmation to subscriber (only works if subscriber == verified owner email while we're on resend test domain)
     return jsonResponse({ ok: true, message: 'Subscribed. First digest arrives Sunday morning.' });
@@ -3566,7 +3568,7 @@ async function subscribeDigest(request) {
   }
 }
 
-async function createPriceAlert(request) {
+async function createPriceAlert(request, env) {
   try {
     const data = await request.json();
     if (!data.email || !data.gameTitle || !data.targetPrice) {
@@ -3591,6 +3593,7 @@ async function createPriceAlert(request) {
         html: `<pre>${JSON.stringify(data, null, 2)}</pre>`,
       }),
     });
+    logSpend(env, 'resend', { purpose: 'price_alert_signup' });
 
     return jsonResponse({ ok: true, message: 'Alert registered. Check your email.' });
   } catch (e) {
@@ -4044,7 +4047,7 @@ async function myDeals(url) {
 // FLEETWATCH SIGNUP (existing)
 // ════════════════════════════════════════════════════════
 
-async function handleFleetSignup(request) {
+async function handleFleetSignup(request, env) {
   const data = await request.json();
   const vessels = (data.vessels || []).join(', ') || 'none selected';
   const plan    = (data.plan || 'free').toUpperCase();
@@ -4071,6 +4074,7 @@ async function handleFleetSignup(request) {
       html
     })
   });
+  logSpend(env, 'resend', { purpose: 'fleet_signup' });
 
   return jsonResponse({ ok: true });
 }
@@ -4465,9 +4469,9 @@ async function scribeResearch(url, env) {
 
   try {
     const [mainSearch, regretSearch, wisdomSearch, wikiSummary] = await Promise.all([
-      serpSearch(`${name} founder biography career`),
-      serpSearch(`${name} regret OR mistake OR "would do differently"`),
-      serpSearch(`${name} advice young founders OR "younger self"`),
+      serpSearch(`${name} founder biography career`, env),
+      serpSearch(`${name} regret OR mistake OR "would do differently"`, env),
+      serpSearch(`${name} advice young founders OR "younger self"`, env),
       fetchWikiSummary(name),
     ]);
 
@@ -4487,7 +4491,7 @@ async function scribeResearch(url, env) {
 
     const anthropicKey = env?.ANTHROPIC_KEY || ANTHROPIC_KEY_FALLBACK;
     let synthesis = null;
-    if (anthropicKey) synthesis = await anthropicSynthesis(anthropicKey, name, rawSignals);
+    if (anthropicKey) synthesis = await anthropicSynthesis(anthropicKey, name, rawSignals, env);
 
     const out = { name, fetchedAt: Date.now(), synthesis, raw: rawSignals };
     await kvPut(env, cacheKey, out);
@@ -4497,13 +4501,15 @@ async function scribeResearch(url, env) {
   }
 }
 
-async function serpSearch(q) {
+async function serpSearch(q, env) {
   const u = new URL('https://serpapi.com/search.json');
   u.searchParams.set('q', q);
   u.searchParams.set('api_key', SERPAPI_KEY);
   u.searchParams.set('engine', 'google');
   u.searchParams.set('num', '10');
-  return fetchJSON(u.toString());
+  const res = await fetchJSON(u.toString());
+  if (env) logSpend(env, 'serpapi', { q });
+  return res;
 }
 
 async function fetchWikiSummary(name) {
@@ -4521,7 +4527,7 @@ async function fetchWikiSummary(name) {
   } catch { return null; }
 }
 
-async function anthropicSynthesis(key, name, signals) {
+async function anthropicSynthesis(key, name, signals, env) {
   const prompt = `You are helping two 14-year-olds research ${name} so they can write a thoughtful letter asking for advice. Below are raw search results. Synthesise them into a structured research brief in JSON with this exact shape:
 
 {
@@ -4561,9 +4567,101 @@ ${JSON.stringify(signals, null, 2)}`;
     if (!r.ok) return null;
     const data = await r.json();
     const text = data.content?.[0]?.text || '';
+    if (env) {
+      logSpend(env, 'anthropic', {
+        inputTokens: data.usage?.input_tokens || 0,
+        outputTokens: data.usage?.output_tokens || 0,
+        model: data.model,
+        purpose: 'scribe',
+      });
+    }
     const jsonStart = text.indexOf('{');
     const jsonEnd = text.lastIndexOf('}');
     if (jsonStart === -1 || jsonEnd === -1) return null;
     return JSON.parse(text.slice(jsonStart, jsonEnd + 1));
   } catch { return null; }
+}
+
+
+// ════════════════════════════════════════════════════════
+// SPEND TRACKING
+// Logs costs of paid API calls (Anthropic, SerpAPI, Resend) to KV
+// keyed by day. Dashboard at /api/spend exposes totals.
+// ════════════════════════════════════════════════════════
+
+// Approximate prices in USD per unit
+const SPEND_PRICES = {
+  anthropic_input:  3.00 / 1_000_000,    // claude-sonnet-4-5 input per token
+  anthropic_output: 15.00 / 1_000_000,   // claude-sonnet-4-5 output per token
+  serpapi_call:     5.00 / 1000,         // ~$5/1000 calls on Developer plan, free up to 100/mo
+  resend_email:     0.001,               // ~$0.001/email beyond 100/day free
+};
+
+async function logSpend(env, kind, meta = {}) {
+  if (!env?.QUESTLOG_KV) return;
+  try {
+    const day = new Date().toISOString().slice(0, 10);
+    const key = `spend:${day}`;
+    const cur = (await kvGet(env, key)) || { day, total: 0, breakdown: {}, count: {} };
+
+    let cost = 0;
+    let label = kind;
+    if (kind === 'anthropic') {
+      const inT = parseInt(meta.inputTokens || 0);
+      const outT = parseInt(meta.outputTokens || 0);
+      cost = inT * SPEND_PRICES.anthropic_input + outT * SPEND_PRICES.anthropic_output;
+    } else if (kind === 'serpapi') {
+      cost = SPEND_PRICES.serpapi_call;
+    } else if (kind === 'resend') {
+      cost = SPEND_PRICES.resend_email;
+    }
+
+    cur.total = (cur.total || 0) + cost;
+    cur.breakdown[label] = (cur.breakdown[label] || 0) + cost;
+    cur.count[label] = (cur.count[label] || 0) + 1;
+    cur.lastUpdate = Date.now();
+
+    // Keep 90 days of history
+    await kvPut(env, key, cur, 60 * 60 * 24 * 95);
+  } catch {}
+}
+
+// Public dashboard endpoint - returns today + last 30 days
+async function spendStatus(url, env) {
+  if (!env?.QUESTLOG_KV) return jsonResponse({ error: 'KV not bound' }, 500);
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    const days = [];
+    for (let i = 0; i < 30; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = `spend:${d.toISOString().slice(0, 10)}`;
+      const v = await kvGet(env, key);
+      days.push(v || { day: d.toISOString().slice(0, 10), total: 0, breakdown: {}, count: {} });
+    }
+    const todayData = days[0];
+    const monthTotal = days.reduce((s, d) => s + (d.total || 0), 0);
+    const weekTotal = days.slice(0, 7).reduce((s, d) => s + (d.total || 0), 0);
+
+    // Aggregate counts and breakdown across the month
+    const monthBreakdown = {};
+    const monthCount = {};
+    for (const d of days) {
+      for (const k of Object.keys(d.breakdown || {})) {
+        monthBreakdown[k] = (monthBreakdown[k] || 0) + d.breakdown[k];
+        monthCount[k] = (monthCount[k] || 0) + (d.count?.[k] || 0);
+      }
+    }
+
+    return jsonResponse({
+      today: todayData,
+      weekTotal,
+      monthTotal,
+      monthBreakdown,
+      monthCount,
+      days: days.reverse(),
+    });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
+  }
 }
