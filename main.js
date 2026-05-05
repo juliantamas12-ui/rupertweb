@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Bond Vigilantes of 1994: How a Bunch of Traders Mugged Bill Clinton",
+    date: "2026-05-05",
+    category: "Economics",
+    excerpt: "In February 1994 the US economy was, by every conventional measure, in good shape. Inflation was 2.7 percent. GDP had just printed 7.5 percent annualised. Then Greenspan raised rates by twenty-five basis points, and the bond market lost its mind. $1.5 trillion in global bond value evaporated. Orange County went bankrupt. Mexico blew up. Kidder Peabody collapsed. The Great Bond Massacre of 1994 was not a story about inflation - it was a story about who actually runs economic policy in a country financed by capital markets, and the answer turned out not to be the elected government...",
+    url: "essays/2026-05-05-the-bond-vigilantes-of-1994-how-a-bunch-of-traders-mugged-bill-clinton.html"
+  },
+  {
     title: "The Bluff at Portsmouth: How Sergei Witte Won a Peace Russia Had Already Lost",
     date: "2026-05-04",
     category: "History",
