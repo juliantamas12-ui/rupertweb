@@ -1532,7 +1532,10 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
       </div>
 
       <div class="section" style="padding:0;margin-bottom:20px">
-        <div class="section-head"><h3 style="font-size:15px">Recent Price Drops</h3></div>
+        <div class="section-head" style="display:flex;justify-content:space-between;align-items:center">
+          <h3 style="font-size:15px">Recent Price Drops</h3>
+          <button id="refreshDropsBtn" onclick="refreshDrops()" title="Scan your wishlist now instead of waiting for the next hourly check" style="background:var(--panel2);border:1px solid var(--border);color:var(--dim);padding:4px 10px;border-radius:4px;font-size:11px;font-family:inherit;cursor:pointer;letter-spacing:0.5px">Refresh</button>
+        </div>
         <div class="sidebar-card">
           <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Drops we've spotted on your wishlist in the last 30 days. Checked hourly.</p>
           <div id="recentDropsList"><div class="empty" style="text-align:left;font-size:12px;padding:8px 0">Add games to your wishlist below - drops will appear here automatically.</div></div>
@@ -3193,6 +3196,42 @@ async function renderWishlist() {
 }
 
 // ───── RECENT PRICE DROPS (server-detected, /api/alerts) ─────
+// Manual refresh: triggers a self-scoped wishlist sweep on the server
+// (/api/cron/run-now) instead of waiting up to an hour for the next cron tick.
+// Self-scoped + bounded by PRICE_WATCH_ITEMS_PER_USER on the worker, so safe
+// to expose without admin auth. Doubles as the soft-launch "first-run" path:
+// new users can hit this immediately after syncing a wishlist instead of
+// staring at an empty panel for up to 60 minutes.
+async function refreshDrops() {
+  const btn = document.getElementById('refreshDropsBtn');
+  if (!STATE.sid) return;
+  if (btn) {
+    if (btn.dataset.busy === '1') return; // simple debounce
+    btn.dataset.busy = '1';
+    btn.disabled = true;
+    btn.textContent = 'Scanning...';
+    btn.style.opacity = '0.6';
+  }
+  try {
+    const r = await fetch(`/api/cron/run-now?sid=${encodeURIComponent(STATE.sid)}`);
+    const d = await r.json().catch(() => ({}));
+    await renderRecentDrops();
+    if (btn) {
+      const newCount = (d && typeof d.alerts === 'number') ? d.alerts : 0;
+      btn.textContent = newCount > 0 ? `+${newCount} new` : 'Up to date';
+      setTimeout(() => { if (btn) btn.textContent = 'Refresh'; }, 2500);
+    }
+  } catch (e) {
+    if (btn) btn.textContent = 'Failed';
+    setTimeout(() => { if (btn) btn.textContent = 'Refresh'; }, 2500);
+  } finally {
+    if (btn) {
+      btn.dataset.busy = '0';
+      btn.disabled = false;
+      btn.style.opacity = '';
+    }
+  }
+}
 async function renderRecentDrops() {
   const el = document.getElementById('recentDropsList');
   if (!el || !STATE.sid) return;
