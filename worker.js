@@ -113,6 +113,7 @@ export default {
       if (p === '/api/cron-status')                                   return cronStatus(env);
       if (p === '/api/scribe/research')                               return scribeResearch(url, env);
       if (p === '/api/spend')                                         return spendStatus(url, env);
+      if (p === '/api/spend/log' && request.method === 'POST')        return spendLog(request, env);
       if (p === '/api/cron/run-now')                                  return cronRunNow(url, env);
 
     } catch (e) {
@@ -4508,7 +4509,7 @@ async function serpSearch(q, env) {
   u.searchParams.set('engine', 'google');
   u.searchParams.set('num', '10');
   const res = await fetchJSON(u.toString());
-  if (env) logSpend(env, 'serpapi', { q });
+  if (env) logSpend(env, 'serpapi', { q, purpose: 'scribe' });
   return res;
 }
 
@@ -4590,40 +4591,93 @@ ${JSON.stringify(signals, null, 2)}`;
 // ════════════════════════════════════════════════════════
 
 // Approximate prices in USD per unit
+// Per-token / per-call USD pricing for variable-cost APIs
 const SPEND_PRICES = {
-  anthropic_input:  3.00 / 1_000_000,    // claude-sonnet-4-5 input per token
-  anthropic_output: 15.00 / 1_000_000,   // claude-sonnet-4-5 output per token
-  serpapi_call:     5.00 / 1000,         // ~$5/1000 calls on Developer plan, free up to 100/mo
-  resend_email:     0.001,               // ~$0.001/email beyond 100/day free
+  // Anthropic Claude Sonnet 4.5 (default Rupert/Scribe model)
+  anthropic_input:  3.00 / 1_000_000,
+  anthropic_output: 15.00 / 1_000_000,
+  // Claude Opus 4 (used for harder essays)
+  anthropic_opus_input:  15.00 / 1_000_000,
+  anthropic_opus_output: 75.00 / 1_000_000,
+  // OpenAI gpt-4o (if used)
+  openai_input:  5.00 / 1_000_000,
+  openai_output: 15.00 / 1_000_000,
+  // ElevenLabs TTS (Creator plan, $0.30 per 1k chars overage; free 100k/mo)
+  elevenlabs_chars: 0.0003,
+  // SerpAPI Developer plan: 100 free/mo then $5/1000
+  serpapi_call:     5.00 / 1000,
+  // Resend: 100/day free then $0.001/email
+  resend_email:     0.001,
 };
+
+// Fixed monthly subscriptions — prorated to USD/day for the dashboard
+const SUBSCRIPTIONS = [
+  { name: 'ElevenLabs Creator',    usdMonth: 22, since: '2026-01-01' },
+  { name: 'Anthropic Pro (Claude)', usdMonth: 20, since: '2026-01-01' },
+  { name: 'Cloudflare Workers',    usdMonth: 0,  since: '2026-01-01', note: 'Free tier' },
+  { name: 'SerpAPI Free',          usdMonth: 0,  since: '2026-01-01', note: '100 searches/mo free' },
+];
 
 async function logSpend(env, kind, meta = {}) {
   if (!env?.QUESTLOG_KV) return;
   try {
     const day = new Date().toISOString().slice(0, 10);
     const key = `spend:${day}`;
-    const cur = (await kvGet(env, key)) || { day, total: 0, breakdown: {}, count: {} };
+    const cur = (await kvGet(env, key)) || { day, total: 0, breakdown: {}, count: {}, byPurpose: {} };
 
     let cost = 0;
-    let label = kind;
     if (kind === 'anthropic') {
       const inT = parseInt(meta.inputTokens || 0);
       const outT = parseInt(meta.outputTokens || 0);
-      cost = inT * SPEND_PRICES.anthropic_input + outT * SPEND_PRICES.anthropic_output;
+      const isOpus = (meta.model || '').toLowerCase().includes('opus');
+      const inP = isOpus ? SPEND_PRICES.anthropic_opus_input : SPEND_PRICES.anthropic_input;
+      const outP = isOpus ? SPEND_PRICES.anthropic_opus_output : SPEND_PRICES.anthropic_output;
+      cost = inT * inP + outT * outP;
+    } else if (kind === 'openai') {
+      cost = (parseInt(meta.inputTokens || 0)) * SPEND_PRICES.openai_input
+           + (parseInt(meta.outputTokens || 0)) * SPEND_PRICES.openai_output;
+    } else if (kind === 'elevenlabs') {
+      cost = (parseInt(meta.chars || 0)) * SPEND_PRICES.elevenlabs_chars;
     } else if (kind === 'serpapi') {
       cost = SPEND_PRICES.serpapi_call;
     } else if (kind === 'resend') {
       cost = SPEND_PRICES.resend_email;
+    } else if (kind === 'fixed') {
+      cost = parseFloat(meta.cost || 0);
     }
 
     cur.total = (cur.total || 0) + cost;
-    cur.breakdown[label] = (cur.breakdown[label] || 0) + cost;
-    cur.count[label] = (cur.count[label] || 0) + 1;
-    cur.lastUpdate = Date.now();
+    cur.breakdown[kind] = (cur.breakdown[kind] || 0) + cost;
+    cur.count[kind] = (cur.count[kind] || 0) + 1;
 
-    // Keep 90 days of history
+    // Per-purpose tracking (e.g. anthropic:scribe, anthropic:telegram, anthropic:essay)
+    const purpose = meta.purpose || 'misc';
+    const purposeKey = `${kind}:${purpose}`;
+    cur.byPurpose = cur.byPurpose || {};
+    cur.byPurpose[purposeKey] = cur.byPurpose[purposeKey] || { cost: 0, count: 0, tokens: 0 };
+    cur.byPurpose[purposeKey].cost += cost;
+    cur.byPurpose[purposeKey].count += 1;
+    cur.byPurpose[purposeKey].tokens += (parseInt(meta.inputTokens || 0) + parseInt(meta.outputTokens || 0));
+
+    cur.lastUpdate = Date.now();
     await kvPut(env, key, cur, 60 * 60 * 24 * 95);
   } catch {}
+}
+
+// External systems (OpenClaw runtime, nightly essay cron) push usage here.
+// Uses a shared bearer token so randoms can't spam the dashboard.
+async function spendLog(request, env) {
+  const auth = request.headers.get('authorization') || '';
+  const expected = `Bearer ${env?.SPEND_LOG_TOKEN || ''}`;
+  if (!env?.SPEND_LOG_TOKEN || auth !== expected) {
+    return jsonResponse({ error: 'unauthorized' }, 401);
+  }
+  let body;
+  try { body = await request.json(); } catch { return jsonResponse({ error: 'bad json' }, 400); }
+  const { kind, ...meta } = body || {};
+  if (!kind) return jsonResponse({ error: 'kind required' }, 400);
+  await logSpend(env, kind, meta);
+  return jsonResponse({ ok: true });
 }
 
 // Public dashboard endpoint - returns today + last 30 days
@@ -4653,12 +4707,31 @@ async function spendStatus(url, env) {
       }
     }
 
+    // Aggregate per-purpose totals across the month
+    const monthByPurpose = {};
+    for (const d of days) {
+      for (const [k, v] of Object.entries(d.byPurpose || {})) {
+        monthByPurpose[k] = monthByPurpose[k] || { cost: 0, count: 0, tokens: 0 };
+        monthByPurpose[k].cost += v.cost || 0;
+        monthByPurpose[k].count += v.count || 0;
+        monthByPurpose[k].tokens += v.tokens || 0;
+      }
+    }
+
+    // Fixed subscriptions — active ones only (since <= today)
+    const todayDate = today;
+    const subs = SUBSCRIPTIONS.filter(s => s.since <= todayDate);
+    const subsMonthly = subs.reduce((s, x) => s + (x.usdMonth || 0), 0);
+
     return jsonResponse({
       today: todayData,
       weekTotal,
       monthTotal,
       monthBreakdown,
       monthCount,
+      monthByPurpose,
+      subscriptions: subs,
+      subsMonthly,
       days: days.reverse(),
     });
   } catch (e) {

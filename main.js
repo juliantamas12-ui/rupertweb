@@ -633,19 +633,60 @@ async function renderSpend() {
     const r = await fetch('/api/spend');
     if (!r.ok) throw new Error('api ' + r.status);
     const d = await r.json();
-    const fmt = n => '$' + (n || 0).toFixed(4);
+    const usd2 = n => '$' + (n || 0).toFixed(2);
+    const usd4 = n => '$' + (n || 0).toFixed(4);
+    const fmtCost = n => (n || 0) >= 1 ? usd2(n) : usd4(n);
+
     const today = d.today || {};
     const todayCost = today.total || 0;
     const monthCost = d.monthTotal || 0;
     const weekCost = d.weekTotal || 0;
+    const subsMonthly = d.subsMonthly || 0;
+    const totalMonthAll = monthCost + subsMonthly;
 
-    const breakdownRows = Object.entries(d.monthBreakdown || {})
-      .sort((a, b) => b[1] - a[1])
+    // Friendly labels for purpose keys: "anthropic:telegram" -> "Claude / Telegram chat"
+    const purposeLabel = (key) => {
+      const [kind, purpose] = key.split(':');
+      const k = {
+        anthropic: 'Claude',
+        openai: 'GPT-4o',
+        elevenlabs: 'ElevenLabs TTS',
+        serpapi: 'SerpAPI',
+        resend: 'Resend',
+        fixed: 'Other',
+      }[kind] || kind;
+      const p = {
+        scribe:     'Scribe research',
+        telegram:   'Telegram chat',
+        essay:      'Nightly essay',
+        heartbeat:  'Heartbeats',
+        cron:       'Cron jobs',
+        digest_signup: 'Digest signups',
+        price_alert_signup: 'Price alert signups',
+        fleet_signup: 'FleetWatch signups',
+        misc:       'Misc',
+      }[purpose] || purpose;
+      return `${k} / ${p}`;
+    };
+
+    // Per-purpose rows for the month
+    const purposeRows = Object.entries(d.monthByPurpose || {})
+      .filter(([k, v]) => (v.cost || 0) > 0 || (v.count || 0) > 0)
+      .sort((a, b) => (b[1].cost || 0) - (a[1].cost || 0))
       .map(([k, v]) => {
-        const cnt = (d.monthCount && d.monthCount[k]) || 0;
-        const label = { anthropic: 'Claude (Scribe)', serpapi: 'SerpAPI (Scribe)', resend: 'Resend (emails)' }[k] || k;
-        return `<div style="display:flex;justify-content:space-between;padding:6px 0;font-family:'Space Mono',monospace;font-size:12px;color:#888"><span>${label}<span style="color:#444;margin-left:8px">x${cnt}</span></span><span style="color:#c8f135">${fmt(v)}</span></div>`;
-      }).join('') || '<div style="color:#666;font-family:Space Mono,monospace;font-size:12px">No spend yet.</div>';
+        const tokensInfo = v.tokens > 0 ? `<span style="color:#444;margin-left:6px">· ${v.tokens.toLocaleString()} tok</span>` : '';
+        return `<div style="display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;font-family:'Space Mono',monospace;font-size:12px;color:#aaa;border-bottom:1px solid #1a1a1a">
+          <span>${purposeLabel(k)}<span style="color:#555;margin-left:8px">x${v.count}</span>${tokensInfo}</span>
+          <span style="color:#c8f135">${fmtCost(v.cost)}</span>
+        </div>`;
+      }).join('') || '<div style="color:#666;font-family:Space Mono,monospace;font-size:12px;padding:6px 0">No usage yet.</div>';
+
+    // Subscriptions list
+    const subsRows = (d.subscriptions || [])
+      .map(s => `<div style="display:flex;justify-content:space-between;padding:6px 0;font-family:'Space Mono',monospace;font-size:12px;color:#aaa;border-bottom:1px solid #1a1a1a">
+        <span>${s.name}${s.note ? `<span style="color:#555;margin-left:8px">${s.note}</span>` : ''}</span>
+        <span style="color:#fff">${(s.usdMonth||0) > 0 ? usd2(s.usdMonth) + '/mo' : 'free'}</span>
+      </div>`).join('');
 
     // Sparkline of daily totals (last 14 days)
     const last14 = (d.days || []).slice(-14);
@@ -653,20 +694,31 @@ async function renderSpend() {
     const bars = last14.map(x => {
       const h = Math.max(2, Math.round((x.total || 0) / max * 28));
       const col = (x.total || 0) > 0 ? '#c8f135' : '#1a1a1a';
-      return `<div title="${x.day}: ${fmt(x.total || 0)}" style="flex:1;height:${h}px;background:${col};opacity:${(x.total||0)>0?1:0.3};border-radius:1px"></div>`;
+      return `<div title="${x.day}: ${usd4(x.total || 0)}" style="flex:1;height:${h}px;background:${col};opacity:${(x.total||0)>0?1:0.3};border-radius:1px"></div>`;
     }).join('');
 
     body.innerHTML = `
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-bottom:16px">
-        <div><div style="color:#888;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;font-family:'Space Mono',monospace">Today</div><div style="color:#c8f135;font-size:20px;font-weight:700;font-family:'Space Mono',monospace;margin-top:2px">${fmt(todayCost)}</div></div>
-        <div><div style="color:#888;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;font-family:'Space Mono',monospace">7-day</div><div style="color:#fff;font-size:20px;font-weight:700;font-family:'Space Mono',monospace;margin-top:2px">${fmt(weekCost)}</div></div>
-        <div><div style="color:#888;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;font-family:'Space Mono',monospace">30-day</div><div style="color:#fff;font-size:20px;font-weight:700;font-family:'Space Mono',monospace;margin-top:2px">${fmt(monthCost)}</div></div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px">
+        <div><div style="color:#888;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;font-family:'Space Mono',monospace">Today</div><div style="color:#c8f135;font-size:20px;font-weight:700;font-family:'Space Mono',monospace;margin-top:2px">${fmtCost(todayCost)}</div></div>
+        <div><div style="color:#888;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;font-family:'Space Mono',monospace">7-day</div><div style="color:#fff;font-size:20px;font-weight:700;font-family:'Space Mono',monospace;margin-top:2px">${fmtCost(weekCost)}</div></div>
+        <div><div style="color:#888;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;font-family:'Space Mono',monospace">API 30-day</div><div style="color:#fff;font-size:20px;font-weight:700;font-family:'Space Mono',monospace;margin-top:2px">${fmtCost(monthCost)}</div></div>
+        <div><div style="color:#888;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;font-family:'Space Mono',monospace">Total /mo</div><div style="color:#fff;font-size:20px;font-weight:700;font-family:'Space Mono',monospace;margin-top:2px">${usd2(totalMonthAll)}</div></div>
       </div>
-      <div style="display:flex;gap:2px;align-items:flex-end;height:32px;margin-bottom:14px;background:#0a0a0a;padding:2px;border-radius:2px">${bars}</div>
-      <div>${breakdownRows}</div>
-      <div style="margin-top:10px;font-size:10px;color:#444;font-family:'Space Mono',monospace;letter-spacing:0.05em">Estimates only. Actual usage from Anthropic / SerpAPI / Resend dashboards.</div>
+      <div style="display:flex;gap:2px;align-items:flex-end;height:32px;margin-bottom:18px;background:#0a0a0a;padding:2px;border-radius:2px">${bars}</div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+        <div>
+          <div style="font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:#888;font-family:'Space Mono',monospace;margin-bottom:8px">Variable · last 30 days</div>
+          ${purposeRows}
+        </div>
+        <div>
+          <div style="font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:#888;font-family:'Space Mono',monospace;margin-bottom:8px">Subscriptions · ${usd2(subsMonthly)}/mo</div>
+          ${subsRows}
+        </div>
+      </div>
+      <div style="margin-top:12px;font-size:10px;color:#444;font-family:'Space Mono',monospace;letter-spacing:0.05em">Estimates from per-token / per-call pricing. Verify on each provider dashboard for billing.</div>
     `;
-    if (sub) sub.textContent = `${fmt(monthCost)} / 30 days`;
+    if (sub) sub.textContent = `${usd2(totalMonthAll)} /mo all-in · ${fmtCost(monthCost)} variable`;
   } catch (e) {
     body.innerHTML = `<div style="color:#666;font-family:'Space Mono',monospace;font-size:12px">Spend tracking unavailable.</div>`;
   }
