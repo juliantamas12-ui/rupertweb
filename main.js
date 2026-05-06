@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Peasant Who Made Catherine the Great a Tyrant: Pugachev and the Invention of Modern Russian Serfdom",
+    date: "2026-05-06",
+    category: "History",
+    excerpt: "In September 1773 a semi-literate Cossack deserter declared himself the murdered Tsar Peter III and within ten months commanded an army of a hundred thousand peasants, Cossacks, Old Believers, and frontier tribes. He took Kazan. He massacred the nobility of half a dozen provinces. The standard story is that Catherine crushed the rebellion and resumed her enlightened reforms. The standard story is wrong. What actually happened in the decade after Pugachev is that Catherine the Great, the most prolific reader of the French Enlightenment ever to wear a crown, doubled the percentage of Russians held in legal servitude and built the system of bondage that would not be dismantled until 1861...",
+    url: "essays/2026-05-06-the-peasant-who-made-catherine-the-great-a-tyrant-pugachev-and-the-invention-of-modern-russian-serfdom.html"
+  },
+  {
     title: "The Bond Vigilantes of 1994: How a Bunch of Traders Mugged Bill Clinton",
     date: "2026-05-05",
     category: "Economics",
