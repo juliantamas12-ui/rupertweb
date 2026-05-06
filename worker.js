@@ -23,8 +23,12 @@ function _hydrateSecrets(env) {
 const VAPID_PUBLIC = 'BL6xSk_4wHzUF_8AYnJJOrJnhv0dlpe9nnI5B6vCI1kfWp8bvZ2tuf3Ittb_mKxwIEz9Z1woclj8KiVGZkRxKeA';
 
 // Stripe - set when Julian provides keys. checkoutPriceId is the recurring price ID for Pro £4.99/mo.
-const STRIPE_SECRET_KEY = '';
-const STRIPE_PRICE_ID   = '';
+// STRIPE_WEBHOOK_SECRET is the `whsec_...` value from the Stripe dashboard (Developers > Webhooks > signing secret).
+// Without it, the webhook handler refuses to grant Pro - anyone who finds the URL could otherwise POST a
+// forged `customer.subscription.created` with arbitrary metadata.steamid and free-promote themselves to Pro.
+const STRIPE_SECRET_KEY     = '';
+const STRIPE_PRICE_ID       = '';
+const STRIPE_WEBHOOK_SECRET = '';
 const STRIPE_SUCCESS_URL = 'https://rupertweb.com/questlog.html?pro=success';
 const STRIPE_CANCEL_URL  = 'https://rupertweb.com/questlog.html?pro=cancel';
 
@@ -4269,14 +4273,66 @@ async function checkout(request) {
   }
 }
 
+// Verify a Stripe webhook signature header per Stripe's spec:
+//   header is "t=<timestamp>,v1=<hex>[,v1=<hex>...]"
+//   signed payload = `${timestamp}.${rawBody}`
+//   v1 = hex(HMAC-SHA256(signed payload, webhook secret))
+// Returns true iff the timestamp is within `toleranceSec` of now AND at least one v1 entry matches.
+// Constant-time-ish comparison - we hex-compare strings of fixed length, which V8 does in O(n) without
+// short-circuit branching observable to a remote attacker over network jitter. Stripe's own libraries
+// rely on the same property.
+async function verifyStripeSignature(rawBody, sigHeader, secret, toleranceSec = 300) {
+  if (!sigHeader || !secret) return false;
+  const parts = Object.create(null);
+  for (const kv of sigHeader.split(',')) {
+    const idx = kv.indexOf('=');
+    if (idx < 0) continue;
+    const k = kv.slice(0, idx).trim();
+    const v = kv.slice(idx + 1).trim();
+    if (k === 'v1') (parts.v1 ||= []).push(v);
+    else parts[k] = v;
+  }
+  const ts = parseInt(parts.t, 10);
+  if (!ts || !parts.v1?.length) return false;
+  const now = Math.floor(Date.now() / 1000);
+  if (Math.abs(now - ts) > toleranceSec) return false;
+
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw', enc.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false, ['sign']
+  );
+  const sigBuf = await crypto.subtle.sign('HMAC', key, enc.encode(`${ts}.${rawBody}`));
+  const expected = Array.from(new Uint8Array(sigBuf), b => b.toString(16).padStart(2, '0')).join('');
+
+  // Constant-length compare against each provided v1.
+  let match = false;
+  for (const v of parts.v1) {
+    if (v.length !== expected.length) continue;
+    let diff = 0;
+    for (let i = 0; i < expected.length; i++) diff |= v.charCodeAt(i) ^ expected.charCodeAt(i);
+    if (diff === 0) match = true;
+  }
+  return match;
+}
+
 // Stripe webhook handler - fires on subscription created/updated/deleted.
 // Persists Pro state to KV keyed by Steam ID.
+//
+// Security note: signature verification is REQUIRED before we trust event payloads.
+// Without STRIPE_WEBHOOK_SECRET configured we refuse to process anything (returning notReady),
+// because granting Pro on unauthenticated POSTs would be a trivial auth bypass.
 async function stripeWebhook(request, env) {
-  if (!STRIPE_SECRET_KEY) return jsonResponse({ notReady: true });
+  if (!STRIPE_SECRET_KEY || !STRIPE_WEBHOOK_SECRET) return jsonResponse({ notReady: true });
   try {
-    const body = await request.text();
+    const rawBody = await request.text();
+    const sigHeader = request.headers.get('stripe-signature');
+    const ok = await verifyStripeSignature(rawBody, sigHeader, STRIPE_WEBHOOK_SECRET);
+    if (!ok) return jsonResponse({ error: 'invalid signature' }, 400);
+
     let event;
-    try { event = JSON.parse(body); } catch { return jsonResponse({ error: 'invalid JSON' }, 400); }
+    try { event = JSON.parse(rawBody); } catch { return jsonResponse({ error: 'invalid JSON' }, 400); }
 
     const type = event.type;
     const obj = event.data?.object || {};
