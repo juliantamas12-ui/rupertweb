@@ -358,18 +358,6 @@ const SCHOOL_TASKS = [
     "status": "upcoming"
   },
   {
-    "title": "Vocabulary Slideshow #2",
-    "due": "",
-    "subject": "",
-    "status": "upcoming"
-  },
-  {
-    "title": "Classwork Science 7",
-    "due": "",
-    "subject": "",
-    "status": "upcoming"
-  },
-  {
     "title": "Math 8: Rotating 2-D Shapes",
     "due": "",
     "subject": "",
