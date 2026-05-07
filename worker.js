@@ -4615,10 +4615,22 @@ async function scribeResearch(url, env) {
 
     const hasAnySignal = wikiSummary || mainResults.length || regretResults.length || wisdomResults.length;
     if (!hasAnySignal) {
+      // Build a diagnostic so we can tell whether Brave/SerpAPI/Wikipedia each succeeded
+      const diag = {
+        braveConfigured: !!BRAVE_API_KEY,
+        serpapiConfigured: !!SERPAPI_KEY,
+        searchAttempts: settled.slice(0, 3).map((s, i) => ({
+          query: queries[i],
+          status: s.status,
+          reason: s.status === 'rejected' ? String(s.reason).slice(0, 200) : null,
+        })),
+        wikipedia: settled[3].status === 'fulfilled' ? 'fulfilled (empty)' : `rejected: ${String(settled[3].reason).slice(0, 200)}`,
+      };
       return jsonResponse({
         name,
-        error: 'No data sources available. Both web search and Wikipedia returned nothing for this name. Try again later or check the spelling.',
+        error: 'No data sources returned anything for this name. Diagnostics attached.',
         warnings,
+        diag,
       }, 503);
     }
 
@@ -4697,16 +4709,51 @@ async function serpSearch(q, env) {
 }
 
 async function fetchWikiSummary(name) {
+  // 1. Try direct page-title lookup
   try {
     const slug = encodeURIComponent(name.replace(/ /g, '_'));
-    const r = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${slug}`);
+    const r = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${slug}`, {
+      headers: { 'User-Agent': 'rupertweb-scribe/1.0 (https://rupertweb.com)' },
+    });
+    if (r.ok) {
+      const d = await r.json();
+      if (d.extract) return {
+        title: d.title,
+        description: d.description,
+        extract: d.extract,
+        url: d.content_urls?.desktop?.page,
+      };
+    }
+  } catch {}
+
+  // 2. Fall back to Wikipedia search API (handles disambiguation, partial names)
+  try {
+    const su = new URL('https://en.wikipedia.org/w/api.php');
+    su.searchParams.set('action', 'query');
+    su.searchParams.set('list', 'search');
+    su.searchParams.set('srsearch', name);
+    su.searchParams.set('srlimit', '1');
+    su.searchParams.set('format', 'json');
+    su.searchParams.set('origin', '*');
+    const r = await fetch(su.toString(), {
+      headers: { 'User-Agent': 'rupertweb-scribe/1.0 (https://rupertweb.com)' },
+    });
     if (!r.ok) return null;
     const d = await r.json();
+    const top = d?.query?.search?.[0];
+    if (!top) return null;
+    // Now fetch summary for the matched title
+    const slug2 = encodeURIComponent(top.title.replace(/ /g, '_'));
+    const r2 = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${slug2}`, {
+      headers: { 'User-Agent': 'rupertweb-scribe/1.0 (https://rupertweb.com)' },
+    });
+    if (!r2.ok) return null;
+    const d2 = await r2.json();
     return {
-      title: d.title,
-      description: d.description,
-      extract: d.extract,
-      url: d.content_urls?.desktop?.page,
+      title: d2.title,
+      description: d2.description,
+      extract: d2.extract,
+      url: d2.content_urls?.desktop?.page,
     };
   } catch { return null; }
 }

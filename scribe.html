@@ -436,7 +436,12 @@ async function doResearch() {
   try {
     const r = await fetch('/api/scribe/research?name=' + encodeURIComponent(name));
     const d = await r.json();
-    if (d.error) throw new Error(d.error);
+    if (d.error) {
+      let extra = '';
+      if (d.diag) extra = '<pre style="margin-top:10px;font-size:11px;color:#888;white-space:pre-wrap;font-family:monospace;background:#fafaf2;padding:10px;border-radius:4px">' + escapeHtml(JSON.stringify(d.diag, null, 2)) + '</pre>';
+      out.innerHTML = `<div style="padding:18px;background:#fff0f0;border:1px solid #d99"><b>${escapeHtml(d.error)}</b>${extra}</div>`;
+      return;
+    }
     out.innerHTML = renderResearch(d);
   } catch (e) {
     out.innerHTML = `<div style="padding:18px;background:#fff0f0;border:1px solid #d99">Error: ${e.message}</div>`;
