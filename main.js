@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Weekend That Made Partition Inevitable: Jinnah's Direct Action Day",
+    date: "2026-05-07",
+    category: "History",
+    excerpt: "On 16 August 1946 Jinnah called for a general strike across British India. By the morning of 17 August Calcutta was on fire. Four days later perhaps 10,000 people were dead in a single city, the corpses so thick that the British garrison commander ordered army trucks to dump them in the Hooghly because the burning ghats and graveyards could not keep pace. The standard textbook version is that this was a tragic communal explosion that convinced a war-exhausted Britain to leave India in a hurry. The standard version misses the point. Direct Action Day was not a riot that got out of hand. It was a demonstration by a constitutional politician who had run out of constitutional moves, and the thing being demonstrated was that Jinnah could produce as many corpses as he needed...",
+    url: "essays/2026-05-07-the-weekend-that-made-partition-inevitable-jinnahs-direct-action-day.html"
+  },
+  {
     title: "The Peasant Who Made Catherine the Great a Tyrant: Pugachev and the Invention of Modern Russian Serfdom",
     date: "2026-05-06",
     category: "History",
