@@ -1311,7 +1311,10 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
           <span style="background:var(--accent);color:#000;font-size:10px;font-weight:800;padding:4px 10px;border-radius:3px;letter-spacing:1.5px">PRO ACTIVE</span>
           <span style="font-size:13px;color:var(--text)">Thanks for being Pro. All features below are unlocked.</span>
         </div>
-        <button onclick="togglePro()" style="background:transparent;color:var(--dim);border:1px solid var(--border);padding:6px 12px;border-radius:4px;font-size:11px;cursor:pointer;font-family:inherit">Disable demo</button>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button id="manageSubBtn" onclick="manageSubscription()" style="display:none;background:transparent;color:var(--accent);border:1px solid var(--accent);padding:6px 12px;border-radius:4px;font-size:11px;cursor:pointer;font-family:inherit;font-weight:600">Manage subscription</button>
+          <button onclick="togglePro()" style="background:transparent;color:var(--dim);border:1px solid var(--border);padding:6px 12px;border-radius:4px;font-size:11px;cursor:pointer;font-family:inherit">Disable demo</button>
+        </div>
       </div>
 
       <div class="sub-tab-bar" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:24px;overflow-x:auto">
@@ -2677,6 +2680,35 @@ function renderProHub() {
   // Hide the home upgrade banner once user is Pro
   const homeBanner = document.getElementById('homeProBanner');
   if (homeBanner) homeBanner.style.display = active ? 'none' : 'flex';
+  // Show "Manage subscription" only for *paying* Pro users (server-active),
+  // not demo togglers and not whitelisted owner accounts. Stripe billing
+  // portal needs a customerId, which only exists for real subscriptions.
+  const manageBtn = document.getElementById('manageSubBtn');
+  if (manageBtn) manageBtn.style.display = STATE.serverProActive ? 'inline-block' : 'none';
+}
+
+// Open Stripe-hosted billing portal so Pro users can cancel, update card,
+// or view invoices without contacting support. Endpoint returns:
+//   {url}        -> redirect there
+//   {notReady}   -> Stripe key not yet configured (pre-launch)
+//   {noCustomer} -> no Stripe customer on file (shouldn't happen for serverPro,
+//                   but guard anyway in case webhook missed customerId).
+async function manageSubscription() {
+  if (!STATE.sid) { alert('Sign in with Steam first.'); return; }
+  try {
+    const r = await fetch('/api/stripe/billing-portal', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sid: STATE.sid }),
+    });
+    const d = await r.json();
+    if (d.url) { window.location.href = d.url; return; }
+    if (d.notReady) { alert('Subscription management isn\u2019t live yet \u2013 Stripe is being finalised. Email julian.tamas12@gmail.com if you need to cancel in the meantime.'); return; }
+    if (d.noCustomer) { alert('No Stripe subscription found on this account. If you paid for Pro and see this, email julian.tamas12@gmail.com.'); return; }
+    alert('Could not open billing portal: ' + (d.error || 'unknown error'));
+  } catch (e) {
+    alert('Billing portal unavailable right now. ' + e.message);
+  }
 }
 
 function goToPro() {

@@ -75,6 +75,7 @@ export default {
     try {
       if (p === '/api/fleet-signup' && request.method === 'POST')     return handleFleetSignup(request, env);
       if (p === '/api/checkout' && request.method === 'POST')         return checkout(request);
+      if (p === '/api/stripe/billing-portal' && request.method === 'POST') return billingPortal(request, env);
       if (p === '/api/stripe/webhook' && request.method === 'POST')   return stripeWebhook(request, env);
       if (p === '/api/pro-status')                                    return proStatus(url, env);
       if (p === '/api/push/vapid-key')                                return jsonResponse({ key: VAPID_PUBLIC });
@@ -4258,6 +4259,46 @@ async function checkout(request) {
     if (profile) params.set('subscription_data[metadata][profile]', profile);
 
     const r = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${STRIPE_SECRET_KEY}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: params.toString(),
+    });
+    const d = await r.json();
+    if (!r.ok) return jsonResponse({ error: d?.error?.message || 'Stripe error' }, 500);
+    return jsonResponse({ url: d.url });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
+  }
+}
+
+// Stripe billing portal redirect.
+//   Pro users hit this from the "Manage subscription" button in the PRO ACTIVE
+//   header. We look up their stored customerId (written by stripeWebhook on
+//   subscription.created/updated/checkout.session.completed) and POST it to
+//   Stripe to mint a one-time portal session URL, then return it for the
+//   frontend to redirect to. The portal handles cancel / update card / view
+//   invoices server-side - no card data ever touches our worker.
+//
+//   Failure modes are explicit so the frontend can show useful copy:
+//     - notReady   : STRIPE_SECRET_KEY not configured (pre-launch)
+//     - noCustomer : sid has no pro:${sid} record yet, or no customerId on it
+//                    (e.g. whitelist/demo Pro users - they have nothing to manage)
+async function billingPortal(request, env) {
+  if (!STRIPE_SECRET_KEY) return jsonResponse({ notReady: true });
+  try {
+    const { sid } = await request.json();
+    if (!sid) return jsonResponse({ error: 'sid required' }, 400);
+    const pro = await kvGet(env, `pro:${sid}`);
+    if (!pro?.customerId) return jsonResponse({ noCustomer: true }, 404);
+
+    const params = new URLSearchParams();
+    params.set('customer', pro.customerId);
+    params.set('return_url', STRIPE_SUCCESS_URL.replace('?pro=success', '') || 'https://rupertweb.com/questlog.html');
+
+    const r = await fetch('https://api.stripe.com/v1/billing_portal/sessions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${STRIPE_SECRET_KEY}`,
