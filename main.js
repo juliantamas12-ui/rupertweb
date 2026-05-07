@@ -654,6 +654,7 @@ async function renderSpend() {
         openai: 'GPT-4o',
         elevenlabs: 'ElevenLabs TTS',
         serpapi: 'SerpAPI',
+        brave: 'Brave Search',
         resend: 'Resend',
         fixed: 'Other',
       }[kind] || kind;

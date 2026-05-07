@@ -7,6 +7,7 @@
 let STEAM_KEY = '';
 let RESEND_KEY = '';
 let SERPAPI_KEY = '';
+let BRAVE_API_KEY = '';
 const DEFAULT_STEAM_ID = null;
 const OWNER_EMAIL = 'julian.tamas12@gmail.com';
 const ANTHROPIC_KEY_FALLBACK = '';
@@ -14,9 +15,10 @@ const ANTHROPIC_KEY_FALLBACK = '';
 // Resolve env-bound secrets the first time we get a request.
 function _hydrateSecrets(env) {
   if (!env) return;
-  if (env.STEAM_KEY)    STEAM_KEY    = env.STEAM_KEY;
-  if (env.RESEND_KEY)   RESEND_KEY   = env.RESEND_KEY;
-  if (env.SERPAPI_KEY)  SERPAPI_KEY  = env.SERPAPI_KEY;
+  if (env.STEAM_KEY)      STEAM_KEY      = env.STEAM_KEY;
+  if (env.RESEND_KEY)     RESEND_KEY     = env.RESEND_KEY;
+  if (env.SERPAPI_KEY)    SERPAPI_KEY    = env.SERPAPI_KEY;
+  if (env.BRAVE_API_KEY)  BRAVE_API_KEY  = env.BRAVE_API_KEY;
 }
 
 // VAPID for web push notifications
@@ -4587,44 +4589,35 @@ async function scribeResearch(url, env) {
   }
 
   try {
-    // Each SerpAPI call is independent — if one 429s or fails, keep the others.
+    const queries = [
+      `${name} founder biography career`,
+      `${name} regret OR mistake OR "would do differently"`,
+      `${name} advice young founders OR "younger self"`,
+    ];
+    // Brave first (preferred), SerpAPI as fallback.
     const settled = await Promise.allSettled([
-      serpSearch(`${name} founder biography career`, env),
-      serpSearch(`${name} regret OR mistake OR "would do differently"`, env),
-      serpSearch(`${name} advice young founders OR "younger self"`, env),
+      ...queries.map(q => webSearch(q, env)),
       fetchWikiSummary(name),
     ]);
-    const pick = (s) => (s.status === 'fulfilled' ? s.value : null) || {};
-    const mainSearch = pick(settled[0]);
-    const regretSearch = pick(settled[1]);
-    const wisdomSearch = pick(settled[2]);
-    const wikiSummary = settled[3].status === 'fulfilled' ? settled[3].value : null;
+    const pick = (s) => (s.status === 'fulfilled' && Array.isArray(s.value) ? s.value : []);
+    const mainResults   = pick(settled[0]).slice(0, 8);
+    const regretResults = pick(settled[1]).slice(0, 5);
+    const wisdomResults = pick(settled[2]).slice(0, 5);
+    const wikiSummary   = settled[3].status === 'fulfilled' ? settled[3].value : null;
 
-    const serpFailures = settled.slice(0, 3).filter(s => s.status === 'rejected').length;
-    const serpRateLimited = settled.slice(0, 3).some(s => s.status === 'rejected' && /HTTP 429|rate/i.test(String(s.reason)));
+    const searchFailures = settled.slice(0, 3).filter(s => s.status === 'rejected').length;
+    const rateLimited    = settled.slice(0, 3).some(s => s.status === 'rejected' && /HTTP 429|rate/i.test(String(s.reason)));
     const warnings = [];
-    if (serpRateLimited) warnings.push('SerpAPI is rate-limited (free plan = 100 searches / month). Wikipedia + AI synthesis still working.');
-    else if (serpFailures > 0) warnings.push(`${serpFailures} of 3 web searches failed. Result is partial.`);
+    if (rateLimited) warnings.push('Web search backends rate-limited. Wikipedia + AI synthesis still working.');
+    else if (searchFailures > 0) warnings.push(`${searchFailures} of 3 web searches failed. Result is partial.`);
 
-    const rawSignals = {
-      name,
-      wikipedia: wikiSummary,
-      mainResults: (mainSearch.organic_results || []).slice(0, 8).map(r => ({
-        title: r.title, snippet: r.snippet, link: r.link, source: r.displayed_link,
-      })),
-      regretResults: (regretSearch.organic_results || []).slice(0, 5).map(r => ({
-        title: r.title, snippet: r.snippet, link: r.link,
-      })),
-      wisdomResults: (wisdomSearch.organic_results || []).slice(0, 5).map(r => ({
-        title: r.title, snippet: r.snippet, link: r.link,
-      })),
-    };
+    const rawSignals = { name, wikipedia: wikiSummary, mainResults, regretResults, wisdomResults };
 
-    const hasAnySignal = wikiSummary || rawSignals.mainResults.length || rawSignals.regretResults.length || rawSignals.wisdomResults.length;
+    const hasAnySignal = wikiSummary || mainResults.length || regretResults.length || wisdomResults.length;
     if (!hasAnySignal) {
       return jsonResponse({
         name,
-        error: 'No data sources available. SerpAPI rate-limited and Wikipedia returned nothing for this name. Try again later or check the spelling.',
+        error: 'No data sources available. Both web search and Wikipedia returned nothing for this name. Try again later or check the spelling.',
         warnings,
       }, 503);
     }
@@ -4634,12 +4627,62 @@ async function scribeResearch(url, env) {
     if (anthropicKey) synthesis = await anthropicSynthesis(anthropicKey, name, rawSignals, env);
 
     const out = { name, fetchedAt: Date.now(), synthesis, raw: rawSignals, warnings };
-    // Only cache if we got real data (don't cache rate-limited partials for 7 days)
-    if (!serpRateLimited) await kvPut(env, cacheKey, out);
+    // Only cache if we got real data
+    if (!rateLimited) await kvPut(env, cacheKey, out);
     return jsonResponse(out);
   } catch (e) {
     return jsonResponse({ error: e.message }, 500);
   }
+}
+
+// Unified web search: Brave first, SerpAPI fallback. Returns a normalised array of
+// { title, snippet, link, source } so the synthesis prompt is backend-agnostic.
+async function webSearch(q, env) {
+  // Try Brave first if we have a key
+  if (BRAVE_API_KEY) {
+    try {
+      const res = await braveSearch(q, env);
+      if (res && res.length) return res;
+    } catch (e) {
+      // Brave failed (rate limit, downtime, etc.) — fall through to SerpAPI
+    }
+  }
+  // SerpAPI fallback
+  if (SERPAPI_KEY) {
+    try {
+      const raw = await serpSearch(q, env);
+      return (raw.organic_results || []).map(r => ({
+        title: r.title, snippet: r.snippet, link: r.link, source: r.displayed_link,
+      }));
+    } catch (e) {
+      throw e; // Let scribeResearch see the failure
+    }
+  }
+  return [];
+}
+
+async function braveSearch(q, env) {
+  const u = new URL('https://api.search.brave.com/res/v1/web/search');
+  u.searchParams.set('q', q);
+  u.searchParams.set('count', '10');
+  u.searchParams.set('safesearch', 'moderate');
+  const r = await fetch(u.toString(), {
+    headers: {
+      'Accept': 'application/json',
+      'Accept-Encoding': 'gzip',
+      'X-Subscription-Token': BRAVE_API_KEY,
+    },
+  });
+  if (!r.ok) throw new Error(`HTTP ${r.status} on brave search`);
+  const d = await r.json();
+  if (env) logSpend(env, 'brave', { q, purpose: 'scribe' });
+  const items = d?.web?.results || [];
+  return items.map(it => ({
+    title:   it.title || '',
+    snippet: it.description || '',
+    link:    it.url || '',
+    source:  it.profile?.name || (it.url ? new URL(it.url).hostname : ''),
+  }));
 }
 
 async function serpSearch(q, env) {
@@ -4746,6 +4789,8 @@ const SPEND_PRICES = {
   elevenlabs_chars: 0.0003,
   // SerpAPI Developer plan: 100 free/mo then $5/1000
   serpapi_call:     5.00 / 1000,
+  // Brave Search free tier 2k/mo, then $5/1000 on Pro
+  brave_call:       5.00 / 1000,
   // Resend: 100/day free then $0.001/email
   resend_email:     0.001,
 };
@@ -4780,6 +4825,8 @@ async function logSpend(env, kind, meta = {}) {
       cost = (parseInt(meta.chars || 0)) * SPEND_PRICES.elevenlabs_chars;
     } else if (kind === 'serpapi') {
       cost = SPEND_PRICES.serpapi_call;
+    } else if (kind === 'brave') {
+      cost = SPEND_PRICES.brave_call;
     } else if (kind === 'resend') {
       cost = SPEND_PRICES.resend_email;
     } else if (kind === 'fixed') {
