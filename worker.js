@@ -12,25 +12,34 @@ const DEFAULT_STEAM_ID = null;
 const OWNER_EMAIL = 'julian.tamas12@gmail.com';
 const ANTHROPIC_KEY_FALLBACK = '';
 
+// Stripe - set via wrangler secrets when Julian provisions keys. STRIPE_PRICE_ID is the recurring price ID
+// for Pro £4.99/mo. STRIPE_WEBHOOK_SECRET is the `whsec_...` value from the Stripe dashboard
+// (Developers > Webhooks > signing secret). Without it, the webhook handler refuses to process events -
+// anyone who finds the URL could otherwise POST a forged `customer.subscription.created` with arbitrary
+// metadata.steamid and free-promote themselves to Pro.
+//
+// Set with:
+//   wrangler secret put STRIPE_SECRET_KEY
+//   wrangler secret put STRIPE_PRICE_ID
+//   wrangler secret put STRIPE_WEBHOOK_SECRET
+let STRIPE_SECRET_KEY     = '';
+let STRIPE_PRICE_ID       = '';
+let STRIPE_WEBHOOK_SECRET = '';
+
 // Resolve env-bound secrets the first time we get a request.
 function _hydrateSecrets(env) {
   if (!env) return;
-  if (env.STEAM_KEY)      STEAM_KEY      = env.STEAM_KEY;
-  if (env.RESEND_KEY)     RESEND_KEY     = env.RESEND_KEY;
-  if (env.SERPAPI_KEY)    SERPAPI_KEY    = env.SERPAPI_KEY;
-  if (env.BRAVE_API_KEY)  BRAVE_API_KEY  = env.BRAVE_API_KEY;
+  if (env.STEAM_KEY)             STEAM_KEY             = env.STEAM_KEY;
+  if (env.RESEND_KEY)            RESEND_KEY            = env.RESEND_KEY;
+  if (env.SERPAPI_KEY)           SERPAPI_KEY           = env.SERPAPI_KEY;
+  if (env.BRAVE_API_KEY)         BRAVE_API_KEY         = env.BRAVE_API_KEY;
+  if (env.STRIPE_SECRET_KEY)     STRIPE_SECRET_KEY     = env.STRIPE_SECRET_KEY;
+  if (env.STRIPE_PRICE_ID)       STRIPE_PRICE_ID       = env.STRIPE_PRICE_ID;
+  if (env.STRIPE_WEBHOOK_SECRET) STRIPE_WEBHOOK_SECRET = env.STRIPE_WEBHOOK_SECRET;
 }
 
 // VAPID for web push notifications
 const VAPID_PUBLIC = 'BL6xSk_4wHzUF_8AYnJJOrJnhv0dlpe9nnI5B6vCI1kfWp8bvZ2tuf3Ittb_mKxwIEz9Z1woclj8KiVGZkRxKeA';
-
-// Stripe - set when Julian provides keys. checkoutPriceId is the recurring price ID for Pro £4.99/mo.
-// STRIPE_WEBHOOK_SECRET is the `whsec_...` value from the Stripe dashboard (Developers > Webhooks > signing secret).
-// Without it, the webhook handler refuses to grant Pro - anyone who finds the URL could otherwise POST a
-// forged `customer.subscription.created` with arbitrary metadata.steamid and free-promote themselves to Pro.
-const STRIPE_SECRET_KEY     = '';
-const STRIPE_PRICE_ID       = '';
-const STRIPE_WEBHOOK_SECRET = '';
 const STRIPE_SUCCESS_URL = 'https://rupertweb.com/questlog.html?pro=success';
 const STRIPE_CANCEL_URL  = 'https://rupertweb.com/questlog.html?pro=cancel';
 
