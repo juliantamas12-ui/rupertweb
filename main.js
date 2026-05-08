@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Run on the Pound That Ended the British Empire: Eisenhower, Suez, and the Five Days in November 1956",
+    date: "2026-05-08",
+    category: "History",
+    excerpt: "The conventional account of the Suez Crisis is that Britain, France, and Israel colluded to seize the canal in November 1956, that the United States and the Soviet Union both opposed them, and that the resulting humiliation marked the end of Britain as a great power. This is true in the way that saying 'the Titanic hit an iceberg' is true. It identifies the proximate cause and ignores the mechanism. The mechanism was a deliberate, surgical run on sterling engineered by the Eisenhower administration over five days in early November 1956 — the most precise use of financial coercion by one ally against another in the twentieth century, and the moment at which the United States demonstrated that the dollar was now the only currency that mattered...",
+    url: "essays/2026-05-08-the-run-on-the-pound-that-ended-the-british-empire.html"
+  },
+  {
     title: "The Weekend That Made Partition Inevitable: Jinnah's Direct Action Day",
     date: "2026-05-07",
     category: "History",
