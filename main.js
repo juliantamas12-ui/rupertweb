@@ -372,7 +372,13 @@ const SCHOOL_TASKS = [
     "status": "upcoming"
   },
   {
-    "title": "Math 7 (HW)",
+    "title": "Math 8: Unit 6 Test",
+    "due": "",
+    "subject": "",
+    "status": "upcoming"
+  },
+  {
+    "title": "Math 8: Geometry Unit Test Study Guide",
     "due": "",
     "subject": "",
     "status": "upcoming"
@@ -384,7 +390,7 @@ const SCHOOL_TASKS = [
     "status": "upcoming"
   },
   {
-    "title": "Math 8: Unit 6 Test",
+    "title": "Math 7 (HW)",
     "due": "",
     "subject": "",
     "status": "upcoming"
