@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Last Man Who Could Have Saved the Tsar: Why Stolypin Was Killed by the Okhrana",
+    date: "2026-05-09",
+    category: "History",
+    excerpt: "On the evening of 1 September 1911, in the Kiev Opera House during a gala performance attended by Nicholas II, a 24-year-old anarchist named Dmitry Bogrov shot Pyotr Stolypin twice at point-blank range. The standard line is that Bogrov was a lone fanatic who slipped through inadequate security. The truth is that Bogrov was a paid informant of the Kiev Okhrana, that he was inside the Opera House because the Okhrana had given him the ticket, and that the man Tsar Nicholas was about to dismiss anyway died in a way the regime declined to investigate. A diagnosis, not a tragedy...",
+    url: "essays/2026-05-09-the-last-man-who-could-have-saved-the-tsar.html"
+  },
+  {
     title: "The Run on the Pound That Ended the British Empire: Eisenhower, Suez, and the Five Days in November 1956",
     date: "2026-05-08",
     category: "History",
