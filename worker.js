@@ -4375,6 +4375,25 @@ async function verifyStripeSignature(rawBody, sigHeader, secret, toleranceSec = 
 // Security note: signature verification is REQUIRED before we trust event payloads.
 // Without STRIPE_WEBHOOK_SECRET configured we refuse to process anything (returning notReady),
 // because granting Pro on unauthenticated POSTs would be a trivial auth bypass.
+// Stripe webhook handler.
+//
+// Idempotency + correctness notes (audit fix 2026-05-09):
+//   * Stripe retries failed deliveries up to 3 days. Without dedupe, every
+//     retry re-runs the kvPut and stomps fields like `since` to the latest
+//     timestamp. We dedupe by `event.id` (24h TTL is plenty - Stripe's retry
+//     window is shorter than that).
+//   * `since` records the user's original Pro start date - it must NOT be
+//     overwritten on `subscription.updated` (which fires for trial->active,
+//     payment_method changes, plan changes, status flips, etc). We read the
+//     existing record and preserve `since` if already set.
+//   * `subscriptionId` must come from the right field per event type:
+//       - subscription.created/updated/deleted: obj.id (the sub ID, sub_xxx)
+//       - checkout.session.completed: obj.subscription (the sub ID, sub_xxx).
+//         obj.id on a checkout.session is cs_xxx, NOT a sub ID. The previous
+//         `obj.id || obj.subscription` fallback was wrong for this event.
+//   * `customer.subscription.deleted` previously kvDelete'd the record. We now
+//     mark `active:false` instead so `since`/`subscriptionId` survive for audit
+//     and so a re-subscribe can detect prior status. proStatus reads `active`.
 async function stripeWebhook(request, env) {
   if (!STRIPE_SECRET_KEY || !STRIPE_WEBHOOK_SECRET) return jsonResponse({ notReady: true });
   try {
@@ -4386,6 +4405,15 @@ async function stripeWebhook(request, env) {
     let event;
     try { event = JSON.parse(rawBody); } catch { return jsonResponse({ error: 'invalid JSON' }, 400); }
 
+    // Idempotency: skip events we've already processed (Stripe retries on failure).
+    const eventId = event.id;
+    if (eventId) {
+      const seenKey = `stripe:event:${eventId}`;
+      if (await kvGet(env, seenKey)) {
+        return new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+    }
+
     const type = event.type;
     const obj = event.data?.object || {};
     const sid = obj.metadata?.steamid || obj.client_reference_id;
@@ -4394,16 +4422,40 @@ async function stripeWebhook(request, env) {
       if (type === 'customer.subscription.created' ||
           type === 'customer.subscription.updated' ||
           type === 'checkout.session.completed') {
+        // Pick subscriptionId from the correct field per event type.
+        // checkout.session: obj.id is cs_xxx (a session id, not a sub id).
+        const subscriptionId = (type === 'checkout.session.completed')
+          ? (obj.subscription || null)
+          : (obj.id || null);
+
+        const existing = await kvGet(env, `pro:${sid}`);
         await kvPut(env, `pro:${sid}`, {
           active: true,
-          since: Date.now(),
-          subscriptionId: obj.id || obj.subscription || null,
-          customerId: obj.customer || null,
+          // Preserve original Pro start date across updates.
+          since: existing?.since || Date.now(),
+          subscriptionId: subscriptionId || existing?.subscriptionId || null,
+          customerId: obj.customer || existing?.customerId || null,
           status: obj.status || 'active',
+          updatedAt: Date.now(),
         });
       } else if (type === 'customer.subscription.deleted') {
-        await kvDelete(env, `pro:${sid}`);
+        // Mark inactive instead of deleting - preserves audit trail and lets
+        // proStatus return active:false cleanly. Re-subscribes will reactivate
+        // via the created/updated branch above.
+        const existing = await kvGet(env, `pro:${sid}`);
+        if (existing) {
+          await kvPut(env, `pro:${sid}`, {
+            ...existing,
+            active: false,
+            status: 'canceled',
+            canceledAt: Date.now(),
+          });
+        }
       }
+    }
+
+    if (eventId) {
+      await kvPut(env, `stripe:event:${eventId}`, { at: Date.now(), type }, 86400);
     }
     return new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } });
   } catch (e) {
