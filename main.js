@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Bank That Killed the World Economy: Why Creditanstalt, Not Wall Street, Caused the Great Depression",
+    date: "2026-05-10",
+    category: "History",
+    excerpt: "The single most durable lie in twentieth-century economic history is that the Great Depression began with the Wall Street Crash of October 1929. It did not. By April 1930 the Dow had clawed back nearly half its losses and American industrial production was still above mid-1928. What turned a sharp American recession into a ten-year global depression that destroyed three empires and produced Hitler was a run on a single Austrian bank in May 1931, and more specifically the French government's deliberate decision to let that bank fail in order to extract a political concession from Vienna over a customs union the Hague was about to strike down anyway. The Great Depression was not caused. It was chosen...",
+    url: "essays/2026-05-10-the-bank-that-killed-the-world-economy.html"
+  },
+  {
     title: "The Last Man Who Could Have Saved the Tsar: Why Stolypin Was Killed by the Okhrana",
     date: "2026-05-09",
     category: "History",
