@@ -4148,18 +4148,77 @@ async function pushUnsubscribe(request, env) {
 }
 
 // Cross-device wishlist sync
+//
+// Shape contract (enforced by sanitizeWishlist): items is an array of either
+//   - a positive integer appid (1..2^31-1, also accepts numeric strings), or
+//   - an object whose .appid (or legacy .id) parses as such.
+// Object items are normalised to {appid:Number, name?:string, header_image?:string,
+// store_url?:string} - extra fields are dropped. Anything else (null, garbage
+// strings, deeply nested objects) is silently filtered. A POST that produces
+// zero valid items after filtering is rejected (so a typo can't wipe a
+// previously-good wishlist on a sync round-trip), and the array is capped at
+// MAX_WISHLIST_ITEMS to keep the cron's per-user subrequest budget bounded
+// and the KV value size sane.
+const MAX_WISHLIST_ITEMS = 1000;
+const MAX_SID_LEN = 64;
+const SID_RE = /^[A-Za-z0-9_-]{1,64}$/;
+
+function _validAppid(v) {
+  // Accept numbers or numeric strings; Steam appids are positive ints, current
+  // max in the wild is ~9 digits. Reject NaN/Infinity/floats/negatives.
+  const n = typeof v === 'number' ? v : (typeof v === 'string' && /^\d{1,10}$/.test(v) ? Number(v) : NaN);
+  return Number.isInteger(n) && n > 0 && n < 2147483647 ? n : null;
+}
+function _clipStr(s, max) {
+  return typeof s === 'string' ? s.slice(0, max) : undefined;
+}
+function sanitizeWishlist(items) {
+  if (!Array.isArray(items)) return null;
+  const out = [];
+  const seen = new Set();
+  for (const it of items.slice(0, MAX_WISHLIST_ITEMS)) {
+    let appid, name, header_image, store_url;
+    if (it && typeof it === 'object' && !Array.isArray(it)) {
+      appid = _validAppid(it.appid ?? it.id);
+      name = _clipStr(it.name, 200);
+      header_image = _clipStr(it.header_image, 500);
+      store_url = _clipStr(it.store_url, 500);
+    } else {
+      appid = _validAppid(it);
+    }
+    if (!appid || seen.has(appid)) continue;
+    seen.add(appid);
+    const rec = { appid };
+    if (name) rec.name = name;
+    if (header_image) rec.header_image = header_image;
+    if (store_url) rec.store_url = store_url;
+    out.push(rec);
+  }
+  return out;
+}
+
 async function wishlistGet(url, env) {
   const sid = url.searchParams.get('sid');
-  if (!sid) return jsonResponse({ error: 'sid required' }, 400);
+  if (!sid || !SID_RE.test(sid)) return jsonResponse({ error: 'sid required' }, 400);
   const data = await kvGet(env, `wishlist:${sid}`);
   return jsonResponse({ items: data || [] });
 }
 async function wishlistPut(request, env) {
   try {
     const { sid, items } = await request.json();
-    if (!sid || !Array.isArray(items)) return jsonResponse({ error: 'sid + items required' }, 400);
-    await kvPut(env, `wishlist:${sid}`, items);
-    return jsonResponse({ ok: true, count: items.length });
+    if (!sid || typeof sid !== 'string' || sid.length > MAX_SID_LEN || !SID_RE.test(sid)) {
+      return jsonResponse({ error: 'invalid sid' }, 400);
+    }
+    const clean = sanitizeWishlist(items);
+    if (!clean) return jsonResponse({ error: 'items must be an array' }, 400);
+    if (!clean.length) {
+      // Reject empty result rather than overwrite an existing good wishlist
+      // with []. Clients that genuinely want to clear can DELETE (not wired
+      // yet) - safer to surface this loudly than silently nuke data.
+      return jsonResponse({ error: 'no valid items', received: Array.isArray(items) ? items.length : 0 }, 400);
+    }
+    await kvPut(env, `wishlist:${sid}`, clean);
+    return jsonResponse({ ok: true, count: clean.length, dropped: (Array.isArray(items) ? items.length : 0) - clean.length });
   } catch (e) {
     return jsonResponse({ error: e.message }, 500);
   }
