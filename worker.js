@@ -4121,13 +4121,53 @@ async function handleFleetSignup(request, env) {
 // PUSH NOTIFICATIONS
 // ════════════════════════════════════════════════════════
 
+// Push subscription shape contract (enforced by sanitizePushSubscription):
+//   - endpoint: must be a string parseable as an https:// URL, max 2KB.
+//     Real-world push endpoints (FCM, Mozilla autopush, Apple) are all https.
+//     Rejecting http:// closes a redirect/SSRF surface where a forged sub
+//     could trick the cron-side dispatcher into hitting an internal host.
+//   - keys.p256dh / keys.auth: base64url strings up to 256 chars each
+//     (real values are ~88 and ~24). Required for aes128gcm payload encrypt.
+//   - expirationTime: pass-through (number or null), pushManager.subscribe
+//     returns this verbatim.
+// Prefs shape (sanitizePushPrefs): exactly 3 booleans matching frontend
+// getPushPrefs() output. Unknown keys dropped, non-bools coerced via Boolean().
+const MAX_PUSH_ENDPOINT_LEN = 2048;
+const MAX_PUSH_KEY_LEN = 256;
+function sanitizePushSubscription(sub) {
+  if (!sub || typeof sub !== 'object') return null;
+  if (typeof sub.endpoint !== 'string' || sub.endpoint.length > MAX_PUSH_ENDPOINT_LEN) return null;
+  let u;
+  try { u = new URL(sub.endpoint); } catch { return null; }
+  if (u.protocol !== 'https:') return null;
+  const k = sub.keys && typeof sub.keys === 'object' ? sub.keys : {};
+  const p256dh = typeof k.p256dh === 'string' && k.p256dh.length > 0 && k.p256dh.length <= MAX_PUSH_KEY_LEN ? k.p256dh : null;
+  const auth = typeof k.auth === 'string' && k.auth.length > 0 && k.auth.length <= MAX_PUSH_KEY_LEN ? k.auth : null;
+  if (!p256dh || !auth) return null;
+  const out = { endpoint: sub.endpoint, keys: { p256dh, auth } };
+  if (typeof sub.expirationTime === 'number' || sub.expirationTime === null) out.expirationTime = sub.expirationTime;
+  return out;
+}
+function sanitizePushPrefs(prefs) {
+  const p = (prefs && typeof prefs === 'object' && !Array.isArray(prefs)) ? prefs : {};
+  return {
+    priceAlerts: 'priceAlerts' in p ? Boolean(p.priceAlerts) : true,
+    freeGames: 'freeGames' in p ? Boolean(p.freeGames) : true,
+    achievementOfDay: 'achievementOfDay' in p ? Boolean(p.achievementOfDay) : true,
+  };
+}
+
 async function pushSubscribe(request, env) {
   try {
     const { sid, subscription, prefs } = await request.json();
-    if (!sid || !subscription?.endpoint) return jsonResponse({ error: 'sid + subscription required' }, 400);
+    if (!sid || typeof sid !== 'string' || sid.length > MAX_SID_LEN || !SID_RE.test(sid)) {
+      return jsonResponse({ error: 'invalid sid' }, 400);
+    }
+    const cleanSub = sanitizePushSubscription(subscription);
+    if (!cleanSub) return jsonResponse({ error: 'invalid subscription' }, 400);
     await kvPut(env, `push:${sid}`, {
-      subscription,
-      prefs: prefs || { priceAlerts: true, freeGames: true, achievementOfDay: true },
+      subscription: cleanSub,
+      prefs: sanitizePushPrefs(prefs),
       registered: Date.now(),
     });
     return jsonResponse({ ok: true });
@@ -4139,7 +4179,9 @@ async function pushSubscribe(request, env) {
 async function pushUnsubscribe(request, env) {
   try {
     const { sid } = await request.json();
-    if (!sid) return jsonResponse({ error: 'sid required' }, 400);
+    if (!sid || typeof sid !== 'string' || sid.length > MAX_SID_LEN || !SID_RE.test(sid)) {
+      return jsonResponse({ error: 'invalid sid' }, 400);
+    }
     await kvDelete(env, `push:${sid}`);
     return jsonResponse({ ok: true });
   } catch (e) {
@@ -4225,18 +4267,52 @@ async function wishlistPut(request, env) {
 }
 
 // Cross-device journal sync
+//
+// Shape contract (enforced by sanitizeJournal): entries is an array of
+// objects with optional .id (string, <=64), .text (string, <=8000), .ts
+// (number, finite, >0), .appid (positive int). Extra fields are dropped,
+// strings are clipped, anything non-object filtered. Capped at
+// MAX_JOURNAL_ENTRIES total entries. Like wishlist, an empty result after
+// sanitization is rejected rather than silently nuking previously-good data.
+const MAX_JOURNAL_ENTRIES = 500;
+const MAX_JOURNAL_TEXT = 8000;
+function sanitizeJournal(entries) {
+  if (!Array.isArray(entries)) return null;
+  const out = [];
+  for (const e of entries.slice(0, MAX_JOURNAL_ENTRIES)) {
+    if (!e || typeof e !== 'object' || Array.isArray(e)) continue;
+    const rec = {};
+    if (typeof e.id === 'string' && e.id.length > 0 && e.id.length <= 64) rec.id = e.id;
+    if (typeof e.text === 'string') rec.text = e.text.slice(0, MAX_JOURNAL_TEXT);
+    if (typeof e.ts === 'number' && Number.isFinite(e.ts) && e.ts > 0) rec.ts = e.ts;
+    const appid = _validAppid(e.appid);
+    if (appid) rec.appid = appid;
+    if (typeof e.title === 'string') rec.title = e.title.slice(0, 200);
+    // Drop entries that are entirely empty (no text, no title, no appid)
+    if (!rec.text && !rec.title && !rec.appid) continue;
+    out.push(rec);
+  }
+  return out;
+}
 async function journalGet(url, env) {
   const sid = url.searchParams.get('sid');
-  if (!sid) return jsonResponse({ error: 'sid required' }, 400);
+  if (!sid || !SID_RE.test(sid)) return jsonResponse({ error: 'sid required' }, 400);
   const data = await kvGet(env, `journal:${sid}`);
   return jsonResponse({ entries: data || [] });
 }
 async function journalPut(request, env) {
   try {
     const { sid, entries } = await request.json();
-    if (!sid || !Array.isArray(entries)) return jsonResponse({ error: 'sid + entries required' }, 400);
-    await kvPut(env, `journal:${sid}`, entries);
-    return jsonResponse({ ok: true, count: entries.length });
+    if (!sid || typeof sid !== 'string' || sid.length > MAX_SID_LEN || !SID_RE.test(sid)) {
+      return jsonResponse({ error: 'invalid sid' }, 400);
+    }
+    const clean = sanitizeJournal(entries);
+    if (!clean) return jsonResponse({ error: 'entries must be an array' }, 400);
+    if (!clean.length) {
+      return jsonResponse({ error: 'no valid entries', received: Array.isArray(entries) ? entries.length : 0 }, 400);
+    }
+    await kvPut(env, `journal:${sid}`, clean);
+    return jsonResponse({ ok: true, count: clean.length, dropped: (Array.isArray(entries) ? entries.length : 0) - clean.length });
   } catch (e) {
     return jsonResponse({ error: e.message }, 500);
   }
