@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Ambiguity That Made the Modern Middle East: McMahon, Hussein, and the Districts of Damascus",
+    date: "2026-05-11",
+    category: "History",
+    excerpt: "The grievance is canonical. In 1915 and 1916, the British High Commissioner in Cairo, Sir Henry McMahon, exchanged ten letters with the Sharif of Mecca, Hussein bin Ali, promising an independent Arab kingdom in exchange for a revolt against the Ottomans. The Arabs revolted. The British then carved up the promised territory with the French at Sykes-Picot. The Arabs were betrayed. This story is true in outline and badly wrong in detail. The McMahon-Hussein correspondence was not a betrayed promise. It was a deliberately ambiguous document that both sides read against each other, and the ambiguity was Hussein's invention as much as McMahon's...",
+    url: "essays/2026-05-11-the-ambiguity-that-made-the-modern-middle-east.html"
+  },
+  {
     title: "The Bank That Killed the World Economy: Why Creditanstalt, Not Wall Street, Caused the Great Depression",
     date: "2026-05-10",
     category: "History",
