@@ -405,12 +405,6 @@ const SCHOOL_TASKS = [
     "status": "upcoming"
   },
   {
-    "title": "Submit Coursework",
-    "due": "",
-    "subject": "",
-    "status": "upcoming"
-  },
-  {
     "title": "HW Science 7",
     "due": "",
     "subject": "",
