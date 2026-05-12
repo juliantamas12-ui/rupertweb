@@ -139,7 +139,7 @@ export default {
       if (p === '/api/scribe/research')                               return scribeResearch(url, env);
       if (p === '/api/spend')                                         return spendStatus(url, env);
       if (p === '/api/spend/log' && request.method === 'POST')        return spendLog(request, env);
-      if (p === '/api/cron/run-now')                                  return cronRunNow(url, env);
+      if (p === '/api/cron/run-now')                                  return cronRunNow(url, env, request);
 
     } catch (e) {
       return jsonResponse({ error: e.message }, 500);
@@ -4741,9 +4741,40 @@ async function runWishlistPriceWatch(env, opts = {}) {
 // force a wishlist scan without waiting up to an hour for the next hourly
 // cron tick. Self-scoped: only sweeps the sid in the query string, so cost is
 // bounded to one user's PRICE_WATCH_ITEMS_PER_USER subrequests.
-async function cronRunNow(url, env) {
+// /api/cron/run-now?sid=X - on-demand single-user wishlist sweep.
+//   Called by the "Refresh" button on the Recent Price Drops panel and as the
+//   loop-closer for the alerts-pipeline smoke test.
+//
+//   This endpoint triggers up to PRICE_WATCH_ITEMS_PER_USER outbound Steam
+//   appdetails subrequests per call, so without rate limiting it is an abuse
+//   surface: an attacker hitting `?sid=anything` in a loop burns through our
+//   Steam API quota and our Worker subrequest budget. We enforce two limits
+//   via KV with 60s TTL (the KV expirationTtl minimum):
+//     - per-IP   (`ratelimit:run-now:ip:${ip}`)   : caller can't spam from one box
+//     - per-sid  (`ratelimit:run-now:sid:${sid}`) : even from rotating IPs, an
+//                                                   attacker can't re-sweep one
+//                                                   user's wishlist faster than
+//                                                   the hourly cron already does
+//   Both return 429 with a Retry-After hint so well-behaved frontends back off.
+//   Sid is validated against SID_RE (same contract as wishlist/journal/push)
+//   to keep the rate-limit KV key namespace bounded.
+async function cronRunNow(url, env, request) {
   const sid = url.searchParams.get('sid');
-  if (!sid) return jsonResponse({ error: 'sid required' }, 400);
+  if (!sid || typeof sid !== 'string' || sid.length > MAX_SID_LEN || !SID_RE.test(sid)) {
+    return jsonResponse({ error: 'sid required' }, 400);
+  }
+  const ip = request?.headers?.get?.('cf-connecting-ip') || 'unknown';
+  const ipKey  = `ratelimit:run-now:ip:${ip}`;
+  const sidKey = `ratelimit:run-now:sid:${sid}`;
+  const [ipHit, sidHit] = await Promise.all([kvGet(env, ipKey), kvGet(env, sidKey)]);
+  if (ipHit || sidHit) {
+    return jsonResponse({ error: 'rate limited', retryAfter: 60 }, 429);
+  }
+  // Reserve the slot up front so concurrent requests can't slip through.
+  await Promise.all([
+    kvPut(env, ipKey,  { at: Date.now() }, 60),
+    kvPut(env, sidKey, { at: Date.now() }, 60),
+  ]);
   const startedAt = Date.now();
   try {
     const r = await runWishlistPriceWatch(env, { onlySid: sid });
