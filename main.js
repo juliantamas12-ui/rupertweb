@@ -400,31 +400,31 @@ const SCHOOL_TASKS = [
     "status": "upcoming"
   },
   {
-    "title": "Eng 7: Read Part 5",
+    "title": "Math 7 (Formative)",
     "due": "",
     "subject": "",
     "status": "upcoming"
   },
   {
-    "title": "Math 7 (HW)",
+    "title": "Math 8: Probability Worksheet",
+    "due": "",
+    "subject": "",
+    "status": "upcoming"
+  },
+  {
+    "title": "Submit Coursework",
+    "due": "",
+    "subject": "",
+    "status": "upcoming"
+  },
+  {
+    "title": "Classwork Science 7",
     "due": "",
     "subject": "",
     "status": "upcoming"
   },
   {
     "title": "HW Science 7",
-    "due": "",
-    "subject": "",
-    "status": "upcoming"
-  },
-  {
-    "title": "Vocabulary Quiz §10",
-    "due": "",
-    "subject": "",
-    "status": "upcoming"
-  },
-  {
-    "title": "Math 7 (Formative)",
     "due": "",
     "subject": "",
     "status": "upcoming"
