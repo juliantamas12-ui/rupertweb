@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Night Mao's Revolution Ate Itself: Lin Biao and the Trident at Öndörkhaan",
+    date: "2026-05-12",
+    category: "History",
+    excerpt: "At 02:30 on 13 September 1971, a British-built Hawker Siddeley Trident bearing Chinese air force markings crashed in a grassland near Öndörkhaan in eastern Mongolia. One of the burned bodies was Lin Biao — Marshal of the People's Republic, Vice Chairman of the Communist Party, the man Mao had personally inscribed as his successor in the Party constitution two years earlier. The official Chinese explanation was that Lin attempted a coup, failed, and fled toward the Soviet Union until his plane ran out of fuel. This explanation is almost certainly false in its details and entirely true in its meaning, and the gap between the two is where the Cultural Revolution dies...",
+    url: "essays/2026-05-12-the-night-maos-revolution-ate-itself.html"
+  },
+  {
     title: "The Ambiguity That Made the Modern Middle East: McMahon, Hussein, and the Districts of Damascus",
     date: "2026-05-11",
     category: "History",
