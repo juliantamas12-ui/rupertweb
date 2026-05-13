@@ -98,7 +98,7 @@ export default {
       if (p === '/api/journal' && request.method === 'POST')          return journalPut(request, env);
       if (p === '/api/achievement-of-day')                            return achievementOfDay(url);
       if (p === '/api/steam/profile')                                 return steamProfile(url);
-      if (p === '/api/steam/resolve-vanity')                          return steamResolveVanity(url);
+      if (p === '/api/steam/resolve-vanity')                          return steamResolveVanity(url, env, request);
       if (p === '/api/steam/games')                                   return steamGames(url);
       if (p === '/api/steam/recent')                                  return steamRecent(url);
       if (p.startsWith('/api/steam/achievements/'))                   return steamAchievements(url, p);
@@ -231,9 +231,29 @@ function isJunkTitle(title) {
 // STEAM ENDPOINTS
 // ════════════════════════════════════════════════════════
 
-async function steamResolveVanity(url) {
+// Steam vanity URL contract: Steam community URLs are /id/<vanity>; per
+// Steam's own rules vanity URLs are 3-32 chars, [A-Za-z0-9_-]. We accept
+// up to 64 to be lenient on future expansion but stay bounded. Rejecting
+// out-of-shape input here prevents abuse as an open Steam-API proxy and
+// bounds the per-IP rate-limit KV-key namespace.
+//
+// Per-IP rate limit (60s) keeps any single caller from burning the Steam
+// public-API quota by looping the endpoint; the 60s floor matches KV's
+// expirationTtl minimum and is well above the legitimate one-call-per-
+// signup pattern from the Steam ID wizard.
+const VANITY_RE = /^[A-Za-z0-9_-]{1,64}$/;
+async function steamResolveVanity(url, env, request) {
   const v = url.searchParams.get('vanity');
-  if (!v) return jsonResponse({ error: 'vanity required' }, 400);
+  if (!v || typeof v !== 'string' || !VANITY_RE.test(v)) {
+    return jsonResponse({ error: 'vanity required (alphanumeric, _, -, max 64)' }, 400);
+  }
+  const ip = request?.headers?.get?.('cf-connecting-ip') || 'unknown';
+  const rlKey = `ratelimit:resolve-vanity:ip:${ip}`;
+  if (env) {
+    const hit = await kvGet(env, rlKey);
+    if (hit) return jsonResponse({ error: 'rate limited', retryAfter: 60 }, 429);
+    await kvPut(env, rlKey, { at: Date.now() }, 60);
+  }
   try {
     const data = await fetchJSON(`https://api.steampowered.com/ISteamUser/ResolveVanityURL/v1/?key=${STEAM_KEY}&vanityurl=${encodeURIComponent(v)}`);
     if (data?.response?.success === 1 && data.response.steamid) {
