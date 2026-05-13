@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The 55 Days That Killed the Italian Left: Aldo Moro and the Historic Compromise",
+    date: "2026-05-13",
+    category: "History",
+    excerpt: "On the morning of 16 March 1978, a unit of the Red Brigades ambushed Aldo Moro's convoy in Rome, killed his five-man escort in under ninety seconds, and took him alive. Fifty-five days later he was shot eleven times in the boot of a red Renault 4, parked with deliberate symbolism halfway between the Christian Democrat and Communist Party headquarters. The conventional reading is that a small Marxist terror cell derailed Italy's evolution toward a left-Catholic governing coalition. This reading is correct in mechanism and wrong in agency. The Red Brigades pulled the trigger. They did not decide that Moro should die. That decision was made by the Italian state — in full knowledge that refusal to negotiate meant his execution, because Moro himself, in eighty-six smuggled letters, said so explicitly...",
+    url: "essays/2026-05-13-the-55-days-that-killed-the-italian-left.html"
+  },
+  {
     title: "The Night Mao's Revolution Ate Itself: Lin Biao and the Trident at Öndörkhaan",
     date: "2026-05-12",
     category: "History",
