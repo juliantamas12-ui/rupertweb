@@ -196,16 +196,16 @@ footer .right a:hover{color:var(--accent)}
 <section class="hero">
   <div class="hero-left">
     <h1>Letters to the people who <span class="em">built the world.</span></h1>
-    <p class="lede">Two students writing — by hand, by post — to the founders, investors and operators they admire. Asking the three questions an AI cannot answer. The replies become a book.</p>
+    <p class="lede"><strong>The Praefatio</strong> is a research project by two students, Julian and Rocco. We write hand-typed letters to the founders, investors and operators we want to learn from - asking each one a single, deeply-researched question about a turning point in their life. The replies, with permission, become a book.</p>
 
     <div class="hero-meta-row">
-      <span>Handwritten</span>
-      <span>50 letters · 30 founders</span>
+      <span>In preparation</span>
+      <span>First letters: summer 2026</span>
       <span>Edition 01 · MMXXVI</span>
     </div>
 
     <div class="subscribe-inline">
-      <div class="label">Leave an address. We send you the first letter when it's ready.</div>
+      <div class="label">Leave an address. We send you the first published letter when it's ready.</div>
       <form onsubmit="handleSubscribe(event)">
         <input type="email" id="subscribeEmail" placeholder="your@email.com" required>
         <button type="submit" id="subscribeBtn">Subscribe <span>→</span></button>
@@ -217,18 +217,18 @@ footer .right a:hover{color:var(--accent)}
   <div class="hero-right">
     <div class="letter-card">
       <div class="head">
-        <span>Specimen · Letter № 01</span>
+        <span>Specimen · In preparation</span>
         <span class="red">Draft</span>
       </div>
       <div class="body" id="letterBody">
         <div class="salutation" id="letterSalu">Dear Mr Collison,</div>
-        <p id="letterIntro">We are Julian and Rocco. We are fourteen, at school in Rome, and we are writing the same letter to thirty founders we admire.</p>
-        <p id="letterHook">We chose to write to you because of <em>a specific decision you made in 2010 that everyone has forgotten</em> — and we want to know what you'd tell a fourteen-year-old about it now.</p>
-        <p id="letterClose">If you have ten minutes, we have three questions. A stamped envelope is enclosed.</p>
-        <span class="signature">— J &amp; R</span>
+        <p id="letterIntro">We are Julian and Rocco - fourteen, at school in Rome. Before writing this letter, we read everything we could about your career.</p>
+        <p id="letterHook">What struck us most: <em>you were a published research scientist in your teens, then you put science down and built Stripe.</em> We want to ask you about that pivot - what it cost, what you carried over, and whether you'd make it again.</p>
+        <p id="letterClose">One question. Ten minutes. A stamped envelope is enclosed.</p>
+        <span class="signature">- J &amp; R</span>
       </div>
       <div class="name-picker">
-        <div class="hint">Pick a recipient ↓</div>
+        <div class="hint">See how the letter changes per recipient ↓</div>
         <div class="pills" id="namePills"></div>
       </div>
     </div>
@@ -241,15 +241,15 @@ footer .right a:hover{color:var(--accent)}
   <blockquote>
     Most of what the next generation learns is filtered through podcasts, ghostwritten memoirs and quotes recycled until they mean nothing. <span class="accent-word">We are trying something older.</span> We write, by hand, and we ask the questions a chatbot cannot.
   </blockquote>
-  <cite>— The editors</cite>
+  <cite>- The editors</cite>
 </section>
 
-<!-- ═══════════ NAMES WALL ═══════════ -->
+<!-- ═══════════ TARGETS ═══════════ -->
 <section class="names-section">
   <div data-reveal>
-    <div class="label">The List · Hover to see the question</div>
-    <h2>We are writing to <em>thirty.</em></h2>
-    <p class="hint">A mix of names you'll recognise and names you should. Hover any name to see the question we'd ask them.</p>
+    <div class="label">Targets · Hover to see the question we're drafting</div>
+    <h2>Who we plan to <em>write to.</em></h2>
+    <p class="hint">These are the people we're researching. None of these letters have been sent yet. Hover any name to see the specific question we'd ask them, based on a pivot or turning point in their life.</p>
   </div>
 
   <div class="names-grid" id="namesGrid" data-reveal></div>
@@ -258,8 +258,8 @@ footer .right a:hover{color:var(--accent)}
 <!-- ═══════════ COUNTER ═══════════ -->
 <section class="counter-section">
   <div class="text" data-reveal>
-    <h2>The work is <em>public.</em></h2>
-    <p>Counts update in real time. We send a letter, the number goes up. We get a reply, the second number goes up. No theatre. Just the score.</p>
+    <h2>Everything we do is <em>public.</em></h2>
+    <p>We don't pretend to have shipped what we haven't. These numbers will only ever show real letters and real replies. They start at zero. They go up when something has genuinely happened. No theatre.</p>
   </div>
   <div class="counter-numbers" data-reveal>
     <div class="counter-num">
@@ -278,18 +278,18 @@ footer .right a:hover{color:var(--accent)}
 <div class="vote-wrap">
   <section class="vote-section">
     <div class="sample-letter" data-reveal>
-      <div class="from">Sample · Letter draft № 03 · 2026-05</div>
+      <div class="from">Specimen letter · In preparation · Not yet sent</div>
       <div class="salu">Dear Mr Marks,</div>
-      <p>We are Julian and Rocco — fourteen years old, students in Rome. We've read every Oaktree memo since 1990. You've written that the most important thing is "second-level thinking," but we've also seen you write, in 2007, that you weren't worried enough about leverage.</p>
-      <p>Three questions, ten minutes, a stamped envelope enclosed:</p>
-      <p style="padding-left:14px;color:var(--ink-soft)">— What did you believe in 1990 that you no longer believe?<br>— What is the price of being a contrarian who turns out to be wrong?<br>— What should we, at fourteen, do that you wish someone had told you?</p>
-      <p style="margin-top:14px">We have read fifty of your memos. We have no agenda. We have an envelope.</p>
-      <span class="sig">— J &amp; R</span>
+      <p>We are Julian and Rocco - fourteen, at school in Rome. Before writing this letter, we read fifty of your Oaktree memos, starting with the earliest in 1990.</p>
+      <p>The thing we kept returning to: in 2007 you wrote that you weren't worried enough about leverage. A year later, the world found out why. We want to ask you about that gap - the time between sensing something and acting on it.</p>
+      <p style="padding-left:14px;color:var(--ink-soft);font-style:italic">When you read your own memo from 2007 today, what do you wish you had done in the months between writing it and the crisis? And what are you sensing now that you have not yet acted on?</p>
+      <p style="margin-top:14px">One question. A stamped envelope enclosed.</p>
+      <span class="sig">- J &amp; R</span>
     </div>
 
     <div class="vote-prompt" data-reveal>
       <h3>If this landed on <em>your desk,</em> would you reply?</h3>
-      <p class="sub">Tell us honestly. Numbers are aggregated. We pay attention to the answer — it changes how we write the next one.</p>
+      <p class="sub">Honestly. Numbers are aggregated anonymously. The answer changes how we write the next letter.</p>
       <div class="vote-buttons">
         <button class="vote-btn" data-vote="reply" onclick="handleVote('reply')">
           <span>I would reply.</span>
@@ -323,29 +323,64 @@ footer .right a:hover{color:var(--accent)}
 
 <script>
 // ═══════════════════ DATA ═══════════════════
+// Each question is based on a real pivot, turning point, or contradiction in the person's life.
+// The research method: read their life chronologically, find the moment they changed direction or
+// publicly contradicted an earlier position, ask them about THAT specific moment.
 const RECIPIENTS = [
-  { name:'Patrick Collison',    co:'Stripe',         q:'What did you believe at 19 that you no longer believe at 35?',           salu:'Dear Mr Collison,',    hook:'a specific decision you made in 2010 that everyone has forgotten' },
-  { name:'Howard Marks',        co:'Oaktree',        q:'You wrote in 2007 you weren\'t worried enough about leverage. What are you not worried enough about now?', salu:'Dear Mr Marks,',       hook:'fifty memos of yours we\'ve read, and one line from 2007 that haunts us' },
-  { name:'Daniel Ek',           co:'Spotify',        q:'When you almost lost Spotify in 2009, what did you tell yourself the moment before deciding not to quit?', salu:'Dear Mr Ek,',           hook:'the moment in 2009 you nearly walked away' },
-  { name:'Naval Ravikant',      co:'AngelList',      q:'Which of your tweets are you most embarrassed by, and why have you not deleted it?',                       salu:'Dear Mr Ravikant,',     hook:'a tweet from 2018 we keep returning to' },
-  { name:'Brian Chesky',        co:'Airbnb',         q:'What did you sell on Craigslist for cash in 2008 that you wish you\'d kept?',                              salu:'Dear Mr Chesky,',       hook:'the cereal-box years and what they actually taught you' },
-  { name:'Marc Andreessen',     co:'a16z',           q:'In 1993 you wrote browser code that changed everything. Which line of code do you wish you\'d written differently?', salu:'Dear Mr Andreessen,',   hook:'the Mosaic year and what it cost you' },
-  { name:'Bernard Arnault',     co:'LVMH',           q:'What does inheritance mean to a man who built something his own children can\'t replicate?',              salu:'Cher Monsieur Arnault,',hook:'the family question that always gets asked in French interviews and never in English' },
-  { name:'Vlad Tenev',          co:'Robinhood',      q:'You\'re from a Bulgarian immigrant family. What did your mother say after January 2021?',                  salu:'Dear Mr Tenev,',        hook:'the GameStop week, from inside your kitchen' },
-  { name:'Tobi Lütke',          co:'Shopify',        q:'You learned to code on a snowboard. What\'s the worst piece of advice you ever followed?',                salu:'Dear Mr Lütke,',        hook:'a snowboard shop in Ottawa and the choice that came after' },
-  { name:'Sam Altman',          co:'OpenAI',         q:'You ran YC at 28. What did you wish someone had told you that nobody did?',                                salu:'Dear Mr Altman,',       hook:'the years before AI, when you were just running an accelerator' },
+  {
+    name:'Patrick Collison', co:'Stripe',
+    salu:'Dear Mr Collison,',
+    hook:'you were a published research scientist in your teens, then you put science down and built Stripe',
+    q:'You left research science behind to build a payments company. Twenty years later, do you think of yourself as someone who abandoned science, or someone who applied it to something different - and what would you tell a fourteen-year-old facing a similar choice today?'
+  },
+  {
+    name:'Howard Marks', co:'Oaktree',
+    salu:'Dear Mr Marks,',
+    hook:'a memo you wrote in 2007 that quietly anticipated the crisis - and the months that followed it',
+    q:'When you re-read your own July 2007 memo today, what do you wish you had done in the months between writing it and the crisis fully breaking? And what are you sensing now that you have not yet acted on?'
+  },
+  {
+    name:'Daniel Ek', co:'Spotify',
+    salu:'Dear Mr Ek,',
+    hook:'the eighteen months in 2008-2009 when Spotify was almost not Spotify',
+    q:'In that period, when major labels could have shut you down, you made decisions that any reasonable adviser would have called reckless. Which of those decisions, with hindsight, was actually the dangerous one - and which only looked dangerous?'
+  },
+  {
+    name:'Brian Chesky', co:'Airbnb',
+    salu:'Dear Mr Chesky,',
+    hook:'going from design school graduate to selling cereal to keep Airbnb alive - and what that taught you that design school did not',
+    q:'You trained as a designer, not a businessperson. Looking back, what part of design school education has helped you most in running a hundred-billion-dollar company - and what did you have to actively unlearn?'
+  },
+  {
+    name:'Naval Ravikant', co:'AngelList',
+    salu:'Dear Mr Ravikant,',
+    hook:'the contrast between your early career grinding in startups and the philosophical, almost monk-like voice you adopted in your forties',
+    q:'There seems to be a clean break between the operator you were before forty and the philosopher you became after. Was that a deliberate transformation, an inevitable one, or something that surprised you when it happened?'
+  },
+  {
+    name:'Tobi Lütke', co:'Shopify',
+    salu:'Dear Mr Lütke,',
+    hook:'the choice you made in 2004 to turn a snowboard shop into a software company rather than the other way around',
+    q:'You started selling snowboards online and ended up building the software underneath instead. At what specific point did you realise the software was the company, and what convinced you to follow that rather than the snowboard sales that were already working?'
+  },
 ];
 
-// More for the wall (don't need full data, just for the typographic display)
+// Wall shows the same six we've researched + a smaller pool of others we plan to research.
+// Each "planned" name has a placeholder note - we don't fake questions we haven't drafted.
 const NAMES_WALL = [
   ...RECIPIENTS,
-  { name:'Reed Hastings' },{ name:'Anne Wojcicki' },{ name:'Cliff Asness' },
-  { name:'Julie Wainwright' },{ name:'Marc Lore' },{ name:'Mike Cannon-Brookes' },
-  { name:'Daniela Rus' },{ name:'Dario Amodei' },{ name:'Demis Hassabis' },
-  { name:'Tom Blomfield' },{ name:'Drew Houston' },{ name:'Stewart Butterfield' },
-  { name:'Whitney Wolfe Herd' },{ name:'Melanie Perkins' },{ name:'Aileen Lee' },
-  { name:'Ben Horowitz' },{ name:'Ron Conway' },{ name:'Vinod Khosla' },
-  { name:'Bill Gurley' },{ name:'Mary Meeker' },
+  { name:'Reed Hastings',     q:'Still in research - we are reading every shareholder letter chronologically before drafting.' },
+  { name:'Anne Wojcicki',     q:'Still in research - studying the 23andMe regulatory pivot.' },
+  { name:'Cliff Asness',      q:'Still in research - working through the AQR papers.' },
+  { name:'Melanie Perkins',   q:'Still in research - the eight years of pitching before Canva took off.' },
+  { name:'Drew Houston',      q:'Still in research - the early Dropbox demo and what it cost to make.' },
+  { name:'Stewart Butterfield',q:'Still in research - the pivot from a failed game to Slack.' },
+  { name:'Demis Hassabis',    q:'Still in research - chess prodigy, neuroscience PhD, then AI.' },
+  { name:'Whitney Wolfe Herd',q:'Still in research - leaving Tinder to build a competitor that put women first.' },
+  { name:'Tom Blomfield',     q:'Still in research - founding Monzo, leaving Monzo, what came in between.' },
+  { name:'Mike Cannon-Brookes',q:'Still in research - bootstrapping Atlassian without VC for nine years.' },
+  { name:'Aileen Lee',        q:'Still in research - the term "unicorn" and what she meant by it in 2013.' },
+  { name:'Bernard Arnault',   q:'Still in research - the question about French succession and craft will be careful.' },
 ];
 
 // ═══════════════════ HERO LETTER PICKER ═══════════════════
@@ -365,7 +400,7 @@ function switchRecipient(i){
   body.style.transform = 'translateY(4px)';
   setTimeout(() => {
     document.getElementById('letterSalu').textContent = r.salu;
-    document.getElementById('letterHook').innerHTML = `We chose to write to you because of <em>${escapeHtml(r.hook)}</em> — and we want to know what you'd tell a fourteen-year-old about it now.`;
+    document.getElementById('letterHook').innerHTML = `We chose to write to you because of <em>${escapeHtml(r.hook)}</em> - and we want to know what you'd tell a fourteen-year-old about it now.`;
     body.style.transition = 'opacity 0.4s, transform 0.4s';
     body.style.opacity = '1';
     body.style.transform = 'translateY(0)';
@@ -378,7 +413,8 @@ function renderNamesWall(){
   const sizes = ['size-m','size-l','size-s','size-m','size-xl','size-s','size-m','size-l','size-s','size-m'];
   grid.innerHTML = NAMES_WALL.map((n,i) => {
     const size = sizes[i % sizes.length];
-    const q = RECIPIENTS.find(r => r.name === n.name)?.q || 'A question we are still drafting.';
+    const recipient = RECIPIENTS.find(r => r.name === n.name);
+    const q = recipient?.q || n.q || 'In research. Question still being drafted.';
     return `<span class="name ${size}" data-q="${escapeHtml(q)}">${escapeHtml(n.name)}</span>`;
   }).join('');
   const tooltip = document.getElementById('nameTooltip');
