@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>The Praefatio</title>
-<meta name="description" content="Letters to the people who built the world. A research project by two students writing to the founders, investors, and operators they admire.">
+<meta name="description" content="Letters to the people who built the world. A research project by two students.">
 <link rel="canonical" href="https://thepraefatio.com">
 <meta property="og:type" content="website">
 <meta property="og:title" content="The Praefatio">
@@ -14,137 +14,170 @@
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500;1,9..144,600;1,9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500;1,9..144,600;1,9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Caveat:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  /* Cohere-style warm cream palette */
   --bg:#F4EFE6;
   --bg-2:#FFFBF3;
-  --panel:#FFFFFF;
-  --panel-shadow:0 1px 2px rgba(26,15,5,0.04), 0 8px 24px rgba(26,15,5,0.04);
+  --paper:#FFFEFA;
   --ink:#1A1207;
   --ink-soft:#5A4A38;
   --ink-mute:#8A7860;
   --rule:rgba(26,18,7,0.10);
   --rule-strong:rgba(26,18,7,0.18);
-  /* Earthy terracotta primary, sage secondary */
   --accent:#B8552E;
   --accent-soft:rgba(184,85,46,0.10);
   --sage:#7A8F6E;
-  --sage-soft:rgba(122,143,110,0.12);
+  --sage-soft:rgba(122,143,110,0.14);
+  --shadow:0 1px 2px rgba(26,15,5,0.04), 0 12px 36px rgba(26,15,5,0.06);
 }
 html,body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,sans-serif;-webkit-font-smoothing:antialiased;font-size:16px;line-height:1.55;overflow-x:hidden}
 .serif{font-family:'Fraunces',Georgia,serif}
+.script{font-family:'Caveat',cursive}
 .mono{font-family:'JetBrains Mono',monospace}
 
-/* ──────────── NAV ──────────── */
-nav{position:sticky;top:0;display:flex;align-items:center;justify-content:space-between;padding:18px 40px;z-index:100;background:rgba(244,239,230,0.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--rule)}
+/* ═══════════════════ NAV ═══════════════════ */
+nav{position:sticky;top:0;display:flex;align-items:center;justify-content:space-between;padding:18px 40px;z-index:50;background:rgba(244,239,230,0.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--rule)}
 nav .brand{font-family:'Fraunces',serif;font-size:20px;font-weight:600;font-style:italic;letter-spacing:-0.3px;color:var(--ink)}
 nav .brand .dot{color:var(--accent);font-style:normal}
-nav .links{display:flex;gap:32px;font-size:13px;font-weight:500;color:var(--ink-soft)}
-nav a{color:inherit;text-decoration:none;transition:color 0.15s}
-nav a:hover{color:var(--accent)}
-nav .cta{background:var(--ink);color:var(--bg-2);padding:9px 18px;border-radius:6px;font-weight:600;font-size:12px;letter-spacing:0.3px;transition:background 0.15s}
-nav .cta:hover{background:var(--accent);color:var(--bg-2)}
-@media(max-width:700px){nav{padding:14px 18px}nav .links{gap:16px;font-size:12px}}
+nav .nav-meta{display:flex;align-items:center;gap:18px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;color:var(--ink-mute);text-transform:uppercase}
+nav .live-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--sage);box-shadow:0 0 0 0 var(--sage);animation:pulse 2s infinite;margin-right:6px;vertical-align:middle}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(122,143,110,0.5)}70%{box-shadow:0 0 0 8px rgba(122,143,110,0)}100%{box-shadow:0 0 0 0 rgba(122,143,110,0)}}
+@media(max-width:700px){nav{padding:14px 18px}nav .nav-meta{display:none}}
 
-/* ──────────── HERO ──────────── */
-.hero{position:relative;padding:120px 40px 140px;text-align:center;overflow:hidden}
-@media(max-width:700px){.hero{padding:70px 20px 90px}}
-/* Soft gradient blob, Clay-style */
-.hero::before{content:'';position:absolute;top:-200px;left:50%;transform:translateX(-50%);width:1100px;height:700px;background:
-  radial-gradient(circle at 30% 50%,rgba(184,85,46,0.10) 0%,transparent 50%),
-  radial-gradient(circle at 70% 60%,rgba(122,143,110,0.10) 0%,transparent 50%);
-  pointer-events:none;filter:blur(40px);z-index:0}
+/* ═══════════════════ HERO ═══════════════════ */
+.hero{position:relative;padding:80px 40px 40px;display:grid;grid-template-columns:1.3fr 1fr;gap:64px;max-width:1320px;margin:0 auto;align-items:start;overflow:hidden}
+@media(max-width:1000px){.hero{grid-template-columns:1fr;gap:40px;padding:60px 24px 30px}}
+.hero::before{content:'';position:absolute;top:-100px;right:-200px;width:700px;height:600px;background:
+  radial-gradient(circle,rgba(184,85,46,0.12) 0%,transparent 55%),
+  radial-gradient(circle at 60% 60%,rgba(122,143,110,0.10) 0%,transparent 55%);
+  pointer-events:none;filter:blur(30px);z-index:0}
 .hero > *{position:relative;z-index:1}
-.hero-eyebrow{display:inline-flex;align-items:center;gap:10px;font-size:12px;font-weight:600;letter-spacing:1px;color:var(--accent);background:var(--accent-soft);padding:6px 14px;border-radius:100px;margin-bottom:30px}
-.hero-eyebrow .pulse{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
-.hero h1{font-family:'Fraunces',serif;font-size:clamp(48px,8.5vw,108px);line-height:0.96;letter-spacing:-2.5px;font-weight:600;color:var(--ink);margin-bottom:28px;max-width:1100px;margin-left:auto;margin-right:auto}
-.hero h1 .em{font-style:italic;color:var(--accent);position:relative;display:inline-block}
-.hero h1 .em::after{content:'';position:absolute;left:0;right:0;bottom:-2px;height:14px;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 14' preserveAspectRatio='none'><path d='M2 9 Q 30 2, 60 6 T 120 6 T 180 8' stroke='%23B8552E' stroke-width='2.2' fill='none' stroke-linecap='round' opacity='0.55'/></svg>") no-repeat;background-size:100% 100%}
-.hero-sub{font-family:'Fraunces',serif;font-size:clamp(18px,2vw,22px);color:var(--ink-soft);max-width:660px;margin:0 auto 44px;line-height:1.55;font-weight:400}
-.hero-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
-.btn-primary{background:var(--ink);color:var(--bg-2);padding:14px 26px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;letter-spacing:0.2px;transition:background 0.15s, transform 0.15s;display:inline-flex;align-items:center;gap:8px;border:none;cursor:pointer;font-family:inherit}
-.btn-primary:hover{background:var(--accent);transform:translateY(-1px)}
-.btn-ghost{background:transparent;color:var(--ink);padding:14px 26px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;letter-spacing:0.2px;transition:all 0.15s;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--rule-strong);cursor:pointer;font-family:inherit}
-.btn-ghost:hover{border-color:var(--ink);background:var(--bg-2)}
-.btn-primary .arrow,.btn-ghost .arrow{transition:transform 0.15s}
-.btn-primary:hover .arrow,.btn-ghost:hover .arrow{transform:translateX(3px)}
 
-/* Hero badges row */
-.hero-meta{margin-top:48px;display:flex;justify-content:center;gap:32px;flex-wrap:wrap;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.5px;color:var(--ink-mute);font-weight:500}
-.hero-meta span{display:inline-flex;align-items:center;gap:8px}
-.hero-meta span::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--sage)}
+.hero-left h1{font-family:'Fraunces',serif;font-size:clamp(44px,7vw,88px);line-height:0.96;letter-spacing:-2px;font-weight:600;margin-bottom:24px;color:var(--ink)}
+.hero-left h1 .em{font-style:italic;color:var(--accent);position:relative;display:inline-block}
+.hero-left h1 .em::after{content:'';position:absolute;left:-2%;right:-2%;bottom:-4px;height:14px;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 14' preserveAspectRatio='none'><path d='M2 9 Q 30 2, 60 6 T 120 6 T 180 8' stroke='%23B8552E' stroke-width='2.2' fill='none' stroke-linecap='round' opacity='0.55'/></svg>") no-repeat;background-size:100% 100%}
+.hero-left .lede{font-family:'Fraunces',serif;font-size:clamp(17px,1.6vw,20px);color:var(--ink-soft);line-height:1.55;margin-bottom:32px;max-width:540px}
 
-/* ──────────── SECTION CONTAINER ──────────── */
-.section{padding:100px 40px;max-width:1200px;margin:0 auto;position:relative}
-@media(max-width:700px){.section{padding:60px 20px}}
-.section-eyebrow{display:inline-block;font-size:12px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--accent);background:var(--accent-soft);padding:6px 12px;border-radius:6px;margin-bottom:24px}
-.section-headline{font-family:'Fraunces',serif;font-size:clamp(36px,5vw,64px);line-height:1.05;letter-spacing:-1.5px;font-weight:600;margin-bottom:24px;max-width:900px;color:var(--ink)}
-.section-headline em{font-style:italic;color:var(--accent)}
-.section-lede{font-family:'Fraunces',serif;font-size:clamp(17px,1.8vw,21px);color:var(--ink-soft);max-width:680px;line-height:1.6;font-weight:400}
+.hero-meta-row{display:flex;gap:14px;flex-wrap:wrap;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.5px;color:var(--ink-mute);font-weight:500;margin-bottom:36px}
+.hero-meta-row span{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border:1px solid var(--rule);border-radius:100px;background:var(--bg-2)}
+.hero-meta-row span::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--sage)}
 
-/* ──────────── MISSION ──────────── */
-.mission-body{display:grid;grid-template-columns:1fr 1fr;gap:60px;margin-top:48px}
-@media(max-width:900px){.mission-body{grid-template-columns:1fr;gap:32px}}
-.mission-body p{font-family:'Fraunces',serif;font-size:18px;line-height:1.7;color:var(--ink-soft)}
-.mission-body p + p{margin-top:18px}
-.mission-body strong{color:var(--ink);font-weight:600;font-style:italic}
-
-/* ──────────── PRINCIPLES (Mintlify card grid) ──────────── */
-.principles-wrap{background:var(--bg-2);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
-.principle-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:48px}
-@media(max-width:900px){.principle-grid{grid-template-columns:1fr}}
-.principle{background:var(--panel);border:1px solid var(--rule);border-radius:14px;padding:32px;position:relative;transition:transform 0.2s ease-out, box-shadow 0.2s;box-shadow:0 1px 2px rgba(26,15,5,0.03)}
-.principle:hover{transform:translateY(-3px);box-shadow:var(--panel-shadow)}
-.principle .icon{width:38px;height:38px;border-radius:9px;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;color:var(--accent);font-family:'Fraunces',serif;font-style:italic;font-weight:600;font-size:20px;margin-bottom:20px}
-.principle h3{font-family:'Fraunces',serif;font-size:22px;font-weight:600;line-height:1.2;margin-bottom:12px;color:var(--ink);letter-spacing:-0.3px}
-.principle h3 em{font-style:italic;color:var(--accent)}
-.principle p{font-size:15px;color:var(--ink-soft);line-height:1.55}
-
-/* ──────────── PROOF / QUOTE ──────────── */
-.proof{padding:130px 40px;text-align:center;position:relative;overflow:hidden;border-bottom:1px solid var(--rule)}
-.proof::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:700px;height:300px;background:radial-gradient(ellipse,rgba(122,143,110,0.10),transparent 70%);pointer-events:none}
-@media(max-width:700px){.proof{padding:80px 20px}}
-.proof blockquote{position:relative;z-index:1;font-family:'Fraunces',serif;font-style:italic;font-size:clamp(28px,4.5vw,52px);line-height:1.18;letter-spacing:-0.8px;max-width:1000px;margin:0 auto 32px;color:var(--ink);font-weight:500}
-.proof blockquote .mark{font-family:'Fraunces',serif;font-style:italic;color:var(--accent);font-weight:700;font-size:1.2em;line-height:0;vertical-align:-0.1em}
-.proof cite{position:relative;z-index:1;font-style:normal;font-size:13px;letter-spacing:1px;color:var(--ink-mute);font-weight:500;font-family:'Inter',sans-serif}
-
-/* ──────────── STATS ──────────── */
-.stats{padding:100px 40px;max-width:1200px;margin:0 auto;border-bottom:1px solid var(--rule)}
-@media(max-width:700px){.stats{padding:60px 20px}}
-.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;margin-top:48px}
-@media(max-width:900px){.stats-grid{grid-template-columns:1fr 1fr;gap:20px}}
-.stat{background:var(--panel);border:1px solid var(--rule);border-radius:14px;padding:32px 28px}
-.stat .v{font-family:'Fraunces',serif;font-size:clamp(40px,5vw,64px);font-weight:600;line-height:1;letter-spacing:-2px;color:var(--ink);margin-bottom:14px}
-.stat .v em{font-style:italic;color:var(--accent)}
-.stat .l{font-family:'Inter',sans-serif;font-size:12px;letter-spacing:0.5px;color:var(--ink-mute);font-weight:500;text-transform:uppercase}
-
-/* ──────────── SUBSCRIBE ──────────── */
-.cta-block{padding:130px 40px;text-align:center;background:linear-gradient(180deg,var(--bg) 0%,var(--bg-2) 100%)}
-@media(max-width:700px){.cta-block{padding:80px 20px}}
-.cta-block .section-headline{margin:0 auto 24px;max-width:840px;text-align:center}
-.cta-block .section-lede{margin:0 auto 48px;text-align:center}
-.subscribe-form{display:flex;gap:8px;max-width:520px;margin:0 auto;flex-wrap:wrap;justify-content:center;background:var(--panel);padding:8px;border-radius:12px;border:1px solid var(--rule);box-shadow:var(--panel-shadow)}
-.subscribe-form input{flex:1;min-width:240px;background:transparent;color:var(--ink);border:none;padding:14px 18px;font-size:15px;font-family:inherit;letter-spacing:0.2px}
-.subscribe-form input:focus{outline:none}
-.subscribe-form input::placeholder{color:var(--ink-mute)}
-.subscribe-form button{background:var(--ink);color:var(--bg-2);border:none;padding:0 26px;font-size:14px;font-weight:600;border-radius:8px;cursor:pointer;height:48px;font-family:inherit;transition:background 0.15s;display:inline-flex;align-items:center;gap:6px;letter-spacing:0.2px}
-.subscribe-form button:hover{background:var(--accent)}
-.subscribe-form button:disabled{opacity:0.5;cursor:not-allowed}
-.subscribe-status{margin-top:20px;font-size:13px;color:var(--ink-mute);min-height:18px;font-weight:500}
+/* SUBSCRIBE INLINE IN HERO */
+.subscribe-inline{display:flex;flex-direction:column;gap:10px;max-width:480px}
+.subscribe-inline .label{font-family:'Fraunces',serif;font-style:italic;font-size:15px;color:var(--ink-soft);margin-bottom:4px}
+.subscribe-inline form{display:flex;background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:6px;box-shadow:var(--shadow)}
+.subscribe-inline input{flex:1;background:transparent;border:none;padding:12px 14px;font-family:inherit;font-size:14px;color:var(--ink);outline:none}
+.subscribe-inline input::placeholder{color:var(--ink-mute)}
+.subscribe-inline button{background:var(--ink);color:var(--bg-2);border:none;padding:0 22px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px;transition:background 0.15s;letter-spacing:0.2px}
+.subscribe-inline button:hover{background:var(--accent)}
+.subscribe-inline button:disabled{opacity:0.6;cursor:not-allowed}
+.subscribe-status{font-size:13px;color:var(--ink-mute);min-height:18px;font-family:'Fraunces',serif;font-style:italic}
 .subscribe-status.ok{color:var(--sage)}
 .subscribe-status.err{color:#c44e2e}
 
-/* ──────────── FOOTER ──────────── */
-footer{padding:36px 40px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;font-family:'Inter',sans-serif;font-size:12px;color:var(--ink-mute);font-weight:500;border-top:1px solid var(--rule)}
-footer a{color:inherit;text-decoration:none;transition:color 0.15s}
-footer a:hover{color:var(--accent)}
-footer .left{display:flex;gap:18px;align-items:center;flex-wrap:wrap;font-family:'Fraunces',serif;font-style:italic;font-weight:500}
-footer .right{display:flex;gap:24px;align-items:center;flex-wrap:wrap}
+/* INTERACTIVE LETTER ON THE RIGHT */
+.letter-card{background:var(--paper);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;border:1px solid var(--rule);position:relative;transform:rotate(0.6deg);transition:transform 0.3s ease-out}
+.letter-card:hover{transform:rotate(0deg) translateY(-2px)}
+.letter-card .head{padding:14px 22px;border-bottom:1px solid var(--rule);display:flex;align-items:center;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-mute)}
+.letter-card .head .red{color:var(--accent);display:inline-flex;align-items:center;gap:6px}
+.letter-card .head .red::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite}
+.letter-card .body{padding:36px 32px 32px;font-family:'Fraunces',serif;font-size:15px;line-height:1.65;color:var(--ink);min-height:340px}
+.letter-card .body .salutation{font-style:italic;color:var(--accent);margin-bottom:18px;font-size:18px}
+.letter-card .body p{margin-bottom:14px}
+.letter-card .body .signature{font-family:'Caveat',cursive;font-size:24px;color:var(--ink);margin-top:24px;transform:rotate(-2deg);display:inline-block}
+.letter-card .name-picker{padding:14px 22px;background:linear-gradient(180deg,var(--bg-2),var(--paper));border-top:1px solid var(--rule)}
+.letter-card .name-picker .hint{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-mute);margin-bottom:10px}
+.letter-card .name-picker .pills{display:flex;gap:6px;flex-wrap:wrap}
+.letter-card .name-picker .pill{padding:5px 12px;border:1px solid var(--rule);background:var(--paper);border-radius:100px;font-size:12px;color:var(--ink-soft);cursor:pointer;transition:all 0.15s;font-family:'Inter',sans-serif;font-weight:500}
+.letter-card .name-picker .pill:hover{border-color:var(--accent);color:var(--accent)}
+.letter-card .name-picker .pill.active{background:var(--ink);color:var(--bg-2);border-color:var(--ink)}
 
-/* ──────────── REVEAL ON SCROLL ──────────── */
+@media(max-width:600px){.letter-card{transform:rotate(0deg)}.letter-card .body{padding:24px 22px;font-size:14px;min-height:300px}}
+
+/* ═══════════════════ MANIFESTO ═══════════════════ */
+.manifesto{padding:120px 40px 80px;max-width:1100px;margin:0 auto;position:relative}
+@media(max-width:700px){.manifesto{padding:80px 20px 50px}}
+.manifesto .kicker{font-family:'Caveat',cursive;font-size:24px;color:var(--accent);margin-bottom:14px;transform:rotate(-1deg);display:inline-block;font-weight:600}
+.manifesto blockquote{font-family:'Fraunces',serif;font-size:clamp(28px,4vw,46px);line-height:1.2;letter-spacing:-0.8px;font-weight:500;color:var(--ink);max-width:920px;font-style:italic}
+.manifesto blockquote .accent-word{color:var(--accent);font-style:italic}
+.manifesto cite{display:block;margin-top:24px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-mute);font-style:normal}
+
+/* ═══════════════════ NAMES WALL ═══════════════════ */
+.names-section{padding:100px 40px;max-width:1280px;margin:0 auto;border-top:1px solid var(--rule)}
+@media(max-width:700px){.names-section{padding:60px 20px}}
+.names-section .label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);background:var(--accent-soft);padding:6px 12px;border-radius:6px;display:inline-block;margin-bottom:24px}
+.names-section h2{font-family:'Fraunces',serif;font-size:clamp(36px,5vw,60px);line-height:1.05;letter-spacing:-1.5px;font-weight:600;margin-bottom:14px;max-width:840px}
+.names-section h2 em{font-style:italic;color:var(--accent)}
+.names-section .hint{font-family:'Fraunces',serif;font-style:italic;color:var(--ink-soft);font-size:16px;margin-bottom:48px;max-width:580px}
+
+.names-grid{display:flex;flex-wrap:wrap;gap:6px 18px;line-height:1.4;position:relative}
+.name{font-family:'Fraunces',serif;font-weight:500;color:var(--ink-soft);cursor:pointer;transition:color 0.2s, transform 0.2s;letter-spacing:-0.3px;line-height:1.1;padding:6px 0;position:relative;user-select:none}
+.name:hover{color:var(--accent);transform:translateY(-2px)}
+.name.size-s{font-size:18px}
+.name.size-m{font-size:26px}
+.name.size-l{font-size:36px;font-style:italic;font-weight:600}
+.name.size-xl{font-size:48px;font-style:italic;font-weight:600;color:var(--ink)}
+@media(max-width:700px){.name.size-s{font-size:14px}.name.size-m{font-size:18px}.name.size-l{font-size:24px}.name.size-xl{font-size:32px}}
+
+.name-tooltip{position:fixed;background:var(--ink);color:var(--bg-2);padding:14px 18px;border-radius:10px;font-family:'Fraunces',serif;font-size:14px;font-style:italic;line-height:1.45;max-width:280px;pointer-events:none;opacity:0;transform:translateY(8px);transition:opacity 0.15s, transform 0.15s;z-index:200;box-shadow:0 8px 32px rgba(0,0,0,0.25)}
+.name-tooltip.show{opacity:1;transform:translateY(0)}
+.name-tooltip::before{content:'';position:absolute;top:-6px;left:24px;width:10px;height:10px;background:var(--ink);transform:rotate(45deg)}
+
+/* ═══════════════════ COUNTER ═══════════════════ */
+.counter-section{padding:120px 40px;max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr 1.4fr;gap:80px;align-items:center}
+@media(max-width:900px){.counter-section{grid-template-columns:1fr;gap:40px;padding:80px 24px;text-align:left}}
+.counter-section .text h2{font-family:'Fraunces',serif;font-size:clamp(34px,4vw,52px);line-height:1.1;letter-spacing:-1px;font-weight:600;margin-bottom:18px;color:var(--ink)}
+.counter-section .text h2 em{font-style:italic;color:var(--accent)}
+.counter-section .text p{font-family:'Fraunces',serif;font-size:17px;color:var(--ink-soft);line-height:1.6}
+.counter-numbers{display:flex;gap:48px;flex-wrap:wrap;justify-content:flex-end}
+@media(max-width:900px){.counter-numbers{justify-content:flex-start;gap:32px}}
+.counter-num{position:relative}
+.counter-num .v{font-family:'Fraunces',serif;font-size:clamp(72px,11vw,156px);line-height:1;letter-spacing:-5px;font-weight:600;color:var(--ink);font-feature-settings:'tnum';font-variant-numeric:tabular-nums}
+.counter-num .v.italic{font-style:italic;color:var(--accent)}
+.counter-num .l{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-mute);margin-top:4px}
+.counter-live{position:absolute;top:0;right:0;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--sage);display:flex;align-items:center;gap:5px}
+.counter-live::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--sage);animation:pulse 2s infinite}
+
+/* ═══════════════════ VOTE / WOULD YOU REPLY ═══════════════════ */
+.vote-wrap{background:var(--bg-2);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:120px 40px}
+@media(max-width:700px){.vote-wrap{padding:60px 20px}}
+.vote-section{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1.1fr 1fr;gap:64px;align-items:center}
+@media(max-width:900px){.vote-section{grid-template-columns:1fr;gap:40px}}
+
+.sample-letter{background:var(--paper);border:1px solid var(--rule);border-radius:14px;padding:36px 36px 32px;box-shadow:var(--shadow);font-family:'Fraunces',serif;font-size:14.5px;line-height:1.65;color:var(--ink);transform:rotate(-0.4deg)}
+.sample-letter .from{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-mute);margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--rule)}
+.sample-letter .salu{font-style:italic;color:var(--accent);margin-bottom:14px;font-size:16px}
+.sample-letter p{margin-bottom:11px}
+.sample-letter .sig{font-family:'Caveat',cursive;font-size:22px;margin-top:16px;transform:rotate(-1.5deg);display:inline-block}
+
+.vote-prompt h3{font-family:'Fraunces',serif;font-size:clamp(28px,3.5vw,40px);line-height:1.1;letter-spacing:-0.8px;font-weight:600;margin-bottom:14px}
+.vote-prompt h3 em{font-style:italic;color:var(--accent)}
+.vote-prompt .sub{font-family:'Fraunces',serif;font-style:italic;color:var(--ink-soft);font-size:16px;margin-bottom:28px;line-height:1.55}
+.vote-buttons{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+.vote-btn{flex:1;min-width:140px;padding:18px 20px;border:1px solid var(--rule-strong);background:var(--paper);border-radius:10px;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;color:var(--ink);cursor:pointer;transition:all 0.15s;display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+.vote-btn:hover{border-color:var(--ink);transform:translateY(-1px)}
+.vote-btn .big{font-family:'Fraunces',serif;font-size:18px;font-style:italic;color:var(--accent)}
+.vote-btn.voted{background:var(--ink);color:var(--bg-2);border-color:var(--ink)}
+.vote-btn.voted .big{color:var(--bg-2)}
+.vote-results{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-mute);letter-spacing:0.5px;display:none}
+.vote-results.show{display:block}
+.vote-bar{height:4px;background:var(--rule);border-radius:100px;margin-top:14px;overflow:hidden;display:flex}
+.vote-bar .reply-bar{background:var(--sage);transition:width 0.8s ease-out}
+.vote-bar .ignore-bar{background:var(--ink-mute);transition:width 0.8s ease-out}
+
+/* ═══════════════════ FOOTER ═══════════════════ */
+footer{padding:60px 40px 40px;max-width:1200px;margin:0 auto;display:grid;grid-template-columns:auto 1fr auto;gap:32px;align-items:end;border-top:1px solid var(--rule)}
+@media(max-width:700px){footer{grid-template-columns:1fr;gap:18px;padding:40px 20px;text-align:left}}
+footer .left{font-family:'Fraunces',serif;font-style:italic;font-size:22px;color:var(--ink);font-weight:500}
+footer .left .dot{color:var(--accent);font-style:normal}
+footer .mid{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-mute);text-align:center}
+@media(max-width:700px){footer .mid{text-align:left}}
+footer .right{display:flex;gap:18px;align-items:center;flex-wrap:wrap;font-family:'Inter',sans-serif;font-size:12px}
+footer .right a{color:var(--ink-soft);text-decoration:none;transition:color 0.15s}
+footer .right a:hover{color:var(--accent)}
+
 [data-reveal]{opacity:0;transform:translateY(20px);transition:opacity 0.7s ease-out,transform 0.7s ease-out}
 [data-reveal].visible{opacity:1;transform:translateY(0)}
 @media(prefers-reduced-motion:reduce){[data-reveal]{opacity:1;transform:none;transition:none}}
@@ -154,167 +187,294 @@ footer .right{display:flex;gap:24px;align-items:center;flex-wrap:wrap}
 
 <nav>
   <div class="brand">The Praefatio<span class="dot">.</span></div>
-  <div class="links">
-    <a href="#mission">Mission</a>
-    <a href="#principles">Method</a>
-    <a href="#subscribe" class="cta">Subscribe</a>
+  <div class="nav-meta">
+    <span><span class="live-dot"></span>Issue 01 forthcoming</span>
   </div>
 </nav>
 
-<!-- HERO -->
+<!-- ═══════════ HERO (split: headline + live letter) ═══════════ -->
 <section class="hero">
-  <div class="hero-eyebrow"><span class="pulse"></span> Issue 01 · Forthcoming 2026</div>
-  <h1>Letters to the people who <span class="em">built the world.</span></h1>
-  <p class="hero-sub">A correspondence project. Two students writing to the founders, investors and operators they admire — asking the questions that artificial intelligence cannot answer.</p>
-  <div class="hero-actions">
-    <a href="#subscribe" class="btn-primary">Subscribe for the first letters <span class="arrow">→</span></a>
-    <a href="#mission" class="btn-ghost">What it is <span class="arrow">↓</span></a>
+  <div class="hero-left">
+    <h1>Letters to the people who <span class="em">built the world.</span></h1>
+    <p class="lede">Two students writing — by hand, by post — to the founders, investors and operators they admire. Asking the three questions an AI cannot answer. The replies become a book.</p>
+
+    <div class="hero-meta-row">
+      <span>Handwritten</span>
+      <span>50 letters · 30 founders</span>
+      <span>Edition 01 · MMXXVI</span>
+    </div>
+
+    <div class="subscribe-inline">
+      <div class="label">Leave an address. We send you the first letter when it's ready.</div>
+      <form onsubmit="handleSubscribe(event)">
+        <input type="email" id="subscribeEmail" placeholder="your@email.com" required>
+        <button type="submit" id="subscribeBtn">Subscribe <span>→</span></button>
+      </form>
+      <div class="subscribe-status" id="subscribeStatus" aria-live="polite"></div>
+    </div>
   </div>
-  <div class="hero-meta">
-    <span>Handwritten</span>
-    <span>50 letters</span>
-    <span>Published 2026</span>
+
+  <div class="hero-right">
+    <div class="letter-card">
+      <div class="head">
+        <span>Specimen · Letter № 01</span>
+        <span class="red">Draft</span>
+      </div>
+      <div class="body" id="letterBody">
+        <div class="salutation" id="letterSalu">Dear Mr Collison,</div>
+        <p id="letterIntro">We are Julian and Rocco. We are fourteen, at school in Rome, and we are writing the same letter to thirty founders we admire.</p>
+        <p id="letterHook">We chose to write to you because of <em>a specific decision you made in 2010 that everyone has forgotten</em> — and we want to know what you'd tell a fourteen-year-old about it now.</p>
+        <p id="letterClose">If you have ten minutes, we have three questions. A stamped envelope is enclosed.</p>
+        <span class="signature">— J &amp; R</span>
+      </div>
+      <div class="name-picker">
+        <div class="hint">Pick a recipient ↓</div>
+        <div class="pills" id="namePills"></div>
+      </div>
+    </div>
   </div>
 </section>
 
-<!-- MISSION -->
-<section class="section" id="mission">
+<!-- ═══════════ MANIFESTO ═══════════ -->
+<section class="manifesto" data-reveal>
+  <div class="kicker">why this matters,</div>
+  <blockquote>
+    Most of what the next generation learns is filtered through podcasts, ghostwritten memoirs and quotes recycled until they mean nothing. <span class="accent-word">We are trying something older.</span> We write, by hand, and we ask the questions a chatbot cannot.
+  </blockquote>
+  <cite>— The editors</cite>
+</section>
+
+<!-- ═══════════ NAMES WALL ═══════════ -->
+<section class="names-section">
   <div data-reveal>
-    <div class="section-eyebrow">The Mission</div>
-    <h2 class="section-headline">We write letters that <em>get answered.</em></h2>
-    <p class="section-lede">Most of what the next generation learns about business is filtered through podcasts, ghostwritten memoirs, and quotes recycled until they mean nothing. We are trying something older. We write, by hand, to the people we want to learn from — and we ask the questions a chatbot cannot.</p>
+    <div class="label">The List · Hover to see the question</div>
+    <h2>We are writing to <em>thirty.</em></h2>
+    <p class="hint">A mix of names you'll recognise and names you should. Hover any name to see the question we'd ask them.</p>
   </div>
 
-  <div class="mission-body">
-    <div data-reveal>
-      <p>The Praefatio is a research project run by two students. Each letter is preceded by hours of reading: every long-form profile, every annual letter, every obscure interview from before the subject was famous. We are not journalists. We are not consultants. We are not asking for anything but ten minutes of honesty.</p>
-      <p>The output is a book, a quarterly publication, and a small archive that will outlast both. <strong>The first edition collects thirty letters.</strong> Half from people who built companies worth a billion or more. Half from people we suspect will, but have not yet.</p>
+  <div class="names-grid" id="namesGrid" data-reveal></div>
+</section>
+
+<!-- ═══════════ COUNTER ═══════════ -->
+<section class="counter-section">
+  <div class="text" data-reveal>
+    <h2>The work is <em>public.</em></h2>
+    <p>Counts update in real time. We send a letter, the number goes up. We get a reply, the second number goes up. No theatre. Just the score.</p>
+  </div>
+  <div class="counter-numbers" data-reveal>
+    <div class="counter-num">
+      <div class="counter-live">Live</div>
+      <div class="v" id="countSent">0</div>
+      <div class="l">Letters sent</div>
     </div>
-    <div data-reveal>
-      <p>The work is patient on purpose. Most of what gets written today exists to be scrolled past. We are interested in what survives — what someone says when they have time to consider the answer, and a reason to commit it to paper.</p>
-      <p>If you are a founder, an investor, an operator, or any other kind of builder — and someone you've never heard of writes you a letter that begins with this name on the masthead — that is us. Read it.</p>
+    <div class="counter-num">
+      <div class="v italic" id="countReplied">0</div>
+      <div class="l">Replied</div>
     </div>
   </div>
 </section>
 
-<!-- PRINCIPLES -->
-<div class="principles-wrap">
-  <section class="section" id="principles">
-    <div data-reveal>
-      <div class="section-eyebrow">The Method</div>
-      <h2 class="section-headline">Three principles. <em>Held strictly.</em></h2>
-      <p class="section-lede">No survey. No automated outreach. No clever growth tricks. The method is the moat.</p>
+<!-- ═══════════ VOTE ═══════════ -->
+<div class="vote-wrap">
+  <section class="vote-section">
+    <div class="sample-letter" data-reveal>
+      <div class="from">Sample · Letter draft № 03 · 2026-05</div>
+      <div class="salu">Dear Mr Marks,</div>
+      <p>We are Julian and Rocco — fourteen years old, students in Rome. We've read every Oaktree memo since 1990. You've written that the most important thing is "second-level thinking," but we've also seen you write, in 2007, that you weren't worried enough about leverage.</p>
+      <p>Three questions, ten minutes, a stamped envelope enclosed:</p>
+      <p style="padding-left:14px;color:var(--ink-soft)">— What did you believe in 1990 that you no longer believe?<br>— What is the price of being a contrarian who turns out to be wrong?<br>— What should we, at fourteen, do that you wish someone had told you?</p>
+      <p style="margin-top:14px">We have read fifty of your memos. We have no agenda. We have an envelope.</p>
+      <span class="sig">— J &amp; R</span>
     </div>
 
-    <div class="principle-grid">
-      <div class="principle" data-reveal>
-        <div class="icon">i</div>
-        <h3>Research, <em>not interrogation.</em></h3>
-        <p>Two to three hours of preparation precede every letter. We arrive having read what the subject already said. We ask only what they have not been asked.</p>
+    <div class="vote-prompt" data-reveal>
+      <h3>If this landed on <em>your desk,</em> would you reply?</h3>
+      <p class="sub">Tell us honestly. Numbers are aggregated. We pay attention to the answer — it changes how we write the next one.</p>
+      <div class="vote-buttons">
+        <button class="vote-btn" data-vote="reply" onclick="handleVote('reply')">
+          <span>I would reply.</span>
+          <span class="big">Yes</span>
+        </button>
+        <button class="vote-btn" data-vote="ignore" onclick="handleVote('ignore')">
+          <span>I'd ignore it.</span>
+          <span class="big">No</span>
+        </button>
       </div>
-      <div class="principle" data-reveal>
-        <div class="icon">ii</div>
-        <h3>Three questions, <em>no more.</em></h3>
-        <p>Each letter contains a single hook, a single proof of work, and three questions. One forces opinion. One forces specificity. One forces regret. Ten minutes of their time. No survey.</p>
-      </div>
-      <div class="principle" data-reveal>
-        <div class="icon">iii</div>
-        <h3>Paper, <em>not pixels.</em></h3>
-        <p>The letters are printed and posted. Hand-signed. Stamped envelope returned for the reply. The medium is the proof of seriousness. Almost no one writes letters anymore.</p>
+      <div class="vote-results" id="voteResults">
+        <span id="voteText">12 of 28 said they'd reply.</span>
+        <div class="vote-bar">
+          <div class="reply-bar" id="voteReplyBar" style="width:0%"></div>
+          <div class="ignore-bar" id="voteIgnoreBar" style="width:0%"></div>
+        </div>
       </div>
     </div>
   </section>
 </div>
 
-<!-- PROOF -->
-<section class="proof">
-  <blockquote data-reveal>
-    <span class="mark">"</span>What survives is what someone took the time to write down.<span class="mark">"</span>
-  </blockquote>
-  <cite data-reveal>— The Editors, 2026</cite>
-</section>
-
-<!-- STATS -->
-<section class="stats">
-  <div data-reveal>
-    <div class="section-eyebrow">Edition 01</div>
-    <h2 class="section-headline">What we are <em>building toward.</em></h2>
-  </div>
-  <div class="stats-grid">
-    <div class="stat" data-reveal>
-      <div class="v"><em>50</em></div>
-      <div class="l">Letters sent</div>
-    </div>
-    <div class="stat" data-reveal>
-      <div class="v">25</div>
-      <div class="l">Replies sought</div>
-    </div>
-    <div class="stat" data-reveal>
-      <div class="v">10</div>
-      <div class="l">In-person interviews</div>
-    </div>
-    <div class="stat" data-reveal>
-      <div class="v"><em>1</em></div>
-      <div class="l">Volume, hardcover</div>
-    </div>
-  </div>
-</section>
-
-<!-- SUBSCRIBE -->
-<section class="cta-block" id="subscribe">
-  <div data-reveal>
-    <div class="section-eyebrow">Be Among The First</div>
-    <h2 class="section-headline">The <em>first letters</em> arrive when they arrive.</h2>
-    <p class="section-lede">Leave us an address. We will send the first published letter when it is ready — no marketing, no recurring newsletter, no nonsense. One email. From us. With a letter.</p>
-  </div>
-  <form class="subscribe-form" data-reveal onsubmit="handleSubscribe(event)">
-    <input type="email" id="subscribeEmail" placeholder="your@email.com" required>
-    <button type="submit" id="subscribeBtn">Subscribe <span>→</span></button>
-  </form>
-  <div class="subscribe-status" id="subscribeStatus" aria-live="polite"></div>
-</section>
-
 <footer>
-  <div class="left">
-    The Praefatio
-  </div>
+  <div class="left">The Praefatio<span class="dot">.</span></div>
+  <div class="mid">Issue 01 · MMXXVI · Rome</div>
   <div class="right">
-    <span>Issue 01 · MMXXVI</span>
     <a href="mailto:hello@thepraefatio.com">hello@thepraefatio.com</a>
   </div>
 </footer>
 
+<div class="name-tooltip" id="nameTooltip"></div>
+
 <script>
-// Reveal on scroll
-const io = new IntersectionObserver((entries) => {
-  for (const e of entries) {
-    if (e.isIntersecting) {
-      e.target.classList.add('visible');
-      io.unobserve(e.target);
-    }
-  }
-}, { threshold: 0.15, rootMargin: '0px 0px -50px 0px' });
-document.querySelectorAll('[data-reveal]').forEach(el => io.observe(el));
+// ═══════════════════ DATA ═══════════════════
+const RECIPIENTS = [
+  { name:'Patrick Collison',    co:'Stripe',         q:'What did you believe at 19 that you no longer believe at 35?',           salu:'Dear Mr Collison,',    hook:'a specific decision you made in 2010 that everyone has forgotten' },
+  { name:'Howard Marks',        co:'Oaktree',        q:'You wrote in 2007 you weren\'t worried enough about leverage. What are you not worried enough about now?', salu:'Dear Mr Marks,',       hook:'fifty memos of yours we\'ve read, and one line from 2007 that haunts us' },
+  { name:'Daniel Ek',           co:'Spotify',        q:'When you almost lost Spotify in 2009, what did you tell yourself the moment before deciding not to quit?', salu:'Dear Mr Ek,',           hook:'the moment in 2009 you nearly walked away' },
+  { name:'Naval Ravikant',      co:'AngelList',      q:'Which of your tweets are you most embarrassed by, and why have you not deleted it?',                       salu:'Dear Mr Ravikant,',     hook:'a tweet from 2018 we keep returning to' },
+  { name:'Brian Chesky',        co:'Airbnb',         q:'What did you sell on Craigslist for cash in 2008 that you wish you\'d kept?',                              salu:'Dear Mr Chesky,',       hook:'the cereal-box years and what they actually taught you' },
+  { name:'Marc Andreessen',     co:'a16z',           q:'In 1993 you wrote browser code that changed everything. Which line of code do you wish you\'d written differently?', salu:'Dear Mr Andreessen,',   hook:'the Mosaic year and what it cost you' },
+  { name:'Bernard Arnault',     co:'LVMH',           q:'What does inheritance mean to a man who built something his own children can\'t replicate?',              salu:'Cher Monsieur Arnault,',hook:'the family question that always gets asked in French interviews and never in English' },
+  { name:'Vlad Tenev',          co:'Robinhood',      q:'You\'re from a Bulgarian immigrant family. What did your mother say after January 2021?',                  salu:'Dear Mr Tenev,',        hook:'the GameStop week, from inside your kitchen' },
+  { name:'Tobi Lütke',          co:'Shopify',        q:'You learned to code on a snowboard. What\'s the worst piece of advice you ever followed?',                salu:'Dear Mr Lütke,',        hook:'a snowboard shop in Ottawa and the choice that came after' },
+  { name:'Sam Altman',          co:'OpenAI',         q:'You ran YC at 28. What did you wish someone had told you that nobody did?',                                salu:'Dear Mr Altman,',       hook:'the years before AI, when you were just running an accelerator' },
+];
 
-// Smooth scroll
-document.querySelectorAll('a[href^="#"]').forEach(a => {
-  a.addEventListener('click', (e) => {
-    const target = document.querySelector(a.getAttribute('href'));
-    if (!target) return;
-    e.preventDefault();
-    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+// More for the wall (don't need full data, just for the typographic display)
+const NAMES_WALL = [
+  ...RECIPIENTS,
+  { name:'Reed Hastings' },{ name:'Anne Wojcicki' },{ name:'Cliff Asness' },
+  { name:'Julie Wainwright' },{ name:'Marc Lore' },{ name:'Mike Cannon-Brookes' },
+  { name:'Daniela Rus' },{ name:'Dario Amodei' },{ name:'Demis Hassabis' },
+  { name:'Tom Blomfield' },{ name:'Drew Houston' },{ name:'Stewart Butterfield' },
+  { name:'Whitney Wolfe Herd' },{ name:'Melanie Perkins' },{ name:'Aileen Lee' },
+  { name:'Ben Horowitz' },{ name:'Ron Conway' },{ name:'Vinod Khosla' },
+  { name:'Bill Gurley' },{ name:'Mary Meeker' },
+];
+
+// ═══════════════════ HERO LETTER PICKER ═══════════════════
+function renderNamePills(){
+  const c = document.getElementById('namePills');
+  c.innerHTML = RECIPIENTS.slice(0,6).map((r,i)=>`<span class="pill ${i===0?'active':''}" data-i="${i}">${escapeHtml(r.name)}</span>`).join('');
+  c.querySelectorAll('.pill').forEach(p => {
+    p.addEventListener('click', () => switchRecipient(parseInt(p.dataset.i)));
   });
-});
+}
+function switchRecipient(i){
+  const r = RECIPIENTS[i];
+  document.querySelectorAll('#namePills .pill').forEach(p => p.classList.toggle('active', parseInt(p.dataset.i)===i));
+  const body = document.getElementById('letterBody');
+  // Fade animation
+  body.style.opacity = '0';
+  body.style.transform = 'translateY(4px)';
+  setTimeout(() => {
+    document.getElementById('letterSalu').textContent = r.salu;
+    document.getElementById('letterHook').innerHTML = `We chose to write to you because of <em>${escapeHtml(r.hook)}</em> — and we want to know what you'd tell a fourteen-year-old about it now.`;
+    body.style.transition = 'opacity 0.4s, transform 0.4s';
+    body.style.opacity = '1';
+    body.style.transform = 'translateY(0)';
+  }, 200);
+}
 
-// Subscribe handler
-async function handleSubscribe(e) {
+// ═══════════════════ NAMES WALL ═══════════════════
+function renderNamesWall(){
+  const grid = document.getElementById('namesGrid');
+  const sizes = ['size-m','size-l','size-s','size-m','size-xl','size-s','size-m','size-l','size-s','size-m'];
+  grid.innerHTML = NAMES_WALL.map((n,i) => {
+    const size = sizes[i % sizes.length];
+    const q = RECIPIENTS.find(r => r.name === n.name)?.q || 'A question we are still drafting.';
+    return `<span class="name ${size}" data-q="${escapeHtml(q)}">${escapeHtml(n.name)}</span>`;
+  }).join('');
+  const tooltip = document.getElementById('nameTooltip');
+  grid.querySelectorAll('.name').forEach(el => {
+    el.addEventListener('mouseenter', (e) => {
+      tooltip.textContent = el.dataset.q;
+      tooltip.classList.add('show');
+    });
+    el.addEventListener('mousemove', (e) => {
+      const rect = tooltip.getBoundingClientRect();
+      let x = e.clientX + 14;
+      let y = e.clientY - rect.height - 12;
+      if (x + rect.width > window.innerWidth - 20) x = window.innerWidth - rect.width - 20;
+      if (y < 10) y = e.clientY + 18;
+      tooltip.style.left = x + 'px';
+      tooltip.style.top = y + 'px';
+    });
+    el.addEventListener('mouseleave', () => tooltip.classList.remove('show'));
+    el.addEventListener('click', () => {
+      // Visual feedback: click to "lock" tooltip briefly
+      el.style.color = 'var(--accent)';
+      setTimeout(()=>el.style.color = '', 600);
+    });
+  });
+}
+
+// ═══════════════════ COUNTER (animated, KV-backed) ═══════════════════
+async function loadCounter(){
+  try {
+    const r = await fetch('/api/praefatio/stats');
+    if (r.ok){
+      const d = await r.json();
+      animateNum('countSent', d.sent || 0);
+      animateNum('countReplied', d.replied || 0);
+      return;
+    }
+  } catch {}
+  // Fallback to defaults
+  animateNum('countSent', 0);
+  animateNum('countReplied', 0);
+}
+function animateNum(id, target){
+  const el = document.getElementById(id);
+  if (!el) return;
+  const start = 0;
+  const dur = 1400;
+  const t0 = performance.now();
+  function step(now){
+    const p = Math.min(1, (now - t0) / dur);
+    const eased = 1 - Math.pow(1-p, 3);
+    el.textContent = Math.round(start + (target-start) * eased);
+    if (p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+// ═══════════════════ VOTE ═══════════════════
+async function handleVote(choice){
+  document.querySelectorAll('.vote-btn').forEach(b => b.classList.toggle('voted', b.dataset.vote === choice));
+  try {
+    const r = await fetch('/api/praefatio/vote', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({choice})
+    });
+    if (r.ok){
+      const d = await r.json();
+      renderVote(d.reply || 0, d.ignore || 0);
+    }
+  } catch {
+    renderVote(0,0);
+  }
+}
+function renderVote(reply, ignore){
+  const total = reply + ignore;
+  const res = document.getElementById('voteResults');
+  if (!total){
+    document.getElementById('voteText').textContent = 'Your vote is the first. Numbers will appear once more come in.';
+  } else {
+    const pct = Math.round(reply/total*100);
+    document.getElementById('voteText').textContent = `${pct}% of ${total} would reply.`;
+    document.getElementById('voteReplyBar').style.width = (reply/total*100)+'%';
+    document.getElementById('voteIgnoreBar').style.width = (ignore/total*100)+'%';
+  }
+  res.classList.add('show');
+}
+
+// ═══════════════════ SUBSCRIBE ═══════════════════
+async function handleSubscribe(e){
   e.preventDefault();
   const email = document.getElementById('subscribeEmail').value.trim();
   const btn = document.getElementById('subscribeBtn');
   const status = document.getElementById('subscribeStatus');
-  if (!email || !email.includes('@')) {
+  if (!email || !email.includes('@')){
     status.className = 'subscribe-status err';
-    status.textContent = 'Please enter a valid email.';
+    status.textContent = 'A valid address, please.';
     return;
   }
   btn.disabled = true;
@@ -322,21 +482,35 @@ async function handleSubscribe(e) {
   status.textContent = 'Sending...';
   try {
     const r = await fetch('/api/praefatio/subscribe', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({email})
     });
-    if (!r.ok) throw new Error('Subscribe failed');
+    if (!r.ok) throw new Error();
     status.className = 'subscribe-status ok';
     status.textContent = 'Received. We will be in touch.';
     document.getElementById('subscribeEmail').value = '';
-  } catch (err) {
+  } catch {
     status.className = 'subscribe-status err';
     status.textContent = 'Something went wrong. Try again.';
   } finally {
     btn.disabled = false;
   }
 }
+
+// ═══════════════════ UTILS & BOOT ═══════════════════
+function escapeHtml(s){return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+const io = new IntersectionObserver((entries) => {
+  for (const e of entries){
+    if (e.isIntersecting){ e.target.classList.add('visible'); io.unobserve(e.target); }
+  }
+}, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+document.querySelectorAll('[data-reveal]').forEach(el => io.observe(el));
+
+renderNamePills();
+renderNamesWall();
+loadCounter();
 </script>
 
 </body>

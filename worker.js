@@ -156,6 +156,8 @@ export default {
       if (p === '/api/cron-status')                                   return cronStatus(env);
       if (p === '/api/scribe/research')                               return scribeResearch(url, env);
       if (p === '/api/praefatio/subscribe' && request.method === 'POST') return praefatioSubscribe(request, env);
+      if (p === '/api/praefatio/stats')                               return praefatioStats(env);
+      if (p === '/api/praefatio/vote' && request.method === 'POST')   return praefatioVote(request, env);
       if (p === '/api/spend')                                         return spendStatus(url, env);
       if (p === '/api/spend/log' && request.method === 'POST')        return spendLog(request, env);
       if (p === '/api/cron/run-now')                                  return cronRunNow(url, env, request);
@@ -5297,6 +5299,35 @@ async function praefatioSubscribe(request, env) {
     } catch {}
 
     return jsonResponse({ ok: true });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
+  }
+}
+
+
+// ════════════════════════════════════════════════════════
+// PRAEFATIO - live stats counter
+// Reads praefatio:counters from KV. Manual updates via:
+//   POST /api/praefatio/admin (with admin token) - to be added later
+// For now, returns whatever's in KV (defaults to 0/0).
+// ════════════════════════════════════════════════════════
+async function praefatioStats(env) {
+  const counters = (await kvGet(env, 'praefatio:counters')) || { sent: 0, replied: 0 };
+  return jsonResponse(counters);
+}
+
+// PRAEFATIO - "would you reply?" vote
+async function praefatioVote(request, env) {
+  try {
+    const { choice } = await request.json();
+    if (choice !== 'reply' && choice !== 'ignore') {
+      return jsonResponse({ error: 'invalid choice' }, 400);
+    }
+    const key = 'praefatio:vote';
+    const cur = (await kvGet(env, key)) || { reply: 0, ignore: 0 };
+    cur[choice] = (cur[choice] || 0) + 1;
+    await kvPut(env, key, cur);
+    return jsonResponse(cur);
   } catch (e) {
     return jsonResponse({ error: e.message }, 500);
   }
