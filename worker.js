@@ -26,6 +26,24 @@ let STRIPE_SECRET_KEY     = '';
 let STRIPE_PRICE_ID       = '';
 let STRIPE_WEBHOOK_SECRET = '';
 
+// VAPID for Web Push notifications (P-256 keypair).
+//   VAPID_PUBLIC is the 65-byte uncompressed P-256 point in base64url - this
+//     is the value `/api/push/vapid-key` returns and `subscribe()` in the
+//     PWA frontend uses as `applicationServerKey`. Safe to ship in source.
+//   VAPID_PRIVATE is the JWK `d` scalar (base64url, 32 bytes). USED ONLY
+//     server-side to (a) sign the VAPID JWT in the Authorization header on
+//     outbound POSTs to push services and (b) derive the shared secret for
+//     RFC 8291 aes128gcm payload encryption. MUST be a wrangler secret in
+//     production; the value below is the local-dev/checked-in pair from
+//     2026-05-14 and is also stored in .secrets/credentials.md. Cloudflare
+//     will override this via env.VAPID_PRIVATE once the secret is set with
+//     `wrangler secret put VAPID_PRIVATE` - see TOOLS.md.
+let VAPID_PUBLIC  = 'BAjYR6Kk_x3ggBPF6WFpIpVAiYpvOnvBjKMLaLMzQPF0OG0fjjQuCLbEiyS2H7_pheoSLid6Y2G_sRVSON5W5VA';
+let VAPID_PRIVATE = 'xzs1NvV75mmLby5NoFEBfom4YAgN3mvSwIzBgphBlB8';
+// Contact mailto: emitted in the VAPID JWT `sub` claim; push services use
+// this to reach us if our pushes misbehave. Not a secret.
+let VAPID_SUBJECT = 'mailto:julian.tamas12@gmail.com';
+
 // Resolve env-bound secrets the first time we get a request.
 function _hydrateSecrets(env) {
   if (!env) return;
@@ -36,10 +54,10 @@ function _hydrateSecrets(env) {
   if (env.STRIPE_SECRET_KEY)     STRIPE_SECRET_KEY     = env.STRIPE_SECRET_KEY;
   if (env.STRIPE_PRICE_ID)       STRIPE_PRICE_ID       = env.STRIPE_PRICE_ID;
   if (env.STRIPE_WEBHOOK_SECRET) STRIPE_WEBHOOK_SECRET = env.STRIPE_WEBHOOK_SECRET;
+  if (env.VAPID_PUBLIC)          VAPID_PUBLIC          = env.VAPID_PUBLIC;
+  if (env.VAPID_PRIVATE)         VAPID_PRIVATE         = env.VAPID_PRIVATE;
+  if (env.VAPID_SUBJECT)         VAPID_SUBJECT         = env.VAPID_SUBJECT;
 }
-
-// VAPID for web push notifications
-const VAPID_PUBLIC = 'BL6xSk_4wHzUF_8AYnJJOrJnhv0dlpe9nnI5B6vCI1kfWp8bvZ2tuf3Ittb_mKxwIEz9Z1woclj8KiVGZkRxKeA';
 const STRIPE_SUCCESS_URL = 'https://rupertweb.com/questlog.html?pro=success';
 const STRIPE_CANCEL_URL  = 'https://rupertweb.com/questlog.html?pro=cancel';
 
