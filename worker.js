@@ -165,13 +165,16 @@ export default {
     }
 
     // Domain-specific static routing.
-    // thepraefatio.com -> serve praefatio.html as the root
+    // thepraefatio.com -> serve praefatio.html for the root, allow other assets through
     const host = url.hostname.toLowerCase().replace(/^www\./, '');
     if (host === 'thepraefatio.com') {
-      // Root or trailing-slash -> praefatio.html
-      if (p === '/' || p === '') {
+      if (p === '/' || p === '' || p === '/index.html') {
         const rewritten = new Request(new URL('/praefatio.html', request.url).toString(), request);
-        return env.ASSETS.fetch(rewritten);
+        const res = await env.ASSETS.fetch(rewritten);
+        // Pass through but tag so we can verify in browser devtools
+        const newRes = new Response(res.body, res);
+        newRes.headers.set('x-praefatio-rewrite', 'root->praefatio.html');
+        return newRes;
       }
     }
 
