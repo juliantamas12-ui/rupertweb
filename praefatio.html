@@ -472,8 +472,19 @@ function animateNum(id, target){
 }
 
 // ═══════════════════ VOTE ═══════════════════
-async function handleVote(choice){
+// One vote per visitor. Switching is allowed but doesn't inflate counts.
+let voteInFlight = false;
+function getPriorVote(){ try { return localStorage.getItem('praefatio_vote'); } catch { return null; } }
+function setPriorVote(v){ try { localStorage.setItem('praefatio_vote', v); } catch {} }
+function lockVoteUI(choice){
   document.querySelectorAll('.vote-btn').forEach(b => b.classList.toggle('voted', b.dataset.vote === choice));
+}
+async function handleVote(choice){
+  if (voteInFlight) return;
+  const prior = getPriorVote();
+  if (prior === choice) return; // already voted that way - no-op
+  voteInFlight = true;
+  lockVoteUI(choice);
   try {
     const r = await fetch('/api/praefatio/vote', {
       method:'POST',
@@ -482,11 +493,19 @@ async function handleVote(choice){
     });
     if (r.ok){
       const d = await r.json();
+      setPriorVote(choice);
       renderVote(d.reply || 0, d.ignore || 0);
     }
   } catch {
     renderVote(0,0);
+  } finally {
+    voteInFlight = false;
   }
+}
+// On load, lock the UI if they've already voted from this browser
+function loadVoteState(){
+  const prior = getPriorVote();
+  if (prior) lockVoteUI(prior);
 }
 function renderVote(reply, ignore){
   const total = reply + ignore;
@@ -547,6 +566,7 @@ document.querySelectorAll('[data-reveal]').forEach(el => io.observe(el));
 renderNamePills();
 renderNamesWall();
 loadCounter();
+loadVoteState();
 </script>
 
 </body>

@@ -5317,17 +5317,40 @@ async function praefatioStats(env) {
 }
 
 // PRAEFATIO - "would you reply?" vote
+// One vote per IP, ever (or per 30d if we want soft reset). Switching choice is allowed
+// without inflating counts: we remember the previous choice and decrement it before incrementing.
 async function praefatioVote(request, env) {
   try {
     const { choice } = await request.json();
     if (choice !== 'reply' && choice !== 'ignore') {
       return jsonResponse({ error: 'invalid choice' }, 400);
     }
-    const key = 'praefatio:vote';
-    const cur = (await kvGet(env, key)) || { reply: 0, ignore: 0 };
+    const ip = (request.headers.get('cf-connecting-ip') || '').trim();
+    if (!ip) return jsonResponse({ error: 'no ip' }, 400);
+
+    const voteKey = 'praefatio:vote';
+    const cur = (await kvGet(env, voteKey)) || { reply: 0, ignore: 0 };
+
+    // Track this voter
+    const voterKey = `praefatio:voter:${ip}`;
+    const prev = await kvGet(env, voterKey); // null OR { choice: 'reply'|'ignore', ts }
+
+    if (prev && prev.choice === choice) {
+      // Same vote again - no-op, just return current totals
+      return jsonResponse({ ...cur, alreadyVoted: true });
+    }
+    if (prev && prev.choice && prev.choice !== choice) {
+      // Switching their vote - decrement the old one
+      cur[prev.choice] = Math.max(0, (cur[prev.choice] || 0) - 1);
+    }
+    // Increment the new choice
     cur[choice] = (cur[choice] || 0) + 1;
-    await kvPut(env, key, cur);
-    return jsonResponse(cur);
+    await kvPut(env, voteKey, cur);
+
+    // Record this voter's current pick (180-day TTL)
+    await kvPut(env, voterKey, { choice, ts: Date.now() }, 60 * 60 * 24 * 180);
+
+    return jsonResponse({ ...cur, recorded: true });
   } catch (e) {
     return jsonResponse({ error: e.message }, 500);
   }
