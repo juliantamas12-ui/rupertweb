@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>The Praefatio</title>
 <meta name="description" content="Letters to the people who built the world. A research project by two students writing to the founders, investors, and operators they admire.">
-<meta name="robots" content="index,follow">
 <link rel="canonical" href="https://thepraefatio.com">
 <meta property="og:type" content="website">
 <meta property="og:title" content="The Praefatio">
@@ -13,118 +12,140 @@
 <meta property="og:url" content="https://thepraefatio.com">
 <link rel="icon" type="image/svg+xml" href="/icons/favicon-praefatio.svg">
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500;1,9..144,600;1,9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#000;
-  --bg-2:#0a0a0a;
-  --bg-3:#141414;
-  --text:#fff;
-  --text-dim:#9a9a9a;
-  --text-mute:#5a5a5a;
-  --rule:rgba(255,255,255,0.08);
-  --rule-strong:rgba(255,255,255,0.20);
-  --accent:#d4b16a;
-  --accent-dim:rgba(212,177,106,0.5);
+  /* Cohere-style warm cream palette */
+  --bg:#F4EFE6;
+  --bg-2:#FFFBF3;
+  --panel:#FFFFFF;
+  --panel-shadow:0 1px 2px rgba(26,15,5,0.04), 0 8px 24px rgba(26,15,5,0.04);
+  --ink:#1A1207;
+  --ink-soft:#5A4A38;
+  --ink-mute:#8A7860;
+  --rule:rgba(26,18,7,0.10);
+  --rule-strong:rgba(26,18,7,0.18);
+  /* Earthy terracotta primary, sage secondary */
+  --accent:#B8552E;
+  --accent-soft:rgba(184,85,46,0.10);
+  --sage:#7A8F6E;
+  --sage-soft:rgba(122,143,110,0.12);
 }
-html,body{background:var(--bg);color:var(--text);font-family:'Inter',-apple-system,sans-serif;-webkit-font-smoothing:antialiased;font-size:16px;line-height:1.55;letter-spacing:0;overflow-x:hidden}
-.serif{font-family:'Crimson Text',Georgia,serif}
-.mono{font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums}
+html,body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,sans-serif;-webkit-font-smoothing:antialiased;font-size:16px;line-height:1.55;overflow-x:hidden}
+.serif{font-family:'Fraunces',Georgia,serif}
+.mono{font-family:'JetBrains Mono',monospace}
 
 /* ──────────── NAV ──────────── */
-nav{position:fixed;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:18px 40px;z-index:100;background:linear-gradient(180deg,rgba(0,0,0,0.7) 0%,rgba(0,0,0,0) 100%);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-nav .brand{font-family:'Crimson Text',serif;font-size:18px;font-weight:600;letter-spacing:0.5px;font-style:italic}
+nav{position:sticky;top:0;display:flex;align-items:center;justify-content:space-between;padding:18px 40px;z-index:100;background:rgba(244,239,230,0.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--rule)}
+nav .brand{font-family:'Fraunces',serif;font-size:20px;font-weight:600;font-style:italic;letter-spacing:-0.3px;color:var(--ink)}
 nav .brand .dot{color:var(--accent);font-style:normal}
-nav .links{display:flex;gap:32px;font-size:11px;letter-spacing:3px;text-transform:uppercase;font-weight:600}
-nav a{color:var(--text-dim);text-decoration:none;transition:color 0.15s}
-nav a:hover{color:var(--text)}
-nav .cta{color:var(--accent);font-weight:700}
-@media(max-width:700px){nav{padding:14px 18px}nav .links{gap:18px;font-size:10px;letter-spacing:2px}}
+nav .links{display:flex;gap:32px;font-size:13px;font-weight:500;color:var(--ink-soft)}
+nav a{color:inherit;text-decoration:none;transition:color 0.15s}
+nav a:hover{color:var(--accent)}
+nav .cta{background:var(--ink);color:var(--bg-2);padding:9px 18px;border-radius:6px;font-weight:600;font-size:12px;letter-spacing:0.3px;transition:background 0.15s}
+nav .cta:hover{background:var(--accent);color:var(--bg-2)}
+@media(max-width:700px){nav{padding:14px 18px}nav .links{gap:16px;font-size:12px}}
 
 /* ──────────── HERO ──────────── */
-.hero{height:100vh;min-height:680px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative;overflow:hidden;padding:0 24px}
-.hero::before{content:'';position:absolute;inset:0;background:
-  radial-gradient(ellipse at center top,rgba(212,177,106,0.10) 0%,transparent 50%),
-  radial-gradient(ellipse at center bottom,rgba(212,177,106,0.04) 0%,transparent 50%);
-  pointer-events:none;z-index:0}
-.hero-eyebrow{position:relative;z-index:2;font-size:11px;letter-spacing:5px;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:28px}
-.hero-title{position:relative;z-index:2;font-family:'Crimson Text',serif;font-style:italic;font-weight:600;font-size:clamp(56px,11vw,148px);line-height:0.92;letter-spacing:-3px;margin-bottom:32px;color:var(--text)}
-.hero-title .accent{color:var(--accent);font-style:italic}
-.hero-sub{position:relative;z-index:2;font-family:'Crimson Text',serif;font-size:clamp(18px,2.2vw,24px);color:var(--text-dim);max-width:640px;margin:0 auto 48px;line-height:1.5;font-style:italic;font-weight:400}
-.hero-cta{position:relative;z-index:2;display:inline-flex;align-items:center;gap:10px;background:transparent;color:var(--text);border:1px solid var(--rule-strong);padding:16px 28px;font-size:11px;letter-spacing:3px;text-transform:uppercase;font-weight:700;cursor:pointer;transition:all 0.15s;text-decoration:none;font-family:inherit}
-.hero-cta:hover{background:var(--text);color:var(--bg);border-color:var(--text)}
-.hero-cta .arrow{font-size:14px}
-.scroll-indicator{position:absolute;bottom:32px;left:50%;transform:translateX(-50%);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--text-mute);font-weight:600;display:flex;flex-direction:column;align-items:center;gap:10px;z-index:2}
-.scroll-indicator::after{content:'';width:1px;height:36px;background:linear-gradient(180deg,var(--rule-strong),transparent);animation:scrollPulse 2s ease-in-out infinite}
-@keyframes scrollPulse{0%,100%{opacity:0.4;transform:scaleY(1)}50%{opacity:1;transform:scaleY(1.15)}}
+.hero{position:relative;padding:120px 40px 140px;text-align:center;overflow:hidden}
+@media(max-width:700px){.hero{padding:70px 20px 90px}}
+/* Soft gradient blob, Clay-style */
+.hero::before{content:'';position:absolute;top:-200px;left:50%;transform:translateX(-50%);width:1100px;height:700px;background:
+  radial-gradient(circle at 30% 50%,rgba(184,85,46,0.10) 0%,transparent 50%),
+  radial-gradient(circle at 70% 60%,rgba(122,143,110,0.10) 0%,transparent 50%);
+  pointer-events:none;filter:blur(40px);z-index:0}
+.hero > *{position:relative;z-index:1}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:10px;font-size:12px;font-weight:600;letter-spacing:1px;color:var(--accent);background:var(--accent-soft);padding:6px 14px;border-radius:100px;margin-bottom:30px}
+.hero-eyebrow .pulse{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+.hero h1{font-family:'Fraunces',serif;font-size:clamp(48px,8.5vw,108px);line-height:0.96;letter-spacing:-2.5px;font-weight:600;color:var(--ink);margin-bottom:28px;max-width:1100px;margin-left:auto;margin-right:auto}
+.hero h1 .em{font-style:italic;color:var(--accent);position:relative;display:inline-block}
+.hero h1 .em::after{content:'';position:absolute;left:0;right:0;bottom:-2px;height:14px;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 14' preserveAspectRatio='none'><path d='M2 9 Q 30 2, 60 6 T 120 6 T 180 8' stroke='%23B8552E' stroke-width='2.2' fill='none' stroke-linecap='round' opacity='0.55'/></svg>") no-repeat;background-size:100% 100%}
+.hero-sub{font-family:'Fraunces',serif;font-size:clamp(18px,2vw,22px);color:var(--ink-soft);max-width:660px;margin:0 auto 44px;line-height:1.55;font-weight:400}
+.hero-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn-primary{background:var(--ink);color:var(--bg-2);padding:14px 26px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;letter-spacing:0.2px;transition:background 0.15s, transform 0.15s;display:inline-flex;align-items:center;gap:8px;border:none;cursor:pointer;font-family:inherit}
+.btn-primary:hover{background:var(--accent);transform:translateY(-1px)}
+.btn-ghost{background:transparent;color:var(--ink);padding:14px 26px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;letter-spacing:0.2px;transition:all 0.15s;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--rule-strong);cursor:pointer;font-family:inherit}
+.btn-ghost:hover{border-color:var(--ink);background:var(--bg-2)}
+.btn-primary .arrow,.btn-ghost .arrow{transition:transform 0.15s}
+.btn-primary:hover .arrow,.btn-ghost:hover .arrow{transform:translateX(3px)}
 
-/* ──────────── SECTION ──────────── */
-.section{padding:140px 40px;max-width:1320px;margin:0 auto;position:relative}
-@media(max-width:700px){.section{padding:80px 20px}}
-.section-eyebrow{font-size:11px;letter-spacing:5px;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:24px;display:flex;align-items:center;gap:14px}
-.section-eyebrow::before{content:'';display:block;width:32px;height:1px;background:var(--accent)}
-.section-headline{font-family:'Crimson Text',serif;font-size:clamp(40px,6vw,84px);line-height:1.0;letter-spacing:-2px;font-weight:600;margin-bottom:32px;max-width:1100px}
+/* Hero badges row */
+.hero-meta{margin-top:48px;display:flex;justify-content:center;gap:32px;flex-wrap:wrap;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.5px;color:var(--ink-mute);font-weight:500}
+.hero-meta span{display:inline-flex;align-items:center;gap:8px}
+.hero-meta span::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--sage)}
+
+/* ──────────── SECTION CONTAINER ──────────── */
+.section{padding:100px 40px;max-width:1200px;margin:0 auto;position:relative}
+@media(max-width:700px){.section{padding:60px 20px}}
+.section-eyebrow{display:inline-block;font-size:12px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--accent);background:var(--accent-soft);padding:6px 12px;border-radius:6px;margin-bottom:24px}
+.section-headline{font-family:'Fraunces',serif;font-size:clamp(36px,5vw,64px);line-height:1.05;letter-spacing:-1.5px;font-weight:600;margin-bottom:24px;max-width:900px;color:var(--ink)}
 .section-headline em{font-style:italic;color:var(--accent)}
-.section-lede{font-family:'Crimson Text',serif;font-size:clamp(18px,2vw,22px);color:var(--text-dim);max-width:640px;line-height:1.55;font-weight:400}
+.section-lede{font-family:'Fraunces',serif;font-size:clamp(17px,1.8vw,21px);color:var(--ink-soft);max-width:680px;line-height:1.6;font-weight:400}
 
 /* ──────────── MISSION ──────────── */
-.mission{border-top:1px solid var(--rule)}
-.mission-body{display:grid;grid-template-columns:1fr 1fr;gap:80px;margin-top:64px}
-@media(max-width:900px){.mission-body{grid-template-columns:1fr;gap:40px}}
-.mission-body p{font-family:'Crimson Text',serif;font-size:18px;line-height:1.7;color:var(--text-dim)}
+.mission-body{display:grid;grid-template-columns:1fr 1fr;gap:60px;margin-top:48px}
+@media(max-width:900px){.mission-body{grid-template-columns:1fr;gap:32px}}
+.mission-body p{font-family:'Fraunces',serif;font-size:18px;line-height:1.7;color:var(--ink-soft)}
 .mission-body p + p{margin-top:18px}
-.mission-body strong{color:var(--text);font-weight:600;font-style:italic}
+.mission-body strong{color:var(--ink);font-weight:600;font-style:italic}
 
-/* ──────────── PRINCIPLES ──────────── */
-.principles{border-top:1px solid var(--rule);background:var(--bg-2)}
-.principle-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin-top:64px;background:var(--rule)}
+/* ──────────── PRINCIPLES (Mintlify card grid) ──────────── */
+.principles-wrap{background:var(--bg-2);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.principle-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:48px}
 @media(max-width:900px){.principle-grid{grid-template-columns:1fr}}
-.principle{background:var(--bg-2);padding:48px 36px;position:relative}
-.principle .num{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:2px;margin-bottom:24px}
-.principle h3{font-family:'Crimson Text',serif;font-size:26px;font-weight:600;line-height:1.15;margin-bottom:14px;letter-spacing:-0.3px}
+.principle{background:var(--panel);border:1px solid var(--rule);border-radius:14px;padding:32px;position:relative;transition:transform 0.2s ease-out, box-shadow 0.2s;box-shadow:0 1px 2px rgba(26,15,5,0.03)}
+.principle:hover{transform:translateY(-3px);box-shadow:var(--panel-shadow)}
+.principle .icon{width:38px;height:38px;border-radius:9px;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;color:var(--accent);font-family:'Fraunces',serif;font-style:italic;font-weight:600;font-size:20px;margin-bottom:20px}
+.principle h3{font-family:'Fraunces',serif;font-size:22px;font-weight:600;line-height:1.2;margin-bottom:12px;color:var(--ink);letter-spacing:-0.3px}
 .principle h3 em{font-style:italic;color:var(--accent)}
-.principle p{font-size:14px;color:var(--text-dim);line-height:1.6}
+.principle p{font-size:15px;color:var(--ink-soft);line-height:1.55}
 
 /* ──────────── PROOF / QUOTE ──────────── */
-.proof{border-top:1px solid var(--rule);text-align:center;padding:160px 40px}
-@media(max-width:700px){.proof{padding:100px 20px}}
-.proof blockquote{font-family:'Crimson Text',serif;font-style:italic;font-size:clamp(28px,4vw,52px);line-height:1.2;letter-spacing:-1px;max-width:1000px;margin:0 auto 40px;color:var(--text);font-weight:400}
-.proof cite{font-style:normal;font-size:11px;letter-spacing:4px;text-transform:uppercase;color:var(--accent);font-weight:600}
+.proof{padding:130px 40px;text-align:center;position:relative;overflow:hidden;border-bottom:1px solid var(--rule)}
+.proof::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:700px;height:300px;background:radial-gradient(ellipse,rgba(122,143,110,0.10),transparent 70%);pointer-events:none}
+@media(max-width:700px){.proof{padding:80px 20px}}
+.proof blockquote{position:relative;z-index:1;font-family:'Fraunces',serif;font-style:italic;font-size:clamp(28px,4.5vw,52px);line-height:1.18;letter-spacing:-0.8px;max-width:1000px;margin:0 auto 32px;color:var(--ink);font-weight:500}
+.proof blockquote .mark{font-family:'Fraunces',serif;font-style:italic;color:var(--accent);font-weight:700;font-size:1.2em;line-height:0;vertical-align:-0.1em}
+.proof cite{position:relative;z-index:1;font-style:normal;font-size:13px;letter-spacing:1px;color:var(--ink-mute);font-weight:500;font-family:'Inter',sans-serif}
 
 /* ──────────── STATS ──────────── */
-.stats{border-top:1px solid var(--rule);padding:120px 40px;max-width:1320px;margin:0 auto}
+.stats{padding:100px 40px;max-width:1200px;margin:0 auto;border-bottom:1px solid var(--rule)}
 @media(max-width:700px){.stats{padding:60px 20px}}
-.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:48px;margin-top:48px}
-@media(max-width:900px){.stats-grid{grid-template-columns:1fr 1fr;gap:32px}}
-.stat .v{font-family:'Crimson Text',serif;font-size:clamp(40px,5vw,72px);font-weight:600;line-height:1;letter-spacing:-2px;color:var(--text)}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;margin-top:48px}
+@media(max-width:900px){.stats-grid{grid-template-columns:1fr 1fr;gap:20px}}
+.stat{background:var(--panel);border:1px solid var(--rule);border-radius:14px;padding:32px 28px}
+.stat .v{font-family:'Fraunces',serif;font-size:clamp(40px,5vw,64px);font-weight:600;line-height:1;letter-spacing:-2px;color:var(--ink);margin-bottom:14px}
 .stat .v em{font-style:italic;color:var(--accent)}
-.stat .l{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--text-mute);margin-top:14px;font-weight:500}
+.stat .l{font-family:'Inter',sans-serif;font-size:12px;letter-spacing:0.5px;color:var(--ink-mute);font-weight:500;text-transform:uppercase}
 
-/* ──────────── CTA / SUBSCRIBE ──────────── */
-.cta-block{border-top:1px solid var(--rule);padding:140px 40px;text-align:center;background:radial-gradient(ellipse at center,rgba(212,177,106,0.06) 0%,transparent 60%)}
+/* ──────────── SUBSCRIBE ──────────── */
+.cta-block{padding:130px 40px;text-align:center;background:linear-gradient(180deg,var(--bg) 0%,var(--bg-2) 100%)}
 @media(max-width:700px){.cta-block{padding:80px 20px}}
-.cta-block .section-headline{margin:0 auto 28px;max-width:880px}
-.cta-block .section-lede{margin:0 auto 56px;color:var(--text-dim)}
-.subscribe-form{display:flex;gap:8px;max-width:520px;margin:0 auto;flex-wrap:wrap;justify-content:center}
-.subscribe-form input{flex:1;min-width:260px;background:transparent;color:var(--text);border:1px solid var(--rule-strong);padding:18px 22px;font-size:14px;font-family:inherit;letter-spacing:0.3px;height:54px}
-.subscribe-form input:focus{outline:none;border-color:var(--accent)}
-.subscribe-form button{background:var(--accent);color:#0a0a0a;border:none;padding:0 32px;font-size:11px;letter-spacing:3px;text-transform:uppercase;font-weight:700;cursor:pointer;height:54px;font-family:inherit;transition:background 0.15s}
-.subscribe-form button:hover{background:#e8c787}
+.cta-block .section-headline{margin:0 auto 24px;max-width:840px;text-align:center}
+.cta-block .section-lede{margin:0 auto 48px;text-align:center}
+.subscribe-form{display:flex;gap:8px;max-width:520px;margin:0 auto;flex-wrap:wrap;justify-content:center;background:var(--panel);padding:8px;border-radius:12px;border:1px solid var(--rule);box-shadow:var(--panel-shadow)}
+.subscribe-form input{flex:1;min-width:240px;background:transparent;color:var(--ink);border:none;padding:14px 18px;font-size:15px;font-family:inherit;letter-spacing:0.2px}
+.subscribe-form input:focus{outline:none}
+.subscribe-form input::placeholder{color:var(--ink-mute)}
+.subscribe-form button{background:var(--ink);color:var(--bg-2);border:none;padding:0 26px;font-size:14px;font-weight:600;border-radius:8px;cursor:pointer;height:48px;font-family:inherit;transition:background 0.15s;display:inline-flex;align-items:center;gap:6px;letter-spacing:0.2px}
+.subscribe-form button:hover{background:var(--accent)}
 .subscribe-form button:disabled{opacity:0.5;cursor:not-allowed}
-.subscribe-status{margin-top:22px;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1px;color:var(--text-mute);min-height:16px}
-.subscribe-status.ok{color:var(--accent)}
-.subscribe-status.err{color:#ff7a7a}
+.subscribe-status{margin-top:20px;font-size:13px;color:var(--ink-mute);min-height:18px;font-weight:500}
+.subscribe-status.ok{color:var(--sage)}
+.subscribe-status.err{color:#c44e2e}
 
 /* ──────────── FOOTER ──────────── */
-footer{border-top:1px solid var(--rule);padding:40px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text-mute);font-weight:500}
-footer a{color:var(--text-mute);text-decoration:none}
+footer{padding:36px 40px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;font-family:'Inter',sans-serif;font-size:12px;color:var(--ink-mute);font-weight:500;border-top:1px solid var(--rule)}
+footer a{color:inherit;text-decoration:none;transition:color 0.15s}
 footer a:hover{color:var(--accent)}
-footer .left{display:flex;gap:24px;align-items:center;flex-wrap:wrap}
+footer .left{display:flex;gap:18px;align-items:center;flex-wrap:wrap;font-family:'Fraunces',serif;font-style:italic;font-weight:500}
 footer .right{display:flex;gap:24px;align-items:center;flex-wrap:wrap}
 
 /* ──────────── REVEAL ON SCROLL ──────────── */
-[data-reveal]{opacity:0;transform:translateY(24px);transition:opacity 0.8s ease-out,transform 0.8s ease-out}
+[data-reveal]{opacity:0;transform:translateY(20px);transition:opacity 0.7s ease-out,transform 0.7s ease-out}
 [data-reveal].visible{opacity:1;transform:translateY(0)}
 @media(prefers-reduced-motion:reduce){[data-reveal]{opacity:1;transform:none;transition:none}}
 </style>
@@ -142,18 +163,27 @@ footer .right{display:flex;gap:24px;align-items:center;flex-wrap:wrap}
 
 <!-- HERO -->
 <section class="hero">
-  <div class="hero-eyebrow">Issue 01 · Forthcoming 2026</div>
-  <h1 class="hero-title">Letters to the<br><em class="accent">people who built<br>the world.</em></h1>
+  <div class="hero-eyebrow"><span class="pulse"></span> Issue 01 · Forthcoming 2026</div>
+  <h1>Letters to the people who <span class="em">built the world.</span></h1>
   <p class="hero-sub">A correspondence project. Two students writing to the founders, investors and operators they admire — asking the questions that artificial intelligence cannot answer.</p>
-  <a href="#subscribe" class="hero-cta">Subscribe for the first letters <span class="arrow">→</span></a>
-  <div class="scroll-indicator">Scroll</div>
+  <div class="hero-actions">
+    <a href="#subscribe" class="btn-primary">Subscribe for the first letters <span class="arrow">→</span></a>
+    <a href="#mission" class="btn-ghost">What it is <span class="arrow">↓</span></a>
+  </div>
+  <div class="hero-meta">
+    <span>Handwritten</span>
+    <span>50 letters</span>
+    <span>Published 2026</span>
+  </div>
 </section>
 
 <!-- MISSION -->
-<section class="section mission" id="mission">
-  <div class="section-eyebrow" data-reveal>The Mission</div>
-  <h2 class="section-headline" data-reveal>We write letters that <em>get answered.</em></h2>
-  <p class="section-lede" data-reveal>Most of what the next generation learns about business is filtered through podcasts, ghostwritten memoirs, and quotes recycled until they mean nothing. We are trying something older. We write, by hand, to the people we want to learn from — and we ask the questions a chatbot cannot.</p>
+<section class="section" id="mission">
+  <div data-reveal>
+    <div class="section-eyebrow">The Mission</div>
+    <h2 class="section-headline">We write letters that <em>get answered.</em></h2>
+    <p class="section-lede">Most of what the next generation learns about business is filtered through podcasts, ghostwritten memoirs, and quotes recycled until they mean nothing. We are trying something older. We write, by hand, to the people we want to learn from — and we ask the questions a chatbot cannot.</p>
+  </div>
 
   <div class="mission-body">
     <div data-reveal>
@@ -168,41 +198,48 @@ footer .right{display:flex;gap:24px;align-items:center;flex-wrap:wrap}
 </section>
 
 <!-- PRINCIPLES -->
-<section class="section principles" id="principles">
-  <div class="section-eyebrow" data-reveal>The Method</div>
-  <h2 class="section-headline" data-reveal>Three principles. <em>Held strictly.</em></h2>
+<div class="principles-wrap">
+  <section class="section" id="principles">
+    <div data-reveal>
+      <div class="section-eyebrow">The Method</div>
+      <h2 class="section-headline">Three principles. <em>Held strictly.</em></h2>
+      <p class="section-lede">No survey. No automated outreach. No clever growth tricks. The method is the moat.</p>
+    </div>
 
-  <div class="principle-grid">
-    <div class="principle" data-reveal>
-      <div class="num">01</div>
-      <h3>Research, <em>not interrogation.</em></h3>
-      <p>Two to three hours of preparation precede every letter. We arrive having read what the subject already said. We ask only what they have not been asked.</p>
+    <div class="principle-grid">
+      <div class="principle" data-reveal>
+        <div class="icon">i</div>
+        <h3>Research, <em>not interrogation.</em></h3>
+        <p>Two to three hours of preparation precede every letter. We arrive having read what the subject already said. We ask only what they have not been asked.</p>
+      </div>
+      <div class="principle" data-reveal>
+        <div class="icon">ii</div>
+        <h3>Three questions, <em>no more.</em></h3>
+        <p>Each letter contains a single hook, a single proof of work, and three questions. One forces opinion. One forces specificity. One forces regret. Ten minutes of their time. No survey.</p>
+      </div>
+      <div class="principle" data-reveal>
+        <div class="icon">iii</div>
+        <h3>Paper, <em>not pixels.</em></h3>
+        <p>The letters are printed and posted. Hand-signed. Stamped envelope returned for the reply. The medium is the proof of seriousness. Almost no one writes letters anymore.</p>
+      </div>
     </div>
-    <div class="principle" data-reveal>
-      <div class="num">02</div>
-      <h3>Three questions, <em>no more.</em></h3>
-      <p>Each letter contains a single hook, a single proof of work, and three questions. One forces opinion. One forces specificity. One forces regret. Ten minutes of their time. No survey.</p>
-    </div>
-    <div class="principle" data-reveal>
-      <div class="num">03</div>
-      <h3>Paper, <em>not pixels.</em></h3>
-      <p>The letters are printed and posted. Hand-signed. Stamped envelope returned for the reply. The medium is the proof of seriousness. Almost no one writes letters anymore. The ones who reply do so because of that.</p>
-    </div>
-  </div>
-</section>
+  </section>
+</div>
 
-<!-- PROOF / QUOTE -->
+<!-- PROOF -->
 <section class="proof">
   <blockquote data-reveal>
-    "What survives is what someone took the time to write down."
+    <span class="mark">"</span>What survives is what someone took the time to write down.<span class="mark">"</span>
   </blockquote>
-  <cite data-reveal>The Editors · 2026</cite>
+  <cite data-reveal>— The Editors, 2026</cite>
 </section>
 
 <!-- STATS -->
 <section class="stats">
-  <div class="section-eyebrow" data-reveal>Edition 01</div>
-  <h2 class="section-headline" data-reveal>What we are <em>building toward.</em></h2>
+  <div data-reveal>
+    <div class="section-eyebrow">Edition 01</div>
+    <h2 class="section-headline">What we are <em>building toward.</em></h2>
+  </div>
   <div class="stats-grid">
     <div class="stat" data-reveal>
       <div class="v"><em>50</em></div>
@@ -225,23 +262,24 @@ footer .right{display:flex;gap:24px;align-items:center;flex-wrap:wrap}
 
 <!-- SUBSCRIBE -->
 <section class="cta-block" id="subscribe">
-  <div class="section-eyebrow" data-reveal style="justify-content:center">Be Among The First</div>
-  <h2 class="section-headline" data-reveal>The <em>first letters</em> arrive when they arrive.</h2>
-  <p class="section-lede" data-reveal>Leave us an address. We will send the first published letter when it is ready — no marketing, no recurring newsletter, no nonsense. One email. From us. With a letter.</p>
+  <div data-reveal>
+    <div class="section-eyebrow">Be Among The First</div>
+    <h2 class="section-headline">The <em>first letters</em> arrive when they arrive.</h2>
+    <p class="section-lede">Leave us an address. We will send the first published letter when it is ready — no marketing, no recurring newsletter, no nonsense. One email. From us. With a letter.</p>
+  </div>
   <form class="subscribe-form" data-reveal onsubmit="handleSubscribe(event)">
     <input type="email" id="subscribeEmail" placeholder="your@email.com" required>
-    <button type="submit" id="subscribeBtn">Subscribe</button>
+    <button type="submit" id="subscribeBtn">Subscribe <span>→</span></button>
   </form>
   <div class="subscribe-status" id="subscribeStatus" aria-live="polite"></div>
 </section>
 
 <footer>
   <div class="left">
-    <span>The Praefatio</span>
-    <span>·</span>
-    <span>Issue 01 · MMXXVI</span>
+    The Praefatio
   </div>
   <div class="right">
+    <span>Issue 01 · MMXXVI</span>
     <a href="mailto:hello@thepraefatio.com">hello@thepraefatio.com</a>
   </div>
 </footer>
@@ -258,7 +296,7 @@ const io = new IntersectionObserver((entries) => {
 }, { threshold: 0.15, rootMargin: '0px 0px -50px 0px' });
 document.querySelectorAll('[data-reveal]').forEach(el => io.observe(el));
 
-// Smooth-scroll nav links
+// Smooth scroll
 document.querySelectorAll('a[href^="#"]').forEach(a => {
   a.addEventListener('click', (e) => {
     const target = document.querySelector(a.getAttribute('href'));
@@ -268,7 +306,7 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
   });
 });
 
-// Subscribe
+// Subscribe handler
 async function handleSubscribe(e) {
   e.preventDefault();
   const email = document.getElementById('subscribeEmail').value.trim();
@@ -279,7 +317,7 @@ async function handleSubscribe(e) {
     status.textContent = 'Please enter a valid email.';
     return;
   }
-  btn.disabled = true; btn.textContent = '...';
+  btn.disabled = true;
   status.className = 'subscribe-status';
   status.textContent = 'Sending...';
   try {
@@ -296,7 +334,7 @@ async function handleSubscribe(e) {
     status.className = 'subscribe-status err';
     status.textContent = 'Something went wrong. Try again.';
   } finally {
-    btn.disabled = false; btn.textContent = 'Subscribe';
+    btn.disabled = false;
   }
 }
 </script>

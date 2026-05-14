@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Praefatio</title>
+<meta name="description" content="Letters to the people who built the world. A research project by two students writing to the founders, investors, and operators they admire.">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://thepraefatio.com">
+<meta property="og:type" content="website">
+<meta property="og:title" content="The Praefatio">
+<meta property="og:description" content="Letters to the people who built the world.">
+<meta property="og:url" content="https://thepraefatio.com">
+<link rel="icon" type="image/svg+xml" href="/icons/favicon-praefatio.svg">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#000;
+  --bg-2:#0a0a0a;
+  --bg-3:#141414;
+  --text:#fff;
+  --text-dim:#9a9a9a;
+  --text-mute:#5a5a5a;
+  --rule:rgba(255,255,255,0.08);
+  --rule-strong:rgba(255,255,255,0.20);
+  --accent:#d4b16a;
+  --accent-dim:rgba(212,177,106,0.5);
+}
+html,body{background:var(--bg);color:var(--text);font-family:'Inter',-apple-system,sans-serif;-webkit-font-smoothing:antialiased;font-size:16px;line-height:1.55;letter-spacing:0;overflow-x:hidden}
+.serif{font-family:'Crimson Text',Georgia,serif}
+.mono{font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums}
+
+/* ──────────── NAV ──────────── */
+nav{position:fixed;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:18px 40px;z-index:100;background:linear-gradient(180deg,rgba(0,0,0,0.7) 0%,rgba(0,0,0,0) 100%);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+nav .brand{font-family:'Crimson Text',serif;font-size:18px;font-weight:600;letter-spacing:0.5px;font-style:italic}
+nav .brand .dot{color:var(--accent);font-style:normal}
+nav .links{display:flex;gap:32px;font-size:11px;letter-spacing:3px;text-transform:uppercase;font-weight:600}
+nav a{color:var(--text-dim);text-decoration:none;transition:color 0.15s}
+nav a:hover{color:var(--text)}
+nav .cta{color:var(--accent);font-weight:700}
+@media(max-width:700px){nav{padding:14px 18px}nav .links{gap:18px;font-size:10px;letter-spacing:2px}}
+
+/* ──────────── HERO ──────────── */
+.hero{height:100vh;min-height:680px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative;overflow:hidden;padding:0 24px}
+.hero::before{content:'';position:absolute;inset:0;background:
+  radial-gradient(ellipse at center top,rgba(212,177,106,0.10) 0%,transparent 50%),
+  radial-gradient(ellipse at center bottom,rgba(212,177,106,0.04) 0%,transparent 50%);
+  pointer-events:none;z-index:0}
+.hero-eyebrow{position:relative;z-index:2;font-size:11px;letter-spacing:5px;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:28px}
+.hero-title{position:relative;z-index:2;font-family:'Crimson Text',serif;font-style:italic;font-weight:600;font-size:clamp(56px,11vw,148px);line-height:0.92;letter-spacing:-3px;margin-bottom:32px;color:var(--text)}
+.hero-title .accent{color:var(--accent);font-style:italic}
+.hero-sub{position:relative;z-index:2;font-family:'Crimson Text',serif;font-size:clamp(18px,2.2vw,24px);color:var(--text-dim);max-width:640px;margin:0 auto 48px;line-height:1.5;font-style:italic;font-weight:400}
+.hero-cta{position:relative;z-index:2;display:inline-flex;align-items:center;gap:10px;background:transparent;color:var(--text);border:1px solid var(--rule-strong);padding:16px 28px;font-size:11px;letter-spacing:3px;text-transform:uppercase;font-weight:700;cursor:pointer;transition:all 0.15s;text-decoration:none;font-family:inherit}
+.hero-cta:hover{background:var(--text);color:var(--bg);border-color:var(--text)}
+.hero-cta .arrow{font-size:14px}
+.scroll-indicator{position:absolute;bottom:32px;left:50%;transform:translateX(-50%);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--text-mute);font-weight:600;display:flex;flex-direction:column;align-items:center;gap:10px;z-index:2}
+.scroll-indicator::after{content:'';width:1px;height:36px;background:linear-gradient(180deg,var(--rule-strong),transparent);animation:scrollPulse 2s ease-in-out infinite}
+@keyframes scrollPulse{0%,100%{opacity:0.4;transform:scaleY(1)}50%{opacity:1;transform:scaleY(1.15)}}
+
+/* ──────────── SECTION ──────────── */
+.section{padding:140px 40px;max-width:1320px;margin:0 auto;position:relative}
+@media(max-width:700px){.section{padding:80px 20px}}
+.section-eyebrow{font-size:11px;letter-spacing:5px;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:24px;display:flex;align-items:center;gap:14px}
+.section-eyebrow::before{content:'';display:block;width:32px;height:1px;background:var(--accent)}
+.section-headline{font-family:'Crimson Text',serif;font-size:clamp(40px,6vw,84px);line-height:1.0;letter-spacing:-2px;font-weight:600;margin-bottom:32px;max-width:1100px}
+.section-headline em{font-style:italic;color:var(--accent)}
+.section-lede{font-family:'Crimson Text',serif;font-size:clamp(18px,2vw,22px);color:var(--text-dim);max-width:640px;line-height:1.55;font-weight:400}
+
+/* ──────────── MISSION ──────────── */
+.mission{border-top:1px solid var(--rule)}
+.mission-body{display:grid;grid-template-columns:1fr 1fr;gap:80px;margin-top:64px}
+@media(max-width:900px){.mission-body{grid-template-columns:1fr;gap:40px}}
+.mission-body p{font-family:'Crimson Text',serif;font-size:18px;line-height:1.7;color:var(--text-dim)}
+.mission-body p + p{margin-top:18px}
+.mission-body strong{color:var(--text);font-weight:600;font-style:italic}
+
+/* ──────────── PRINCIPLES ──────────── */
+.principles{border-top:1px solid var(--rule);background:var(--bg-2)}
+.principle-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin-top:64px;background:var(--rule)}
+@media(max-width:900px){.principle-grid{grid-template-columns:1fr}}
+.principle{background:var(--bg-2);padding:48px 36px;position:relative}
+.principle .num{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:2px;margin-bottom:24px}
+.principle h3{font-family:'Crimson Text',serif;font-size:26px;font-weight:600;line-height:1.15;margin-bottom:14px;letter-spacing:-0.3px}
+.principle h3 em{font-style:italic;color:var(--accent)}
+.principle p{font-size:14px;color:var(--text-dim);line-height:1.6}
+
+/* ──────────── PROOF / QUOTE ──────────── */
+.proof{border-top:1px solid var(--rule);text-align:center;padding:160px 40px}
+@media(max-width:700px){.proof{padding:100px 20px}}
+.proof blockquote{font-family:'Crimson Text',serif;font-style:italic;font-size:clamp(28px,4vw,52px);line-height:1.2;letter-spacing:-1px;max-width:1000px;margin:0 auto 40px;color:var(--text);font-weight:400}
+.proof cite{font-style:normal;font-size:11px;letter-spacing:4px;text-transform:uppercase;color:var(--accent);font-weight:600}
+
+/* ──────────── STATS ──────────── */
+.stats{border-top:1px solid var(--rule);padding:120px 40px;max-width:1320px;margin:0 auto}
+@media(max-width:700px){.stats{padding:60px 20px}}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:48px;margin-top:48px}
+@media(max-width:900px){.stats-grid{grid-template-columns:1fr 1fr;gap:32px}}
+.stat .v{font-family:'Crimson Text',serif;font-size:clamp(40px,5vw,72px);font-weight:600;line-height:1;letter-spacing:-2px;color:var(--text)}
+.stat .v em{font-style:italic;color:var(--accent)}
+.stat .l{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--text-mute);margin-top:14px;font-weight:500}
+
+/* ──────────── CTA / SUBSCRIBE ──────────── */
+.cta-block{border-top:1px solid var(--rule);padding:140px 40px;text-align:center;background:radial-gradient(ellipse at center,rgba(212,177,106,0.06) 0%,transparent 60%)}
+@media(max-width:700px){.cta-block{padding:80px 20px}}
+.cta-block .section-headline{margin:0 auto 28px;max-width:880px}
+.cta-block .section-lede{margin:0 auto 56px;color:var(--text-dim)}
+.subscribe-form{display:flex;gap:8px;max-width:520px;margin:0 auto;flex-wrap:wrap;justify-content:center}
+.subscribe-form input{flex:1;min-width:260px;background:transparent;color:var(--text);border:1px solid var(--rule-strong);padding:18px 22px;font-size:14px;font-family:inherit;letter-spacing:0.3px;height:54px}
+.subscribe-form input:focus{outline:none;border-color:var(--accent)}
+.subscribe-form button{background:var(--accent);color:#0a0a0a;border:none;padding:0 32px;font-size:11px;letter-spacing:3px;text-transform:uppercase;font-weight:700;cursor:pointer;height:54px;font-family:inherit;transition:background 0.15s}
+.subscribe-form button:hover{background:#e8c787}
+.subscribe-form button:disabled{opacity:0.5;cursor:not-allowed}
+.subscribe-status{margin-top:22px;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1px;color:var(--text-mute);min-height:16px}
+.subscribe-status.ok{color:var(--accent)}
+.subscribe-status.err{color:#ff7a7a}
+
+/* ──────────── FOOTER ──────────── */
+footer{border-top:1px solid var(--rule);padding:40px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text-mute);font-weight:500}
+footer a{color:var(--text-mute);text-decoration:none}
+footer a:hover{color:var(--accent)}
+footer .left{display:flex;gap:24px;align-items:center;flex-wrap:wrap}
+footer .right{display:flex;gap:24px;align-items:center;flex-wrap:wrap}
+
+/* ──────────── REVEAL ON SCROLL ──────────── */
+[data-reveal]{opacity:0;transform:translateY(24px);transition:opacity 0.8s ease-out,transform 0.8s ease-out}
+[data-reveal].visible{opacity:1;transform:translateY(0)}
+@media(prefers-reduced-motion:reduce){[data-reveal]{opacity:1;transform:none;transition:none}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="brand">The Praefatio<span class="dot">.</span></div>
+  <div class="links">
+    <a href="#mission">Mission</a>
+    <a href="#principles">Method</a>
+    <a href="#subscribe" class="cta">Subscribe</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-eyebrow">Issue 01 · Forthcoming 2026</div>
+  <h1 class="hero-title">Letters to the<br><em class="accent">people who built<br>the world.</em></h1>
+  <p class="hero-sub">A correspondence project. Two students writing to the founders, investors and operators they admire — asking the questions that artificial intelligence cannot answer.</p>
+  <a href="#subscribe" class="hero-cta">Subscribe for the first letters <span class="arrow">→</span></a>
+  <div class="scroll-indicator">Scroll</div>
+</section>
+
+<!-- MISSION -->
+<section class="section mission" id="mission">
+  <div class="section-eyebrow" data-reveal>The Mission</div>
+  <h2 class="section-headline" data-reveal>We write letters that <em>get answered.</em></h2>
+  <p class="section-lede" data-reveal>Most of what the next generation learns about business is filtered through podcasts, ghostwritten memoirs, and quotes recycled until they mean nothing. We are trying something older. We write, by hand, to the people we want to learn from — and we ask the questions a chatbot cannot.</p>
+
+  <div class="mission-body">
+    <div data-reveal>
+      <p>The Praefatio is a research project run by two students. Each letter is preceded by hours of reading: every long-form profile, every annual letter, every obscure interview from before the subject was famous. We are not journalists. We are not consultants. We are not asking for anything but ten minutes of honesty.</p>
+      <p>The output is a book, a quarterly publication, and a small archive that will outlast both. <strong>The first edition collects thirty letters.</strong> Half from people who built companies worth a billion or more. Half from people we suspect will, but have not yet.</p>
+    </div>
+    <div data-reveal>
+      <p>The work is patient on purpose. Most of what gets written today exists to be scrolled past. We are interested in what survives — what someone says when they have time to consider the answer, and a reason to commit it to paper.</p>
+      <p>If you are a founder, an investor, an operator, or any other kind of builder — and someone you've never heard of writes you a letter that begins with this name on the masthead — that is us. Read it.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PRINCIPLES -->
+<section class="section principles" id="principles">
+  <div class="section-eyebrow" data-reveal>The Method</div>
+  <h2 class="section-headline" data-reveal>Three principles. <em>Held strictly.</em></h2>
+
+  <div class="principle-grid">
+    <div class="principle" data-reveal>
+      <div class="num">01</div>
+      <h3>Research, <em>not interrogation.</em></h3>
+      <p>Two to three hours of preparation precede every letter. We arrive having read what the subject already said. We ask only what they have not been asked.</p>
+    </div>
+    <div class="principle" data-reveal>
+      <div class="num">02</div>
+      <h3>Three questions, <em>no more.</em></h3>
+      <p>Each letter contains a single hook, a single proof of work, and three questions. One forces opinion. One forces specificity. One forces regret. Ten minutes of their time. No survey.</p>
+    </div>
+    <div class="principle" data-reveal>
+      <div class="num">03</div>
+      <h3>Paper, <em>not pixels.</em></h3>
+      <p>The letters are printed and posted. Hand-signed. Stamped envelope returned for the reply. The medium is the proof of seriousness. Almost no one writes letters anymore. The ones who reply do so because of that.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PROOF / QUOTE -->
+<section class="proof">
+  <blockquote data-reveal>
+    "What survives is what someone took the time to write down."
+  </blockquote>
+  <cite data-reveal>The Editors · 2026</cite>
+</section>
+
+<!-- STATS -->
+<section class="stats">
+  <div class="section-eyebrow" data-reveal>Edition 01</div>
+  <h2 class="section-headline" data-reveal>What we are <em>building toward.</em></h2>
+  <div class="stats-grid">
+    <div class="stat" data-reveal>
+      <div class="v"><em>50</em></div>
+      <div class="l">Letters sent</div>
+    </div>
+    <div class="stat" data-reveal>
+      <div class="v">25</div>
+      <div class="l">Replies sought</div>
+    </div>
+    <div class="stat" data-reveal>
+      <div class="v">10</div>
+      <div class="l">In-person interviews</div>
+    </div>
+    <div class="stat" data-reveal>
+      <div class="v"><em>1</em></div>
+      <div class="l">Volume, hardcover</div>
+    </div>
+  </div>
+</section>
+
+<!-- SUBSCRIBE -->
+<section class="cta-block" id="subscribe">
+  <div class="section-eyebrow" data-reveal style="justify-content:center">Be Among The First</div>
+  <h2 class="section-headline" data-reveal>The <em>first letters</em> arrive when they arrive.</h2>
+  <p class="section-lede" data-reveal>Leave us an address. We will send the first published letter when it is ready — no marketing, no recurring newsletter, no nonsense. One email. From us. With a letter.</p>
+  <form class="subscribe-form" data-reveal onsubmit="handleSubscribe(event)">
+    <input type="email" id="subscribeEmail" placeholder="your@email.com" required>
+    <button type="submit" id="subscribeBtn">Subscribe</button>
+  </form>
+  <div class="subscribe-status" id="subscribeStatus" aria-live="polite"></div>
+</section>
+
+<footer>
+  <div class="left">
+    <span>The Praefatio</span>
+    <span>·</span>
+    <span>Issue 01 · MMXXVI</span>
+  </div>
+  <div class="right">
+    <a href="mailto:hello@thepraefatio.com">hello@thepraefatio.com</a>
+  </div>
+</footer>
+
+<script>
+// Reveal on scroll
+const io = new IntersectionObserver((entries) => {
+  for (const e of entries) {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      io.unobserve(e.target);
+    }
+  }
+}, { threshold: 0.15, rootMargin: '0px 0px -50px 0px' });
+document.querySelectorAll('[data-reveal]').forEach(el => io.observe(el));
+
+// Smooth-scroll nav links
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', (e) => {
+    const target = document.querySelector(a.getAttribute('href'));
+    if (!target) return;
+    e.preventDefault();
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+
+// Subscribe
+async function handleSubscribe(e) {
+  e.preventDefault();
+  const email = document.getElementById('subscribeEmail').value.trim();
+  const btn = document.getElementById('subscribeBtn');
+  const status = document.getElementById('subscribeStatus');
+  if (!email || !email.includes('@')) {
+    status.className = 'subscribe-status err';
+    status.textContent = 'Please enter a valid email.';
+    return;
+  }
+  btn.disabled = true; btn.textContent = '...';
+  status.className = 'subscribe-status';
+  status.textContent = 'Sending...';
+  try {
+    const r = await fetch('/api/praefatio/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    if (!r.ok) throw new Error('Subscribe failed');
+    status.className = 'subscribe-status ok';
+    status.textContent = 'Received. We will be in touch.';
+    document.getElementById('subscribeEmail').value = '';
+  } catch (err) {
+    status.className = 'subscribe-status err';
+    status.textContent = 'Something went wrong. Try again.';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Subscribe';
+  }
+}
+</script>
+
+</body>
+</html>
