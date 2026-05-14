@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Forgery That Killed the First Labour Government: The Zinoviev Letter",
+    date: "2026-05-14",
+    category: "History",
+    excerpt: "On 25 October 1924, four days before a British general election, the Daily Mail led with a banner that read: CIVIL WAR PLOT BY SOCIALISTS' MASTERS. Below it was a letter purportedly written by Grigory Zinoviev, head of the Communist International, to the British communists, instructing them on how to use Ramsay MacDonald's Labour government to advance world revolution. It was a complete fabrication. Four days later Labour lost ninety seats. The conventional reading is that a foolish electorate threw out a competent government on the strength of a letter that turned out to be fake. This reading is wrong in almost every detail. What the letter actually did was teach the British state that it could destroy a Labour government from inside its own intelligence apparatus, and teach Labour that the British state would, given the chance, do exactly that...",
+    url: "essays/2026-05-14-the-forgery-that-killed-the-first-labour-government.html"
+  },
+  {
     title: "The 55 Days That Killed the Italian Left: Aldo Moro and the Historic Compromise",
     date: "2026-05-13",
     category: "History",
