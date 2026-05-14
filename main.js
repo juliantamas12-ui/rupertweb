@@ -414,25 +414,25 @@ const SCHOOL_TASKS = [
     "status": "upcoming"
   },
   {
-    "title": "Math 7 (Formative)",
-    "due": "",
-    "subject": "",
-    "status": "upcoming"
-  },
-  {
-    "title": "Math 8: Probability Worksheet",
-    "due": "",
-    "subject": "",
-    "status": "upcoming"
-  },
-  {
-    "title": "Submit Coursework",
+    "title": "Eng 7: Read Part 4",
     "due": "",
     "subject": "",
     "status": "upcoming"
   },
   {
     "title": "Classwork Science 7",
+    "due": "",
+    "subject": "",
+    "status": "upcoming"
+  },
+  {
+    "title": "Cover Work_Exampreparation_May26",
+    "due": "",
+    "subject": "",
+    "status": "upcoming"
+  },
+  {
+    "title": "Submit Coursework",
     "due": "",
     "subject": "",
     "status": "upcoming"
@@ -457,6 +457,24 @@ const SCHOOL_TASKS = [
   },
   {
     "title": "Test Science 7",
+    "due": "",
+    "subject": "",
+    "status": "upcoming"
+  },
+  {
+    "title": "2nd Semester Exams 2026_Listening",
+    "due": "",
+    "subject": "",
+    "status": "upcoming"
+  },
+  {
+    "title": "2nd Semester Exams 2026_Speaking",
+    "due": "",
+    "subject": "",
+    "status": "upcoming"
+  },
+  {
+    "title": "2nd Semester Exams 2026_Speaking (Teil II)",
     "due": "",
     "subject": "",
     "status": "upcoming"
