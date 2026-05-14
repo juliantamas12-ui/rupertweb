@@ -164,6 +164,17 @@ export default {
       return jsonResponse({ error: e.message }, 500);
     }
 
+    // Domain-specific static routing.
+    // thepraefatio.com -> serve praefatio.html as the root
+    const host = url.hostname.toLowerCase().replace(/^www\./, '');
+    if (host === 'thepraefatio.com') {
+      // Root or trailing-slash -> praefatio.html
+      if (p === '/' || p === '') {
+        const rewritten = new Request(new URL('/praefatio.html', request.url).toString(), request);
+        return env.ASSETS.fetch(rewritten);
+      }
+    }
+
     return env.ASSETS.fetch(request);
   },
 
