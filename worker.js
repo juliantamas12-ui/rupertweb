@@ -155,6 +155,7 @@ export default {
       if (p === '/api/alerts')                                        return getAlerts(url, env);
       if (p === '/api/cron-status')                                   return cronStatus(env);
       if (p === '/api/scribe/research')                               return scribeResearch(url, env);
+      if (p === '/api/praefatio/subscribe' && request.method === 'POST') return praefatioSubscribe(request, env);
       if (p === '/api/spend')                                         return spendStatus(url, env);
       if (p === '/api/spend/log' && request.method === 'POST')        return spendLog(request, env);
       if (p === '/api/cron/run-now')                                  return cronRunNow(url, env, request);
@@ -5233,6 +5234,55 @@ async function spendStatus(url, env) {
       subsMonthly,
       days: days.reverse(),
     });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
+  }
+}
+
+
+// ════════════════════════════════════════════════════════
+// THE PRAEFATIO - email signup
+// Stores subscribers in KV, notifies owner via Resend
+// ════════════════════════════════════════════════════════
+async function praefatioSubscribe(request, env) {
+  try {
+    const body = await request.json();
+    const email = (body.email || '').trim().toLowerCase();
+    if (!email || !email.includes('@') || email.length > 120) {
+      return jsonResponse({ error: 'invalid email' }, 400);
+    }
+
+    // Store in KV under praefatio:subscribers (array of {email, ts, ua})
+    const key = 'praefatio:subscribers';
+    const cur = (await kvGet(env, key)) || { subscribers: [] };
+    // De-duplicate
+    if (cur.subscribers.find(s => s.email === email)) {
+      return jsonResponse({ ok: true, alreadySubscribed: true });
+    }
+    cur.subscribers.push({
+      email,
+      ts: Date.now(),
+      ua: request.headers.get('user-agent') || '',
+      ip: request.headers.get('cf-connecting-ip') || '',
+    });
+    await kvPut(env, key, cur);
+
+    // Notify owner via Resend
+    try {
+      await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from: 'onboarding@resend.dev',
+          to: OWNER_EMAIL,
+          subject: `Praefatio subscriber: ${email}`,
+          html: `<p><strong>${email}</strong> subscribed to The Praefatio.</p><p>Total subscribers: ${cur.subscribers.length}</p>`,
+        }),
+      });
+      logSpend(env, 'resend', { purpose: 'praefatio_signup' });
+    } catch {}
+
+    return jsonResponse({ ok: true });
   } catch (e) {
     return jsonResponse({ error: e.message }, 500);
   }

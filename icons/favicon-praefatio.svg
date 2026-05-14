@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" fill="#000"/>
+  <text x="32" y="48" font-family="Crimson Text, Georgia, serif" font-style="italic" font-size="56" font-weight="600" fill="#d4b16a" text-anchor="middle" letter-spacing="-2">P</text>
+  <rect x="44" y="46" width="6" height="6" fill="#d4b16a"/>
+</svg>
