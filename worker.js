@@ -4662,6 +4662,159 @@ async function proStatus(url, env) {
 }
 
 // ════════════════════════════════════════════════════════
+// WEB PUSH DELIVERY  (RFC 8291 aes128gcm payload encryption)
+// ════════════════════════════════════════════════════════
+//
+// VAPID night 2 of 3 (see launch-log 2026-05-14):
+//   - night 1: keypair generation + storage + hydration   (DONE 05-14)
+//   - night 2: aes128gcm payload encryption                (THIS NIGHT)
+//   - night 3: ES256 JWT signing + dispatcher integration  (next night)
+//
+// `encryptPushPayload` produces the binary body to POST to a push service's
+// subscription endpoint. Inputs are the client's PushSubscription `p256dh`
+// + `auth` (both base64url), which are stored on each `push:${sid}` record
+// after the `sanitizePushSubscription` validation that landed 2026-05-11.
+//
+// Self-tested via /tmp/aes128gcm-test.mjs (13 tests: round-trip across
+// empty/short/JSON/max-size payloads, oversize rejection, bad auth/p256dh
+// rejection, tamper-detection, client-isolation, salt-randomness). All pass
+// on Node's Web Crypto, which is the same surface Cloudflare Workers expose.
+//
+// Header layout (RFC 8188 §2.1 + RFC 8291 §4):
+//   salt(16) || rs(4 BE) || idlen(1) || keyid=as_pub(65) || ciphertext
+// Plaintext layout (single record, last):
+//   payload || 0x02         (no padding bytes for our short JSON payloads)
+
+// base64url -> Uint8Array (no padding; tolerant of - and _ but rejects bad len)
+function b64uToBytes(s) {
+  s = String(s).replace(/-/g, '+').replace(/_/g, '/');
+  const pad = s.length % 4;
+  if (pad === 2) s += '==';
+  else if (pad === 3) s += '=';
+  else if (pad === 1) throw new Error('bad base64url length');
+  const bin = atob(s);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+// Uint8Array | ArrayBuffer -> base64url (no padding)
+function bytesToB64u(b) {
+  const arr = b instanceof Uint8Array ? b : new Uint8Array(b);
+  let s = '';
+  for (let i = 0; i < arr.length; i++) s += String.fromCharCode(arr[i]);
+  return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function _concatBytes(...parts) {
+  let n = 0;
+  for (const p of parts) n += p.length;
+  const out = new Uint8Array(n);
+  let o = 0;
+  for (const p of parts) { out.set(p, o); o += p.length; }
+  return out;
+}
+
+// HKDF-SHA256 single-shot: returns `length` bytes.
+async function _hkdfSha256(salt, ikm, info, length) {
+  const key = await crypto.subtle.importKey('raw', ikm, 'HKDF', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits(
+    { name: 'HKDF', hash: 'SHA-256', salt, info },
+    key,
+    length * 8
+  );
+  return new Uint8Array(bits);
+}
+
+// Encrypt a Web Push payload per RFC 8291 (aes128gcm content coding).
+// payload: string | Uint8Array (max 4079 bytes plaintext at rs=4096).
+// clientP256dhB64u + clientAuthB64u come from PushSubscription.keys.
+// Returns { body: Uint8Array, serverPublicRaw: Uint8Array }.
+//   - body          -> POST to subscription.endpoint with header
+//                      `Content-Encoding: aes128gcm`
+//   - serverPublicRaw is exposed for callers that want to log the ephemeral key
+async function encryptPushPayload(payload, clientP256dhB64u, clientAuthB64u) {
+  const enc = new TextEncoder();
+  const payloadBytes = (typeof payload === 'string') ? enc.encode(payload)
+                     : (payload instanceof Uint8Array) ? payload
+                     : new Uint8Array(payload);
+
+  const RS = 4096;
+  // rs - 17 = max plaintext: 16-byte GCM tag + 1-byte delimiter.
+  if (payloadBytes.length > RS - 17) {
+    throw new Error(`payload too large: ${payloadBytes.length} > ${RS - 17}`);
+  }
+
+  const clientP256dhRaw = b64uToBytes(clientP256dhB64u);
+  if (clientP256dhRaw.length !== 65 || clientP256dhRaw[0] !== 0x04) {
+    throw new Error('client p256dh must be 65-byte uncompressed point');
+  }
+  const authSecret = b64uToBytes(clientAuthB64u);
+  if (authSecret.length !== 16) throw new Error('auth must be 16 bytes');
+
+  // 1. Ephemeral P-256 keypair (server-side, fresh per push).
+  const serverKeypair = await crypto.subtle.generateKey(
+    { name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveBits']
+  );
+  const serverPublicRaw = new Uint8Array(
+    await crypto.subtle.exportKey('raw', serverKeypair.publicKey)
+  );
+
+  // 2. ECDH(server_priv, client_pub) -> 32-byte shared secret.
+  const clientPublicKey = await crypto.subtle.importKey(
+    'raw', clientP256dhRaw, { name: 'ECDH', namedCurve: 'P-256' }, true, []
+  );
+  const sharedBits = await crypto.subtle.deriveBits(
+    { name: 'ECDH', public: clientPublicKey }, serverKeypair.privateKey, 256
+  );
+  const ecdhSecret = new Uint8Array(sharedBits);
+
+  // 3. PRK_key = HKDF(salt=auth, ikm=ECDH, info="WebPush: info\0"||ua_pub||as_pub, L=32)
+  const info1 = _concatBytes(
+    enc.encode('WebPush: info\0'),
+    clientP256dhRaw,
+    serverPublicRaw
+  );
+  const prkKey = await _hkdfSha256(authSecret, ecdhSecret, info1, 32);
+
+  // 4. Random salt for the content encoding.
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+
+  // 5. CEK = HKDF(salt, prkKey, "Content-Encoding: aes128gcm\0", 16)
+  const cek = await _hkdfSha256(
+    salt, prkKey, enc.encode('Content-Encoding: aes128gcm\0'), 16
+  );
+
+  // 6. NONCE = HKDF(salt, prkKey, "Content-Encoding: nonce\0", 12)
+  const nonce = await _hkdfSha256(
+    salt, prkKey, enc.encode('Content-Encoding: nonce\0'), 12
+  );
+
+  // 7. plaintext = payload || 0x02 (last-record delimiter; no padding for our case).
+  const plaintext = _concatBytes(payloadBytes, new Uint8Array([0x02]));
+
+  // 8. AES-128-GCM encrypt (output appends 16-byte auth tag).
+  const cekKey = await crypto.subtle.importKey(
+    'raw', cek, { name: 'AES-GCM' }, false, ['encrypt']
+  );
+  const ciphertext = new Uint8Array(
+    await crypto.subtle.encrypt({ name: 'AES-GCM', iv: nonce, tagLength: 128 }, cekKey, plaintext)
+  );
+
+  // 9. Emit aes128gcm header || ciphertext.
+  const header = new Uint8Array(16 + 4 + 1 + 65);
+  header.set(salt, 0);
+  header[16] = (RS >>> 24) & 0xff;
+  header[17] = (RS >>> 16) & 0xff;
+  header[18] = (RS >>> 8) & 0xff;
+  header[19] = RS & 0xff;
+  header[20] = 65;
+  header.set(serverPublicRaw, 21);
+
+  return { body: _concatBytes(header, ciphertext), serverPublicRaw };
+}
+
+// ════════════════════════════════════════════════════════
 // SCHEDULED JOBS  (invoked by Cloudflare cron triggers)
 // ════════════════════════════════════════════════════════
 
@@ -4679,9 +4832,12 @@ async function proStatus(url, env) {
 //   5. Cap aggressively so a single run can't blow the worker CPU/sub-request
 //      budget. Excess users are simply picked up on the next hourly tick.
 //
-// Web Push *delivery* is a separate step (needs VAPID private key + RFC 8291
-// payload encryption); for now the alerts queue is consumed by the QuestLog
-// frontend via /api/alerts so users see drops the next time they open the app.
+// Web Push *dispatch* is a separate step. VAPID keypair + hydration landed
+// 2026-05-14, RFC 8291 aes128gcm payload encryption (encryptPushPayload above)
+// landed 2026-05-15; remaining piece is RFC 8292 ES256 JWT signing for the
+// Authorization header + fan-out from this function. Until that lands the
+// in-app /api/alerts feed (Recent Price Drops panel) is the only delivery
+// path for the data this sweep writes.
 const PRICE_WATCH_USER_CAP = 50;
 const PRICE_WATCH_ITEMS_PER_USER = 20;
 const ALERT_DEDUPE_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
