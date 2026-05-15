@@ -421,13 +421,7 @@ const SCHOOL_TASKS = [
     "status": "upcoming"
   },
   {
-    "title": "Eng 7: Read Part 4",
-    "due": "",
-    "subject": "",
-    "status": "upcoming"
-  },
-  {
-    "title": "Classwork Science 7",
+    "title": "Eng 7: finish reading the novel",
     "due": "",
     "subject": "",
     "status": "upcoming"
@@ -440,6 +434,12 @@ const SCHOOL_TASKS = [
   },
   {
     "title": "Submit Coursework",
+    "due": "",
+    "subject": "",
+    "status": "upcoming"
+  },
+  {
+    "title": "Classwork Science 7",
     "due": "",
     "subject": "",
     "status": "upcoming"
