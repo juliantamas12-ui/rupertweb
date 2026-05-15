@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Night Two Junior Officers Conquered Manchuria and Killed Japanese Democracy",
+    date: "2026-05-15",
+    category: "History",
+    excerpt: "On the evening of 18 September 1931, a small charge of dynamite exploded on the South Manchuria Railway line just outside Mukden. The damage was negligible. By morning the Kwantung Army had occupied Mukden, killed several hundred Chinese soldiers in their barracks, and begun a campaign that within five months had seized a territory larger than France, Germany, and Italy combined. The Japanese cabinet learned about it from the newspapers. The conventional reading is that Mukden was the opening shot of Japanese militarism. This reading mistakes the consequence for the cause. Japan in September 1931 was a parliamentary democracy. What Mukden did was to establish a constitutional principle that destroyed the civilian state from within: that field officers, acting without orders, could initiate foreign wars, and that Tokyo would ratify their decisions retroactively rather than punish them...",
+    url: "essays/2026-05-15-the-night-two-junior-officers-conquered-manchuria-and-killed-japanese-democracy.html"
+  },
+  {
     title: "The Forgery That Killed the First Labour Government: The Zinoviev Letter",
     date: "2026-05-14",
     category: "History",
