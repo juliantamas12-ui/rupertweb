@@ -434,13 +434,19 @@ const SCHOOL_TASKS = [
     "status": "upcoming"
   },
   {
-    "title": "Cover Work_Exampreparation_May26",
+    "title": "Math 7 (HW)",
     "due": "",
     "subject": "",
     "status": "upcoming"
   },
   {
     "title": "Submit Coursework",
+    "due": "",
+    "subject": "",
+    "status": "upcoming"
+  },
+  {
+    "title": "Cover Work_Exampreparation_May26",
     "due": "",
     "subject": "",
     "status": "upcoming"
