@@ -110,19 +110,25 @@ self.addEventListener('fetch', (event) => {
   // Default: just hit the network.
 });
 
-// Push notification scaffolding — disabled until VAPID keys + backend exist.
-// When ready: register subscription on connect-Steam success, store on the worker, deliver via /api/push.
+// Push notification handler. Worker dispatchWebPush sends payloads shaped as
+//   { title, body, tag?, data: { url, appid?, ts? } }
+// (see worker.js dispatchWebPush). `tag` collapses successive notifications
+// for the same app (e.g. multiple price drops on the same game) into one,
+// and `data.url` is what notificationclick uses to focus or open the right
+// tab. Falls back gracefully if the payload is plain text.
 self.addEventListener('push', (event) => {
   if (!event.data) return;
   let payload = {};
   try { payload = event.data.json(); } catch (_) { payload = { title: 'QuestLog', body: event.data.text() }; }
+  const opts = {
+    body: payload.body || '',
+    icon: '/icons/questlog-192.png',
+    badge: '/icons/questlog-192.png',
+    data: payload.data || {}
+  };
+  if (payload.tag) opts.tag = payload.tag;
   event.waitUntil(
-    self.registration.showNotification(payload.title || 'QuestLog', {
-      body: payload.body || '',
-      icon: '/icons/questlog-192.png',
-      badge: '/icons/questlog-192.png',
-      data: payload.data || {}
-    })
+    self.registration.showNotification(payload.title || 'QuestLog', opts)
   );
 });
 

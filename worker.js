@@ -4815,6 +4815,159 @@ async function encryptPushPayload(payload, clientP256dhB64u, clientAuthB64u) {
 }
 
 // ════════════════════════════════════════════════════════
+// WEB PUSH DISPATCH  (RFC 8292 VAPID JWT + fan-out)
+// ════════════════════════════════════════════════════════
+//
+// VAPID night 3 of 3 (see launch-log 2026-05-14 / 05-15):
+//   - night 1: keypair generation + storage + hydration   (DONE 05-14)
+//   - night 2: aes128gcm payload encryption                (DONE 05-15)
+//   - night 3: ES256 JWT signing + dispatcher integration  (THIS NIGHT)
+//
+// `signVapidJwt(audience)` produces the ES256 JWT that goes in the
+// `Authorization: vapid t=<jwt>, k=<VAPID_PUBLIC>` header on every outbound
+// push POST. We reconstruct the full EC JWK from the stored 65-byte
+// uncompressed public point (x = bytes[1..33], y = bytes[33..65]) plus the
+// stored `d` scalar, import once, sign the JOSE compact-serialised input.
+// Web Crypto returns raw r||s (64 bytes) which is exactly what JWS wants.
+//
+// JWTs are valid 12h per spec; we cache the imported signing key in module
+// scope (lazy-init) and cache each (audience, jwt) for ~10h so a viral free
+// game alert doesn't re-sign for every endpoint we hit. The cache is per
+// Worker isolate, which is fine - the cache miss cost is a few ms of crypto.
+//
+// `dispatchWebPush(env, sid, alert)` is the fan-out: load `push:${sid}`,
+// check prefs.priceAlerts, build a notification JSON, encrypt via
+// encryptPushPayload, sign the JWT, POST to subscription.endpoint. On 410
+// Gone we kvDelete the dead subscription (RFC 8030 §7.3). All other errors
+// are swallowed - one failed push must not abort the alerts sweep.
+
+let _vapidSigningKey = null;
+const _vapidJwtCache = new Map(); // audience -> { jwt, exp }
+
+async function _vapidGetSigningKey() {
+  if (_vapidSigningKey) return _vapidSigningKey;
+  if (!VAPID_PRIVATE || !VAPID_PUBLIC) throw new Error('VAPID keys not configured');
+  // Derive x/y from the stored uncompressed public point.
+  const pub = b64uToBytes(VAPID_PUBLIC);
+  if (pub.length !== 65 || pub[0] !== 0x04) {
+    throw new Error('VAPID_PUBLIC must be 65-byte uncompressed P-256 point');
+  }
+  const xB64u = bytesToB64u(pub.slice(1, 33));
+  const yB64u = bytesToB64u(pub.slice(33, 65));
+  _vapidSigningKey = await crypto.subtle.importKey(
+    'jwk',
+    { kty: 'EC', crv: 'P-256', x: xB64u, y: yB64u, d: VAPID_PRIVATE },
+    { name: 'ECDSA', namedCurve: 'P-256' },
+    false,
+    ['sign']
+  );
+  return _vapidSigningKey;
+}
+
+// Sign an RFC 8292 VAPID JWT for the given audience (push service origin).
+// Returns the compact-serialised JWS string. Cached per audience for ~10h.
+async function signVapidJwt(audience) {
+  const now = Math.floor(Date.now() / 1000);
+  const cached = _vapidJwtCache.get(audience);
+  if (cached && cached.exp > now + 300) return cached.jwt; // 5-min freshness margin
+
+  const enc = new TextEncoder();
+  const header = { alg: 'ES256', typ: 'JWT' };
+  const exp = now + 12 * 3600; // VAPID max is 24h; spec recommends <=12h.
+  const payload = { aud: audience, exp, sub: VAPID_SUBJECT };
+  const headerB64  = bytesToB64u(enc.encode(JSON.stringify(header)));
+  const payloadB64 = bytesToB64u(enc.encode(JSON.stringify(payload)));
+  const signingInput = `${headerB64}.${payloadB64}`;
+
+  const key = await _vapidGetSigningKey();
+  const sigRaw = new Uint8Array(
+    await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, key, enc.encode(signingInput))
+  );
+  const jwt = `${signingInput}.${bytesToB64u(sigRaw)}`;
+  _vapidJwtCache.set(audience, { jwt, exp });
+  return jwt;
+}
+
+// Audience for the VAPID JWT is the scheme+host of the push service.
+function _pushAudience(endpoint) {
+  const u = new URL(endpoint);
+  return `${u.protocol}//${u.host}`;
+}
+
+// Dispatch a single alert to a sid's push subscription, if any.
+// Returns { sent: bool, reason?: string }. Swallows network errors.
+async function dispatchWebPush(env, sid, alert) {
+  try {
+    if (!VAPID_PRIVATE || !VAPID_PUBLIC || !VAPID_SUBJECT) {
+      return { sent: false, reason: 'no-vapid' };
+    }
+    const rec = await kvGet(env, `push:${sid}`);
+    if (!rec || !rec.subscription || !rec.subscription.endpoint) {
+      return { sent: false, reason: 'no-subscription' };
+    }
+    if (rec.prefs && rec.prefs.priceAlerts === false) {
+      return { sent: false, reason: 'pref-off' };
+    }
+    const sub = rec.subscription;
+    if (!sub.keys || !sub.keys.p256dh || !sub.keys.auth) {
+      return { sent: false, reason: 'incomplete-keys' };
+    }
+
+    // Notification payload shape matches questlog-sw.js's push handler:
+    //   showNotification(title, { body, icon, badge, data })
+    //   then notificationclick reads `data.url` to focus/open the right tab.
+    // We also include `tag` (so successive price drops for the same app
+    // collapse into one notification) and `data.appid`/`data.ts` for any
+    // future click-handler analytics. Keep it compact - smaller plaintext
+    // = more headroom under aes128gcm's 4079-byte limit.
+    const priceTxt = alert.final_formatted
+                  || (alert.currency && alert.final != null
+                      ? `${alert.currency} ${(alert.final / 100).toFixed(2)}`
+                      : 'on sale');
+    const notif = {
+      title: 'Price drop',
+      body:  `${alert.name} is now ${priceTxt} (-${alert.discount_percent}%)`,
+      tag:   `questlog-price-${alert.appid}`,
+      data:  {
+        url:   alert.store_url || 'https://rupertweb.com/questlog.html',
+        appid: alert.appid,
+        ts:    alert.ts || Date.now(),
+      },
+    };
+    const payloadStr = JSON.stringify(notif);
+
+    const { body } = await encryptPushPayload(payloadStr, sub.keys.p256dh, sub.keys.auth);
+    const aud = _pushAudience(sub.endpoint);
+    const jwt = await signVapidJwt(aud);
+
+    const resp = await fetch(sub.endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Encoding': 'aes128gcm',
+        'Content-Type':     'application/octet-stream',
+        'TTL':              '86400',
+        'Authorization':    `vapid t=${jwt}, k=${VAPID_PUBLIC}`,
+      },
+      body,
+    });
+
+    // 410 Gone = subscription permanently invalid (user unsubscribed in browser,
+    // cleared site data, etc.). RFC 8030 §7.3 says we must stop sending.
+    // 404 Not Found is also commonly used by push services for the same case.
+    if (resp.status === 410 || resp.status === 404) {
+      await kvDelete(env, `push:${sid}`);
+      return { sent: false, reason: `gone-${resp.status}` };
+    }
+    if (resp.status >= 200 && resp.status < 300) {
+      return { sent: true, status: resp.status };
+    }
+    return { sent: false, reason: `http-${resp.status}` };
+  } catch (e) {
+    return { sent: false, reason: `error: ${e.message}` };
+  }
+}
+
+// ════════════════════════════════════════════════════════
 // SCHEDULED JOBS  (invoked by Cloudflare cron triggers)
 // ════════════════════════════════════════════════════════
 
@@ -4832,12 +4985,12 @@ async function encryptPushPayload(payload, clientP256dhB64u, clientAuthB64u) {
 //   5. Cap aggressively so a single run can't blow the worker CPU/sub-request
 //      budget. Excess users are simply picked up on the next hourly tick.
 //
-// Web Push *dispatch* is a separate step. VAPID keypair + hydration landed
-// 2026-05-14, RFC 8291 aes128gcm payload encryption (encryptPushPayload above)
-// landed 2026-05-15; remaining piece is RFC 8292 ES256 JWT signing for the
-// Authorization header + fan-out from this function. Until that lands the
-// in-app /api/alerts feed (Recent Price Drops panel) is the only delivery
-// path for the data this sweep writes.
+// Web Push dispatch is layered on top of the alerts queue: when we append a
+// new alert to alerts:${sid} we also fan out to that sid's push subscription
+// via dispatchWebPush (above). VAPID keypair + hydration landed 2026-05-14,
+// aes128gcm payload encryption landed 2026-05-15, ES256 JWT + dispatcher
+// landed 2026-05-16. Users without a push subscription still see drops in
+// the in-app /api/alerts feed (Recent Price Drops panel).
 const PRICE_WATCH_USER_CAP = 50;
 const PRICE_WATCH_ITEMS_PER_USER = 20;
 const ALERT_DEDUPE_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
@@ -4938,6 +5091,18 @@ async function runWishlistPriceWatch(env, opts = {}) {
         await kvPut(env, `alerts:${sid}`, merged, ALERTS_TTL_SECONDS);
         stats.alerts += newAlerts.length;
         sidStat.alerts += newAlerts.length;
+
+        // Fan out to Web Push if this sid has a subscription. Serial loop
+        // (not parallel) to keep outbound subrequest pressure modest and
+        // because a single sid almost always has one subscription anyway.
+        // dispatchWebPush swallows all errors and reports per-alert outcome.
+        sidStat.pushSent = 0;
+        sidStat.pushSkipped = 0;
+        for (const alert of newAlerts) {
+          const r = await dispatchWebPush(env, sid, alert);
+          if (r.sent) sidStat.pushSent++;
+          else sidStat.pushSkipped++;
+        }
       }
     } catch (e) {
       stats.errors++;
