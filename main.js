@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Four Sick Old Men Who Killed the Soviet Union: The Politburo Session of 12 December 1979",
+    date: "2026-05-16",
+    category: "History",
+    excerpt: "On the afternoon of 12 December 1979, four men met in a small room next to Leonid Brezhnev's office on Staraya Square in Moscow. Brezhnev was barely lucid. Andropov was already in kidney failure. Ustinov was seventy-one, Gromyko seventy. Between them they decided to send forty thousand Soviet soldiers across the Amu Darya into Afghanistan. They did not inform the full Politburo. They did not inform the General Staff's operations directorate, whose chief had spent the previous month begging them not to do it. The conventional reading is that this was the high tide of Brezhnev-era expansionism. This reading inverts cause and effect. The Soviet Union did not invade Afghanistan because it was strong. It invaded because the institutions designed to restrain four old men no longer functioned well enough to prevent them...",
+    url: "essays/2026-05-16-the-four-sick-old-men-who-killed-the-soviet-union.html"
+  },
+  {
     title: "The Night Two Junior Officers Conquered Manchuria and Killed Japanese Democracy",
     date: "2026-05-15",
     category: "History",
