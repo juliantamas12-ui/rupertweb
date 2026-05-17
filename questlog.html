@@ -1435,6 +1435,10 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
             <label style="display:flex;align-items:center;gap:10px;padding:6px 0;font-size:13px;cursor:pointer"><input type="checkbox" id="prefPriceAlerts" checked onchange="savePushPrefs()" style="accent-color:var(--accent)"> Price drops on tracked games</label>
             <label style="display:flex;align-items:center;gap:10px;padding:6px 0;font-size:13px;cursor:pointer"><input type="checkbox" id="prefFreeGames" checked onchange="savePushPrefs()" style="accent-color:var(--accent)"> New free games (Epic, Steam, GOG)</label>
             <label style="display:flex;align-items:center;gap:10px;padding:6px 0;font-size:13px;cursor:pointer"><input type="checkbox" id="prefAotd" checked onchange="savePushPrefs()" style="accent-color:var(--accent)"> Daily achievement challenge</label>
+            <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+              <button onclick="sendTestPush()" id="pushTestBtn" class="connect-btn" style="padding:8px 18px;font-size:12px">Send test notification</button>
+              <div id="pushTestStatus" style="font-size:12px;color:var(--dim);margin-top:8px;min-height:16px"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -3459,6 +3463,35 @@ function getPushPrefs() {
     freeGames: document.getElementById('prefFreeGames')?.checked ?? true,
     achievementOfDay: document.getElementById('prefAotd')?.checked ?? true,
   };
+}
+async function sendTestPush() {
+  const btn = document.getElementById('pushTestBtn');
+  const status = document.getElementById('pushTestStatus');
+  if (!STATE.sid) { status.innerHTML = '<span style="color:#ff5a5a">Connect Steam first.</span>'; return; }
+  if (!btn || btn.disabled) return;
+  btn.disabled = true;
+  const original = btn.textContent;
+  btn.textContent = 'Sending...';
+  status.textContent = '';
+  try {
+    const r = await fetch('/api/push/test', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sid: STATE.sid }),
+    });
+    const j = await r.json();
+    if (r.status === 429) {
+      status.innerHTML = '<span style="color:#ff9e42">Slow down - try again in a few minutes.</span>';
+    } else if (j.result && j.result.sent) {
+      status.innerHTML = '<span style="color:var(--accent)">Sent. Check your device.</span>';
+    } else {
+      const reason = (j.result && j.result.reason) || j.error || 'unknown';
+      status.innerHTML = '<span style="color:#ff5a5a">Could not send: ' + reason + '</span>';
+    }
+  } catch (e) {
+    status.innerHTML = '<span style="color:#ff5a5a">Network error: ' + e.message + '</span>';
+  } finally {
+    setTimeout(() => { btn.disabled = false; btn.textContent = original; }, 2000);
+  }
 }
 async function savePushPrefs() {
   const p = getPushPrefs();

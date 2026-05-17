@@ -110,6 +110,7 @@ export default {
       if (p === '/api/push/vapid-key')                                return jsonResponse({ key: VAPID_PUBLIC });
       if (p === '/api/push/subscribe' && request.method === 'POST')   return pushSubscribe(request, env);
       if (p === '/api/push/unsubscribe' && request.method === 'POST') return pushUnsubscribe(request, env);
+      if (p === '/api/push/test' && request.method === 'POST')        return pushTest(request, env);
       if (p === '/api/wishlist' && request.method === 'GET')          return wishlistGet(url, env);
       if (p === '/api/wishlist' && request.method === 'POST')         return wishlistPut(request, env);
       if (p === '/api/journal' && request.method === 'GET')           return journalGet(url, env);
@@ -5157,6 +5158,54 @@ async function cronRunNow(url, env, request) {
     return jsonResponse({ ok: true, durationMs: Date.now() - startedAt, ...r });
   } catch (e) {
     return jsonResponse({ error: e.message, durationMs: Date.now() - startedAt }, 500);
+  }
+}
+
+// /api/push/test - send a single synthetic notification to the caller's own
+// subscription. The point: when a user toggles push on, they should be able
+// to confirm a real notification reaches their device without waiting for an
+// actual price drop (which can be hours away or never). Builds a fixed
+// dummy alert and calls dispatchWebPush, which already handles missing
+// subscription / 410-Gone cleanup / encryption / VAPID signing.
+//
+// Rate limits are deliberately tighter than run-now since the abuse model
+// is different: a single test push is cheap for us but spammy for the user
+// being targeted. We cap to 1 per 5 minutes per-sid and per-IP. Sid is
+// validated against SID_RE same as every other public-write endpoint.
+async function pushTest(request, env) {
+  try {
+    const { sid } = await request.json();
+    if (!sid || typeof sid !== 'string' || sid.length > MAX_SID_LEN || !SID_RE.test(sid)) {
+      return jsonResponse({ error: 'invalid sid' }, 400);
+    }
+    const ip = request?.headers?.get?.('cf-connecting-ip') || 'unknown';
+    const ipKey  = `ratelimit:push-test:ip:${ip}`;
+    const sidKey = `ratelimit:push-test:sid:${sid}`;
+    const [ipHit, sidHit] = await Promise.all([kvGet(env, ipKey), kvGet(env, sidKey)]);
+    if (ipHit || sidHit) {
+      return jsonResponse({ error: 'rate limited', retryAfter: 300 }, 429);
+    }
+    await Promise.all([
+      kvPut(env, ipKey,  { at: Date.now() }, 300),
+      kvPut(env, sidKey, { at: Date.now() }, 300),
+    ]);
+    // Synthetic alert shaped exactly like the real ones runWishlistPriceWatch
+    // produces (see ~line 5070), so dispatchWebPush takes the normal code
+    // path. appid 0 is a sentinel - no real Steam app has appid 0 - which
+    // also keeps the SW's `tag` collision-free with real price alerts.
+    const testAlert = {
+      appid: 0,
+      name: 'QuestLog test',
+      discount_percent: 100,
+      final_formatted: 'FREE',
+      currency: 'TEST',
+      store_url: 'https://rupertweb.com/questlog.html',
+      ts: Date.now(),
+    };
+    const r = await dispatchWebPush(env, sid, testAlert);
+    return jsonResponse({ ok: true, result: r });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
   }
 }
 
