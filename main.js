@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Saturday Morning at the Plaza That Broke Japan: 22 September 1985",
+    date: "2026-05-17",
+    category: "History",
+    excerpt: "On the morning of Saturday, 22 September 1985, the finance ministers and central bank governors of the United States, Japan, West Germany, France, and the United Kingdom arrived at the Plaza Hotel on Fifth Avenue and in under three hours produced a one-page communiqué that announced the dollar was overvalued. The Japanese delegation was led by Finance Minister Noboru Takeshita, who had checked into the Plaza under a false name and let it be reported in Tokyo that he was playing golf at home. By the close of trading on Monday, the yen had risen eight per cent. Within four years the Tokyo stock market and Tokyo property market had inflated into the largest twin bubbles in the history of capitalism. The conventional reading is that the Plaza Accord was a successful piece of multilateral coordination and that what happened to Japan afterwards was the fault of the Bank of Japan. This reading is half right and entirely misleading...",
+    url: "essays/2026-05-17-the-saturday-morning-at-the-plaza-that-broke-japan.html"
+  },
+  {
     title: "The Four Sick Old Men Who Killed the Soviet Union: The Politburo Session of 12 December 1979",
     date: "2026-05-16",
     category: "History",
