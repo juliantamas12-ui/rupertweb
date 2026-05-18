@@ -1,0 +1,12 @@
+{
+  "items": [
+    {
+      "kind": "image",
+      "title": "Rupert profile picture (v1)",
+      "subtitle": "Wax seal R on parchment",
+      "url": "/images/rupert/rupert-profile-v1.png",
+      "createdAt": "2026-05-18",
+      "tags": ["rupert", "profile", "ai-generated", "flux-pro"]
+    }
+  ]
+}

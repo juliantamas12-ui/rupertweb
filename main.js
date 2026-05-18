@@ -567,6 +567,12 @@ const PROJECTS = [
     tags: ["Letters", "Interviews", "Research", "Book"]
   },
   {
+    name: "The Praefatio",
+    url: "https://thepraefatio.com",
+    desc: "Public landing page for the Letters to Builders project. Editorial-style overview of the mission, methodology, targets, and a specimen letter. Variants at /praefatio-italian, /praefatio-forest, /praefatio-linen, /praefatio-black.",
+    tags: ["Letters", "Editorial", "Public", "thepraefatio.com"]
+  },
+  {
     name: "Rupert Web",
     url: "https://rupertweb.com",
     desc: "Personal command center and life dashboard. The page you are currently looking at.",
@@ -822,6 +828,50 @@ async function renderSpend() {
   }
 }
 
+/* Media - anything Rupert generates that lives on rupertweb */
+async function renderMedia() {
+  const body = document.getElementById('media-body');
+  const sub = document.getElementById('media-sub');
+  if (!body) return;
+  try {
+    const r = await fetch('/media-index.json', { cache: 'no-store' });
+    if (!r.ok) throw new Error('no index');
+    const d = await r.json();
+    const items = d.items || [];
+    if (sub) sub.textContent = items.length + ' item' + (items.length === 1 ? '' : 's');
+    if (!items.length) {
+      body.innerHTML = `<div style="color:#666;font-family:'Space Mono',monospace;font-size:12px;letter-spacing:0.1em">Nothing here yet.</div>`;
+      return;
+    }
+    // Sort newest first
+    const sorted = [...items].sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+    body.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px">${sorted.map(it => renderMediaTile(it)).join('')}</div>`;
+  } catch (e) {
+    body.innerHTML = `<div style="color:#666;font-family:'Space Mono',monospace;font-size:12px;letter-spacing:0.1em">Nothing here yet.</div>`;
+  }
+}
+function renderMediaTile(it) {
+  const kind = (it.kind || 'file').toLowerCase();
+  const tags = (it.tags || []).slice(0, 2).map(t => `<span style="color:#666;font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.1em;text-transform:uppercase">${t}</span>`).join(' &middot; ');
+  let preview = '';
+  if (kind === 'image') {
+    preview = `<div style="width:100%;aspect-ratio:1/1;background:#0a0a0a url('${it.url}') center/cover;border:1px solid #1a1a1a;border-radius:2px"></div>`;
+  } else if (kind === 'page' || kind === 'link') {
+    preview = `<div style="width:100%;aspect-ratio:1/1;background:#0a0a0a;border:1px solid #1a1a1a;border-radius:2px;display:flex;align-items:center;justify-content:center;color:#c8f135;font-family:Times,serif;font-size:32px;font-style:italic">${escapeHtml(it.title?.[0] || '?')}</div>`;
+  } else {
+    preview = `<div style="width:100%;aspect-ratio:1/1;background:#0a0a0a;border:1px solid #1a1a1a;border-radius:2px"></div>`;
+  }
+  return `<a href="${escapeHtml(it.url)}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;display:block">
+    ${preview}
+    <div style="margin-top:8px">
+      <div style="color:#fff;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;letter-spacing:0.05em;line-height:1.3;margin-bottom:3px">${escapeHtml(it.title || '')}</div>
+      <div style="color:#888;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:0.05em">${escapeHtml(it.subtitle || '')}</div>
+      ${tags ? `<div style="margin-top:4px">${tags}</div>` : ''}
+    </div>
+  </a>`;
+}
+function escapeHtml(s) { return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
 /* Boot */
 renderEssays();
 renderSchool();
@@ -829,3 +879,4 @@ renderSteam();
 renderProjects();
 renderLifeStats();
 renderSpend();
+renderMedia();
