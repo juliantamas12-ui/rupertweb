@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Afternoon at Heathrow That Killed British Social Democracy: 28 September 1976",
+    date: "2026-05-18",
+    category: "History",
+    excerpt: "On the afternoon of Tuesday, 28 September 1976, Denis Healey, Chancellor of the Exchequer in James Callaghan's Labour government, was driven from the Treasury to Heathrow airport, intending to board a flight to Hong Kong for the IMF and World Bank annual meetings. He never boarded. By the time he reached the airport, sterling was in free fall, and the duty clerk at the Treasury had Healey's private secretary on the line begging him to come back. Three days later, at the Labour Conference in Blackpool, he told a furious hall that he was applying to the IMF for the largest loan in its history. Tony Benn recorded in his diary that night that he had just witnessed the death of the Labour Party as a socialist project. He was three years out and entirely correct. The 1976 IMF crisis, and not Thatcher's 1979 victory, was the moment British social democracy came to an end...",
+    url: "essays/2026-05-18-the-afternoon-at-heathrow-that-killed-british-social-democracy.html"
+  },
+  {
     title: "The Saturday Morning at the Plaza That Broke Japan: 22 September 1985",
     date: "2026-05-17",
     category: "History",
