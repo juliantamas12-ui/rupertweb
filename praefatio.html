@@ -93,12 +93,13 @@ body > *{position:relative;z-index:1}
 /* Cursive scribbles removed - too informal for the editorial brand */
 .masthead .byline .note{display:none}
 
-/* HERO ARTWORK - clean abstract composition (wax seal study) */
-.hero-photo{margin:0 -40px 0;height:clamp(320px,46vw,560px);overflow:hidden;position:relative;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
-@media(max-width:900px){.hero-photo{margin:0 -22px}}
-.hero-photo img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(0.78) contrast(0.98)}
-/* Subtle vignette top + bottom */
-.hero-photo::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(232,228,217,0.30) 0%,rgba(232,228,217,0) 25%,rgba(232,228,217,0) 75%,rgba(232,228,217,0.55) 100%);pointer-events:none}
+/* HERO ARTWORK - full-bleed wax seal study with soft gradient masks fading into bg */
+.hero-photo{margin:0;width:100vw;position:relative;left:50%;right:50%;margin-left:-50vw;margin-right:-50vw;height:clamp(380px,52vw,640px);overflow:hidden;border:none}
+.hero-photo img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(0.82) contrast(0.97)}
+/* Long soft vertical gradient mask - image gently emerges from bg and dissolves back */
+.hero-photo::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,var(--bg) 0%,rgba(232,228,217,0.55) 12%,rgba(232,228,217,0) 35%,rgba(232,228,217,0) 65%,rgba(232,228,217,0.55) 88%,var(--bg) 100%);pointer-events:none;z-index:2}
+/* Side gradient mask - left/right edges fade into bg */
+.hero-photo::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,var(--bg) 0%,rgba(232,228,217,0.4) 8%,rgba(232,228,217,0) 22%,rgba(232,228,217,0) 78%,rgba(232,228,217,0.4) 92%,var(--bg) 100%);pointer-events:none;z-index:2}
 
 /* Two-column intro spread */
 .intro-spread{display:grid;grid-template-columns:1fr 1fr;gap:48px;margin-top:64px;align-items:start;position:relative}
@@ -135,6 +136,9 @@ body > *{position:relative;z-index:1}
 .targets-header .label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:var(--ink-mute);margin-bottom:14px;font-weight:500}
 .targets-header .intro{font-family:'Fraunces',serif;font-style:italic;font-size:17px;color:var(--ink-soft);line-height:1.55;margin-bottom:18px}
 /* Counter row removed - wall speaks for itself */
+
+/* Soft fading underline beneath the targets header */
+.targets-header::after{content:'';display:block;width:80%;max-width:520px;margin:28px auto 0;height:1px;background:linear-gradient(90deg,transparent 0%,var(--rule-strong) 50%,transparent 100%);opacity:0.6}
 
 .targets-footer{margin-top:48px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:24px;padding-top:24px;border-top:1px solid var(--rule-soft)}
 .targets-legend{display:flex;gap:18px;flex-wrap:wrap;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-mute)}
