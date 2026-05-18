@@ -1,10 +1,34 @@
+<!-- THE PRAEFATIO · Royal cypher monogram - delicate, 18th-century courtly with modern restraint -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="The Praefatio">
   <rect width="200" height="200" fill="#2B1F25"/>
-  <circle cx="100" cy="100" r="86" fill="none" stroke="#D4A156" stroke-width="2.8"/>
-  <circle cx="100" cy="100" r="76" fill="none" stroke="#D4A156" stroke-width="0.7" opacity="0.55"/>
-  <g font-family="'URW Bookman','Liberation Serif',Georgia,serif" font-style="italic" font-weight="600" font-size="100" fill="#D4A156">
-    <text x="64" y="132">R</text>
-    <text x="108" y="132">J</text>
+
+  <!-- Delicate double-line outer frame -->
+  <circle cx="100" cy="100" r="86" fill="none" stroke="#D4A156" stroke-width="0.8" opacity="0.95"/>
+  <circle cx="100" cy="100" r="82" fill="none" stroke="#D4A156" stroke-width="0.4" opacity="0.55"/>
+
+  <!-- Four delicate cardinal cypher dots -->
+  <circle cx="100" cy="14" r="1.6" fill="#D4A156"/>
+  <circle cx="100" cy="186" r="1.6" fill="#D4A156"/>
+  <circle cx="14" cy="100" r="1.6" fill="#D4A156"/>
+  <circle cx="186" cy="100" r="1.6" fill="#D4A156"/>
+
+  <!-- Two tiny ornamental accent dots at NE/NW/SE/SW corners (cypher convention) -->
+  <circle cx="40" cy="40" r="0.9" fill="#D4A156" opacity="0.6"/>
+  <circle cx="160" cy="40" r="0.9" fill="#D4A156" opacity="0.6"/>
+  <circle cx="40" cy="160" r="0.9" fill="#D4A156" opacity="0.6"/>
+  <circle cx="160" cy="160" r="0.9" fill="#D4A156" opacity="0.6"/>
+
+  <!-- The interlocked monogram. Light weight italic serif - delicate not chunky. -->
+  <g font-family="'URW Bookman','Liberation Serif',Georgia,serif" font-style="italic" font-weight="400">
+    <!-- J - subtler, behind, slightly smaller and lower -->
+    <text x="118" y="138" font-size="96" fill="#D4A156" opacity="0.78" text-anchor="middle" letter-spacing="-2">J</text>
+    <!-- R - main, slightly larger, higher, in front -->
+    <text x="85" y="128" font-size="100" fill="#D4A156" text-anchor="middle" letter-spacing="-2">R</text>
   </g>
-  <circle cx="100" cy="158" r="2.4" fill="#D4A156"/>
+
+  <!-- Thin swash flourish under the monogram - small curved line, suggests a banner ribbon -->
+  <path d="M 70 156 Q 100 162, 130 156" fill="none" stroke="#D4A156" stroke-width="0.7" opacity="0.7"/>
+
+  <!-- Centre period mark below the flourish -->
+  <circle cx="100" cy="168" r="1.2" fill="#D4A156"/>
 </svg>
