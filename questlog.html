@@ -1569,6 +1569,17 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
       </div>
 
       <div class="section" style="padding:0;margin-bottom:20px">
+        <div class="section-head" style="display:flex;justify-content:space-between;align-items:center">
+          <h3 style="font-size:15px">System Status</h3>
+          <button id="refreshSystemStatusBtn" onclick="renderSystemStatus()" title="Refresh cron diagnostics" style="background:var(--panel2);border:1px solid var(--border);color:var(--dim);padding:4px 10px;border-radius:4px;font-size:11px;font-family:inherit;cursor:pointer;letter-spacing:0.5px">Refresh</button>
+        </div>
+        <div class="sidebar-card">
+          <p style="color:var(--dim);font-size:13px;margin-bottom:14px">Live health of QuestLog's hourly wishlist sweep and Web Push delivery. Updates every hour.</p>
+          <div id="systemStatusPanel"><div class="empty" style="text-align:left;font-size:12px;padding:8px 0"><span class="loading"></span> Loading status...</div></div>
+        </div>
+      </div>
+
+      <div class="section" style="padding:0;margin-bottom:20px">
         <div class="section-head"><h3 style="font-size:15px">Wishlist Sync</h3></div>
         <div class="sidebar-card">
           <p style="color:var(--dim);font-size:13px;margin-bottom:14px">One wishlist across every store. Prices monitored continuously.</p>
@@ -2637,6 +2648,7 @@ function initProFeatures() {
     renderPriceAlerts();
     renderWishlist();
     renderRecentDrops();
+    renderSystemStatus();
     renderThemeButtons();
     loadActiveTheme();
     const savedCustom = localStorage.getItem('questlog_custom_url');
@@ -3330,6 +3342,69 @@ async function renderRecentDrops() {
     }).join('');
   } catch (e) {
     el.innerHTML = '<div class="empty" style="text-align:left;font-size:12px;padding:8px 0;color:#ff5a5a">Could not load recent drops.</div>';
+  }
+}
+
+// Pro System Status widget. Reads /api/cron-status (which exposes
+// cron:lastRun written by the hourly scheduled() handler in worker.js) and
+// renders a small health panel. The cron runs hourly; we treat anything
+// over 90 min stale (1.5x the interval) as 'Stale' in amber. Per-sid push
+// counters are summed client-side since the top-level stats object only
+// tracks users/scanned/alerts/errors - pushSent/pushSkipped live on perSid.
+async function renderSystemStatus() {
+  const el = document.getElementById('systemStatusPanel');
+  if (!el) return;
+  try {
+    const r = await fetch('/api/cron-status');
+    const d = await r.json();
+    const last = d && d.lastRun;
+    if (!last || !last.finishedAt) {
+      el.innerHTML = '<div class="empty" style="text-align:left;font-size:12px;padding:8px 0">No cron runs recorded yet. The hourly sweep writes here after it first fires.</div>';
+      return;
+    }
+    const pw = (last.jobs && last.jobs.priceWatch) || {};
+    const perSid = Array.isArray(pw.perSid) ? pw.perSid : [];
+    let pushSent = 0, pushSkipped = 0;
+    for (const s of perSid) {
+      if (typeof s.pushSent === 'number') pushSent += s.pushSent;
+      if (typeof s.pushSkipped === 'number') pushSkipped += s.pushSkipped;
+    }
+    const ageMs = Date.now() - last.finishedAt;
+    const ageMin = Math.floor(ageMs / 60000);
+    const ageStr = ageMin < 1 ? 'just now'
+      : ageMin < 60 ? `${ageMin}m ago`
+      : ageMin < 1440 ? `${Math.floor(ageMin/60)}h ${ageMin%60}m ago`
+      : `${Math.floor(ageMin/1440)}d ago`;
+    const stale = ageMs > 90 * 60000;
+    const errored = pw.error || (typeof pw.errors === 'number' && pw.errors > 0);
+    const bannerColor = errored ? '#ff5a5a' : stale ? '#ff9e42' : 'var(--accent)';
+    const bannerText  = errored ? 'Errors in last run'
+                     : stale   ? 'Stale (>90 min)'
+                     :           'All systems normal';
+    const dur = (typeof last.durationMs === 'number') ? `${last.durationMs}ms` : '—';
+    const cron = (last.cron || '').trim() || 'manual';
+    const rows = [
+      ['Last run',     ageStr],
+      ['Trigger',      cron === '0 * * * *' ? 'hourly' : cron === '0 0 * * *' ? 'daily 00:00 UTC' : cron],
+      ['Duration',     dur],
+      ['Users swept',  String(pw.users || 0)],
+      ['Items scanned', String(pw.scanned || 0)],
+      ['Alerts produced', String(pw.alerts || 0)],
+      ['Push sent',    String(pushSent)],
+      ['Push skipped', String(pushSkipped)],
+      ['Errors',       String(pw.errors || 0)],
+    ];
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(255,255,255,0.02);border-left:3px solid ${bannerColor};border-radius:3px;margin-bottom:12px">
+        <span style="width:8px;height:8px;border-radius:50%;background:${bannerColor};flex-shrink:0"></span>
+        <span style="font-size:12px;color:${bannerColor};font-weight:600;letter-spacing:0.3px">${bannerText}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr auto;gap:6px 16px;font-size:12px">
+        ${rows.map(([k,v]) => `<div style="color:var(--dim)">${k}</div><div style="color:var(--text);font-variant-numeric:tabular-nums">${v}</div>`).join('')}
+      </div>
+    `;
+  } catch (e) {
+    el.innerHTML = '<div class="empty" style="text-align:left;font-size:12px;padding:8px 0;color:#ff5a5a">Could not load system status.</div>';
   }
 }
 
