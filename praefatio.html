@@ -34,8 +34,23 @@
   --shadow:0 1px 2px rgba(28,24,18,0.05), 0 18px 48px rgba(28,24,18,0.08);
 }
 html,body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,sans-serif;-webkit-font-smoothing:antialiased;font-size:16px;line-height:1.6;overflow-x:hidden;position:relative}
+
+/* ═══════ FERRARI-STYLE INTRO ANIMATION ═══════
+   Black screen with the R+J seal, fades to reveal the site.
+   Plays only once per session (sessionStorage gates the replay). */
+.intro-overlay{position:fixed;inset:0;background:#0A0807;z-index:9999;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:1;transition:opacity 0.7s ease-out 1.6s,visibility 0s linear 2.3s;visibility:visible}
+.intro-overlay.gone{opacity:0;visibility:hidden}
+.intro-seal{width:140px;height:140px;color:var(--accent);opacity:0;transform:scale(0.85);animation:sealReveal 1.6s cubic-bezier(0.16,1,0.3,1) forwards}
+@media(max-width:700px){.intro-seal{width:96px;height:96px}}
+@keyframes sealReveal{
+  0%{opacity:0;transform:scale(0.85)}
+  40%{opacity:1;transform:scale(1.02)}
+  100%{opacity:1;transform:scale(1)}
+}
+.intro-overlay.skip{transition:none;opacity:0;visibility:hidden}
+@media(prefers-reduced-motion:reduce){.intro-overlay{opacity:0;visibility:hidden}}
 /* Subtle parchment texture overlay on the whole page — adds tactile depth */
-body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='600' height='600'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.11 0 0 0 0 0.09 0 0 0 0 0.07 0 0 0 0.5 0'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.4'/></svg>");background-size:300px 300px;opacity:0.4;mix-blend-mode:multiply}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='600' height='600'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.11 0 0 0 0 0.09 0 0 0 0 0.07 0 0 0 0.5 0'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.25'/></svg>");background-size:340px 340px;opacity:0.22;mix-blend-mode:multiply}
 body > *{position:relative;z-index:1}
 .serif{font-family:'Fraunces',Georgia,serif}
 .script{font-family:'Caveat',cursive}
@@ -78,11 +93,12 @@ body > *{position:relative;z-index:1}
 /* Cursive scribbles removed - too informal for the editorial brand */
 .masthead .byline .note{display:none}
 
-/* HERO PHOTOGRAPH - atmospheric band between masthead and intro */
-.hero-photo{margin:0 -40px 0;height:clamp(280px,42vw,520px);overflow:hidden;position:relative;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+/* HERO ARTWORK - clean abstract composition (wax seal study) */
+.hero-photo{margin:0 -40px 0;height:clamp(320px,46vw,560px);overflow:hidden;position:relative;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
 @media(max-width:900px){.hero-photo{margin:0 -22px}}
-.hero-photo img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(0.85) contrast(0.95)}
-.hero-photo::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(232,228,217,0.0) 0%,rgba(232,228,217,0.0) 60%,rgba(232,228,217,0.45) 100%);pointer-events:none}
+.hero-photo img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(0.78) contrast(0.98)}
+/* Subtle vignette top + bottom */
+.hero-photo::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(232,228,217,0.30) 0%,rgba(232,228,217,0) 25%,rgba(232,228,217,0) 75%,rgba(232,228,217,0.55) 100%);pointer-events:none}
 
 /* Two-column intro spread */
 .intro-spread{display:grid;grid-template-columns:1fr 1fr;gap:48px;margin-top:64px;align-items:start;position:relative}
@@ -254,6 +270,17 @@ footer .meta-links a:hover{color:var(--accent)}
 </head>
 <body>
 
+<!-- Ferrari-style intro: R+J seal on black, fades to site -->
+<div class="intro-overlay" id="introOverlay" aria-hidden="true">
+  <svg class="intro-seal" viewBox="0 0 100 100">
+    <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="2.5"/>
+    <circle cx="50" cy="50" r="38" fill="none" stroke="currentColor" stroke-width="0.7" opacity="0.4"/>
+    <text x="34" y="64" font-family="Fraunces, Georgia, serif" font-style="italic" font-size="42" font-weight="600" fill="currentColor" letter-spacing="-3">R</text>
+    <text x="56" y="64" font-family="Fraunces, Georgia, serif" font-style="italic" font-size="42" font-weight="600" fill="currentColor" letter-spacing="-3">J</text>
+    <circle cx="50" cy="76" r="1.4" fill="currentColor"/>
+  </svg>
+</div>
+
 <!-- RIBBON -->
 <div class="ribbon">
   <div class="left">
@@ -288,7 +315,7 @@ footer .meta-links a:hover{color:var(--accent)}
 
   <!-- Atmospheric hero photograph -->
   <figure class="hero-photo" data-reveal>
-    <img src="/images/praefatio/hero-desk.jpg" alt="A writing desk with an open letter, fountain pen, and red sealing wax" loading="eager">
+    <img src="/images/praefatio/hero-abstract.jpg" alt="Wax seal on parchment, editorial photograph" loading="eager">
   </figure>
 
   <div class="intro-spread">
@@ -300,9 +327,8 @@ footer .meta-links a:hover{color:var(--accent)}
       </div>
     </div>
     <div class="intro-body" data-reveal>
-      <p>Over the next eighteen months we will write fifty hand-typed letters to founders, investors, and operators we admire. Each letter is preceded by hours of reading: every long-form profile, every annual letter, every obscure interview we can find. We are not journalists. We are not selling anything. We ask a single question — one shaped by a turning point in the recipient's life — and wait to see what comes back.</p>
-      <p>The replies, with permission, become a publication. <strong>The first edition collects thirty letters.</strong> Half from people who built companies worth a billion or more. Half from people we suspect will, but have not yet.</p>
-      <p>The work is patient on purpose. Most of what gets written today exists to be scrolled past. We are interested in what survives.</p>
+      <p>Over the next eighteen months we will write fifty hand-typed letters to founders, investors, and operators we admire. Each letter is preceded by hours of reading. We ask a single question — one shaped by a turning point in the recipient's life — and wait to see what comes back.</p>
+      <p>The replies, with permission, become a publication. <strong>The first edition collects thirty letters.</strong> Half from people who built companies worth a billion or more. Half from people we suspect will.</p>
     </div>
   </div>
 </section>
@@ -509,6 +535,25 @@ const io = new IntersectionObserver((entries) => {
 document.querySelectorAll('[data-reveal]').forEach(el => io.observe(el));
 
 renderTargets();
+
+// Intro overlay - skip if user has already seen it this session
+(function(){
+  const overlay = document.getElementById('introOverlay');
+  if (!overlay) return;
+  let seen = false;
+  try { seen = sessionStorage.getItem('praefatio_intro_seen') === '1'; } catch {}
+  if (seen) {
+    overlay.classList.add('skip');
+  } else {
+    // The CSS animation runs ~1.6s; the overlay fade out is triggered automatically via transition delay
+    setTimeout(() => {
+      overlay.classList.add('gone');
+      try { sessionStorage.setItem('praefatio_intro_seen', '1'); } catch {}
+    }, 1800);
+  }
+  // Allow click anywhere to skip the intro
+  overlay.addEventListener('click', () => overlay.classList.add('gone'));
+})();
 </script>
 
 </body>

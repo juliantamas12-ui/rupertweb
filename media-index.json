@@ -2,11 +2,19 @@
   "items": [
     {
       "kind": "image",
-      "title": "Praefatio hero (writing desk)",
-      "subtitle": "Atmospheric photograph for thepraefatio.com",
-      "url": "/images/praefatio/hero-desk.jpg",
+      "title": "Praefatio hero (wax seal study)",
+      "subtitle": "Abstract editorial composition - currently live",
+      "url": "/images/praefatio/hero-abstract.jpg",
       "createdAt": "2026-05-18",
       "tags": ["praefatio", "hero", "ai-generated", "flux-pro"]
+    },
+    {
+      "kind": "image",
+      "title": "Praefatio hero (writing desk) - v1",
+      "subtitle": "Earlier desk-with-pen photograph, retired",
+      "url": "/images/praefatio/hero-desk.jpg",
+      "createdAt": "2026-05-18",
+      "tags": ["praefatio", "hero", "ai-generated", "retired"]
     },
     {
       "kind": "image",
