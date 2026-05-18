@@ -2,6 +2,22 @@
   "items": [
     {
       "kind": "image",
+      "title": "Praefatio hero (writing desk)",
+      "subtitle": "Atmospheric photograph for thepraefatio.com",
+      "url": "/images/praefatio/hero-desk.jpg",
+      "createdAt": "2026-05-18",
+      "tags": ["praefatio", "hero", "ai-generated", "flux-pro"]
+    },
+    {
+      "kind": "image",
+      "title": "Sealed envelope (decorative)",
+      "subtitle": "Close-up of an envelope with a wax seal",
+      "url": "/images/praefatio/seal-envelope.jpg",
+      "createdAt": "2026-05-18",
+      "tags": ["praefatio", "decorative", "ai-generated", "flux-pro"]
+    },
+    {
+      "kind": "image",
       "title": "Rupert profile picture (v1)",
       "subtitle": "Wax seal R on parchment",
       "url": "/images/rupert/rupert-profile-v1.png",
