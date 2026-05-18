@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Praefatio - Forest &amp; Stone</title>
+<meta name="description" content="A correspondence project. Two students writing to the people who built the world.">
+<link rel="canonical" href="https://thepraefatio.com">
+<meta property="og:type" content="website">
+<meta property="og:title" content="The Praefatio">
+<meta property="og:description" content="A correspondence project by Julian Tamas and Rocco. Letters to founders, investors, and operators.">
+<meta property="og:url" content="https://thepraefatio.com">
+<link rel="icon" type="image/svg+xml" href="/icons/favicon-praefatio.svg">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500;1,9..144,600;1,9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Caveat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  /* FOREST & STONE - warm stone, brown-black, sage */
+  --bg:#EDEAE2;
+  --bg-2:#F4F1EA;
+  --paper:#F9F6EF;
+  --ink:#1C1812;
+  --ink-soft:#4A4438;
+  --ink-mute:#827A66;
+  --rule:rgba(28,24,18,0.14);
+  --rule-soft:rgba(28,24,18,0.07);
+  --rule-strong:rgba(28,24,18,0.22);
+  --accent:#3F5945;
+  --accent-soft:rgba(63,89,69,0.12);
+  --sage:#6B7A55;
+  --shadow:0 1px 2px rgba(28,24,18,0.05), 0 18px 48px rgba(28,24,18,0.08);
+}
+html,body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,sans-serif;-webkit-font-smoothing:antialiased;font-size:16px;line-height:1.6;overflow-x:hidden}
+.serif{font-family:'Fraunces',Georgia,serif}
+.script{font-family:'Caveat',cursive}
+.mono{font-family:'JetBrains Mono',monospace}
+
+/* ═══════════ RIBBON ═══════════ */
+.ribbon{display:flex;align-items:center;justify-content:space-between;padding:14px 40px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-mute);border-bottom:1px solid var(--rule)}
+@media(max-width:700px){.ribbon{padding:12px 18px;font-size:9px;letter-spacing:1px}}
+.ribbon a{color:inherit;text-decoration:none}
+.ribbon a:hover{color:var(--accent)}
+.ribbon .left{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.ribbon .right{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--sage);box-shadow:0 0 0 0 var(--sage);animation:pulse 2s infinite;display:inline-block;margin-right:4px;vertical-align:middle}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(122,143,110,0.5)}70%{box-shadow:0 0 0 6px rgba(122,143,110,0)}100%{box-shadow:0 0 0 0 rgba(122,143,110,0)}}
+
+/* ═══════════ ZONE 1: MASTHEAD + PROJECT ═══════════ */
+.zone-1{max-width:1240px;margin:0 auto;padding:56px 40px 80px;position:relative}
+@media(max-width:900px){.zone-1{padding:40px 22px 50px}}
+
+/* Hand-drawn pen illustration in the corner */
+.pen-mark{position:absolute;top:120px;right:60px;width:130px;height:130px;color:var(--accent);opacity:0.55;pointer-events:none;transform:rotate(8deg)}
+@media(max-width:900px){.pen-mark{display:none}}
+
+.masthead{text-align:center;margin-bottom:60px;position:relative}
+.masthead .kicker{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:14px;font-weight:500}
+.masthead h1{font-family:'Fraunces',serif;font-size:clamp(60px,12vw,148px);line-height:0.88;letter-spacing:-3.5px;font-weight:600;color:var(--ink);font-style:italic;margin-bottom:18px}
+.masthead h1 .roman{font-style:normal;color:var(--ink)}
+.masthead .strap{font-family:'Fraunces',serif;font-size:clamp(19px,2.2vw,24px);color:var(--ink-soft);line-height:1.45;font-style:italic;max-width:580px;margin:0 auto}
+.masthead .byline{margin-top:32px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--ink-mute);position:relative;display:inline-block}
+.masthead .byline span{color:var(--ink);font-weight:600}
+.masthead .byline .note{position:absolute;top:-18px;right:-180px;font-family:'Caveat',cursive;font-size:18px;color:var(--accent);font-weight:500;transform:rotate(-3deg);white-space:nowrap;letter-spacing:0}
+.masthead .byline .note::before{content:'';position:absolute;left:-20px;top:10px;width:18px;height:1px;background:var(--accent);transform:rotate(20deg)}
+@media(max-width:900px){.masthead .byline .note{display:none}}
+
+/* Two-column intro spread */
+.intro-spread{display:grid;grid-template-columns:1fr 1fr;gap:48px;margin-top:24px;align-items:start;border-top:1px solid var(--rule);padding-top:48px;position:relative}
+@media(max-width:900px){.intro-spread{grid-template-columns:1fr;gap:28px;padding-top:32px}}
+.intro-headline{font-family:'Fraunces',serif;font-size:clamp(30px,4vw,46px);line-height:1.08;letter-spacing:-1.2px;font-weight:600;color:var(--ink)}
+.intro-headline em{font-style:italic;color:var(--accent)}
+.intro-headline .small{display:block;font-size:14px;letter-spacing:2.5px;text-transform:uppercase;color:var(--ink-mute);font-family:'JetBrains Mono',monospace;font-weight:500;font-style:normal;margin-bottom:14px}
+.intro-body{font-family:'Fraunces',serif;font-size:17px;line-height:1.7;color:var(--ink-soft)}
+.intro-body p{margin-bottom:14px}
+.intro-body p:first-child::first-letter{font-family:'Fraunces',serif;font-style:italic;font-size:64px;float:left;line-height:0.88;margin:6px 10px 0 0;color:var(--accent);font-weight:600}
+.intro-body strong{color:var(--ink);font-weight:600;font-style:italic}
+
+/* Margin note in the gap */
+.intro-spread .margin-note{position:absolute;top:60px;left:50%;transform:translateX(-50%) rotate(-2deg);font-family:'Caveat',cursive;font-size:16px;color:var(--accent);max-width:160px;text-align:center;display:none}
+@media(min-width:1200px){.intro-spread .margin-note{display:block}}
+
+/* ═══════════ PULL QUOTE BAND ═══════════ */
+.quote-band{background:var(--bg-2);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:80px 40px;text-align:center;position:relative;overflow:hidden}
+@media(max-width:700px){.quote-band{padding:54px 22px}}
+.quote-band::before{content:'"';font-family:'Fraunces',serif;font-style:italic;position:absolute;top:0;left:5%;font-size:220px;color:var(--accent);line-height:0.7;opacity:0.16}
+@media(max-width:700px){.quote-band::before{font-size:120px;left:2%}}
+.quote-band q{quotes:none}
+.quote-band q::before,.quote-band q::after{content:''}
+.quote-band .text{position:relative;font-family:'Fraunces',serif;font-size:clamp(24px,3.2vw,38px);line-height:1.3;letter-spacing:-0.6px;font-style:italic;font-weight:500;color:var(--ink);max-width:980px;margin:0 auto 18px}
+.quote-band .text .accent{color:var(--accent)}
+.quote-band cite{position:relative;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--ink-mute);font-style:normal}
+
+/* ═══════════ ZONE 2: METHOD + TARGETS (split) ═══════════ */
+.zone-2{max-width:1240px;margin:0 auto;padding:80px 40px;display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:start;position:relative}
+@media(max-width:900px){.zone-2{grid-template-columns:1fr;gap:48px;padding:54px 22px}}
+
+.column h2{font-family:'Fraunces',serif;font-size:clamp(26px,3.4vw,40px);line-height:1.08;letter-spacing:-1px;font-weight:600;color:var(--ink);margin-bottom:8px}
+.column h2 em{font-style:italic;color:var(--accent)}
+.column .label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--ink-mute);margin-bottom:14px;font-weight:500}
+.column .intro{font-family:'Fraunces',serif;font-style:italic;font-size:15px;color:var(--ink-soft);line-height:1.55;margin-bottom:28px}
+
+/* Method list */
+.method-item{display:grid;grid-template-columns:32px 1fr;gap:14px;padding:18px 0;border-bottom:1px solid var(--rule-soft);align-items:start}
+.method-item:last-child{border-bottom:none}
+.method-item .roman{font-family:'Fraunces',serif;font-style:italic;font-size:20px;color:var(--accent);font-weight:600;line-height:1}
+.method-item h3{font-family:'Fraunces',serif;font-size:17px;font-weight:600;color:var(--ink);margin-bottom:4px;letter-spacing:-0.2px;line-height:1.3}
+.method-item p{font-family:'Fraunces',serif;font-size:14.5px;color:var(--ink-soft);line-height:1.55}
+
+/* Targets list */
+.targets-list{border-top:1px solid var(--rule)}
+.target-row{display:grid;grid-template-columns:1fr auto;gap:12px;padding:13px 0;border-bottom:1px solid var(--rule-soft);align-items:center}
+.target-row .name{font-family:'Fraunces',serif;font-size:16.5px;color:var(--ink);font-weight:500;line-height:1.3}
+.target-row .name .co{color:var(--ink-mute);font-size:13px;font-style:italic;margin-left:5px}
+.target-row .status{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;padding:5px 9px;border-radius:100px;font-weight:600;white-space:nowrap}
+.status-research{background:var(--rule-soft);color:var(--ink-mute)}
+.status-drafting{background:var(--accent-soft);color:var(--accent)}
+.status-sent{background:rgba(122,143,110,0.18);color:var(--sage)}
+.status-replied{background:var(--accent);color:#fff}
+.status-declined{background:transparent;color:var(--ink-mute);border:1px solid var(--rule)}
+
+/* Tiny live status counter at top of targets */
+.targets-meta{display:flex;gap:16px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-mute);margin-bottom:16px;flex-wrap:wrap}
+.targets-meta span strong{color:var(--ink);font-weight:600;margin-right:4px}
+
+/* Margin note on method side */
+.zone-2 .method-note{position:absolute;left:-30px;top:200px;font-family:'Caveat',cursive;font-size:18px;color:var(--accent);transform:rotate(-90deg);transform-origin:left top;letter-spacing:1px;display:none}
+@media(min-width:1200px){.zone-2 .method-note{display:block}}
+
+/* ═══════════ ZONE 3: SPECIMEN + EDITORS + CONTACT ═══════════ */
+.zone-3{max-width:1240px;margin:0 auto;padding:80px 40px;display:grid;grid-template-columns:1.4fr 1fr;gap:64px;align-items:start;position:relative;border-top:1px solid var(--rule)}
+@media(max-width:900px){.zone-3{grid-template-columns:1fr;gap:48px;padding:54px 22px}}
+
+.specimen-col h2{font-family:'Fraunces',serif;font-size:clamp(26px,3.4vw,40px);line-height:1.08;letter-spacing:-1px;font-weight:600;color:var(--ink);margin-bottom:8px}
+.specimen-col h2 em{font-style:italic;color:var(--accent)}
+.specimen-col .label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--ink-mute);margin-bottom:14px;font-weight:500}
+.specimen-col .intro{font-family:'Fraunces',serif;font-style:italic;font-size:15px;color:var(--ink-soft);line-height:1.55;margin-bottom:28px}
+
+.specimen{background:var(--paper);border:1px solid var(--rule);border-radius:6px;padding:40px 44px 38px;box-shadow:var(--shadow);font-family:'Fraunces',serif;color:var(--ink);position:relative;transform:rotate(-0.5deg)}
+.specimen .stamp{position:absolute;top:-12px;right:24px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:#fff;background:var(--accent);padding:6px 12px;border-radius:3px;font-weight:700;transform:rotate(3deg);box-shadow:0 4px 12px rgba(184,85,46,0.3)}
+.specimen .from{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-mute);margin-bottom:22px;padding-bottom:16px;border-bottom:1px solid var(--rule-soft)}
+.specimen .salu{font-style:italic;color:var(--accent);margin-bottom:16px;font-size:17px}
+.specimen p{font-size:15px;line-height:1.7;margin-bottom:12px}
+.specimen .question{font-style:italic;color:var(--ink);padding:14px 18px;border-left:2px solid var(--accent);background:var(--accent-soft);margin:16px 0;font-size:15px;font-weight:500}
+.specimen .sig{font-family:'Caveat',cursive;font-size:26px;color:var(--ink);margin-top:22px;transform:rotate(-2deg);display:inline-block}
+@media(max-width:700px){.specimen{padding:26px 22px;transform:none}.specimen .stamp{right:12px;top:-10px}}
+
+/* Editors side panel */
+.editors-col h2{font-family:'Fraunces',serif;font-size:clamp(26px,3.4vw,40px);line-height:1.08;letter-spacing:-1px;font-weight:600;color:var(--ink);margin-bottom:8px}
+.editors-col h2 em{font-style:italic;color:var(--accent)}
+.editors-col .label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--ink-mute);margin-bottom:14px;font-weight:500}
+
+.editor-stack{display:flex;flex-direction:column;gap:32px;margin-top:24px}
+.editor{display:grid;grid-template-columns:88px 1fr;gap:18px;align-items:start}
+.editor:nth-child(2){padding-top:24px;border-top:1px solid var(--rule-soft)}
+.editor .portrait{width:88px;aspect-ratio:3/4;background:linear-gradient(135deg,#E8DDC6,#D4C4A0);border-radius:4px;position:relative;overflow:hidden;border:1px solid var(--rule)}
+.editor .portrait::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 280' preserveAspectRatio='xMidYMid meet'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%231a1207' stop-opacity='0.20'/><stop offset='1' stop-color='%231a1207' stop-opacity='0.36'/></linearGradient></defs><circle cx='100' cy='105' r='42' fill='url(%23g)'/><path d='M 30 280 Q 30 175, 100 170 Q 170 175, 170 280 Z' fill='url(%23g)'/></svg>") no-repeat center / 78% auto;opacity:0.9}
+.editor:nth-child(1) .portrait{transform:rotate(-2deg)}
+.editor:nth-child(2) .portrait{transform:rotate(1.5deg)}
+.editor .info .name{font-family:'Fraunces',serif;font-size:19px;font-weight:600;letter-spacing:-0.3px;color:var(--ink);line-height:1.2}
+.editor .info .meta{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-mute);margin-top:4px;margin-bottom:10px}
+.editor .info .bio{font-family:'Fraunces',serif;font-size:14px;line-height:1.55;color:var(--ink-soft)}
+
+/* Contact mini-card */
+.contact-card{margin-top:36px;padding-top:24px;border-top:1px solid var(--rule)}
+.contact-card .label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--ink-mute);margin-bottom:8px;font-weight:500}
+.contact-card h3{font-family:'Fraunces',serif;font-size:22px;font-weight:600;color:var(--ink);margin-bottom:8px;line-height:1.15;letter-spacing:-0.4px}
+.contact-card h3 em{font-style:italic;color:var(--accent)}
+.contact-card p{font-family:'Fraunces',serif;font-size:14px;color:var(--ink-soft);line-height:1.55;margin-bottom:14px}
+.contact-card .email{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--ink);background:var(--paper);border:1px solid var(--rule);padding:10px 14px;border-radius:6px;display:inline-block;text-decoration:none;font-weight:500;letter-spacing:0.4px;transition:all 0.15s;word-break:break-all}
+.contact-card .email:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ═══════════ FOOTER ═══════════ */
+footer{max-width:1240px;margin:0 auto;padding:40px;border-top:1px solid var(--rule);display:grid;grid-template-columns:1fr auto;gap:24px;align-items:end;font-size:12px;color:var(--ink-mute)}
+@media(max-width:700px){footer{grid-template-columns:1fr;padding:32px 22px;gap:18px}}
+footer .brand{font-family:'Fraunces',serif;font-style:italic;font-size:22px;color:var(--ink);font-weight:500;letter-spacing:-0.4px}
+footer .brand .dot{color:var(--accent);font-style:normal}
+footer .copy{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;margin-top:6px}
+footer .meta-links{display:flex;gap:18px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase}
+footer .meta-links a{color:var(--ink-mute);text-decoration:none;transition:color 0.15s}
+footer .meta-links a:hover{color:var(--accent)}
+
+[data-reveal]{opacity:0;transform:translateY(14px);transition:opacity 0.7s ease-out,transform 0.7s ease-out}
+[data-reveal].visible{opacity:1;transform:translateY(0)}
+@media(prefers-reduced-motion:reduce){[data-reveal]{opacity:1;transform:none;transition:none}}
+</style>
+</head>
+<body>
+
+<!-- RIBBON -->
+<div class="ribbon">
+  <div class="left">
+    <span><span class="status-dot"></span>In preparation</span>
+    <span>Issue 01 · MMXXVI</span>
+    <span>Rome</span>
+  </div>
+  <div class="right">
+    <a href="mailto:hello@thepraefatio.com">hello@thepraefatio.com</a>
+  </div>
+</div>
+
+<!-- ═══════ ZONE 1: MASTHEAD + INTRO ═══════ -->
+<section class="zone-1">
+
+  <!-- Hand-drawn pen + envelope, top-right corner -->
+  <svg class="pen-mark" viewBox="0 0 130 130" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Envelope -->
+    <rect x="14" y="58" width="78" height="50" rx="2" />
+    <path d="M14 62 L53 88 L92 62" />
+    <!-- Pen drawn across -->
+    <path d="M70 22 L114 70" stroke-width="2.4"/>
+    <path d="M68 24 L74 30 L80 24" />
+    <path d="M112 68 L118 76 L122 80" stroke-width="2"/>
+    <!-- Scribble accent under -->
+    <path d="M22 116 Q 38 112, 56 116 T 92 114" stroke-width="1" opacity="0.6"/>
+  </svg>
+
+  <header class="masthead">
+    <div class="kicker">A correspondence project</div>
+    <h1>The <span class="roman">Praefatio</span></h1>
+    <p class="strap">Letters to the people who built the world.</p>
+    <div class="byline">By <span>Julian Tamas</span> &amp; <span>Rocco</span> · 14 · Marymount, Rome
+      <span class="note">posted by hand →</span>
+    </div>
+  </header>
+
+  <div class="intro-spread">
+    <span class="margin-note">we are<br>trying<br>something<br>older</span>
+    <div data-reveal>
+      <div class="intro-headline">
+        <span class="small">What we are doing</span>
+        We write letters that <em>get answered.</em>
+      </div>
+    </div>
+    <div class="intro-body" data-reveal>
+      <p>Over the next eighteen months we will write fifty hand-typed letters to founders, investors, and operators we admire. Each letter is preceded by hours of reading: every long-form profile, every annual letter, every obscure interview we can find. We are not journalists. We are not selling anything. We ask a single question — one shaped by a turning point in the recipient's life — and wait to see what comes back.</p>
+      <p>The replies, with permission, become a publication. <strong>The first edition collects thirty letters.</strong> Half from people who built companies worth a billion or more. Half from people we suspect will, but have not yet.</p>
+      <p>The work is patient on purpose. Most of what gets written today exists to be scrolled past. We are interested in what survives.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ QUOTE BAND ═══════ -->
+<section class="quote-band">
+  <p class="text" data-reveal><q>Most of what the next generation learns is filtered through podcasts, ghostwritten memoirs and quotes recycled until they mean nothing. <span class="accent">We are trying something older.</span></q></p>
+  <cite data-reveal>— The Editors</cite>
+</section>
+
+<!-- ═══════ ZONE 2: METHOD + TARGETS (split) ═══════ -->
+<section class="zone-2">
+  <span class="method-note">how the work is done</span>
+
+  <!-- Method column -->
+  <div class="column" data-reveal>
+    <div class="label">Methodology</div>
+    <h2>Four <em>rules</em> we don't break.</h2>
+    <p class="intro">The method is the moat. No surveys, no automated outreach, no clever growth tricks.</p>
+
+    <div class="method-list-wrap">
+      <div class="method-item">
+        <div class="roman">i.</div>
+        <div>
+          <h3>Two to three hours of research per letter.</h3>
+          <p>We read everything publicly available about the subject before writing a single word. The question we ask must reflect that reading.</p>
+        </div>
+      </div>
+      <div class="method-item">
+        <div class="roman">ii.</div>
+        <div>
+          <h3>One question per letter — about a real pivot.</h3>
+          <p>A turning point in the subject's life: a moment they changed direction, contradicted an earlier position, or made a choice they may not have explained publicly.</p>
+        </div>
+      </div>
+      <div class="method-item">
+        <div class="roman">iii.</div>
+        <div>
+          <h3>Paper, not pixels.</h3>
+          <p>Letters are printed, hand-signed, and posted with a stamped reply envelope. The medium is the proof of seriousness.</p>
+        </div>
+      </div>
+      <div class="method-item">
+        <div class="roman">iv.</div>
+        <div>
+          <h3>Nothing is published without permission.</h3>
+          <p>Every letter includes explicit language about how a reply might be used. Anyone may decline, restrict, or speak off the record. We honour every instruction.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Targets column -->
+  <div class="column" data-reveal>
+    <div class="label">Targets · The Working List</div>
+    <h2>Who we plan to <em>write to.</em></h2>
+    <p class="intro">A working list with honest status. <strong>Nothing here has been sent yet.</strong> The list will update as letters genuinely move forward.</p>
+
+    <div class="targets-meta" id="targetsMeta"></div>
+    <div class="targets-list" id="targetsList"></div>
+  </div>
+</section>
+
+<!-- ═══════ ZONE 3: SPECIMEN + EDITORS + CONTACT ═══════ -->
+<section class="zone-3">
+
+  <!-- Specimen letter, larger column -->
+  <div class="specimen-col" data-reveal>
+    <div class="label">A Draft Letter</div>
+    <h2>How it actually <em>reads.</em></h2>
+    <p class="intro">An example of what we send. This particular letter is in preparation. It has not been posted yet.</p>
+
+    <div class="specimen">
+      <div class="stamp">Draft</div>
+      <div class="from">From The Praefatio · Rome · MMXXVI</div>
+      <div class="salu">Dear Mr Collison,</div>
+      <p>We are Julian Tamas and Rocco. We are fourteen, students at Marymount International School in Rome, and we are writing to thirty founders whose work we have spent the past year reading.</p>
+      <p>Before this letter, we read your sister's profile of you in <em>The New Yorker</em>, your essays at patrickcollison.com, every Stripe shareholder letter, and the early Lisp interpreter you wrote at fourteen. What struck us most was a single thing: you were a published research scientist in your teens, and then you put science down and built Stripe.</p>
+      <div class="question">You left research science behind to build a payments company. Twenty years later, do you think of yourself as someone who abandoned science, or someone who applied it to something different — and what would you tell a fourteen-year-old facing a similar choice today?</div>
+      <p>That is the only question. We have enclosed a stamped envelope for your reply. If you would prefer to write off the record, or not at all, we will respect either entirely.</p>
+      <span class="sig">— Julian &amp; Rocco</span>
+    </div>
+  </div>
+
+  <!-- Editors + contact, side column -->
+  <div class="editors-col" data-reveal>
+    <div class="label">The Editors</div>
+    <h2>Who we <em>are.</em></h2>
+
+    <div class="editor-stack">
+      <div class="editor">
+        <div class="portrait" aria-label="Portrait of Julian Tamas"></div>
+        <div class="info">
+          <div class="name">Julian Tamas</div>
+          <div class="meta">Editor · Rome · 14</div>
+          <div class="bio">Builds small things on the internet. QuestLog, a fleet tracker, the software behind this project. Reads more long-form business writing than is probably healthy for fourteen.</div>
+        </div>
+      </div>
+      <div class="editor">
+        <div class="portrait" aria-label="Portrait of Rocco"></div>
+        <div class="info">
+          <div class="name">Rocco</div>
+          <div class="meta">Editor · Rome · 14</div>
+          <div class="bio">Bio in preparation. Brings the second-opinion edits and the first warm introductions through family.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="contact-card">
+      <div class="label">Contact</div>
+      <h3>How to <em>reach us.</em></h3>
+      <p>If you have received a letter from us and would prefer to reply by email, or wish to be included in a later edition, the address below reaches both editors.</p>
+      <a class="email" href="mailto:hello@thepraefatio.com">hello@thepraefatio.com</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div>
+    <div class="brand">The Praefatio<span class="dot">.</span></div>
+    <div class="copy">Issue 01 · MMXXVI · Rome</div>
+  </div>
+  <div class="meta-links">
+    <a href="#method">Method</a>
+    <a href="#targets">Targets</a>
+    <a href="#specimen">Specimen</a>
+    <a href="mailto:hello@thepraefatio.com">Contact</a>
+  </div>
+</footer>
+
+<script>
+// Real working list. Update statuses as letters move.
+// Statuses: research / drafting / sent / replied / declined
+const TARGETS = [
+  { name:'Patrick Collison',     co:'Stripe',         status:'research' },
+  { name:'Howard Marks',         co:'Oaktree',        status:'research' },
+  { name:'Daniel Ek',            co:'Spotify',        status:'research' },
+  { name:'Brian Chesky',         co:'Airbnb',         status:'research' },
+  { name:'Naval Ravikant',       co:'AngelList',      status:'research' },
+  { name:'Tobi Lütke',           co:'Shopify',        status:'research' },
+  { name:'Melanie Perkins',      co:'Canva',          status:'research' },
+  { name:'Drew Houston',         co:'Dropbox',        status:'research' },
+  { name:'Stewart Butterfield',  co:'Slack',          status:'research' },
+  { name:'Demis Hassabis',       co:'DeepMind',       status:'research' },
+  { name:'Whitney Wolfe Herd',   co:'Bumble',         status:'research' },
+  { name:'Tom Blomfield',        co:'Monzo',          status:'research' },
+];
+
+const STATUS_LABELS = {
+  research: 'In research',
+  drafting: 'Drafting',
+  sent:     'Sent',
+  replied:  'Replied',
+  declined: 'Declined',
+};
+
+function renderTargets(){
+  // Top meta counts
+  const meta = document.getElementById('targetsMeta');
+  const counts = TARGETS.reduce((a,t)=>{a[t.status]=(a[t.status]||0)+1;return a;},{});
+  const order = ['research','drafting','sent','replied','declined'];
+  meta.innerHTML = order.filter(k => counts[k]).map(k => `<span><strong>${counts[k]}</strong>${STATUS_LABELS[k]}</span>`).join('');
+
+  // Rows
+  const list = document.getElementById('targetsList');
+  list.innerHTML = TARGETS.map(t => `
+    <div class="target-row">
+      <div class="name">${escapeHtml(t.name)}<span class="co"> · ${escapeHtml(t.co)}</span></div>
+      <div class="status status-${t.status}">${STATUS_LABELS[t.status] || t.status}</div>
+    </div>
+  `).join('');
+}
+
+function escapeHtml(s){return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+const io = new IntersectionObserver((entries) => {
+  for (const e of entries){
+    if (e.isIntersecting){ e.target.classList.add('visible'); io.unobserve(e.target); }
+  }
+}, { threshold: 0.1, rootMargin: '0px 0px -30px 0px' });
+document.querySelectorAll('[data-reveal]').forEach(el => io.observe(el));
+
+renderTargets();
+</script>
+
+</body>
+</html>
