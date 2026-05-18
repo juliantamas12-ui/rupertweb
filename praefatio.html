@@ -18,19 +18,20 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#F4EFE6;
-  --bg-2:#FFFBF3;
-  --paper:#FFFEFA;
-  --ink:#1A1207;
-  --ink-soft:#5A4A38;
-  --ink-mute:#8A7860;
-  --rule:rgba(26,18,7,0.14);
-  --rule-soft:rgba(26,18,7,0.07);
-  --rule-strong:rgba(26,18,7,0.22);
-  --accent:#B8552E;
-  --accent-soft:rgba(184,85,46,0.10);
-  --sage:#7A8F6E;
-  --shadow:0 1px 2px rgba(26,15,5,0.05), 0 18px 48px rgba(26,15,5,0.08);
+  /* FOREST & STONE - warm stone, brown-black ink, forest sage accent */
+  --bg:#EDEAE2;
+  --bg-2:#F4F1EA;
+  --paper:#F9F6EF;
+  --ink:#1C1812;
+  --ink-soft:#4A4438;
+  --ink-mute:#827A66;
+  --rule:rgba(28,24,18,0.14);
+  --rule-soft:rgba(28,24,18,0.07);
+  --rule-strong:rgba(28,24,18,0.22);
+  --accent:#3F5945;
+  --accent-soft:rgba(63,89,69,0.12);
+  --sage:#6B7A55;
+  --shadow:0 1px 2px rgba(28,24,18,0.05), 0 18px 48px rgba(28,24,18,0.08);
 }
 html,body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,sans-serif;-webkit-font-smoothing:antialiased;font-size:16px;line-height:1.6;overflow-x:hidden}
 .serif{font-family:'Fraunces',Georgia,serif}
@@ -155,48 +156,30 @@ html,body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-syste
 .zone-2 .method-note{position:absolute;left:-30px;top:200px;font-family:'Caveat',cursive;font-size:18px;color:var(--accent);transform:rotate(-90deg);transform-origin:left top;letter-spacing:1px;display:none}
 @media(min-width:1200px){.zone-2 .method-note{display:block}}
 
-/* ═══════════ ZONE 3: SPECIMEN + EDITORS + CONTACT ═══════════ */
-.zone-3{max-width:1240px;margin:0 auto;padding:80px 40px;display:grid;grid-template-columns:1.4fr 1fr;gap:64px;align-items:start;position:relative;border-top:1px solid var(--rule)}
+/* ═══════ ZONE 3: EDITORS + CONTACT ═══════ */
+.zone-3{max-width:1240px;margin:0 auto;padding:80px 40px;display:grid;grid-template-columns:1.5fr 1fr;gap:80px;align-items:start;position:relative;border-top:1px solid var(--rule)}
 @media(max-width:900px){.zone-3{grid-template-columns:1fr;gap:48px;padding:54px 22px}}
 
-.specimen-col h2{font-family:'Fraunces',serif;font-size:clamp(26px,3.4vw,40px);line-height:1.08;letter-spacing:-1px;font-weight:600;color:var(--ink);margin-bottom:8px}
-.specimen-col h2 em{font-style:italic;color:var(--accent)}
-.specimen-col .label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--ink-mute);margin-bottom:14px;font-weight:500}
-.specimen-col .intro{font-family:'Fraunces',serif;font-style:italic;font-size:15px;color:var(--ink-soft);line-height:1.55;margin-bottom:28px}
+.editors-col h2,.contact-col h2{font-family:'Fraunces',serif;font-size:clamp(26px,3.4vw,40px);line-height:1.08;letter-spacing:-1px;font-weight:600;color:var(--ink);margin-bottom:8px}
+.editors-col h2 em,.contact-col h2 em{font-style:italic;color:var(--accent)}
+.editors-col .label,.contact-col .label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--ink-mute);margin-bottom:14px;font-weight:500}
 
-.specimen{background:var(--paper);border:1px solid var(--rule);border-radius:6px;padding:40px 44px 38px;box-shadow:var(--shadow);font-family:'Fraunces',serif;color:var(--ink);position:relative;transform:rotate(-0.5deg)}
-.specimen .stamp{position:absolute;top:-12px;right:24px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:#fff;background:var(--accent);padding:6px 12px;border-radius:3px;font-weight:700;transform:rotate(3deg);box-shadow:0 4px 12px rgba(184,85,46,0.3)}
-.specimen .from{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-mute);margin-bottom:22px;padding-bottom:16px;border-bottom:1px solid var(--rule-soft)}
-.specimen .salu{font-style:italic;color:var(--accent);margin-bottom:16px;font-size:17px}
-.specimen p{font-size:15px;line-height:1.7;margin-bottom:12px}
-.specimen .question{font-style:italic;color:var(--ink);padding:14px 18px;border-left:2px solid var(--accent);background:var(--accent-soft);margin:16px 0;font-size:15px;font-weight:500}
-.specimen .sig{font-family:'Caveat',cursive;font-size:26px;color:var(--ink);margin-top:22px;transform:rotate(-2deg);display:inline-block}
-@media(max-width:700px){.specimen{padding:26px 22px;transform:none}.specimen .stamp{right:12px;top:-10px}}
-
-/* Editors side panel */
-.editors-col h2{font-family:'Fraunces',serif;font-size:clamp(26px,3.4vw,40px);line-height:1.08;letter-spacing:-1px;font-weight:600;color:var(--ink);margin-bottom:8px}
-.editors-col h2 em{font-style:italic;color:var(--accent)}
-.editors-col .label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--ink-mute);margin-bottom:14px;font-weight:500}
-
-.editor-stack{display:flex;flex-direction:column;gap:32px;margin-top:24px}
-.editor{display:grid;grid-template-columns:88px 1fr;gap:18px;align-items:start}
-.editor:nth-child(2){padding-top:24px;border-top:1px solid var(--rule-soft)}
-.editor .portrait{width:88px;aspect-ratio:3/4;background:linear-gradient(135deg,#E8DDC6,#D4C4A0);border-radius:4px;position:relative;overflow:hidden;border:1px solid var(--rule)}
-.editor .portrait::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 280' preserveAspectRatio='xMidYMid meet'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%231a1207' stop-opacity='0.20'/><stop offset='1' stop-color='%231a1207' stop-opacity='0.36'/></linearGradient></defs><circle cx='100' cy='105' r='42' fill='url(%23g)'/><path d='M 30 280 Q 30 175, 100 170 Q 170 175, 170 280 Z' fill='url(%23g)'/></svg>") no-repeat center / 78% auto;opacity:0.9}
-.editor:nth-child(1) .portrait{transform:rotate(-2deg)}
+.editor-stack{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:32px}
+@media(max-width:600px){.editor-stack{grid-template-columns:1fr;gap:32px}}
+.editor{display:flex;flex-direction:column;gap:14px}
+.editor .portrait{width:100%;aspect-ratio:3/4;background:linear-gradient(135deg,#D8D2C0,#B8B19E);border-radius:4px;position:relative;overflow:hidden;border:1px solid var(--rule);max-width:200px}
+.editor .portrait::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 280' preserveAspectRatio='xMidYMid meet'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%231c1812' stop-opacity='0.22'/><stop offset='1' stop-color='%231c1812' stop-opacity='0.40'/></linearGradient></defs><circle cx='100' cy='105' r='42' fill='url(%23g)'/><path d='M 30 280 Q 30 175, 100 170 Q 170 175, 170 280 Z' fill='url(%23g)'/></svg>") no-repeat center / 78% auto;opacity:0.9}
+.editor:nth-child(1) .portrait{transform:rotate(-1.5deg)}
 .editor:nth-child(2) .portrait{transform:rotate(1.5deg)}
-.editor .info .name{font-family:'Fraunces',serif;font-size:19px;font-weight:600;letter-spacing:-0.3px;color:var(--ink);line-height:1.2}
-.editor .info .meta{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-mute);margin-top:4px;margin-bottom:10px}
-.editor .info .bio{font-family:'Fraunces',serif;font-size:14px;line-height:1.55;color:var(--ink-soft)}
+.editor .info .name{font-family:'Fraunces',serif;font-size:22px;font-weight:600;letter-spacing:-0.3px;color:var(--ink);line-height:1.2;margin-top:8px}
+.editor .info .meta{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-mute);margin-top:4px;margin-bottom:12px}
+.editor .info .bio{font-family:'Fraunces',serif;font-size:14.5px;line-height:1.6;color:var(--ink-soft)}
 
-/* Contact mini-card */
-.contact-card{margin-top:36px;padding-top:24px;border-top:1px solid var(--rule)}
-.contact-card .label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--ink-mute);margin-bottom:8px;font-weight:500}
-.contact-card h3{font-family:'Fraunces',serif;font-size:22px;font-weight:600;color:var(--ink);margin-bottom:8px;line-height:1.15;letter-spacing:-0.4px}
-.contact-card h3 em{font-style:italic;color:var(--accent)}
-.contact-card p{font-family:'Fraunces',serif;font-size:14px;color:var(--ink-soft);line-height:1.55;margin-bottom:14px}
-.contact-card .email{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--ink);background:var(--paper);border:1px solid var(--rule);padding:10px 14px;border-radius:6px;display:inline-block;text-decoration:none;font-weight:500;letter-spacing:0.4px;transition:all 0.15s;word-break:break-all}
-.contact-card .email:hover{border-color:var(--accent);color:var(--accent)}
+/* Contact column */
+.contact-col .contact-body{font-family:'Fraunces',serif;font-size:15px;color:var(--ink-soft);line-height:1.6;margin:18px 0 20px}
+.contact-col .email{font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--ink);background:var(--paper);border:1px solid var(--rule);padding:14px 18px;border-radius:8px;display:inline-block;text-decoration:none;font-weight:500;letter-spacing:0.4px;transition:all 0.15s;word-break:break-all}
+.contact-col .email:hover{border-color:var(--accent);color:var(--accent)}
+.contact-col .contact-foot{font-family:'Fraunces',serif;font-style:italic;font-size:13px;color:var(--ink-mute);line-height:1.55;margin-top:18px}
 
 /* ═══════════ FOOTER ═══════════ */
 footer{max-width:1240px;margin:0 auto;padding:40px;border-top:1px solid var(--rule);display:grid;grid-template-columns:1fr auto;gap:24px;align-items:end;font-size:12px;color:var(--ink-mute)}
@@ -328,28 +311,10 @@ footer .meta-links a:hover{color:var(--accent)}
   </div>
 </section>
 
-<!-- ═══════ ZONE 3: SPECIMEN + EDITORS + CONTACT ═══════ -->
+<!-- ═══════ ZONE 3: EDITORS + CONTACT ═══════ -->
 <section class="zone-3">
 
-  <!-- Specimen letter, larger column -->
-  <div class="specimen-col" data-reveal>
-    <div class="label">A Draft Letter</div>
-    <h2>How it actually <em>reads.</em></h2>
-    <p class="intro">An example of what we send. This particular letter is in preparation. It has not been posted yet.</p>
-
-    <div class="specimen">
-      <div class="stamp">Draft</div>
-      <div class="from">From The Praefatio · Rome · MMXXVI</div>
-      <div class="salu">Dear Mr Collison,</div>
-      <p>We are Julian Tamas and Rocco. We are fourteen, students at Marymount International School in Rome, and we are writing to thirty founders whose work we have spent the past year reading.</p>
-      <p>Before this letter, we read your sister's profile of you in <em>The New Yorker</em>, your essays at patrickcollison.com, every Stripe shareholder letter, and the early Lisp interpreter you wrote at fourteen. What struck us most was a single thing: you were a published research scientist in your teens, and then you put science down and built Stripe.</p>
-      <div class="question">You left research science behind to build a payments company. Twenty years later, do you think of yourself as someone who abandoned science, or someone who applied it to something different — and what would you tell a fourteen-year-old facing a similar choice today?</div>
-      <p>That is the only question. We have enclosed a stamped envelope for your reply. If you would prefer to write off the record, or not at all, we will respect either entirely.</p>
-      <span class="sig">— Julian &amp; Rocco</span>
-    </div>
-  </div>
-
-  <!-- Editors + contact, side column -->
+  <!-- Editors as a two-column block -->
   <div class="editors-col" data-reveal>
     <div class="label">The Editors</div>
     <h2>Who we <em>are.</em></h2>
@@ -372,13 +337,15 @@ footer .meta-links a:hover{color:var(--accent)}
         </div>
       </div>
     </div>
+  </div>
 
-    <div class="contact-card">
-      <div class="label">Contact</div>
-      <h3>How to <em>reach us.</em></h3>
-      <p>If you have received a letter from us and would prefer to reply by email, or wish to be included in a later edition, the address below reaches both editors.</p>
-      <a class="email" href="mailto:hello@thepraefatio.com">hello@thepraefatio.com</a>
-    </div>
+  <!-- Contact, side -->
+  <div class="contact-col" data-reveal>
+    <div class="label">Contact</div>
+    <h2>How to <em>reach us.</em></h2>
+    <p class="contact-body">If you have received a letter from us and would prefer to reply by email, or wish to be included in a later edition, the address below reaches both editors.</p>
+    <a class="email" href="mailto:hello@thepraefatio.com">hello@thepraefatio.com</a>
+    <p class="contact-foot">We answer everything within seventy-two hours.</p>
   </div>
 </section>
 
@@ -391,7 +358,6 @@ footer .meta-links a:hover{color:var(--accent)}
   <div class="meta-links">
     <a href="#method">Method</a>
     <a href="/targets">Targets</a>
-    <a href="#specimen">Specimen</a>
     <a href="mailto:hello@thepraefatio.com">Contact</a>
   </div>
 </footer>
