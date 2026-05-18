@@ -2,11 +2,19 @@
   "items": [
     {
       "kind": "image",
-      "title": "Praefatio hero (wax seal study)",
-      "subtitle": "Abstract editorial composition - currently live",
-      "url": "/images/praefatio/hero-abstract.jpg",
+      "title": "Praefatio hero (R+J wax seal)",
+      "subtitle": "Red wax seal with gold R and J - currently live",
+      "url": "/images/praefatio/hero-seal-rj.jpg",
       "createdAt": "2026-05-18",
       "tags": ["praefatio", "hero", "ai-generated", "flux-pro"]
+    },
+    {
+      "kind": "image",
+      "title": "Praefatio hero (wax seal study) - v2",
+      "subtitle": "Earlier abstract version, retired",
+      "url": "/images/praefatio/hero-abstract.jpg",
+      "createdAt": "2026-05-18",
+      "tags": ["praefatio", "hero", "ai-generated", "retired"]
     },
     {
       "kind": "image",
