@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>The Praefatio</title>
-<meta name="description" content="Letters to the people who built the world. A research project by two students.">
+<meta name="description" content="A correspondence project. Two students writing to the people who built the world.">
 <link rel="canonical" href="https://thepraefatio.com">
 <meta property="og:type" content="website">
 <meta property="og:title" content="The Praefatio">
-<meta property="og:description" content="Letters to the people who built the world.">
+<meta property="og:description" content="A correspondence project by Julian Tamas and Rocco. Letters to founders, investors, and operators.">
 <meta property="og:url" content="https://thepraefatio.com">
 <link rel="icon" type="image/svg+xml" href="/icons/favicon-praefatio.svg">
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
@@ -24,538 +24,329 @@
   --ink:#1A1207;
   --ink-soft:#5A4A38;
   --ink-mute:#8A7860;
-  --rule:rgba(26,18,7,0.10);
-  --rule-strong:rgba(26,18,7,0.18);
+  --rule:rgba(26,18,7,0.12);
+  --rule-soft:rgba(26,18,7,0.06);
+  --rule-strong:rgba(26,18,7,0.22);
   --accent:#B8552E;
-  --accent-soft:rgba(184,85,46,0.10);
+  --accent-soft:rgba(184,85,46,0.08);
   --sage:#7A8F6E;
-  --sage-soft:rgba(122,143,110,0.14);
-  --shadow:0 1px 2px rgba(26,15,5,0.04), 0 12px 36px rgba(26,15,5,0.06);
+  --shadow:0 1px 2px rgba(26,15,5,0.04), 0 12px 40px rgba(26,15,5,0.06);
 }
-html,body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,sans-serif;-webkit-font-smoothing:antialiased;font-size:16px;line-height:1.55;overflow-x:hidden}
+html,body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,sans-serif;-webkit-font-smoothing:antialiased;font-size:16px;line-height:1.6;overflow-x:hidden}
 .serif{font-family:'Fraunces',Georgia,serif}
 .script{font-family:'Caveat',cursive}
 .mono{font-family:'JetBrains Mono',monospace}
 
-/* ═══════════════════ NAV ═══════════════════ */
-nav{position:sticky;top:0;display:flex;align-items:center;justify-content:space-between;padding:18px 40px;z-index:50;background:rgba(244,239,230,0.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--rule)}
-nav .brand{font-family:'Fraunces',serif;font-size:20px;font-weight:600;font-style:italic;letter-spacing:-0.3px;color:var(--ink)}
-nav .brand .dot{color:var(--accent);font-style:normal}
-nav .nav-meta{display:flex;align-items:center;gap:18px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;color:var(--ink-mute);text-transform:uppercase}
-nav .live-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--sage);box-shadow:0 0 0 0 var(--sage);animation:pulse 2s infinite;margin-right:6px;vertical-align:middle}
-@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(122,143,110,0.5)}70%{box-shadow:0 0 0 8px rgba(122,143,110,0)}100%{box-shadow:0 0 0 0 rgba(122,143,110,0)}}
-@media(max-width:700px){nav{padding:14px 18px}nav .nav-meta{display:none}}
+/* ═══════════════════ TOP RIBBON ═══════════════════ */
+.ribbon{display:flex;align-items:center;justify-content:space-between;padding:14px 40px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-mute);border-bottom:1px solid var(--rule)}
+@media(max-width:700px){.ribbon{padding:12px 18px;font-size:9px;letter-spacing:1px}}
+.ribbon .left{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.ribbon .right{display:flex;gap:18px;align-items:center}
+.ribbon a{color:inherit;text-decoration:none}
+.ribbon a:hover{color:var(--accent)}
+.ribbon .status-dot{width:6px;height:6px;border-radius:50%;background:var(--sage);box-shadow:0 0 0 0 var(--sage);animation:pulse 2s infinite;display:inline-block;margin-right:4px;vertical-align:middle}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(122,143,110,0.5)}70%{box-shadow:0 0 0 6px rgba(122,143,110,0)}100%{box-shadow:0 0 0 0 rgba(122,143,110,0)}}
 
-/* ═══════════════════ HERO ═══════════════════ */
-.hero{position:relative;padding:80px 40px 40px;display:grid;grid-template-columns:1.3fr 1fr;gap:64px;max-width:1320px;margin:0 auto;align-items:start;overflow:hidden}
-@media(max-width:1000px){.hero{grid-template-columns:1fr;gap:40px;padding:60px 24px 30px}}
-.hero::before{content:'';position:absolute;top:-100px;right:-200px;width:700px;height:600px;background:
-  radial-gradient(circle,rgba(184,85,46,0.12) 0%,transparent 55%),
-  radial-gradient(circle at 60% 60%,rgba(122,143,110,0.10) 0%,transparent 55%);
-  pointer-events:none;filter:blur(30px);z-index:0}
-.hero > *{position:relative;z-index:1}
+/* ═══════════════════ MASTHEAD ═══════════════════ */
+.masthead{max-width:1100px;margin:0 auto;padding:80px 40px 40px;text-align:center;border-bottom:1px solid var(--rule)}
+@media(max-width:700px){.masthead{padding:48px 20px 28px}}
+.masthead .kicker{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:18px;font-weight:500}
+.masthead h1{font-family:'Fraunces',serif;font-size:clamp(56px,11vw,128px);line-height:0.9;letter-spacing:-3px;font-weight:600;margin-bottom:22px;color:var(--ink);font-style:italic}
+.masthead h1 .roman{font-style:normal}
+.masthead .strap{font-family:'Fraunces',serif;font-size:clamp(18px,2vw,22px);color:var(--ink-soft);max-width:540px;margin:0 auto;line-height:1.5;font-style:italic}
+.masthead .byline{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--ink-mute);margin-top:30px}
+.masthead .byline span{color:var(--ink);font-weight:600}
 
-.hero-left h1{font-family:'Fraunces',serif;font-size:clamp(44px,7vw,88px);line-height:0.96;letter-spacing:-2px;font-weight:600;margin-bottom:24px;color:var(--ink)}
-.hero-left h1 .em{font-style:italic;color:var(--accent);position:relative;display:inline-block}
-.hero-left h1 .em::after{content:'';position:absolute;left:-2%;right:-2%;bottom:-4px;height:14px;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 14' preserveAspectRatio='none'><path d='M2 9 Q 30 2, 60 6 T 120 6 T 180 8' stroke='%23B8552E' stroke-width='2.2' fill='none' stroke-linecap='round' opacity='0.55'/></svg>") no-repeat;background-size:100% 100%}
-.hero-left .lede{font-family:'Fraunces',serif;font-size:clamp(17px,1.6vw,20px);color:var(--ink-soft);line-height:1.55;margin-bottom:32px;max-width:540px}
+/* ═══════════════════ PULL QUOTE ═══════════════════ */
+.pullquote{max-width:920px;margin:0 auto;padding:80px 40px;text-align:center;position:relative}
+@media(max-width:700px){.pullquote{padding:48px 20px}}
+.pullquote::before{content:'"';font-family:'Fraunces',serif;font-style:italic;position:absolute;top:24px;left:24px;font-size:96px;color:var(--accent);line-height:1;opacity:0.3}
+@media(max-width:700px){.pullquote::before{font-size:64px;left:8px;top:16px}}
+.pullquote q{quotes:none}
+.pullquote q::before,.pullquote q::after{content:''}
+.pullquote .text{font-family:'Fraunces',serif;font-size:clamp(24px,3.5vw,38px);line-height:1.3;letter-spacing:-0.6px;font-style:italic;font-weight:500;color:var(--ink);margin-bottom:24px}
+.pullquote .text .accent{color:var(--accent)}
+.pullquote cite{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--ink-mute);font-style:normal}
 
-.hero-meta-row{display:flex;gap:14px;flex-wrap:wrap;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.5px;color:var(--ink-mute);font-weight:500;margin-bottom:36px}
-.hero-meta-row span{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border:1px solid var(--rule);border-radius:100px;background:var(--bg-2)}
-.hero-meta-row span::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--sage)}
+/* ═══════════════════ SECTION ═══════════════════ */
+.section{max-width:1000px;margin:0 auto;padding:80px 40px;border-top:1px solid var(--rule);position:relative}
+@media(max-width:700px){.section{padding:50px 20px}}
+.section .num{position:absolute;top:80px;left:40px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;color:var(--accent);font-weight:600}
+@media(max-width:700px){.section .num{position:static;margin-bottom:14px;display:block}}
+.section h2{font-family:'Fraunces',serif;font-size:clamp(28px,4vw,42px);line-height:1.1;letter-spacing:-1px;font-weight:600;margin-bottom:30px;color:var(--ink);padding-left:60px}
+.section h2 em{font-style:italic;color:var(--accent)}
+@media(max-width:700px){.section h2{padding-left:0;margin-bottom:22px}}
+.section .body{padding-left:60px;max-width:680px}
+@media(max-width:700px){.section .body{padding-left:0}}
+.section .body p{font-family:'Fraunces',serif;font-size:17px;line-height:1.65;color:var(--ink-soft);margin-bottom:14px}
+.section .body p strong{color:var(--ink);font-weight:600;font-style:italic}
 
-/* SUBSCRIBE INLINE IN HERO */
-.subscribe-inline{display:flex;flex-direction:column;gap:10px;max-width:480px}
-.subscribe-inline .label{font-family:'Fraunces',serif;font-style:italic;font-size:15px;color:var(--ink-soft);margin-bottom:4px}
-.subscribe-inline form{display:flex;background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:6px;box-shadow:var(--shadow)}
-.subscribe-inline input{flex:1;background:transparent;border:none;padding:12px 14px;font-family:inherit;font-size:14px;color:var(--ink);outline:none}
-.subscribe-inline input::placeholder{color:var(--ink-mute)}
-.subscribe-inline button{background:var(--ink);color:var(--bg-2);border:none;padding:0 22px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px;transition:background 0.15s;letter-spacing:0.2px}
-.subscribe-inline button:hover{background:var(--accent)}
-.subscribe-inline button:disabled{opacity:0.6;cursor:not-allowed}
-.subscribe-status{font-size:13px;color:var(--ink-mute);min-height:18px;font-family:'Fraunces',serif;font-style:italic}
-.subscribe-status.ok{color:var(--sage)}
-.subscribe-status.err{color:#c44e2e}
+/* ═══════════════════ METHOD LIST ═══════════════════ */
+.method-list{padding-left:60px;max-width:760px;margin-top:8px}
+@media(max-width:700px){.method-list{padding-left:0}}
+.method-item{display:grid;grid-template-columns:38px 1fr;gap:18px;padding:18px 0;border-bottom:1px solid var(--rule-soft);align-items:start}
+.method-item:last-child{border-bottom:none}
+.method-item .roman{font-family:'Fraunces',serif;font-style:italic;font-size:18px;color:var(--accent);font-weight:600;line-height:1.4}
+.method-item h3{font-family:'Fraunces',serif;font-size:18px;font-weight:600;color:var(--ink);margin-bottom:5px;letter-spacing:-0.2px}
+.method-item p{font-family:'Fraunces',serif;font-size:15px;color:var(--ink-soft);line-height:1.55}
 
-/* INTERACTIVE LETTER ON THE RIGHT */
-.letter-card{background:var(--paper);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;border:1px solid var(--rule);position:relative;transform:rotate(0.6deg);transition:transform 0.3s ease-out}
-.letter-card:hover{transform:rotate(0deg) translateY(-2px)}
-.letter-card .head{padding:14px 22px;border-bottom:1px solid var(--rule);display:flex;align-items:center;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-mute)}
-.letter-card .head .red{color:var(--accent);display:inline-flex;align-items:center;gap:6px}
-.letter-card .head .red::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite}
-.letter-card .body{padding:36px 32px 32px;font-family:'Fraunces',serif;font-size:15px;line-height:1.65;color:var(--ink);min-height:340px}
-.letter-card .body .salutation{font-style:italic;color:var(--accent);margin-bottom:18px;font-size:18px}
-.letter-card .body p{margin-bottom:14px}
-.letter-card .body .signature{font-family:'Caveat',cursive;font-size:24px;color:var(--ink);margin-top:24px;transform:rotate(-2deg);display:inline-block}
-.letter-card .name-picker{padding:14px 22px;background:linear-gradient(180deg,var(--bg-2),var(--paper));border-top:1px solid var(--rule)}
-.letter-card .name-picker .hint{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-mute);margin-bottom:10px}
-.letter-card .name-picker .pills{display:flex;gap:6px;flex-wrap:wrap}
-.letter-card .name-picker .pill{padding:5px 12px;border:1px solid var(--rule);background:var(--paper);border-radius:100px;font-size:12px;color:var(--ink-soft);cursor:pointer;transition:all 0.15s;font-family:'Inter',sans-serif;font-weight:500}
-.letter-card .name-picker .pill:hover{border-color:var(--accent);color:var(--accent)}
-.letter-card .name-picker .pill.active{background:var(--ink);color:var(--bg-2);border-color:var(--ink)}
+/* ═══════════════════ TARGETS TABLE ═══════════════════ */
+.targets-wrap{padding-left:60px;max-width:760px}
+@media(max-width:700px){.targets-wrap{padding-left:0}}
+.targets-intro{font-family:'Fraunces',serif;font-style:italic;color:var(--ink-soft);font-size:15px;margin-bottom:24px;line-height:1.55}
+.targets-list{border-top:1px solid var(--rule);font-family:'Inter',sans-serif}
+.target-row{display:grid;grid-template-columns:1fr auto;gap:14px;padding:14px 0;border-bottom:1px solid var(--rule-soft);align-items:center}
+.target-row .name{font-family:'Fraunces',serif;font-size:17px;color:var(--ink);font-weight:500}
+.target-row .name .co{color:var(--ink-mute);font-size:14px;font-style:italic;margin-left:6px}
+.target-row .status{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:5px 10px;border-radius:100px;font-weight:600;white-space:nowrap}
+.status-research{background:var(--rule-soft);color:var(--ink-mute)}
+.status-drafting{background:var(--accent-soft);color:var(--accent)}
+.status-sent{background:rgba(122,143,110,0.18);color:var(--sage)}
+.status-replied{background:var(--accent);color:#fff}
+.status-declined{background:transparent;color:var(--ink-mute);border:1px solid var(--rule)}
 
-@media(max-width:600px){.letter-card{transform:rotate(0deg)}.letter-card .body{padding:24px 22px;font-size:14px;min-height:300px}}
+/* ═══════════════════ SPECIMEN LETTER ═══════════════════ */
+.specimen-wrap{padding-left:60px;max-width:760px}
+@media(max-width:700px){.specimen-wrap{padding-left:0}}
+.specimen-intro{font-family:'Fraunces',serif;font-style:italic;color:var(--ink-soft);font-size:15px;margin-bottom:24px;line-height:1.55}
+.specimen{background:var(--paper);border:1px solid var(--rule);border-radius:8px;padding:40px 44px 36px;box-shadow:var(--shadow);font-family:'Fraunces',serif;color:var(--ink);position:relative;transform:rotate(-0.3deg)}
+.specimen .stamp{position:absolute;top:18px;right:22px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);padding:4px 10px;border-radius:3px;font-weight:600;transform:rotate(3deg)}
+.specimen .from{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-mute);margin-bottom:24px;padding-bottom:18px;border-bottom:1px solid var(--rule-soft)}
+.specimen .salu{font-style:italic;color:var(--accent);margin-bottom:18px;font-size:18px}
+.specimen p{font-size:15.5px;line-height:1.7;margin-bottom:13px}
+.specimen .question{font-style:italic;color:var(--ink-soft);padding:14px 18px;border-left:2px solid var(--accent);background:var(--accent-soft);margin:18px 0;font-size:15.5px}
+.specimen .sig{font-family:'Caveat',cursive;font-size:24px;color:var(--ink);margin-top:24px;transform:rotate(-2deg);display:inline-block}
+@media(max-width:700px){.specimen{padding:28px 22px;transform:none}.specimen .stamp{top:12px;right:12px}}
 
-/* ═══════════════════ MANIFESTO ═══════════════════ */
-.manifesto{padding:120px 40px 80px;max-width:1100px;margin:0 auto;position:relative}
-@media(max-width:700px){.manifesto{padding:80px 20px 50px}}
-.manifesto .kicker{font-family:'Caveat',cursive;font-size:24px;color:var(--accent);margin-bottom:14px;transform:rotate(-1deg);display:inline-block;font-weight:600}
-.manifesto blockquote{font-family:'Fraunces',serif;font-size:clamp(28px,4vw,46px);line-height:1.2;letter-spacing:-0.8px;font-weight:500;color:var(--ink);max-width:920px;font-style:italic}
-.manifesto blockquote .accent-word{color:var(--accent);font-style:italic}
-.manifesto cite{display:block;margin-top:24px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-mute);font-style:normal}
+/* ═══════════════════ EDITORS ═══════════════════ */
+.editors{padding-left:60px;max-width:760px;margin-top:8px}
+@media(max-width:700px){.editors{padding-left:0}}
+.editor-grid{display:grid;grid-template-columns:1fr 1fr;gap:32px}
+@media(max-width:700px){.editor-grid{grid-template-columns:1fr;gap:32px}}
+.editor{display:flex;flex-direction:column;gap:14px}
+.editor .portrait{width:100%;aspect-ratio:3/4;background:linear-gradient(135deg,#E8DDC6,#D4C4A0);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--ink-mute);font-family:'Fraunces',serif;font-style:italic;font-size:64px;position:relative;overflow:hidden}
+.editor .portrait::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 280' preserveAspectRatio='xMidYMid meet'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%231a1207' stop-opacity='0.18'/><stop offset='1' stop-color='%231a1207' stop-opacity='0.32'/></linearGradient></defs><circle cx='100' cy='105' r='42' fill='url(%23g)'/><path d='M 30 280 Q 30 175, 100 170 Q 170 175, 170 280 Z' fill='url(%23g)'/></svg>") no-repeat center / 80% auto;opacity:0.9}
+.editor .name{font-family:'Fraunces',serif;font-size:22px;font-weight:600;letter-spacing:-0.3px;color:var(--ink);margin-top:8px}
+.editor .meta{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-mute);margin-top:2px}
+.editor .bio{font-family:'Fraunces',serif;font-size:15px;line-height:1.6;color:var(--ink-soft);margin-top:8px}
 
-/* ═══════════════════ NAMES WALL ═══════════════════ */
-.names-section{padding:100px 40px;max-width:1280px;margin:0 auto;border-top:1px solid var(--rule)}
-@media(max-width:700px){.names-section{padding:60px 20px}}
-.names-section .label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);background:var(--accent-soft);padding:6px 12px;border-radius:6px;display:inline-block;margin-bottom:24px}
-.names-section h2{font-family:'Fraunces',serif;font-size:clamp(36px,5vw,60px);line-height:1.05;letter-spacing:-1.5px;font-weight:600;margin-bottom:14px;max-width:840px}
-.names-section h2 em{font-style:italic;color:var(--accent)}
-.names-section .hint{font-family:'Fraunces',serif;font-style:italic;color:var(--ink-soft);font-size:16px;margin-bottom:48px;max-width:580px}
-
-.names-grid{display:flex;flex-wrap:wrap;gap:6px 18px;line-height:1.4;position:relative}
-.name{font-family:'Fraunces',serif;font-weight:500;color:var(--ink-soft);cursor:pointer;transition:color 0.2s, transform 0.2s;letter-spacing:-0.3px;line-height:1.1;padding:6px 0;position:relative;user-select:none}
-.name:hover{color:var(--accent);transform:translateY(-2px)}
-.name.size-s{font-size:18px}
-.name.size-m{font-size:26px}
-.name.size-l{font-size:36px;font-style:italic;font-weight:600}
-.name.size-xl{font-size:48px;font-style:italic;font-weight:600;color:var(--ink)}
-@media(max-width:700px){.name.size-s{font-size:14px}.name.size-m{font-size:18px}.name.size-l{font-size:24px}.name.size-xl{font-size:32px}}
-
-.name-tooltip{position:fixed;background:var(--ink);color:var(--bg-2);padding:14px 18px;border-radius:10px;font-family:'Fraunces',serif;font-size:14px;font-style:italic;line-height:1.45;max-width:280px;pointer-events:none;opacity:0;transform:translateY(8px);transition:opacity 0.15s, transform 0.15s;z-index:200;box-shadow:0 8px 32px rgba(0,0,0,0.25)}
-.name-tooltip.show{opacity:1;transform:translateY(0)}
-.name-tooltip::before{content:'';position:absolute;top:-6px;left:24px;width:10px;height:10px;background:var(--ink);transform:rotate(45deg)}
-
-/* ═══════════════════ COUNTER ═══════════════════ */
-.counter-section{padding:120px 40px;max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr 1.4fr;gap:80px;align-items:center}
-@media(max-width:900px){.counter-section{grid-template-columns:1fr;gap:40px;padding:80px 24px;text-align:left}}
-.counter-section .text h2{font-family:'Fraunces',serif;font-size:clamp(34px,4vw,52px);line-height:1.1;letter-spacing:-1px;font-weight:600;margin-bottom:18px;color:var(--ink)}
-.counter-section .text h2 em{font-style:italic;color:var(--accent)}
-.counter-section .text p{font-family:'Fraunces',serif;font-size:17px;color:var(--ink-soft);line-height:1.6}
-.counter-numbers{display:flex;gap:48px;flex-wrap:wrap;justify-content:flex-end}
-@media(max-width:900px){.counter-numbers{justify-content:flex-start;gap:32px}}
-.counter-num{position:relative}
-.counter-num .v{font-family:'Fraunces',serif;font-size:clamp(72px,11vw,156px);line-height:1;letter-spacing:-5px;font-weight:600;color:var(--ink);font-feature-settings:'tnum';font-variant-numeric:tabular-nums}
-.counter-num .v.italic{font-style:italic;color:var(--accent)}
-.counter-num .l{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-mute);margin-top:4px}
-.counter-live{position:absolute;top:0;right:0;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--sage);display:flex;align-items:center;gap:5px}
-.counter-live::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--sage);animation:pulse 2s infinite}
-
-/* ═══════════════════ VOTE / WOULD YOU REPLY ═══════════════════ */
-.vote-wrap{background:var(--bg-2);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:120px 40px}
-@media(max-width:700px){.vote-wrap{padding:60px 20px}}
-.vote-section{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1.1fr 1fr;gap:64px;align-items:center}
-@media(max-width:900px){.vote-section{grid-template-columns:1fr;gap:40px}}
-
-.sample-letter{background:var(--paper);border:1px solid var(--rule);border-radius:14px;padding:36px 36px 32px;box-shadow:var(--shadow);font-family:'Fraunces',serif;font-size:14.5px;line-height:1.65;color:var(--ink);transform:rotate(-0.4deg)}
-.sample-letter .from{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-mute);margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--rule)}
-.sample-letter .salu{font-style:italic;color:var(--accent);margin-bottom:14px;font-size:16px}
-.sample-letter p{margin-bottom:11px}
-.sample-letter .sig{font-family:'Caveat',cursive;font-size:22px;margin-top:16px;transform:rotate(-1.5deg);display:inline-block}
-
-.vote-prompt h3{font-family:'Fraunces',serif;font-size:clamp(28px,3.5vw,40px);line-height:1.1;letter-spacing:-0.8px;font-weight:600;margin-bottom:14px}
-.vote-prompt h3 em{font-style:italic;color:var(--accent)}
-.vote-prompt .sub{font-family:'Fraunces',serif;font-style:italic;color:var(--ink-soft);font-size:16px;margin-bottom:28px;line-height:1.55}
-.vote-buttons{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap}
-.vote-btn{flex:1;min-width:140px;padding:18px 20px;border:1px solid var(--rule-strong);background:var(--paper);border-radius:10px;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;color:var(--ink);cursor:pointer;transition:all 0.15s;display:flex;flex-direction:column;align-items:flex-start;gap:6px}
-.vote-btn:hover{border-color:var(--ink);transform:translateY(-1px)}
-.vote-btn .big{font-family:'Fraunces',serif;font-size:18px;font-style:italic;color:var(--accent)}
-.vote-btn.voted{background:var(--ink);color:var(--bg-2);border-color:var(--ink)}
-.vote-btn.voted .big{color:var(--bg-2)}
-.vote-results{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-mute);letter-spacing:0.5px;display:none}
-.vote-results.show{display:block}
-.vote-bar{height:4px;background:var(--rule);border-radius:100px;margin-top:14px;overflow:hidden;display:flex}
-.vote-bar .reply-bar{background:var(--sage);transition:width 0.8s ease-out}
-.vote-bar .ignore-bar{background:var(--ink-mute);transition:width 0.8s ease-out}
+/* ═══════════════════ CONTACT ═══════════════════ */
+.contact{padding-left:60px;max-width:760px}
+@media(max-width:700px){.contact{padding-left:0}}
+.contact p{font-family:'Fraunces',serif;font-size:17px;line-height:1.65;color:var(--ink-soft);margin-bottom:18px}
+.contact .email{font-family:'JetBrains Mono',monospace;font-size:16px;color:var(--ink);background:var(--paper);border:1px solid var(--rule);padding:14px 20px;border-radius:8px;display:inline-block;text-decoration:none;font-weight:500;letter-spacing:0.3px;transition:all 0.15s;letter-spacing:0.5px}
+.contact .email:hover{border-color:var(--accent);color:var(--accent)}
 
 /* ═══════════════════ FOOTER ═══════════════════ */
-footer{padding:60px 40px 40px;max-width:1200px;margin:0 auto;display:grid;grid-template-columns:auto 1fr auto;gap:32px;align-items:end;border-top:1px solid var(--rule)}
-@media(max-width:700px){footer{grid-template-columns:1fr;gap:18px;padding:40px 20px;text-align:left}}
-footer .left{font-family:'Fraunces',serif;font-style:italic;font-size:22px;color:var(--ink);font-weight:500}
-footer .left .dot{color:var(--accent);font-style:normal}
-footer .mid{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-mute);text-align:center}
-@media(max-width:700px){footer .mid{text-align:left}}
-footer .right{display:flex;gap:18px;align-items:center;flex-wrap:wrap;font-family:'Inter',sans-serif;font-size:12px}
-footer .right a{color:var(--ink-soft);text-decoration:none;transition:color 0.15s}
-footer .right a:hover{color:var(--accent)}
+footer{max-width:1000px;margin:60px auto 0;padding:40px;border-top:1px solid var(--rule);display:grid;grid-template-columns:1fr auto;gap:20px;align-items:end;font-size:12px;color:var(--ink-mute)}
+@media(max-width:700px){footer{grid-template-columns:1fr;padding:32px 20px;gap:16px}}
+footer .brand{font-family:'Fraunces',serif;font-style:italic;font-size:20px;color:var(--ink);font-weight:500}
+footer .brand .dot{color:var(--accent);font-style:normal}
+footer .copy{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase}
+footer .meta-links{display:flex;gap:18px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase}
+footer .meta-links a{color:var(--ink-mute);text-decoration:none;transition:color 0.15s}
+footer .meta-links a:hover{color:var(--accent)}
 
-[data-reveal]{opacity:0;transform:translateY(20px);transition:opacity 0.7s ease-out,transform 0.7s ease-out}
+[data-reveal]{opacity:0;transform:translateY(16px);transition:opacity 0.7s ease-out,transform 0.7s ease-out}
 [data-reveal].visible{opacity:1;transform:translateY(0)}
 @media(prefers-reduced-motion:reduce){[data-reveal]{opacity:1;transform:none;transition:none}}
 </style>
 </head>
 <body>
 
-<nav>
-  <div class="brand">The Praefatio<span class="dot">.</span></div>
-  <div class="nav-meta">
-    <span><span class="live-dot"></span>Issue 01 forthcoming</span>
+<!-- ═══════════ RIBBON ═══════════ -->
+<div class="ribbon">
+  <div class="left">
+    <span><span class="status-dot"></span>In preparation</span>
+    <span>Issue 01 · MMXXVI</span>
   </div>
-</nav>
-
-<!-- ═══════════ HERO (split: headline + live letter) ═══════════ -->
-<section class="hero">
-  <div class="hero-left">
-    <h1>Letters to the people who <span class="em">built the world.</span></h1>
-    <p class="lede"><strong>The Praefatio</strong> is a research project by two students, Julian and Rocco. We write hand-typed letters to the founders, investors and operators we want to learn from - asking each one a single, deeply-researched question about a turning point in their life. The replies, with permission, become a book.</p>
-
-    <div class="hero-meta-row">
-      <span>In preparation</span>
-      <span>First letters: summer 2026</span>
-      <span>Edition 01 · MMXXVI</span>
-    </div>
-
-    <div class="subscribe-inline">
-      <div class="label">Leave an address. We send you the first published letter when it's ready.</div>
-      <form onsubmit="handleSubscribe(event)">
-        <input type="email" id="subscribeEmail" placeholder="your@email.com" required>
-        <button type="submit" id="subscribeBtn">Subscribe <span>→</span></button>
-      </form>
-      <div class="subscribe-status" id="subscribeStatus" aria-live="polite"></div>
-    </div>
-  </div>
-
-  <div class="hero-right">
-    <div class="letter-card">
-      <div class="head">
-        <span>Specimen · In preparation</span>
-        <span class="red">Draft</span>
-      </div>
-      <div class="body" id="letterBody">
-        <div class="salutation" id="letterSalu">Dear Mr Collison,</div>
-        <p id="letterIntro">We are Julian and Rocco - fourteen, at school in Rome. Before writing this letter, we read everything we could about your career.</p>
-        <p id="letterHook">What struck us most: <em>you were a published research scientist in your teens, then you put science down and built Stripe.</em> We want to ask you about that pivot - what it cost, what you carried over, and whether you'd make it again.</p>
-        <p id="letterClose">One question. Ten minutes. A stamped envelope is enclosed.</p>
-        <span class="signature">- J &amp; R</span>
-      </div>
-      <div class="name-picker">
-        <div class="hint">See how the letter changes per recipient ↓</div>
-        <div class="pills" id="namePills"></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ═══════════ MANIFESTO ═══════════ -->
-<section class="manifesto" data-reveal>
-  <div class="kicker">why this matters,</div>
-  <blockquote>
-    Most of what the next generation learns is filtered through podcasts, ghostwritten memoirs and quotes recycled until they mean nothing. <span class="accent-word">We are trying something older.</span> We write, by hand, and we ask the questions a chatbot cannot.
-  </blockquote>
-  <cite>- The editors</cite>
-</section>
-
-<!-- ═══════════ TARGETS ═══════════ -->
-<section class="names-section">
-  <div data-reveal>
-    <div class="label">Targets · Hover to see the question we're drafting</div>
-    <h2>Who we plan to <em>write to.</em></h2>
-    <p class="hint">These are the people we're researching. None of these letters have been sent yet. Hover any name to see the specific question we'd ask them, based on a pivot or turning point in their life.</p>
-  </div>
-
-  <div class="names-grid" id="namesGrid" data-reveal></div>
-</section>
-
-<!-- ═══════════ COUNTER ═══════════ -->
-<section class="counter-section">
-  <div class="text" data-reveal>
-    <h2>Everything we do is <em>public.</em></h2>
-    <p>We don't pretend to have shipped what we haven't. These numbers will only ever show real letters and real replies. They start at zero. They go up when something has genuinely happened. No theatre.</p>
-  </div>
-  <div class="counter-numbers" data-reveal>
-    <div class="counter-num">
-      <div class="counter-live">Live</div>
-      <div class="v" id="countSent">0</div>
-      <div class="l">Letters sent</div>
-    </div>
-    <div class="counter-num">
-      <div class="v italic" id="countReplied">0</div>
-      <div class="l">Replied</div>
-    </div>
-  </div>
-</section>
-
-<!-- ═══════════ VOTE ═══════════ -->
-<div class="vote-wrap">
-  <section class="vote-section">
-    <div class="sample-letter" data-reveal>
-      <div class="from">Specimen letter · In preparation · Not yet sent</div>
-      <div class="salu">Dear Mr Marks,</div>
-      <p>We are Julian and Rocco - fourteen, at school in Rome. Before writing this letter, we read fifty of your Oaktree memos, starting with the earliest in 1990.</p>
-      <p>The thing we kept returning to: in 2007 you wrote that you weren't worried enough about leverage. A year later, the world found out why. We want to ask you about that gap - the time between sensing something and acting on it.</p>
-      <p style="padding-left:14px;color:var(--ink-soft);font-style:italic">When you read your own memo from 2007 today, what do you wish you had done in the months between writing it and the crisis? And what are you sensing now that you have not yet acted on?</p>
-      <p style="margin-top:14px">One question. A stamped envelope enclosed.</p>
-      <span class="sig">- J &amp; R</span>
-    </div>
-
-    <div class="vote-prompt" data-reveal>
-      <h3>If this landed on <em>your desk,</em> would you reply?</h3>
-      <p class="sub">Honestly. Numbers are aggregated anonymously. The answer changes how we write the next letter.</p>
-      <div class="vote-buttons">
-        <button class="vote-btn" data-vote="reply" onclick="handleVote('reply')">
-          <span>I would reply.</span>
-          <span class="big">Yes</span>
-        </button>
-        <button class="vote-btn" data-vote="ignore" onclick="handleVote('ignore')">
-          <span>I'd ignore it.</span>
-          <span class="big">No</span>
-        </button>
-      </div>
-      <div class="vote-results" id="voteResults">
-        <span id="voteText">12 of 28 said they'd reply.</span>
-        <div class="vote-bar">
-          <div class="reply-bar" id="voteReplyBar" style="width:0%"></div>
-          <div class="ignore-bar" id="voteIgnoreBar" style="width:0%"></div>
-        </div>
-      </div>
-    </div>
-  </section>
-</div>
-
-<footer>
-  <div class="left">The Praefatio<span class="dot">.</span></div>
-  <div class="mid">Issue 01 · MMXXVI · Rome</div>
   <div class="right">
     <a href="mailto:hello@thepraefatio.com">hello@thepraefatio.com</a>
   </div>
+</div>
+
+<!-- ═══════════ MASTHEAD ═══════════ -->
+<header class="masthead">
+  <div class="kicker">A correspondence project · Rome</div>
+  <h1>The <span class="roman">Praefatio</span></h1>
+  <p class="strap">Letters to the people who built the world.</p>
+  <div class="byline">By <span>Julian Tamas</span> &amp; <span>Rocco</span> · 14 · Marymount, Rome</div>
+</header>
+
+<!-- ═══════════ PULL QUOTE ═══════════ -->
+<section class="pullquote">
+  <p class="text" data-reveal>Most of what the next generation learns about business is filtered through podcasts, ghostwritten memoirs, and quotes recycled until they mean nothing. <span class="accent">We are trying something older.</span></p>
+  <cite data-reveal>The Editors</cite>
+</section>
+
+<!-- ═══════════ 01 — THE PROJECT ═══════════ -->
+<section class="section" id="project">
+  <span class="num">01 — The Project</span>
+  <h2>What we are <em>doing.</em></h2>
+  <div class="body" data-reveal>
+    <p>The Praefatio is a correspondence project. Over the next eighteen months, we will write fifty hand-typed letters to founders, investors, and operators we admire. Each letter is preceded by hours of reading: every long-form profile, every annual letter, every obscure interview we can find. We are not journalists. We are not selling anything. We are asking each recipient a single deeply-researched question about a turning point in their life — and waiting to see what comes back.</p>
+    <p>The replies, with permission, become a publication. <strong>The first edition collects thirty letters.</strong> Half from people who built companies worth a billion or more. Half from people we suspect will, but have not yet.</p>
+    <p>The work is patient on purpose. Most of what gets written today exists to be scrolled past. We are interested in what survives — what someone says when they have time to consider the answer, and a reason to commit it to paper.</p>
+  </div>
+</section>
+
+<!-- ═══════════ 02 — METHODOLOGY ═══════════ -->
+<section class="section" id="method">
+  <span class="num">02 — Methodology</span>
+  <h2>How we <em>work.</em></h2>
+  <div class="method-list" data-reveal>
+    <div class="method-item">
+      <div class="roman">i.</div>
+      <div>
+        <h3>Two to three hours of research per letter.</h3>
+        <p>We read everything publicly available about the subject before writing a single word. The question we ask must reflect that reading.</p>
+      </div>
+    </div>
+    <div class="method-item">
+      <div class="roman">ii.</div>
+      <div>
+        <h3>One question per letter — based on a real pivot.</h3>
+        <p>Each letter asks a single question about a turning point in the subject's life: a moment they changed direction, contradicted an earlier position, or made a choice they may not have explained publicly. We do not send surveys.</p>
+      </div>
+    </div>
+    <div class="method-item">
+      <div class="roman">iii.</div>
+      <div>
+        <h3>Paper, not pixels.</h3>
+        <p>Letters are printed, hand-signed, and sent by post with a stamped reply envelope. The medium is the proof of seriousness. Almost no one writes letters anymore. The ones who reply do so because of that.</p>
+      </div>
+    </div>
+    <div class="method-item">
+      <div class="roman">iv.</div>
+      <div>
+        <h3>Nothing is published without permission.</h3>
+        <p>Every letter we send includes explicit language about how a reply might be used. Anyone may decline publication, restrict use, or speak entirely off the record. We honour every instruction in writing.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ 03 — TARGETS ═══════════ -->
+<section class="section" id="targets">
+  <span class="num">03 — Targets</span>
+  <h2>People we plan to <em>write to.</em></h2>
+  <div class="targets-wrap" data-reveal>
+    <p class="targets-intro">A working list, with the actual status of each letter. <strong>Nothing here has been sent yet.</strong> The list will update as letters move from research to drafting to post. Status will never be inflated for the sake of appearances.</p>
+    <div class="targets-list" id="targetsList">
+      <!-- populated by script -->
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ 04 — SPECIMEN ═══════════ -->
+<section class="section" id="specimen">
+  <span class="num">04 — Specimen</span>
+  <h2>A <em>draft</em> letter.</h2>
+  <div class="specimen-wrap" data-reveal>
+    <p class="specimen-intro">An example of what we send. This particular letter is in preparation; it has not yet been posted.</p>
+
+    <div class="specimen">
+      <div class="stamp">Draft</div>
+      <div class="from">From The Praefatio · Rome · MMXXVI</div>
+      <div class="salu">Dear Mr Collison,</div>
+      <p>We are Julian Tamas and Rocco. We are fourteen, students at Marymount International School in Rome, and we are writing to thirty founders whose work we have spent the past year reading.</p>
+      <p>Before this letter, we read your sister's profile of you in <em>The New Yorker</em>, your essays at patrickcollison.com, every Stripe shareholder letter, and the early Lisp interpreter you wrote at fourteen. What struck us most was a single thing: you were a published research scientist in your teens, and then you put science down and built Stripe.</p>
+      <div class="question">You left research science behind to build a payments company. Twenty years later, do you think of yourself as someone who abandoned science, or someone who applied it to something different — and what would you tell a fourteen-year-old facing a similar choice today?</div>
+      <p>That is the only question. We have enclosed a stamped envelope for your reply. If you would prefer to write off the record, or not at all, we will respect either entirely.</p>
+      <span class="sig">— Julian &amp; Rocco</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ 05 — EDITORS ═══════════ -->
+<section class="section" id="editors">
+  <span class="num">05 — The Editors</span>
+  <h2>Who we <em>are.</em></h2>
+  <div class="editors" data-reveal>
+    <div class="editor-grid">
+      <div class="editor">
+        <div class="portrait" aria-label="Portrait of Julian Tamas"></div>
+        <div class="name">Julian Tamas</div>
+        <div class="meta">Editor · Rome · 14</div>
+        <p class="bio">Builder of small things on the internet, including a gaming dashboard called QuestLog, a private fleet tracker, and the editorial software behind this project. Reads more long-form business writing than is probably healthy for fourteen. The questions begin here.</p>
+      </div>
+      <div class="editor">
+        <div class="portrait" aria-label="Portrait of Rocco"></div>
+        <div class="name">Rocco</div>
+        <div class="meta">Editor · Rome · 14</div>
+        <p class="bio">Bio in preparation. Surname and full biography will appear here once finalised. Brings the diligence, the second-opinion edits, and a family network that gives the project its first warm introductions.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ 06 — CONTACT ═══════════ -->
+<section class="section" id="contact">
+  <span class="num">06 — Contact</span>
+  <h2>How to <em>reach us.</em></h2>
+  <div class="contact" data-reveal>
+    <p>If you have received a letter from us and would prefer to reply by email, or if you would like to be included in a later edition, the address below reaches both editors.</p>
+    <p>We answer everything within seventy-two hours.</p>
+    <a class="email" href="mailto:hello@thepraefatio.com">hello@thepraefatio.com</a>
+  </div>
+</section>
+
+<!-- ═══════════ FOOTER ═══════════ -->
+<footer>
+  <div>
+    <div class="brand">The Praefatio<span class="dot">.</span></div>
+    <div class="copy" style="margin-top:8px">Issue 01 · MMXXVI · Rome</div>
+  </div>
+  <div class="meta-links">
+    <a href="#project">Project</a>
+    <a href="#method">Method</a>
+    <a href="#targets">Targets</a>
+    <a href="mailto:hello@thepraefatio.com">Contact</a>
+  </div>
 </footer>
 
-<div class="name-tooltip" id="nameTooltip"></div>
-
 <script>
-// ═══════════════════ DATA ═══════════════════
-// Each question is based on a real pivot, turning point, or contradiction in the person's life.
-// The research method: read their life chronologically, find the moment they changed direction or
-// publicly contradicted an earlier position, ask them about THAT specific moment.
-const RECIPIENTS = [
-  {
-    name:'Patrick Collison', co:'Stripe',
-    salu:'Dear Mr Collison,',
-    hook:'you were a published research scientist in your teens, then you put science down and built Stripe',
-    q:'You left research science behind to build a payments company. Twenty years later, do you think of yourself as someone who abandoned science, or someone who applied it to something different - and what would you tell a fourteen-year-old facing a similar choice today?'
-  },
-  {
-    name:'Howard Marks', co:'Oaktree',
-    salu:'Dear Mr Marks,',
-    hook:'a memo you wrote in 2007 that quietly anticipated the crisis - and the months that followed it',
-    q:'When you re-read your own July 2007 memo today, what do you wish you had done in the months between writing it and the crisis fully breaking? And what are you sensing now that you have not yet acted on?'
-  },
-  {
-    name:'Daniel Ek', co:'Spotify',
-    salu:'Dear Mr Ek,',
-    hook:'the eighteen months in 2008-2009 when Spotify was almost not Spotify',
-    q:'In that period, when major labels could have shut you down, you made decisions that any reasonable adviser would have called reckless. Which of those decisions, with hindsight, was actually the dangerous one - and which only looked dangerous?'
-  },
-  {
-    name:'Brian Chesky', co:'Airbnb',
-    salu:'Dear Mr Chesky,',
-    hook:'going from design school graduate to selling cereal to keep Airbnb alive - and what that taught you that design school did not',
-    q:'You trained as a designer, not a businessperson. Looking back, what part of design school education has helped you most in running a hundred-billion-dollar company - and what did you have to actively unlearn?'
-  },
-  {
-    name:'Naval Ravikant', co:'AngelList',
-    salu:'Dear Mr Ravikant,',
-    hook:'the contrast between your early career grinding in startups and the philosophical, almost monk-like voice you adopted in your forties',
-    q:'There seems to be a clean break between the operator you were before forty and the philosopher you became after. Was that a deliberate transformation, an inevitable one, or something that surprised you when it happened?'
-  },
-  {
-    name:'Tobi Lütke', co:'Shopify',
-    salu:'Dear Mr Lütke,',
-    hook:'the choice you made in 2004 to turn a snowboard shop into a software company rather than the other way around',
-    q:'You started selling snowboards online and ended up building the software underneath instead. At what specific point did you realise the software was the company, and what convinced you to follow that rather than the snowboard sales that were already working?'
-  },
+// ═══════════════════ TARGETS ═══════════════════
+// Real working list. Update statuses as letters actually move.
+// Status options: research / drafting / sent / replied / declined
+const TARGETS = [
+  { name:'Patrick Collison',     co:'Stripe',         status:'research' },
+  { name:'Howard Marks',         co:'Oaktree',        status:'research' },
+  { name:'Daniel Ek',            co:'Spotify',        status:'research' },
+  { name:'Brian Chesky',         co:'Airbnb',         status:'research' },
+  { name:'Naval Ravikant',       co:'AngelList',      status:'research' },
+  { name:'Tobi Lütke',           co:'Shopify',        status:'research' },
+  { name:'Melanie Perkins',      co:'Canva',          status:'research' },
+  { name:'Drew Houston',         co:'Dropbox',        status:'research' },
+  { name:'Stewart Butterfield',  co:'Slack',          status:'research' },
+  { name:'Demis Hassabis',       co:'DeepMind',       status:'research' },
+  { name:'Whitney Wolfe Herd',   co:'Bumble',         status:'research' },
+  { name:'Tom Blomfield',        co:'Monzo',          status:'research' },
+  { name:'Mike Cannon-Brookes',  co:'Atlassian',      status:'research' },
+  { name:'Bernard Arnault',      co:'LVMH',           status:'research' },
+  { name:'Cliff Asness',         co:'AQR',            status:'research' },
 ];
 
-// Wall shows the same six we've researched + a smaller pool of others we plan to research.
-// Each "planned" name has a placeholder note - we don't fake questions we haven't drafted.
-const NAMES_WALL = [
-  ...RECIPIENTS,
-  { name:'Reed Hastings',     q:'Still in research - we are reading every shareholder letter chronologically before drafting.' },
-  { name:'Anne Wojcicki',     q:'Still in research - studying the 23andMe regulatory pivot.' },
-  { name:'Cliff Asness',      q:'Still in research - working through the AQR papers.' },
-  { name:'Melanie Perkins',   q:'Still in research - the eight years of pitching before Canva took off.' },
-  { name:'Drew Houston',      q:'Still in research - the early Dropbox demo and what it cost to make.' },
-  { name:'Stewart Butterfield',q:'Still in research - the pivot from a failed game to Slack.' },
-  { name:'Demis Hassabis',    q:'Still in research - chess prodigy, neuroscience PhD, then AI.' },
-  { name:'Whitney Wolfe Herd',q:'Still in research - leaving Tinder to build a competitor that put women first.' },
-  { name:'Tom Blomfield',     q:'Still in research - founding Monzo, leaving Monzo, what came in between.' },
-  { name:'Mike Cannon-Brookes',q:'Still in research - bootstrapping Atlassian without VC for nine years.' },
-  { name:'Aileen Lee',        q:'Still in research - the term "unicorn" and what she meant by it in 2013.' },
-  { name:'Bernard Arnault',   q:'Still in research - the question about French succession and craft will be careful.' },
-];
-
-// ═══════════════════ HERO LETTER PICKER ═══════════════════
-function renderNamePills(){
-  const c = document.getElementById('namePills');
-  c.innerHTML = RECIPIENTS.slice(0,6).map((r,i)=>`<span class="pill ${i===0?'active':''}" data-i="${i}">${escapeHtml(r.name)}</span>`).join('');
-  c.querySelectorAll('.pill').forEach(p => {
-    p.addEventListener('click', () => switchRecipient(parseInt(p.dataset.i)));
-  });
-}
-function switchRecipient(i){
-  const r = RECIPIENTS[i];
-  document.querySelectorAll('#namePills .pill').forEach(p => p.classList.toggle('active', parseInt(p.dataset.i)===i));
-  const body = document.getElementById('letterBody');
-  // Fade animation
-  body.style.opacity = '0';
-  body.style.transform = 'translateY(4px)';
-  setTimeout(() => {
-    document.getElementById('letterSalu').textContent = r.salu;
-    document.getElementById('letterHook').innerHTML = `We chose to write to you because of <em>${escapeHtml(r.hook)}</em> - and we want to know what you'd tell a fourteen-year-old about it now.`;
-    body.style.transition = 'opacity 0.4s, transform 0.4s';
-    body.style.opacity = '1';
-    body.style.transform = 'translateY(0)';
-  }, 200);
+function renderTargets(){
+  const el = document.getElementById('targetsList');
+  const labels = {
+    research: 'In research',
+    drafting: 'Drafting',
+    sent:     'Sent',
+    replied:  'Replied',
+    declined: 'Declined',
+  };
+  el.innerHTML = TARGETS.map(t => `
+    <div class="target-row">
+      <div class="name">${escapeHtml(t.name)}<span class="co"> · ${escapeHtml(t.co)}</span></div>
+      <div class="status status-${t.status}">${labels[t.status] || t.status}</div>
+    </div>
+  `).join('');
 }
 
-// ═══════════════════ NAMES WALL ═══════════════════
-function renderNamesWall(){
-  const grid = document.getElementById('namesGrid');
-  const sizes = ['size-m','size-l','size-s','size-m','size-xl','size-s','size-m','size-l','size-s','size-m'];
-  grid.innerHTML = NAMES_WALL.map((n,i) => {
-    const size = sizes[i % sizes.length];
-    const recipient = RECIPIENTS.find(r => r.name === n.name);
-    const q = recipient?.q || n.q || 'In research. Question still being drafted.';
-    return `<span class="name ${size}" data-q="${escapeHtml(q)}">${escapeHtml(n.name)}</span>`;
-  }).join('');
-  const tooltip = document.getElementById('nameTooltip');
-  grid.querySelectorAll('.name').forEach(el => {
-    el.addEventListener('mouseenter', (e) => {
-      tooltip.textContent = el.dataset.q;
-      tooltip.classList.add('show');
-    });
-    el.addEventListener('mousemove', (e) => {
-      const rect = tooltip.getBoundingClientRect();
-      let x = e.clientX + 14;
-      let y = e.clientY - rect.height - 12;
-      if (x + rect.width > window.innerWidth - 20) x = window.innerWidth - rect.width - 20;
-      if (y < 10) y = e.clientY + 18;
-      tooltip.style.left = x + 'px';
-      tooltip.style.top = y + 'px';
-    });
-    el.addEventListener('mouseleave', () => tooltip.classList.remove('show'));
-    el.addEventListener('click', () => {
-      // Visual feedback: click to "lock" tooltip briefly
-      el.style.color = 'var(--accent)';
-      setTimeout(()=>el.style.color = '', 600);
-    });
-  });
-}
-
-// ═══════════════════ COUNTER (animated, KV-backed) ═══════════════════
-async function loadCounter(){
-  try {
-    const r = await fetch('/api/praefatio/stats');
-    if (r.ok){
-      const d = await r.json();
-      animateNum('countSent', d.sent || 0);
-      animateNum('countReplied', d.replied || 0);
-      return;
-    }
-  } catch {}
-  // Fallback to defaults
-  animateNum('countSent', 0);
-  animateNum('countReplied', 0);
-}
-function animateNum(id, target){
-  const el = document.getElementById(id);
-  if (!el) return;
-  const start = 0;
-  const dur = 1400;
-  const t0 = performance.now();
-  function step(now){
-    const p = Math.min(1, (now - t0) / dur);
-    const eased = 1 - Math.pow(1-p, 3);
-    el.textContent = Math.round(start + (target-start) * eased);
-    if (p < 1) requestAnimationFrame(step);
-  }
-  requestAnimationFrame(step);
-}
-
-// ═══════════════════ VOTE ═══════════════════
-// One vote per visitor. Switching is allowed but doesn't inflate counts.
-let voteInFlight = false;
-function getPriorVote(){ try { return localStorage.getItem('praefatio_vote'); } catch { return null; } }
-function setPriorVote(v){ try { localStorage.setItem('praefatio_vote', v); } catch {} }
-function lockVoteUI(choice){
-  document.querySelectorAll('.vote-btn').forEach(b => b.classList.toggle('voted', b.dataset.vote === choice));
-}
-async function handleVote(choice){
-  if (voteInFlight) return;
-  const prior = getPriorVote();
-  if (prior === choice) return; // already voted that way - no-op
-  voteInFlight = true;
-  lockVoteUI(choice);
-  try {
-    const r = await fetch('/api/praefatio/vote', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({choice})
-    });
-    if (r.ok){
-      const d = await r.json();
-      setPriorVote(choice);
-      renderVote(d.reply || 0, d.ignore || 0);
-    }
-  } catch {
-    renderVote(0,0);
-  } finally {
-    voteInFlight = false;
-  }
-}
-// On load, lock the UI if they've already voted from this browser
-function loadVoteState(){
-  const prior = getPriorVote();
-  if (prior) lockVoteUI(prior);
-}
-function renderVote(reply, ignore){
-  const total = reply + ignore;
-  const res = document.getElementById('voteResults');
-  if (!total){
-    document.getElementById('voteText').textContent = 'Your vote is the first. Numbers will appear once more come in.';
-  } else {
-    const pct = Math.round(reply/total*100);
-    document.getElementById('voteText').textContent = `${pct}% of ${total} would reply.`;
-    document.getElementById('voteReplyBar').style.width = (reply/total*100)+'%';
-    document.getElementById('voteIgnoreBar').style.width = (ignore/total*100)+'%';
-  }
-  res.classList.add('show');
-}
-
-// ═══════════════════ SUBSCRIBE ═══════════════════
-async function handleSubscribe(e){
-  e.preventDefault();
-  const email = document.getElementById('subscribeEmail').value.trim();
-  const btn = document.getElementById('subscribeBtn');
-  const status = document.getElementById('subscribeStatus');
-  if (!email || !email.includes('@')){
-    status.className = 'subscribe-status err';
-    status.textContent = 'A valid address, please.';
-    return;
-  }
-  btn.disabled = true;
-  status.className = 'subscribe-status';
-  status.textContent = 'Sending...';
-  try {
-    const r = await fetch('/api/praefatio/subscribe', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({email})
-    });
-    if (!r.ok) throw new Error();
-    status.className = 'subscribe-status ok';
-    status.textContent = 'Received. We will be in touch.';
-    document.getElementById('subscribeEmail').value = '';
-  } catch {
-    status.className = 'subscribe-status err';
-    status.textContent = 'Something went wrong. Try again.';
-  } finally {
-    btn.disabled = false;
-  }
-}
-
-// ═══════════════════ UTILS & BOOT ═══════════════════
 function escapeHtml(s){return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
+// Reveal on scroll
 const io = new IntersectionObserver((entries) => {
   for (const e of entries){
     if (e.isIntersecting){ e.target.classList.add('visible'); io.unobserve(e.target); }
@@ -563,10 +354,7 @@ const io = new IntersectionObserver((entries) => {
 }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
 document.querySelectorAll('[data-reveal]').forEach(el => io.observe(el));
 
-renderNamePills();
-renderNamesWall();
-loadCounter();
-loadVoteState();
+renderTargets();
 </script>
 
 </body>
