@@ -1,8 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="The Praefatio">
-  <rect width="200" height="200" fill="#2B1F25"/>
   <circle cx="100" cy="100" r="86" fill="none" stroke="#D4A156" stroke-width="2.8"/>
   <circle cx="100" cy="100" r="76" fill="none" stroke="#D4A156" stroke-width="0.7" opacity="0.55"/>
-  <g font-family="'URW Bookman','Liberation Serif',Georgia,serif" font-style="italic" font-weight="600" font-size="100" fill="#D4A156">
+  <g font-family="'Playfair Display','URW Bookman','Liberation Serif',Georgia,serif" font-style="italic" font-weight="600" font-size="100" fill="#D4A156">
     <text x="64" y="132">R</text>
     <text x="108" y="132">J</text>
   </g>

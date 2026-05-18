@@ -1,0 +1,7 @@
+<!-- THE PRAEFATIO · Mark only · the double-ring wax seal with a centre dot -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="The Praefatio mark">
+  <circle cx="100" cy="100" r="86" fill="none" stroke="#D4A156" stroke-width="2.8"/>
+  <circle cx="100" cy="100" r="76" fill="none" stroke="#D4A156" stroke-width="0.7" opacity="0.5"/>
+  <!-- Centre period mark - small dignified flourish -->
+  <circle cx="100" cy="100" r="3" fill="#D4A156"/>
+</svg>

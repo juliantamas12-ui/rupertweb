@@ -1,0 +1,5 @@
+<!-- Tab-bar favicon: italic gold P on plum. Survives at 16px. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" fill="#2B1F25"/>
+  <text x="32" y="54" font-family="'URW Bookman', 'Liberation Serif', Georgia, serif" font-style="italic" font-size="60" font-weight="700" fill="#D4A156" text-anchor="middle">P</text>
+</svg>

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 200" role="img" aria-label="The Praefatio">
+  <g>
+    <circle cx="100" cy="100" r="86" fill="none" stroke="#D4A156" stroke-width="2.8"/>
+    <circle cx="100" cy="100" r="76" fill="none" stroke="#D4A156" stroke-width="0.7" opacity="0.55"/>
+    <g font-family="'Playfair Display','URW Bookman','Liberation Serif',Georgia,serif" font-style="italic" font-weight="600" font-size="100" fill="#D4A156">
+      <text x="64" y="132">R</text>
+      <text x="108" y="132">J</text>
+    </g>
+    <circle cx="100" cy="158" r="2.4" fill="#D4A156"/>
+  </g>
+  <text x="225" y="118" font-family="'Playfair Display','URW Bookman','Liberation Serif',Georgia,serif" font-style="italic" font-weight="600" font-size="74" fill="#F4E8D2" letter-spacing="-1">The Praefatio</text>
+  <text x="225" y="155" font-family="'JetBrains Mono','Courier New',monospace" font-size="14" fill="#8A7B5C" letter-spacing="4">A CORRESPONDENCE PROJECT</text>
+</svg>
