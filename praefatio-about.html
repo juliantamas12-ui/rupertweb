@@ -3,13 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>The Praefatio</title>
-<meta name="description" content="A correspondence project. Two students writing to the people who built the world.">
-<link rel="canonical" href="https://thepraefatio.com">
-<meta property="og:type" content="website">
-<meta property="og:title" content="The Praefatio">
-<meta property="og:description" content="Letters to the people who built the world.">
-<meta property="og:url" content="https://thepraefatio.com">
+<title>About - The Praefatio</title>
+<meta name="description" content="What The Praefatio is. Why we are writing.">
+<link rel="canonical" href="https://thepraefatio.com/about">
 <link rel="icon" type="image/svg+xml" href="/icons/favicon-praefatio.svg">
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,7 +15,6 @@
 </head>
 <body>
 
-<!-- Ferrari-style intro: gold R+J seal on black, fades to site (once per session) -->
 <div class="intro-overlay" id="introOverlay" aria-hidden="true">
   <svg class="intro-seal" viewBox="0 0 100 100">
     <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="2.5"/>
@@ -30,7 +25,6 @@
   </svg>
 </div>
 
-<!-- PERSISTENT HEADER -->
 <header class="nav-bar">
   <a class="brand" href="/">
     <svg class="brand-seal" viewBox="0 0 100 100" aria-hidden="true">
@@ -43,7 +37,7 @@
     <span class="brand-name">The Praefatio</span>
   </a>
   <nav class="nav-tabs">
-    <a href="/" class="tab active">Overview</a>
+    <a href="/" class="tab">Overview</a>
     <a href="/about" class="tab">About</a>
     <a href="/method" class="tab">Method</a>
     <a href="/targets" class="tab">Targets</a>
@@ -54,39 +48,31 @@
   <button class="nav-burger" aria-label="Menu" id="navBurger">☰</button>
 </header>
 
-<!-- ════════════ HERO - the hook ════════════ -->
-<section class="hero-home">
-  <div class="hero-home-bg" aria-hidden="true">
-    <img src="/images/praefatio/hero-seal-rj.jpg" alt="">
-  </div>
-  <div class="hero-home-inner">
-    <div class="hero-eyebrow">A correspondence project · Rome · MMXXVI</div>
-    <h1 class="hero-h1">Letters to the people who <em>built the world.</em></h1>
-    <p class="hero-strap">Two students writing — by post and by email — to the founders, investors and operators they admire. One question each, shaped by hours of reading.</p>
-    <div class="hero-ctas">
-      <a class="btn-primary" href="/targets">See who we're writing to <span>→</span></a>
-      <a class="btn-ghost" href="/method">Read the method <span>→</span></a>
-    </div>
-  </div>
-</section>
+<main class="page">
+  <div class="kicker">About the project</div>
+  <h1>What we are <em>doing.</em></h1>
+  <p class="strap">A correspondence project. Two students. Fifty letters. One question each.</p>
 
-<!-- ════════════ TINY TEASER (optional below-the-fold) ════════════ -->
-<section class="teaser" data-reveal>
-  <div class="teaser-inner">
-    <div class="teaser-left">
-      <div class="label">First three in research</div>
-      <ul class="teaser-list" id="teaserList"></ul>
-      <a href="/targets" class="teaser-more">See all twelve →</a>
-    </div>
-    <div class="teaser-right">
-      <div class="label">What this is</div>
-      <p>A letters project, not a podcast. We post a single carefully-researched question to one person and wait. The replies, with permission, will become a book.</p>
-      <a href="/about" class="teaser-more">Read more about the project →</a>
-    </div>
-  </div>
-</section>
+  <p>Over the next eighteen months we will write fifty letters — some hand-typed and posted, some sent by email — to founders, investors, and operators we admire. Each is preceded by hours of reading: every long-form profile, every annual letter, every obscure interview we can find. We are not journalists. We are not selling anything. We ask a single question, shaped by a turning point in the recipient's life, and wait to see what comes back.</p>
 
-<!-- ════════════ FOOTER ════════════ -->
+  <p>The replies, with permission, become a publication. <strong>The first edition collects thirty letters.</strong> Half from people who built companies worth a billion or more. Half from people we suspect will, but have not yet.</p>
+
+  <div class="quote">
+    Most of what the next generation learns about business is filtered through podcasts, ghostwritten memoirs and quotes recycled until they mean nothing. <em>We are trying something older.</em>
+    <span class="cite">— The Editors</span>
+  </div>
+
+  <h2>Why letters.</h2>
+  <p>The work is patient on purpose. Most of what gets written today exists to be scrolled past. We are interested in what survives — what someone says when they have time to consider the answer, and a reason to commit it to paper.</p>
+
+  <p>If you are a founder, an investor, an operator, or any other kind of builder — and someone you've never heard of writes you a letter that begins with this name on the masthead — that is us. <strong>Read it.</strong></p>
+
+  <h2>What you can expect.</h2>
+  <p>One question. Ten minutes of your time. A stamped envelope, or a reply-to address that goes only to the two of us. Anything you write back will be treated with the respect we hope it deserves: nothing published without permission, nothing quoted out of context, nothing repurposed.</p>
+
+  <p style="margin-top:36px"><a class="btn-primary" href="/method">Read the method <span>→</span></a></p>
+</main>
+
 <footer class="page-footer">
   <div class="footer-inner">
     <div class="footer-brand">The Praefatio<span class="dot">.</span></div>
@@ -102,18 +88,5 @@
 </footer>
 
 <script src="/praefatio.js"></script>
-<script>
-// Tiny teaser - first 3 names in research
-const TEASER = [
-  { name:'Patrick Collison', co:'Stripe' },
-  { name:'Howard Marks',     co:'Oaktree' },
-  { name:'Daniel Ek',        co:'Spotify' },
-];
-const el = document.getElementById('teaserList');
-if (el) {
-  el.innerHTML = TEASER.map(t => `<li><span class="t-name">${t.name}</span><span class="t-co"> · ${t.co}</span><span class="t-status">In research</span></li>`).join('');
-}
-</script>
-
 </body>
 </html>

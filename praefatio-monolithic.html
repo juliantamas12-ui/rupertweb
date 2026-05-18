@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Praefatio</title>
+<meta name="description" content="A correspondence project. Two students writing to the people who built the world.">
+<link rel="canonical" href="https://thepraefatio.com">
+<meta property="og:type" content="website">
+<meta property="og:title" content="The Praefatio">
+<meta property="og:description" content="A correspondence project by Julian Tamas and Rocco. Letters to founders, investors, and operators.">
+<meta property="og:url" content="https://thepraefatio.com">
+<link rel="icon" type="image/svg+xml" href="/icons/favicon-praefatio.svg">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500;1,9..144,600;1,9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Caveat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  /* AUBERGINE & GOLD - deep plum paper, warm cream ink, gold accent */
+  --bg:#2B1F25;
+  --bg-2:#33252B;
+  --paper:#3A2C33;
+  --ink:#F4E8D2;
+  --ink-soft:#C9B894;
+  --ink-mute:#8A7B5C;
+  --rule:rgba(244,232,210,0.14);
+  --rule-soft:rgba(244,232,210,0.07);
+  --rule-strong:rgba(244,232,210,0.24);
+  --accent:#D4A156;
+  --accent-soft:rgba(212,161,86,0.14);
+  --sage:#A8895A;
+  --shadow:0 1px 2px rgba(0,0,0,0.20), 0 18px 48px rgba(0,0,0,0.32);
+}
+html,body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,sans-serif;-webkit-font-smoothing:antialiased;font-size:16px;line-height:1.6;overflow-x:hidden;position:relative}
+
+/* ═══════ FERRARI-STYLE INTRO ANIMATION ═══════
+   Black screen with the R+J seal, fades to reveal the site.
+   Plays only once per session (sessionStorage gates the replay). */
+.intro-overlay{position:fixed;inset:0;background:#0A0807;z-index:9999;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:1;transition:opacity 0.7s ease-out 1.6s,visibility 0s linear 2.3s;visibility:visible}
+.intro-overlay.gone{opacity:0;visibility:hidden}
+.intro-seal{width:140px;height:140px;color:var(--accent);opacity:0;transform:scale(0.85);animation:sealReveal 1.6s cubic-bezier(0.16,1,0.3,1) forwards}
+@media(max-width:700px){.intro-seal{width:96px;height:96px}}
+@keyframes sealReveal{
+  0%{opacity:0;transform:scale(0.85)}
+  40%{opacity:1;transform:scale(1.02)}
+  100%{opacity:1;transform:scale(1)}
+}
+.intro-overlay.skip{transition:none;opacity:0;visibility:hidden}
+@media(prefers-reduced-motion:reduce){.intro-overlay{opacity:0;visibility:hidden}}
+/* Subtle parchment texture overlay on the whole page — adds tactile depth */
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='600' height='600'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.96 0 0 0 0 0.91 0 0 0 0 0.82 0 0 0 0.5 0'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.25'/></svg>");background-size:340px 340px;opacity:0.10;mix-blend-mode:screen}
+body > *{position:relative;z-index:1}
+.serif{font-family:'Fraunces',Georgia,serif}
+.script{font-family:'Caveat',cursive}
+.mono{font-family:'JetBrains Mono',monospace}
+
+/* ═══════════ RIBBON ═══════════ */
+.ribbon{display:flex;align-items:center;justify-content:space-between;padding:14px 40px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-mute);border-bottom:1px solid var(--rule)}
+@media(max-width:700px){.ribbon{padding:12px 18px;font-size:9px;letter-spacing:1px}}
+.ribbon a{color:inherit;text-decoration:none}
+.ribbon a:hover{color:var(--accent)}
+.ribbon .left{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.ribbon .right{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--sage);box-shadow:0 0 0 0 var(--sage);animation:pulse 2s infinite;display:inline-block;margin-right:4px;vertical-align:middle}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(122,143,110,0.5)}70%{box-shadow:0 0 0 6px rgba(122,143,110,0)}100%{box-shadow:0 0 0 0 rgba(122,143,110,0)}}
+
+/* ═══════════ ZONE 1: MASTHEAD + PROJECT ═══════════ */
+.zone-1{max-width:1240px;margin:0 auto;padding:56px 40px 80px;position:relative}
+@media(max-width:900px){.zone-1{padding:40px 22px 50px}}
+
+/* R+J wax seal logo - sits above the masthead title */
+.seal{display:block;width:96px;height:96px;margin:0 auto 28px;color:var(--accent);transition:transform 0.4s ease-out}
+.seal:hover{transform:rotate(-4deg)}
+@media(max-width:700px){.seal{width:72px;height:72px;margin-bottom:20px}}
+
+.masthead{text-align:center;margin-bottom:60px;position:relative;padding:48px 24px}
+/* Engraved-look corner ornaments on the masthead - frontispiece style */
+.masthead::before,.masthead::after{content:'';position:absolute;width:48px;height:48px;border:1px solid var(--accent);opacity:0.5}
+.masthead::before{top:0;left:0;border-right:none;border-bottom:none}
+.masthead::after{top:0;right:0;border-left:none;border-bottom:none}
+.masthead .corner-bottom-left,.masthead .corner-bottom-right{position:absolute;width:48px;height:48px;border:1px solid var(--accent);opacity:0.5}
+.masthead .corner-bottom-left{bottom:0;left:0;border-right:none;border-top:none}
+.masthead .corner-bottom-right{bottom:0;right:0;border-left:none;border-top:none}
+@media(max-width:700px){.masthead::before,.masthead::after,.masthead .corner-bottom-left,.masthead .corner-bottom-right{width:32px;height:32px}}
+.masthead .kicker{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:14px;font-weight:500}
+.masthead h1{font-family:'Fraunces',serif;font-size:clamp(60px,12vw,148px);line-height:0.88;letter-spacing:-3.5px;font-weight:600;color:var(--ink);font-style:italic;margin-bottom:18px}
+.masthead h1 .roman{font-style:normal;color:var(--ink)}
+.masthead .strap{font-family:'Fraunces',serif;font-size:clamp(19px,2.2vw,24px);color:var(--ink-soft);line-height:1.45;font-style:italic;max-width:580px;margin:0 auto}
+.masthead .byline{margin-top:32px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--ink-mute);position:relative;display:inline-block}
+.masthead .byline span{color:var(--ink);font-weight:600}
+/* Cursive scribbles removed - too informal for the editorial brand */
+.masthead .byline .note{display:none}
+
+/* HERO ARTWORK - full-bleed wax seal study with soft gradient masks fading into bg */
+.hero-photo{margin:0;width:100vw;position:relative;left:50%;right:50%;margin-left:-50vw;margin-right:-50vw;height:clamp(380px,52vw,640px);overflow:hidden;border:none}
+.hero-photo img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(0.82) contrast(0.97)}
+/* Long soft vertical gradient mask - image gently emerges from bg and dissolves back */
+.hero-photo::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,var(--bg) 0%,rgba(43,31,37,0.55) 12%,rgba(43,31,37,0) 35%,rgba(43,31,37,0) 65%,rgba(43,31,37,0.55) 88%,var(--bg) 100%);pointer-events:none;z-index:2}
+/* Side gradient mask - left/right edges fade into bg */
+.hero-photo::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,var(--bg) 0%,rgba(43,31,37,0.4) 8%,rgba(43,31,37,0) 22%,rgba(43,31,37,0) 78%,rgba(43,31,37,0.4) 92%,var(--bg) 100%);pointer-events:none;z-index:2}
+
+/* Two-column intro spread */
+.intro-spread{display:grid;grid-template-columns:1fr 1fr;gap:48px;margin-top:64px;align-items:start;position:relative}
+@media(max-width:900px){.intro-spread{grid-template-columns:1fr;gap:28px;padding-top:32px}}
+.intro-headline{font-family:'Fraunces',serif;font-size:clamp(30px,4vw,46px);line-height:1.08;letter-spacing:-1.2px;font-weight:600;color:var(--ink)}
+.intro-headline em{font-style:italic;color:var(--accent)}
+.intro-headline .small{display:block;font-size:14px;letter-spacing:2.5px;text-transform:uppercase;color:var(--ink-mute);font-family:'JetBrains Mono',monospace;font-weight:500;font-style:normal;margin-bottom:14px}
+.intro-body{font-family:'Fraunces',serif;font-size:17px;line-height:1.7;color:var(--ink-soft)}
+.intro-body p{margin-bottom:14px}
+.intro-body p:first-child::first-letter{font-family:'Fraunces',serif;font-style:italic;font-size:96px;float:left;line-height:0.78;margin:8px 14px 0 0;color:var(--accent);font-weight:600;letter-spacing:-4px}
+.intro-body strong{color:var(--ink);font-weight:600;font-style:italic}
+
+/* Margin note in the gap */
+.intro-spread .margin-note{display:none}
+
+/* ═══════════ PULL QUOTE BAND ═══════════
+   Gradient transition from page bg into the slightly lighter quote panel and back, no hard borders */
+/* No panel band - quote sits on the page bg, no horizontal stripe */
+.quote-band{background:transparent;padding:140px 40px;text-align:center;position:relative;overflow:hidden;border:none}
+@media(max-width:700px){.quote-band{padding:72px 22px}}
+/* Decorative quote mark removed - looked orphaned on the dark bg */
+.quote-band::before{display:none}
+.quote-band q{quotes:none}
+.quote-band q::before,.quote-band q::after{content:''}
+.quote-band .text{position:relative;font-family:'Fraunces',serif;font-size:clamp(24px,3.2vw,38px);line-height:1.3;letter-spacing:-0.6px;font-style:italic;font-weight:500;color:var(--ink);max-width:980px;margin:0 auto 18px}
+.quote-band .text .accent{color:var(--accent)}
+.quote-band cite{position:relative;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--ink-mute);font-style:normal}
+
+/* ═══════ ZONE 2: TARGETS (full-width typographic wall) ═══════ */
+.zone-targets{max-width:1320px;margin:0 auto;padding:60px 40px 80px;position:relative}
+@media(max-width:700px){.zone-targets{padding:48px 22px}}
+.targets-header{max-width:760px;margin-bottom:48px}
+.targets-header h2{font-family:'Fraunces',serif;font-size:clamp(32px,5vw,56px);line-height:1.05;letter-spacing:-1.5px;font-weight:600;color:var(--ink);margin-bottom:14px}
+.targets-header h2 em{font-style:italic;color:var(--accent)}
+.targets-header .label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:var(--ink-mute);margin-bottom:14px;font-weight:500}
+.targets-header .intro{font-family:'Fraunces',serif;font-style:italic;font-size:17px;color:var(--ink-soft);line-height:1.55;margin-bottom:18px}
+/* Counter row removed - wall speaks for itself */
+
+/* Soft fading underline beneath the targets header */
+.targets-header::after{content:'';display:block;width:80%;max-width:520px;margin:28px auto 0;height:1px;background:linear-gradient(90deg,transparent 0%,var(--rule-strong) 50%,transparent 100%);opacity:0.6}
+
+.targets-footer{margin-top:48px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:24px;padding-top:24px;border-top:1px solid var(--rule-soft)}
+.targets-legend{display:flex;gap:18px;flex-wrap:wrap;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-mute)}
+.targets-legend .legend-item{display:inline-flex;align-items:center;gap:8px}
+.targets-legend .dot{width:8px;height:8px;border-radius:50%}
+.targets-legend .dot.research{background:var(--ink-mute);opacity:0.4}
+.targets-legend .dot.drafting{background:var(--accent)}
+.targets-legend .dot.sent{background:var(--sage)}
+.targets-legend .dot.replied{background:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.targets-cta{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);text-decoration:none;font-weight:600;padding:10px 16px;border:1px solid var(--accent-soft);border-radius:6px;transition:all 0.15s}
+.targets-cta:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* ═══════ ZONE 2B: METHODOLOGY (own section under targets) ═══════ */
+.zone-method{max-width:1240px;margin:0 auto;padding:60px 40px 80px;position:relative}
+@media(max-width:700px){.zone-method{padding:54px 22px}}
+.method-header{max-width:680px;margin-bottom:36px}
+.method-header h2{font-family:'Fraunces',serif;font-size:clamp(28px,4vw,44px);line-height:1.08;letter-spacing:-1px;font-weight:600;color:var(--ink);margin-bottom:14px}
+.method-header h2 em{font-style:italic;color:var(--accent)}
+.method-header .label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:var(--ink-mute);margin-bottom:14px;font-weight:500}
+.method-header .intro{font-family:'Fraunces',serif;font-style:italic;font-size:16px;color:var(--ink-soft);line-height:1.55}
+.method-grid{display:grid;grid-template-columns:1fr 1fr;gap:32px 48px;margin-top:8px}
+@media(max-width:700px){.method-grid{grid-template-columns:1fr;gap:24px}}
+
+/* Method list */
+.method-item{display:grid;grid-template-columns:32px 1fr;gap:14px;padding:18px 0;border-bottom:1px solid var(--rule-soft);align-items:start}
+.method-item:last-child{border-bottom:none}
+.method-item .roman{font-family:'Fraunces',serif;font-style:italic;font-size:20px;color:var(--accent);font-weight:600;line-height:1}
+.method-item h3{font-family:'Fraunces',serif;font-size:17px;font-weight:600;color:var(--ink);margin-bottom:4px;letter-spacing:-0.2px;line-height:1.3}
+.method-item p{font-family:'Fraunces',serif;font-size:14.5px;color:var(--ink-soft);line-height:1.55}
+
+/* Full-width typographic wall - centred, asymmetric */
+.targets-wall{display:flex;flex-wrap:wrap;gap:8px 32px;line-height:1.2;align-items:baseline;padding-top:12px;justify-content:center}
+.targets-header{text-align:center;margin-left:auto;margin-right:auto}
+.targets-footer{justify-content:center}
+.target-name{font-family:'Fraunces',serif;font-weight:500;color:var(--ink-soft);cursor:default;transition:color 0.2s, transform 0.2s;letter-spacing:-0.3px;padding:6px 0;position:relative;user-select:none;text-decoration:none;display:inline-flex;align-items:baseline;gap:4px}
+.target-name:hover{color:var(--accent);transform:translateY(-2px)}
+.target-name.s-research{color:var(--ink-soft)}
+.target-name.s-drafting{color:var(--accent);font-style:italic}
+.target-name.s-sent{color:var(--sage);font-style:italic}
+.target-name.s-replied{color:var(--accent);font-weight:700}
+.target-name.s-declined{color:var(--ink-mute);text-decoration:line-through;opacity:0.5}
+.target-name .co{color:var(--ink-mute);font-size:0.55em;font-style:italic;font-weight:400;margin-left:4px;letter-spacing:0;line-height:1}
+.target-name.size-s{font-size:24px}
+.target-name.size-m{font-size:38px}
+.target-name.size-l{font-size:56px;font-style:italic}
+.target-name.size-xl{font-size:78px;font-style:italic;font-weight:600;color:var(--ink);letter-spacing:-2px}
+@media(max-width:900px){.target-name.size-s{font-size:18px}.target-name.size-m{font-size:26px}.target-name.size-l{font-size:36px}.target-name.size-xl{font-size:48px}}
+.target-name .status-dot-inline{display:inline-block;width:9px;height:9px;border-radius:50%;margin-left:8px;opacity:0.85;vertical-align:0.3em;flex-shrink:0}
+.target-name .status-dot-inline{display:inline-block;width:7px;height:7px;border-radius:50%;margin-left:6px;vertical-align:0.18em;opacity:0.85}
+.target-name.s-research .status-dot-inline{background:var(--ink-mute);opacity:0.4}
+.target-name.s-drafting .status-dot-inline{background:var(--accent)}
+.target-name.s-sent .status-dot-inline{background:var(--sage)}
+.target-name.s-replied .status-dot-inline{background:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.target-name.s-declined .status-dot-inline{background:var(--ink-mute);opacity:0.4}
+
+/* Tooltip - cursor-follow */
+.target-tip{position:fixed;background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;pointer-events:none;opacity:0;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,0.25);white-space:nowrap;font-weight:600;transition:opacity 0.12s}
+.target-tip.show{opacity:1}
+.target-tip::after{content:'';position:absolute;top:-4px;left:14px;width:8px;height:8px;background:var(--ink);transform:rotate(45deg)}
+
+/* Status dot colours on inline names */
+.target-name.s-research .status-dot-inline{background:var(--ink-mute);opacity:0.35}
+.target-name.s-drafting .status-dot-inline{background:var(--accent)}
+.target-name.s-sent .status-dot-inline{background:var(--sage)}
+.target-name.s-replied .status-dot-inline{background:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+.target-name.s-declined .status-dot-inline{background:var(--ink-mute);opacity:0.35}
+
+/* Margin note on method side */
+.zone-method .method-note{display:none}
+
+/* ═══════ ZONE 3: EDITORS + CONTACT ═══════ */
+.zone-3{max-width:1240px;margin:0 auto;padding:60px 40px 80px;display:grid;grid-template-columns:1.5fr 1fr;gap:80px;align-items:start;position:relative}
+@media(max-width:900px){.zone-3{grid-template-columns:1fr;gap:48px;padding:54px 22px}}
+
+.editors-col h2,.contact-col h2{font-family:'Fraunces',serif;font-size:clamp(26px,3.4vw,40px);line-height:1.08;letter-spacing:-1px;font-weight:600;color:var(--ink);margin-bottom:8px}
+.editors-col h2 em,.contact-col h2 em{font-style:italic;color:var(--accent)}
+.editors-col .label,.contact-col .label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--ink-mute);margin-bottom:14px;font-weight:500}
+
+.editor-stack{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:32px}
+@media(max-width:600px){.editor-stack{grid-template-columns:1fr;gap:32px}}
+.editor{display:flex;flex-direction:column;gap:14px}
+.editor .portrait{width:100%;aspect-ratio:3/4;background:linear-gradient(135deg,#D8D2C0,#B8B19E);border-radius:4px;position:relative;overflow:hidden;border:1px solid var(--rule);max-width:200px}
+.editor .portrait::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 280' preserveAspectRatio='xMidYMid meet'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%231c1812' stop-opacity='0.22'/><stop offset='1' stop-color='%231c1812' stop-opacity='0.40'/></linearGradient></defs><circle cx='100' cy='105' r='42' fill='url(%23g)'/><path d='M 30 280 Q 30 175, 100 170 Q 170 175, 170 280 Z' fill='url(%23g)'/></svg>") no-repeat center / 78% auto;opacity:0.9}
+.editor:nth-child(1) .portrait{transform:rotate(-1.5deg)}
+.editor:nth-child(2) .portrait{transform:rotate(1.5deg)}
+.editor .info .name{font-family:'Fraunces',serif;font-size:22px;font-weight:600;letter-spacing:-0.3px;color:var(--ink);line-height:1.2;margin-top:8px}
+.editor .info .meta{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-mute);margin-top:4px;margin-bottom:12px}
+.editor .info .bio{font-family:'Fraunces',serif;font-size:14.5px;line-height:1.6;color:var(--ink-soft)}
+
+/* Contact column */
+.contact-col .contact-body{font-family:'Fraunces',serif;font-size:15px;color:var(--ink-soft);line-height:1.6;margin:18px 0 20px}
+.contact-col .email{font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--ink);background:var(--paper);border:1px solid var(--rule);padding:14px 18px;border-radius:8px;display:inline-block;text-decoration:none;font-weight:500;letter-spacing:0.4px;transition:all 0.15s;word-break:break-all}
+.contact-col .email:hover{border-color:var(--accent);color:var(--accent)}
+.contact-col .contact-foot{font-family:'Fraunces',serif;font-style:italic;font-size:13px;color:var(--ink-mute);line-height:1.55;margin-top:18px}
+
+/* ═══════════ FOOTER ═══════════ */
+footer{max-width:1240px;margin:0 auto;padding:40px;border-top:1px solid var(--rule);display:grid;grid-template-columns:1fr auto;gap:24px;align-items:end;font-size:12px;color:var(--ink-mute)}
+@media(max-width:700px){footer{grid-template-columns:1fr;padding:32px 22px;gap:18px}}
+footer .brand{font-family:'Fraunces',serif;font-style:italic;font-size:22px;color:var(--ink);font-weight:500;letter-spacing:-0.4px}
+footer .brand .dot{color:var(--accent);font-style:normal}
+footer .copy{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;margin-top:6px}
+footer .meta-links{display:flex;gap:18px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase}
+footer .meta-links a{color:var(--ink-mute);text-decoration:none;transition:color 0.15s}
+footer .meta-links a:hover{color:var(--accent)}
+
+/* Decorative section divider - three dots flanked by gradient hairlines */
+.ornament{display:flex;align-items:center;justify-content:center;gap:18px;padding:64px 0;color:var(--accent);opacity:0.55}
+.ornament::before,.ornament::after{content:'';flex:0 0 80px;height:1px;background:linear-gradient(90deg,transparent,currentColor,transparent)}
+.ornament .glyph{font-family:'Fraunces',serif;font-style:italic;font-size:18px;letter-spacing:6px;line-height:1}
+@media(max-width:700px){.ornament::before,.ornament::after{flex:0 0 40px}}
+
+[data-reveal]{opacity:0;transform:translateY(14px);transition:opacity 0.7s ease-out,transform 0.7s ease-out}
+[data-reveal].visible{opacity:1;transform:translateY(0)}
+
+/* Per-name staggered reveal on the wall */
+.targets-wall .target-name{opacity:0;transform:translateY(8px);transition:opacity 0.6s ease-out,transform 0.6s ease-out,color 0.2s,transform 0.2s}
+.targets-wall.visible .target-name{opacity:1;transform:translateY(0)}
+.targets-wall.visible .target-name:nth-child(1){transition-delay:0.00s}
+.targets-wall.visible .target-name:nth-child(2){transition-delay:0.05s}
+.targets-wall.visible .target-name:nth-child(3){transition-delay:0.10s}
+.targets-wall.visible .target-name:nth-child(4){transition-delay:0.15s}
+.targets-wall.visible .target-name:nth-child(5){transition-delay:0.20s}
+.targets-wall.visible .target-name:nth-child(6){transition-delay:0.25s}
+.targets-wall.visible .target-name:nth-child(7){transition-delay:0.30s}
+.targets-wall.visible .target-name:nth-child(8){transition-delay:0.35s}
+.targets-wall.visible .target-name:nth-child(9){transition-delay:0.40s}
+.targets-wall.visible .target-name:nth-child(10){transition-delay:0.45s}
+.targets-wall.visible .target-name:nth-child(11){transition-delay:0.50s}
+.targets-wall.visible .target-name:nth-child(12){transition-delay:0.55s}
+
+@media(prefers-reduced-motion:reduce){[data-reveal]{opacity:1;transform:none;transition:none}.targets-wall .target-name{opacity:1;transform:none;transition:none}}
+</style>
+</head>
+<body>
+
+<!-- Ferrari-style intro: R+J seal on black, fades to site -->
+<div class="intro-overlay" id="introOverlay" aria-hidden="true">
+  <svg class="intro-seal" viewBox="0 0 100 100">
+    <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="2.5"/>
+    <circle cx="50" cy="50" r="38" fill="none" stroke="currentColor" stroke-width="0.7" opacity="0.4"/>
+    <text x="34" y="64" font-family="Fraunces, Georgia, serif" font-style="italic" font-size="42" font-weight="600" fill="currentColor" letter-spacing="-3">R</text>
+    <text x="56" y="64" font-family="Fraunces, Georgia, serif" font-style="italic" font-size="42" font-weight="600" fill="currentColor" letter-spacing="-3">J</text>
+    <circle cx="50" cy="76" r="1.4" fill="currentColor"/>
+  </svg>
+</div>
+
+<!-- RIBBON -->
+<div class="ribbon">
+  <div class="left">
+    <span><span class="status-dot"></span>In preparation</span>
+    <span>Issue 01 · MMXXVI</span>
+    <span>Rome</span>
+  </div>
+  <div class="right">
+    <a href="mailto:hello@thepraefatio.com">hello@thepraefatio.com</a>
+  </div>
+</div>
+
+<!-- ═══════ ZONE 1: MASTHEAD + INTRO ═══════ -->
+<section class="zone-1">
+
+  <header class="masthead">
+    <!-- R + J wax seal monogram - the project's mark -->
+    <svg class="seal" viewBox="0 0 100 100" aria-label="Praefatio seal: R and J monogram">
+      <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="2.5"/>
+      <circle cx="50" cy="50" r="38" fill="none" stroke="currentColor" stroke-width="0.7" opacity="0.4"/>
+      <text x="34" y="64" font-family="Fraunces, Georgia, serif" font-style="italic" font-size="42" font-weight="600" fill="currentColor" letter-spacing="-3">R</text>
+      <text x="56" y="64" font-family="Fraunces, Georgia, serif" font-style="italic" font-size="42" font-weight="600" fill="currentColor" letter-spacing="-3">J</text>
+      <circle cx="50" cy="76" r="1.4" fill="currentColor"/>
+    </svg>
+    <div class="kicker">A correspondence project</div>
+    <h1>The <span class="roman">Praefatio</span></h1>
+    <p class="strap">Letters to the people who built the world.</p>
+    <div class="byline">By <span>Julian Tamas</span> &amp; <span>Rocco</span> · 14 · Marymount, Rome</div>
+    <span class="corner-bottom-left"></span>
+    <span class="corner-bottom-right"></span>
+  </header>
+
+  <!-- Atmospheric hero photograph -->
+  <figure class="hero-photo" data-reveal>
+    <img src="/images/praefatio/hero-abstract.jpg" alt="Wax seal on parchment, editorial photograph" loading="eager">
+  </figure>
+
+  <div class="intro-spread">
+    <span class="margin-note">we are<br>trying<br>something<br>older</span>
+    <div data-reveal>
+      <div class="intro-headline">
+        <span class="small">What we are doing</span>
+        We write letters that <em>get answered.</em>
+      </div>
+    </div>
+    <div class="intro-body" data-reveal>
+      <p>Over the next eighteen months we will write fifty letters — some hand-typed and posted, some sent by email — to founders, investors, and operators we admire. Each is preceded by hours of reading. We ask a single question, shaped by a turning point in the recipient's life, and wait to see what comes back.</p>
+      <p>The replies, with permission, become a publication. <strong>The first edition collects thirty letters.</strong> Half from people who built companies worth a billion or more. Half from people we suspect will.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ QUOTE BAND ═══════ -->
+<section class="quote-band">
+  <p class="text" data-reveal><q>Most of what the next generation learns is filtered through podcasts, ghostwritten memoirs and quotes recycled until they mean nothing. <span class="accent">We are trying something older.</span></q></p>
+  <cite data-reveal>— The Editors</cite>
+</section>
+
+<div class="ornament" aria-hidden="true"><span class="glyph">· · ·</span></div>
+
+<!-- ═══════ ZONE 2: TARGETS — full-width typographic wall ═══════ -->
+<section class="zone-targets" id="targets">
+  <div class="targets-header" data-reveal>
+    <div class="label">Targets · The Working List</div>
+    <h2>Who we plan to <em>write to.</em></h2>
+    <p class="intro">A working list with honest status. <strong>Nothing here has been sent yet.</strong> The list updates as letters genuinely move forward.</p>
+
+  </div>
+
+  <div class="targets-wall" id="targetsList" data-reveal></div>
+
+  <div class="targets-footer" data-reveal>
+    <div class="targets-legend">
+      <span class="legend-item"><span class="dot research"></span>In research</span>
+      <span class="legend-item"><span class="dot drafting"></span>Drafting</span>
+      <span class="legend-item"><span class="dot sent"></span>Sent</span>
+      <span class="legend-item"><span class="dot replied"></span>Replied</span>
+    </div>
+    <a href="/targets" class="targets-cta">Open the full targets page →</a>
+  </div>
+</section>
+<div class="target-tip" id="targetTip"></div>
+
+<div class="ornament" aria-hidden="true"><span class="glyph">· · ·</span></div>
+
+<!-- ═══════ ZONE 2B: METHODOLOGY — own zone below targets ═══════ -->
+<section class="zone-method" id="method">
+  <span class="method-note">how the work is done</span>
+
+  <div class="method-header" data-reveal>
+    <div class="label">Methodology</div>
+    <h2>Four <em>rules</em> we don't break.</h2>
+    <p class="intro">The method is the moat. No surveys, no automated outreach, no clever growth tricks.</p>
+  </div>
+
+  <div class="method-grid" data-reveal>
+    <div class="method-item">
+      <div class="roman">i.</div>
+      <div>
+        <h3>Two to three hours of research per letter.</h3>
+        <p>We read everything publicly available about the subject before writing a single word. The question we ask must reflect that reading.</p>
+      </div>
+    </div>
+    <div class="method-item">
+      <div class="roman">ii.</div>
+      <div>
+        <h3>One question per letter — about a real pivot.</h3>
+        <p>A turning point in the subject's life: a moment they changed direction, contradicted an earlier position, or made a choice they may not have explained publicly.</p>
+      </div>
+    </div>
+    <div class="method-item">
+      <div class="roman">iii.</div>
+      <div>
+        <h3>By post, or by email.</h3>
+        <p>When we believe the medium matters, we print, hand-sign, and post with a stamped reply envelope. When the recipient prefers digital, we write a properly composed email and send it from <span style="font-style:italic">hello@thepraefatio.com</span>. The form follows the reader, not the other way around.</p>
+      </div>
+    </div>
+    <div class="method-item">
+      <div class="roman">iv.</div>
+      <div>
+        <h3>Nothing is published without permission.</h3>
+        <p>Every letter includes explicit language about how a reply might be used. Anyone may decline, restrict, or speak off the record. We honour every instruction.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="ornament" aria-hidden="true"><span class="glyph">· · ·</span></div>
+
+<!-- ═══════ ZONE 3: EDITORS + CONTACT ═══════ -->
+<section class="zone-3">
+
+  <!-- Editors as a two-column block -->
+  <div class="editors-col" data-reveal>
+    <div class="label">The Editors</div>
+    <h2>Who we <em>are.</em></h2>
+
+    <div class="editor-stack">
+      <div class="editor">
+        <div class="portrait" aria-label="Portrait of Julian Tamas"></div>
+        <div class="info">
+          <div class="name">Julian Tamas</div>
+          <div class="meta">Editor · Rome · 14</div>
+          <div class="bio">Builds small things on the internet. QuestLog, a fleet tracker, the software behind this project. Reads more long-form business writing than is probably healthy for fourteen.</div>
+        </div>
+      </div>
+      <div class="editor">
+        <div class="portrait" aria-label="Portrait of Rocco"></div>
+        <div class="info">
+          <div class="name">Rocco</div>
+          <div class="meta">Editor · Rome · 14</div>
+          <div class="bio">Bio in preparation. Brings the second-opinion edits and the first warm introductions through family.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contact, side -->
+  <div class="contact-col" data-reveal>
+    <div class="label">Contact</div>
+    <h2>How to <em>reach us.</em></h2>
+    <p class="contact-body">If you have received a letter from us and would prefer to reply by email, or wish to be included in a later edition, the address below reaches both editors.</p>
+    <a class="email" href="mailto:hello@thepraefatio.com">hello@thepraefatio.com</a>
+    <p class="contact-foot">We answer everything within seventy-two hours.</p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div>
+    <div class="brand">The Praefatio<span class="dot">.</span></div>
+    <div class="copy">Issue 01 · MMXXVI · Rome</div>
+  </div>
+  <div class="meta-links">
+    <a href="#method">Method</a>
+    <a href="/targets">Targets</a>
+    <a href="mailto:hello@thepraefatio.com">Contact</a>
+  </div>
+</footer>
+
+<script>
+// Real working list. Update statuses as letters move.
+// Statuses: research / drafting / sent / replied / declined
+const TARGETS = [
+  { name:'Patrick Collison',     co:'Stripe',         status:'research' },
+  { name:'Howard Marks',         co:'Oaktree',        status:'research' },
+  { name:'Daniel Ek',            co:'Spotify',        status:'research' },
+  { name:'Brian Chesky',         co:'Airbnb',         status:'research' },
+  { name:'Naval Ravikant',       co:'AngelList',      status:'research' },
+  { name:'Tobi Lütke',           co:'Shopify',        status:'research' },
+  { name:'Melanie Perkins',      co:'Canva',          status:'research' },
+  { name:'Drew Houston',         co:'Dropbox',        status:'research' },
+  { name:'Stewart Butterfield',  co:'Slack',          status:'research' },
+  { name:'Demis Hassabis',       co:'DeepMind',       status:'research' },
+  { name:'Whitney Wolfe Herd',   co:'Bumble',         status:'research' },
+  { name:'Tom Blomfield',        co:'Monzo',          status:'research' },
+];
+
+const STATUS_LABELS = {
+  research: 'In research',
+  drafting: 'Drafting',
+  sent:     'Sent',
+  replied:  'Replied',
+  declined: 'Declined',
+};
+
+function renderTargets(){
+  // Full wall - all names in mixed asymmetric sizes
+  const sizes = ['size-m','size-xl','size-s','size-l','size-m','size-xl','size-s','size-l','size-m','size-s','size-xl','size-m','size-l','size-s'];
+  const list = document.getElementById('targetsList');
+  list.innerHTML = TARGETS.map((t, i) => {
+    const sz = sizes[i % sizes.length];
+    return `<span class="target-name ${sz} s-${t.status}" data-status="${STATUS_LABELS[t.status]||t.status}">${escapeHtml(t.name)}<span class="co"> · ${escapeHtml(t.co)}</span><span class="status-dot-inline" aria-hidden="true"></span></span>`;
+  }).join('');
+
+  // Cursor-following tooltip: single mousemove on the wall, lookup the hovered name
+  const tip = document.getElementById('targetTip');
+  if (!tip) return;
+  function placeTipAt(clientX, clientY){
+    // Default: just below the cursor, slightly to the right
+    let x = clientX + 12;
+    let y = clientY + 20;
+    const rect = tip.getBoundingClientRect();
+    if (x + rect.width > window.innerWidth - 10) x = clientX - rect.width - 12;
+    if (y + rect.height > window.innerHeight - 10) y = clientY - rect.height - 14;
+    tip.style.left = x + 'px';
+    tip.style.top  = y + 'px';
+  }
+  list.addEventListener('mousemove', (e) => {
+    const target = e.target.closest('.target-name');
+    if (target) {
+      const status = target.dataset.status;
+      if (status) {
+        if (tip.textContent !== status) tip.textContent = status;
+        placeTipAt(e.clientX, e.clientY);
+        tip.classList.add('show');
+        return;
+      }
+    }
+    tip.classList.remove('show');
+  });
+  list.addEventListener('mouseleave', () => tip.classList.remove('show'));
+}
+
+function escapeHtml(s){return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+const io = new IntersectionObserver((entries) => {
+  for (const e of entries){
+    if (e.isIntersecting){ e.target.classList.add('visible'); io.unobserve(e.target); }
+  }
+}, { threshold: 0.1, rootMargin: '0px 0px -30px 0px' });
+document.querySelectorAll('[data-reveal]').forEach(el => io.observe(el));
+
+renderTargets();
+
+// Intro overlay - skip if user has already seen it this session
+(function(){
+  const overlay = document.getElementById('introOverlay');
+  if (!overlay) return;
+  let seen = false;
+  try { seen = sessionStorage.getItem('praefatio_intro_seen') === '1'; } catch {}
+  if (seen) {
+    overlay.classList.add('skip');
+  } else {
+    // The CSS animation runs ~1.6s; the overlay fade out is triggered automatically via transition delay
+    setTimeout(() => {
+      overlay.classList.add('gone');
+      try { sessionStorage.setItem('praefatio_intro_seen', '1'); } catch {}
+    }, 1800);
+  }
+  // Allow click anywhere to skip the intro
+  overlay.addEventListener('click', () => overlay.classList.add('gone'));
+})();
+</script>
+
+</body>
+</html>

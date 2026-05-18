@@ -3,23 +3,30 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>The Praefatio</title>
-<meta name="description" content="A correspondence project. Two students writing to the people who built the world.">
-<link rel="canonical" href="https://thepraefatio.com">
-<meta property="og:type" content="website">
-<meta property="og:title" content="The Praefatio">
-<meta property="og:description" content="Letters to the people who built the world.">
-<meta property="og:url" content="https://thepraefatio.com">
+<title>Editors - The Praefatio</title>
+<meta name="description" content="The two editors of The Praefatio.">
+<link rel="canonical" href="https://thepraefatio.com/editors">
 <link rel="icon" type="image/svg+xml" href="/icons/favicon-praefatio.svg">
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500;1,9..144,600;1,9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/praefatio.css">
+<style>
+.editor-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px;margin-top:24px}
+@media(max-width:700px){.editor-grid{grid-template-columns:1fr;gap:40px}}
+.editor{display:flex;flex-direction:column;gap:18px}
+.editor .portrait{width:100%;aspect-ratio:3/4;background:linear-gradient(135deg,#4a3a44,#3a2c33);border-radius:6px;position:relative;overflow:hidden;border:1px solid var(--rule);max-width:280px}
+.editor .portrait::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 280' preserveAspectRatio='xMidYMid meet'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%23F4E8D2' stop-opacity='0.18'/><stop offset='1' stop-color='%23F4E8D2' stop-opacity='0.30'/></linearGradient></defs><circle cx='100' cy='105' r='42' fill='url(%23g)'/><path d='M 30 280 Q 30 175, 100 170 Q 170 175, 170 280 Z' fill='url(%23g)'/></svg>") no-repeat center / 78% auto;opacity:0.9}
+.editor:nth-child(1) .portrait{transform:rotate(-1.5deg)}
+.editor:nth-child(2) .portrait{transform:rotate(1.5deg)}
+.editor .name{font-family:'Fraunces',serif;font-size:28px;font-weight:600;letter-spacing:-0.3px;color:var(--ink);line-height:1.2;margin-top:8px}
+.editor .meta{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-mute);margin-top:4px;margin-bottom:14px}
+.editor .bio{font-family:'Fraunces',serif;font-size:16px;line-height:1.65;color:var(--ink-soft)}
+</style>
 </head>
 <body>
 
-<!-- Ferrari-style intro: gold R+J seal on black, fades to site (once per session) -->
 <div class="intro-overlay" id="introOverlay" aria-hidden="true">
   <svg class="intro-seal" viewBox="0 0 100 100">
     <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="2.5"/>
@@ -30,7 +37,6 @@
   </svg>
 </div>
 
-<!-- PERSISTENT HEADER -->
 <header class="nav-bar">
   <a class="brand" href="/">
     <svg class="brand-seal" viewBox="0 0 100 100" aria-hidden="true">
@@ -43,7 +49,7 @@
     <span class="brand-name">The Praefatio</span>
   </a>
   <nav class="nav-tabs">
-    <a href="/" class="tab active">Overview</a>
+    <a href="/" class="tab">Overview</a>
     <a href="/about" class="tab">About</a>
     <a href="/method" class="tab">Method</a>
     <a href="/targets" class="tab">Targets</a>
@@ -54,39 +60,29 @@
   <button class="nav-burger" aria-label="Menu" id="navBurger">☰</button>
 </header>
 
-<!-- ════════════ HERO - the hook ════════════ -->
-<section class="hero-home">
-  <div class="hero-home-bg" aria-hidden="true">
-    <img src="/images/praefatio/hero-seal-rj.jpg" alt="">
-  </div>
-  <div class="hero-home-inner">
-    <div class="hero-eyebrow">A correspondence project · Rome · MMXXVI</div>
-    <h1 class="hero-h1">Letters to the people who <em>built the world.</em></h1>
-    <p class="hero-strap">Two students writing — by post and by email — to the founders, investors and operators they admire. One question each, shaped by hours of reading.</p>
-    <div class="hero-ctas">
-      <a class="btn-primary" href="/targets">See who we're writing to <span>→</span></a>
-      <a class="btn-ghost" href="/method">Read the method <span>→</span></a>
-    </div>
-  </div>
-</section>
+<main class="page">
+  <div class="kicker">The editors</div>
+  <h1>Who we <em>are.</em></h1>
+  <p class="strap">Two students. Same school in Rome. Different obsessions, complementary edits.</p>
 
-<!-- ════════════ TINY TEASER (optional below-the-fold) ════════════ -->
-<section class="teaser" data-reveal>
-  <div class="teaser-inner">
-    <div class="teaser-left">
-      <div class="label">First three in research</div>
-      <ul class="teaser-list" id="teaserList"></ul>
-      <a href="/targets" class="teaser-more">See all twelve →</a>
+  <div class="editor-grid">
+    <div class="editor">
+      <div class="portrait" aria-label="Portrait of Julian Tamas"></div>
+      <div class="name">Julian Tamas</div>
+      <div class="meta">Editor · Rome · 14</div>
+      <div class="bio">Builds small things on the internet — a gaming dashboard called QuestLog, a private fleet tracker, and the editorial software that powers this project. Reads more long-form business writing than is probably healthy for fourteen. The questions begin here.</div>
     </div>
-    <div class="teaser-right">
-      <div class="label">What this is</div>
-      <p>A letters project, not a podcast. We post a single carefully-researched question to one person and wait. The replies, with permission, will become a book.</p>
-      <a href="/about" class="teaser-more">Read more about the project →</a>
+    <div class="editor">
+      <div class="portrait" aria-label="Portrait of Rocco"></div>
+      <div class="name">Rocco</div>
+      <div class="meta">Editor · Rome · 14</div>
+      <div class="bio">Bio in preparation. Surname and full biography will appear once finalised. Brings the diligence, the second-opinion edits, and a family network that gives the project its first warm introductions.</div>
     </div>
   </div>
-</section>
 
-<!-- ════════════ FOOTER ════════════ -->
+  <p style="margin-top:48px"><a class="btn-primary" href="/contact">Get in touch <span>→</span></a></p>
+</main>
+
 <footer class="page-footer">
   <div class="footer-inner">
     <div class="footer-brand">The Praefatio<span class="dot">.</span></div>
@@ -102,18 +98,5 @@
 </footer>
 
 <script src="/praefatio.js"></script>
-<script>
-// Tiny teaser - first 3 names in research
-const TEASER = [
-  { name:'Patrick Collison', co:'Stripe' },
-  { name:'Howard Marks',     co:'Oaktree' },
-  { name:'Daniel Ek',        co:'Spotify' },
-];
-const el = document.getElementById('teaserList');
-if (el) {
-  el.innerHTML = TEASER.map(t => `<li><span class="t-name">${t.name}</span><span class="t-co"> · ${t.co}</span><span class="t-status">In research</span></li>`).join('');
-}
-</script>
-
 </body>
 </html>

@@ -3,13 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>The Praefatio</title>
-<meta name="description" content="A correspondence project. Two students writing to the people who built the world.">
-<link rel="canonical" href="https://thepraefatio.com">
-<meta property="og:type" content="website">
-<meta property="og:title" content="The Praefatio">
-<meta property="og:description" content="Letters to the people who built the world.">
-<meta property="og:url" content="https://thepraefatio.com">
+<title>Contact - The Praefatio</title>
+<meta name="description" content="How to reach The Praefatio editors.">
+<link rel="canonical" href="https://thepraefatio.com/contact">
 <link rel="icon" type="image/svg+xml" href="/icons/favicon-praefatio.svg">
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,7 +15,6 @@
 </head>
 <body>
 
-<!-- Ferrari-style intro: gold R+J seal on black, fades to site (once per session) -->
 <div class="intro-overlay" id="introOverlay" aria-hidden="true">
   <svg class="intro-seal" viewBox="0 0 100 100">
     <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="2.5"/>
@@ -30,7 +25,6 @@
   </svg>
 </div>
 
-<!-- PERSISTENT HEADER -->
 <header class="nav-bar">
   <a class="brand" href="/">
     <svg class="brand-seal" viewBox="0 0 100 100" aria-hidden="true">
@@ -43,7 +37,7 @@
     <span class="brand-name">The Praefatio</span>
   </a>
   <nav class="nav-tabs">
-    <a href="/" class="tab active">Overview</a>
+    <a href="/" class="tab">Overview</a>
     <a href="/about" class="tab">About</a>
     <a href="/method" class="tab">Method</a>
     <a href="/targets" class="tab">Targets</a>
@@ -54,39 +48,22 @@
   <button class="nav-burger" aria-label="Menu" id="navBurger">☰</button>
 </header>
 
-<!-- ════════════ HERO - the hook ════════════ -->
-<section class="hero-home">
-  <div class="hero-home-bg" aria-hidden="true">
-    <img src="/images/praefatio/hero-seal-rj.jpg" alt="">
-  </div>
-  <div class="hero-home-inner">
-    <div class="hero-eyebrow">A correspondence project · Rome · MMXXVI</div>
-    <h1 class="hero-h1">Letters to the people who <em>built the world.</em></h1>
-    <p class="hero-strap">Two students writing — by post and by email — to the founders, investors and operators they admire. One question each, shaped by hours of reading.</p>
-    <div class="hero-ctas">
-      <a class="btn-primary" href="/targets">See who we're writing to <span>→</span></a>
-      <a class="btn-ghost" href="/method">Read the method <span>→</span></a>
-    </div>
-  </div>
-</section>
+<main class="page">
+  <div class="kicker">Contact</div>
+  <h1>How to <em>reach us.</em></h1>
+  <p class="strap">Both editors share one address. We read everything that arrives and answer within seventy-two hours.</p>
 
-<!-- ════════════ TINY TEASER (optional below-the-fold) ════════════ -->
-<section class="teaser" data-reveal>
-  <div class="teaser-inner">
-    <div class="teaser-left">
-      <div class="label">First three in research</div>
-      <ul class="teaser-list" id="teaserList"></ul>
-      <a href="/targets" class="teaser-more">See all twelve →</a>
-    </div>
-    <div class="teaser-right">
-      <div class="label">What this is</div>
-      <p>A letters project, not a podcast. We post a single carefully-researched question to one person and wait. The replies, with permission, will become a book.</p>
-      <a href="/about" class="teaser-more">Read more about the project →</a>
-    </div>
-  </div>
-</section>
+  <p>If you have received a letter from us and would prefer to reply by email, write to the address below. Quote nothing in the subject line — your name is enough. We will know.</p>
 
-<!-- ════════════ FOOTER ════════════ -->
+  <p>If you would like to be considered for a later edition, or if you know someone we should be writing to, the same address works.</p>
+
+  <p>Press, schools, partnerships: same address. We answer all of them ourselves.</p>
+
+  <a class="email-card" href="mailto:hello@thepraefatio.com">hello@thepraefatio.com</a>
+
+  <p style="margin-top:48px;font-style:italic;color:var(--ink-mute)">Postal correspondence will be possible from summer 2026, when we begin sending the first letters. Until then, the email is the front door.</p>
+</main>
+
 <footer class="page-footer">
   <div class="footer-inner">
     <div class="footer-brand">The Praefatio<span class="dot">.</span></div>
@@ -102,18 +79,5 @@
 </footer>
 
 <script src="/praefatio.js"></script>
-<script>
-// Tiny teaser - first 3 names in research
-const TEASER = [
-  { name:'Patrick Collison', co:'Stripe' },
-  { name:'Howard Marks',     co:'Oaktree' },
-  { name:'Daniel Ek',        co:'Spotify' },
-];
-const el = document.getElementById('teaserList');
-if (el) {
-  el.innerHTML = TEASER.map(t => `<li><span class="t-name">${t.name}</span><span class="t-co"> · ${t.co}</span><span class="t-status">In research</span></li>`).join('');
-}
-</script>
-
 </body>
 </html>

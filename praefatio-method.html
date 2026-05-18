@@ -3,23 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>The Praefatio</title>
-<meta name="description" content="A correspondence project. Two students writing to the people who built the world.">
-<link rel="canonical" href="https://thepraefatio.com">
-<meta property="og:type" content="website">
-<meta property="og:title" content="The Praefatio">
-<meta property="og:description" content="Letters to the people who built the world.">
-<meta property="og:url" content="https://thepraefatio.com">
+<title>Method - The Praefatio</title>
+<meta name="description" content="How The Praefatio works. Four rules we don't break.">
+<link rel="canonical" href="https://thepraefatio.com/method">
 <link rel="icon" type="image/svg+xml" href="/icons/favicon-praefatio.svg">
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500;1,9..144,600;1,9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/praefatio.css">
+<style>
+.method-item{display:grid;grid-template-columns:40px 1fr;gap:18px;padding:24px 0;border-bottom:1px solid var(--rule-soft);align-items:start}
+.method-item:last-child{border-bottom:none}
+.method-item .roman{font-family:'Fraunces',serif;font-style:italic;font-size:22px;color:var(--accent);font-weight:600;line-height:1.4}
+.method-item h3{font-family:'Fraunces',serif;font-size:22px;font-weight:600;color:var(--ink);margin-bottom:6px;letter-spacing:-0.2px;line-height:1.3}
+.method-item p{font-family:'Fraunces',serif;font-size:16px;color:var(--ink-soft);line-height:1.6;margin:0}
+</style>
 </head>
 <body>
 
-<!-- Ferrari-style intro: gold R+J seal on black, fades to site (once per session) -->
 <div class="intro-overlay" id="introOverlay" aria-hidden="true">
   <svg class="intro-seal" viewBox="0 0 100 100">
     <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="2.5"/>
@@ -30,7 +32,6 @@
   </svg>
 </div>
 
-<!-- PERSISTENT HEADER -->
 <header class="nav-bar">
   <a class="brand" href="/">
     <svg class="brand-seal" viewBox="0 0 100 100" aria-hidden="true">
@@ -43,7 +44,7 @@
     <span class="brand-name">The Praefatio</span>
   </a>
   <nav class="nav-tabs">
-    <a href="/" class="tab active">Overview</a>
+    <a href="/" class="tab">Overview</a>
     <a href="/about" class="tab">About</a>
     <a href="/method" class="tab">Method</a>
     <a href="/targets" class="tab">Targets</a>
@@ -54,39 +55,46 @@
   <button class="nav-burger" aria-label="Menu" id="navBurger">☰</button>
 </header>
 
-<!-- ════════════ HERO - the hook ════════════ -->
-<section class="hero-home">
-  <div class="hero-home-bg" aria-hidden="true">
-    <img src="/images/praefatio/hero-seal-rj.jpg" alt="">
-  </div>
-  <div class="hero-home-inner">
-    <div class="hero-eyebrow">A correspondence project · Rome · MMXXVI</div>
-    <h1 class="hero-h1">Letters to the people who <em>built the world.</em></h1>
-    <p class="hero-strap">Two students writing — by post and by email — to the founders, investors and operators they admire. One question each, shaped by hours of reading.</p>
-    <div class="hero-ctas">
-      <a class="btn-primary" href="/targets">See who we're writing to <span>→</span></a>
-      <a class="btn-ghost" href="/method">Read the method <span>→</span></a>
-    </div>
-  </div>
-</section>
+<main class="page">
+  <div class="kicker">Methodology</div>
+  <h1>Four <em>rules</em> we don't break.</h1>
+  <p class="strap">The method is the moat. No surveys. No automated outreach. No clever growth tricks. The same discipline that makes a letter worth answering is what makes the project worth doing.</p>
 
-<!-- ════════════ TINY TEASER (optional below-the-fold) ════════════ -->
-<section class="teaser" data-reveal>
-  <div class="teaser-inner">
-    <div class="teaser-left">
-      <div class="label">First three in research</div>
-      <ul class="teaser-list" id="teaserList"></ul>
-      <a href="/targets" class="teaser-more">See all twelve →</a>
-    </div>
-    <div class="teaser-right">
-      <div class="label">What this is</div>
-      <p>A letters project, not a podcast. We post a single carefully-researched question to one person and wait. The replies, with permission, will become a book.</p>
-      <a href="/about" class="teaser-more">Read more about the project →</a>
+  <div class="method-item">
+    <div class="roman">i.</div>
+    <div>
+      <h3>Two to three hours of research per letter.</h3>
+      <p>We read everything publicly available about the subject before writing a single word: every long-form profile, every annual letter, every interview from before they were famous. The question we ask must reflect that reading. If a chatbot could have answered it, we have not asked it yet.</p>
     </div>
   </div>
-</section>
 
-<!-- ════════════ FOOTER ════════════ -->
+  <div class="method-item">
+    <div class="roman">ii.</div>
+    <div>
+      <h3>One question per letter — about a real pivot.</h3>
+      <p>A turning point in the subject's life: a moment they changed direction, contradicted an earlier position, or made a choice they may not have explained publicly. The question is short, specific, and unanswerable without consideration. We do not send surveys, we do not ask for a list of advice.</p>
+    </div>
+  </div>
+
+  <div class="method-item">
+    <div class="roman">iii.</div>
+    <div>
+      <h3>By post, or by email.</h3>
+      <p>When we believe the medium matters, we print, hand-sign, and post with a stamped reply envelope. When the recipient prefers digital, we write a properly composed email and send it from <em>hello@thepraefatio.com</em>. The form follows the reader, not the other way around. Almost no one writes letters anymore. The ones who reply often do so because of that.</p>
+    </div>
+  </div>
+
+  <div class="method-item">
+    <div class="roman">iv.</div>
+    <div>
+      <h3>Nothing is published without permission.</h3>
+      <p>Every letter includes explicit language about how a reply might be used. Anyone may decline publication, restrict use to specific contexts, or speak entirely off the record. We honour every instruction in writing and confirm in advance of publication. The trust on which this project depends is built one reply at a time.</p>
+    </div>
+  </div>
+
+  <p style="margin-top:48px"><a class="btn-primary" href="/targets">See who we're writing to <span>→</span></a></p>
+</main>
+
 <footer class="page-footer">
   <div class="footer-inner">
     <div class="footer-brand">The Praefatio<span class="dot">.</span></div>
@@ -102,18 +110,5 @@
 </footer>
 
 <script src="/praefatio.js"></script>
-<script>
-// Tiny teaser - first 3 names in research
-const TEASER = [
-  { name:'Patrick Collison', co:'Stripe' },
-  { name:'Howard Marks',     co:'Oaktree' },
-  { name:'Daniel Ek',        co:'Spotify' },
-];
-const el = document.getElementById('teaserList');
-if (el) {
-  el.innerHTML = TEASER.map(t => `<li><span class="t-name">${t.name}</span><span class="t-co"> · ${t.co}</span><span class="t-status">In research</span></li>`).join('');
-}
-</script>
-
 </body>
 </html>

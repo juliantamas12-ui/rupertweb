@@ -177,8 +177,16 @@ export default {
         '/':           '/praefatio.html',
         '':            '/praefatio.html',
         '/index.html': '/praefatio.html',
+        '/about':      '/praefatio-about.html',
+        '/about/':     '/praefatio-about.html',
+        '/method':     '/praefatio-method.html',
+        '/method/':    '/praefatio-method.html',
         '/targets':    '/praefatio-targets.html',
         '/targets/':   '/praefatio-targets.html',
+        '/editors':    '/praefatio-editors.html',
+        '/editors/':   '/praefatio-editors.html',
+        '/contact':    '/praefatio-contact.html',
+        '/contact/':   '/praefatio-contact.html',
       };
       if (p in routes) {
         const rewritten = new Request(new URL(routes[p], request.url).toString(), request);
