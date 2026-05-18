@@ -64,9 +64,8 @@ html,body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-syste
 .masthead .strap{font-family:'Fraunces',serif;font-size:clamp(19px,2.2vw,24px);color:var(--ink-soft);line-height:1.45;font-style:italic;max-width:580px;margin:0 auto}
 .masthead .byline{margin-top:32px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--ink-mute);position:relative;display:inline-block}
 .masthead .byline span{color:var(--ink);font-weight:600}
-.masthead .byline .note{position:absolute;top:-18px;right:-180px;font-family:'Caveat',cursive;font-size:18px;color:var(--accent);font-weight:500;transform:rotate(-3deg);white-space:nowrap;letter-spacing:0}
-.masthead .byline .note::before{content:'';position:absolute;left:-20px;top:10px;width:18px;height:1px;background:var(--accent);transform:rotate(20deg)}
-@media(max-width:900px){.masthead .byline .note{display:none}}
+/* Cursive scribbles removed - too informal for the editorial brand */
+.masthead .byline .note{display:none}
 
 /* Two-column intro spread */
 .intro-spread{display:grid;grid-template-columns:1fr 1fr;gap:48px;margin-top:24px;align-items:start;border-top:1px solid var(--rule);padding-top:48px;position:relative}
@@ -80,8 +79,7 @@ html,body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-syste
 .intro-body strong{color:var(--ink);font-weight:600;font-style:italic}
 
 /* Margin note in the gap */
-.intro-spread .margin-note{position:absolute;top:60px;left:50%;transform:translateX(-50%) rotate(-2deg);font-family:'Caveat',cursive;font-size:16px;color:var(--accent);max-width:160px;text-align:center;display:none}
-@media(min-width:1200px){.intro-spread .margin-note{display:block}}
+.intro-spread .margin-note{display:none}
 
 /* ═══════════ PULL QUOTE BAND ═══════════ */
 .quote-band{background:var(--bg-2);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:80px 40px;text-align:center;position:relative;overflow:hidden}
@@ -170,8 +168,7 @@ html,body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-syste
 .target-name.s-declined .status-dot-inline{background:var(--ink-mute);opacity:0.35}
 
 /* Margin note on method side */
-.zone-method .method-note{position:absolute;left:-30px;top:120px;font-family:'Caveat',cursive;font-size:18px;color:var(--accent);transform:rotate(-90deg);transform-origin:left top;letter-spacing:1px;display:none}
-@media(min-width:1200px){.zone-method .method-note{display:block}}
+.zone-method .method-note{display:none}
 
 /* ═══════ ZONE 3: EDITORS + CONTACT ═══════ */
 .zone-3{max-width:1240px;margin:0 auto;padding:80px 40px;display:grid;grid-template-columns:1.5fr 1fr;gap:80px;align-items:start;position:relative;border-top:1px solid var(--rule)}
@@ -242,9 +239,7 @@ footer .meta-links a:hover{color:var(--accent)}
     <div class="kicker">A correspondence project</div>
     <h1>The <span class="roman">Praefatio</span></h1>
     <p class="strap">Letters to the people who built the world.</p>
-    <div class="byline">By <span>Julian Tamas</span> &amp; <span>Rocco</span> · 14 · Marymount, Rome
-      <span class="note">posted by hand →</span>
-    </div>
+    <div class="byline">By <span>Julian Tamas</span> &amp; <span>Rocco</span> · 14 · Marymount, Rome</div>
   </header>
 
   <div class="intro-spread">
