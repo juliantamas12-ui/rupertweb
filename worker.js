@@ -8,6 +8,7 @@ let STEAM_KEY = '';
 let RESEND_KEY = '';
 let SERPAPI_KEY = '';
 let BRAVE_API_KEY = '';
+let REPLICATE_API_KEY = '';
 const DEFAULT_STEAM_ID = null;
 const OWNER_EMAIL = 'julian.tamas12@gmail.com';
 const ANTHROPIC_KEY_FALLBACK = '';
@@ -51,6 +52,7 @@ function _hydrateSecrets(env) {
   if (env.RESEND_KEY)            RESEND_KEY            = env.RESEND_KEY;
   if (env.SERPAPI_KEY)           SERPAPI_KEY           = env.SERPAPI_KEY;
   if (env.BRAVE_API_KEY)         BRAVE_API_KEY         = env.BRAVE_API_KEY;
+  if (env.REPLICATE_API_KEY)     REPLICATE_API_KEY     = env.REPLICATE_API_KEY;
   if (env.STRIPE_SECRET_KEY)     STRIPE_SECRET_KEY     = env.STRIPE_SECRET_KEY;
   if (env.STRIPE_PRICE_ID)       STRIPE_PRICE_ID       = env.STRIPE_PRICE_ID;
   if (env.STRIPE_WEBHOOK_SECRET) STRIPE_WEBHOOK_SECRET = env.STRIPE_WEBHOOK_SECRET;
