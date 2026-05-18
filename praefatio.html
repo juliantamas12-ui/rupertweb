@@ -134,8 +134,7 @@ body > *{position:relative;z-index:1}
 .targets-header h2 em{font-style:italic;color:var(--accent)}
 .targets-header .label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:var(--ink-mute);margin-bottom:14px;font-weight:500}
 .targets-header .intro{font-family:'Fraunces',serif;font-style:italic;font-size:17px;color:var(--ink-soft);line-height:1.55;margin-bottom:18px}
-.targets-header .targets-meta{display:flex;gap:18px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-mute);flex-wrap:wrap;margin-top:18px;padding-top:14px;border-top:1px solid var(--rule-soft)}
-.targets-header .targets-meta span strong{color:var(--ink);font-weight:600;margin-right:5px;font-family:'Fraunces',serif;font-style:italic;font-size:15px}
+/* Counter row removed - wall speaks for itself */
 
 .targets-footer{margin-top:48px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:24px;padding-top:24px;border-top:1px solid var(--rule-soft)}
 .targets-legend{display:flex;gap:18px;flex-wrap:wrap;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-mute)}
@@ -328,7 +327,7 @@ footer .meta-links a:hover{color:var(--accent)}
       </div>
     </div>
     <div class="intro-body" data-reveal>
-      <p>Over the next eighteen months we will write fifty hand-typed letters to founders, investors, and operators we admire. Each letter is preceded by hours of reading. We ask a single question — one shaped by a turning point in the recipient's life — and wait to see what comes back.</p>
+      <p>Over the next eighteen months we will write fifty letters — some hand-typed and posted, some sent by email — to founders, investors, and operators we admire. Each is preceded by hours of reading. We ask a single question, shaped by a turning point in the recipient's life, and wait to see what comes back.</p>
       <p>The replies, with permission, become a publication. <strong>The first edition collects thirty letters.</strong> Half from people who built companies worth a billion or more. Half from people we suspect will.</p>
     </div>
   </div>
@@ -348,7 +347,7 @@ footer .meta-links a:hover{color:var(--accent)}
     <div class="label">Targets · The Working List</div>
     <h2>Who we plan to <em>write to.</em></h2>
     <p class="intro">A working list with honest status. <strong>Nothing here has been sent yet.</strong> The list updates as letters genuinely move forward.</p>
-    <div class="targets-meta" id="targetsMeta"></div>
+
   </div>
 
   <div class="targets-wall" id="targetsList" data-reveal></div>
@@ -395,8 +394,8 @@ footer .meta-links a:hover{color:var(--accent)}
     <div class="method-item">
       <div class="roman">iii.</div>
       <div>
-        <h3>Paper, not pixels.</h3>
-        <p>Letters are printed, hand-signed, and posted with a stamped reply envelope. The medium is the proof of seriousness.</p>
+        <h3>By post, or by email.</h3>
+        <p>When we believe the medium matters, we print, hand-sign, and post with a stamped reply envelope. When the recipient prefers digital, we write a properly composed email and send it from <span style="font-style:italic">hello@thepraefatio.com</span>. The form follows the reader, not the other way around.</p>
       </div>
     </div>
     <div class="method-item">
@@ -489,12 +488,6 @@ const STATUS_LABELS = {
 };
 
 function renderTargets(){
-  // Counter row
-  const meta = document.getElementById('targetsMeta');
-  const counts = TARGETS.reduce((a,t)=>{a[t.status]=(a[t.status]||0)+1;return a;},{});
-  const order = ['research','drafting','sent','replied','declined'];
-  meta.innerHTML = order.filter(k => counts[k]).map(k => `<span><strong>${counts[k]}</strong>${STATUS_LABELS[k]}</span>`).join('');
-
   // Full wall - all names in mixed asymmetric sizes
   const sizes = ['size-m','size-xl','size-s','size-l','size-m','size-xl','size-s','size-l','size-m','size-s','size-xl','size-m','size-l','size-s'];
   const list = document.getElementById('targetsList');
@@ -503,27 +496,33 @@ function renderTargets(){
     return `<span class="target-name ${sz} s-${t.status}" data-status="${STATUS_LABELS[t.status]||t.status}">${escapeHtml(t.name)}<span class="co"> · ${escapeHtml(t.co)}</span><span class="status-dot-inline" aria-hidden="true"></span></span>`;
   }).join('');
 
-  // Cursor-following tooltip
+  // Cursor-following tooltip: single mousemove on the wall, lookup the hovered name
   const tip = document.getElementById('targetTip');
   if (!tip) return;
-  function place(e){
-    let x = e.clientX + 14;
-    let y = e.clientY + 18;
+  function placeTipAt(clientX, clientY){
+    // Default: just below the cursor, slightly to the right
+    let x = clientX + 12;
+    let y = clientY + 20;
     const rect = tip.getBoundingClientRect();
-    if (x + rect.width > window.innerWidth - 12) x = e.clientX - rect.width - 14;
-    if (y + rect.height > window.innerHeight - 12) y = e.clientY - rect.height - 14;
+    if (x + rect.width > window.innerWidth - 10) x = clientX - rect.width - 12;
+    if (y + rect.height > window.innerHeight - 10) y = clientY - rect.height - 14;
     tip.style.left = x + 'px';
     tip.style.top  = y + 'px';
   }
-  list.querySelectorAll('.target-name').forEach(el => {
-    el.addEventListener('mouseenter', (e) => {
-      tip.textContent = el.dataset.status;
-      place(e);
-      tip.classList.add('show');
-    });
-    el.addEventListener('mousemove', place);
-    el.addEventListener('mouseleave', () => tip.classList.remove('show'));
+  list.addEventListener('mousemove', (e) => {
+    const target = e.target.closest('.target-name');
+    if (target) {
+      const status = target.dataset.status;
+      if (status) {
+        if (tip.textContent !== status) tip.textContent = status;
+        placeTipAt(e.clientX, e.clientY);
+        tip.classList.add('show');
+        return;
+      }
+    }
+    tip.classList.remove('show');
   });
+  list.addEventListener('mouseleave', () => tip.classList.remove('show'));
 }
 
 function escapeHtml(s){return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}

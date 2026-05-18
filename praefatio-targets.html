@@ -200,26 +200,31 @@ function render(){
     return `<span class="target-name ${sz} s-${t.status}" data-status="${STATUS_LABELS[t.status]||t.status}">${escapeHtml(t.name)}<span class="co"> · ${escapeHtml(t.co)}</span><span class="status-dot-inline" aria-hidden="true"></span></span>`;
   }).join('');
 
-  // Tooltip - follows cursor
+  // Tooltip - single mousemove on the wall, place just below cursor
   const tip = document.getElementById('targetTip');
-  function place(e){
-    let x = e.clientX + 14;
-    let y = e.clientY + 18;
+  function placeTipAt(clientX, clientY){
+    let x = clientX + 12;
+    let y = clientY + 20;
     const rect = tip.getBoundingClientRect();
-    if (x + rect.width > window.innerWidth - 12) x = e.clientX - rect.width - 14;
-    if (y + rect.height > window.innerHeight - 12) y = e.clientY - rect.height - 14;
+    if (x + rect.width > window.innerWidth - 10) x = clientX - rect.width - 12;
+    if (y + rect.height > window.innerHeight - 10) y = clientY - rect.height - 14;
     tip.style.left = x + 'px';
     tip.style.top  = y + 'px';
   }
-  wall.querySelectorAll('.target-name').forEach(el=>{
-    el.addEventListener('mouseenter', (e) => {
-      tip.textContent = el.dataset.status;
-      place(e);
-      tip.classList.add('show');
-    });
-    el.addEventListener('mousemove', place);
-    el.addEventListener('mouseleave', () => tip.classList.remove('show'));
+  wall.addEventListener('mousemove', (e) => {
+    const target = e.target.closest('.target-name');
+    if (target) {
+      const status = target.dataset.status;
+      if (status) {
+        if (tip.textContent !== status) tip.textContent = status;
+        placeTipAt(e.clientX, e.clientY);
+        tip.classList.add('show');
+        return;
+      }
+    }
+    tip.classList.remove('show');
   });
+  wall.addEventListener('mouseleave', () => tip.classList.remove('show'));
 }
 render();
 </script>
