@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Targets - The Praefatio</title>
+<meta name="description" content="The working list of people The Praefatio plans to write to. Status updates as letters move forward.">
+<link rel="canonical" href="https://thepraefatio.com/targets">
+<link rel="icon" type="image/svg+xml" href="/icons/favicon-praefatio.svg">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500;1,9..144,600;1,9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Caveat:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F4EFE6;
+  --bg-2:#FFFBF3;
+  --paper:#FFFEFA;
+  --ink:#1A1207;
+  --ink-soft:#5A4A38;
+  --ink-mute:#8A7860;
+  --rule:rgba(26,18,7,0.14);
+  --rule-soft:rgba(26,18,7,0.07);
+  --rule-strong:rgba(26,18,7,0.22);
+  --accent:#B8552E;
+  --accent-soft:rgba(184,85,46,0.10);
+  --sage:#7A8F6E;
+}
+html,body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;font-size:16px;line-height:1.6;overflow-x:hidden}
+
+/* RIBBON */
+.ribbon{display:flex;align-items:center;justify-content:space-between;padding:14px 40px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-mute);border-bottom:1px solid var(--rule)}
+@media(max-width:700px){.ribbon{padding:12px 18px;font-size:9px;letter-spacing:1px}}
+.ribbon a{color:inherit;text-decoration:none}
+.ribbon a:hover{color:var(--accent)}
+.ribbon .left{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.ribbon .right{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+
+/* HEADER */
+.page-header{max-width:1280px;margin:0 auto;padding:64px 40px 36px;text-align:center}
+@media(max-width:700px){.page-header{padding:40px 22px 24px}}
+.page-header .kicker{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:14px;font-weight:500}
+.page-header h1{font-family:'Fraunces',serif;font-size:clamp(44px,7vw,82px);line-height:1;letter-spacing:-2px;font-weight:600;color:var(--ink);font-style:italic;margin-bottom:18px}
+.page-header h1 .roman{font-style:normal}
+.page-header .strap{font-family:'Fraunces',serif;font-size:clamp(17px,1.8vw,20px);color:var(--ink-soft);max-width:660px;margin:0 auto;line-height:1.55;font-style:italic}
+
+/* COUNTER STRIP */
+.counters{max-width:1280px;margin:0 auto;padding:24px 40px;display:flex;gap:48px;justify-content:center;flex-wrap:wrap;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-mute);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+@media(max-width:700px){.counters{padding:18px 22px;gap:24px;font-size:10px}}
+.counters .item{display:inline-flex;gap:8px;align-items:baseline}
+.counters .item strong{color:var(--ink);font-weight:700;font-size:18px;font-family:'Fraunces',serif;font-style:italic;letter-spacing:0}
+
+/* WALL */
+.wall-wrap{max-width:1280px;margin:0 auto;padding:80px 40px 60px;position:relative}
+@media(max-width:700px){.wall-wrap{padding:48px 22px 40px}}
+.wall{display:flex;flex-wrap:wrap;gap:8px 28px;line-height:1.2;align-items:baseline;justify-content:flex-start}
+.target-name{font-family:'Fraunces',serif;font-weight:500;color:var(--ink-soft);cursor:default;transition:color 0.2s, transform 0.2s;letter-spacing:-0.3px;padding:6px 0;position:relative;user-select:none;text-decoration:none;display:inline-flex;align-items:baseline;gap:4px}
+.target-name:hover{color:var(--accent);transform:translateY(-2px)}
+.target-name.s-research{color:var(--ink-soft)}
+.target-name.s-drafting{color:var(--accent);font-style:italic}
+.target-name.s-sent{color:var(--sage);font-style:italic}
+.target-name.s-replied{color:var(--accent);font-weight:700}
+.target-name.s-declined{color:var(--ink-mute);text-decoration:line-through;opacity:0.5}
+.target-name .co{color:var(--ink-mute);font-size:0.55em;font-style:italic;font-weight:400;margin-left:4px;letter-spacing:0;line-height:1}
+.target-name.size-s{font-size:24px}
+.target-name.size-m{font-size:38px}
+.target-name.size-l{font-size:56px;font-style:italic}
+.target-name.size-xl{font-size:78px;font-style:italic;font-weight:600;color:var(--ink);letter-spacing:-2px}
+@media(max-width:900px){.target-name.size-s{font-size:18px}.target-name.size-m{font-size:26px}.target-name.size-l{font-size:36px}.target-name.size-xl{font-size:48px}}
+.target-name .status-dot-inline{display:inline-block;width:9px;height:9px;border-radius:50%;margin-left:8px;opacity:0.85;vertical-align:0.3em;flex-shrink:0}
+.target-name.s-research .status-dot-inline{background:var(--ink-mute);opacity:0.35}
+.target-name.s-drafting .status-dot-inline{background:var(--accent)}
+.target-name.s-sent .status-dot-inline{background:var(--sage)}
+.target-name.s-replied .status-dot-inline{background:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+.target-name.s-declined .status-dot-inline{background:var(--ink-mute);opacity:0.35}
+
+/* TOOLTIP */
+.target-tip{position:fixed;background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;pointer-events:none;opacity:0;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,0.25);white-space:nowrap;font-weight:600;transition:opacity 0.12s}
+.target-tip.show{opacity:1}
+.target-tip::after{content:'';position:absolute;top:-4px;left:14px;width:8px;height:8px;background:var(--ink);transform:rotate(45deg)}
+
+/* LEGEND */
+.legend-band{background:var(--bg-2);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:28px 40px}
+@media(max-width:700px){.legend-band{padding:20px 22px}}
+.legend-band .inner{max-width:1280px;margin:0 auto;display:flex;justify-content:center;gap:32px;flex-wrap:wrap;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-mute)}
+.legend-band .item{display:inline-flex;align-items:center;gap:10px}
+.legend-band .dot{width:9px;height:9px;border-radius:50%}
+.legend-band .dot.research{background:var(--ink-mute);opacity:0.35}
+.legend-band .dot.drafting{background:var(--accent)}
+.legend-band .dot.sent{background:var(--sage)}
+.legend-band .dot.replied{background:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.legend-band .dot.declined{background:var(--ink-mute);opacity:0.35}
+
+/* METHODOLOGY NOTE */
+.note{max-width:760px;margin:60px auto;padding:0 40px;font-family:'Fraunces',serif;font-style:italic;font-size:18px;line-height:1.6;color:var(--ink-soft);text-align:center}
+@media(max-width:700px){.note{padding:0 22px;font-size:16px;margin:40px auto}}
+.note strong{color:var(--ink);font-weight:600;font-style:italic}
+
+/* FOOTER */
+footer{max-width:1280px;margin:0 auto;padding:32px 40px;border-top:1px solid var(--rule);display:grid;grid-template-columns:1fr auto;gap:20px;align-items:end;font-size:12px;color:var(--ink-mute)}
+@media(max-width:700px){footer{grid-template-columns:1fr;padding:24px 22px;gap:16px}}
+footer .brand{font-family:'Fraunces',serif;font-style:italic;font-size:18px;color:var(--ink);font-weight:500}
+footer .brand .dot{color:var(--accent);font-style:normal}
+footer .meta{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;margin-top:6px}
+footer .links{display:flex;gap:18px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase}
+footer .links a{color:var(--ink-mute);text-decoration:none;transition:color 0.15s}
+footer .links a:hover{color:var(--accent)}
+</style>
+</head>
+<body>
+
+<div class="ribbon">
+  <div class="left">
+    <a href="/">← The Praefatio</a>
+    <span>Targets</span>
+  </div>
+  <div class="right">
+    <a href="mailto:hello@thepraefatio.com">hello@thepraefatio.com</a>
+  </div>
+</div>
+
+<header class="page-header">
+  <div class="kicker">The Working List</div>
+  <h1>People we plan to <span style="font-style:italic;color:var(--accent)">write to.</span></h1>
+  <p class="strap">A working list, ordered roughly by where each letter is in the process. <strong>Nothing here has been sent yet.</strong> Status updates as letters genuinely move forward.</p>
+</header>
+
+<div class="counters" id="counters"></div>
+
+<section class="wall-wrap">
+  <div class="wall" id="wall"></div>
+  <div class="target-tip" id="targetTip"></div>
+</section>
+
+<div class="legend-band">
+  <div class="inner">
+    <span class="item"><span class="dot research"></span>In research</span>
+    <span class="item"><span class="dot drafting"></span>Drafting</span>
+    <span class="item"><span class="dot sent"></span>Sent</span>
+    <span class="item"><span class="dot replied"></span>Replied</span>
+    <span class="item"><span class="dot declined"></span>Declined</span>
+  </div>
+</div>
+
+<div class="note">
+  <p>Each name represents two to three hours of reading before a single sentence is drafted. We do not send the same letter twice, and we do not write to anyone we have not researched.</p>
+</div>
+
+<footer>
+  <div>
+    <div class="brand">The Praefatio<span class="dot">.</span></div>
+    <div class="meta">Issue 01 · MMXXVI · Rome</div>
+  </div>
+  <div class="links">
+    <a href="/">Overview</a>
+    <a href="/#method">Method</a>
+    <a href="mailto:hello@thepraefatio.com">Contact</a>
+  </div>
+</footer>
+
+<script>
+const TARGETS = [
+  { name:'Patrick Collison',     co:'Stripe',         status:'research' },
+  { name:'Howard Marks',         co:'Oaktree',        status:'research' },
+  { name:'Daniel Ek',            co:'Spotify',        status:'research' },
+  { name:'Brian Chesky',         co:'Airbnb',         status:'research' },
+  { name:'Naval Ravikant',       co:'AngelList',      status:'research' },
+  { name:'Tobi Lütke',           co:'Shopify',        status:'research' },
+  { name:'Melanie Perkins',      co:'Canva',          status:'research' },
+  { name:'Drew Houston',         co:'Dropbox',        status:'research' },
+  { name:'Stewart Butterfield',  co:'Slack',          status:'research' },
+  { name:'Demis Hassabis',       co:'DeepMind',       status:'research' },
+  { name:'Whitney Wolfe Herd',   co:'Bumble',         status:'research' },
+  { name:'Tom Blomfield',        co:'Monzo',          status:'research' },
+];
+
+const STATUS_LABELS = {
+  research: 'In research',
+  drafting: 'Drafting',
+  sent:     'Sent',
+  replied:  'Replied',
+  declined: 'Declined',
+};
+
+function escapeHtml(s){return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+function render(){
+  // counters
+  const counts = TARGETS.reduce((a,t)=>{a[t.status]=(a[t.status]||0)+1;return a;},{});
+  const order = ['research','drafting','sent','replied','declined'];
+  document.getElementById('counters').innerHTML = order.filter(k=>counts[k]).map(k=>`<span class="item"><strong>${counts[k]}</strong>${STATUS_LABELS[k]}</span>`).join('');
+
+  // wall with cycling sizes
+  const sizes = ['size-m','size-xl','size-s','size-l','size-m','size-xl','size-s','size-l','size-m','size-s','size-xl','size-m','size-l','size-s'];
+  const wall = document.getElementById('wall');
+  wall.innerHTML = TARGETS.map((t,i)=>{
+    const sz = sizes[i % sizes.length];
+    return `<span class="target-name ${sz} s-${t.status}" data-status="${STATUS_LABELS[t.status]||t.status}">${escapeHtml(t.name)}<span class="co"> · ${escapeHtml(t.co)}</span><span class="status-dot-inline" aria-hidden="true"></span></span>`;
+  }).join('');
+
+  // Tooltip - follows cursor
+  const tip = document.getElementById('targetTip');
+  function place(e){
+    let x = e.clientX + 14;
+    let y = e.clientY + 18;
+    const rect = tip.getBoundingClientRect();
+    if (x + rect.width > window.innerWidth - 12) x = e.clientX - rect.width - 14;
+    if (y + rect.height > window.innerHeight - 12) y = e.clientY - rect.height - 14;
+    tip.style.left = x + 'px';
+    tip.style.top  = y + 'px';
+  }
+  wall.querySelectorAll('.target-name').forEach(el=>{
+    el.addEventListener('mouseenter', (e) => {
+      tip.textContent = el.dataset.status;
+      place(e);
+      tip.classList.add('show');
+    });
+    el.addEventListener('mousemove', place);
+    el.addEventListener('mouseleave', () => tip.classList.remove('show'));
+  });
+}
+render();
+</script>
+
+</body>
+</html>

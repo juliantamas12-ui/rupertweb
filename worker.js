@@ -169,16 +169,22 @@ export default {
       return jsonResponse({ error: e.message }, 500);
     }
 
-    // Domain-specific static routing.
-    // thepraefatio.com -> serve praefatio.html for the root, allow other assets through
+    // Domain-specific static routing for thepraefatio.com.
+    // Root -> praefatio.html; /targets -> praefatio-targets.html; other assets pass through.
     const host = url.hostname.toLowerCase().replace(/^www\./, '');
     if (host === 'thepraefatio.com') {
-      if (p === '/' || p === '' || p === '/index.html') {
-        const rewritten = new Request(new URL('/praefatio.html', request.url).toString(), request);
+      const routes = {
+        '/':           '/praefatio.html',
+        '':            '/praefatio.html',
+        '/index.html': '/praefatio.html',
+        '/targets':    '/praefatio-targets.html',
+        '/targets/':   '/praefatio-targets.html',
+      };
+      if (p in routes) {
+        const rewritten = new Request(new URL(routes[p], request.url).toString(), request);
         const res = await env.ASSETS.fetch(rewritten);
-        // Pass through but tag so we can verify in browser devtools
         const newRes = new Response(res.body, res);
-        newRes.headers.set('x-praefatio-rewrite', 'root->praefatio.html');
+        newRes.headers.set('x-praefatio-rewrite', `${p} -> ${routes[p]}`);
         return newRes;
       }
     }
