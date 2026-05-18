@@ -108,21 +108,44 @@ html,body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-syste
 .method-item h3{font-family:'Fraunces',serif;font-size:17px;font-weight:600;color:var(--ink);margin-bottom:4px;letter-spacing:-0.2px;line-height:1.3}
 .method-item p{font-family:'Fraunces',serif;font-size:14.5px;color:var(--ink-soft);line-height:1.55}
 
-/* Targets list */
-.targets-list{border-top:1px solid var(--rule)}
-.target-row{display:grid;grid-template-columns:1fr auto;gap:12px;padding:13px 0;border-bottom:1px solid var(--rule-soft);align-items:center}
-.target-row .name{font-family:'Fraunces',serif;font-size:16.5px;color:var(--ink);font-weight:500;line-height:1.3}
-.target-row .name .co{color:var(--ink-mute);font-size:13px;font-style:italic;margin-left:5px}
-.target-row .status{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;padding:5px 9px;border-radius:100px;font-weight:600;white-space:nowrap}
-.status-research{background:var(--rule-soft);color:var(--ink-mute)}
-.status-drafting{background:var(--accent-soft);color:var(--accent)}
-.status-sent{background:rgba(122,143,110,0.18);color:var(--sage)}
-.status-replied{background:var(--accent);color:#fff}
-.status-declined{background:transparent;color:var(--ink-mute);border:1px solid var(--rule)}
-
-/* Tiny live status counter at top of targets */
-.targets-meta{display:flex;gap:16px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-mute);margin-bottom:16px;flex-wrap:wrap}
+/* Targets wall - typographic, floating, asymmetric */
+.targets-meta{display:flex;gap:14px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-mute);margin-bottom:20px;flex-wrap:wrap;padding-top:8px;border-top:1px solid var(--rule-soft)}
 .targets-meta span strong{color:var(--ink);font-weight:600;margin-right:4px}
+.targets-wall{display:flex;flex-wrap:wrap;gap:4px 16px;line-height:1.25;padding-top:8px}
+.target-name{font-family:'Fraunces',serif;font-weight:500;color:var(--ink-soft);cursor:default;transition:color 0.2s, transform 0.2s;letter-spacing:-0.3px;padding:4px 0;position:relative;user-select:none;text-decoration:none;display:inline-block}
+.target-name:hover{color:var(--accent);transform:translateY(-1px)}
+.target-name.s-research{color:var(--ink-soft)}
+.target-name.s-drafting{color:var(--accent);font-style:italic}
+.target-name.s-sent{color:var(--sage);font-style:italic}
+.target-name.s-replied{color:var(--accent);font-weight:700}
+.target-name.s-declined{color:var(--ink-mute);text-decoration:line-through;opacity:0.6}
+.target-name .co{color:var(--ink-mute);font-size:0.7em;font-style:italic;font-weight:400;margin-left:3px;letter-spacing:0}
+.target-name.size-s{font-size:18px}
+.target-name.size-m{font-size:24px}
+.target-name.size-l{font-size:32px;font-style:italic}
+.target-name.size-xl{font-size:42px;font-style:italic;font-weight:600;color:var(--ink)}
+@media(max-width:700px){.target-name.size-s{font-size:15px}.target-name.size-m{font-size:18px}.target-name.size-l{font-size:23px}.target-name.size-xl{font-size:28px}}
+.target-name .status-dot-inline{display:inline-block;width:7px;height:7px;border-radius:50%;margin-left:6px;vertical-align:0.18em;opacity:0.85}
+.target-name.s-research .status-dot-inline{background:var(--ink-mute);opacity:0.4}
+.target-name.s-drafting .status-dot-inline{background:var(--accent)}
+.target-name.s-sent .status-dot-inline{background:var(--sage)}
+.target-name.s-replied .status-dot-inline{background:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.target-name.s-declined .status-dot-inline{background:var(--ink-mute);opacity:0.4}
+
+/* Tooltip for status on hover */
+.target-tip{position:fixed;background:var(--ink);color:var(--bg);padding:8px 12px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;pointer-events:none;opacity:0;transform:translateY(6px);transition:opacity 0.15s, transform 0.15s;z-index:200;box-shadow:0 6px 20px rgba(0,0,0,0.25);white-space:nowrap}
+.target-tip.show{opacity:1;transform:translateY(0)}
+.target-tip::before{content:'';position:absolute;top:-5px;left:18px;width:8px;height:8px;background:var(--ink);transform:rotate(45deg)}
+
+/* Legend below the wall */
+.targets-legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:24px;padding-top:14px;border-top:1px solid var(--rule-soft);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-mute)}
+.targets-legend .legend-item{display:inline-flex;align-items:center;gap:6px}
+.targets-legend .dot{width:7px;height:7px;border-radius:50%}
+.targets-legend .dot.research{background:var(--ink-mute);opacity:0.4}
+.targets-legend .dot.drafting{background:var(--accent)}
+.targets-legend .dot.sent{background:var(--sage)}
+.targets-legend .dot.replied{background:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.targets-legend .dot.declined{background:var(--ink-mute);opacity:0.4}
 
 /* Margin note on method side */
 .zone-2 .method-note{position:absolute;left:-30px;top:200px;font-family:'Caveat',cursive;font-size:18px;color:var(--accent);transform:rotate(-90deg);transform-origin:left top;letter-spacing:1px;display:none}
@@ -296,8 +319,15 @@ footer .meta-links a:hover{color:var(--accent)}
     <p class="intro">A working list with honest status. <strong>Nothing here has been sent yet.</strong> The list will update as letters genuinely move forward.</p>
 
     <div class="targets-meta" id="targetsMeta"></div>
-    <div class="targets-list" id="targetsList"></div>
+    <div class="targets-wall" id="targetsList"></div>
+    <div class="targets-legend">
+      <span class="legend-item"><span class="dot research"></span>In research</span>
+      <span class="legend-item"><span class="dot drafting"></span>Drafting</span>
+      <span class="legend-item"><span class="dot sent"></span>Sent</span>
+      <span class="legend-item"><span class="dot replied"></span>Replied</span>
+    </div>
   </div>
+  <div class="target-tip" id="targetTip"></div>
 </section>
 
 <!-- ═══════ ZONE 3: SPECIMEN + EDITORS + CONTACT ═══════ -->
@@ -401,14 +431,33 @@ function renderTargets(){
   const order = ['research','drafting','sent','replied','declined'];
   meta.innerHTML = order.filter(k => counts[k]).map(k => `<span><strong>${counts[k]}</strong>${STATUS_LABELS[k]}</span>`).join('');
 
-  // Rows
+  // Floating wall - asymmetric sizing for typographic feel.
+  // Hand-picked sizes for visual rhythm; cycles through pattern so any list length looks intentional.
+  const sizes = ['size-m','size-l','size-s','size-xl','size-s','size-m','size-l','size-s','size-m','size-l','size-xl','size-s'];
   const list = document.getElementById('targetsList');
-  list.innerHTML = TARGETS.map(t => `
-    <div class="target-row">
-      <div class="name">${escapeHtml(t.name)}<span class="co"> · ${escapeHtml(t.co)}</span></div>
-      <div class="status status-${t.status}">${STATUS_LABELS[t.status] || t.status}</div>
-    </div>
-  `).join('');
+  list.innerHTML = TARGETS.map((t, i) => {
+    const size = sizes[i % sizes.length];
+    return `<span class="target-name ${size} s-${t.status}" data-status="${STATUS_LABELS[t.status] || t.status}">${escapeHtml(t.name)}<span class="co"> · ${escapeHtml(t.co)}</span><span class="status-dot-inline" aria-hidden="true"></span></span>`;
+  }).join('');
+
+  // Tooltip showing status on hover
+  const tip = document.getElementById('targetTip');
+  list.querySelectorAll('.target-name').forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      tip.textContent = el.dataset.status;
+      tip.classList.add('show');
+    });
+    el.addEventListener('mousemove', (e) => {
+      const rect = tip.getBoundingClientRect();
+      let x = e.clientX + 14;
+      let y = e.clientY - rect.height - 10;
+      if (x + rect.width > window.innerWidth - 16) x = window.innerWidth - rect.width - 16;
+      if (y < 10) y = e.clientY + 18;
+      tip.style.left = x + 'px';
+      tip.style.top = y + 'px';
+    });
+    el.addEventListener('mouseleave', () => tip.classList.remove('show'));
+  });
 }
 
 function escapeHtml(s){return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
