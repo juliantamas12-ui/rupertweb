@@ -454,13 +454,13 @@ const SCHOOL_TASKS = [
     "status": "upcoming"
   },
   {
-    "title": "Submit Coursework",
+    "title": "Cover Work_Exampreparation_May26",
     "due": "",
     "subject": "",
     "status": "upcoming"
   },
   {
-    "title": "Cover Work_Exampreparation_May26",
+    "title": "Submit Coursework",
     "due": "",
     "subject": "",
     "status": "upcoming"
