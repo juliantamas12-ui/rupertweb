@@ -3,6 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" type="image/svg+xml" href="/icons/favicon-praefatio.svg">
+<link rel="icon" type="image/x-icon" href="/icons/favicon-praefatio.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-praefatio-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icons/favicon-praefatio-192.png">
+<link rel="apple-touch-icon" sizes="192x192" href="/icons/favicon-praefatio-192.png">
 <title>The Praefatio</title>
 <meta name="description" content="A correspondence project. Two students writing to the people who built the world.">
 <link rel="canonical" href="https://thepraefatio.com">
@@ -10,8 +15,6 @@
 <meta property="og:title" content="The Praefatio">
 <meta property="og:description" content="Letters to the people who built the world.">
 <meta property="og:url" content="https://thepraefatio.com">
-<link rel="icon" type="image/svg+xml" href="/icons/favicon-praefatio.svg">
-<link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500;1,9..144,600;1,9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -38,9 +41,11 @@
 .rail-card .body .arrow{position:absolute;right:22px;top:50%;transform:translateY(-50%);width:32px;height:32px;border:1px solid var(--ink-soft);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--ink);opacity:0;transition:all 0.3s}
 .rail-card:hover .body .arrow{opacity:1;border-color:var(--accent);color:var(--accent)}
 
-/* Cinematic full-bleed blocks - Bentley signature */
-.cine-block{position:relative;min-height:80vh;display:flex;align-items:center;overflow:hidden;margin:0;width:100%}
-.cine-block.tall{min-height:90vh}
+/* Cinematic full-bleed blocks - Bentley signature. Spacing between blocks for breath. */
+.cine-block{position:relative;min-height:80vh;display:flex;align-items:center;overflow:hidden;margin:64px 0;width:100%;border-radius:0}
+.cine-block.tall{min-height:80vh}
+.cine-block + .cine-block{margin-top:48px}
+@media(max-width:700px){.cine-block{margin:32px 0}.cine-block + .cine-block{margin-top:32px}}
 @media(max-width:700px){.cine-block,.cine-block.tall{min-height:78vh}}
 .cine-block .bg{position:absolute;inset:0;z-index:0}
 .cine-block .bg img{width:100%;height:100%;object-fit:cover;filter:saturate(0.80) brightness(0.78)}
