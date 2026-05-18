@@ -3,10 +3,34 @@
     {
       "kind": "image",
       "title": "Praefatio hero (R+J wax seal)",
-      "subtitle": "Red wax seal with gold R and J - currently live",
+      "subtitle": "Red wax seal with gold R and J - hero image, live",
       "url": "/images/praefatio/hero-seal-rj.jpg",
       "createdAt": "2026-05-18",
       "tags": ["praefatio", "hero", "ai-generated", "flux-pro"]
+    },
+    {
+      "kind": "image",
+      "title": "Cine block: letters on desk",
+      "subtitle": "Scattered envelopes, dramatic light - The List",
+      "url": "/images/praefatio/block-letters.jpg",
+      "createdAt": "2026-05-18",
+      "tags": ["praefatio", "cinematic", "ai-generated", "flux-pro"]
+    },
+    {
+      "kind": "image",
+      "title": "Cine block: typewriter + letter",
+      "subtitle": "Macro typewriter on cream paper - The Method",
+      "url": "/images/praefatio/block-typewriter.jpg",
+      "createdAt": "2026-05-18",
+      "tags": ["praefatio", "cinematic", "ai-generated", "flux-pro"]
+    },
+    {
+      "kind": "image",
+      "title": "Cine block: empty library",
+      "subtitle": "Roman library at dusk - The Editors",
+      "url": "/images/praefatio/block-library.jpg",
+      "createdAt": "2026-05-18",
+      "tags": ["praefatio", "cinematic", "ai-generated", "flux-pro"]
     },
     {
       "kind": "image",

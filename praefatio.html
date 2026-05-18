@@ -16,10 +16,59 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500;1,9..144,600;1,9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/praefatio.css">
+<style>
+/* ═══════════════════ BENTLEY-STYLE CINEMATIC BLOCKS ═══════════════════ */
+
+/* Horizontal carousel of cards under hero */
+.card-rail-wrap{padding:64px 40px 0;border-top:1px solid var(--rule-soft);background:var(--bg)}
+@media(max-width:700px){.card-rail-wrap{padding:48px 22px 0}}
+.card-rail-label{font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--ink-mute);margin-bottom:32px;font-weight:600;max-width:1400px;margin-left:auto;margin-right:auto}
+.card-rail{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;max-width:1400px;margin:0 auto}
+@media(max-width:900px){.card-rail{grid-template-columns:1fr;gap:18px}}
+.rail-card{position:relative;aspect-ratio:4/3;overflow:hidden;border-radius:4px;text-decoration:none;color:var(--ink);display:block;background:var(--paper);transition:transform 0.4s ease-out}
+.rail-card:hover{transform:translateY(-4px)}
+.rail-card .img{position:absolute;inset:0}
+.rail-card .img img{width:100%;height:100%;object-fit:cover;filter:saturate(0.85) brightness(0.85);transition:transform 0.6s ease-out,filter 0.4s}
+.rail-card:hover .img img{transform:scale(1.04);filter:saturate(0.95) brightness(0.95)}
+.rail-card .img::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(43,31,37,0.10) 0%,rgba(43,31,37,0.30) 50%,rgba(43,31,37,0.85) 100%)}
+.rail-card .body{position:absolute;left:0;right:0;bottom:0;padding:24px 26px;z-index:1}
+.rail-card .body h3{font-family:'Fraunces',serif;font-size:26px;font-weight:600;letter-spacing:-0.4px;color:var(--ink);margin-bottom:6px;line-height:1.1}
+.rail-card .body h3 em{font-style:italic;color:var(--accent)}
+.rail-card .body p{font-family:'Inter',sans-serif;font-size:13px;line-height:1.5;color:var(--ink-soft);margin:0}
+.rail-card .body .arrow{position:absolute;right:22px;top:50%;transform:translateY(-50%);width:32px;height:32px;border:1px solid var(--ink-soft);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--ink);opacity:0;transition:all 0.3s}
+.rail-card:hover .body .arrow{opacity:1;border-color:var(--accent);color:var(--accent)}
+
+/* Cinematic full-bleed blocks - Bentley signature */
+.cine-block{position:relative;min-height:80vh;display:flex;align-items:center;overflow:hidden;margin:0;width:100%}
+.cine-block.tall{min-height:90vh}
+@media(max-width:700px){.cine-block,.cine-block.tall{min-height:78vh}}
+.cine-block .bg{position:absolute;inset:0;z-index:0}
+.cine-block .bg img{width:100%;height:100%;object-fit:cover;filter:saturate(0.80) brightness(0.78)}
+.cine-block .bg::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(43,31,37,0.92) 0%,rgba(43,31,37,0.55) 45%,rgba(43,31,37,0.15) 100%)}
+.cine-block.right .bg::after{background:linear-gradient(270deg,rgba(43,31,37,0.92) 0%,rgba(43,31,37,0.55) 45%,rgba(43,31,37,0.15) 100%)}
+.cine-block .inner{position:relative;z-index:1;max-width:1400px;margin:0 auto;padding:80px 40px;width:100%}
+@media(max-width:700px){.cine-block .inner{padding:60px 22px}}
+.cine-block .copy{max-width:540px}
+.cine-block.right .copy{margin-left:auto}
+@media(max-width:700px){.cine-block.right .copy{margin-left:0}}
+.cine-block .eyebrow{font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:24px;font-weight:600;display:inline-block}
+.cine-block h2{font-family:'Fraunces',serif;font-size:clamp(40px,6vw,72px);font-weight:600;line-height:1;letter-spacing:-2px;color:var(--ink);margin-bottom:24px}
+.cine-block h2 em{font-style:italic;color:var(--accent)}
+.cine-block .lede{font-family:'Inter',sans-serif;font-size:clamp(15px,1.4vw,17px);line-height:1.6;color:var(--ink-soft);margin-bottom:36px;max-width:480px;font-weight:400}
+.cine-cta{display:inline-flex;align-items:center;gap:12px;background:transparent;color:var(--ink);font-family:'Inter',sans-serif;font-size:12px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;padding:16px 26px;border:1px solid var(--ink);text-decoration:none;cursor:pointer;transition:all 0.2s;border-radius:0}
+.cine-cta:hover{background:var(--ink);color:var(--bg)}
+.cine-cta .arrow{transition:transform 0.2s}
+.cine-cta:hover .arrow{transform:translateX(4px)}
+
+/* Reveal on cinematic blocks */
+.cine-block .copy{opacity:0;transform:translateY(20px);transition:opacity 0.9s ease-out,transform 0.9s ease-out}
+.cine-block.in-view .copy{opacity:1;transform:translateY(0)}
+@media(prefers-reduced-motion:reduce){.cine-block .copy{opacity:1;transform:none;transition:none}}
+</style>
 </head>
 <body>
 
-<!-- Ferrari-style intro: gold R+J seal on black, fades to site (once per session) -->
+<!-- Ferrari-style intro: gold R+J seal on black, fades to site -->
 <div class="intro-overlay" id="introOverlay" aria-hidden="true">
   <svg class="intro-seal" viewBox="0 0 100 100">
     <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="2.5"/>
@@ -70,18 +119,72 @@
   </div>
 </section>
 
-<!-- ════════════ TINY TEASER (optional below-the-fold) ════════════ -->
-<section class="teaser" data-reveal>
-  <div class="teaser-inner">
-    <div class="teaser-left">
-      <div class="label">First three in research</div>
-      <ul class="teaser-list" id="teaserList"></ul>
-      <a href="/targets" class="teaser-more">See all twelve →</a>
+<!-- ════════════ CARD RAIL (Bentley top-row style) ════════════ -->
+<section class="card-rail-wrap">
+  <div class="card-rail-label">Explore</div>
+  <div class="card-rail">
+    <a class="rail-card" href="/about">
+      <div class="img"><img src="/images/praefatio/block-letters.jpg" alt=""></div>
+      <div class="body">
+        <h3>The <em>Project</em></h3>
+        <p>What we are building, and why letters.</p>
+        <span class="arrow">→</span>
+      </div>
+    </a>
+    <a class="rail-card" href="/method">
+      <div class="img"><img src="/images/praefatio/block-typewriter.jpg" alt=""></div>
+      <div class="body">
+        <h3>The <em>Method</em></h3>
+        <p>Four rules we don't break.</p>
+        <span class="arrow">→</span>
+      </div>
+    </a>
+    <a class="rail-card" href="/editors">
+      <div class="img"><img src="/images/praefatio/block-library.jpg" alt=""></div>
+      <div class="body">
+        <h3>The <em>Editors</em></h3>
+        <p>Two students. Same school in Rome.</p>
+        <span class="arrow">→</span>
+      </div>
+    </a>
+  </div>
+</section>
+
+<!-- ════════════ CINE BLOCK 1 - Targets (left-aligned text on photo) ════════════ -->
+<section class="cine-block tall" data-cine>
+  <div class="bg"><img src="/images/praefatio/block-letters.jpg" alt=""></div>
+  <div class="inner">
+    <div class="copy">
+      <div class="eyebrow">Explore</div>
+      <h2>The <em>List.</em></h2>
+      <p class="lede">Twelve founders. Each chosen for a specific pivot, contradiction or turning point in their life that the public hasn't fully heard them explain.</p>
+      <a class="cine-cta" href="/targets">See the list <span class="arrow">→</span></a>
     </div>
-    <div class="teaser-right">
-      <div class="label">What this is</div>
-      <p>A letters project, not a podcast. We post a single carefully-researched question to one person and wait. The replies, with permission, will become a book.</p>
-      <a href="/about" class="teaser-more">Read more about the project →</a>
+  </div>
+</section>
+
+<!-- ════════════ CINE BLOCK 2 - Method (right-aligned) ════════════ -->
+<section class="cine-block tall right" data-cine>
+  <div class="bg"><img src="/images/praefatio/block-typewriter.jpg" alt=""></div>
+  <div class="inner">
+    <div class="copy">
+      <div class="eyebrow">Read</div>
+      <h2>Two to three <em>hours</em>.</h2>
+      <p class="lede">That's the floor for research, before a single sentence of a letter is drafted. The discipline is the difference between a letter that gets read and one that gets deleted.</p>
+      <a class="cine-cta" href="/method">Read the method <span class="arrow">→</span></a>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════ CINE BLOCK 3 - Editors (left) ════════════ -->
+<section class="cine-block tall" data-cine>
+  <div class="bg"><img src="/images/praefatio/block-library.jpg" alt=""></div>
+  <div class="inner">
+    <div class="copy">
+      <div class="eyebrow">Meet</div>
+      <h2>The <em>editors</em>.</h2>
+      <p class="lede">Julian Tamas and Rocco. Both fourteen, both at Marymount International School in Rome. One reads more long-form business writing than is healthy. The other brings the edits — and the introductions.</p>
+      <a class="cine-cta" href="/editors">Meet them <span class="arrow">→</span></a>
     </div>
   </div>
 </section>
@@ -103,16 +206,17 @@
 
 <script src="/praefatio.js"></script>
 <script>
-// Tiny teaser - first 3 names in research
-const TEASER = [
-  { name:'Patrick Collison', co:'Stripe' },
-  { name:'Howard Marks',     co:'Oaktree' },
-  { name:'Daniel Ek',        co:'Spotify' },
-];
-const el = document.getElementById('teaserList');
-if (el) {
-  el.innerHTML = TEASER.map(t => `<li><span class="t-name">${t.name}</span><span class="t-co"> · ${t.co}</span><span class="t-status">In research</span></li>`).join('');
-}
+// Cinematic block reveal on scroll
+(function(){
+  const blocks = document.querySelectorAll('[data-cine]');
+  if (!blocks.length) return;
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries){
+      if (e.isIntersecting){ e.target.classList.add('in-view'); io.unobserve(e.target); }
+    }
+  }, { threshold: 0.25, rootMargin: '0px 0px -80px 0px' });
+  blocks.forEach(b => io.observe(b));
+})();
 </script>
 
 </body>
