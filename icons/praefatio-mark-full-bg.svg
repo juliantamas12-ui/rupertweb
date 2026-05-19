@@ -1,34 +1,42 @@
-<!-- THE PRAEFATIO · Royal cypher monogram - delicate, 18th-century courtly with modern restraint -->
+<!-- THE PRAEFATIO · Hand-pressed wax seal monogram - single irregular ring -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="The Praefatio">
   <rect width="200" height="200" fill="#2B1F25"/>
 
-  <!-- Delicate double-line outer frame -->
-  <circle cx="100" cy="100" r="86" fill="none" stroke="#D4A156" stroke-width="0.8" opacity="0.95"/>
-  <circle cx="100" cy="100" r="82" fill="none" stroke="#D4A156" stroke-width="0.4" opacity="0.55"/>
+  <!--
+    Hand-pressed wax ring. Slightly irregular path with subtle thickness variation
+    via filter and stroke-dasharray. The shape isn't a perfect circle - corners are
+    pulled in slightly to mimic a hand-pressed brass die.
+  -->
+  <defs>
+    <filter id="waxblur" x="-5%" y="-5%" width="110%" height="110%">
+      <feGaussianBlur stdDeviation="0.18"/>
+    </filter>
+  </defs>
 
-  <!-- Four delicate cardinal cypher dots -->
-  <circle cx="100" cy="14" r="1.6" fill="#D4A156"/>
-  <circle cx="100" cy="186" r="1.6" fill="#D4A156"/>
-  <circle cx="14" cy="100" r="1.6" fill="#D4A156"/>
-  <circle cx="186" cy="100" r="1.6" fill="#D4A156"/>
+  <!-- Outer wax rim - hand-drawn-feeling path -->
+  <path d="M 100 13
+           C 122 13, 144 22, 161 38
+           C 178 56, 187 80, 186 100
+           C 187 122, 178 144, 162 161
+           C 145 178, 122 187, 100 186
+           C 78 187, 56 178, 39 161
+           C 22 144, 13 122, 14 100
+           C 13 78, 22 56, 39 39
+           C 56 22, 78 13, 100 13 Z"
+        fill="none" stroke="#D4A156" stroke-width="2" opacity="0.94" stroke-linecap="round" stroke-linejoin="round" filter="url(#waxblur)"/>
 
-  <!-- Two tiny ornamental accent dots at NE/NW/SE/SW corners (cypher convention) -->
-  <circle cx="40" cy="40" r="0.9" fill="#D4A156" opacity="0.6"/>
-  <circle cx="160" cy="40" r="0.9" fill="#D4A156" opacity="0.6"/>
-  <circle cx="40" cy="160" r="0.9" fill="#D4A156" opacity="0.6"/>
-  <circle cx="160" cy="160" r="0.9" fill="#D4A156" opacity="0.6"/>
+  <!-- Subtle thicker spots around the rim - like wax pressed more in some places -->
+  <circle cx="100" cy="13" r="2.3" fill="#D4A156" opacity="0.7"/>
+  <circle cx="14" cy="100" r="1.6" fill="#D4A156" opacity="0.5"/>
+  <circle cx="186" cy="100" r="1.6" fill="#D4A156" opacity="0.5"/>
+  <circle cx="100" cy="187" r="2" fill="#D4A156" opacity="0.6"/>
 
-  <!-- The interlocked monogram. Light weight italic serif - delicate not chunky. -->
+  <!-- Italic R + J cypher -->
   <g font-family="'URW Bookman','Liberation Serif',Georgia,serif" font-style="italic" font-weight="400">
-    <!-- J - subtler, behind, slightly smaller and lower -->
     <text x="118" y="138" font-size="96" fill="#D4A156" opacity="0.78" text-anchor="middle" letter-spacing="-2">J</text>
-    <!-- R - main, slightly larger, higher, in front -->
     <text x="85" y="128" font-size="100" fill="#D4A156" text-anchor="middle" letter-spacing="-2">R</text>
   </g>
 
-  <!-- Thin swash flourish under the monogram - small curved line, suggests a banner ribbon -->
-  <path d="M 70 156 Q 100 162, 130 156" fill="none" stroke="#D4A156" stroke-width="0.7" opacity="0.7"/>
-
-  <!-- Centre period mark below the flourish -->
+  <!-- Period dot -->
   <circle cx="100" cy="168" r="1.2" fill="#D4A156"/>
 </svg>
