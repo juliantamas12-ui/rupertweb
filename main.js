@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Stranded Army That Decided the Russian Civil War: The Czechoslovak Legion and the Trans-Siberian Railway, 1918",
+    date: "2026-05-19",
+    category: "History",
+    excerpt: "On the afternoon of 14 May 1918, at the railway station in Chelyabinsk, a Hungarian prisoner of war returning home under Brest-Litovsk threw a piece of cast iron out of his train carriage at a Czech soldier on the opposite platform. His comrades lynched the Hungarian on the platform. Within a fortnight, the rest of the Czechoslovak Legion — forty thousand former Habsburg prisoners of war strung out along four thousand miles of the Trans-Siberian Railway — had risen against the Soviet government and effectively detached Siberia from Moscow's control. The Bolsheviks were almost destroyed in the summer of 1918, and the reason was not Denikin, not Kolchak, and not the British landing at Murmansk. The reason was forty thousand Czechs who had been trying to go home and could not...",
+    url: "essays/2026-05-19-the-stranded-army-that-decided-the-russian-civil-war.html"
+  },
+  {
     title: "The Afternoon at Heathrow That Killed British Social Democracy: 28 September 1976",
     date: "2026-05-18",
     category: "History",
