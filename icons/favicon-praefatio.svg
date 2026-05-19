@@ -1,33 +1,46 @@
-<!-- THE PRAEFATIO · Hand-pressed wax seal vector - irregular outer ring + italic RJ cypher -->
+<!-- THE PRAEFATIO · Wax-stamp seal: thick outer rim with subtle inner highlight -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="The Praefatio">
   <rect width="200" height="200" fill="#2B1F25"/>
 
-  <!--
-    Hand-pressed wax ring. Slightly irregular bezier path, NOT a perfect circle.
-    Asymmetric control points create the natural wobble of a stamp pressed by hand.
-    Thick stroke (~5px at this scale) gives it the bulk of pressed wax.
-  -->
-  <path d="M 100 24
-           C 122 23, 144 31, 159 47
-           C 174 62, 178 84, 177 100
-           C 178 117, 174 138, 159 153
-           C 144 169, 122 177, 100 177
-           C 79 178, 56 170, 41 154
-           C 26 139, 23 117, 23 100
-           C 22 83, 26 62, 41 47
-           C 56 31, 78 23, 100 24 Z"
+  <!-- Outer wax bulk - thick, slightly irregular, dark base layer -->
+  <path d="M 95 15
+           C 124 12, 152 22, 170 42
+           C 186 60, 188 78, 184 96
+           C 192 116, 184 142, 162 158
+           C 144 174, 124 184, 102 184
+           C 78 186, 52 178, 34 158
+           C 18 142, 12 122, 18 102
+           C 12 80, 24 56, 44 38
+           C 60 22, 78 17, 95 15 Z"
         fill="none"
-        stroke="#D4A156"
-        stroke-width="5"
+        stroke="#9C7438"
+        stroke-width="10"
         stroke-linejoin="round"
-        stroke-linecap="round"/>
+        stroke-linecap="round"
+        opacity="0.95"/>
 
-  <!-- Italic R + J cypher (kept exactly as Julian liked) -->
+  <!-- Inner highlight rim - thinner brighter gold to suggest wax bulge top -->
+  <path d="M 95 15
+           C 124 12, 152 22, 170 42
+           C 186 60, 188 78, 184 96
+           C 192 116, 184 142, 162 158
+           C 144 174, 124 184, 102 184
+           C 78 186, 52 178, 34 158
+           C 18 142, 12 122, 18 102
+           C 12 80, 24 56, 44 38
+           C 60 22, 78 17, 95 15 Z"
+        fill="none"
+        stroke="#E8C570"
+        stroke-width="2.5"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        opacity="0.9"/>
+
+  <!-- Italic R + J cypher -->
   <g font-family="'URW Bookman','Liberation Serif',Georgia,serif" font-style="italic" font-weight="500">
     <text x="118" y="128" font-size="84" fill="#D4A156" opacity="0.85" text-anchor="middle" letter-spacing="-2">J</text>
     <text x="86" y="120" font-size="88" fill="#D4A156" text-anchor="middle" letter-spacing="-2">R</text>
   </g>
 
-  <!-- Tiny period dot below the cypher -->
   <circle cx="100" cy="148" r="1.6" fill="#D4A156"/>
 </svg>
