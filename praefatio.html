@@ -75,13 +75,29 @@
 
 <!-- Ferrari-style intro: gold R+J seal on black, fades to site -->
 <div class="intro-overlay" id="introOverlay" aria-hidden="true">
-  <img class="intro-seal" src="/icons/wax-seal-rj-source.png" alt="">
+  <svg class="intro-seal" viewBox="0 0 100 100">
+    <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="2.5"/>
+    <circle cx="50" cy="50" r="38" fill="none" stroke="currentColor" stroke-width="0.7" opacity="0.5"/>
+    <g font-family="'Playfair Display','URW Bookman','Liberation Serif',Georgia,serif" font-style="italic" font-weight="600" font-size="50" fill="currentColor">
+      <text x="32" y="66">R</text>
+      <text x="55" y="66">J</text>
+    </g>
+    <circle cx="50" cy="80" r="1.4" fill="currentColor"/>
+  </svg>
 </div>
 
 <!-- PERSISTENT HEADER -->
 <header class="nav-bar">
   <a class="brand" href="/">
-    <img class="brand-seal" src="/icons/wax-seal-rj-source.png" alt="The Praefatio" width="42" height="42">
+    <svg class="brand-seal" viewBox="0 0 100 100" aria-hidden="true">
+      <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="3"/>
+      <circle cx="50" cy="50" r="38" fill="none" stroke="currentColor" stroke-width="0.8" opacity="0.5"/>
+      <g font-family="'Playfair Display','URW Bookman','Liberation Serif',Georgia,serif" font-style="italic" font-weight="600" font-size="50" fill="currentColor">
+        <text x="32" y="66">R</text>
+        <text x="55" y="66">J</text>
+      </g>
+      <circle cx="50" cy="80" r="1.4" fill="currentColor"/>
+    </svg>
     <span class="brand-name">The Praefatio</span>
   </a>
   <nav class="nav-tabs">
@@ -98,12 +114,16 @@
 
 <!-- ════════════ HERO - the hook ════════════ -->
 <section class="hero-home">
-
+  <div class="hero-home-bg" aria-hidden="true">
+    <img src="/images/praefatio/hero-seal-rj.jpg" alt="">
+  </div>
   <div class="hero-home-inner">
-    <img class="hero-seal" src="/icons/wax-seal-rj-source.png" alt="" aria-hidden="true">
     <h1 class="hero-h1">Letters to the people who <em>built the world.</em></h1>
     <p class="hero-strap">Two students writing — by post and by email — to the founders, investors and operators they admire. One question each, shaped by hours of reading.</p>
-
+    <div class="hero-ctas">
+      <a class="btn-primary" href="/targets">See who we're writing to <span>→</span></a>
+      <a class="btn-ghost" href="/method">Read the method <span>→</span></a>
+    </div>
   </div>
 </section>
 
