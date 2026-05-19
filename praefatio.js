@@ -115,3 +115,33 @@
 })();
 
 // Custom cursor removed - Julian disliked the gold dot/ring.
+
+// ── Feadship-style drawer menu ──
+(function(){
+  const trigger = document.getElementById('menuTrigger');
+  const drawer = document.getElementById('menuDrawer');
+  if (!trigger || !drawer) return;
+  const open = () => {
+    drawer.classList.add('open');
+    trigger.classList.add('open');
+    trigger.setAttribute('aria-expanded','true');
+    drawer.setAttribute('aria-hidden','false');
+    document.body.style.overflow = 'hidden';
+  };
+  const close = () => {
+    drawer.classList.remove('open');
+    trigger.classList.remove('open');
+    trigger.setAttribute('aria-expanded','false');
+    drawer.setAttribute('aria-hidden','true');
+    document.body.style.overflow = '';
+  };
+  trigger.addEventListener('click', () => drawer.classList.contains('open') ? close() : open());
+  drawer.querySelector('.backdrop').addEventListener('click', close);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && drawer.classList.contains('open')) close(); });
+  // Mark the current page's item as active
+  const path = window.location.pathname.replace(/\/$/, '') || '/';
+  drawer.querySelectorAll('.item').forEach(a => {
+    const href = a.getAttribute('href').replace(/\/$/, '') || '/';
+    a.classList.toggle('active', href === path);
+  });
+})();
