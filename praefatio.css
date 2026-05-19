@@ -192,6 +192,59 @@ body > *{position:relative;z-index:1}
 .word-reveal{display:inline-block;opacity:0;transform:translateY(8px) skewY(2deg);transition:opacity 0.5s ease-out,transform 0.5s ease-out}
 .word-reveal.shown{opacity:1;transform:translateY(0) skewY(0)}
 
+/* ── SUB-PAGE MOTION ── */
+
+/* H1 letter-rise on page load - each character settles into place like ink */
+.page h1 .char{display:inline-block;opacity:0;transform:translateY(40px);animation:charRise 0.7s cubic-bezier(0.16,1,0.3,1) forwards}
+.page h1 .char.space{width:0.28em}
+@keyframes charRise{to{opacity:1;transform:translateY(0)}}
+
+/* Strap fades in after the headline finishes */
+.page .strap{opacity:0;animation:fadeUp 0.8s ease-out forwards}
+@keyframes fadeUp{0%{opacity:0;transform:translateY(14px)}100%{opacity:1;transform:translateY(0)}}
+
+/* Headline underline that draws itself in */
+.page h2{position:relative;display:inline-block;padding-bottom:6px}
+.page h2::after{content:'';position:absolute;left:0;bottom:0;width:0;height:1px;background:linear-gradient(90deg,var(--accent),transparent);transition:width 1.2s cubic-bezier(0.16,1,0.3,1) 0.2s}
+.page h2.draw::after{width:80px}
+
+/* Method items - staggered reveal as scrolled into view */
+.method-item{opacity:0;transform:translateY(30px);transition:opacity 0.7s cubic-bezier(0.16,1,0.3,1),transform 0.7s cubic-bezier(0.16,1,0.3,1)}
+.method-item.in-view{opacity:1;transform:translateY(0)}
+.method-item.in-view:nth-child(1){transition-delay:0s}
+.method-item.in-view:nth-child(2){transition-delay:0.12s}
+.method-item.in-view:nth-child(3){transition-delay:0.24s}
+.method-item.in-view:nth-child(4){transition-delay:0.36s}
+.method-item .roman{display:inline-block;transition:transform 0.5s cubic-bezier(0.16,1,0.3,1),color 0.3s}
+.method-item:hover .roman{transform:translateX(-4px) scale(1.15);color:#E8C570}
+
+/* Editor cards develop in like a Polaroid */
+.editor{opacity:0;filter:blur(8px);transition:opacity 0.9s ease-out,filter 0.9s ease-out}
+.editor.in-view{opacity:1;filter:blur(0)}
+.editor:nth-child(2).in-view{transition-delay:0.2s}
+.editor .portrait{transition:transform 0.4s cubic-bezier(0.16,1,0.3,1)}
+.editor:hover .portrait{transform:rotate(0)!important;box-shadow:0 12px 32px rgba(0,0,0,0.4)}
+
+/* Quote on /about - typewriter effect handled via JS adding visible chars */
+.page .quote{position:relative}
+.page .quote .typing-cursor{display:inline-block;width:2px;height:0.9em;background:var(--accent);margin-left:2px;vertical-align:text-bottom;animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+.page .quote.done .typing-cursor{display:none}
+.page .quote .cite{opacity:0;transition:opacity 0.7s ease-out 0.3s}
+.page .quote.done .cite{opacity:1}
+
+/* Email card on /contact - wax-press effect on hover */
+.email-card{position:relative;overflow:hidden}
+.email-card::after{content:'';position:absolute;inset:0;border-radius:inherit;box-shadow:0 0 0 0 var(--accent-soft);transition:box-shadow 0.5s ease-out}
+.email-card:active{transform:scale(0.96);transition:transform 0.1s}
+.email-card:hover::after{box-shadow:0 0 0 8px transparent}
+.email-card:active::after{box-shadow:0 0 0 16px transparent;transition:box-shadow 0.4s ease-out}
+
+@media(prefers-reduced-motion:reduce){
+  .page h1 .char,.page .strap,.method-item,.editor{opacity:1;transform:none;filter:none;animation:none;transition:none}
+  .page h2::after{width:80px;transition:none}
+}
+
 /* Magnetic hover targets - pulled toward cursor */
 .magnetic{transition:transform 0.18s cubic-bezier(0.16,1,0.3,1)}
 

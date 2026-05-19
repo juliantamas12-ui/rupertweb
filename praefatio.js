@@ -116,6 +116,122 @@
 
 // Custom cursor removed - Julian disliked the gold dot/ring.
 
+// ── SUB-PAGE MOTION (about/method/targets/editors/contact) ──
+(function(){
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduced) return;
+
+  // 1. Split H1 into per-character spans with stagger
+  const h1 = document.querySelector('.page h1');
+  if (h1 && !h1.dataset.charSplit){
+    h1.dataset.charSplit = '1';
+    const walk = (node) => {
+      if (node.nodeType === 3){
+        const chars = [...node.textContent];
+        const frag = document.createDocumentFragment();
+        chars.forEach((c,i) => {
+          if (c === ' '){
+            const sp = document.createElement('span'); sp.className='char space'; frag.appendChild(sp);
+          } else {
+            const sp = document.createElement('span'); sp.className='char'; sp.textContent=c; frag.appendChild(sp);
+          }
+        });
+        node.parentNode.replaceChild(frag, node);
+      } else if (node.nodeType === 1){
+        Array.from(node.childNodes).forEach(walk);
+      }
+    };
+    walk(h1);
+    // Stagger animation delays
+    const all = h1.querySelectorAll('.char');
+    all.forEach((c,i) => { c.style.animationDelay = (i * 22) + 'ms'; });
+    // Strap appears after the H1 is done
+    const strap = document.querySelector('.page .strap');
+    if (strap) strap.style.animationDelay = (all.length * 22 + 200) + 'ms';
+  }
+
+  // 2. Draw the underline beneath h2s as they enter view
+  const h2s = document.querySelectorAll('.page h2');
+  if (h2s.length){
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries){
+        if (e.isIntersecting){ e.target.classList.add('draw'); io.unobserve(e.target); }
+      }
+    }, { threshold: 0.4 });
+    h2s.forEach(el => io.observe(el));
+  }
+
+  // 3. Method items - staggered reveal
+  const methods = document.querySelectorAll('.method-item');
+  if (methods.length){
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries){
+        if (e.isIntersecting){ e.target.classList.add('in-view'); io.unobserve(e.target); }
+      }
+    }, { threshold: 0.25, rootMargin: '0px 0px -40px 0px' });
+    methods.forEach(el => io.observe(el));
+  }
+
+  // 4. Editor cards - Polaroid develop
+  const editors = document.querySelectorAll('.editor');
+  if (editors.length){
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries){
+        if (e.isIntersecting){ e.target.classList.add('in-view'); io.unobserve(e.target); }
+      }
+    }, { threshold: 0.3 });
+    editors.forEach(el => io.observe(el));
+  }
+
+  // 5. Typewriter for /about quote
+  const quote = document.querySelector('.page .quote');
+  if (quote){
+    // The quote has a text node + an <em> + a <span class="cite">. Isolate the quote text first.
+    const cite = quote.querySelector('.cite');
+    // Collect text + em segments
+    const fragments = [];
+    Array.from(quote.childNodes).forEach(n => {
+      if (n === cite) return;
+      if (n.nodeType === 3){ fragments.push({type:'text', value:n.textContent}); }
+      else if (n.nodeType === 1 && n.tagName !== 'SPAN'){ fragments.push({type:'tag', value:n.outerHTML, plain:n.textContent}); }
+    });
+    // Wipe the original content (keep cite) and rebuild with a cursor
+    quote.innerHTML = '';
+    const target = document.createElement('span'); quote.appendChild(target);
+    const cursor = document.createElement('span'); cursor.className='typing-cursor'; quote.appendChild(cursor);
+    if (cite) quote.appendChild(cite);
+
+    // Trigger typing when scrolled into view
+    const io = new IntersectionObserver((entries,obs) => {
+      for (const e of entries){
+        if (!e.isIntersecting) continue;
+        obs.unobserve(e.target);
+        let frags = fragments.slice();
+        let cur = '';
+        function step(){
+          if (!frags.length){ quote.classList.add('done'); return; }
+          const f = frags[0];
+          if (f.type === 'text'){
+            if (!f.value.length){ frags.shift(); step(); return; }
+            cur += f.value[0];
+            f.value = f.value.slice(1);
+            target.textContent = cur;
+            setTimeout(step, 28);
+          } else {
+            // tag - inject whole HTML in one go (em accent words)
+            cur += f.value;
+            target.innerHTML = cur;
+            frags.shift();
+            setTimeout(step, 60);
+          }
+        }
+        step();
+      }
+    }, { threshold: 0.5 });
+    io.observe(quote);
+  }
+})();
+
 // ── Feadship-style drawer menu ──
 (function(){
   const trigger = document.getElementById('menuTrigger');
