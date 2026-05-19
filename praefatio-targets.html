@@ -149,11 +149,14 @@ wall.innerHTML = TARGETS.map((t,i)=>{
 
 const tip = document.getElementById('targetTip');
 function placeTipAt(clientX, clientY){
-  let x = clientX + 12;
-  let y = clientY + 20;
   const rect = tip.getBoundingClientRect();
-  if (x + rect.width > window.innerWidth - 10) x = clientX - rect.width - 12;
-  if (y + rect.height > window.innerHeight - 10) y = clientY - rect.height - 14;
+  // Center horizontally under the cursor
+  let x = clientX - rect.width / 2;
+  let y = clientY + 18;
+  // Keep on screen
+  if (x < 8) x = 8;
+  if (x + rect.width > window.innerWidth - 8) x = window.innerWidth - rect.width - 8;
+  if (y + rect.height > window.innerHeight - 10) y = clientY - rect.height - 18;
   tip.style.left = x + 'px';
   tip.style.top = y + 'px';
 }
