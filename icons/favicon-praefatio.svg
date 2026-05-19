@@ -1,42 +1,59 @@
-<!-- THE PRAEFATIO · Hand-pressed wax seal monogram - single irregular ring -->
+<!-- THE PRAEFATIO · Hand-pressed wax seal monogram - thick uneven rim like real wax -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="The Praefatio">
   <rect width="200" height="200" fill="#2B1F25"/>
 
-  <!--
-    Hand-pressed wax ring. Slightly irregular path with subtle thickness variation
-    via filter and stroke-dasharray. The shape isn't a perfect circle - corners are
-    pulled in slightly to mimic a hand-pressed brass die.
-  -->
   <defs>
     <filter id="waxblur" x="-5%" y="-5%" width="110%" height="110%">
-      <feGaussianBlur stdDeviation="0.18"/>
+      <feGaussianBlur stdDeviation="0.35"/>
     </filter>
   </defs>
 
-  <!-- Outer wax rim - hand-drawn-feeling path -->
-  <path d="M 100 13
-           C 122 13, 144 22, 161 38
-           C 178 56, 187 80, 186 100
-           C 187 122, 178 144, 162 161
-           C 145 178, 122 187, 100 186
-           C 78 187, 56 178, 39 161
-           C 22 144, 13 122, 14 100
-           C 13 78, 22 56, 39 39
-           C 56 22, 78 13, 100 13 Z"
-        fill="none" stroke="#D4A156" stroke-width="2" opacity="0.94" stroke-linecap="round" stroke-linejoin="round" filter="url(#waxblur)"/>
+  <!--
+    Wax-pressed rim. Two stacked paths:
+    - A thick outer "wax body" with translucent gold (the bulk of the wax)
+    - A thinner inner darker line where the wax meets the impression (the press edge)
+    Both paths are irregular blob outlines mimicking how wax actually spreads.
+  -->
 
-  <!-- Subtle thicker spots around the rim - like wax pressed more in some places -->
-  <circle cx="100" cy="13" r="2.3" fill="#D4A156" opacity="0.7"/>
-  <circle cx="14" cy="100" r="1.6" fill="#D4A156" opacity="0.5"/>
-  <circle cx="186" cy="100" r="1.6" fill="#D4A156" opacity="0.5"/>
-  <circle cx="100" cy="187" r="2" fill="#D4A156" opacity="0.6"/>
+  <!-- Thick outer wax body - the chunky organic rim -->
+  <path d="M 100 11
+           C 124 11, 146 19, 163 36
+           C 180 53, 189 76, 188 100
+           C 189 124, 180 146, 164 163
+           C 147 180, 124 189, 100 188
+           C 76 189, 53 180, 36 164
+           C 19 147, 11 124, 12 100
+           C 11 76, 20 53, 36 36
+           C 53 19, 76 11, 100 11 Z"
+        fill="none"
+        stroke="#D4A156"
+        stroke-width="6"
+        opacity="0.85"
+        stroke-linejoin="round"
+        filter="url(#waxblur)"/>
 
-  <!-- Italic R + J cypher -->
+  <!-- Inner highlight ring where the press impression meets the wax surface -->
+  <path d="M 100 19
+           C 121 19, 141 26, 156 41
+           C 172 57, 180 77, 180 99
+           C 181 121, 173 141, 158 157
+           C 142 173, 121 181, 100 180
+           C 79 181, 58 173, 43 157
+           C 27 141, 19 121, 20 99
+           C 19 77, 27 57, 43 42
+           C 58 27, 79 19, 100 19 Z"
+        fill="none"
+        stroke="#E8B870"
+        stroke-width="1.2"
+        opacity="0.9"
+        stroke-linejoin="round"/>
+
+  <!-- Italic R + J cypher layered -->
   <g font-family="'URW Bookman','Liberation Serif',Georgia,serif" font-style="italic" font-weight="400">
     <text x="118" y="138" font-size="96" fill="#D4A156" opacity="0.78" text-anchor="middle" letter-spacing="-2">J</text>
     <text x="85" y="128" font-size="100" fill="#D4A156" text-anchor="middle" letter-spacing="-2">R</text>
   </g>
 
-  <!-- Period dot -->
-  <circle cx="100" cy="168" r="1.2" fill="#D4A156"/>
+  <!-- Period mark -->
+  <circle cx="100" cy="168" r="1.4" fill="#D4A156"/>
 </svg>
