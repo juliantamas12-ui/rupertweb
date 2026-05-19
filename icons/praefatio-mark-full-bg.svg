@@ -1,83 +1,34 @@
-<!-- THE PRAEFATIO · Copperplate cypher monogram - calligraphic R+J interlocked -->
+<!-- THE PRAEFATIO · Royal cypher monogram - delicate, 18th-century courtly with modern restraint -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="The Praefatio">
   <rect width="200" height="200" fill="#2B1F25"/>
 
-  <!-- Outer hairline ring -->
+  <!-- Delicate double-line outer frame -->
   <circle cx="100" cy="100" r="86" fill="none" stroke="#D4A156" stroke-width="0.8" opacity="0.95"/>
   <circle cx="100" cy="100" r="82" fill="none" stroke="#D4A156" stroke-width="0.4" opacity="0.55"/>
 
-  <!-- Four cardinal cypher dots -->
+  <!-- Four delicate cardinal cypher dots -->
   <circle cx="100" cy="14" r="1.6" fill="#D4A156"/>
   <circle cx="100" cy="186" r="1.6" fill="#D4A156"/>
   <circle cx="14" cy="100" r="1.6" fill="#D4A156"/>
   <circle cx="186" cy="100" r="1.6" fill="#D4A156"/>
 
-  <!--
-    ─── J descender (drawn first so it sits BEHIND the R) ───
-    Style: copperplate italic. Top: a long sweeping flourish curl entering from upper right.
-    Body: thin upstroke into a thick down-curve with belly on the left, terminating
-    in a curling tail at the bottom that loops back rightward.
-  -->
-  <g fill="#D4A156">
-    <!-- J top flourish - swooping curl entering from upper right -->
-    <path d="M 152 38
-             Q 145 32, 138 38
-             Q 135 42, 138 48
-             Q 142 54, 148 52
-             L 144 54" stroke="#D4A156" stroke-width="1.2" fill="none" stroke-linecap="round"/>
-    <!-- J main body - thick descending stroke with belly curve, ending in a curl -->
-    <path d="M 138 48
-             Q 138 60, 134 80
-             Q 130 105, 124 128
-             Q 118 148, 104 154
-             Q 88 158, 78 148
-             Q 72 140, 80 134
-             Q 88 130, 94 138
-             Q 98 144, 96 150" fill="none" stroke="#D4A156" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" opacity="0.92"/>
+  <!-- Two tiny ornamental accent dots at NE/NW/SE/SW corners (cypher convention) -->
+  <circle cx="40" cy="40" r="0.9" fill="#D4A156" opacity="0.6"/>
+  <circle cx="160" cy="40" r="0.9" fill="#D4A156" opacity="0.6"/>
+  <circle cx="40" cy="160" r="0.9" fill="#D4A156" opacity="0.6"/>
+  <circle cx="160" cy="160" r="0.9" fill="#D4A156" opacity="0.6"/>
+
+  <!-- The interlocked monogram. Light weight italic serif - delicate not chunky. -->
+  <g font-family="'URW Bookman','Liberation Serif',Georgia,serif" font-style="italic" font-weight="400">
+    <!-- J - subtler, behind, slightly smaller and lower -->
+    <text x="118" y="138" font-size="96" fill="#D4A156" opacity="0.78" text-anchor="middle" letter-spacing="-2">J</text>
+    <!-- R - main, slightly larger, higher, in front -->
+    <text x="85" y="128" font-size="100" fill="#D4A156" text-anchor="middle" letter-spacing="-2">R</text>
   </g>
 
-  <!--
-    ─── R (drawn on top of J, dominant) ───
-    Style: copperplate italic - matches the reference exactly.
-    Three strokes: (1) elaborate top flourish entering left, (2) thick main vertical
-    stem with curl base, (3) sweeping diagonal leg with terminal flourish.
-  -->
-  <g fill="none" stroke="#D4A156" stroke-linecap="round" stroke-linejoin="round">
-    <!-- Top flourish curl - the dramatic "wing" entering from above-left -->
-    <path d="M 38 64
-             Q 40 50, 52 46
-             Q 64 44, 70 50
-             Q 74 54, 72 60
-             Q 68 64, 64 60
-             L 70 64" stroke-width="1.6"/>
+  <!-- Thin swash flourish under the monogram - small curved line, suggests a banner ribbon -->
+  <path d="M 70 156 Q 100 162, 130 156" fill="none" stroke="#D4A156" stroke-width="0.7" opacity="0.7"/>
 
-    <!-- Main stem - the thick descending curve of the R -->
-    <path d="M 70 56
-             Q 72 70, 70 88
-             Q 68 110, 64 130
-             Q 60 148, 52 154
-             Q 44 158, 40 152
-             Q 38 144, 46 142
-             Q 52 142, 54 148" stroke-width="3.5"/>
-
-    <!-- Top bowl of R - rounded loop on the upper right of stem -->
-    <path d="M 70 56
-             Q 92 50, 104 62
-             Q 114 76, 104 88
-             Q 90 96, 76 92
-             L 74 90" stroke-width="3.5"/>
-
-    <!-- Diagonal leg of R sweeping to lower right with copperplate terminal -->
-    <path d="M 86 92
-             Q 96 102, 108 118
-             Q 122 138, 138 154
-             Q 146 160, 152 154
-             Q 156 146, 148 142" stroke-width="3.5"/>
-
-    <!-- Tiny flourish curl at the foot of the diagonal leg -->
-    <path d="M 152 154 Q 158 158, 158 152 Q 156 148, 150 150" stroke-width="1.2"/>
-  </g>
-
-  <!-- Period mark below the cypher -->
-  <circle cx="100" cy="172" r="1.4" fill="#D4A156"/>
+  <!-- Centre period mark below the flourish -->
+  <circle cx="100" cy="168" r="1.2" fill="#D4A156"/>
 </svg>
