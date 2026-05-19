@@ -1,46 +1,17 @@
-<!-- THE PRAEFATIO · Wax-stamp seal: thick outer rim with subtle inner highlight -->
+<!-- THE PRAEFATIO · v3 clean cypher - italic RJ inside thin double ring -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="The Praefatio">
   <rect width="200" height="200" fill="#2B1F25"/>
 
-  <!-- Outer wax bulk - thick, slightly irregular, dark base layer -->
-  <path d="M 95 15
-           C 124 12, 152 22, 170 42
-           C 186 60, 188 78, 184 96
-           C 192 116, 184 142, 162 158
-           C 144 174, 124 184, 102 184
-           C 78 186, 52 178, 34 158
-           C 18 142, 12 122, 18 102
-           C 12 80, 24 56, 44 38
-           C 60 22, 78 17, 95 15 Z"
-        fill="none"
-        stroke="#9C7438"
-        stroke-width="10"
-        stroke-linejoin="round"
-        stroke-linecap="round"
-        opacity="0.95"/>
+  <!-- Thin clean double ring -->
+  <circle cx="100" cy="100" r="76" fill="none" stroke="#D4A156" stroke-width="2"/>
+  <circle cx="100" cy="100" r="72" fill="none" stroke="#D4A156" stroke-width="0.8" opacity="0.55"/>
 
-  <!-- Inner highlight rim - thinner brighter gold to suggest wax bulge top -->
-  <path d="M 95 15
-           C 124 12, 152 22, 170 42
-           C 186 60, 188 78, 184 96
-           C 192 116, 184 142, 162 158
-           C 144 174, 124 184, 102 184
-           C 78 186, 52 178, 34 158
-           C 18 142, 12 122, 18 102
-           C 12 80, 24 56, 44 38
-           C 60 22, 78 17, 95 15 Z"
-        fill="none"
-        stroke="#E8C570"
-        stroke-width="2.5"
-        stroke-linejoin="round"
-        stroke-linecap="round"
-        opacity="0.9"/>
-
-  <!-- Italic R + J cypher -->
+  <!-- Italic R + J cypher layered (J behind, R in front) -->
   <g font-family="'URW Bookman','Liberation Serif',Georgia,serif" font-style="italic" font-weight="500">
-    <text x="118" y="128" font-size="84" fill="#D4A156" opacity="0.85" text-anchor="middle" letter-spacing="-2">J</text>
-    <text x="86" y="120" font-size="88" fill="#D4A156" text-anchor="middle" letter-spacing="-2">R</text>
+    <text x="118" y="128" font-size="80" fill="#D4A156" opacity="0.85" text-anchor="middle" letter-spacing="-2">J</text>
+    <text x="86" y="120" font-size="84" fill="#D4A156" text-anchor="middle" letter-spacing="-2">R</text>
   </g>
 
+  <!-- Tiny period dot -->
   <circle cx="100" cy="148" r="1.6" fill="#D4A156"/>
 </svg>
