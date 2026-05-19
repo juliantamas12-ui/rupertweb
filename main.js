@@ -449,13 +449,7 @@ const SCHOOL_TASKS = [
     "status": "upcoming"
   },
   {
-    "title": "Eng 7: finish reading the novel",
-    "due": "",
-    "subject": "",
-    "status": "upcoming"
-  },
-  {
-    "title": "Math 7 (HW)",
+    "title": "Ed. Tech 7 - Spreadsheets Unit Test",
     "due": "",
     "subject": "",
     "status": "upcoming"
@@ -479,13 +473,13 @@ const SCHOOL_TASKS = [
     "status": "upcoming"
   },
   {
-    "title": "HW Science 7",
+    "title": "Math 8: Probability of Dependent Events",
     "due": "",
     "subject": "",
     "status": "upcoming"
   },
   {
-    "title": "Ed. Tech 7 - Spreadsheets Unit Test",
+    "title": "Math 7 (HW)",
     "due": "",
     "subject": "",
     "status": "upcoming"
@@ -504,6 +498,12 @@ const SCHOOL_TASKS = [
   },
   {
     "title": "2nd Semester Exams 2026_Listening",
+    "due": "",
+    "subject": "",
+    "status": "upcoming"
+  },
+  {
+    "title": "HW Science 7",
     "due": "",
     "subject": "",
     "status": "upcoming"
