@@ -62,9 +62,9 @@ body > *{position:relative;z-index:1}
 .menu-drawer.open{pointer-events:auto;visibility:visible}
 .menu-drawer .backdrop{position:absolute;inset:0;background:rgba(15,10,12,0.75);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);opacity:0;transition:opacity 0.5s ease-out}
 .menu-drawer.open .backdrop{opacity:1}
-.menu-drawer .panel{position:relative;height:100%;display:grid;grid-template-columns:1.2fr 1fr;gap:0;max-width:1500px;margin:0 auto;padding:120px 80px 60px;opacity:0;transform:translateY(-20px);transition:opacity 0.5s ease-out 0.1s,transform 0.6s cubic-bezier(0.16,1,0.3,1) 0.1s}
+.menu-drawer .panel{position:relative;height:100%;display:grid;grid-template-columns:1.2fr 1fr;gap:0;max-width:1500px;margin:0 auto;padding:80px;align-content:center;opacity:0;transform:translateY(-20px);transition:opacity 0.5s ease-out 0.1s,transform 0.6s cubic-bezier(0.16,1,0.3,1) 0.1s}
 .menu-drawer.open .panel{opacity:1;transform:translateY(0)}
-@media(max-width:900px){.menu-drawer .panel{grid-template-columns:1fr;padding:96px 28px 40px;gap:32px}}
+@media(max-width:900px){.menu-drawer .panel{grid-template-columns:1fr;padding:80px 28px;gap:32px}}
 
 .menu-list{display:flex;flex-direction:column;gap:6px;position:relative}
 .menu-list .item{display:inline-flex;align-items:baseline;gap:18px;font-family:'Fraunces',serif;font-style:italic;font-weight:500;font-size:clamp(40px,6vw,82px);line-height:1.05;letter-spacing:-2px;color:var(--ink-soft);text-decoration:none;text-transform:uppercase;transition:color 0.25s,padding-left 0.3s,opacity 0.25s;padding-left:0;position:relative;opacity:0.4}
@@ -75,7 +75,7 @@ body > *{position:relative;z-index:1}
 .menu-list .item:hover::before,.menu-list .item.active::before{transform:translateY(-50%) scaleY(1)}
 
 /* Right column - sub-info / image */
-.menu-meta{display:flex;flex-direction:column;justify-content:space-between;padding-left:48px;border-left:1px solid var(--rule)}
+.menu-meta{display:flex;flex-direction:column;justify-content:center;gap:32px;padding-left:48px;border-left:1px solid var(--rule)}
 @media(max-width:900px){.menu-meta{padding-left:0;border-left:none;padding-top:24px;border-top:1px solid var(--rule)}}
 .menu-meta .meta-label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:18px;font-weight:600}
 .menu-meta .meta-title{font-family:'Fraunces',serif;font-style:italic;font-size:clamp(22px,2.6vw,32px);line-height:1.2;letter-spacing:-0.5px;color:var(--ink);margin-bottom:14px}
