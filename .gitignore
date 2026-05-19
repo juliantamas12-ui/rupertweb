@@ -12,3 +12,8 @@
 *.swp
 .idea/
 .vscode/
+
+# Scraped study guides - too big for git, kept local only
+data/study-guides/files-*/
+data/study-guides/*.zip
+data/study-guides/raw-*.json
