@@ -3321,6 +3321,15 @@ async function renderRecentDrops() {
       if (s < 86400) return `${Math.floor(s/3600)}h ago`;
       return `${Math.floor(s/86400)}d ago`;
     };
+    // Clear the PWA app-icon badge: the user is now looking at the alerts panel,
+    // so any badge count accumulated from push notifications is acknowledged.
+    // Posts to questlog-sw.js which calls navigator.clearAppBadge() and resets
+    // the persisted counter. Silent on browsers without SW support / badging.
+    try {
+      if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({ type: 'clear-badge' });
+      }
+    } catch (_) {}
     el.innerHTML = list.slice(0, 12).map(a => {
       const name = (a.name || '').replace(/[<>&"']/g, c => ({ '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;' }[c]));
       const cur = a.currency || 'USD';

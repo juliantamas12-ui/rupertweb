@@ -5,7 +5,7 @@
  *   - Offline fallback: serves last cached questlog.html when offline
  * Bump VERSION on breaking cache shape changes.
  */
-const VERSION = 'questlog-v4-2026-04-30';
+const VERSION = 'questlog-v5-2026-05-19';
 const STATIC_CACHE = `${VERSION}-static`;
 const RUNTIME_CACHE = `${VERSION}-runtime`;
 
@@ -110,6 +110,46 @@ self.addEventListener('fetch', (event) => {
   // Default: just hit the network.
 });
 
+// ───── App Badge persistence ─────
+// The PWA Badging API (navigator.setAppBadge / clearAppBadge) surfaces an
+// unread count on the home-screen icon (Chromium / Edge / iOS Safari 16.4+).
+// We persist the count in a dedicated Cache entry so it survives SW restarts;
+// it is incremented from the push handler and cleared either by clicking a
+// notification or when the foreground app posts {type:'clear-badge'} after
+// the user views their alerts. SW global is unreliable across cold starts -
+// the cache entry is the source of truth.
+const BADGE_CACHE = 'questlog-badge';
+const BADGE_KEY = '/__questlog_badge__';
+
+async function getBadgeCount() {
+  try {
+    const c = await caches.open(BADGE_CACHE);
+    const hit = await c.match(BADGE_KEY);
+    if (!hit) return 0;
+    const n = parseInt(await hit.text(), 10);
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  } catch (_) { return 0; }
+}
+
+async function setBadgeCount(n) {
+  try {
+    const c = await caches.open(BADGE_CACHE);
+    await c.put(BADGE_KEY, new Response(String(n | 0), { headers: { 'content-type': 'text/plain' } }));
+  } catch (_) {}
+  try {
+    if (n > 0 && self.navigator && typeof self.navigator.setAppBadge === 'function') {
+      await self.navigator.setAppBadge(n);
+    } else if ((!n || n <= 0) && self.navigator && typeof self.navigator.clearAppBadge === 'function') {
+      await self.navigator.clearAppBadge();
+    }
+  } catch (_) {
+    // Badging API not supported (e.g. Firefox) - cache still holds the count
+    // so when the user opens the app the foreground side can read it via
+    // `getRegistration()` + message-channel if it ever needs to. Silent
+    // degradation, no functional regression.
+  }
+}
+
 // Push notification handler. Worker dispatchWebPush sends payloads shaped as
 //   { title, body, tag?, data: { url, appid?, ts? } }
 // (see worker.js dispatchWebPush). `tag` collapses successive notifications
@@ -128,7 +168,18 @@ self.addEventListener('push', (event) => {
   };
   if (payload.tag) opts.tag = payload.tag;
   event.waitUntil(
-    self.registration.showNotification(payload.title || 'QuestLog', opts)
+    Promise.all([
+      self.registration.showNotification(payload.title || 'QuestLog', opts),
+      // Increment + persist + paint the home-screen badge. Skip the test-push
+      // synthetic payload (appid sentinel = 0, set by /api/push/test) so the
+      // Send test notification button doesn't leave a stray badge behind.
+      (async () => {
+        const isTest = payload.data && (payload.data.appid === 0 || payload.data.appid === '0');
+        if (isTest) return;
+        const cur = await getBadgeCount();
+        await setBadgeCount(cur + 1);
+      })()
+    ])
   );
 });
 
@@ -136,11 +187,29 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const url = (event.notification.data && event.notification.data.url) || '/questlog.html';
   event.waitUntil(
-    self.clients.matchAll({ type: 'window' }).then((wins) => {
-      for (const w of wins) {
-        if (w.url.includes(url) && 'focus' in w) return w.focus();
-      }
-      return self.clients.openWindow(url);
-    })
+    Promise.all([
+      // Clicking any notification means the user has acknowledged this batch -
+      // reset the badge. The in-app render path also clears it when the user
+      // simply opens the panel.
+      setBadgeCount(0),
+      self.clients.matchAll({ type: 'window' }).then((wins) => {
+        for (const w of wins) {
+          if (w.url.includes(url) && 'focus' in w) return w.focus();
+        }
+        return self.clients.openWindow(url);
+      })
+    ])
   );
+});
+
+// Foreground -> SW channel. The questlog.html page posts {type:'clear-badge'}
+// after the Recent Price Drops panel renders successfully, so simply opening
+// the app counts as 'I have seen these'. Defensive: any unknown message type
+// is ignored.
+self.addEventListener('message', (event) => {
+  const msg = event.data;
+  if (!msg || typeof msg !== 'object') return;
+  if (msg.type === 'clear-badge') {
+    event.waitUntil(setBadgeCount(0));
+  }
 });
