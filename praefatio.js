@@ -12,7 +12,7 @@
     setTimeout(() => {
       overlay.classList.add('gone');
       try { sessionStorage.setItem('praefatio_intro_seen', '1'); } catch {}
-    }, 1800);
+    }, 1000);
   }
   overlay.addEventListener('click', () => overlay.classList.add('gone'));
 })();
