@@ -159,17 +159,8 @@ body > *{position:relative;z-index:1}
 /* Magnetic hover targets - pulled toward cursor */
 .magnetic{transition:transform 0.18s cubic-bezier(0.16,1,0.3,1)}
 
-/* Custom cursor - gold dot that grows over interactive elements */
-html:not([data-cursor-off]){cursor:none}
-html:not([data-cursor-off]) a,html:not([data-cursor-off]) button,html:not([data-cursor-off]) .magnetic{cursor:none}
-.cursor-dot,.cursor-ring{position:fixed;top:0;left:0;pointer-events:none;z-index:9000;will-change:transform;opacity:0;transition:opacity 0.3s,width 0.2s,height 0.2s,background 0.2s,border-color 0.2s}
-.cursor-dot{width:6px;height:6px;background:var(--accent);border-radius:50%;margin:-3px 0 0 -3px}
-.cursor-ring{width:32px;height:32px;border:1px solid var(--accent-soft);border-radius:50%;margin:-16px 0 0 -16px}
-.cursor-ready .cursor-dot,.cursor-ready .cursor-ring{opacity:1}
-.cursor-active .cursor-dot{width:0;height:0;margin:0}
-.cursor-active .cursor-ring{width:48px;height:48px;margin:-24px 0 0 -24px;background:var(--accent-soft);border-color:var(--accent)}
-/* Hide custom cursor on touch devices */
-@media(hover:none),(pointer:coarse){html{cursor:auto !important}html a,html button{cursor:pointer !important}.cursor-dot,.cursor-ring{display:none}}
+/* Custom cursor disabled - Julian didn't like it */
+.cursor-dot,.cursor-ring{display:none !important}
 @media(prefers-reduced-motion:reduce){.magnetic{transition:none}.word-reveal{opacity:1;transform:none;transition:none}}
 
 /* Parallax depth on cinematic block images */

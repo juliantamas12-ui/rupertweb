@@ -114,43 +114,4 @@
   }
 })();
 
-// ── Custom cursor (gold dot + ring, grows over interactive elements) ──
-(function(){
-  if (window.matchMedia('(prefers-reduced-motion: reduce), (hover: none), (pointer: coarse)').matches) return;
-  const dot = document.createElement('div'); dot.className = 'cursor-dot';
-  const ring = document.createElement('div'); ring.className = 'cursor-ring';
-  document.body.appendChild(dot);
-  document.body.appendChild(ring);
-
-  let dx=window.innerWidth/2, dy=window.innerHeight/2;
-  let rx=dx, ry=dy;
-  let active = false;
-
-  window.addEventListener('mousemove', (e) => {
-    dx = e.clientX; dy = e.clientY;
-    if (!document.documentElement.classList.contains('cursor-ready')){
-      document.documentElement.classList.add('cursor-ready');
-    }
-    // Check if hovering an interactive element
-    const t = e.target;
-    const inter = t && (t.closest('a, button, .magnetic, input, textarea, select') !== null);
-    if (inter !== active){
-      active = inter;
-      document.documentElement.classList.toggle('cursor-active', active);
-    }
-  }, { passive: true });
-
-  // Smooth ring follow (10% lerp per frame)
-  function loop(){
-    rx += (dx - rx) * 0.18;
-    ry += (dy - ry) * 0.18;
-    dot.style.transform = `translate(${dx}px, ${dy}px)`;
-    ring.style.transform = `translate(${rx}px, ${ry}px)`;
-    requestAnimationFrame(loop);
-  }
-  loop();
-
-  // Hide custom cursor when window loses focus
-  window.addEventListener('blur', () => document.documentElement.classList.remove('cursor-ready'));
-  window.addEventListener('focus', () => document.documentElement.classList.add('cursor-ready'));
-})();
+// Custom cursor removed - Julian disliked the gold dot/ring.
