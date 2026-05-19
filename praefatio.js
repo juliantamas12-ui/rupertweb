@@ -257,8 +257,46 @@
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && drawer.classList.contains('open')) close(); });
   // Mark the current page's item as active
   const path = window.location.pathname.replace(/\/$/, '') || '/';
-  drawer.querySelectorAll('.item').forEach(a => {
+  const items = drawer.querySelectorAll('.item');
+  items.forEach(a => {
     const href = a.getAttribute('href').replace(/\/$/, '') || '/';
     a.classList.toggle('active', href === path);
   });
+
+  // Hover any item -> update the right column preview
+  const meta = document.getElementById('menuMeta');
+  if (meta){
+    const label = meta.querySelector('.meta-label');
+    const title = meta.querySelector('.meta-title');
+    const desc = meta.querySelector('.meta-desc');
+    // Capture defaults
+    const defaults = {
+      label: label.textContent,
+      title: title.textContent,
+      desc: desc.textContent,
+    };
+    function setMeta(itemEl){
+      // Brief fade transition
+      [label, title, desc].forEach(el => el.classList.add('meta-fading'));
+      setTimeout(() => {
+        label.textContent = itemEl.dataset.label || defaults.label;
+        title.textContent = itemEl.dataset.title || defaults.title;
+        desc.textContent  = itemEl.dataset.desc  || defaults.desc;
+        [label, title, desc].forEach(el => el.classList.remove('meta-fading'));
+      }, 160);
+    }
+    function resetMeta(){
+      [label, title, desc].forEach(el => el.classList.add('meta-fading'));
+      setTimeout(() => {
+        label.textContent = defaults.label;
+        title.textContent = defaults.title;
+        desc.textContent  = defaults.desc;
+        [label, title, desc].forEach(el => el.classList.remove('meta-fading'));
+      }, 160);
+    }
+    items.forEach(a => {
+      a.addEventListener('mouseenter', () => setMeta(a));
+    });
+    drawer.querySelector('.menu-list').addEventListener('mouseleave', resetMeta);
+  }
 })();
