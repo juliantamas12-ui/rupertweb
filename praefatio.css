@@ -38,10 +38,12 @@ body > *{position:relative;z-index:1}
    No tabs, no status, no background bar. Just a small floating R+J seal
    in the corner that links home from any sub-page. */
 .nav-bar{position:absolute;top:18px;left:24px;z-index:50;pointer-events:none}
-.nav-bar .brand{display:inline-flex;align-items:center;gap:10px;text-decoration:none;color:var(--accent);font-family:'Fraunces',serif;font-style:italic;font-size:0;pointer-events:auto;opacity:0.9;transition:opacity 0.2s}
-.nav-bar .brand:hover{opacity:1}
+.nav-bar .brand{display:inline-flex;align-items:center;gap:12px;text-decoration:none;color:var(--accent);font-family:'Fraunces',serif;font-style:italic;font-size:14px;pointer-events:auto;opacity:0.9;transition:opacity 0.2s;background:rgba(43,31,37,0.4);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:6px 14px 6px 6px;border-radius:100px}
+.nav-bar .brand:hover{opacity:1;background:rgba(43,31,37,0.7)}
 .nav-bar .brand-seal{width:42px;height:42px;flex-shrink:0}
-.nav-bar .brand-name{display:none}
+.nav-bar .brand-name{display:inline;color:var(--ink);font-family:'Fraunces',serif;font-style:italic;font-size:15px;font-weight:500;letter-spacing:-0.2px;white-space:nowrap;opacity:0;max-width:0;overflow:hidden;transition:opacity 0.2s, max-width 0.3s ease-out}
+.nav-bar .brand:hover .brand-name{opacity:1;max-width:200px}
+@media(max-width:700px){.nav-bar .brand-name{display:none}}
 /* Hide all the old tabs/status/burger without removing the markup */
 .nav-tabs,.nav-status,.nav-burger,.status-dot{display:none !important}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
