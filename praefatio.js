@@ -93,7 +93,8 @@
 // ── Magnetic hover on every interactive element ──
 (function(){
   if (window.matchMedia('(prefers-reduced-motion: reduce), (hover: none)').matches) return;
-  const targets = document.querySelectorAll('a:not(.no-magnetic), button:not(.no-magnetic), .cine-cta, .btn-primary, .btn-ghost');
+  // Magnetic only on small buttons / CTAs - NOT on cards, list items, or menu items.
+  const targets = document.querySelectorAll('.btn-primary, .btn-ghost, .cine-cta, .email-card, .teaser-more, .menu-trigger');
   for (const el of targets){
     el.classList.add('magnetic');
     const strength = 0.25;
