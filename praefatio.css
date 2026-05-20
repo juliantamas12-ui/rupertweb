@@ -269,3 +269,34 @@ body > *{position:relative;z-index:1}
 .cine-block .bg img{transition:transform 1.6s cubic-bezier(0.16,1,0.3,1)}
 
 /* Cinematic headline wipe-in removed - was leaving a visible bar mid-animation */
+
+/* ═══════════════════ WIDE-SCREEN SCALING (1600px+) ═══════════════════
+   On big desktops everything looked tiny because clamp ceilings were
+   tuned for ~1440px. These overrides scale type and containers up
+   proportionally without disturbing the mobile/tablet layouts. */
+@media(min-width:1600px){
+  .hero-home{padding:120px 80px}
+  .hero-h1{font-size:clamp(96px,9vw,168px) !important;letter-spacing:-4px}
+  .hero-strap{font-size:clamp(18px,1.3vw,22px) !important;max-width:740px}
+  .hero-eyebrow{font-size:13px;letter-spacing:3.5px}
+  .card-rail,.card-rail-label{max-width:1700px}
+  .card-rail{gap:32px}
+  .card-rail-wrap{padding:96px 80px 0}
+  .rail-card .body{padding:32px 34px}
+  .rail-card .body h3{font-size:32px}
+  .rail-card .body p{font-size:15px}
+  .cine-block .inner{max-width:1700px;padding:120px 80px}
+  .cine-block h2{font-size:clamp(64px,6.5vw,112px) !important}
+  .cine-block .lede{font-size:clamp(17px,1.3vw,21px) !important;max-width:580px}
+  .page{max-width:1080px;padding:120px 80px}
+  .page h1{font-size:clamp(64px,5.5vw,96px) !important}
+  .page .strap{font-size:clamp(19px,1.4vw,23px) !important;max-width:760px}
+}
+
+@media(min-width:2200px){
+  .hero-h1{font-size:clamp(128px,9vw,200px) !important}
+  .card-rail,.card-rail-label,.cine-block .inner{max-width:2000px}
+  .card-rail-wrap{padding:120px 100px 0}
+  .cine-block .inner{padding:160px 100px}
+  .hero-home{padding:160px 100px}
+}
