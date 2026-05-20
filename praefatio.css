@@ -53,14 +53,12 @@ body > *{position:relative;z-index:1}
 .menu-trigger .label{display:none}
 .menu-trigger .x{display:none}
 .menu-trigger .dots{display:none}
-/* Envelope icon — sealed by default, opens on .open */
+/* Envelope icon — single SVG, only the triangle flap rotates up on .open */
 .menu-trigger .envelope{position:relative;width:26px;height:20px;display:block}
-.menu-trigger .envelope svg{position:absolute;inset:0;width:100%;height:100%;transition:opacity 0.35s cubic-bezier(0.16,1,0.3,1),transform 0.4s cubic-bezier(0.16,1,0.3,1);fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
-.menu-trigger .envelope .e-closed{opacity:1;transform:translateY(0)}
-.menu-trigger .envelope .e-open{opacity:0;transform:translateY(2px)}
+.menu-trigger .envelope svg{width:100%;height:100%;display:block;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;overflow:visible}
+.menu-trigger .envelope .flap{transform-origin:13px 3px;transition:transform 0.45s cubic-bezier(0.16,1,0.3,1)}
 .menu-trigger.open{background:var(--accent);color:#1A1208;border-color:var(--accent)}
-.menu-trigger.open .envelope .e-closed{opacity:0;transform:translateY(-2px)}
-.menu-trigger.open .envelope .e-open{opacity:1;transform:translateY(0)}
+.menu-trigger.open .envelope .flap{transform:rotateX(180deg)}
 @media(max-width:700px){.menu-trigger{width:44px;height:44px}}
 
 /* ═════════ AMBIENT SOUND TOGGLE (top-right, next to menu) ═════════ */
