@@ -5,5 +5,5 @@
   <circle cx="100" cy="100" r="72" fill="none" stroke="#D4A156" stroke-width="0.8" opacity="0.55"/>
   <text x="78" y="124" font-family="'URW Bookman','Liberation Serif',Georgia,serif" font-style="italic" font-weight="500" font-size="76" fill="#D4A156" text-anchor="middle">R</text>
   <text x="124" y="140" font-family="'URW Bookman','Liberation Serif',Georgia,serif" font-style="italic" font-weight="500" font-size="76" fill="#D4A156" text-anchor="middle">J</text>
-  <circle cx="108" cy="112" r="3" fill="#D4A156"/>
+  <circle cx="120" cy="124" r="3" fill="#D4A156"/>
 </svg>

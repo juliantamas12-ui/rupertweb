@@ -210,31 +210,46 @@
   }
 })();
 
-// ── Ambient sound toggle (opt-in, off by default, remembers choice) ──
+// ── Ambient sound — ON by default, toggle to silence (choice remembered) ──
 (function(){
   const btn = document.getElementById('soundToggle');
   const audio = document.getElementById('ambientAudio');
   if (!btn || !audio) return;
   audio.volume = 0.18;
   const KEY = 'praefatio_ambient_on';
-  let on = false;
-  try { on = localStorage.getItem(KEY) === '1'; } catch {}
-  function apply(){
+  // Default ON unless the user has explicitly silenced it before.
+  let on = true;
+  try {
+    const saved = localStorage.getItem(KEY);
+    if (saved === '0') on = false;
+  } catch {}
+  function render(){
     btn.classList.toggle('on', on);
     btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  }
+  function apply(){
+    render();
     if (on){
-      audio.play().catch(() => { /* autoplay blocked - user will click to enable */ });
+      audio.play().catch(() => {});
     } else {
       audio.pause();
     }
   }
-  // Don't autoplay on first visit even if user previously had it on - browsers block this
-  // Only resume if user has interacted with the site this session
-  let userInteracted = false;
-  const markInteracted = () => { userInteracted = true; if (on) audio.play().catch(()=>{}); window.removeEventListener('click', markInteracted); window.removeEventListener('keydown', markInteracted); };
-  window.addEventListener('click', markInteracted, { once: true });
-  window.addEventListener('keydown', markInteracted, { once: true });
-  btn.classList.toggle('on', on);
+  render();
+  // Try to autoplay immediately. Modern browsers block autoplay-with-sound
+  // until a user gesture; if that happens, kick it off on the first
+  // interaction (any click, key, scroll or touch).
+  if (on){
+    audio.play().catch(() => {
+      const kick = () => {
+        if (on) audio.play().catch(()=>{});
+        ['click','keydown','scroll','touchstart','pointerdown'].forEach(ev =>
+          window.removeEventListener(ev, kick, true));
+      };
+      ['click','keydown','scroll','touchstart','pointerdown'].forEach(ev =>
+        window.addEventListener(ev, kick, { once: true, capture: true, passive: true }));
+    });
+  }
   btn.addEventListener('click', () => {
     on = !on;
     try { localStorage.setItem(KEY, on ? '1' : '0'); } catch {}
