@@ -191,9 +191,11 @@
           const f = frags[0];
           if (f.type === 'text'){
             if (!f.value.length){ frags.shift(); step(); return; }
-            cur += f.value[0];
+            const ch = f.value[0];
+            // Escape only the live-typed character so accumulated <em> HTML stays intact
+            cur += (ch === '<' ? '&lt;' : ch === '>' ? '&gt;' : ch === '&' ? '&amp;' : ch);
             f.value = f.value.slice(1);
-            target.textContent = cur;
+            target.innerHTML = cur;
             setTimeout(step, 28);
           } else {
             // tag - inject whole HTML in one go (em accent words)
