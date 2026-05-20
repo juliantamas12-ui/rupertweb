@@ -1559,7 +1559,7 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
 
       <div class="section" style="padding:0;margin-bottom:20px">
         <div class="section-head" style="display:flex;justify-content:space-between;align-items:center">
-          <h3 style="font-size:15px">Recent Price Drops</h3>
+          <h3 id="recentDropsHeading" style="font-size:15px">Recent Price Drops</h3>
           <button id="refreshDropsBtn" onclick="refreshDrops()" title="Scan your wishlist now instead of waiting for the next hourly check" style="background:var(--panel2);border:1px solid var(--border);color:var(--dim);padding:4px 10px;border-radius:4px;font-size:11px;font-family:inherit;cursor:pointer;letter-spacing:0.5px">Refresh</button>
         </div>
         <div class="sidebar-card">
@@ -3321,10 +3321,28 @@ async function renderRecentDrops() {
       if (s < 86400) return `${Math.floor(s/3600)}h ago`;
       return `${Math.floor(s/86400)}d ago`;
     };
-    // Clear the PWA app-icon badge: the user is now looking at the alerts panel,
-    // so any badge count accumulated from push notifications is acknowledged.
-    // Posts to questlog-sw.js which calls navigator.clearAppBadge() and resets
-    // the persisted counter. Silent on browsers without SW support / badging.
+    // Read the persisted badge count BEFORE clearing it, so we can decorate
+    // the heading with "(N new)" for users on browsers without the Badging API
+    // (Firefox, older Safari). The count lives in the 'questlog-badge' Cache
+    // managed by questlog-sw.js; CacheStorage is shared between window and SW
+    // contexts on the same origin. Defensive: any read failure -> no decoration,
+    // no error surfaced. After decorating, we post clear-badge to the SW which
+    // resets the count AND calls clearAppBadge() (no-op on Firefox).
+    let unread = 0;
+    try {
+      if (self.caches && typeof self.caches.open === 'function') {
+        const c = await self.caches.open('questlog-badge');
+        const hit = await c.match('/__questlog_badge__');
+        if (hit) {
+          const n = parseInt(await hit.text(), 10);
+          if (Number.isFinite(n) && n > 0) unread = n;
+        }
+      }
+    } catch (_) {}
+    try {
+      const h = document.getElementById('recentDropsHeading');
+      if (h) h.textContent = unread > 0 ? `Recent Price Drops (${unread} new)` : 'Recent Price Drops';
+    } catch (_) {}
     try {
       if (navigator.serviceWorker && navigator.serviceWorker.controller) {
         navigator.serviceWorker.controller.postMessage({ type: 'clear-badge' });
