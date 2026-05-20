@@ -90,30 +90,7 @@
   targets.forEach(t => io.observe(t));
 })();
 
-// ── Magnetic hover on every interactive element ──
-(function(){
-  if (window.matchMedia('(prefers-reduced-motion: reduce), (hover: none)').matches) return;
-  // Magnetic only on small buttons / CTAs - NOT on cards, list items, or menu items.
-  const targets = document.querySelectorAll('.btn-primary, .btn-ghost, .cine-cta, .email-card, .teaser-more, .menu-trigger');
-  for (const el of targets){
-    el.classList.add('magnetic');
-    const strength = 0.25;
-    let raf = null;
-    el.addEventListener('mousemove', (e) => {
-      const r = el.getBoundingClientRect();
-      const x = e.clientX - r.left - r.width/2;
-      const y = e.clientY - r.top - r.height/2;
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => {
-        el.style.transform = `translate(${x*strength}px, ${y*strength}px)`;
-      });
-    });
-    el.addEventListener('mouseleave', () => {
-      cancelAnimationFrame(raf);
-      el.style.transform = '';
-    });
-  }
-})();
+// Magnetic hover effect removed - Julian disliked the dragging.
 
 // Custom cursor removed - Julian disliked the gold dot/ring.
 
