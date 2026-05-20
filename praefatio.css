@@ -2,10 +2,10 @@
 
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  /* AUBERGINE & GOLD */
-  --bg:#2B1F25;
-  --bg-2:#33252B;
-  --paper:#3A2C33;
+  /* AUBERGINE & GOLD (single flat bg) */
+  --bg:#2A1F26;
+  --bg-2:#2A1F26;
+  --paper:#2A1F26;
   --ink:#F4E8D2;
   --ink-soft:#C9B894;
   --ink-mute:#8A7B5C;
@@ -21,12 +21,12 @@ html,body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-syste
 .serif{font-family:'Fraunces',Georgia,serif}
 .mono{font-family:'JetBrains Mono',monospace}
 
-/* Subtle light grain texture on the dark bg */
-body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='600' height='600'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.96 0 0 0 0 0.91 0 0 0 0 0.82 0 0 0 0.5 0'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.25'/></svg>");background-size:340px 340px;opacity:0.10;mix-blend-mode:screen}
+/* Grain texture removed — flat bg only */
+body::before{display:none}
 body > *{position:relative;z-index:1}
 
 /* ═══════════════════ FERRARI INTRO ANIMATION ═══════════════════ */
-.intro-overlay{position:fixed;inset:0;background:#0A0807;z-index:9999;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:1;transition:opacity 0.45s ease-out 0.85s,visibility 0s linear 1.3s;visibility:visible}
+.intro-overlay{position:fixed;inset:0;background:#2A1F26;z-index:9999;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:1;transition:opacity 0.45s ease-out 0.85s,visibility 0s linear 1.3s;visibility:visible}
 .intro-overlay.gone{opacity:0;visibility:hidden}
 .intro-overlay.skip{transition:none;opacity:0;visibility:hidden}
 .intro-seal{width:140px;height:140px;color:var(--accent);opacity:0;transform:scale(0.85);animation:sealReveal 0.9s cubic-bezier(0.16,1,0.3,1) forwards}
@@ -264,10 +264,7 @@ body > *{position:relative;z-index:1}
 .cursor-dot,.cursor-ring{display:none !important}
 @media(prefers-reduced-motion:reduce){.magnetic{transition:none}.word-reveal{opacity:1;transform:none;transition:none}}
 
-/* Parallax depth on cinematic block images */
-.cine-block .bg img{will-change:transform}
-.cine-block.in-view .bg img{transform:scale(1.05)}
-.cine-block .bg img{transition:transform 1.6s cubic-bezier(0.16,1,0.3,1)}
+/* Parallax disabled — photos removed in favour of flat bg */
 
 /* Cinematic headline wipe-in removed - was leaving a visible bar mid-animation */
 
