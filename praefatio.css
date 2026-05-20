@@ -51,17 +51,16 @@ body > *{position:relative;z-index:1}
 .menu-trigger{position:fixed;top:18px;right:24px;z-index:60;width:54px;height:54px;padding:0;border-radius:100px;border:1px solid var(--rule);background:rgba(43,31,37,0.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:var(--accent);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:background 0.25s,border-color 0.25s,color 0.25s,transform 0.2s;font-family:inherit}
 .menu-trigger:hover{background:rgba(43,31,37,0.85);border-color:var(--accent-soft);transform:scale(1.05)}
 .menu-trigger .label{display:none}
-.menu-trigger .x{position:absolute;font-family:'Fraunces',serif;font-size:22px;line-height:1;opacity:0;transform:rotate(-90deg);transition:opacity 0.25s,transform 0.3s cubic-bezier(0.16,1,0.3,1);font-style:normal;font-weight:300}
-/* Three-line stack icon for the open trigger */
-.menu-trigger .dots{display:flex;flex-direction:column;align-items:flex-end;gap:5px;width:22px}
-.menu-trigger .dots span{display:block;background:currentColor;border-radius:1px;height:1.6px;transition:width 0.3s cubic-bezier(0.16,1,0.3,1),transform 0.3s,opacity 0.2s,height 0.2s,border-radius 0.2s}
-.menu-trigger .dots span:nth-child(1){width:22px}
-.menu-trigger .dots span:nth-child(2){width:14px}
-.menu-trigger .dots span:nth-child(3){width:6px;height:6px;border-radius:50%;margin-right:8px}
-.menu-trigger .dots span:nth-child(4){display:none}
+.menu-trigger .x{display:none}
+.menu-trigger .dots{display:none}
+/* Envelope icon — sealed by default, opens on .open */
+.menu-trigger .envelope{position:relative;width:26px;height:20px;display:block}
+.menu-trigger .envelope svg{position:absolute;inset:0;width:100%;height:100%;transition:opacity 0.35s cubic-bezier(0.16,1,0.3,1),transform 0.4s cubic-bezier(0.16,1,0.3,1);fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.menu-trigger .envelope .e-closed{opacity:1;transform:translateY(0)}
+.menu-trigger .envelope .e-open{opacity:0;transform:translateY(2px)}
 .menu-trigger.open{background:var(--accent);color:#1A1208;border-color:var(--accent)}
-.menu-trigger.open .dots{opacity:0}
-.menu-trigger.open .x{opacity:1;transform:rotate(0)}
+.menu-trigger.open .envelope .e-closed{opacity:0;transform:translateY(-2px)}
+.menu-trigger.open .envelope .e-open{opacity:1;transform:translateY(0)}
 @media(max-width:700px){.menu-trigger{width:44px;height:44px}}
 
 /* ═════════ AMBIENT SOUND TOGGLE (top-right, next to menu) ═════════ */
