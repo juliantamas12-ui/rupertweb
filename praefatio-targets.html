@@ -25,8 +25,8 @@
 .targets-page .strap strong{color:var(--ink);font-weight:600}
 
 .wall{display:flex;flex-wrap:wrap;gap:8px 32px;line-height:1.2;align-items:baseline;justify-content:center;padding:24px 0}
-.target-name{font-family:'Fraunces',serif;font-weight:500;color:var(--ink-soft);cursor:default;transition:color 0.2s,transform 0.2s;letter-spacing:-0.3px;padding:6px 0;user-select:none;display:inline-flex;align-items:baseline;gap:4px}
-.target-name:hover{color:var(--accent);transform:translateY(-2px)}
+.target-name{font-family:'Fraunces',serif;font-weight:500;color:var(--ink-soft);cursor:default;transition:color 0.2s,transform 0.25s cubic-bezier(0.16,1,0.3,1);letter-spacing:-0.3px;padding:6px 0;user-select:none;display:inline-flex;align-items:baseline;gap:4px;transform-origin:center;will-change:transform}
+.target-name:hover{color:var(--accent);transform:scale(1.06)}
 .target-name.s-research{color:var(--ink-soft)}
 .target-name.s-drafting{color:var(--accent);font-style:italic}
 .target-name.s-sent{color:var(--sage);font-style:italic}
@@ -45,9 +45,9 @@
 .target-name.s-replied .status-dot-inline{background:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
 .target-name.s-declined .status-dot-inline{background:var(--ink-mute);opacity:0.4}
 
-/* Inline status pill — hidden by default, shown attached to the name on hover */
-.target-name .status-pill{display:inline-block;background:#0A0807;color:var(--ink);padding:6px 10px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;border:1px solid var(--rule-strong);margin-left:10px;vertical-align:0.35em;opacity:0;max-width:0;overflow:hidden;white-space:nowrap;transition:opacity 0.15s,max-width 0.25s ease-out,padding 0.2s;padding-left:0;padding-right:0;line-height:1}
-.target-name:hover .status-pill{opacity:1;max-width:200px;padding:6px 10px}
+/* Floating status pill that follows the cursor, sits just below it */
+.target-tip{position:fixed;background:#0A0807;color:var(--ink);padding:8px 12px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;pointer-events:none;opacity:0;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,0.4);white-space:nowrap;font-weight:600;transition:opacity 0.12s;border:1px solid var(--rule-strong);transform:translate(-50%,0)}
+.target-tip.show{opacity:1}
 
 .legend{display:flex;justify-content:center;gap:28px;flex-wrap:wrap;margin-top:48px;padding-top:24px;border-top:1px solid var(--rule-soft);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-mute)}
 .legend .item{display:inline-flex;align-items:center;gap:8px}
@@ -163,6 +163,7 @@
   <p class="strap">A working list, ordered by where each letter is in the process. <strong>Nothing here has been sent yet.</strong> Status updates as letters genuinely move forward.</p>
 
   <div class="wall" id="wall"></div>
+  <div class="target-tip" id="targetTip"></div>
 
 </main>
 
@@ -196,10 +197,33 @@ const wall = document.getElementById('wall');
 wall.innerHTML = TARGETS.map((t,i)=>{
   const sz = sizes[i % sizes.length];
   const statusLabel = STATUS_LABELS[t.status]||t.status;
-  return `<span class="target-name ${sz} s-${t.status}">${escapeHtml(t.name)}<span class="co"> · ${escapeHtml(t.co)}</span><span class="status-dot-inline" aria-hidden="true"></span><span class="status-pill">${escapeHtml(statusLabel)}</span></span>`;
+  return `<span class="target-name ${sz} s-${t.status}" data-status="${escapeHtml(statusLabel)}">${escapeHtml(t.name)}<span class="co"> · ${escapeHtml(t.co)}</span><span class="status-dot-inline" aria-hidden="true"></span></span>`;
 }).join('');
 
-// Status pill is now inline inside each .target-name and revealed via CSS :hover.
+// Floating status pill follows the cursor just below it.
+const tip = document.getElementById('targetTip');
+wall.addEventListener('mousemove', (e) => {
+  const target = e.target.closest('.target-name');
+  if (target) {
+    const status = target.dataset.status;
+    if (status) {
+      if (tip.textContent !== status) tip.textContent = status;
+      // Sit ~18px below the cursor, horizontally centered on it.
+      let x = e.clientX;
+      let y = e.clientY + 18;
+      const rect = tip.getBoundingClientRect();
+      if (y + rect.height > window.innerHeight - 8) y = e.clientY - rect.height - 10;
+      if (x - rect.width/2 < 8) x = rect.width/2 + 8;
+      if (x + rect.width/2 > window.innerWidth - 8) x = window.innerWidth - rect.width/2 - 8;
+      tip.style.left = x + 'px';
+      tip.style.top = y + 'px';
+      tip.classList.add('show');
+      return;
+    }
+  }
+  tip.classList.remove('show');
+});
+wall.addEventListener('mouseleave', () => tip.classList.remove('show'));
 </script>
 </body>
 </html>
