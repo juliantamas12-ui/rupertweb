@@ -451,19 +451,19 @@ const ESSAYS = [
 const SCHOOL_TASKS = [
   {
     "title": "Marymount International School, Rome",
-    "due": "",
+    "due": "Submit Coursework",
     "subject": "Classes\n\nC\n\n\n\n\n\n\n\nAdvisory SL (7) 2\n\n\n\n\n\nArt (7) 4\n\n\n\n\n\nLatin Int. I (8) 1\n\n\n\n\n\nEng (7) 1\n\n\n\n\n\nIt Interm2 (8) 3\n\n\n\n\n\nMath 8 (8) 4\n\n\n\n\n\nMath 7 (7) 1\n\n\n\n\n\nGerman Int. I (7) 2\n\n\n\n\n\nSport and Resilience (7) 1\n\n\n\n\n\nRel Ed 7 (7) 1\n\n\n\n\n\nScience (7) 4\n\n\n\n\n\nHistory/Geography (7) 2\n\n\n\n\n\nEd. Technology (7) 4\n\n\n\n\n\nGeneral Music (7) 1\n\n\n\nBrowse All Classes",
     "status": "upcoming"
   },
   {
-    "title": "Ed. Tech 7 - Spreadsheets Unit Test",
-    "due": "",
+    "title": "Eng 7 : Unit test on A Long Way Down",
+    "due": "Submit Coursework",
     "subject": "",
     "status": "upcoming"
   },
   {
     "title": "Cover Work_Exampreparation_May26",
-    "due": "",
+    "due": "Submit Coursework",
     "subject": "",
     "status": "upcoming"
   },
@@ -481,13 +481,13 @@ const SCHOOL_TASKS = [
   },
   {
     "title": "Math 8: Probability of Dependent Events",
-    "due": "",
+    "due": "Submit Coursework",
     "subject": "",
     "status": "upcoming"
   },
   {
     "title": "Math 7 (HW)",
-    "due": "",
+    "due": "Submit Coursework",
     "subject": "",
     "status": "upcoming"
   },
@@ -511,7 +511,7 @@ const SCHOOL_TASKS = [
   },
   {
     "title": "HW Science 7",
-    "due": "",
+    "due": "Submit Coursework",
     "subject": "",
     "status": "upcoming"
   },
@@ -529,6 +529,12 @@ const SCHOOL_TASKS = [
   },
   {
     "title": "SEMESTER 2 SCIENCE EXAM",
+    "due": "",
+    "subject": "",
+    "status": "upcoming"
+  },
+  {
+    "title": "S2 Examination Study Guide",
     "due": "",
     "subject": "",
     "status": "upcoming"
