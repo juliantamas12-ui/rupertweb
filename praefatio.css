@@ -264,7 +264,10 @@ body > *{position:relative;z-index:1}
 .cursor-dot,.cursor-ring{display:none !important}
 @media(prefers-reduced-motion:reduce){.magnetic{transition:none}.word-reveal{opacity:1;transform:none;transition:none}}
 
-/* Parallax disabled — photos removed in favour of flat bg */
+/* Parallax depth on cinematic block images */
+.cine-block .bg img{will-change:transform}
+.cine-block.in-view .bg img{transform:scale(1.05)}
+.cine-block .bg img{transition:transform 1.6s cubic-bezier(0.16,1,0.3,1)}
 
 /* Cinematic headline wipe-in removed - was leaving a visible bar mid-animation */
 
