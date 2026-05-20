@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Mutiny at Kiel: How the German Navy Toppled the Kaiserreich in Seventy-Two Hours, October-November 1918",
+    date: "2026-05-20",
+    category: "History",
+    excerpt: "On the evening of 29 October 1918, in the roadstead of Schillig outside Wilhelmshaven, the stokers and seamen of the German High Seas Fleet refused to weigh anchor. The order had come from Admiral Scheer's headquarters that morning: the fleet was to sortie into the North Sea, engage the Grand Fleet, and — in the words of Operation Order 19, drafted by Admiral Adolf von Trotha — 'die honourably.' Germany was two weeks into an armistice negotiation. The Imperial Navy's senior officers, who had spent four years watching the army fight the war while their dreadnoughts swung at anchor, decided independently that they would not allow the war to end without a final action. The lower deck refused. This is the moment the Kaiserreich ended — not the abdication on 9 November, not the armistice at Compiègne, but the night when twenty thousand sailors decided they would rather face a firing squad than be sacrificed to redeem the honour of an officer corps they despised...",
+    url: "essays/2026-05-20-the-mutiny-at-kiel.html"
+  },
+  {
     title: "The Stranded Army That Decided the Russian Civil War: The Czechoslovak Legion and the Trans-Siberian Railway, 1918",
     date: "2026-05-19",
     category: "History",
