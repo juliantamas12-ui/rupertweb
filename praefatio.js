@@ -218,7 +218,8 @@
   const audio = document.getElementById('ambientAudio');
   if (!btn || !audio) return;
   audio.volume = 0.18;
-  const KEY = 'praefatio_ambient_on';
+  // v2: bumped key so previously-silenced visitors get the new default-on behaviour
+  const KEY = 'praefatio_ambient_on_v2';
   // Default ON unless the user has explicitly silenced it before.
   let on = true;
   try {
