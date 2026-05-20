@@ -154,7 +154,7 @@ body > *{position:relative;z-index:1}
 .hero-ctas{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
 
 /* ═══════════════════ TEASER (below the fold on home) ═══════════════════ */
-.teaser{padding:80px 40px;border-top:1px solid var(--rule-soft)}
+.teaser{padding:80px 40px}
 @media(max-width:700px){.teaser{padding:48px 22px}}
 .teaser-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:start}
 @media(max-width:800px){.teaser-inner{grid-template-columns:1fr;gap:40px}}
@@ -220,10 +220,7 @@ body > *{position:relative;z-index:1}
 .page .strap{opacity:0;animation:fadeUp 0.8s ease-out forwards}
 @keyframes fadeUp{0%{opacity:0;transform:translateY(14px)}100%{opacity:1;transform:translateY(0)}}
 
-/* Headline underline that draws itself in */
-.page h2{position:relative;display:inline-block;padding-bottom:6px}
-.page h2::after{content:'';position:absolute;left:0;bottom:0;width:0;height:1px;background:linear-gradient(90deg,var(--accent),transparent);transition:width 1.2s cubic-bezier(0.16,1,0.3,1) 0.2s}
-.page h2.draw::after{width:80px}
+/* H2 underline draw removed - Julian wants no hairlines */
 
 /* Method items - staggered reveal as scrolled into view */
 .method-item{opacity:0;transform:translateY(30px);transition:opacity 0.7s cubic-bezier(0.16,1,0.3,1),transform 0.7s cubic-bezier(0.16,1,0.3,1)}
@@ -274,7 +271,4 @@ body > *{position:relative;z-index:1}
 .cine-block.in-view .bg img{transform:scale(1.05)}
 .cine-block .bg img{transition:transform 1.6s cubic-bezier(0.16,1,0.3,1)}
 
-/* Headline wipe-in for cinematic blocks (replaces simple fade) */
-.cine-block h2{position:relative;overflow:hidden;display:inline-block;padding:0 4px 4px 4px;margin-left:-4px}
-.cine-block h2::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,var(--bg) 0%,var(--bg) 50%,transparent 100%);transform:translateX(0);transition:transform 1s cubic-bezier(0.16,1,0.3,1) 0.2s}
-.cine-block.in-view h2::after{transform:translateX(105%)}
+/* Cinematic headline wipe-in removed - was leaving a visible bar mid-animation */
