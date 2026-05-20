@@ -169,7 +169,6 @@
 
 <!-- ════════════ HERO - the hook ════════════ -->
 <section class="hero-home">
-  <div class="hero-particles" id="heroParticles" aria-hidden="true"></div>
   <div class="hero-home-inner">
     <h1 class="hero-h1"><em><span class="word">The</span> <span class="word">Praefatio</span></em></h1>
 
@@ -257,26 +256,6 @@
   blocks.forEach(b => io.observe(b));
 })();
 
-// Ambient gold particles drifting through the hero - subtle atmosphere
-(function(){
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  const wrap = document.getElementById('heroParticles');
-  if (!wrap) return;
-  const N = 18;
-  for (let i = 0; i < N; i++){
-    const p = document.createElement('span');
-    p.style.left = Math.random() * 100 + '%';
-    p.style.bottom = '-10px';
-    p.style.animationDuration = (10 + Math.random() * 14) + 's';
-    p.style.animationDelay = (Math.random() * 14) + 's';
-    p.style.opacity = '0';
-    // Random subtle size variation
-    const s = 1 + Math.random() * 2.5;
-    p.style.width = s + 'px';
-    p.style.height = s + 'px';
-    wrap.appendChild(p);
-  }
-})();
 </script>
 
 </body>
