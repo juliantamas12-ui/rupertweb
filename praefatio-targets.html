@@ -92,7 +92,20 @@
   <button class="nav-burger" aria-label="Menu" id="navBurger">☰</button>
 </header>
 <!-- Feadship-style menu trigger + drawer -->
+<!-- Ambient sound toggle (off by default, opt-in) -->
+<button class="sound-toggle" id="soundToggle" aria-label="Toggle ambient sound" aria-pressed="false">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M11 5L6 9H3v6h3l5 4V5z"/>
+    <path class="wave" d="M15.5 8.5a4 4 0 0 1 0 7"/>
+    <path class="wave" d="M18.5 5.5a8 8 0 0 1 0 13"/>
+  </svg>
+</button>
+<audio id="ambientAudio" loop preload="none">
+  <source src="/audio/ambient-praefatio.mp3" type="audio/mpeg">
+</audio>
+
 <button class="menu-trigger" id="menuTrigger" aria-label="Open menu" aria-expanded="false">
+  <span class="label">Menu</span>
   <span class="dots"><span></span><span></span><span></span><span></span></span>
 </button>
 <div class="menu-drawer" id="menuDrawer" aria-hidden="true">

@@ -233,6 +233,38 @@
   }
 })();
 
+// ── Ambient sound toggle (opt-in, off by default, remembers choice) ──
+(function(){
+  const btn = document.getElementById('soundToggle');
+  const audio = document.getElementById('ambientAudio');
+  if (!btn || !audio) return;
+  audio.volume = 0.18;
+  const KEY = 'praefatio_ambient_on';
+  let on = false;
+  try { on = localStorage.getItem(KEY) === '1'; } catch {}
+  function apply(){
+    btn.classList.toggle('on', on);
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    if (on){
+      audio.play().catch(() => { /* autoplay blocked - user will click to enable */ });
+    } else {
+      audio.pause();
+    }
+  }
+  // Don't autoplay on first visit even if user previously had it on - browsers block this
+  // Only resume if user has interacted with the site this session
+  let userInteracted = false;
+  const markInteracted = () => { userInteracted = true; if (on) audio.play().catch(()=>{}); window.removeEventListener('click', markInteracted); window.removeEventListener('keydown', markInteracted); };
+  window.addEventListener('click', markInteracted, { once: true });
+  window.addEventListener('keydown', markInteracted, { once: true });
+  btn.classList.toggle('on', on);
+  btn.addEventListener('click', () => {
+    on = !on;
+    try { localStorage.setItem(KEY, on ? '1' : '0'); } catch {}
+    apply();
+  });
+})();
+
 // ── Feadship-style drawer menu ──
 (function(){
   const trigger = document.getElementById('menuTrigger');
