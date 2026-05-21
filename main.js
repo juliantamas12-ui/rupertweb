@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Morning the Bundesbank Killed Bretton Woods: 5 May 1971",
+    date: "2026-05-21",
+    category: "Economics",
+    excerpt: "On Wednesday morning, 5 May 1971, at approximately 9:35 in Frankfurt, the Bundesbank's foreign exchange desk stopped quoting a price for the United States dollar and walked away from the market. By 10:30, four other European central banks had done the same. By the end of the trading day, the gold-dollar standard that had organised the world economy since Bretton Woods had effectively ceased to function, though it would take Nixon another fifteen weeks to publicly recognise this and close the gold window. The decision was taken in a small back room of the Bundesbank's Frankfurt headquarters by perhaps eight men. There was no announcement. There was no consultation with the IMF or the US Treasury. The Bundesbank simply stopped buying dollars, and a global monetary order ended...",
+    url: "essays/2026-05-21-the-morning-the-bundesbank-killed-bretton-woods.html"
+  },
+  {
     title: "The Mutiny at Kiel: How the German Navy Toppled the Kaiserreich in Seventy-Two Hours, October-November 1918",
     date: "2026-05-20",
     category: "History",
