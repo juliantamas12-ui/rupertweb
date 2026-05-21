@@ -463,13 +463,13 @@ const SCHOOL_TASKS = [
     "status": "upcoming"
   },
   {
-    "title": "Eng 7 : Unit test on A Long Way Down",
+    "title": "Math 7 (HW)",
     "due": "Submit Coursework",
     "subject": "",
     "status": "upcoming"
   },
   {
-    "title": "Cover Work_Exampreparation_May26",
+    "title": "Substitution Work: The terror",
     "due": "Submit Coursework",
     "subject": "",
     "status": "upcoming"
@@ -477,24 +477,6 @@ const SCHOOL_TASKS = [
   {
     "title": "Submit Coursework",
     "due": "",
-    "subject": "",
-    "status": "upcoming"
-  },
-  {
-    "title": "Classwork Science 7",
-    "due": "",
-    "subject": "",
-    "status": "upcoming"
-  },
-  {
-    "title": "Math 8: Probability of Dependent Events",
-    "due": "Submit Coursework",
-    "subject": "",
-    "status": "upcoming"
-  },
-  {
-    "title": "Math 7 (HW)",
-    "due": "Submit Coursework",
     "subject": "",
     "status": "upcoming"
   },
@@ -519,6 +501,12 @@ const SCHOOL_TASKS = [
   {
     "title": "HW Science 7",
     "due": "Submit Coursework",
+    "subject": "",
+    "status": "upcoming"
+  },
+  {
+    "title": "Classwork Science 7",
+    "due": "",
     "subject": "",
     "status": "upcoming"
   },
