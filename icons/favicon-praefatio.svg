@@ -6,6 +6,6 @@
   <g transform="translate(100 116)">
     <text x="-26" y="0" font-family="'URW Bookman','Liberation Serif',Georgia,serif" font-style="italic" font-weight="500" font-size="64" fill="#D4A156" text-anchor="middle">R</text>
     <text x="26" y="14" font-family="'URW Bookman','Liberation Serif',Georgia,serif" font-style="italic" font-weight="500" font-size="64" fill="#D4A156" text-anchor="middle">J</text>
-    <circle cx="0" cy="0" r="3" fill="#D4A156"/>
+    <circle cx="0" cy="14" r="3" fill="#D4A156"/>
   </g>
 </svg>
