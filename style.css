@@ -445,3 +445,59 @@ body {
   border-color: var(--accent);
   background: rgba(200, 241, 53, 0.04);
 }
+
+/* ── Essays as a horizontal rail ──────────────────────────── */
+.essay-rail {
+  display: flex;
+  gap: var(--gap);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 12px;
+  scrollbar-width: thin;
+  scroll-behavior: smooth;
+}
+.essay-rail::-webkit-scrollbar { height: 6px; }
+.essay-rail::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+.essay-rail .essay-card {
+  flex: 0 0 320px;
+  scroll-snap-align: start;
+  max-width: 320px;
+}
+@media (max-width: 600px) {
+  .essay-rail .essay-card { flex-basis: 78vw; max-width: 78vw; }
+}
+
+/* ── ME & RUPERT stats ────────────────────────────────────── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--gap);
+}
+.stat-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+.stat-card__value {
+  font-family: 'Space Mono', monospace;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1.1;
+  margin-bottom: 4px;
+}
+.stat-card__label {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--ink-mute, #888);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.stat-card__sub {
+  font-size: 0.72rem;
+  color: #777;
+  margin-top: 4px;
+  line-height: 1.4;
+}

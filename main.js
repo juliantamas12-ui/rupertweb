@@ -650,6 +650,60 @@ function renderEssays() {
     }
     grid.appendChild(card);
   });
+
+  // Wheel-scroll: vertical scroll wheel pushes the rail horizontally.
+  grid.addEventListener('wheel', (e) => {
+    if (e.deltaY === 0) return;
+    const max = grid.scrollWidth - grid.clientWidth;
+    if (max <= 0) return;
+    // Only intercept if we have room to scroll horizontally in that direction.
+    const goingRight = e.deltaY > 0;
+    if ((goingRight && grid.scrollLeft < max) || (!goingRight && grid.scrollLeft > 0)) {
+      e.preventDefault();
+      grid.scrollLeft += e.deltaY;
+    }
+  }, { passive: false });
+}
+
+/* ME & RUPERT stats */
+const RUPERT_STATS = {
+  firstSession: '2026-03-23',
+  sessions: 66,
+  msgsFromJulian: 2726,
+  msgsFromRupert: 11881,
+  essaysWritten: 59,
+  memoryLines: 1171,
+};
+function renderStats() {
+  const grid = document.getElementById('stats-grid');
+  const sub = document.getElementById('stats-sub');
+  if (!grid) return;
+  const today = new Date();
+  const start = new Date(RUPERT_STATS.firstSession + 'T00:00:00');
+  const days = Math.max(1, Math.floor((today - start) / 86400000));
+  const totalMsgs = RUPERT_STATS.msgsFromJulian + RUPERT_STATS.msgsFromRupert;
+  const avgPerDay = Math.round(totalMsgs / days);
+  const fmt = (n) => n.toLocaleString('en-GB');
+  if (sub) sub.textContent = `Together since ${fmtDate(RUPERT_STATS.firstSession)}`;
+
+  const cards = [
+    { value: fmt(days), label: 'Days together', sub: `since ${fmtDate(RUPERT_STATS.firstSession)}` },
+    { value: fmt(totalMsgs), label: 'Messages exchanged', sub: `~${fmt(avgPerDay)} per day` },
+    { value: fmt(RUPERT_STATS.msgsFromJulian), label: 'From Julian', sub: 'questions, requests, ideas' },
+    { value: fmt(RUPERT_STATS.msgsFromRupert), label: 'From Rupert', sub: 'replies, drafts, fixes' },
+    { value: fmt(RUPERT_STATS.sessions), label: 'Sessions', sub: 'separate conversation threads' },
+    { value: fmt(RUPERT_STATS.essaysWritten), label: 'Essays written', sub: 'history & politics nightly' },
+    { value: fmt(RUPERT_STATS.memoryLines), label: 'Lines remembered', sub: 'in MEMORY.md + daily logs' },
+  ];
+  cards.forEach(c => {
+    const card = el('div', 'stat-card');
+    card.innerHTML = `
+      <div class="stat-card__value">${c.value}</div>
+      <div class="stat-card__label">${c.label}</div>
+      <div class="stat-card__sub">${c.sub}</div>
+    `;
+    grid.appendChild(card);
+  });
 }
 
 /* School */
@@ -889,6 +943,7 @@ function escapeHtml(s) { return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;'
 
 /* Boot */
 renderEssays();
+renderStats();
 renderSchool();
 renderSteam();
 renderProjects();
