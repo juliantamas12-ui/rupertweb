@@ -5208,13 +5208,39 @@ async function pushTest(request, env) {
     // Synthetic alert shaped exactly like the real ones runWishlistPriceWatch
     // produces (see ~line 5070), so dispatchWebPush takes the normal code
     // path. appid 0 is a sentinel - no real Steam app has appid 0 - which
-    // also keeps the SW's `tag` collision-free with real price alerts.
+    // also keeps the SW's badge-skip logic working (questlog-sw.js checks
+    // data.appid === 0 to avoid leaving a stray badge after a test).
+    //
+    // Pre-launch UX validator (2026-05-20 option f): make the synthetic
+    // payload look like a real price drop so users testing their setup can
+    // verify the actual notification chrome (sound, banner width, lock-screen
+    // typography, vibration pattern) matches what they'd see for a genuine
+    // alert. The previous 'QuestLog test / FREE / -100%' payload was technically
+    // a notification but visually unlike a real drop - users who tested with
+    // it could not catch issues like body-text overflow on long game titles.
+    //
+    // We pick a rotating well-known game from a tiny curated list (varies by
+    // minute-of-day so successive tests in a single session pick different
+    // titles), pair it with a plausible discount + GBP price, and tack on a
+    // visible '(test)' marker inside the name field so the body reads
+    // 'Hades II (test) is now £14.99 (-40%)'. Honest about being a test,
+    // visually equivalent to the real thing in every other respect.
+    const TEST_SAMPLES = [
+      { name: 'Hades II',                discount: 40, price: '£14.99' },
+      { name: 'Baldur\u2019s Gate 3',    discount: 33, price: '£40.19' },
+      { name: 'Elden Ring',              discount: 50, price: '£24.99' },
+      { name: 'Cyberpunk 2077',          discount: 60, price: '£19.99' },
+      { name: 'Stardew Valley',          discount: 25, price: '£8.99'  },
+      { name: 'Disco Elysium',           discount: 75, price: '£8.74'  },
+      { name: 'Hollow Knight',           discount: 50, price: '£5.49'  },
+    ];
+    const sample = TEST_SAMPLES[Math.floor(Date.now() / 60000) % TEST_SAMPLES.length];
     const testAlert = {
       appid: 0,
-      name: 'QuestLog test',
-      discount_percent: 100,
-      final_formatted: 'FREE',
-      currency: 'TEST',
+      name: `${sample.name} (test)`,
+      discount_percent: sample.discount,
+      final_formatted: sample.price,
+      currency: 'GBP',
       store_url: 'https://rupertweb.com/questlog.html',
       ts: Date.now(),
     };
