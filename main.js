@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Fortnight at Erfurt When Talleyrand Sold Napoleon to the Tsar: September-October 1808",
+    date: "2026-05-22",
+    category: "History",
+    excerpt: "On the evening of 27 September 1808, in a candle-lit room in the Hôtel des Princes at Erfurt, Charles-Maurice de Talleyrand-Périgord, Prince of Benevento and Grand Chamberlain of the French Empire, requested a private audience with Alexander I, Emperor of All the Russias. He had been instructed by Napoleon to assist in tightening the Franco-Russian alliance forged at Tilsit fifteen months earlier. He used the audience to do the precise opposite. With two sentences delivered in private, the most useful French diplomat of his generation went into treason against the man who had made him. This is the moment the First Empire's destruction was set in motion — not Bailén, not the Spanish ulcer, not the Russian winter of 1812, but a fortnight in Erfurt when the choreographer of imperial spectacle decided that France could no longer afford its emperor...",
+    url: "essays/2026-05-22-the-fortnight-at-erfurt-when-talleyrand-sold-napoleon-to-the-tsar.html"
+  },
+  {
     title: "The Morning the Bundesbank Killed Bretton Woods: 5 May 1971",
     date: "2026-05-21",
     category: "Economics",
