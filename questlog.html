@@ -3299,6 +3299,66 @@ async function refreshDrops() {
     }
   }
 }
+// Re-read the persisted badge count from the 'questlog-badge' Cache and
+// re-decorate the heading. Cheap (~1 cache read, no network), idempotent.
+// Used both inside renderRecentDrops() and from the visibilitychange +
+// IntersectionObserver hooks installed below, so a Pro user who has the
+// Pro tab open in the background, gets a push, then switches back / scrolls
+// the Recent Price Drops panel into view sees the "(N new)" decoration
+// update without having to reload. Safe to call before renderRecentDrops()
+// has ever run.
+async function refreshDropsHeading() {
+  let unread = 0;
+  try {
+    if (self.caches && typeof self.caches.open === 'function') {
+      const c = await self.caches.open('questlog-badge');
+      const hit = await c.match('/__questlog_badge__');
+      if (hit) {
+        const n = parseInt(await hit.text(), 10);
+        if (Number.isFinite(n) && n > 0) unread = n;
+      }
+    }
+  } catch (_) {}
+  try {
+    const h = document.getElementById('recentDropsHeading');
+    if (h) h.textContent = unread > 0 ? `Recent Price Drops (${unread} new)` : 'Recent Price Drops';
+  } catch (_) {}
+  // Only post clear-badge when we actually painted a count, so a no-op
+  // re-check (unread=0) doesn't churn the SW message channel.
+  if (unread > 0) {
+    try {
+      if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({ type: 'clear-badge' });
+      }
+    } catch (_) {}
+  }
+  return unread;
+}
+// Install visibilitychange + IntersectionObserver hooks once. The heading
+// element exists in the static HTML, so we can wire the IO immediately.
+// visibilitychange catches the tab-switch case; the IO catches the
+// scroll-back-into-view case for users who keep the Pro tab pinned and
+// scroll away from the drops panel.
+(function installDropsHeadingHooks() {
+  if (typeof window === 'undefined' || window._dropsHeadingHooked) return;
+  window._dropsHeadingHooked = true;
+  try {
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') refreshDropsHeading();
+    });
+  } catch (_) {}
+  try {
+    const h = document.getElementById('recentDropsHeading');
+    if (h && typeof IntersectionObserver === 'function') {
+      const io = new IntersectionObserver((entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) refreshDropsHeading();
+        }
+      }, { threshold: 0.1 });
+      io.observe(h);
+    }
+  } catch (_) {}
+})();
 async function renderRecentDrops() {
   const el = document.getElementById('recentDropsList');
   if (!el || !STATE.sid) return;
