@@ -470,26 +470,8 @@ const SCHOOL_TASKS = [
     "status": "upcoming"
   },
   {
-    "title": "Math 7 (HW)",
-    "due": "Submit Coursework",
-    "subject": "",
-    "status": "upcoming"
-  },
-  {
-    "title": "Substitution Work: The terror",
-    "due": "Submit Coursework",
-    "subject": "",
-    "status": "upcoming"
-  },
-  {
-    "title": "Submit Coursework",
-    "due": "",
-    "subject": "",
-    "status": "upcoming"
-  },
-  {
     "title": "Math 7 (Summative)",
-    "due": "",
+    "due": "Submit Coursework",
     "subject": "",
     "status": "upcoming"
   },
@@ -508,6 +490,12 @@ const SCHOOL_TASKS = [
   {
     "title": "HW Science 7",
     "due": "Submit Coursework",
+    "subject": "",
+    "status": "upcoming"
+  },
+  {
+    "title": "Submit Coursework",
+    "due": "",
     "subject": "",
     "status": "upcoming"
   },
