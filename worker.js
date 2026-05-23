@@ -202,8 +202,10 @@ export default {
 
   // Cloudflare scheduled handler - invoked by cron triggers in wrangler.toml.
   // Hourly trigger: runs the wishlist price-watch sweep. Daily 00:00 trigger:
-  // also rotates the Achievement-of-the-Day cache stamp. Each job is wrapped
-  // in try/catch so a single failure can't break the next run.
+  // also rotates the Achievement-of-the-Day cache stamp AND runs the
+  // free-games sweep (Epic-only at skeleton stage; push dispatch deferred to
+  // night 2 of plan (d)). Each job is wrapped in try/catch so a single
+  // failure can't break the next run.
   async scheduled(event, env, ctx) {
     _hydrateSecrets(env);
     ctx.waitUntil((async () => {
@@ -217,13 +219,23 @@ export default {
         log.jobs.priceWatch = { error: e.message };
       }
       // Daily midnight (UTC) tick - refresh Achievement-of-the-Day stamp so
-      // clients can detect a new day without comparing strings.
+      // clients can detect a new day without comparing strings, and run the
+      // free-games sweep (Epic rotates Thursdays ~16:00 UTC; a daily 00:00
+      // tick catches new promotions within 8h max - good enough since the
+      // promotions themselves last ~7 days, and avoids adding a new cron
+      // entry).
       if (cron.startsWith('0 0 ')) {
         try {
           await kvPut(env, 'aotd:day-stamp', { day: new Date().toISOString().slice(0,10), at: Date.now() });
           log.jobs.aotdRotation = { ok: true };
         } catch (e) {
           log.jobs.aotdRotation = { error: e.message };
+        }
+        try {
+          const fg = await runFreeGamesSweep(env);
+          log.jobs.freeGames = fg;
+        } catch (e) {
+          log.jobs.freeGames = { error: e.message };
         }
       }
       log.finishedAt = Date.now();
@@ -5121,6 +5133,162 @@ async function runWishlistPriceWatch(env, opts = {}) {
           else sidStat.pushSkipped++;
         }
       }
+    } catch (e) {
+      stats.errors++;
+      sidStat.errors++;
+      sidStat.error = e.message;
+    }
+  }
+  return stats;
+}
+
+// Free-games sweep (Epic-only for now). Runs daily under the 00:00 UTC cron.
+//   Why Epic-only at skeleton stage: Epic's promotionalOffers feed is the
+//   only one of the three sources in freeGames() that gives a clean,
+//   time-bounded "free right now, ends at X" signal. GOG's catalog query
+//   returns *permanently* free titles (price=0..0 is a price filter, not a
+//   promotion filter) and CheapShark's Steam free-weekends feed is similarly
+//   noisy with perma-free titles. Adding those sources later requires
+//   per-source "is this actually a new promotion?" logic, which is a
+//   separate night's work. Epic alone covers the cadence users care about
+//   most (weekly Thursday rotation).
+//
+//   Wire-up tonight stops at "write alerts:${sid}" - push dispatch is
+//   deferred to night 2 of the (d) plan, so the existing in-app Recent
+//   Price Drops panel surfaces free games naturally (free game alerts are
+//   shaped exactly like price-drop alerts: discount_percent:100, final:0,
+//   initial:<originalPriceInCents>) but no notification fires. This means
+//   tonight's change is observable in /api/alerts and the in-app panel
+//   without committing to a notification UX that hasn't been validated yet.
+//
+//   appid:0 sentinel: questlog-sw.js's push handler already skips the
+//   home-screen badge increment for appid:0 (shipped 2026-05-19). Free-game
+//   alerts use appid:0 so when push dispatch IS wired up next night, they
+//   won't pollute the wishlist badge count. The frontend's renderRecentDrops
+//   already tolerates appid:0 because it only reads name/currency/final/
+//   initial/discount_percent/header_image/store_url/ts.
+//
+//   Stable key: `freegame-${source}-${stableSlug(title)}`. The dedupe set
+//   stored at `freegame-seen:${sid}` (30-day TTL) prevents re-alerting on
+//   the same promotion across consecutive daily ticks while Epic still has
+//   the title in its current-offers feed.
+const FREE_GAMES_USER_CAP = 100;
+const FREE_GAMES_DEDUPE_TTL_SECONDS = 30 * 24 * 60 * 60;
+const FREE_GAMES_MAX_PER_RUN = 5; // hard upper bound; Epic almost never gives more than 1-2 simultaneously
+
+function _freeGameStableKey(source, title) {
+  // Slug down to [a-z0-9-] so unicode/punctuation differences (curly quotes,
+  // trademark symbols) can't break dedupe across runs.
+  const slug = String(title || '').toLowerCase()
+    .normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  return `freegame-${source}-${slug}`;
+}
+
+// Pure collector: hits Epic's freeGamesPromotions feed and returns an array
+// of normalised, time-bounded "free right now" entries. Throws on network
+// error - caller (runFreeGamesSweep) wraps in try/catch. Kept separate from
+// freeGames() (which serves the /api/free-games endpoint) so we don't have
+// to depend on its lookupRating() Steam-review enrichment - reviews are
+// nice-to-have for the UI but pointless for a push payload.
+async function _collectFreeGamePromotions() {
+  const out = [];
+  const epic = await fetchJSON(
+    'https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions?locale=en-US&country=US&allowCountries=US'
+  );
+  const elements = (epic?.data?.Catalog?.searchStore?.elements || []).filter(e => !isJunkTitle(e.title));
+  for (const g of elements) {
+    const promos = g.promotions?.promotionalOffers?.[0]?.promotionalOffers?.[0];
+    const isFreeNow = promos && promos.discountSetting?.discountPercentage === 0;
+    if (!isFreeNow) continue; // skip upcoming-only; we re-alert when they go live next tick
+    const img = (g.keyImages || []).find(i => i.type === 'OfferImageWide' || i.type === 'DieselStoreFrontWide')?.url
+            || (g.keyImages || [])[0]?.url || null;
+    const slug = g.catalogNs?.mappings?.[0]?.pageSlug || g.urlSlug || g.productSlug || '';
+    const originalCents = Math.round((g.price?.totalPrice?.originalPrice ?? 0));
+    out.push({
+      source: 'epic',
+      key:    _freeGameStableKey('epic', g.title),
+      title:  g.title,
+      img,
+      originalCents, // Epic's totalPrice is already in cents
+      currency: g.price?.totalPrice?.currencyCode || 'USD',
+      endDate: promos?.endDate || null,
+      url: slug ? `https://store.epicgames.com/en-US/p/${slug}` : 'https://store.epicgames.com/en-US/free-games',
+    });
+    if (out.length >= FREE_GAMES_MAX_PER_RUN) break;
+  }
+  return out;
+}
+
+async function runFreeGamesSweep(env, opts = {}) {
+  if (!env?.QUESTLOG_KV) return { skipped: 'no-kv' };
+  const stats = { promotions: 0, users: 0, alerts: 0, errors: 0, perSid: [] };
+
+  let promotions;
+  try {
+    promotions = await _collectFreeGamePromotions();
+  } catch (e) {
+    return { error: 'collector: ' + e.message };
+  }
+  stats.promotions = promotions.length;
+  if (!promotions.length) return stats;
+
+  // Audience: push subscribers OR (optionally) explicit single sid for tests.
+  // Note: tonight is skeleton-only - we write alerts but DO NOT dispatch
+  // push. So the audience could be "anyone with a sid", but writing alerts
+  // to every wishlist owner is wasteful when free games are global. Push
+  // subscribers is the right audience for night 2's push wire-up too, so
+  // we pick the final audience now and keep skeleton + production identical.
+  let sids;
+  if (opts.onlySid) {
+    sids = [opts.onlySid];
+  } else {
+    const pushKeys = await kvList(env, 'push:');
+    sids = pushKeys.map(k => k.slice('push:'.length)).filter(Boolean).slice(0, FREE_GAMES_USER_CAP);
+  }
+  stats.users = sids.length;
+
+  for (const sid of sids) {
+    const sidStat = { sid, alerts: 0, errors: 0 };
+    stats.perSid.push(sidStat);
+    try {
+      const seen = (await kvGet(env, `freegame-seen:${sid}`)) || {};
+      const existingAlerts = (await kvGet(env, `alerts:${sid}`)) || [];
+
+      const newAlerts = [];
+      for (const p of promotions) {
+        if (seen[p.key]) continue;
+        // Shape mirrors price-drop alerts so renderRecentDrops() needs no
+        // changes: discount_percent:100, final:0, initial: originalCents.
+        newAlerts.push({
+          kind: 'freegame', // marker for night 2 push dispatch / future UI badge
+          appid: 0,         // sentinel - questlog-sw.js push handler skips badge for this
+          name: p.title,
+          discount_percent: 100,
+          initial: p.originalCents,
+          final: 0,
+          initial_formatted: null,
+          final_formatted: 'FREE',
+          currency: p.currency,
+          header_image: p.img,
+          store_url: p.url,
+          source: p.source,
+          endDate: p.endDate,
+          ts: Date.now(),
+        });
+        seen[p.key] = Date.now();
+      }
+
+      if (newAlerts.length) {
+        const merged = [...newAlerts, ...existingAlerts].slice(0, 50);
+        await kvPut(env, `alerts:${sid}`, merged, ALERTS_TTL_SECONDS);
+        await kvPut(env, `freegame-seen:${sid}`, seen, FREE_GAMES_DEDUPE_TTL_SECONDS);
+        stats.alerts += newAlerts.length;
+        sidStat.alerts += newAlerts.length;
+      }
+      // NOTE: push dispatch deliberately deferred to night 2 of (d). Once
+      // wired, the loop here will mirror runWishlistPriceWatch's tail (serial
+      // dispatchWebPush per new alert, accumulate pushSent/pushSkipped).
     } catch (e) {
       stats.errors++;
       sidStat.errors++;
