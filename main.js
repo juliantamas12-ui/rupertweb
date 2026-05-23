@@ -477,20 +477,8 @@ const SCHOOL_TASKS = [
     "status": "upcoming"
   },
   {
-    "title": "Math 7 (Summative)",
-    "due": "Submit Coursework",
-    "subject": "",
-    "status": "upcoming"
-  },
-  {
-    "title": "Test Science 7",
-    "due": "",
-    "subject": "",
-    "status": "upcoming"
-  },
-  {
     "title": "2nd Semester Exams 2026_Listening",
-    "due": "",
+    "due": "Submit Coursework",
     "subject": "",
     "status": "upcoming"
   },
