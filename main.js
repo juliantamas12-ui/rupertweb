@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Night at Okęcie Airport When Gomułka Stared Down Khrushchev: 19 October 1956",
+    date: "2026-05-23",
+    category: "History",
+    excerpt: "At about seven in the morning on Friday, 19 October 1956, four Ilyushin-14s landed at Okęcie airport outside Warsaw without permission, without clearance, and without notifying the Polish government. Out of them came Khrushchev, Molotov, Kaganovich and Mikoyan — half the Soviet Politburo — together with eleven Red Army generals in field uniform. Soviet armoured columns from the Northern Group of Forces had begun moving south from Legnica at three that morning, heading for the capital. This is the morning the Eastern Bloc nearly came apart eleven days before Hungary did, and the reason it did not come apart is that a recently rehabilitated Polish communist, who had spent four years in prison under Stalin, refused to get into a car...",
+    url: "essays/2026-05-23-the-night-at-okecie-airport-when-gomulka-stared-down-khrushchev.html"
+  },
+  {
     title: "The Fortnight at Erfurt When Talleyrand Sold Napoleon to the Tsar: September-October 1808",
     date: "2026-05-22",
     category: "History",
