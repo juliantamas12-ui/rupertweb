@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Afternoon at Annual That Killed the Spanish Monarchy: 22 July 1921",
+    date: "2026-05-24",
+    category: "History",
+    excerpt: "On the afternoon of 22 July 1921, in a stony Rif valley about ninety kilometres south of Melilla, a Spanish colonial army of roughly twenty thousand men ceased to exist. By nightfall its commanding general, Manuel Fernández Silvestre, was dead, and a force of perhaps three thousand tribesmen under a former mine clerk named Abd el-Krim was advancing east through the Spanish positions with effectively no opposition. This is the worst defeat any European colonial power suffered in the twentieth century before Dien Bien Phu, and it is the moment that the Spanish constitutional monarchy of Alfonso XIII began to die. The line from Annual to the Spanish Civil War, fifteen years later, is shorter and straighter than almost any other causal chain in interwar European history...",
+    url: "essays/2026-05-24-the-afternoon-at-annual-that-killed-the-spanish-monarchy.html"
+  },
+  {
     title: "The Night at Okęcie Airport When Gomułka Stared Down Khrushchev: 19 October 1956",
     date: "2026-05-23",
     category: "History",
