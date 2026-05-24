@@ -4945,24 +4945,65 @@ async function dispatchWebPush(env, sid, alert) {
     // Notification payload shape matches questlog-sw.js's push handler:
     //   showNotification(title, { body, icon, badge, data })
     //   then notificationclick reads `data.url` to focus/open the right tab.
-    // We also include `tag` (so successive price drops for the same app
-    // collapse into one notification) and `data.appid`/`data.ts` for any
-    // future click-handler analytics. Keep it compact - smaller plaintext
-    // = more headroom under aes128gcm's 4079-byte limit.
-    const priceTxt = alert.final_formatted
-                  || (alert.currency && alert.final != null
-                      ? `${alert.currency} ${(alert.final / 100).toFixed(2)}`
-                      : 'on sale');
-    const notif = {
-      title: 'Price drop',
-      body:  `${alert.name} is now ${priceTxt} (-${alert.discount_percent}%)`,
-      tag:   `questlog-price-${alert.appid}`,
-      data:  {
-        url:   alert.store_url || 'https://rupertweb.com/questlog.html',
-        appid: alert.appid,
-        ts:    alert.ts || Date.now(),
-      },
-    };
+    // We also include `tag` (so successive notifications for the same item
+    // collapse into one entry) and `data.appid`/`data.ts` for any future
+    // click-handler analytics. Keep it compact - smaller plaintext = more
+    // headroom under aes128gcm's 4079-byte limit.
+    //
+    // Branch on alert.kind: 'freegame' alerts (option (d) night 2,
+    // 2026-05-24) use a different title/body/tag shape so users see
+    // "Free game" instead of "Price drop" and the tag collapses by
+    // source+slug rather than appid (free-game alerts use the appid:0
+    // sentinel, so tagging by appid would collapse every free game into
+    // one notification - obviously wrong).
+    let notif;
+    if (alert.kind === 'freegame') {
+      // Slug name down to [a-z0-9-] so the tag is deterministic across
+      // runs even when Epic returns curly quotes or trademark symbols.
+      // Mirrors _freeGameStableKey's slug logic (kept inline here to
+      // avoid pulling that helper into dispatchWebPush's scope).
+      const slug = String(alert.name || '').toLowerCase()
+        .normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+      const source = alert.source || 'store';
+      // endDate is ISO from Epic; render as YYYY-MM-DD for the body.
+      // Defensive: if missing or unparseable, omit the "ends X" clause.
+      let endsClause = '';
+      if (alert.endDate) {
+        const d = new Date(alert.endDate);
+        if (!isNaN(d.getTime())) {
+          endsClause = ` (ends ${d.toISOString().slice(0, 10)})`;
+        }
+      }
+      // Capitalise source for body display (epic -> Epic).
+      const sourceLabel = source.charAt(0).toUpperCase() + source.slice(1);
+      notif = {
+        title: 'Free game',
+        body:  `${alert.name} is FREE on ${sourceLabel}${endsClause}`,
+        tag:   `questlog-freegame-${source}-${slug}`,
+        data:  {
+          url:   alert.store_url || 'https://rupertweb.com/questlog.html',
+          appid: alert.appid, // 0 sentinel - SW skips badge increment
+          kind:  'freegame',
+          ts:    alert.ts || Date.now(),
+        },
+      };
+    } else {
+      const priceTxt = alert.final_formatted
+                    || (alert.currency && alert.final != null
+                        ? `${alert.currency} ${(alert.final / 100).toFixed(2)}`
+                        : 'on sale');
+      notif = {
+        title: 'Price drop',
+        body:  `${alert.name} is now ${priceTxt} (-${alert.discount_percent}%)`,
+        tag:   `questlog-price-${alert.appid}`,
+        data:  {
+          url:   alert.store_url || 'https://rupertweb.com/questlog.html',
+          appid: alert.appid,
+          ts:    alert.ts || Date.now(),
+        },
+      };
+    }
     const payloadStr = JSON.stringify(notif);
 
     const { body } = await encryptPushPayload(payloadStr, sub.keys.p256dh, sub.keys.auth);
@@ -5153,13 +5194,14 @@ async function runWishlistPriceWatch(env, opts = {}) {
 //   separate night's work. Epic alone covers the cadence users care about
 //   most (weekly Thursday rotation).
 //
-//   Wire-up tonight stops at "write alerts:${sid}" - push dispatch is
-//   deferred to night 2 of the (d) plan, so the existing in-app Recent
-//   Price Drops panel surfaces free games naturally (free game alerts are
-//   shaped exactly like price-drop alerts: discount_percent:100, final:0,
-//   initial:<originalPriceInCents>) but no notification fires. This means
-//   tonight's change is observable in /api/alerts and the in-app panel
-//   without committing to a notification UX that hasn't been validated yet.
+//   Night 1 (2026-05-23) shipped the sweep skeleton + alerts shape.
+//   Night 2 (2026-05-24, option (d) of the launch plan) wires Web Push
+//   dispatch at the tail of the per-sid loop, mirroring
+//   runWishlistPriceWatch's structure. dispatchWebPush branches on
+//   alert.kind === 'freegame' to render "Free game" / "FREE on Epic
+//   (ends YYYY-MM-DD)" / tag `questlog-freegame-${source}-${slug}`
+//   (collapsed by source+slug rather than appid, since free-game alerts
+//   share the appid:0 sentinel).
 //
 //   appid:0 sentinel: questlog-sw.js's push handler already skips the
 //   home-screen badge increment for appid:0 (shipped 2026-05-19). Free-game
@@ -5285,10 +5327,24 @@ async function runFreeGamesSweep(env, opts = {}) {
         await kvPut(env, `freegame-seen:${sid}`, seen, FREE_GAMES_DEDUPE_TTL_SECONDS);
         stats.alerts += newAlerts.length;
         sidStat.alerts += newAlerts.length;
+
+        // Fan out to Web Push. Mirrors runWishlistPriceWatch's tail: serial
+        // loop (not parallel) to keep outbound subrequest pressure modest;
+        // dispatchWebPush swallows all errors and reports per-alert outcome.
+        // dispatchWebPush branches on alert.kind === 'freegame' to render
+        // "Free game" title / "FREE on Epic (ends YYYY-MM-DD)" body / tag
+        // collapsed by source+slug rather than appid (since free-game
+        // alerts share appid:0). Option (d) night 2, 2026-05-24.
+        sidStat.pushSent = 0;
+        sidStat.pushSkipped = 0;
+        for (const alert of newAlerts) {
+          const r = await dispatchWebPush(env, sid, alert);
+          if (r.sent) sidStat.pushSent++;
+          else sidStat.pushSkipped++;
+        }
+        stats.pushSent = (stats.pushSent || 0) + sidStat.pushSent;
+        stats.pushSkipped = (stats.pushSkipped || 0) + sidStat.pushSkipped;
       }
-      // NOTE: push dispatch deliberately deferred to night 2 of (d). Once
-      // wired, the loop here will mirror runWishlistPriceWatch's tail (serial
-      // dispatchWebPush per new alert, accumulate pushSent/pushSkipped).
     } catch (e) {
       stats.errors++;
       sidStat.errors++;
