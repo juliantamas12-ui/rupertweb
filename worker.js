@@ -237,6 +237,15 @@ export default {
         } catch (e) {
           log.jobs.freeGames = { error: e.message };
         }
+        // AotD push dispatch (option (d) night 3, 2026-05-25). Per-user
+        // daily challenge fan-out; deduped via `aotd-seen:${sid}` so a
+        // double-tick within the same UTC day (e.g. cron retry) is a no-op.
+        try {
+          const ad = await runAotdSweep(env);
+          log.jobs.aotd = ad;
+        } catch (e) {
+          log.jobs.aotd = { error: e.message };
+        }
       }
       log.finishedAt = Date.now();
       log.durationMs = log.finishedAt - startedAt;
@@ -4406,23 +4415,33 @@ async function journalPut(request, env) {
 // ACHIEVEMENT OF THE DAY
 // ════════════════════════════════════════════════════════
 
-async function achievementOfDay(url) {
-  const sid = url.searchParams.get('sid');
-  if (!sid) return jsonResponse({ error: 'sid required' }, 400);
+// Compute the Achievement-of-the-Day for a single sid as a plain object
+// (no HTTP wrapping). Extracted from the original achievementOfDay handler
+// so both the /api/achievement-of-day endpoint and the runAotdSweep cron
+// job (option (d) night 3, 2026-05-25) can share one source of truth - if
+// we let them drift, the daily push notification might suggest a different
+// achievement than the in-app Pro panel for the same user on the same day.
+//
+// Return shape:
+//   success -> { ok: true, day, game, gameAppId, gameImg, achievement, guideUrl, youtubeUrl }
+//   miss    -> { ok: false, reason: 'no-sid' | 'no-games' | 'no-candidates' | 'error', message?, game? }
+//
+// Deterministic per (sid, today-UTC) - the same call within a day always
+// returns the same pick, so the sweep's dedupe key `aotd-seen:${sid}` only
+// needs to remember the day stamp.
+async function _computeAotdForUser(sid) {
+  if (!sid) return { ok: false, reason: 'no-sid' };
 
-  // Pull library
   const games = await fetchJSON(
     `https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${STEAM_KEY}&steamid=${sid}&include_appinfo=1`
   );
   const list = (games?.response?.games || []).filter(g => g.playtime_forever > 0).slice(0, 30);
-  if (!list.length) return jsonResponse({ error: 'No played games found' }, 404);
+  if (!list.length) return { ok: false, reason: 'no-games' };
 
-  // Deterministic per-user-per-day pick
   const today = new Date().toISOString().slice(0, 10);
   const seed = (sid + today).split('').reduce((s, c) => s + c.charCodeAt(0), 0);
   const game = list[seed % list.length];
 
-  // Pull achievement schema + player progress + global percentages in parallel
   try {
     const [schema, player, global] = await Promise.all([
       fetchJSON(`https://api.steampowered.com/ISteamUserStats/GetSchemaForGame/v2/?key=${STEAM_KEY}&appid=${game.appid}&l=english`),
@@ -4434,19 +4453,19 @@ async function achievementOfDay(url) {
     const playerMap = Object.fromEntries((player?.playerstats?.achievements || []).map(a => [a.apiname, a.achieved]));
     const globalMap = Object.fromEntries((global?.achievementpercentages?.achievements || []).map(a => [a.name, parseFloat(a.percent)]));
 
-    // Find achievements: not yet unlocked, sort by global rarity (rarer = more interesting)
     const candidates = all
       .filter(a => !playerMap[a.name])
       .map(a => ({ ...a, globalPct: globalMap[a.name] || 0 }))
-      .filter(a => a.globalPct > 1) // skip near-impossible
+      .filter(a => a.globalPct > 1)
       .sort((a, b) => a.globalPct - b.globalPct);
 
-    if (!candidates.length) return jsonResponse({ error: 'No achievements left to unlock' }, 404);
+    if (!candidates.length) return { ok: false, reason: 'no-candidates', game: game.name };
 
-    // Pick deterministically: middle-rarity for variety
     const pick = candidates[Math.min(candidates.length - 1, seed % Math.min(candidates.length, 10))];
 
-    return jsonResponse({
+    return {
+      ok: true,
+      day: today,
       game: game.name,
       gameAppId: game.appid,
       gameImg: `https://cdn.cloudflare.steamstatic.com/steam/apps/${game.appid}/header.jpg`,
@@ -4460,10 +4479,26 @@ async function achievementOfDay(url) {
       },
       guideUrl: `https://www.google.com/search?q=${encodeURIComponent(`${game.name} ${pick.displayName} achievement guide`)}`,
       youtubeUrl: `https://www.youtube.com/results?search_query=${encodeURIComponent(`${game.name} ${pick.displayName} how to`)}`,
-    });
+    };
   } catch (e) {
-    return jsonResponse({ error: 'Achievement data unavailable for this game', game: game.name }, 500);
+    return { ok: false, reason: 'error', message: e.message, game: game.name };
   }
+}
+
+async function achievementOfDay(url) {
+  const sid = url.searchParams.get('sid');
+  const r = await _computeAotdForUser(sid);
+  if (r.ok) {
+    // Strip the bookkeeping fields (ok, day, reason) before returning to
+    // clients - the original endpoint shape never had them and the existing
+    // questlog.html consumer doesn't expect them.
+    const { ok, day, reason, ...payload } = r;
+    return jsonResponse(payload);
+  }
+  if (r.reason === 'no-sid')        return jsonResponse({ error: 'sid required' }, 400);
+  if (r.reason === 'no-games')      return jsonResponse({ error: 'No played games found' }, 404);
+  if (r.reason === 'no-candidates') return jsonResponse({ error: 'No achievements left to unlock' }, 404);
+  return jsonResponse({ error: 'Achievement data unavailable for this game', game: r.game }, 500);
 }
 
 // ════════════════════════════════════════════════════════
@@ -4957,7 +4992,31 @@ async function dispatchWebPush(env, sid, alert) {
     // sentinel, so tagging by appid would collapse every free game into
     // one notification - obviously wrong).
     let notif;
-    if (alert.kind === 'freegame') {
+    if (alert.kind === 'aotd') {
+      // Achievement-of-the-Day push (option (d) night 3, 2026-05-25).
+      // Per-user daily challenge from the user's library; tag collapses by
+      // YYYY-MM-DD so a redispatch (or a user with two devices) replaces
+      // its predecessor instead of stacking. Body "<game>: <achievement>"
+      // mirrors the in-app Pro panel for visual consistency. appid:0
+      // sentinel preserved so questlog-sw.js skips the home-screen badge
+      // increment - AotD pushes shouldn't pollute the wishlist badge count,
+      // same rule as free-games.
+      const day = alert.day || new Date().toISOString().slice(0, 10);
+      const gameName  = alert.name || alert.game || 'today';
+      const achName   = (alert.achievement && alert.achievement.name) || alert.achievementName || 'a rare achievement';
+      notif = {
+        title: "Today's challenge",
+        body:  `${gameName}: ${achName}`,
+        tag:   `questlog-aotd-${day}`,
+        data:  {
+          url:   alert.store_url || 'https://rupertweb.com/questlog.html',
+          appid: alert.appid, // 0 sentinel - SW skips badge increment
+          kind:  'aotd',
+          day,
+          ts:    alert.ts || Date.now(),
+        },
+      };
+    } else if (alert.kind === 'freegame') {
       // Slug name down to [a-z0-9-] so the tag is deterministic across
       // runs even when Epic returns curly quotes or trademark symbols.
       // Mirrors _freeGameStableKey's slug logic (kept inline here to
@@ -5348,6 +5407,114 @@ async function runFreeGamesSweep(env, opts = {}) {
     } catch (e) {
       stats.errors++;
       sidStat.errors++;
+      sidStat.error = e.message;
+    }
+  }
+  return stats;
+}
+
+// Achievement-of-the-Day sweep (option (d) night 3, 2026-05-25). Companion to
+// runFreeGamesSweep: writes an alert + dispatches Web Push for each Pro user
+// who has a push subscription, exactly once per (sid, YYYY-MM-DD).
+//
+//   Audience: push subscribers (`push:*`) - same as free-games sweep. We
+//   intentionally do not write AotD alerts for non-push users; they already
+//   see the AotD inside the Pro panel via the `/api/achievement-of-day`
+//   endpoint each time they open the app, which is the canonical surface
+//   for free-tier users. The sweep's job is purely the push fan-out + the
+//   in-app Recent Price Drops panel decoration for subscribers.
+//
+//   Dedupe: `aotd-seen:${sid}` is a single string holding today's day stamp.
+//   We only ever need to remember "did we already push them today?" - the
+//   pick itself is deterministic per (sid, day), so if we somehow re-ran the
+//   sweep within the same UTC day, we'd compute the same achievement.
+//   7-day TTL because tomorrow's run will overwrite it; longer TTL would just
+//   waste KV space.
+//
+//   Why not piggyback on runFreeGamesSweep: free-games is a single global
+//   collector (one Epic fetch -> shared across all users). AotD is per-user
+//   (each user's library + achievement schema). Different cost profile,
+//   different cap, different dedupe shape - cleaner as a sibling than a
+//   merged function.
+const AOTD_USER_CAP = 100;
+const AOTD_DEDUPE_TTL_SECONDS = 7 * 24 * 60 * 60;
+
+async function runAotdSweep(env, opts = {}) {
+  if (!env?.QUESTLOG_KV) return { skipped: 'no-kv' };
+  const stats = { users: 0, alerts: 0, errors: 0, skipped: 0, perSid: [] };
+
+  const today = new Date().toISOString().slice(0, 10);
+
+  let sids;
+  if (opts.onlySid) {
+    sids = [opts.onlySid];
+  } else {
+    const pushKeys = await kvList(env, 'push:');
+    sids = pushKeys.map(k => k.slice('push:'.length)).filter(Boolean).slice(0, AOTD_USER_CAP);
+  }
+  stats.users = sids.length;
+
+  for (const sid of sids) {
+    const sidStat = { sid };
+    stats.perSid.push(sidStat);
+    try {
+      // Dedupe: skip if we already pushed AotD to this sid today.
+      const seenDay = await kvGet(env, `aotd-seen:${sid}`);
+      if (seenDay && seenDay.day === today) {
+        sidStat.skipped = 'already-today';
+        stats.skipped++;
+        continue;
+      }
+
+      const r = await _computeAotdForUser(sid);
+      if (!r.ok) {
+        // Private libraries, empty libraries, fully-completed games, schema
+        // fetch failures - all expected, just skip and continue. Don't bump
+        // the error counter for known-soft misses.
+        sidStat.skipped = r.reason;
+        if (r.reason === 'error') { stats.errors++; sidStat.error = r.message; }
+        else { stats.skipped++; }
+        continue;
+      }
+
+      // Build alert. Shape mirrors price-drop / free-game alerts so the
+      // existing renderRecentDrops() needs no changes. appid:0 sentinel so
+      // questlog-sw.js skips the home-screen badge increment (same rule as
+      // free-games - AotD shouldn't pollute the wishlist badge count).
+      const alert = {
+        kind: 'aotd',
+        appid: 0,
+        name: r.game,
+        gameAppId: r.gameAppId,
+        achievement: r.achievement,
+        achievementName: r.achievement && r.achievement.name,
+        day: r.day,
+        header_image: r.gameImg,
+        store_url: `https://rupertweb.com/questlog.html#aotd`,
+        ts: Date.now(),
+      };
+
+      const existingAlerts = (await kvGet(env, `alerts:${sid}`)) || [];
+      const merged = [alert, ...existingAlerts].slice(0, 50);
+      await kvPut(env, `alerts:${sid}`, merged, ALERTS_TTL_SECONDS);
+      await kvPut(env, `aotd-seen:${sid}`, { day: today, at: Date.now() }, AOTD_DEDUPE_TTL_SECONDS);
+      stats.alerts++;
+      sidStat.alerts = 1;
+
+      // Push dispatch. Mirrors runWishlistPriceWatch / runFreeGamesSweep
+      // tail: single dispatch, swallowed errors, per-sid + roll-up stats so
+      // the System Status widget picks AotD pushes up naturally.
+      const dr = await dispatchWebPush(env, sid, alert);
+      if (dr.sent) {
+        sidStat.pushSent = 1;
+        stats.pushSent = (stats.pushSent || 0) + 1;
+      } else {
+        sidStat.pushSkipped = 1;
+        sidStat.pushReason = dr.reason;
+        stats.pushSkipped = (stats.pushSkipped || 0) + 1;
+      }
+    } catch (e) {
+      stats.errors++;
       sidStat.error = e.message;
     }
   }
