@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Week at Locarno When France Signed Its Own Death Warrant: October 1925",
+    date: "2026-05-25",
+    category: "History",
+    excerpt: "In the second week of October 1925, in a lakeside hotel in the Swiss canton of Ticino, the foreign ministers of seven European states initialled a set of treaties that the chancelleries of the continent immediately hailed as the founding document of a new European order. Aristide Briand and Gustav Stresemann embraced for the cameras. Locarno entered the diplomatic vocabulary as a synonym for reconciliation, the way Munich would enter it thirteen years later as a synonym for capitulation, and almost nobody at the time noticed that the two words named the same process at different stages of its completion. Locarno was not the moment Germany rejoined Europe as an equal. It was the moment France formally consented to the proposition that the eastern half of the Versailles settlement could be revised by force, and signed a document saying so...",
+    url: "essays/2026-05-25-the-week-at-locarno-when-france-signed-its-own-death-warrant.html"
+  },
+  {
     title: "The Afternoon at Annual That Killed the Spanish Monarchy: 22 July 1921",
     date: "2026-05-24",
     category: "History",
