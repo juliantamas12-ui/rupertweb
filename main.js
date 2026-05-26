@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Three Days at Sèvres When Britain Stopped Being a Great Power: 22-24 October 1956",
+    date: "2026-05-26",
+    category: "History",
+    excerpt: "On the afternoon of Monday, 22 October 1956, a small French air force aircraft landed at a private airfield outside Paris carrying two passengers travelling under false names. One was Selwyn Lloyd, the British Foreign Secretary. The other was Sir Patrick Dean, a senior official of the Foreign Office. They were driven, in cars with curtains drawn across the windows, to a villa in the suburb of Sèvres, the same town where the Allied powers had imposed the terms of the Ottoman partition in 1920. Waiting for them were the French Prime Minister Guy Mollet, his defence and foreign ministers, and a delegation from Israel led by David Ben-Gurion himself, Moshe Dayan, and Shimon Peres. Over the next seventy-two hours, the three governments agreed in writing to fake a war. Sèvres is the moment Britain ceased to be a great power...",
+    url: "essays/2026-05-26-the-three-days-at-sevres-when-britain-stopped-being-a-great-power.html"
+  },
+  {
     title: "The Week at Locarno When France Signed Its Own Death Warrant: October 1925",
     date: "2026-05-25",
     category: "History",
