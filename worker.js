@@ -5562,7 +5562,52 @@ async function cronRunNow(url, env, request) {
   const startedAt = Date.now();
   try {
     const r = await runWishlistPriceWatch(env, { onlySid: sid });
-    return jsonResponse({ ok: true, durationMs: Date.now() - startedAt, ...r });
+    // Option (j), 2026-05-26: also kick AotD for this sid. Symmetry with
+    // the daily 00:00 UTC cron, which sweeps wishlist + free-games + AotD.
+    // Without this, hitting Refresh in the in-app Pro panel only forces a
+    // wishlist sweep - a Pro user who wants to see today's challenge has to
+    // wait up to 24h for the next 00:00 tick (or open the Pro AotD panel,
+    // which only computes on demand and never writes an alert / fires a
+    // push). With this wired in, Refresh becomes the single "force
+    // everything I care about right now" lever.
+    //
+    // Bounded cost: runAotdSweep with onlySid is one Steam library fetch +
+    // up to a few schema/achievement fetches for one user - same order of
+    // magnitude as the wishlist sweep itself, well under the 50-subrequest
+    // Worker budget per request. Free-games NOT included because it is a
+    // global Epic fetch shared across all users, not per-sid scoped, and
+    // running it on every Refresh would burn subrequests for no per-user
+    // benefit (the daily 00:00 tick already covers it for everyone).
+    //
+    // Dedupe is handled inside runAotdSweep via `aotd-seen:${sid}`, so
+    // mashing Refresh twice in one UTC day is a no-op on the second call
+    // (returns `skipped:'already-today'`, no push fired, no double-alert).
+    //
+    // Errors swallowed: wishlist refresh is the headline action; an AotD
+    // failure (Steam down, library private, all achievements unlocked)
+    // shouldn't 500 the whole Refresh response. We surface the error in
+    // the `aotd` sub-key for diagnostics but keep `ok:true` on the outer
+    // response.
+    let aotd = null;
+    try {
+      aotd = await runAotdSweep(env, { onlySid: sid });
+    } catch (e) {
+      aotd = { error: e.message };
+    }
+    // Merge alert counts so the frontend's "+N new" label on the Refresh
+    // button reflects both kinds. runWishlistPriceWatch returns `alerts`
+    // as a number; runAotdSweep returns it as a number too. Defensive
+    // fallback to 0 in case either shape changes.
+    const wishlistAlerts = typeof r.alerts === 'number' ? r.alerts : 0;
+    const aotdAlerts = (aotd && typeof aotd.alerts === 'number') ? aotd.alerts : 0;
+    return jsonResponse({
+      ok: true,
+      durationMs: Date.now() - startedAt,
+      ...r,
+      alerts: wishlistAlerts + aotdAlerts,
+      wishlistAlerts,
+      aotd,
+    });
   } catch (e) {
     return jsonResponse({ error: e.message, durationMs: Date.now() - startedAt }, 500);
   }
