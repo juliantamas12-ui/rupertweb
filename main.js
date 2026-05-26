@@ -498,25 +498,13 @@ const SCHOOL_TASKS = [
     "status": "upcoming"
   },
   {
-    "title": "2nd Semester Exams 2026_Listening",
-    "due": "",
-    "subject": "",
-    "status": "upcoming"
-  },
-  {
-    "title": "HW Science 7",
-    "due": "",
-    "subject": "",
-    "status": "upcoming"
-  },
-  {
-    "title": "Classwork Science 7",
-    "due": "",
-    "subject": "",
-    "status": "upcoming"
-  },
-  {
     "title": "2nd Semester Exams 2026_Speaking",
+    "due": "",
+    "subject": "",
+    "status": "upcoming"
+  },
+  {
+    "title": "Math 7 (HW)",
     "due": "",
     "subject": "",
     "status": "upcoming"
