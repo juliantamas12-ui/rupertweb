@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Three Hours at Fashoda When France Decided Germany Was the Enemy: 18 September 1898",
+    date: "2026-05-27",
+    category: "History",
+    excerpt: "On the morning of 18 September 1898, a small steamer flying the white ensign came up the White Nile and tied to the bank below a half-ruined Egyptian fort at a place called Fashoda, in what is now South Sudan. Out of it stepped Lord Kitchener, Sirdar of the Egyptian Army, sweating in a tarboush and an Egyptian uniform he had put on instead of his British one for diplomatic reasons. Waiting for him on the bank was Captain Jean-Baptiste Marchand of the French Marine Infantry, who had spent the previous fourteen months crossing Africa on foot from the Atlantic with eight French officers, a hundred and twenty Senegalese tirailleurs, and a collapsible steam launch carried in pieces by porters. The two men sat down in the shade of a tamarind tree with a bottle of champagne and over the next three hours decided, between themselves, that there would be no war. Fashoda is the moment France gave up the world and chose Europe...",
+    url: "essays/2026-05-27-the-three-hours-at-fashoda-when-france-decided-germany-was-the-enemy.html"
+  },
+  {
     title: "The Three Days at Sèvres When Britain Stopped Being a Great Power: 22-24 October 1956",
     date: "2026-05-26",
     category: "History",
