@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Imperial Conference of 6 September 1941 That Made Pearl Harbor a Bookkeeping Problem",
+    date: "2026-05-28",
+    category: "History",
+    excerpt: "On the morning of 6 September 1941, in a long room on the second floor of the Imperial Palace in Tokyo, eleven men sat down on either side of a brocaded table in front of the Showa Emperor and approved a document, four paragraphs long, that said Japan would complete preparations for war against the United States, Britain and the Netherlands by the end of October, and that if no acceptable settlement had been reached by approximately 10 October, would immediately decide on war. The Emperor said almost nothing. He read aloud a tanka his grandfather, the Meiji Emperor, had written in 1904 about all the seas being brothers — a hint, transmitted through a wall of court protocol, that he disliked what was being decided in his name. The meeting lasted under two hours. Pearl Harbor was three months and a day away. Japan in 1941 was not a state with a war policy. It was a state with a deadline policy...",
+    url: "essays/2026-05-28-the-imperial-conference-of-6-september-1941-that-made-pearl-harbor-a-bookkeeping-problem.html"
+  },
+  {
     title: "The Three Hours at Fashoda When France Decided Germany Was the Enemy: 18 September 1898",
     date: "2026-05-27",
     category: "History",
