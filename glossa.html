@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Glossa — Read historical sources</title>
+<meta name="description" content="Paste an old or foreign text. Glossa normalises, translates, summarises, and tells you what to read next.">
+<meta name="theme-color" content="#2A1F26">
+<link rel="icon" type="image/svg+xml" href="/icons/favicon-praefatio.svg">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#2A1F26;
+  --ink:#F4E8D2;
+  --ink-soft:#C9B894;
+  --ink-mute:#8A7B5C;
+  --rule:rgba(244,232,210,0.14);
+  --rule-soft:rgba(244,232,210,0.07);
+  --rule-strong:rgba(244,232,210,0.24);
+  --accent:#D4A156;
+  --accent-soft:rgba(212,161,86,0.14);
+  --paper:#3A2C33;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;font-size:16px;line-height:1.6;min-height:100vh}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+
+.wrap{max-width:980px;margin:0 auto;padding:60px 32px 80px}
+@media(max-width:700px){.wrap{padding:36px 18px 60px}}
+
+header.masthead{text-align:center;margin-bottom:48px}
+.brand-line{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:18px}
+.brand-line a{color:inherit}
+h1.title{font-family:'Fraunces',serif;font-style:italic;font-weight:500;font-size:clamp(48px,8vw,96px);line-height:1;letter-spacing:-2px;color:var(--ink);margin-bottom:14px}
+.strap{font-family:'Inter',sans-serif;color:var(--ink-soft);max-width:620px;margin:0 auto;font-size:clamp(15px,1.4vw,17px);line-height:1.55}
+
+.lab{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:var(--ink-mute);margin-bottom:10px;font-weight:600}
+
+.input-card{background:var(--paper);border:1px solid var(--rule);border-radius:6px;padding:22px;margin-bottom:24px}
+textarea{width:100%;background:transparent;border:none;color:var(--ink);font-family:'Fraunces',Georgia,serif;font-size:17px;line-height:1.6;resize:vertical;min-height:200px;outline:none}
+textarea::placeholder{color:var(--ink-mute);font-style:italic}
+
+.row{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-top:18px;padding-top:18px;border-top:1px solid var(--rule-soft)}
+.row label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--ink-mute);font-weight:600;margin-right:6px}
+.row select,.row input[type=text]{background:rgba(0,0,0,0.2);border:1px solid var(--rule);color:var(--ink);padding:8px 12px;border-radius:4px;font-family:'Inter',sans-serif;font-size:13px;outline:none}
+.row select:focus,.row input:focus{border-color:var(--accent-soft)}
+.spacer{flex:1}
+button.go{background:var(--accent);color:#1A1208;border:none;padding:12px 22px;font-family:'Inter',sans-serif;font-weight:600;font-size:13px;letter-spacing:0.5px;border-radius:6px;cursor:pointer;transition:transform 0.15s,background 0.15s}
+button.go:hover{background:#E4B266;transform:translateY(-1px)}
+button.go:disabled{background:var(--rule);color:var(--ink-mute);cursor:not-allowed;transform:none}
+
+.status{min-height:24px;margin:16px 0;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-mute);letter-spacing:0.5px}
+.status.error{color:#E47A6A}
+
+.results{display:none;margin-top:32px;animation:fadeIn 0.5s ease-out}
+.results.show{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+.detected{display:flex;gap:18px;flex-wrap:wrap;padding:14px 18px;background:rgba(212,161,86,0.06);border:1px solid var(--accent-soft);border-radius:6px;margin-bottom:28px}
+.detected .pill{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink);background:rgba(0,0,0,0.25);padding:6px 10px;border-radius:4px}
+.detected .pill .k{color:var(--ink-mute);margin-right:6px}
+
+section.panel{margin-bottom:36px}
+section.panel h2{font-family:'Fraunces',serif;font-style:italic;font-weight:500;font-size:24px;color:var(--ink);margin-bottom:14px;letter-spacing:-0.3px}
+section.panel .body{background:var(--paper);border:1px solid var(--rule);border-radius:6px;padding:22px;font-family:'Fraunces',Georgia,serif;font-size:17px;line-height:1.65;color:var(--ink)}
+section.panel .body.mono{font-family:'JetBrains Mono',monospace;font-size:14px;line-height:1.7;white-space:pre-wrap}
+section.panel .body p+p{margin-top:14px}
+
+.notable-list{list-style:none;padding:0}
+.notable-list li{padding:12px 0;border-bottom:1px solid var(--rule-soft);font-family:'Inter',sans-serif;font-size:15px;line-height:1.55;color:var(--ink-soft)}
+.notable-list li:last-child{border-bottom:none}
+.notable-list li strong{color:var(--accent);font-family:'Fraunces',serif;font-style:italic;font-weight:500;margin-right:8px}
+
+.further-list{list-style:none;padding:0}
+.further-list li{padding:10px 0;font-family:'Fraunces',Georgia,serif;font-style:italic;color:var(--ink-soft);font-size:15px}
+.further-list li::before{content:'— ';color:var(--ink-mute);margin-right:6px;font-style:normal}
+
+footer{text-align:center;margin-top:80px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--ink-mute);text-transform:uppercase}
+
+.spinner{display:inline-block;width:10px;height:10px;border:1.5px solid var(--accent-soft);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite;margin-right:8px;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.samples{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.samples button{background:transparent;border:1px solid var(--rule);color:var(--ink-mute);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:6px 10px;border-radius:4px;cursor:pointer;transition:border-color 0.2s,color 0.2s}
+.samples button:hover{border-color:var(--accent-soft);color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="masthead">
+    <div class="brand-line"><a href="/">Rupertweb</a> &nbsp;·&nbsp; Glossa</div>
+    <h1 class="title">Glossa.</h1>
+    <p class="strap">Paste a historical text in any language or era. Glossa normalises the orthography, translates it, explains what it actually says, and tells you where to read next.</p>
+  </header>
+
+  <div class="input-card">
+    <div class="lab">Source text</div>
+    <textarea id="source" placeholder="Paste Latin, Old Norse, Middle English, Koine Greek, Early Modern French, scribal abbreviations, OCR output, anything historical or hard to read..."></textarea>
+    <div class="row">
+      <label for="srcLang">From</label>
+      <select id="srcLang">
+        <option value="auto">Detect automatically</option>
+        <option>Classical Latin</option>
+        <option>Medieval Latin</option>
+        <option>Ancient Greek</option>
+        <option>Koine Greek</option>
+        <option>Biblical Hebrew</option>
+        <option>Old English</option>
+        <option>Middle English</option>
+        <option>Early Modern English</option>
+        <option>Old Norse</option>
+        <option>Old French</option>
+        <option>Old High German</option>
+        <option>Old Church Slavonic</option>
+        <option>Classical Arabic</option>
+        <option>Ottoman Turkish</option>
+        <option>Classical Chinese</option>
+        <option>Sanskrit</option>
+      </select>
+      <label for="tgtLang">Into</label>
+      <select id="tgtLang">
+        <option>English</option>
+        <option>Italian</option>
+        <option>French</option>
+        <option>German</option>
+        <option>Spanish</option>
+        <option>Latin</option>
+      </select>
+      <div class="spacer"></div>
+      <button class="go" id="goBtn">Analyse</button>
+    </div>
+    <div class="samples">
+      <button data-sample="latin">Latin · Cicero</button>
+      <button data-sample="norse">Old Norse · Hávamál</button>
+      <button data-sample="english">Middle English · Chaucer</button>
+      <button data-sample="medlat">Medieval Latin · Bede</button>
+    </div>
+  </div>
+
+  <div class="status" id="status"></div>
+
+  <div class="results" id="results">
+    <div class="detected" id="detected"></div>
+
+    <section class="panel">
+      <h2>Summary</h2>
+      <div class="body" id="summary"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Context</h2>
+      <div class="body" id="context"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Translation</h2>
+      <div class="body" id="translated"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Normalised source</h2>
+      <div class="body mono" id="normalised"></div>
+    </section>
+
+    <section class="panel" id="notablePanel">
+      <h2>Worth noticing</h2>
+      <div class="body"><ul class="notable-list" id="notable"></ul></div>
+    </section>
+
+    <section class="panel" id="furtherPanel">
+      <h2>Where to read next</h2>
+      <div class="body"><ul class="further-list" id="further"></ul></div>
+    </section>
+  </div>
+
+  <footer>Glossa · MMXXVI · Made by Rupert &amp; JT</footer>
+</div>
+
+<script>
+const SAMPLES = {
+  latin: "Quo usque tandem abutere, Catilina, patientia nostra? quam diu etiam furor iste tuus nos eludet? quem ad finem sese effrenata iactabit audacia?",
+  norse: "Deyr fé, deyja frændr,\ndeyr sjalfr it sama,\nek veit einn at aldri deyr:\ndómr um dauðan hvern.",
+  english: "Whan that Aprille with his shoures soote\nThe droghte of March hath perced to the roote,\nAnd bathed every veyne in swich licour\nOf which vertu engendred is the flour;",
+  medlat: "Anno autem regni Edwini regis quintodecimo, qui est annus dominicae incarnationis sexcentesimus tricesimus tertius, contigit ut idem Edwinus, postquam fidem Christi suscepit, etiam ipse cum tota gente sua Christianus efficeretur."
+};
+
+const $ = id => document.getElementById(id);
+const src = $('source'), srcLang = $('srcLang'), tgtLang = $('tgtLang'), goBtn = $('goBtn'), statusEl = $('status'), resultsEl = $('results');
+
+document.querySelectorAll('.samples button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    src.value = SAMPLES[btn.dataset.sample];
+    src.focus();
+  });
+});
+
+function setStatus(msg, isError) {
+  statusEl.className = 'status' + (isError ? ' error' : '');
+  statusEl.innerHTML = msg;
+}
+
+async function analyse() {
+  const text = src.value.trim();
+  if (!text) { setStatus('Paste some text first.', true); return; }
+  if (text.length > 12000) { setStatus('Text too long. Max 12,000 characters.', true); return; }
+
+  goBtn.disabled = true;
+  setStatus('<span class="spinner"></span>Reading the source. This usually takes 5–15 seconds.');
+  resultsEl.classList.remove('show');
+
+  try {
+    const r = await fetch('/api/glossa/analyse', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, sourceLang: srcLang.value, targetLang: tgtLang.value })
+    });
+    const data = await r.json();
+    if (!r.ok || data.error) {
+      setStatus('Error: ' + (data.error || ('HTTP ' + r.status)), true);
+      goBtn.disabled = false;
+      return;
+    }
+    render(data);
+    setStatus('');
+  } catch (e) {
+    setStatus('Network error: ' + e.message, true);
+  } finally {
+    goBtn.disabled = false;
+  }
+}
+
+function render(d) {
+  const det = d.detected || {};
+  $('detected').innerHTML = [
+    det.language ? `<div class="pill"><span class="k">Language</span>${escapeHtml(det.language)}</div>` : '',
+    det.period   ? `<div class="pill"><span class="k">Period</span>${escapeHtml(det.period)}</div>` : '',
+    det.genre    ? `<div class="pill"><span class="k">Genre</span>${escapeHtml(det.genre)}</div>` : '',
+    det.confidence ? `<div class="pill"><span class="k">Confidence</span>${escapeHtml(det.confidence)}</div>` : '',
+  ].filter(Boolean).join('');
+
+  $('summary').innerHTML = paragraphs(d.summary || '');
+  $('context').innerHTML = paragraphs(d.context || '');
+  $('translated').innerHTML = paragraphs(d.translated || '');
+  $('normalised').textContent = d.normalised || '';
+
+  const notable = Array.isArray(d.notable) ? d.notable : [];
+  $('notable').innerHTML = notable.map(item => {
+    const m = String(item).match(/^([^—\-:]+)[\s—\-:]+(.+)$/);
+    return m
+      ? `<li><strong>${escapeHtml(m[1].trim())}</strong>${escapeHtml(m[2].trim())}</li>`
+      : `<li>${escapeHtml(String(item))}</li>`;
+  }).join('');
+  $('notablePanel').style.display = notable.length ? '' : 'none';
+
+  const further = Array.isArray(d.furtherReading) ? d.furtherReading : [];
+  $('further').innerHTML = further.map(item => `<li>${escapeHtml(String(item))}</li>`).join('');
+  $('furtherPanel').style.display = further.length ? '' : 'none';
+
+  resultsEl.classList.add('show');
+  resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function paragraphs(s) {
+  return String(s).split(/\n\n+/).map(p => `<p>${escapeHtml(p).replace(/\n/g,'<br>')}</p>`).join('');
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+goBtn.addEventListener('click', analyse);
+src.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') analyse();
+});
+</script>
+</body>
+</html>

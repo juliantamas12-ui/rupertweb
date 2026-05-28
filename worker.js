@@ -160,6 +160,7 @@ export default {
       if (p === '/api/scribe/research')                               return scribeResearch(url, env);
       if (p === '/api/praefatio/subscribe' && request.method === 'POST') return praefatioSubscribe(request, env);
       if (p === '/api/praefatio/stats')                               return praefatioStats(env);
+      if (p === '/api/glossa/analyse' && request.method === 'POST')   return glossaAnalyse(request, env);
       if (p === '/api/praefatio/vote' && request.method === 'POST')   return praefatioVote(request, env);
       if (p === '/api/spend')                                         return spendStatus(url, env);
       if (p === '/api/spend/log' && request.method === 'POST')        return spendLog(request, env);
@@ -195,6 +196,12 @@ export default {
         newRes.headers.set('x-praefatio-rewrite', `${p} -> ${routes[p]}`);
         return newRes;
       }
+    }
+
+    // Pretty-URL routing for the main rupertweb domain (Glossa, etc.)
+    if (p === '/glossa' || p === '/glossa/') {
+      const rewritten = new Request(new URL('/glossa.html', request.url).toString(), request);
+      return env.ASSETS.fetch(rewritten);
     }
 
     // Long-cache the fingerprinted questlog.js bundle. The HTML references
@@ -5960,6 +5967,93 @@ ${JSON.stringify(signals, null, 2)}`;
   } catch { return null; }
 }
 
+
+// ════════════════════════════════════════════════════════
+// GLOSSA — historical-source analysis tool
+// POST { text, sourceLang?, targetLang? } → { detected, normalised, translated, summary, period, genre, notes }
+// ════════════════════════════════════════════════════════
+async function glossaAnalyse(request, env) {
+  let body;
+  try { body = await request.json(); } catch { return jsonResponse({ error: 'Invalid JSON' }, 400); }
+  const text = (body?.text || '').trim();
+  if (!text) return jsonResponse({ error: 'Missing text' }, 400);
+  if (text.length > 12000) return jsonResponse({ error: 'Text too long (max 12,000 characters)' }, 400);
+  const sourceLang = (body?.sourceLang || 'auto').trim();
+  const targetLang = (body?.targetLang || 'English').trim();
+
+  const key = env?.ANTHROPIC_KEY || ANTHROPIC_KEY_FALLBACK;
+  if (!key) return jsonResponse({ error: 'Anthropic key not configured' }, 503);
+
+  const prompt = `You are Glossa, a tool that helps readers approach historical primary sources. The user has pasted a piece of historical text. Analyse it and return JSON with this exact shape:
+
+{
+  "detected": {
+    "language": "the language of the source (e.g. Classical Latin, Old Norse, Middle English, Koine Greek, Early Modern English, etc.)",
+    "period": "approximate century or decade (e.g. '12th century', '1480s', 'c. 50 BC')",
+    "genre": "e.g. chronicle, charter, sermon, poem, letter, treatise, inscription",
+    "confidence": "low | medium | high — how confident you are about the above"
+  },
+  "normalised": "The source text rewritten in its own language but with: scribal abbreviations expanded (e.g. m̄ → mihi), ligatures unbundled, capitalisation regularised, punctuation modernised, obvious OCR errors corrected. Preserve the original wording — do not translate. Keep line structure if it looked like verse.",
+  "translated": "A faithful, literal translation into ${targetLang}. Aim for accuracy first, readability second. Where the original is ambiguous, choose the most likely reading and footnote with [?] inline. Preserve any proper nouns in their original form.",
+  "summary": "A 2–4 sentence plain-${targetLang} paragraph explaining what the passage actually says and what its argument or content is. Written for a smart 14-year-old who has not studied this period.",
+  "context": "2–4 sentences situating the source: who likely wrote it, for whom, why, and what a reader should know to understand it. If the passage cites or references other texts, name them.",
+  "notable": ["3–6 specific words, phrases, names, or concepts in the text that are worth flagging, each as: 'TERM — short explanation of why it matters'"],
+  "furtherReading": ["2–4 real primary or secondary sources a curious reader could go to next. Use real, citable works (e.g. 'Bede, Historia Ecclesiastica IV.24', 'Galbraith, Studies in the Public Records, 1948'). Do not invent."]
+}
+
+Rules:
+- Return ONLY the JSON, no markdown, no preamble.
+- If the source is unclear or you cannot identify it confidently, say so in 'detected.confidence' and flag uncertainty in 'context'.
+- Never invent citations. If you do not know a real further-reading source, omit the field rather than fabricate.
+- If the source language is the same as the target language (e.g. modern English), still normalise and provide a useful summary/context — leave 'translated' as a lightly modernised version.
+- Preserve diacritics and special characters (þ, ð, æ, œ, ñ, etc.) exactly.
+
+${sourceLang !== 'auto' ? `The user has indicated the source language is: ${sourceLang}. Take this as a hint but correct it if obviously wrong.\n\n` : ''}SOURCE TEXT:
+"""
+${text}
+"""`;
+
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5',
+        max_tokens: 3000,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
+    if (!r.ok) {
+      const err = await r.text().catch(() => '');
+      return jsonResponse({ error: 'Anthropic call failed', detail: err.slice(0, 400) }, 502);
+    }
+    const data = await r.json();
+    const raw = data.content?.[0]?.text || '';
+    if (env) {
+      logSpend(env, 'anthropic', {
+        inputTokens: data.usage?.input_tokens || 0,
+        outputTokens: data.usage?.output_tokens || 0,
+        model: data.model,
+        purpose: 'glossa',
+      });
+    }
+    const jsonStart = raw.indexOf('{');
+    const jsonEnd = raw.lastIndexOf('}');
+    if (jsonStart === -1 || jsonEnd === -1) {
+      return jsonResponse({ error: 'Model did not return JSON', raw: raw.slice(0, 400) }, 502);
+    }
+    let parsed;
+    try { parsed = JSON.parse(raw.slice(jsonStart, jsonEnd + 1)); }
+    catch (e) { return jsonResponse({ error: 'JSON parse failed', detail: e.message }, 502); }
+    return jsonResponse({ ok: true, ...parsed });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
+  }
+}
 
 // ════════════════════════════════════════════════════════
 // SPEND TRACKING
