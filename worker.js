@@ -197,6 +197,23 @@ export default {
       }
     }
 
+    // Long-cache the fingerprinted questlog.js bundle. The HTML references
+    // /questlog.js?v=<sha256-12>; the v= query is rewritten by scripts/hash-questlog-js.mjs
+    // on every commit that touches the JS, so we can safely send immutable.
+    // Requests without a v= query (legacy bookmarks, scrapers) fall through to
+    // a short cache so a stale HTML doesn't get permanently pinned to old JS.
+    if (p === '/questlog.js') {
+      const assetRes = await env.ASSETS.fetch(request);
+      const newRes = new Response(assetRes.body, assetRes);
+      const v = url.searchParams.get('v');
+      if (v && /^[a-f0-9]{6,64}$/.test(v)) {
+        newRes.headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+      } else {
+        newRes.headers.set('Cache-Control', 'public, max-age=300');
+      }
+      return newRes;
+    }
+
     return env.ASSETS.fetch(request);
   },
 
