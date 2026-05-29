@@ -2008,6 +2008,44 @@ function getPushPrefs() {
     achievementOfDay: document.getElementById('prefAotd')?.checked ?? true,
   };
 }
+// ── Push test "last sent" indicator (localStorage-backed, idempotent) ──
+function _formatPushTestAge(ms) {
+  if (!Number.isFinite(ms) || ms < 0) return '';
+  const s = Math.floor(ms / 1000);
+  if (s < 5) return 'just now';
+  if (s < 60) return s + 's ago';
+  const m = Math.floor(s / 60);
+  if (m < 60) return m + ' min ago';
+  const h = Math.floor(m / 60);
+  if (h < 24) return h + 'h ago';
+  const d = Math.floor(h / 24);
+  if (d < 30) return d + 'd ago';
+  // Beyond 30 days the relative phrasing reads worse than a date.
+  try { return 'on ' + new Date(Date.now() - ms).toISOString().slice(0, 10); } catch (_) { return ''; }
+}
+function renderPushTestLastSent() {
+  try {
+    const el = document.getElementById('pushTestLastSent');
+    if (!el) return;
+    const raw = localStorage.getItem('questlog_push_test_last_sent');
+    const ts = raw ? parseInt(raw, 10) : 0;
+    if (!ts || !Number.isFinite(ts) || ts <= 0 || ts > Date.now() + 60000) {
+      el.textContent = '';
+      return;
+    }
+    const age = _formatPushTestAge(Date.now() - ts);
+    el.textContent = age ? 'Last sent: ' + age : '';
+  } catch (_) { /* localStorage may be unavailable; silent */ }
+}
+if (!window._pushTestLastSentHooked) {
+  window._pushTestLastSentHooked = true;
+  // Refresh on tab visibility so the label is fresh when the user comes back.
+  try { document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') renderPushTestLastSent(); }); } catch (_) {}
+  // Cheap periodic refresh so the label ages without a page reload.
+  try { setInterval(renderPushTestLastSent, 60000); } catch (_) {}
+  // Initial render once DOM is ready (script is deferred so the element exists).
+  try { renderPushTestLastSent(); } catch (_) {}
+}
 async function sendTestPush() {
   const btn = document.getElementById('pushTestBtn');
   const status = document.getElementById('pushTestStatus');
@@ -2027,6 +2065,8 @@ async function sendTestPush() {
       status.innerHTML = '<span style="color:#ff9e42">Slow down - try again in a few minutes.</span>';
     } else if (j.result && j.result.sent) {
       status.innerHTML = '<span style="color:var(--accent)">Sent. Check your device.</span>';
+      try { localStorage.setItem('questlog_push_test_last_sent', String(Date.now())); } catch (_) {}
+      try { renderPushTestLastSent(); } catch (_) {}
     } else {
       const reason = (j.result && j.result.reason) || j.error || 'unknown';
       status.innerHTML = '<span style="color:#ff5a5a">Could not send: ' + reason + '</span>';
