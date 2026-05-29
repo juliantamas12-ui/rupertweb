@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Eleven Days in November 1923 When Germany Stopped a Hyperinflation With a Lie",
+    date: "2026-05-29",
+    category: "History",
+    excerpt: "On 15 November 1923 the German government began issuing a new currency called the Rentenmark, at an exchange rate of one Rentenmark to one trillion paper marks. Twelve days earlier, a dollar had cost 420 billion paper marks at the Berlin Bourse; by the 14th it cost 2.52 trillion. On the 16th, the day after the new note appeared, the rate of depreciation stopped. Within ten weeks prices in Berlin had stabilised. The hyperinflation, the most extreme monetary disorder in the history of an industrial country, simply ended. The Rentenmark had no proper backing, no gold reserve, no foreign loan, no credible fiscal rebalancing behind it. It was a confidence trick that worked because everybody involved, including the people running it, behaved as if it would not. The mortgages on every farm and factory in Germany were a fiction. There was no mechanism by which a Rentenmark holder could actually go to a farm in Pomerania and claim a slice of it. What made the trick work was one bad-tempered banker in an unheated office refusing to take phone calls from the Finance Ministry...",
+    url: "essays/2026-05-29-the-eleven-days-in-november-1923-when-germany-stopped-a-hyperinflation-with-a-lie.html"
+  },
+  {
     title: "The Imperial Conference of 6 September 1941 That Made Pearl Harbor a Bookkeeping Problem",
     date: "2026-05-28",
     category: "History",
