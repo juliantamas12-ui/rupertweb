@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+# rupertweb pre-commit hook.
+#
+# Currently does ONE thing: if questlog.js is part of the commit, re-run the
+# fingerprint script so questlog.html's <script src="/questlog.js?v=..."> tag
+# matches the new content. Without this, browsers that immutable-cached the
+# previous /questlog.js?v=<old-hash> would keep serving stale JS for up to a
+# year after deploy (see launch-log.md 2026-05-28 for the cache design).
+#
+# Activate this hook directory with:
+#   git config core.hooksPath scripts/git-hooks
+# (one-shot, per clone). See scripts/install-git-hooks.mjs for the helper.
+#
+# Skip entirely with:  git commit --no-verify  (or env QUESTLOG_SKIP_HASH_HOOK=1)
+
+set -euo pipefail
+
+if [[ "${QUESTLOG_SKIP_HASH_HOOK:-0}" == "1" ]]; then
+  exit 0
+fi
+
+# Resolve repo root regardless of where git invoked us from.
+repo_root=$(git rev-parse --show-toplevel)
+cd "$repo_root"
+
+# Only act when questlog.js is part of the index for this commit.
+# --cached -> the staged copy; quiet diff -> exit 1 if staged changes exist.
+if git diff --cached --quiet -- questlog.js; then
+  # questlog.js not staged. Nothing to do.
+  exit 0
+fi
+
+# Guard: if questlog.html has UNSTAGED changes already, we can't safely
+# auto-stage the hash rewrite without also pulling in the user's unrelated
+# edits. Bail with a clear message rather than silently mixing changes.
+if ! git diff --quiet -- questlog.html; then
+  echo "pre-commit: questlog.html has unstaged changes." >&2
+  echo "  Refusing to auto-update the /questlog.js?v= reference because" >&2
+  echo "  doing so would also stage your in-progress HTML edits." >&2
+  echo "  Either stage them (\`git add questlog.html\`) and recommit, or" >&2
+  echo "  bypass with \`git commit --no-verify\` (deploy will serve new JS" >&2
+  echo "  with the OLD hash, so immutable-cached clients stay on old JS)." >&2
+  exit 1
+fi
+
+# Run the fingerprint script. Idempotent: prints "hash unchanged" if no work.
+if ! out=$(node scripts/hash-questlog-js.mjs 2>&1); then
+  echo "pre-commit: hash-questlog-js.mjs FAILED" >&2
+  echo "$out" >&2
+  exit 1
+fi
+
+# Print its message for the committer (one short line).
+echo "pre-commit: $out"
+
+# If the script rewrote questlog.html, stage the change so it lands in this
+# commit. If nothing changed, this is a no-op (\`git add\` on a clean file
+# is safe and silent).
+git add questlog.html
+exit 0
