@@ -6225,18 +6225,46 @@ async function chelseaLiveDiff(match, env) {
 }
 
 // Main poll function: called from cron every minute.
-// Looks for: matches starting in ~90 min (pre-brief), matches in play (live diff),
-// matches just finished (post-brief).
+// Smart-polling: only hits football-data.org when there is a Chelsea match
+// within roughly the active window (90 min before kickoff → 3 hours after).
+// Otherwise refreshes the next-fixture cache only once per hour, then sleeps.
 async function chelseaTrackerTick(env) {
   const result = { checked: Date.now(), actions: [] };
   try {
-    // Get fixtures in a window: yesterday → +3 days (covers any timezone weirdness)
+    const now = Date.now();
+    const HOUR = 3600 * 1000;
+
+    // Cached next-fixture date. Refreshed once an hour to save API calls.
+    let nextFixture = await kvGet(env, 'chelsea:next-fixture');
+    if (!nextFixture || (now - (nextFixture.cachedAt || 0)) > HOUR) {
+      try {
+        const d = await fdFetch(`/teams/${CHELSEA_TEAM_ID}/matches?status=SCHEDULED&limit=1`, env);
+        const next = (d.matches || [])[0];
+        nextFixture = next ? { kickoff: next.utcDate, cachedAt: now } : { kickoff: null, cachedAt: now };
+        await kvPut(env, 'chelsea:next-fixture', nextFixture, 60 * 60 * 24);
+      } catch (e) {
+        // Soft fail: don't burn API attempts on a server hiccup
+        result.cacheFailed = e.message;
+      }
+    }
+
+    // Sleep unless a match is within the active window
+    const kickoffMs = nextFixture?.kickoff ? new Date(nextFixture.kickoff).getTime() : null;
+    const minsToKickoff = kickoffMs ? (kickoffMs - now) / 60000 : Infinity;
+    // Active = 100 min before kickoff (to catch the 90-min brief), through 4h after
+    const active = kickoffMs && minsToKickoff < 100 && minsToKickoff > -240;
+    if (!active) {
+      result.idle = true;
+      result.minsToNext = kickoffMs ? Math.round(minsToKickoff) : null;
+      return result;
+    }
+
+    // Active: pull the full fixture window for state
     const today = new Date();
     const yesterday = new Date(today.getTime() - 24*3600*1000).toISOString().slice(0,10);
     const in3 = new Date(today.getTime() + 3*24*3600*1000).toISOString().slice(0,10);
     const data = await fdFetch(`/teams/${CHELSEA_TEAM_ID}/matches?dateFrom=${yesterday}&dateTo=${in3}`, env);
     const matches = data.matches || [];
-    const now = Date.now();
 
     for (const m of matches) {
       const kickoff = new Date(m.utcDate).getTime();
