@@ -526,12 +526,6 @@ const SCHOOL_TASKS = [
     "status": "upcoming"
   },
   {
-    "title": "2nd Semester Exams 2026_Speaking (Teil II)",
-    "due": "",
-    "subject": "",
-    "status": "upcoming"
-  },
-  {
     "title": "SEMESTER 2 SCIENCE EXAM",
     "due": "",
     "subject": "",
