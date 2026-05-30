@@ -161,6 +161,8 @@ export default {
       if (p === '/api/praefatio/subscribe' && request.method === 'POST') return praefatioSubscribe(request, env);
       if (p === '/api/praefatio/stats')                               return praefatioStats(env);
       if (p === '/api/glossa/analyse' && request.method === 'POST')   return glossaAnalyse(request, env);
+      if (p === '/api/chelsea/check')                                 return chelseaCheck(request, env);
+      if (p === '/api/chelsea/next')                                  return chelseaNext(request, env);
       if (p === '/api/praefatio/vote' && request.method === 'POST')   return praefatioVote(request, env);
       if (p === '/api/spend')                                         return spendStatus(url, env);
       if (p === '/api/spend/log' && request.method === 'POST')        return spendLog(request, env);
@@ -236,11 +238,21 @@ export default {
       const startedAt = Date.now();
       const cron = event.cron || '';
       const log = { startedAt, cron, jobs: {} };
+      // Chelsea match tracker — every minute. Cheap; mostly returns 0 actions.
       try {
-        const r = await runWishlistPriceWatch(env);
-        log.jobs.priceWatch = r;
+        const c = await chelseaTrackerTick(env);
+        log.jobs.chelsea = c;
       } catch (e) {
-        log.jobs.priceWatch = { error: e.message };
+        log.jobs.chelsea = { error: e.message };
+      }
+      // Wishlist price watch — only on the hourly tick (cron == '0 * * * *')
+      if (cron === '0 * * * *' || cron.startsWith('0 0 ')) {
+        try {
+          const r = await runWishlistPriceWatch(env);
+          log.jobs.priceWatch = r;
+        } catch (e) {
+          log.jobs.priceWatch = { error: e.message };
+        }
       }
       // Daily midnight (UTC) tick - refresh Achievement-of-the-Day stamp so
       // clients can detect a new day without comparing strings, and run the
@@ -6050,6 +6062,238 @@ ${text}
     try { parsed = JSON.parse(raw.slice(jsonStart, jsonEnd + 1)); }
     catch (e) { return jsonResponse({ error: 'JSON parse failed', detail: e.message }, 502); }
     return jsonResponse({ ok: true, ...parsed });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// CHELSEA TRACKER — live match notifications via Telegram
+// Polls football-data.org for Chelsea fixtures, fires pre-match, live event,
+// and post-match notifications. Cron-driven; state cached in KV.
+// ════════════════════════════════════════════════════════
+const CHELSEA_TEAM_ID = 61;
+const FD_BASE = 'https://api.football-data.org/v4';
+
+async function fdFetch(path, env) {
+  const key = env?.FOOTBALL_DATA_KEY || '';
+  if (!key) throw new Error('FOOTBALL_DATA_KEY not configured');
+  const r = await fetch(FD_BASE + path, {
+    headers: { 'X-Auth-Token': key, 'Accept': 'application/json' },
+  });
+  if (!r.ok) throw new Error(`football-data ${r.status}: ${path}`);
+  return r.json();
+}
+
+async function telegramSend(env, text, parseMode = 'HTML') {
+  const tok = env?.TELEGRAM_BOT_TOKEN || '';
+  const chat = env?.TELEGRAM_CHAT_ID || '974944048';
+  if (!tok) return { error: 'TELEGRAM_BOT_TOKEN not configured' };
+  const r = await fetch(`https://api.telegram.org/bot${tok}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: chat,
+      text,
+      parse_mode: parseMode,
+      disable_web_page_preview: true,
+    }),
+  });
+  return r.ok ? { ok: true } : { error: 'telegram ' + r.status };
+}
+
+function fmtKickoff(utcDate) {
+  const d = new Date(utcDate);
+  const opts = { weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris' };
+  return d.toLocaleString('en-GB', opts) + ' (Paris)';
+}
+
+// Pre-match brief: opponent, comp, kickoff, last 5, league pos, head-to-head.
+async function chelseaPreMatchBrief(match, env) {
+  const home = match.homeTeam?.shortName || match.homeTeam?.name;
+  const away = match.awayTeam?.shortName || match.awayTeam?.name;
+  const us = match.homeTeam?.id === CHELSEA_TEAM_ID ? 'home' : 'away';
+  const opp = us === 'home' ? away : home;
+  const comp = match.competition?.name || 'Match';
+  const venue = match.venue || (us === 'home' ? 'Stamford Bridge' : 'Away');
+
+  // Last 5 Chelsea results
+  let lastFive = '';
+  try {
+    const recent = await fdFetch(`/teams/${CHELSEA_TEAM_ID}/matches?status=FINISHED&limit=5`, env);
+    const form = (recent.matches || []).map(m => {
+      const chelHome = m.homeTeam.id === CHELSEA_TEAM_ID;
+      const cs = chelHome ? m.score.fullTime.home : m.score.fullTime.away;
+      const os = chelHome ? m.score.fullTime.away : m.score.fullTime.home;
+      if (cs > os) return 'W'; if (cs < os) return 'L'; return 'D';
+    }).reverse().join(' ');
+    if (form) lastFive = `\nForm (last 5): ${form}`;
+  } catch {}
+
+  const lines = [
+    `<b>⚽ Chelsea match incoming</b>`,
+    `${comp}`,
+    `${home} vs ${away}`,
+    `Kickoff: ${fmtKickoff(match.utcDate)}`,
+    `Venue: ${venue} (${us})`,
+    lastFive,
+  ].filter(Boolean);
+  return telegramSend(env, lines.join('\n'));
+}
+
+// Post-match brief
+async function chelseaPostMatchBrief(match, env) {
+  const home = match.homeTeam?.shortName || match.homeTeam?.name;
+  const away = match.awayTeam?.shortName || match.awayTeam?.name;
+  const hs = match.score?.fullTime?.home ?? '-';
+  const as = match.score?.fullTime?.away ?? '-';
+  const chelHome = match.homeTeam?.id === CHELSEA_TEAM_ID;
+  const cs = chelHome ? hs : as;
+  const os = chelHome ? as : hs;
+  const verdict = cs > os ? '✅ Win' : cs < os ? '❌ Loss' : '🤝 Draw';
+  const comp = match.competition?.name || 'Match';
+
+  // Goalscorers
+  let scorers = '';
+  const goals = (match.goals || []).filter(g => g.scorer);
+  if (goals.length) {
+    scorers = '\n\n<b>Goalscorers</b>\n' + goals.map(g => {
+      const team = g.team?.id === CHELSEA_TEAM_ID ? '🔵' : '⚪';
+      const min = g.minute ? `${g.minute}'` : '';
+      const assist = g.assist?.name ? ` (assist: ${g.assist.name})` : '';
+      return `${team} ${min} ${g.scorer.name}${assist}`;
+    }).join('\n');
+  }
+
+  const lines = [
+    `<b>Full time — ${verdict}</b>`,
+    `${comp}`,
+    `${home} ${hs}–${as} ${away}`,
+    scorers,
+  ].filter(Boolean);
+  return telegramSend(env, lines.join('\n'));
+}
+
+// Live event diff: compares current match state to last-known state in KV,
+// fires Telegram notifications for goals, red cards, score changes.
+async function chelseaLiveDiff(match, env) {
+  const id = match.id;
+  const stateKey = `chelsea:match:${id}`;
+  const prev = (await kvGet(env, stateKey)) || { goals: [], score: { home: 0, away: 0 } };
+
+  const hs = match.score?.fullTime?.home ?? match.score?.halfTime?.home ?? 0;
+  const as = match.score?.fullTime?.away ?? match.score?.halfTime?.away ?? 0;
+  const chelHome = match.homeTeam?.id === CHELSEA_TEAM_ID;
+  const home = match.homeTeam?.shortName || 'Home';
+  const away = match.awayTeam?.shortName || 'Away';
+
+  // Goal events not yet seen
+  const allGoals = match.goals || [];
+  const seen = new Set(prev.goals || []);
+  for (const g of allGoals) {
+    const key = `${g.minute}-${g.scorer?.id || g.scorer?.name}`;
+    if (seen.has(key)) continue;
+    const team = g.team?.id === CHELSEA_TEAM_ID ? '🔵 Chelsea' : `⚪ ${g.team?.shortName || 'Opp'}`;
+    const min = g.minute ? `${g.minute}'` : '';
+    const assist = g.assist?.name ? ` (assist: ${g.assist.name})` : '';
+    await telegramSend(env, `<b>⚽ GOAL ${min}</b>\n${team}: ${g.scorer?.name || '?'}${assist}\n${home} ${hs}–${as} ${away}`);
+    seen.add(key);
+  }
+
+  // First whistle
+  if (!prev.started && match.status === 'IN_PLAY') {
+    await telegramSend(env, `<b>🆕 Kick-off</b>\n${home} vs ${away}`);
+  }
+
+  // Halftime
+  if (prev.status !== 'PAUSED' && match.status === 'PAUSED') {
+    await telegramSend(env, `<b>Half time</b>\n${home} ${hs}–${as} ${away}`);
+  }
+
+  // Full time (handled by post-match brief)
+  if (prev.status !== 'FINISHED' && match.status === 'FINISHED') {
+    await chelseaPostMatchBrief(match, env);
+  }
+
+  // Persist state
+  await kvPut(env, stateKey, {
+    goals: Array.from(seen),
+    score: { home: hs, away: as },
+    status: match.status,
+    started: prev.started || match.status === 'IN_PLAY',
+  }, 60 * 60 * 24 * 7);
+}
+
+// Main poll function: called from cron every minute.
+// Looks for: matches starting in ~90 min (pre-brief), matches in play (live diff),
+// matches just finished (post-brief).
+async function chelseaTrackerTick(env) {
+  const result = { checked: Date.now(), actions: [] };
+  try {
+    // Get fixtures in a window: yesterday → +3 days (covers any timezone weirdness)
+    const today = new Date();
+    const yesterday = new Date(today.getTime() - 24*3600*1000).toISOString().slice(0,10);
+    const in3 = new Date(today.getTime() + 3*24*3600*1000).toISOString().slice(0,10);
+    const data = await fdFetch(`/teams/${CHELSEA_TEAM_ID}/matches?dateFrom=${yesterday}&dateTo=${in3}`, env);
+    const matches = data.matches || [];
+    const now = Date.now();
+
+    for (const m of matches) {
+      const kickoff = new Date(m.utcDate).getTime();
+      const minsToKickoff = (kickoff - now) / 60000;
+      const briefKey = `chelsea:brief:${m.id}`;
+      const postKey = `chelsea:post:${m.id}`;
+
+      // Pre-match brief: fire once when match is 80-95 min away
+      if (minsToKickoff > 80 && minsToKickoff < 95) {
+        if (!(await kvGet(env, briefKey))) {
+          await chelseaPreMatchBrief(m, env);
+          await kvPut(env, briefKey, { firedAt: now }, 60 * 60 * 24 * 3);
+          result.actions.push({ type: 'pre-brief', id: m.id });
+        }
+      }
+
+      // Live diff: while match is IN_PLAY or PAUSED (halftime)
+      if (m.status === 'IN_PLAY' || m.status === 'PAUSED' || m.status === 'TIMED' && minsToKickoff < 5) {
+        await chelseaLiveDiff(m, env);
+        result.actions.push({ type: 'live-diff', id: m.id, status: m.status });
+      }
+
+      // Post-match brief: fire once when match just finished (within 10 min)
+      if (m.status === 'FINISHED' && minsToKickoff > -180 && minsToKickoff < -90) {
+        if (!(await kvGet(env, postKey))) {
+          await chelseaPostMatchBrief(m, env);
+          await kvPut(env, postKey, { firedAt: now }, 60 * 60 * 24 * 7);
+          result.actions.push({ type: 'post-brief', id: m.id });
+        }
+      }
+    }
+    result.matches = matches.length;
+    return result;
+  } catch (e) {
+    return { error: e.message };
+  }
+}
+
+// Manual trigger via /api/chelsea/check (for debugging + test pings)
+async function chelseaCheck(request, env) {
+  const r = await chelseaTrackerTick(env);
+  return jsonResponse(r);
+}
+
+// Next fixture peek
+async function chelseaNext(request, env) {
+  try {
+    const d = await fdFetch(`/teams/${CHELSEA_TEAM_ID}/matches?status=SCHEDULED&limit=5`, env);
+    return jsonResponse({
+      matches: (d.matches || []).map(m => ({
+        date: m.utcDate,
+        competition: m.competition?.name,
+        home: m.homeTeam?.shortName,
+        away: m.awayTeam?.shortName,
+        venue: m.venue,
+      })),
+    });
   } catch (e) {
     return jsonResponse({ error: e.message }, 500);
   }
