@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Three Weeks in May 1958 When de Gaulle Took France Without Firing a Shot",
+    date: "2026-05-30",
+    category: "History",
+    excerpt: "On 13 May 1958, a crowd of European settlers stormed the headquarters of the Government-General in Algiers and set up a Committee of Public Safety chaired by General Jacques Massu. Its first cable to Paris demanded a government of national unity under Charles de Gaulle, who had been in political retirement for almost twelve years. Twenty-two days later the National Assembly voted him full powers as the last Prime Minister of the Fourth Republic. On 28 September the French electorate approved his new constitution by 82.6 per cent. De Gaulle took power in 1958 without leading a single soldier, without issuing a single threat, and without breaking, on paper, a single article of the existing constitution. He took power because, for three weeks in May, he allowed the army in Algiers to believe he was about to lead a coup, allowed the politicians in Paris to believe he was the only man who could stop one, and never confirmed either reading to either audience. It is one of the cleanest examples in twentieth-century European history of a politician winning by saying as little as possible to as many people as possible...",
+    url: "essays/2026-05-30-the-three-weeks-in-may-1958-when-de-gaulle-took-france-without-firing-a-shot.html"
+  },
+  {
     title: "The Eleven Days in November 1923 When Germany Stopped a Hyperinflation With a Lie",
     date: "2026-05-29",
     category: "History",
