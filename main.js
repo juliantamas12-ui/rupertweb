@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Weekend in June 1970 When the Federal Reserve Invented Too Big to Fail and Refused to Admit It",
+    date: "2026-05-31",
+    category: "Economics",
+    excerpt: "On the morning of Sunday, 21 June 1970, the Penn Central Transportation Company filed for bankruptcy in the Eastern District of Pennsylvania. It was, at $6.3 billion in assets, the largest corporate failure in American history up to that point, larger than every previous bankruptcy combined. What the Federal Reserve did over the seventy-two hours preceding that filing was unprecedented in American central banking, was never publicly described as what it was, and quietly became the template for every subsequent crisis intervention through Continental Illinois in 1984, LTCM in 1998, Bear Stearns in 2008, and Silicon Valley Bank in 2023. The Federal Reserve, between Thursday 18 June and Saturday 20 June 1970, decided that the commercial paper market — not Penn Central — was too big to fail, and bailed it out without using the word, without congressional authorisation, and without telling the public what it had done until the relevant minutes were declassified more than a decade later...",
+    url: "essays/2026-05-31-the-weekend-in-june-1970-when-the-federal-reserve-invented-too-big-to-fail-and-refused-to-admit-it.html"
+  },
+  {
     title: "The Three Weeks in May 1958 When de Gaulle Took France Without Firing a Shot",
     date: "2026-05-30",
     category: "History",
