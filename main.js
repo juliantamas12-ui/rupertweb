@@ -543,6 +543,12 @@ const SCHOOL_TASKS = [
     "due": "",
     "subject": "",
     "status": "upcoming"
+  },
+  {
+    "title": "Semester 2 Exam",
+    "due": "",
+    "subject": "",
+    "status": "upcoming"
   }
 ];
 
