@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Seven Minutes Over the Strait of Hormuz When the United States Decided It Could Not Apologise: 3 July 1988",
+    date: "2026-06-01",
+    category: "History",
+    excerpt: "At 10:24 local time on Sunday, 3 July 1988, the guided missile cruiser USS Vincennes, on patrol in the central Persian Gulf, fired two SM-2 surface-to-air missiles at Iran Air Flight 655, an Airbus A300 climbing out of Bandar Abbas on a scheduled twenty-eight-minute hop to Dubai. Both missiles hit. The aircraft, which carried 290 people, disintegrated over the Strait of Hormuz. There were no survivors. Sixty-six of the dead were children. The aircraft had been in the air for seven minutes. What happened over the next seventy-two hours is the more interesting story, because it determined how the United States learned to talk about its own mistakes for the next thirty-five years, and produced a doctrine of institutional self-defence that has outlived every president, every Secretary of Defense, and every chairman of the Joint Chiefs of Staff who participated in it...",
+    url: "essays/2026-06-01-the-seven-minutes-over-the-strait-of-hormuz-when-the-united-states-decided-it-could-not-apologise.html"
+  },
+  {
     title: "The Weekend in June 1970 When the Federal Reserve Invented Too Big to Fail and Refused to Admit It",
     date: "2026-05-31",
     category: "Economics",
