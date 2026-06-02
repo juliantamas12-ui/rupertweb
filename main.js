@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Three Days in January 1923 When Stanley Baldwin Sold Sterling to Pay America",
+    date: "2026-06-02",
+    category: "History",
+    excerpt: "On the evening of Wednesday, 17 January 1923, the British delegation to the World War Debt Funding Commission arrived in Washington aboard the Majestic. The Chancellor of the Exchequer, Stanley Baldwin, was forty-five years old, six months into the job, and had been given by the Cabinet a written negotiating instruction with a hard floor: no settlement above 2.5 per cent over sixty-two years. Andrew Mellon opened at 4.25 per cent over twenty-five. The figures were not bridgeable. The Cabinet's expectation was that Baldwin would walk out. By Saturday evening Baldwin had signed at 3.3 per cent over sixty-two years, well above his ceiling, cabled London a brief telegram, and sailed home on the Olympic. The Cabinet read the terms at the same time as the public. Bonar Law drafted a resignation letter that night and recorded in his diary that the British Empire would pay for this mistake for two generations. He was wrong about the duration and right about everything else...",
+    url: "essays/2026-06-02-the-three-days-in-january-1923-when-stanley-baldwin-sold-sterling-to-pay-america.html"
+  },
+  {
     title: "The Seven Minutes Over the Strait of Hormuz When the United States Decided It Could Not Apologise: 3 July 1988",
     date: "2026-06-01",
     category: "History",
