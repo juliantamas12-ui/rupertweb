@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Sixty Hours in August 1991 When the Soviet Coup Lost the Television War",
+    date: "2026-06-03",
+    category: "History",
+    excerpt: "On the morning of Monday, 19 August 1991, at 06:00 Moscow time, Radio Moscow announced that Mikhail Gorbachev was unable to perform his duties and that a State Committee for the State of Emergency had assumed his powers. By 09:00 four tank battalions had taken up positions around the Kremlin, the Lubyanka, Ostankino, and — almost as an afterthought — the Russian White House. Sixty hours later the plotters were drunk and weeping, the Interior Minister had shot himself, and Boris Yeltsin was on a balcony in front of 150,000 people. The standard explanation is that the army refused to fire and the plotters were incompetent. Both are true. Neither is the actual mechanism. The actual mechanism was that the GKChP lost the broadcast — Yanayev sweating into a microphone on Vremya, against four minutes of foolscap read off a tank turret and beamed back into the Soviet Union via Radio Liberty within two hours...",
+    url: "essays/2026-06-03-the-sixty-hours-in-august-1991-when-the-soviet-coup-lost-the-television-war.html"
+  },
+  {
     title: "The Three Days in January 1923 When Stanley Baldwin Sold Sterling to Pay America",
     date: "2026-06-02",
     category: "History",
