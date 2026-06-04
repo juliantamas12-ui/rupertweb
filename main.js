@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Afternoon at Plombières in July 1858 When Cavour Sold Nice and Savoy to Buy Italy",
+    date: "2026-06-04",
+    category: "History",
+    excerpt: "On the afternoon of Wednesday, 21 July 1858, in the spa town of Plombières-les-Bains in the Vosges, Count Cavour took a four-hour walk with Napoleon III. No advisers, no minute-takers. Cavour wrote up the conversation that evening in a fifteen-page letter to Victor Emmanuel II, marked secrétissime. It is the entire documentary record of what passed between them, and one of the most consequential pieces of paper in nineteenth-century European history, because what those two men agreed to during the walk was the manufacture of a war. The standard account of Italian unification dwells on Garibaldi's red shirts and Mazzini's exhortations. All real, all downstream. The thing that actually unified Italy was a cynical bilateral compact: Piedmont would provoke Austria, France would intervene with two hundred thousand men, and Piedmont would pay in Nice and Savoy...",
+    url: "essays/2026-06-04-the-afternoon-at-plombieres-in-july-1858-when-cavour-sold-nice-and-savoy-to-buy-italy.html"
+  },
+  {
     title: "The Sixty Hours in August 1991 When the Soviet Coup Lost the Television War",
     date: "2026-06-03",
     category: "History",
