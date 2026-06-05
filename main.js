@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Afternoon Aboard the Polar Star at Björkö in July 1905 When the Kaiser Got the Tsar to Sign Away the French Alliance and the Russian Cabinet Quietly Tore It Up",
+    date: "2026-06-05",
+    category: "History",
+    excerpt: "On the afternoon of Monday, 24 July 1905, in the lee of a granite islet in the Gulf of Finland called Björkö, two imperial yachts lay at anchor about a cable's length apart. The Hohenzollern belonged to Wilhelm II of Germany. The Polar Star belonged to Nicholas II of Russia. Between them, on the deck of the Polar Star, in the presence of one witness on each side, the two emperors signed a treaty of mutual defence. It was, in operational meaning, a unilateral repudiation of the Franco-Russian Alliance of 1894, the cornerstone of the European state system. Wilhelm wept when Nicholas signed. By the second week of October the treaty was dead. It had been killed not by France, not by Britain, not by any foreign chancery, but by two Russian ministers who refused to countersign. It is one of the cleanest examples in the modern record of a sovereign signing his name to a document that turned out to be worth nothing because the ministerial apparatus he depended on declined to validate it...",
+    url: "essays/2026-06-05-the-afternoon-aboard-the-polar-star-at-bjorko-in-july-1905-when-the-kaiser-got-the-tsar-to-sign-away-the-french-alliance.html"
+  },
+  {
     title: "The Afternoon at Plombières in July 1858 When Cavour Sold Nice and Savoy to Buy Italy",
     date: "2026-06-04",
     category: "History",
