@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Afternoon at Safwan on 3 March 1991 When Schwarzkopf Negotiated a Ceasefire on a Map He Had Not Read and Let the Republican Guard Walk Home",
+    date: "2026-06-06",
+    category: "History",
+    excerpt: "On the afternoon of Sunday, 3 March 1991, in a tent pitched on a captured Iraqi airstrip at Safwan, General Norman Schwarzkopf sat down opposite Lieutenant-General Sultan Hashim Ahmad to dictate the terms of a ceasefire that had already been in force for forty-eight hours. The shooting had stopped at 0800 local on 28 February, by personal order of George H. W. Bush, after exactly one hundred hours of ground combat. Bush had wanted a round number. He had got one. What happened in the tent at Safwan that afternoon was not a negotiation but a transcription, until Sultan Hashim asked a question that was not on Schwarzkopf's list. He asked whether Iraqi military helicopters could fly across the demarcation line. Schwarzkopf, exhausted and without a map of Iraq's internal political geography, said yes. That single concession, granted in roughly ten seconds at the end of a four-hour meeting, kept Saddam Hussein in power for twelve more years...",
+    url: "essays/2026-06-06-the-afternoon-at-safwan-on-3-march-1991-when-schwarzkopf-negotiated-a-ceasefire-on-a-map-he-had-not-read.html"
+  },
+  {
     title: "The Afternoon Aboard the Polar Star at Björkö in July 1905 When the Kaiser Got the Tsar to Sign Away the French Alliance and the Russian Cabinet Quietly Tore It Up",
     date: "2026-06-05",
     category: "History",
