@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Seventy-Two Hours in August 1961 When the Berlin Wall Went Up and the Kennedy Administration Decided Not to Stop It",
+    date: "2026-06-07",
+    category: "History",
+    excerpt: "On the morning of Sunday, 13 August 1961, at roughly 01:00 Berlin time, East German Volkspolizei and armed factory militias began stringing barbed wire along the twenty-seven-mile boundary between East and West Berlin. The standard account treats the next seventy-two hours as a fait accompli. Khrushchev moved. The West watched. There was nothing to be done. This is wrong. The Wall, on the morning of 13 August, was a string of fence posts and concertina wire that any platoon of American military police could have pushed over with a jeep. Honecker's troops had explicit orders to retreat in the face of Western intervention. Marshal Konev's Soviet contingency orders forbade engagement with American forces. The Wall was put up by people who expected it to be torn down, and who had operational instructions to fold if it was. It was not torn down because the Kennedy administration, between Sunday morning and Wednesday afternoon, decided that the alternative to the Wall was worse than the Wall...",
+    url: "essays/2026-06-07-the-seventy-two-hours-in-august-1961-when-the-berlin-wall-went-up-and-the-kennedy-administration-decided-not-to-stop-it.html"
+  },
+  {
     title: "The Afternoon at Safwan on 3 March 1991 When Schwarzkopf Negotiated a Ceasefire on a Map He Had Not Read and Let the Republican Guard Walk Home",
     date: "2026-06-06",
     category: "History",
