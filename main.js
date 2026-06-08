@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Forty-Eight Hours in September 1992 When the Bundesbank Chose the D-Mark Over the ERM and Let Sterling Burn",
+    date: "2026-06-08",
+    category: "History",
+    excerpt: "On the evening of Tuesday, 15 September 1992, an interview given by Helmut Schlesinger, president of the Deutsche Bundesbank, to the Handelsblatt and the Wall Street Journal was on every dealer's screen in the City by 22:00 London time. The standard account of Black Wednesday treats it as the day the markets defeated a government. The phrase 'the market' is doing a great deal of work in that account. The market that broke sterling was perhaps thirty institutions running a combined book of around fifteen billion dollars in short sterling positions; George Soros's was about ten billion by close of trade. Against this stood UK reserves of roughly forty-four billion in liquid form, plus an unused Bundesbank swap line, plus an interest rate weapon Major's Cabinet was prepared to use without limit. The arithmetic favoured the defender. The defender lost because the second central bank in the equation, sitting in Frankfurt, had decided three weeks earlier that the German national interest required it to lose...",
+    url: "essays/2026-06-08-the-forty-eight-hours-in-september-1992-when-the-bundesbank-chose-the-d-mark-over-the-erm-and-let-sterling-burn.html"
+  },
+  {
     title: "The Seventy-Two Hours in August 1961 When the Berlin Wall Went Up and the Kennedy Administration Decided Not to Stop It",
     date: "2026-06-07",
     category: "History",
