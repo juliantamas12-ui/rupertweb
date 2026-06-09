@@ -596,12 +596,6 @@ const SCHOOL_TASKS = [
     "status": "upcoming"
   },
   {
-    "title": "English 7 Exam Today!",
-    "due": "",
-    "subject": "",
-    "status": "upcoming"
-  },
-  {
     "title": "S2 Examination Study Guide",
     "due": "",
     "subject": "",
