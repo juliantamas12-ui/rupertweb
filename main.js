@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Evening of 9 November 1989 When Günter Schabowski Misread a Note at a Press Conference and the Berlin Wall Fell by Administrative Accident",
+    date: "2026-06-09",
+    category: "History",
+    excerpt: "On the evening of Thursday, 9 November 1989, at 18:53 Berlin time, the Politburo spokesman Günter Schabowski looked down at a sheet of paper that had been handed to him by Egon Krenz forty minutes earlier and read out, in the flat administrative cadence of a man reading something he had not seen before, the new East German travel regulations. Asked by Riccardo Ehrman of ANSA when the new rules came into force, he hesitated, looked at the paper again, said 'as far as I know — effective immediately, without delay.' The standard account treats the fall of the Wall as the culmination of a popular revolution. There is one in the background. None of it explains the specific fact that the Wall fell on 9 November, at that hour, in that way, rather than three weeks later in a managed process of staged concessions. The Wall fell because a sixty-year-old apparatchik with a head cold, working from a typewritten note he had not been briefed on, used the words 'ab sofort' when the document was meant to come into force the following morning...",
+    url: "essays/2026-06-09-the-evening-of-9-november-1989-when-gunter-schabowski-misread-a-note-at-a-press-conference-and-the-berlin-wall-fell-by-administrative-accident.html"
+  },
+  {
     title: "The Forty-Eight Hours in September 1992 When the Bundesbank Chose the D-Mark Over the ERM and Let Sterling Burn",
     date: "2026-06-08",
     category: "History",
