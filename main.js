@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Afternoon of 4 August 1914 in Downing Street When Grey's Ultimatum Was Designed to Expire Unanswered and Britain Chose the Balance of Power Over Belgium",
+    date: "2026-06-10",
+    category: "History",
+    excerpt: "On the afternoon of Tuesday, 4 August 1914, at approximately 14:00 London time, Sir Edward Grey signed a telegram to Sir Edward Goschen, the British ambassador in Berlin, instructing him to require from the German Imperial Government, before midnight Berlin time, a 'satisfactory answer' to the British demand that Germany respect the neutrality of Belgium. There was no satisfactory answer. At 23:00 London time, Big Ben having just struck the hour, the British Empire was at war with Germany — by operation of an ultimatum that Grey had drafted in the certain knowledge that no German government, having already crossed into Belgium that morning, could conceivably accept its terms within nine hours. The standard account treats the British entry as a moral response to the violation of Belgian neutrality. It is false in a specific and important sense. The British government had decided, by the evening of 2 August — thirty-six hours before the German army crossed the Belgian frontier — that it would enter the war on the French side regardless of what happened to Belgium. The 1839 Treaty was not the reason for British entry. It was the parliamentary instrument by which Grey converted a decision already taken on balance-of-power grounds into a vote the Liberal Cabinet would actually pass...",
+    url: "essays/2026-06-10-the-afternoon-of-4-august-1914-in-downing-street-when-greys-ultimatum-was-designed-to-expire-unanswered-and-britain-chose-the-balance-of-power-over-belgium.html"
+  },
+  {
     title: "The Evening of 9 November 1989 When Günter Schabowski Misread a Note at a Press Conference and the Berlin Wall Fell by Administrative Accident",
     date: "2026-06-09",
     category: "History",
