@@ -8048,11 +8048,30 @@ function render(ctx, minimapCtx) {
     ctx.restore();
     return;
   }
+  // ONE-SHOT DIAGNOSTIC
+  if (!state._diagPrinted) {
+    state._diagPrinted = true;
+    let tilesDrawn = 0, firstScreenX = null, firstScreenY = null;
+    const sample = [];
+    for (let ty = sy0; ty < sy1; ty++) {
+      if (!state.map[ty]) continue;
+      for (let tx = sx0; tx < sx1; tx++) {
+        const px2 = Math.floor(tx*TSIZE - camX), py2 = Math.floor(ty*TSIZE - camY);
+        if (firstScreenX === null) { firstScreenX = px2; firstScreenY = py2; }
+        drawTile(ctx, state.map[ty][tx], px2, py2);
+        tilesDrawn++;
+        if (sample.length < 3) sample.push({tx, ty, val: state.map[ty][tx], px: px2, py: py2});
+      }
+    }
+    console.log('[DIAG] canvas:', canvas.width, canvas.height, 'zoom:', zoom, 'cam:', camX, camY, 'player:', state.player.x, state.player.y, 'sx0:', sx0, 'sy0:', sy0, 'sx1:', sx1, 'sy1:', sy1, 'tilesDrawn:', tilesDrawn, 'firstTile@screen:', firstScreenX, firstScreenY, 'sample:', sample);
+    console.log('[DIAG2] T:', typeof T !== 'undefined' ? T : 'undef', 'TILE_COLORS:', typeof TILE_COLORS !== 'undefined' ? TILE_COLORS : 'undef', 'MSIZE:', MSIZE, 'TSIZE:', TSIZE);
+  } else {
   for (let ty = sy0; ty < sy1; ty++) {
     if (!state.map[ty]) continue;
     for (let tx = sx0; tx < sx1; tx++) {
       drawTile(ctx, state.map[ty][tx], Math.floor(tx*TSIZE - camX), Math.floor(ty*TSIZE - camY));
     }
+  }
   }
 
   // Shoreline waves at beach/water boundary
