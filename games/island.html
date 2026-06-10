@@ -613,11 +613,6 @@ const state = {
   birdTimer: 0,
   footprints: [], // fading beach footprints
 
-  // === BIOLUMINESCENT NIGHT EVENT ===
-  bioNightTimer: 60*60*(7 + Math.random()*5), // first event in 7-12 in-game minutes
-  bioNightActive: false,
-  bioNightDuration: 0, // frames remaining
-
   // Crafting tech tiers
   craftingTier: 0, // 0=Stone Age, 1=Volcanic Age, 2=Deep Sea Age
 
@@ -974,7 +969,7 @@ function genObjects() {
   state.objects.push({type:'treasure_chest', x:77*TSIZE, y:107*TSIZE, opened:false, lootTier:'common', buried:true});
 
   // Waterfall (interactable)
-  // removed waterfall decor // , x:200*TSIZE, y:140*TSIZE, decor:false
+  // removed waterfall decor // , x:200*TSIZE, y:140*TSIZE, decor:false});
 
   // Tidal cave — force onto southwest beach/jungle-edge tile
   {
@@ -2681,6 +2676,55 @@ function drawKona(ctx, sx, sy) {
 }
 
 
+function drawNPCShelter(ctx, sx, sy, npcId) {
+  // Different shelter per NPC
+  if (npcId === 'oonga') {
+    // Simple lean-to made of palm leaves - tribal style
+    px(ctx, '#5c3d1e', sx-20, sy-8, 40, 14);  // base
+    px(ctx, '#2d6e2d', sx-22, sy-20, 44, 4);  // roof left
+    px(ctx, '#3a8a2a', sx-18, sy-26, 36, 4);  // roof mid
+    px(ctx, '#2d6e2d', sx-14, sy-30, 28, 4);  // roof top
+    px(ctx, '#1a3a10', sx-10, sy-34, 20, 4);  // peak
+    px(ctx, '#5c3d1e', sx-22, sy-20, 4, 28);  // left pole
+    px(ctx, '#5c3d1e', sx+18, sy-20, 4, 28);  // right pole
+    // Palm leaf decorations
+    px(ctx, '#4a8a2a', sx-26, sy-22, 8, 3);
+    px(ctx, '#4a8a2a', sx+18, sy-22, 8, 3);
+  } else if (npcId === 'felix') {
+    // Makeshift workshop - planks and tools
+    px(ctx, '#7a5c2e', sx-24, sy-6, 48, 12);  // work table
+    px(ctx, '#5c3d1e', sx-24, sy-6, 4, 12);   // leg
+    px(ctx, '#5c3d1e', sx+20, sy-6, 4, 12);   // leg
+    px(ctx, '#888', sx-10, sy-10, 20, 4);      // metal sheet
+    px(ctx, '#aaa', sx-8, sy-12, 16, 3);       // highlight
+    // Tools scattered
+    px(ctx, '#888', sx-20, sy-8, 8, 2);        // wrench
+    px(ctx, '#5c3d1e', sx+12, sy-8, 6, 2);     // plank
+  } else if (npcId === 'mara') {
+    // Small tent from sail cloth
+    px(ctx, '#c8c0a0', sx-18, sy-24, 36, 4);  // roof
+    px(ctx, '#d4cca8', sx-14, sy-20, 28, 4);  // roof 2
+    px(ctx, '#c8c0a0', sx-10, sy-16, 20, 4);  // roof 3
+    px(ctx, '#c8c0a0', sx-18, sy-20, 4, 24);  // side
+    px(ctx, '#c8c0a0', sx+14, sy-20, 4, 24);  // side
+    px(ctx, '#a8a080', sx-18, sy+2, 36, 2);   // base
+    px(ctx, '#5c3d1e', sx-20, sy-22, 3, 26);  // pole left
+    px(ctx, '#5c3d1e', sx+17, sy-22, 3, 26);  // pole right
+  } else if (npcId === 'kona') {
+    // Ancient stone marker / meditation spot
+    px(ctx, '#555566', sx-16, sy+2, 32, 8);   // stone base
+    px(ctx, '#666677', sx-12, sy-6, 24, 10);  // stone mid
+    px(ctx, '#777788', sx-8, sy-12, 16, 8);   // stone top
+    px(ctx, '#888899', sx-4, sy-16, 8, 6);    // peak
+    // Rune markings
+    px(ctx, '#c8f135', sx-6, sy-10, 2, 6);
+    px(ctx, '#c8f135', sx-3, sy-8, 6, 2);
+    px(ctx, '#c8f135', sx+2, sy-10, 2, 6);
+    // Offerings at base
+    px(ctx, '#ff6600', sx-14, sy+4, 4, 4);    // fire
+    px(ctx, '#ff8800', sx-12, sy+2, 2, 3);
+  }
+}
 function drawNPC(ctx, sx, sy, npc) {
   const bob = Math.sin(npc.bobTimer * 0.04) * 2;
   const ay = sy + bob;
@@ -3855,6 +3899,52 @@ function drawBoar(ctx, sx, sy, dir, hp, maxHp) {
   px(ctx, '#c0520a', sx-10, sy-20, Math.round(20*hp/maxHp), 3);
 }
 
+function drawCreatures(ctx, camX, camY) {
+  state.creatures.forEach(c => {
+    const sx = c.x - camX, sy = c.y - camY;
+    if (sx < -60 || sx > ctx.canvas.width+60 || sy < -60 || sy > ctx.canvas.height+60) return;
+
+    // === BOUNTY CREATURE GLOW ===
+    if (c.isBounty && state.dailyBounty && !state.dailyBounty.killed) {
+      c.glowPhase = (c.glowPhase || 0) + 0.08;
+      const glowAlpha = 0.25 + Math.sin(c.glowPhase) * 0.18;
+      const glowColor = c.bountyDef ? c.bountyDef.color : '#ffd700';
+      ctx.save();
+      ctx.globalAlpha = glowAlpha;
+      ctx.fillStyle = glowColor;
+      ctx.beginPath(); ctx.arc(sx, sy, 22, 0, Math.PI*2); ctx.fill();
+      ctx.restore();
+    }
+
+    if (c.type === 'spider') {
+      drawSpider(ctx, sx, sy);
+      px(ctx, '#333', sx-10, sy-18, 20, 3);
+      px(ctx, '#22cc44', sx-10, sy-18, Math.round(20*c.hp/c.maxHp), 3);
+    } else if (c.type === 'shark') {
+      drawShark(ctx, sx, sy);
+      px(ctx, '#333', sx-14, sy-18, 28, 3);
+      px(ctx, '#2d8a22', sx-14, sy-18, Math.round(28*c.hp/c.maxHp), 3);
+    } else if (c.type === 'bat') {
+      drawBat(ctx, sx, sy);
+      px(ctx, '#333', sx-8, sy-14, 16, 3);
+      px(ctx, '#2a1040', sx-8, sy-14, Math.round(16*c.hp/c.maxHp), 3);
+    } else if (c.type === 'boar') {
+      drawBoar(ctx, sx, sy, c.dir||1, c.hp, c.maxHp);
+    }
+
+    // Bounty crown label above creature
+    if (c.isBounty && state.dailyBounty && !state.dailyBounty.killed) {
+      const glowColor = c.bountyDef ? c.bountyDef.color : '#ffd700';
+      ctx.save();
+      ctx.font = 'bold 8px Lato,sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = glowColor;
+      ctx.fillText('* BOUNTY *', sx, sy - 22);
+      ctx.textAlign = 'left';
+      ctx.restore();
+    }
+  });
+}
 
 function drawProjectiles(ctx, camX, camY) {
   state.projectiles.forEach(proj => {
@@ -4063,18 +4153,13 @@ function updateMinigame(canvas) {
       if (mg.inZone > 60) {
         // Caught! High tide gives bonus fish
         const bonusFish = state.tideLevel > 0.7 ? 1 : 0;
-        const bioBonusFish = state.bioNightActive ? 1 : 0;
         // Fishing skill: rare fish chance
         const fishingSkill = (state.skills && state.skills.fishing) || 0;
-        // Bioluminescent nights dramatically increase rare fish chance
-        const baseRareChance = fishingSkill >= 15 ? 0.4 : fishingSkill >= 5 ? 0.2 : 0;
-        const rareFishChance = state.bioNightActive ? Math.min(0.65, baseRareChance + 0.35) : baseRareChance;
+        const rareFishChance = fishingSkill >= 15 ? 0.4 : fishingSkill >= 5 ? 0.2 : 0;
         const isRare = rareFishChance > 0 && Math.random() < rareFishChance;
-        const fishGained = (isRare ? 2 : 1) + bonusFish + bioBonusFish;
+        const fishGained = (isRare ? 2 : 1) + bonusFish;
         state.player.inv.fish += fishGained;
-        const catchMsg = isRare
-          ? (state.bioNightActive ? 'RARE FISH CAUGHT! (Bioluminescent bonus!)' : 'RARE FISH CAUGHT! (x2 food value)')
-          : (state.bioNightActive ? 'FISH CAUGHT! (Glowing waters bonus +1)' : (bonusFish ? 'FISH CAUGHT! (High tide bonus +1)' : 'FISH CAUGHT!'));
+        const catchMsg = isRare ? 'RARE FISH CAUGHT! (x2 food value)' : (bonusFish ? 'FISH CAUGHT! (High tide bonus +1)' : 'FISH CAUGHT!');
         showMsg(catchMsg, '#4a9ab4');
         spawnParticles(state.player.x, state.player.y, '#3a9ab3',3);
         if (state.runStats) { state.runStats.fishCaught += fishGained; }
@@ -4514,17 +4599,6 @@ window.SFX = (() => {
       _noise(0.15, 0.12, 3000);
       _osc('triangle', 520, 0.08, 0.15, 680);
       setTimeout(() => _noise(0.1, 0.2, 600), 80);
-    },
-
-    // Bioluminescent shimmer — crystalline rising tones, soft and otherworldly
-    bioShimmer() {
-      [440, 554, 659, 880, 1108].forEach((f, i) => {
-        setTimeout(() => {
-          _osc('sine', f, 0.04, 0.6, f * 2);
-          _osc('triangle', f * 1.005, 0.02, 0.5, f * 2.01);
-        }, i * 120);
-      });
-      setTimeout(() => _osc('sine', 1320, 0.03, 0.9, 2640), 700);
     },
 
     // Ship horn — deep foghorn blast + harmonics (distant, mournful)
@@ -7757,6 +7831,47 @@ function drawMinimap(minimapCtx) {
 }
 
 
+function drawGuide(ctx) {
+  if (!state.running || state.cutscenePlaying) return;
+  const p = state.player;
+  let msg = null;
+
+  // Determine what the player should do next
+  if ((p.inv.wood||0) === 0 && (p.inv.driftwood||0) === 0) {
+    msg = ["STEP 1", "Click the brown logs", "on the beach to get wood"];
+  } else if ((p.inv.stone||0) < 2) {
+    msg = ["STEP 2", "Click grey rocks to mine stone", "(bare hands work, slowly)"];
+  } else if ((p.inv.axe||0) === 0 && (p.inv.pickaxe||0) === 0) {
+    msg = ["STEP 3", "Press C to open crafting", "Make a Stone Axe (2W+2S)"];
+  } else if ((p.inv.axe||0) > 0 && state.activeSlot !== 1) {
+    msg = ["TIP", "Press 1 to equip your AXE", "Then click a tree"];
+  } else if (state.zoneUnlocked < 1) {
+    msg = ["NEXT", "Talk to OONGA", "Press E near him"];
+  }
+
+  if (!msg) return;
+
+  const bx = canvas.width - 180, by = 60;
+  ctx.fillStyle = 'rgba(40,20,8,0.85)';
+  ctx.strokeStyle = '#8b6020';
+  ctx.lineWidth = 1;
+  // Draw guide box
+  ctx.beginPath();
+  ctx.roundRect(bx, by, 170, 60, 8);
+  ctx.fill();
+  ctx.stroke();
+  
+  ctx.font = 'bold 10px Cinzel, serif';
+  ctx.fillStyle = '#c8f135';
+  ctx.textAlign = 'left';
+  ctx.fillText(msg[0], bx+10, by+16);
+  ctx.font = '10px Lato, sans-serif';
+  ctx.fillStyle = '#e8d49a';
+  ctx.fillText(msg[1], bx+10, by+32);
+  ctx.fillStyle = '#a08040';
+  ctx.fillText(msg[2], bx+10, by+48);
+  ctx.textAlign = 'left';
+}
 
 // Hover highlight
 function drawHoverHighlight(ctx, camX, camY) {
@@ -7799,6 +7914,59 @@ function drawHoverHighlight(ctx, camX, camY) {
   ctx.restore();
 }
 
+function drawWorldMap(ctx) {
+  if (!state.showMap) return;
+  const cw = canvas.width, ch = canvas.height;
+  const scale = Math.min(cw, ch) * 0.85 / (MSIZE * TSIZE);
+  const mapW = Math.round(MSIZE * TSIZE * scale);
+  const mapH = Math.round(MSIZE * TSIZE * scale);
+  const mapX = (cw - mapW) / 2, mapY = (ch - mapH) / 2;
+  
+  // Background
+  ctx.fillStyle = 'rgba(0,0,0,0.85)';
+  ctx.fillRect(0, 0, cw, ch);
+  
+  // Draw miniature map
+  const tileW = mapW / MSIZE, tileH = mapH / MSIZE;
+  for (let y = 0; y < MSIZE; y += 2) {
+    for (let x = 0; x < MSIZE; x += 2) {
+      const t = state.map[y][x];
+      const colors = ['#0d1f33','#2a7a7a','#d4b870','#1a5020','#0a2810','#3a2020','#cc3300'];
+      ctx.fillStyle = colors[t] || '#333';
+      ctx.fillRect(mapX + x * tileW, mapY + y * tileH, tileW * 2 + 1, tileH * 2 + 1);
+    }
+  }
+  
+  // Player position
+  const px = mapX + (state.player.x / TSIZE) * tileW;
+  const py = mapY + (state.player.y / TSIZE) * tileH;
+  ctx.fillStyle = '#c8f135';
+  ctx.beginPath();
+  ctx.arc(px, py, 4, 0, Math.PI*2);
+  ctx.fill();
+  
+  // NPC positions
+  state.npcs.forEach(npc => {
+    const nx = mapX + (npc.x / TSIZE) * tileW;
+    const ny = mapY + (npc.y / TSIZE) * tileH;
+    ctx.fillStyle = npc.color || '#4a9ab4';
+    ctx.beginPath();
+    ctx.arc(nx, ny, 3, 0, Math.PI*2);
+    ctx.fill();
+  });
+  
+  // Title
+  ctx.fillStyle = '#e8d49a';
+  ctx.font = 'bold 14px Cinzel, serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('ISLAND MAP — press M to close', cw/2, mapY - 12);
+  ctx.textAlign = 'left';
+  
+  // Legend
+  ctx.font = '10px Lato, sans-serif';
+  ctx.fillStyle = '#c8f135'; ctx.fillText('■ You', mapX, mapY + mapH + 18);
+  ctx.fillStyle = '#4a9ab4'; ctx.fillText('■ NPCs', mapX + 50, mapY + mapH + 18);
+}
 // ============================================================
 // GROUND LOOT — enemy drops that auto-collect on touch
 // ============================================================
@@ -7998,6 +8166,28 @@ function render(ctx, minimapCtx) {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
 
+  // Clouds disabled for performance // Draw drifting clouds when cloudy
+  if (false) {
+  if ((currentForecast === 'cloudy' || currentForecast === 'storm') && !state.isNight && state.clouds) {
+    ctx.save();
+    state.clouds.forEach(cloud => {
+      const csx = cloud.wx - camX;
+      const csy = cloud.wy - camY;
+      if (csx < -cloud.w - 20 || csx > canvas.width + cloud.w + 20) return;
+      ctx.fillStyle = currentForecast === 'storm' ? 'rgba(90,90,100,0.55)' : 'rgba(200,200,210,0.45)';
+      ctx.beginPath();
+      ctx.ellipse(csx, csy, cloud.w, cloud.h, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(csx - cloud.w*0.3, csy + cloud.h*0.1, cloud.w*0.55, cloud.h*0.8, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(csx + cloud.w*0.3, csy + cloud.h*0.1, cloud.w*0.5, cloud.h*0.75, 0, 0, Math.PI*2);
+      ctx.fill();
+    });
+    ctx.restore();
+  }
+
   // Season overlay (full-screen text for 3 seconds = 180 frames)
   if (state.seasonOverlay > 0) {
     const alpha = Math.min(1, state.seasonOverlay / 30) * Math.min(1, state.seasonOverlay / (state.seasonOverlay > 150 ? 180 : 1));
@@ -8048,30 +8238,11 @@ function render(ctx, minimapCtx) {
     ctx.restore();
     return;
   }
-  // ONE-SHOT DIAGNOSTIC
-  if (!state._diagPrinted) {
-    state._diagPrinted = true;
-    let tilesDrawn = 0, firstScreenX = null, firstScreenY = null;
-    const sample = [];
-    for (let ty = sy0; ty < sy1; ty++) {
-      if (!state.map[ty]) continue;
-      for (let tx = sx0; tx < sx1; tx++) {
-        const px2 = Math.floor(tx*TSIZE - camX), py2 = Math.floor(ty*TSIZE - camY);
-        if (firstScreenX === null) { firstScreenX = px2; firstScreenY = py2; }
-        drawTile(ctx, state.map[ty][tx], px2, py2);
-        tilesDrawn++;
-        if (sample.length < 3) sample.push({tx, ty, val: state.map[ty][tx], px: px2, py: py2});
-      }
-    }
-    console.log('[DIAG] canvas:', canvas.width, canvas.height, 'zoom:', zoom, 'cam:', camX, camY, 'player:', state.player.x, state.player.y, 'sx0:', sx0, 'sy0:', sy0, 'sx1:', sx1, 'sy1:', sy1, 'tilesDrawn:', tilesDrawn, 'firstTile@screen:', firstScreenX, firstScreenY, 'sample:', sample);
-    console.log('[DIAG2] T:', typeof T !== 'undefined' ? T : 'undef', 'TILE_COLORS:', typeof TILE_COLORS !== 'undefined' ? TILE_COLORS : 'undef', 'MSIZE:', MSIZE, 'TSIZE:', TSIZE);
-  } else {
   for (let ty = sy0; ty < sy1; ty++) {
     if (!state.map[ty]) continue;
     for (let tx = sx0; tx < sx1; tx++) {
       drawTile(ctx, state.map[ty][tx], Math.floor(tx*TSIZE - camX), Math.floor(ty*TSIZE - camY));
     }
-  }
   }
 
   // Shoreline waves at beach/water boundary
@@ -8167,47 +8338,6 @@ function render(ctx, minimapCtx) {
   // Volcano (scaled for 300-tile world: center=150, volcano offset=-72)
   const vcx = 75*TSIZE - camX, vcy = 39*TSIZE - camY;
   if (vcx > -350 && vcx < canvas.width+350) drawVolcano(ctx, vcx, vcy);
-
-  // === BIOLUMINESCENT NIGHT OCEAN GLOW ===
-  if (state.bioNightActive && state.isNight) {
-    const bioPhase = (state.frameCount * 0.018) % (Math.PI * 2);
-    const bioAlpha = 0.13 + Math.sin(bioPhase) * 0.05;
-    for (let ty2 = sy0; ty2 < sy1; ty2++) {
-      if (!state.map[ty2]) continue;
-      for (let tx2 = sx0; tx2 < sx1; tx2++) {
-        const ttype = state.map[ty2][tx2];
-        if (ttype === T.DEEP_OCEAN || ttype === T.SHALLOW_WATER) {
-          const tsx = Math.floor(tx2 * TSIZE - camX);
-          const tsy = Math.floor(ty2 * TSIZE - camY);
-          // Per-tile subtle pulse offset
-          const tilePhase = bioPhase + (tx2 * 0.37 + ty2 * 0.23);
-          const tileA = bioAlpha * (0.7 + Math.sin(tilePhase) * 0.3);
-          ctx.fillStyle = ttype === T.DEEP_OCEAN
-            ? `rgba(0,200,180,${tileA * 0.75})`
-            : `rgba(40,255,200,${tileA})`;
-          ctx.fillRect(tsx, tsy, TSIZE, TSIZE);
-        }
-      }
-    }
-    // Floating bioluminescent sparkle dots
-    if (state.frameCount % 3 === 0) {
-      const numSparkles = 6;
-      const viewW = canvas.width, viewH = canvas.height;
-      for (let s = 0; s < numSparkles; s++) {
-        const sx2 = Math.floor((state.frameCount * 1.7 + s * 197 + Math.sin(state.frameCount * 0.07 + s) * 80) % viewW);
-        const sy2 = Math.floor((state.frameCount * 0.9 + s * 131 + Math.cos(state.frameCount * 0.05 + s) * 60) % viewH);
-        // Only draw on water tiles
-        const wx2 = sx2 + camX, wy2 = sy2 + camY;
-        const txc = Math.floor(wx2 / TSIZE), tyc = Math.floor(wy2 / TSIZE);
-        const stile = state.map[tyc] && state.map[tyc][txc];
-        if (stile === T.DEEP_OCEAN || stile === T.SHALLOW_WATER) {
-          const spA = 0.5 + Math.sin(state.frameCount * 0.2 + s * 1.3) * 0.4;
-          ctx.fillStyle = `rgba(100,255,220,${spA * 0.7})`;
-          ctx.fillRect(sx2, sy2, 2, 2);
-        }
-      }
-    }
-  }
 
   // Lore stones
   state.loreStones.forEach(stone => {
@@ -8481,7 +8611,7 @@ function render(ctx, minimapCtx) {
         drawSpider(ctx, sx2, sy2);
         px(ctx, '#333', sx2-10, sy2-18, 20, 3);
         px(ctx, '#22cc44', sx2-10, sy2-18, Math.round(20*capturedC.hp/capturedC.maxHp), 3);
-      } else if (capturedC.type === 'shark' || capturedC.type === 'croc') {
+      } else if (capturedC.type === 'croc') {
         drawShark(ctx, sx2, sy2);
         px(ctx, '#333', sx2-14, sy2-18, 28, 3);
         px(ctx, '#2d8a22', sx2-14, sy2-18, Math.round(28*capturedC.hp/capturedC.maxHp), 3);
@@ -8489,8 +8619,6 @@ function render(ctx, minimapCtx) {
         drawBat(ctx, sx2, sy2);
         px(ctx, '#333', sx2-8, sy2-14, 16, 3);
         px(ctx, '#2a1040', sx2-8, sy2-14, Math.round(16*capturedC.hp/capturedC.maxHp), 3);
-      } else if (capturedC.type === 'boar') {
-        drawBoar(ctx, sx2, sy2, capturedC.dir||1, capturedC.hp, capturedC.maxHp);
       }
       if (capturedC.hitFlash > 0) {
         capturedC.hitFlash--;
@@ -9409,7 +9537,7 @@ function render(ctx, minimapCtx) {
 
   // === COMPANION PORTRAITS (bottom-left) ===
   drawCompanionPortraits(ctx);
-} // end render
+}
 
 function drawCompanionPortraits(ctx) {
   const companions = state.npcs.filter(n => n && n.companion);
@@ -9632,25 +9760,6 @@ function updateDayNight() {
     // Wet season: drinking water refills slightly
     if (state.season === 1) {
       state.player.water = Math.min(state.player.maxWater, state.player.water + 5);
-    }
-  }
-
-  // Bioluminescent Night event tick
-  if (!state.bioNightActive) {
-    state.bioNightTimer = (state.bioNightTimer || 1) - 1;
-    if (state.bioNightTimer <= 0 && state.isNight && !state.weatherRain && state.eruptionPhase === 0) {
-      state.bioNightActive = true;
-      state.bioNightDuration = state.DAY_FRAMES * 0.38; // roughly one full night
-      state.bioNightTimer = state.DAY_FRAMES * (7 + Math.random() * 5); // reset
-      showMsg('THE OCEAN IS GLOWING — bioluminescence lights the shallows', '#22ffcc');
-      SFX.bioShimmer && SFX.bioShimmer();
-    } else if (state.bioNightTimer <= 0) {
-      state.bioNightTimer = state.DAY_FRAMES * (2 + Math.random() * 3); // retry sooner if conditions wrong
-    }
-  } else {
-    state.bioNightDuration--;
-    if (state.bioNightDuration <= 0 || (!state.isNight && state.bioNightActive)) {
-      state.bioNightActive = false;
     }
   }
 
@@ -11811,7 +11920,6 @@ function animateYacht() {
 // ============================================================
 
 // gameLoop and startGame defined below
-
 
 </script>
 
