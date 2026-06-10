@@ -8263,21 +8263,6 @@ function render(ctx, minimapCtx) {
     ctx.restore();
     return;
   }
-  // DEBUG one-shot
-  if (!state._rendered) {
-    state._rendered = true;
-    console.log('[DBG2] entering tile loop. sx0/sx1:', sx0, sx1, 'sy0/sy1:', sy0, sy1, 'tile at 75,110:', state.map?.[110]?.[75], 'tile at sy0,sx0:', state.map?.[sy0]?.[sx0], 'TILE_COLORS defined:', typeof TILE_COLORS !== 'undefined');
-    console.log('DEBUG render:', {
-      hasMap: !!state.map,
-      mapLen: state.map?.length,
-      row0Len: state.map?.[0]?.length,
-      firstTile: state.map?.[75]?.[110],
-      canvasW: canvas.width, canvasH: canvasH = canvas.height,
-      camX, camY, sx0, sx1, sy0, sy1,
-      zoom, TSIZE, MSIZE,
-      running: state.running, underground: state.underground
-    });
-  }
   for (let ty = sy0; ty < sy1; ty++) {
     if (!state.map[ty]) continue;
     for (let tx = sx0; tx < sx1; tx++) {
