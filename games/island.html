@@ -441,7 +441,7 @@ const TILE_COLORS = {
 
 // Game state
 const state = {
-  running: false, paused: false, showControls: false, lastDamageCause: '',
+  running: false, paused: false, showControls: false, showMap: false, lastDamageCause: '',
   playerName: 'SURVIVOR',
   shirtColor: '#2d7a2d',
   skinColor: '#c8a07a',
@@ -1160,24 +1160,7 @@ function genObjects() {
     state.loreStones.push({x:pos[0]*TSIZE, y:pos[1]*TSIZE, text:LORE_TEXTS[i], read:false});
   });
 
-  // Decorative world objects (non-interactable, atmosphere only)
-  for (let y = 2; y < MSIZE-2; y++) {
-    for (let x = 2; x < MSIZE-2; x++) {
-      const t = state.map[y][x];
-      const wx = x * TSIZE + TSIZE/2;
-      const wy = y * TSIZE + TSIZE/2;
-      const r2 = Math.random();
-
-      if (t === T.BEACH) {
-
-
-      } else if (t === T.JUNGLE_LIGHT) {
-
-      } else if (t === T.JUNGLE_DARK) {
-
-      }
-    }
-  }
+  // (Decorative world object loop removed — was empty, 22500 iterations generating nothing)
 
   // Place NPCs
   state.npcs = NPC_DATA.map(d => ({...d, _lineIdx:0, bobTimer:0, questGiven:false}));
@@ -9891,6 +9874,10 @@ function render(ctx, minimapCtx) {
   ctx.restore(); // end zoom
   drawMinimap(minimapCtx);
 
+  // World map overlay (M key) and tutorial guide — drawn outside zoom transform
+  drawWorldMap(ctx);
+  drawGuide(ctx);
+
   // HUD hotbar icons overlay (draw pixel icons on canvas)
   drawHotbarIcons(ctx);
 
@@ -12515,6 +12502,28 @@ function handleJump() {
     spawnParticles(state.player.x, state.player.y+16, '#aaa',3);
     SFX.jump();
   }
+}
+
+// ============================================================
+// PAUSE MENU ACTIONS
+// ============================================================
+function resumeGame() {
+  const pm = document.getElementById('pause-menu');
+  if (pm) pm.style.display = 'none';
+}
+
+function saveAndQuit() {
+  // Persist skills and achievements before quitting
+  try { localStorage.setItem('island_skills', JSON.stringify(state.skills||{})); } catch(e){_logError('saveAndQuit',e);}
+  try { localStorage.setItem('island_achievements', JSON.stringify([...(state.unlockedAchievements||[])])); } catch(e){_logError('saveAndQuit',e);}
+  try { localStorage.setItem('island_recipes', JSON.stringify([...(state.discoveredRecipes||[])])); } catch(e){_logError('saveAndQuit',e);}
+  // Reload page to return to start
+  window.location.reload();
+}
+
+function setBrightness(val) {
+  const v = Math.max(30, Math.min(100, Number(val)));
+  document.body.style.filter = v < 100 ? `brightness(${v}%)` : '';
 }
 
 // UI update
