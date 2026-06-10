@@ -8433,9 +8433,8 @@ function render(ctx, minimapCtx) {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
 
-  // Clouds disabled for performance // Draw drifting clouds when cloudy
-  if (false) {
-  if ((currentForecast === 'cloudy' || currentForecast === 'storm') && !state.isNight && state.clouds) {
+  // Clouds disabled for performance (outer if(false){} REMOVED — it was wrapping the entire rest of render and hiding the world)
+  if (false && (currentForecast === 'cloudy' || currentForecast === 'storm') && !state.isNight && state.clouds) {
     ctx.save();
     state.clouds.forEach(cloud => {
       const csx = cloud.wx - camX;
@@ -9897,7 +9896,7 @@ function render(ctx, minimapCtx) {
 
   // === COMPANION PORTRAITS (bottom-left) ===
   drawCompanionPortraits(ctx);
-} } // end render + close inner block
+} // end render
 
 function drawCompanionPortraits(ctx) {
   const companions = state.npcs.filter(n => n && n.companion);
@@ -12750,7 +12749,9 @@ window.addEventListener('DOMContentLoaded', () => {
   showMsg('YOU WASHED ASHORE. FIND THE OTHER SURVIVORS.', '#c8f135');
   requestAnimationFrame(gameLoopWithUI);
   // Intro cutscene with delay
-  setTimeout(() => { playCutscene('intro'); }, 500);
+  // Intro cutscene disabled — was blocking gameplay until user pressed Space/Enter.
+  state.cutscenesSeen = state.cutscenesSeen || new Set();
+  state.cutscenesSeen.add('intro');
   // Safe zone welcome message on day 1
   setTimeout(() => {
     if (state.day === 1) showMsg('SAFE BEACH — Gather resources and prepare before venturing into the jungle', '#c8f135');
