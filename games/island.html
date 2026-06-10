@@ -192,16 +192,6 @@ canvas#c{pointer-events:none}
 .slide-dots{display:flex;gap:8px;margin-bottom:20px}
 .dot{width:8px;height:8px;border:1px solid rgba(120,80,20,0.6);border-radius:50%}
 .dot.active{background:#c8c060;border-color:#c8c060}
-#slide-btn{
-  background:linear-gradient(160deg,rgba(0,0,0,0.5),rgba(20,8,2,0.4));
-  color:#e8d490;border:2px solid #7a5018;border-top:2px solid #9a6828;
-  padding:11px 38px;font-family:'Cinzel',serif;font-size:12px;letter-spacing:2px;
-  cursor:pointer;border-radius:10px;
-  box-shadow:0 3px 10px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,200,80,0.08);
-  transition:background 0.15s,border-color 0.15s,color 0.15s;
-}
-#slide-btn:hover{background:rgba(120,80,20,0.3);border-color:rgba(200,160,60,0.8);color:#f0d890;}
-
 /* ── WIN SCREEN ── */
 #win-screen{position:fixed;inset:0;background:radial-gradient(ellipse at center,#0e0802 0%,#060402 100%);z-index:200;display:none;flex-direction:column;align-items:center;justify-content:center}
 #win-screen h1{color:#c8d060;font-family:'Cinzel',serif;font-size:30px;letter-spacing:6px;margin-bottom:10px;text-shadow:0 0 30px rgba(200,210,50,0.4)}
@@ -210,25 +200,8 @@ canvas#c{pointer-events:none}
 /* ── CONTROLS HINT ── */
 #controls-hint{position:fixed;bottom:60px;left:10px;font-size:10px;line-height:1.8;pointer-events:none;z-index:5;font-family:'Lato',sans-serif;background:rgba(240,224,176,0.15);padding:6px 10px;border:1px solid rgba(200,168,100,0.3);border-radius:8px;color:rgba(240,224,176,0.6)}
 @media(max-width:767px){#controls-hint{display:none}}
-/* ── FORCE-HIDE START SCREENS & MOBILE UI ON DESKTOP ── */
-#char-creator,@media(min-width:768px){#touch-controls,#joystick-zone,#btn-zone,#joystick-canvas{display:none !important}}
+/* ── HIDE MOBILE UI ON DESKTOP ── */
 @media(min-width:769px){#touch-controls{display:none !important}#joystick-zone{display:none !important}#btn-zone{display:none !important}#joystick-canvas{display:none !important}}
-
-/* ── CHARACTER CREATOR ── */
-.cc-card{background:linear-gradient(160deg,#3d2010 0%,#2a1508 100%);border:2px solid #8b6020;box-shadow:inset 0 1px 0 rgba(255,220,100,0.1);padding:20px 28px;display:flex;gap:32px;align-items:flex-start;max-width:640px;width:100%;border-radius:14px}
-.cc-preview-wrap{display:flex;flex-direction:column;align-items:center;gap:8px}
-#cc-preview{image-rendering:pixelated;border:2px solid #8b6020;background:#1a0c04;border-radius:6px}
-.cc-preview-label{color:#a08040;font-family:'Lato',sans-serif;font-size:10px;letter-spacing:2px}
-.cc-form{flex:1;display:flex;flex-direction:column;gap:16px}
-.cc-field label{display:block;color:#f0e0b0;font-family:'Cinzel',serif;font-size:11px;letter-spacing:2px;margin-bottom:6px}
-.cc-field input[type=text]{background:rgba(0,0,0,0.4);border:1px solid #8b6020;color:#f0e0b0;font-family:'Lato',sans-serif;font-size:13px;padding:6px 10px;width:100%;outline:none;border-radius:6px}
-.cc-field input[type=text]:focus{border-color:#c8f135}
-.cc-swatches{display:flex;gap:8px;flex-wrap:wrap}
-.cc-swatch{width:64px;height:64px;border:3px solid rgba(139,96,32,0.5);border-radius:8px;cursor:pointer;image-rendering:pixelated;touch-action:manipulation;-webkit-tap-highlight-color:rgba(200,241,53,0.3);transition:border-color 0.15s,box-shadow 0.15s}
-.cc-swatch:hover{border-color:#8b6020}
-.cc-swatch.selected{border-color:#c8f135;box-shadow:0 0 10px rgba(200,241,53,0.5)}
-#cc-begin{background:rgba(0,0,0,0.4);color:#f0e0b0;border:2px solid #8b6020;padding:14px 40px;font-family:'Cinzel',serif;font-size:13px;letter-spacing:2px;cursor:pointer;margin-top:20px;align-self:center;touch-action:manipulation;-webkit-tap-highlight-color:rgba(200,241,53,0.4);min-height:48px;width:100%;border-radius:8px;transition:background 0.15s,border-color 0.15s}
-#cc-begin:hover{background:rgba(200,241,53,0.1);border-color:#c8f135;color:#c8f135}
 
 /* ── TOUCH CONTROLS ── */
 #joystick-canvas{position:fixed;bottom:20px;left:20px;z-index:14;pointer-events:none;width:160px;height:160px}
@@ -887,7 +860,6 @@ function genObjects() {
   // Weather forecast: generate 8 upcoming weather states
   state.weatherForecast = [];
   state.weatherForecastDays = [];
-  const WF_STATES = ['clear', 'cloudy', 'rain', 'clear', 'cloudy', 'storm', 'clear', 'cloudy'];
   for (let i = 0; i < 8; i++) {
     const wfOptions = ['clear', 'clear', 'cloudy', 'rain', 'storm'];
     state.weatherForecast.push(wfOptions[Math.floor(Math.random() * wfOptions.length)]);
@@ -994,8 +966,6 @@ function genObjects() {
   state.objects.push({type:'treasure_chest', x:77*TSIZE, y:107*TSIZE, opened:false, lootTier:'common', buried:true});
 
   // Waterfall (interactable)
-  // removed waterfall decor // , x:200*TSIZE, y:140*TSIZE, decor:false
-
   // Tidal cave — force onto southwest beach/jungle-edge tile
   {
     const caveX = 27, caveY = 85;
@@ -1093,10 +1063,6 @@ function genObjects() {
   });
   // Central fire
   state.objects.push({type:'tribal_fire', x:104*TSIZE, y:57*TSIZE, decor:true});
-  // Skull stakes around village perimeter (removed from random spawning)
-  [{x:101,y:54},{x:108,y:54},{x:101,y:60},{x:108,y:60}].forEach(s => {
-    // skull_stake removed from random spawning
-  });
   // Village warriors (stronger, always present)
   const villageSpawns = [{x:103,y:56},{x:106,y:55},{x:107,y:58},{x:104,y:58}];
   villageSpawns.forEach((vs, idx) => {
@@ -1639,35 +1605,6 @@ function drawBat(ctx, sx, sy) {
   px(ctx, '#cc0000', sx+1, sy-3, 2, 2);
 }
 
-// Wide canopy jungle tree
-function drawJungleTree2(ctx, sx, sy) {
-  px(ctx, 'rgba(0,0,0,0.3)', sx-14, sy+14, 28, 6);
-  px(ctx, '#3d2010', sx-4, sy+2, 8, 16);
-  px(ctx, '#1a4a0a', sx-18, sy-8, 36, 12);
-  px(ctx, '#226614', sx-14, sy-16, 28, 10);
-  px(ctx, '#2d8020', sx-10, sy-22, 20, 8);
-  px(ctx, '#1a3a0a', sx-6, sy-26, 12, 6);
-  px(ctx, '#0d2a06', sx-16, sy-6, 6, 4);
-  px(ctx, '#0d2a06', sx+10, sy-4, 6, 4);
-}
-// Tall thin jungle tree
-function drawJungleTree3(ctx, sx, sy) {
-  px(ctx, 'rgba(0,0,0,0.25)', sx-8, sy+16, 16, 4);
-  px(ctx, '#4a2a10', sx-3, sy-4, 6, 22);
-  px(ctx, '#1a5a10', sx-8, sy-22, 16, 10);
-  px(ctx, '#228820', sx-6, sy-30, 12, 10);
-  px(ctx, '#2da030', sx-4, sy-36, 8, 8);
-  px(ctx, '#1a6618', sx-2, sy-42, 4, 8);
-}
-// Ground fern / undergrowth
-function drawFern(ctx, sx, sy) {
-  px(ctx, '#1a5a10', sx-10, sy-2, 4, 8);
-  px(ctx, '#228820', sx-6, sy-6, 4, 10);
-  px(ctx, '#2da030', sx-2, sy-8, 4, 10);
-  px(ctx, '#228820', sx+2, sy-6, 4, 10);
-  px(ctx, '#1a5a10', sx+6, sy-2, 4, 8);
-}
-
 function drawPalm(ctx, sx, sy) {
   const sway = Math.sin(state.frameCount * 0.015 + sx * 0.08) * 3;
   ctx.save(); ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(sx, sy+14, 7, 3, 0, 0, Math.PI*2); ctx.fill(); ctx.restore();
@@ -1712,34 +1649,6 @@ function drawBerry(ctx, sx, sy) {
   px(ctx, '#e74c3c', sx-6, sy-2, 5, 5);
 }
 
-function drawDeadTree(ctx, sx, sy) {
-  // Bleached white/grey bare trunk
-  px(ctx, '#c8c8c0', sx-2, sy-20, 5, 22);
-  px(ctx, '#b8b8b0', sx+2, sy-12, 4, 14);
-  // Bare branches
-  px(ctx, '#b0b0a8', sx-10, sy-18, 10, 2);
-  px(ctx, '#b0b0a8', sx+3, sy-14, 8, 2);
-  px(ctx, '#a8a8a0', sx-6, sy-22, 6, 2);
-}
-
-function drawFlowerPatch(ctx, sx, sy) {
-  // Green stems
-  px(ctx, '#3a7a1a', sx-8, sy-4, 2, 6);
-  px(ctx, '#3a7a1a', sx-2, sy-6, 2, 8);
-  px(ctx, '#3a7a1a', sx+4, sy-4, 2, 6);
-  px(ctx, '#3a7a1a', sx+8, sy-3, 2, 5);
-  // Bright flowers
-  px(ctx, '#ff2222', sx-10, sy-8, 5, 4);
-  px(ctx, '#ffcc00', sx-4, sy-10, 5, 4);
-  px(ctx, '#ff4400', sx+2, sy-8, 5, 4);
-  px(ctx, '#ff2222', sx+7, sy-7, 5, 4);
-  // Centres
-  px(ctx, '#ffff44', sx-9, sy-7, 2, 2);
-  px(ctx, '#ff4400', sx-3, sy-9, 2, 2);
-  px(ctx, '#ffff44', sx+3, sy-7, 2, 2);
-  px(ctx, '#ff6600', sx+8, sy-6, 2, 2);
-}
-
 function drawMossyLog(ctx, sx, sy) {
   // Fallen log body
   px(ctx, '#5c3a1a', sx-14, sy-4, 28, 8);
@@ -1757,83 +1666,6 @@ function drawMossyLog(ctx, sx, sy) {
   px(ctx, '#f0d0a0', sx-4, sy-9, 1, 4);
   px(ctx, '#cc6622', sx+6, sy-9, 5, 3);
   px(ctx, '#f0d0a0', sx+7, sy-9, 1, 3);
-}
-
-function drawSkullStake(ctx, sx, sy) {
-  // Wooden stake
-  px(ctx, '#5c3a1a', sx-2, sy-28, 4, 30);
-  px(ctx, '#7a5c2e', sx-1, sy-30, 2, 4); // sharpened tip
-  // Skull
-  px(ctx, '#e8e0cc', sx-6, sy-26, 12, 10);
-  px(ctx, '#d0c8b4', sx-4, sy-28, 8, 4);
-  // Eye sockets
-  px(ctx, '#1a0a00', sx-5, sy-25, 4, 4);
-  px(ctx, '#1a0a00', sx+1, sy-25, 4, 4);
-  // Nose hole
-  px(ctx, '#2a1810', sx-1, sy-21, 2, 2);
-  // Jaw
-  px(ctx, '#c8c0ac', sx-4, sy-18, 8, 4);
-  px(ctx, '#1a0a00', sx-3, sy-17, 2, 3);
-  px(ctx, '#1a0a00', sx, sy-17, 2, 3);
-  px(ctx, '#1a0a00', sx+3, sy-17, 2, 3);
-  // Warning carvings on stake
-  px(ctx, '#8a5a2a', sx-1, sy-14, 2, 2);
-  px(ctx, '#8a5a2a', sx-1, sy-10, 2, 2);
-}
-
-function drawAncientStatue(ctx, sx, sy) {
-  // Stone base
-  px(ctx, '#5a5a52', sx-10, sy, 20, 8);
-  px(ctx, '#6a6a62', sx-8, sy-2, 16, 4);
-  // Idol body
-  px(ctx, '#686860', sx-6, sy-20, 12, 22);
-  px(ctx, '#7a7a72', sx-4, sy-22, 8, 4);
-  // Head
-  px(ctx, '#787870', sx-7, sy-30, 14, 12);
-  // Carved face
-  px(ctx, '#4a4a42', sx-5, sy-28, 4, 3); // left eye
-  px(ctx, '#4a4a42', sx+1, sy-28, 4, 3); // right eye
-  px(ctx, '#4a4a42', sx-3, sy-24, 6, 2); // mouth
-  // Cracks
-  px(ctx, '#3a3a32', sx-2, sy-18, 1, 8);
-  px(ctx, '#3a3a32', sx+3, sy-12, 1, 6);
-  // Tribal carvings
-  px(ctx, '#4a4a42', sx-5, sy-15, 10, 1);
-  px(ctx, '#4a4a42', sx-5, sy-10, 8, 1);
-  px(ctx, '#4a4a42', sx-4, sy-6, 6, 1);
-}
-
-function drawWaterfall(ctx, sx, sy) {
-  // Water source at top
-  px(ctx, '#3a7ab4', sx-8, sy-24, 16, 6);
-  // Falling water streams (animated)
-  const flow = state.frameCount * 0.1;
-  for (let i = 0; i < 3; i++) {
-    const foff = ((flow + i * 3) % 20);
-    const alpha = 0.6 + Math.sin(flow + i) * 0.2;
-    ctx.fillStyle = `rgba(80,160,220,${alpha})`;
-    ctx.fillRect(Math.round(sx - 6 + i * 4), Math.round(sy - 18 + foff), 3, 8);
-  }
-  // Splash pool at bottom
-  px(ctx, '#4a9ab4', sx-10, sy+4, 20, 6);
-  ctx.fillStyle = 'rgba(120,200,240,0.5)';
-  ctx.fillRect(sx-12, sy+2, 24, 4);
-}
-
-function drawInteractableWaterfall(ctx, sx, sy) {
-  // Dark rock sides
-  px(ctx, '#3a2e20', sx-12, sy-30, 4, 40);
-  px(ctx, '#3a2e20', sx+8, sy-30, 4, 40);
-  // Water streaks
-  const coralColors2 = ['#4499dd','#55aaee','#66bbff','#3388cc','#77ccff'];
-  for (let i = 0; i < 5; i++) {
-    const ox = sx - 8 + i * 4;
-    px(ctx, coralColors2[i%coralColors2.length], ox, sy-28, 2, 40);
-  }
-  // White foam at bottom
-  px(ctx, 'rgba(255,255,255,0.8)', sx-10, sy+10, 20, 3);
-  // Pool at base
-  px(ctx, '#5cc8d0', sx-10, sy+12, 20, 12);
 }
 
 function drawTreasureChest(ctx, sx, sy, opened, glowOrange) {
@@ -1957,19 +1789,6 @@ function drawSpikeTrap(ctx, sx, sy) {
     ctx.lineTo(ox+4, sy);
     ctx.fill();
   }
-}
-
-function drawCampfireRemains(ctx, sx, sy) {
-  // Ash circle
-  px(ctx, '#8a8a88', sx-10, sy-2, 20, 6);
-  px(ctx, '#6a6a68', sx-8, sy, 16, 4);
-  // Charred wood pieces
-  px(ctx, '#2a2220', sx-8, sy-3, 5, 3);
-  px(ctx, '#1a1812', sx+2, sy-4, 6, 3);
-  px(ctx, '#2a2220', sx-4, sy-2, 4, 2);
-  // Ash detail
-  px(ctx, '#b0b0aa', sx-6, sy+1, 4, 2);
-  px(ctx, '#9a9a98', sx+2, sy+2, 5, 2);
 }
 
 function drawShipwreck(ctx, sx, sy) {
@@ -2104,41 +1923,11 @@ function drawDiveSpot(ctx, sx, sy) {
   ctx.restore();
 }
 
-function drawTidePool(ctx, sx, sy) {
-  // Pool outline (dark sand rim)
-  px(ctx, '#b8a078', sx-12, sy-6, 24, 12);
-  // Water inside
-  px(ctx, '#3a88b4', sx-10, sy-4, 20, 8);
-  // Star shapes inside
-  px(ctx, '#e84444', sx-5, sy-2, 2, 2);
-  ctx.fillStyle = '#e84444';
-  ctx.fillRect(sx-6, sy-1, 4, 1);
-  ctx.fillRect(sx-5, sy-3, 2, 4);
-  ctx.fillRect(sx+3, sy+1, 2, 2);
-  ctx.fillRect(sx+2, sy, 4, 1);
-  ctx.fillRect(sx+3, sy-1, 2, 4);
-  // Shimmer
-  const shimmer = 0.3 + Math.sin(state.frameCount * 0.06 + sx * 0.1) * 0.2;
-  ctx.fillStyle = `rgba(180,230,255,${shimmer})`;
-  ctx.fillRect(sx-8, sy-3, 6, 3);
-}
-
 function drawFishSpot(ctx, sx, sy) {
   // Very subtle fish spot - just a few ripple dots
   ctx.fillStyle = 'rgba(100,200,220,0.35)';
   ctx.fillRect(sx-5, sy-1, 4, 2);
   ctx.fillRect(sx+1, sy-1, 4, 2);
-}
-
-function drawReed(ctx, sx, sy) {
-  // Reed cluster in shallow water (legacy — replaced by coral but kept for safety)
-  const offsets = [-8, -3, 2, 7];
-  offsets.forEach((ox, i) => {
-    const h = 18 + (i%2)*6;
-    px(ctx, '#5a7a30', sx+ox, sy-h, 2, h);
-    px(ctx, '#7a5a20', sx+ox-1, sy-h-6, 4, 7);
-    px(ctx, '#6a4a15', sx+ox, sy-h-8, 2, 4);
-  });
 }
 
 function drawCoral(ctx, sx, sy) {
@@ -2153,52 +1942,6 @@ function drawCoral(ctx, sx, sy) {
     ctx.fillStyle = coralCols[(i+2)%coralCols.length];
     ctx.fillRect(Math.round(sx+ox-1), Math.round(sy+oy-12), 2, 3);
   });
-}
-
-function drawJungleBird(ctx, sx, sy, colorIdx) {
-  const bodyColors = ['#ee2200','#2244ee','#eecc00']; // red lorikeet, blue parrot, yellow
-  const wingColors = ['#ee6600','#44aaee','#88cc00'];
-  const bc = bodyColors[colorIdx%3], wc = wingColors[colorIdx%3];
-  // Body
-  ctx.fillStyle = bc; ctx.fillRect(Math.round(sx-3), Math.round(sy-4), 6, 4);
-  // Wing
-  ctx.fillStyle = wc; ctx.fillRect(Math.round(sx-4), Math.round(sy-3), 3, 3);
-  // Tail
-  ctx.fillStyle = bc; ctx.fillRect(Math.round(sx-5), Math.round(sy-2), 3, 2);
-  // Head
-  ctx.fillStyle = bc; ctx.fillRect(Math.round(sx+2), Math.round(sy-6), 4, 4);
-  // Beak
-  ctx.fillStyle = '#ffcc00'; ctx.fillRect(Math.round(sx+5), Math.round(sy-5), 3, 2);
-  // Eye
-  ctx.fillStyle = '#000'; ctx.fillRect(Math.round(sx+3), Math.round(sy-5), 1, 1);
-}
-
-function drawJungleFlower(ctx, sx, sy, colorIdx) {
-  const cols = ['#ff4400','#ffaa00','#ff2288'];
-  const col = cols[colorIdx%3];
-  // Stem
-  ctx.fillStyle = '#2a6a10'; ctx.fillRect(Math.round(sx), Math.round(sy-4), 2, 6);
-  // Petals
-  ctx.fillStyle = col;
-  ctx.fillRect(Math.round(sx-2), Math.round(sy-6), 2, 2); // left
-  ctx.fillRect(Math.round(sx+2), Math.round(sy-6), 2, 2); // right
-  ctx.fillRect(Math.round(sx-1), Math.round(sy-8), 3, 2); // top
-  // Center
-  ctx.fillStyle = '#ffee88'; ctx.fillRect(Math.round(sx), Math.round(sy-6), 2, 2);
-}
-
-function drawJungleFloor(ctx, sx, sy) {
-  // Fern-like ground cover: small triangular green shapes pointing up
-  const fc = '#1a4a0a';
-  for (let i = 0; i < 4; i++) {
-    const ox = sx - 6 + i * 4;
-    ctx.fillStyle = i%2===0 ? '#1a4a0a' : '#2a6010';
-    ctx.beginPath();
-    ctx.moveTo(ox + 1, sy);
-    ctx.lineTo(ox - 1, sy + 5);
-    ctx.lineTo(ox + 3, sy + 5);
-    ctx.fill();
-  }
 }
 
 function drawCrab(ctx, sx, sy, dir) {
@@ -8684,15 +8427,13 @@ function render(ctx, minimapCtx) {
     drawList.push({y: sortY, draw: () => {
       const ssx = capturedObj.x - camX, ssy = capturedObj.y - camY;
       // Shadow ellipse
-      if (['tree','palm','rock','vol_rock','jungle_chest','vol_chest','treasure_chest','step_stone','ancient_statue','skull_stake','dead_tree','mossy_log','breadfruit','mape','purau','pandanus','filao','hutu'].includes(capturedObj.type)) {
+      if (['tree','palm','rock','vol_rock','jungle_chest','vol_chest','treasure_chest','step_stone','mossy_log','breadfruit','mape','purau','pandanus','filao','hutu'].includes(capturedObj.type)) {
         ctx.save(); ctx.fillStyle = 'rgba(0,0,0,0.22)';
         const shadowW = capturedObj.type === 'tree' || capturedObj.type === 'palm' ? 18 : capturedObj.type === 'rock' || capturedObj.type === 'vol_rock' ? 12 : 10;
         ctx.beginPath(); ctx.ellipse(ssx + 4, ssy + 12, shadowW, shadowW * 0.3, 0, 0, Math.PI*2); ctx.fill(); ctx.restore();
       }
       switch (capturedObj.type) {
         case 'tree': { const ttx2=Math.floor(capturedObj.x/TSIZE),tty2=Math.floor(capturedObj.y/TSIZE); const tt2=(state.map[tty2]&&state.map[tty2][ttx2])||0; if(tt2===T.JUNGLE_DARK)drawJungleTree(ctx,ssx,ssy); else drawTree(ctx,ssx,ssy); break; }
-        case 'jungle_tree2': drawJungleTree2(ctx,ssx,ssy); break;
-        case 'jungle_tree3': drawJungleTree3(ctx,ssx,ssy); break;
         // Tahitian species
         case 'breadfruit': drawBreadfruitTree(ctx,ssx,ssy); break;
         case 'mape': drawMapeTree(ctx,ssx,ssy); break;
@@ -8701,24 +8442,15 @@ function render(ctx, minimapCtx) {
         case 'filao': drawFilaoTree(ctx,ssx,ssy); break;
         case 'hutu': drawHutuTree(ctx,ssx,ssy); break;
         case 'coral': drawCoral(ctx,ssx,ssy); break;
-        case 'fern': drawFern(ctx,ssx,ssy); break;
         case 'palm': drawPalm(ctx,ssx,ssy); break;
         case 'rock': case 'vol_rock': drawRock(ctx,ssx,ssy); if(capturedObj.type==='vol_rock')drawVolRock(ctx,ssx,ssy); break;
         case 'berry': case 'fruit': drawBerry(ctx,ssx,ssy); break;
         case 'fish_spot': drawFishSpot(ctx,ssx,ssy); break;
-        case 'reed': drawReed(ctx,ssx,ssy); break;
         case 'step_stone': px(ctx,'rgba(0,0,0,0.3)',ssx-11,ssy+4,22,5); px(ctx,'#3a2e20',ssx-10,ssy+0,20,6); px(ctx,'#6a5a4a',ssx-10,ssy-5,20,8); px(ctx,'#9a8a7a',ssx-8,ssy-7,16,4); px(ctx,'#7a6a5a',ssx-6,ssy-6,4,2); break;
-        case 'dead_tree': drawDeadTree(ctx,ssx,ssy); break;
-        case 'flower_patch': drawFlowerPatch(ctx,ssx,ssy); break;
         case 'mossy_log': drawMossyLog(ctx,ssx,ssy); break;
-        case 'skull_stake': drawSkullStake(ctx,ssx,ssy); break;
-        case 'ancient_statue': drawAncientStatue(ctx,ssx,ssy); break;
-        case 'waterfall': if(capturedObj.decor){drawWaterfall(ctx,ssx,ssy);}else{drawInteractableWaterfall(ctx,ssx,ssy);} break;
         case 'cave': drawCave(ctx,ssx,ssy); break;
         case 'altar': drawAltar(ctx,ssx,ssy); break;
         case 'bottle': if(!capturedObj.read) drawBottle(ctx,ssx,ssy); break;
-        case 'campfire_remains': drawCampfireRemains(ctx,ssx,ssy); break;
-        case 'tide_pool': drawTidePool(ctx,ssx,ssy); break;
         case 'shipwreck': drawShipwreck(ctx,ssx,ssy); break;
         case 'underwater_wreck': drawUnderwaterWreck(ctx,ssx,ssy); break;
         case 'dive_spot': drawDiveSpot(ctx,ssx,ssy); break;
@@ -8726,9 +8458,6 @@ function render(ctx, minimapCtx) {
           ctx.save(); ctx.fillStyle='#8B6020'; ctx.fillRect(ssx-6,ssy-8,12,14); ctx.fillStyle='#c8a060'; ctx.fillRect(ssx-5,ssy-7,10,12); ctx.fillStyle='#5c3010'; ctx.fillRect(ssx-5,ssy-7,2,12); ctx.fillStyle='#f0d890'; ctx.fillRect(ssx-2,ssy-5,7,1); ctx.fillRect(ssx-2,ssy-3,7,1); ctx.fillRect(ssx-2,ssy-1,5,1);
           const jGlow=0.3+Math.sin(state.frameCount*0.08)*0.2; ctx.fillStyle=`rgba(255,220,100,${jGlow})`; ctx.beginPath(); ctx.arc(ssx,ssy-2,10,0,Math.PI*2); ctx.fill(); ctx.restore(); break;
         }
-        case 'jungle_bird': drawJungleBird(ctx,ssx,ssy,capturedObj.colorIdx||0); break;
-        case 'jungle_flower': drawJungleFlower(ctx,ssx,ssy,capturedObj.colorIdx||0); break;
-        case 'jungle_floor': drawJungleFloor(ctx,ssx,ssy); break;
         case 'crab': drawCrab(ctx,ssx,ssy,capturedObj.dir||1); break;
         case 'hut': drawHut(ctx,ssx,ssy); break;
         case 'tribal_fire': { const tf=Math.sin(state.frameCount*0.2)*2; px(ctx,'#5c3d1e',ssx-6,ssy,12,8); px(ctx,'#ff6600',ssx-4,ssy-8+tf,8,8); px(ctx,'#ffcc00',ssx-2,ssy-12+tf,4,6); break; }
@@ -8813,7 +8542,6 @@ function render(ctx, minimapCtx) {
           }
           break;
         }
-        case 'reed': drawReed(ctx,ssx,ssy); break;
         case 'vine_pickup': if(!capturedObj.collected){drawVine(ctx,ssx,ssy);} break;
         case 'fallen_log': drawMossyLog(ctx,ssx,ssy); break;
         case 'jungle_chest': if(!capturedObj.opened){px(ctx,'#7a5c2e',ssx-8,ssy-6,16,12);px(ctx,'#c8a060',ssx-8,ssy-8,16,4);} break;
@@ -12322,9 +12050,6 @@ function animateYacht() {
 // MAIN LOOP
 // ============================================================
 
-// gameLoop and startGame defined below
-
-
 </script>
 
 <script>
@@ -12713,19 +12438,9 @@ function renderBuildMenu() {
 }
 
 // TUTORIAL
-const slides = [
-  { t:'CONTROLS', b:'<b>WASD</b> — Move &nbsp; <b>SHIFT</b> — Sprint (drains stamina)<br><b>SPACE</b> — Jump (cross lava rocks)<br><b>Click</b> — Attack / Harvest &nbsp; <b>E</b> — Interact with NPCs / objects<br><b>I</b> — Inventory &nbsp; <b>C</b> — Crafting &nbsp; <b>B</b> — Build menu<br><b>F</b> — Cast fishing rod (must be near water)' },
-  { t:'SURVIVAL', b:'You have <b>Health</b>, <b>Water</b>, <b>Food</b>, and <b>Stamina</b> bars.<br><b>Water</b> depletes every 4 seconds. <b>Food</b> every 6 seconds.<br>If either hits zero, your health will drain slowly.<br><b>Raw food</b> has a 20% chance of making you sick.<br>Cook food on a Campfire (press E near it) for full nutrition.' },
-  { t:'THE JUNGLE', b:'The outer jungle is passable but slow.<br>The <b>dark jungle</b> has hidden <b>pit traps</b> — fall in and you die.<br>Craft a <b>Torch</b> (2 wood + 1 stone) to reveal the pits.<br>The jungle holds <b>berry bushes</b>, <b>jungle chests</b>, and <b>lore stones</b>.<br>The correct path leads to the volcano.' },
-  { t:'RESOURCES', b:'<b>Palm trees</b> on the beach → Coconuts (restores water)<br><b>Fruit trees / berry bushes</b> in jungle → Food (cook first!)<br><b>Fishing spots</b> in shallow water → Fish (need Fishing Rod)<br><b>Trees</b> → Wood &nbsp; <b>Rocks</b> → Stone &nbsp; <b>Volcanic rocks</b> → Volcanic Stone<br>Build a <b>Storage Chest</b> and <b>Bed</b> to establish your camp.' },
-  { t:'ENEMIES & STORY', b:'You are the navigator of the Meridian — a colonial survey ship sunk by an ancient tribal artifact.<br><b>Oonga</b> (south beach) is your first guide. <b>Mara</b> (west jungle edge) knows the patrols. <b>Felix</b> (near wreck) is fixing the lifeboat. <b>Elder Kona</b> (inner jungle) holds the truth.<br><b>The island is gated</b> — unlock zones by completing quests.<br>There are <b>4 endings</b>: Peace, Escape, Conquest, or Rescue.<br>Your goal: learn the truth, then decide. Search the <b>underwater wreck</b> (southwest deep water) for secrets — and a signal flare.' },
-];
-let slideIdx = 0;
 // ============================================================
-// CHARACTER CREATOR
+// GAME INIT
 // ============================================================
-
-
 
 // NEW SIMPLE START SCREEN
 window.addEventListener('DOMContentLoaded', () => {
