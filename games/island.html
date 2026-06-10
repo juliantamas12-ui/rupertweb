@@ -415,6 +415,22 @@ const MSIZE = 150;
 const WORLD_W = MSIZE * TSIZE;
 const WORLD_H = MSIZE * TSIZE;
 
+// Early error logger (must be defined before any catch(e){_logError(...)} call below).
+window._islandErrors = window._islandErrors || [];
+window._logError = function(where, e) {
+  try {
+    const entry = {
+      where: String(where).slice(0, 60),
+      msg: (e && e.message ? String(e.message) : String(e)).slice(0, 200),
+      stack: (e && e.stack ? String(e.stack) : '').split('\n').slice(0, 3).join(' | ').slice(0, 300),
+      t: Date.now(),
+      frame: (typeof state !== 'undefined' && state && state.frameCount) || 0
+    };
+    window._islandErrors.push(entry);
+    if (window._islandErrors.length > 200) window._islandErrors.shift();
+  } catch (_) { /* never throw from logger */ }
+};
+
 // Tile types
 const T = { DEEP_OCEAN:0, SHALLOW_WATER:1, BEACH:2, JUNGLE_LIGHT:3, JUNGLE_DARK:4, VOLCANIC:5, LAVA:6 };
 
@@ -5105,21 +5121,7 @@ function drawRain(ctx) {
 
 window.keys = {};
 // === ERROR RING BUFFER (diagnostic) ===
-// Previously many catch(e) blocks were silent. They now log here.
-window._islandErrors = window._islandErrors || [];
-window._logError = function(where, e) {
-  try {
-    const entry = {
-      where: String(where).slice(0, 60),
-      msg: (e && e.message ? String(e.message) : String(e)).slice(0, 200),
-      stack: (e && e.stack ? String(e.stack) : '').split('\n').slice(0, 3).join(' | ').slice(0, 300),
-      t: Date.now(),
-      frame: (typeof state !== 'undefined' && state && state.frameCount) || 0
-    };
-    window._islandErrors.push(entry);
-    if (window._islandErrors.length > 200) window._islandErrors.shift();
-  } catch (_) { /* never throw from logger */ }
-};
+// _logError defined at top of script (moved for hoisting). This block kept as marker.
 // Inspect with: window._islandErrors in console
 // === OBJECT INDEX CACHE (performance) ===
 // Auto-invalidates when state.objects is mutated. Version-based so assignment
