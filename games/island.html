@@ -911,22 +911,25 @@ function genObjects() {
         }
       }
 
+      // Tree visual variation: per-tree scale 0.75-1.35 and slight flip for organic look
+      const _treeScale = () => 0.75 + Math.random() * 0.6;
+      const _treeFlip  = () => Math.random() < 0.5 ? -1 : 1;
       if (t === T.JUNGLE_LIGHT) {
-        if (r < 0.012) state.objects.push({type:selectTree(t,nearWater), x:wx, y:wy, hp:5, maxHp:5});
-        else if (r < 0.016) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4});
-        else if (r < 0.022) state.objects.push({type:'berry', x:wx, y:wy, hp:1, maxHp:1, respawn:0});
-        else if (r < 0.026) state.objects.push({type:'vine_pickup', x:wx, y:wy, collected:false});
+        if (r < 0.0055) state.objects.push({type:selectTree(t,nearWater), x:wx, y:wy, hp:5, maxHp:5, scale:_treeScale(), flipX:_treeFlip()});
+        else if (r < 0.0095) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4, scale:0.85+Math.random()*0.45});
+        else if (r < 0.0155) state.objects.push({type:'berry', x:wx, y:wy, hp:1, maxHp:1, respawn:0});
+        else if (r < 0.0195) state.objects.push({type:'vine_pickup', x:wx, y:wy, collected:false});
       } else if (t === T.JUNGLE_DARK) {
-        if (r < 0.012) state.objects.push({type:selectTree(t,nearWater), x:wx, y:wy, hp:5, maxHp:5});
-        else if (r < 0.016) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4});
-        else if (r < 0.019) state.objects.push({type:'jungle_chest', x:wx, y:wy, opened:false});
-        else if (r < 0.021) state.creatures.push({type:'spider', x:wx, y:wy, hp:25, maxHp:25, spd:1.05, attackTimer:0, walkTimer:0});
+        if (r < 0.008) state.objects.push({type:selectTree(t,nearWater), x:wx, y:wy, hp:5, maxHp:5, scale:_treeScale(), flipX:_treeFlip()});
+        else if (r < 0.012) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4, scale:0.85+Math.random()*0.45});
+        else if (r < 0.015) state.objects.push({type:'jungle_chest', x:wx, y:wy, opened:false});
+        else if (r < 0.017) state.creatures.push({type:'spider', x:wx, y:wy, hp:25, maxHp:25, spd:1.05, attackTimer:0, walkTimer:0});
         // jungle_floor removed entirely
       } else if (t === T.BEACH) {
-        if (r < 0.004) state.objects.push({type:'palm', x:wx, y:wy, hp:4, maxHp:4, respawn:0});
+        if (r < 0.004) state.objects.push({type:'palm', x:wx, y:wy, hp:4, maxHp:4, respawn:0, scale:_treeScale(), flipX:_treeFlip()});
         else if (r < 0.009) state.objects.push({type:'driftwood', x:wx, y:wy, collected:false});
         else if (r < 0.011) state.objects.push({type:'fish_spot', x:wx, y:wy, shimmer:Math.random()*100});
-        else if (r < 0.015) state.objects.push({type:selectTree(t,nearWater), x:wx, y:wy, hp:4, maxHp:4});
+        else if (r < 0.015) state.objects.push({type:selectTree(t,nearWater), x:wx, y:wy, hp:4, maxHp:4, scale:_treeScale(), flipX:_treeFlip()});
         // Crabs: very rare, only on beach far from spawn
         if (t === T.BEACH && Math.random() < 0.0005) {
           const distFromStart = Math.hypot(x - 62, y - 85);
@@ -3956,7 +3959,15 @@ function drawMinigame(ctx) {
   const mg = state.minigame;
   if (!mg) return;
   const cw = ctx.canvas.width, ch = ctx.canvas.height;
-  const bx = cw/2 - 180, by = ch - 180, bw = 360, bh = 120;
+  // Dim the world so the minigame box reads clearly
+  if (mg.type === 'chop' || mg.type === 'mine' || mg.type === 'fish_wait' || mg.type === 'fish_bite' || mg.type === 'fish_reel') {
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    ctx.fillRect(0, 0, cw, ch);
+    ctx.restore();
+  }
+  const bw = 480, bh = 170;
+  const bx = cw/2 - bw/2, by = ch/2 - bh/2;
 
   ctx.fillStyle = 'rgba(61,32,16,0.96)';
   ctx.fillRect(bx, by, bw, bh);
@@ -3967,12 +3978,12 @@ function drawMinigame(ctx) {
   ctx.lineWidth = 1;
   ctx.strokeRect(bx+3, by+3, bw-6, bh-6);
 
-  ctx.font = '11px "Courier New"';
+  ctx.font = 'bold 14px "Courier New"';
   ctx.fillStyle = '#f0d890';
   ctx.textAlign = 'center';
 
   if (mg.type === 'chop') {
-    ctx.fillText('AXE EQUIPPED: 2 hits needed — PRESS SPACE IN THE GREEN ZONE', cw/2, by+18);
+    ctx.fillText('CHOPPING — PRESS SPACE WHEN THE WHITE BAR IS IN THE GREEN ZONE', cw/2, by+22);
     const barX = bx+20, barY = by+35, barW = bw-40, barH = 24;
     // Bar background
     ctx.fillStyle = '#cc2222'; ctx.fillRect(barX, barY, barW, barH);
@@ -3999,7 +4010,7 @@ function drawMinigame(ctx) {
   }
 
   if (mg.type === 'mine') {
-    ctx.fillText('MINING — CLICK THE GLOWING WEAK POINTS IN ORDER', cw/2, by+18);
+    ctx.fillText('MINING — CLICK THE GLOWING WEAK POINTS IN ORDER', cw/2, by+22);
     // Draw rock face
     ctx.fillStyle = '#555'; ctx.fillRect(bx+20, by+28, bw-40, 80);
     mg.zones.forEach((z, i) => {
@@ -4980,8 +4991,8 @@ function updatePlayer() {
   const inDarkJungle = tile === T.JUNGLE_DARK;
   const inDense = inDarkJungle; // slowed in dark jungle
 
-  let spd = 2.0;
-  if (sprinting) spd = 2.8;
+  let spd = 1.35;
+  if (sprinting) spd = 1.95;
   // Bloodlust frenzy speed boost
   if (state.frenzyActive) spd *= state.frenzySpeedMult;
   if (inWater && !((p.inv.raft||0) > 0)) spd *= 0.5; // raft negates water slow
@@ -7625,8 +7636,8 @@ function drawTile(ctx, type, sx, sy) {
     if (v === 0) { ctx.fillStyle = 'rgba(0,0,0,0.06)'; ctx.fillRect(sx, sy, TSIZE+1, TSIZE+1); }
   }
 
-  // Shallow water tide visual: at low tide, near-beach shallow water draws as wet sand
-  if (type === T.SHALLOW_WATER && state.tideLevel < 0.3) {
+  // Shallow water tide visual: as tide drops, near-beach shallow water fades to wet sand
+  if (type === T.SHALLOW_WATER && state.tideLevel < 0.45) {
     const tx2 = Math.round(sx/TSIZE) + Math.floor(state.cam.x/TSIZE);
     const ty2 = Math.round(sy/TSIZE) + Math.floor(state.cam.y/TSIZE);
     let nearBeach = false;
@@ -7636,8 +7647,9 @@ function drawTile(ctx, type, sx, sy) {
       }
     }
     if (nearBeach) {
-      // Draw as darker wet sand
-      ctx.fillStyle = '#b8a272';
+      // Smooth fade: 0 at tide 0.45, full at tide 0.05
+      const wetAlpha = Math.max(0, Math.min(1, (0.45 - state.tideLevel) / 0.4));
+      ctx.fillStyle = `rgba(184,162,114,${wetAlpha.toFixed(3)})`;
       ctx.fillRect(sx, sy, TSIZE+1, TSIZE+1);
     }
   }
@@ -8432,6 +8444,14 @@ function render(ctx, minimapCtx) {
         const shadowW = capturedObj.type === 'tree' || capturedObj.type === 'palm' ? 18 : capturedObj.type === 'rock' || capturedObj.type === 'vol_rock' ? 12 : 10;
         ctx.beginPath(); ctx.ellipse(ssx + 4, ssy + 12, shadowW, shadowW * 0.3, 0, 0, Math.PI*2); ctx.fill(); ctx.restore();
       }
+      // Per-object size/flip variation for natural look (set at spawn)
+      const _hasXform = (capturedObj.scale && capturedObj.scale !== 1) || (capturedObj.flipX && capturedObj.flipX !== 1);
+      if (_hasXform) {
+        ctx.save();
+        ctx.translate(ssx, ssy);
+        ctx.scale((capturedObj.flipX || 1) * (capturedObj.scale || 1), (capturedObj.scale || 1));
+        ctx.translate(-ssx, -ssy);
+      }
       switch (capturedObj.type) {
         case 'tree': { const ttx2=Math.floor(capturedObj.x/TSIZE),tty2=Math.floor(capturedObj.y/TSIZE); const tt2=(state.map[tty2]&&state.map[tty2][ttx2])||0; if(tt2===T.JUNGLE_DARK)drawJungleTree(ctx,ssx,ssy); else drawTree(ctx,ssx,ssy); break; }
         // Tahitian species
@@ -8555,6 +8575,7 @@ function render(ctx, minimapCtx) {
           break;
         }
       }
+      if (_hasXform) { ctx.restore(); }
       // Respawn sparkle indicator — green dots when palm/berry ready
       if ((capturedObj.type==='palm'||capturedObj.type==='berry') && capturedObj.respawn===0) {
         const sparkDots = [{ox:-6,oy:-28},{ox:0,oy:-32},{ox:6,oy:-26},{ox:-3,oy:-30}];
