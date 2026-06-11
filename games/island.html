@@ -902,15 +902,15 @@ function genObjects() {
       const _treeScale = () => 0.75 + Math.random() * 0.6;
       const _treeFlip  = () => Math.random() < 0.5 ? -1 : 1;
       if (t === T.JUNGLE_LIGHT) {
-        if (r < 0.020) state.objects.push({type:selectTree(t,nearWater), x:wx, y:wy, hp:5, maxHp:5, scale:_treeScale(), flipX:_treeFlip()});
-        else if (r < 0.024) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4, scale:0.85+Math.random()*0.45});
-        else if (r < 0.030) state.objects.push({type:'berry', x:wx, y:wy, hp:1, maxHp:1, respawn:0});
-        else if (r < 0.034) state.objects.push({type:'vine_pickup', x:wx, y:wy, collected:false});
+        if (r < 0.080) state.objects.push({type:selectTree(t,nearWater), x:wx, y:wy, hp:5, maxHp:5, scale:_treeScale(), flipX:_treeFlip()});
+        else if (r < 0.084) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4, scale:0.85+Math.random()*0.45});
+        else if (r < 0.090) state.objects.push({type:'berry', x:wx, y:wy, hp:1, maxHp:1, respawn:0});
+        else if (r < 0.094) state.objects.push({type:'vine_pickup', x:wx, y:wy, collected:false});
       } else if (t === T.JUNGLE_DARK) {
-        if (r < 0.028) state.objects.push({type:selectTree(t,nearWater), x:wx, y:wy, hp:5, maxHp:5, scale:_treeScale(), flipX:_treeFlip()});
-        else if (r < 0.033) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4, scale:0.85+Math.random()*0.45});
-        else if (r < 0.035) state.objects.push({type:'jungle_chest', x:wx, y:wy, opened:false});
-        else if (r < 0.037) state.creatures.push({type:'spider', x:wx, y:wy, hp:35, maxHp:35, spd:1.05, attackTimer:0, walkTimer:0});
+        if (r < 0.112) state.objects.push({type:selectTree(t,nearWater), x:wx, y:wy, hp:5, maxHp:5, scale:_treeScale(), flipX:_treeFlip()});
+        else if (r < 0.117) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4, scale:0.85+Math.random()*0.45});
+        else if (r < 0.119) state.objects.push({type:'jungle_chest', x:wx, y:wy, opened:false});
+        else if (r < 0.121) state.creatures.push({type:'spider', x:wx, y:wy, hp:35, maxHp:35, spd:1.05, attackTimer:0, walkTimer:0});
         // jungle_floor removed entirely
       } else if (t === T.BEACH) {
         if (r < 0.004) state.objects.push({type:'palm', x:wx, y:wy, hp:4, maxHp:4, respawn:0, scale:_treeScale(), flipX:_treeFlip()});
