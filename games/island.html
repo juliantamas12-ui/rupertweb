@@ -996,6 +996,51 @@ function genObjects() {
   // Ancient altar
   state.objects.push({type:'altar', x:69*TSIZE, y:25*TSIZE, decor:false});
 
+  // ── LANDMARKS / SET DECORATION ──
+  // Fixed: stone circle clearing in light jungle (east)
+  state.objects.push({type:'stone_circle', x:96*TSIZE, y:78*TSIZE, decor:true});
+  // Ruined pillars (pair) in dark jungle (west)
+  state.objects.push({type:'ruined_pillar', x:55*TSIZE, y:55*TSIZE, decor:true});
+  state.objects.push({type:'ruined_pillar', x:58*TSIZE, y:53*TSIZE, decor:true});
+  // Tribal warning markers ringing the deep jungle
+  state.objects.push({type:'tribal_marker', x:65*TSIZE, y:45*TSIZE, decor:true});
+  state.objects.push({type:'tribal_marker', x:82*TSIZE, y:46*TSIZE, decor:true});
+  state.objects.push({type:'tribal_marker', x:90*TSIZE, y:62*TSIZE, decor:true});
+  state.objects.push({type:'tribal_marker', x:50*TSIZE, y:70*TSIZE, decor:true});
+  // Mushroom rings in dark jungle (3 spots)
+  state.objects.push({type:'mushroom_cluster', x:70*TSIZE, y:50*TSIZE, decor:true});
+  state.objects.push({type:'mushroom_cluster', x:85*TSIZE, y:58*TSIZE, decor:true});
+  state.objects.push({type:'mushroom_cluster', x:60*TSIZE, y:65*TSIZE, decor:true});
+  state.objects.push({type:'mushroom_cluster', x:78*TSIZE, y:72*TSIZE, decor:true});
+
+  // Scattered decoration: tree stumps, flower patches, ferns, vine curtains.
+  // Deterministic per-tile sampling keeps placement stable across runs.
+  for (let ly = 4; ly < MSIZE-4; ly++) {
+    for (let lx = 4; lx < MSIZE-4; lx++) {
+      const tt = state.map[ly][lx];
+      if (tt !== T.JUNGLE_LIGHT && tt !== T.JUNGLE_DARK) continue;
+      const hh = ((lx * 374761393) ^ (ly * 668265263)) >>> 0;
+      const r = hh % 1000;
+      const wxL = lx * TSIZE + TSIZE/2, wyL = ly * TSIZE + TSIZE/2;
+      // Make sure spot is clear of existing objects within ~24px
+      let blocked = false;
+      for (const o of state.objects) {
+        if (Math.abs(o.x - wxL) < 28 && Math.abs(o.y - wyL) < 28) { blocked = true; break; }
+      }
+      if (blocked) continue;
+      if (tt === T.JUNGLE_LIGHT) {
+        if (r < 8)      state.objects.push({type:'tree_stump', x:wxL, y:wyL, decor:true});
+        else if (r<24)  state.objects.push({type:'flower_patch', x:wxL, y:wyL, decor:true});
+        else if (r<36)  state.objects.push({type:'fern', x:wxL, y:wyL, decor:true});
+      } else if (tt === T.JUNGLE_DARK) {
+        if (r < 10)     state.objects.push({type:'mushroom_cluster', x:wxL, y:wyL, decor:true});
+        else if (r<22)  state.objects.push({type:'fern', x:wxL, y:wyL, decor:true});
+        else if (r<32)  state.objects.push({type:'vine_curtain', x:wxL, y:wyL, decor:true});
+        else if (r<40)  state.objects.push({type:'tree_stump', x:wxL, y:wyL, decor:true});
+      }
+    }
+  }
+
   // Messages in bottles on south beaches
   const bottleMessages = [
     "The volcano holds great power. Those who reach its peak find more than fire.",
@@ -1669,6 +1714,153 @@ function drawMossyLog(ctx, sx, sy) {
   px(ctx, '#f0d0a0', sx-4, sy-9, 1, 4);
   px(ctx, '#cc6622', sx+6, sy-9, 5, 3);
   px(ctx, '#f0d0a0', sx+7, sy-9, 1, 3);
+}
+
+// ── Decorative landmarks (purely visual, no collision, no interaction) ──
+function drawTreeStump(ctx, sx, sy) {
+  px(ctx, 'rgba(0,0,0,0.25)', sx-9, sy+4, 18, 4);
+  px(ctx, '#4a2c10', sx-8, sy-2, 16, 8);
+  px(ctx, '#6a4418', sx-7, sy-4, 14, 4);
+  px(ctx, '#3a2008', sx-7, sy-3, 14, 2); // dark ring
+  // Annual rings
+  px(ctx, '#8a5a20', sx-4, sy-3, 8, 2);
+  px(ctx, '#5a3010', sx-2, sy-3, 4, 1);
+  // Bark notches
+  px(ctx, '#2a1808', sx-9, sy+1, 2, 2);
+  px(ctx, '#2a1808', sx+7, sy+0, 2, 3);
+  // Moss on top
+  px(ctx, 'rgba(60,140,40,0.55)', sx-5, sy-4, 4, 1);
+}
+
+function drawFlowerPatch(ctx, sx, sy) {
+  // 5-7 flowers in a small cluster, deterministic by sx
+  const dots = [
+    [-7,-2,'#f0d860'],[ -3, 2,'#f8f0e0'],[2,-3,'#d04040'],
+    [5, 1,'#c060d0'],[-1,4,'#f0d860'],[7,-1,'#f8f0e0'],[-5,3,'#d04040']
+  ];
+  // Greens behind
+  px(ctx, 'rgba(60,120,40,0.6)', sx-8, sy-3, 16, 8);
+  dots.forEach(([dx,dy,c]) => {
+    ctx.fillStyle = c;
+    ctx.fillRect(sx+dx, sy+dy, 2, 2);
+    ctx.fillStyle = '#3a6a1a';
+    ctx.fillRect(sx+dx+1, sy+dy+2, 1, 2);
+  });
+}
+
+function drawMushroomCluster(ctx, sx, sy) {
+  // Big mushroom + 3 smaller ones; glow at night
+  const glow = state.isNight;
+  if (glow) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(120,255,160,0.18)';
+    ctx.beginPath(); ctx.arc(sx, sy-2, 16, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+  // Shadow
+  px(ctx, 'rgba(0,0,0,0.25)', sx-9, sy+5, 18, 3);
+  // Big mushroom
+  px(ctx, '#f0d4a0', sx-3, sy+0, 6, 5);
+  px(ctx, glow?'#aaffc0':'#c64030', sx-6, sy-5, 12, 5);
+  px(ctx, glow?'#ccffd8':'#e85a3c', sx-5, sy-6, 10, 2);
+  px(ctx, '#fff', sx-2, sy-4, 2, 2); // dot
+  px(ctx, '#fff', sx+2, sy-3, 1, 1);
+  // Small mushrooms
+  px(ctx, '#f0d4a0', sx-9, sy+3, 2, 3);
+  px(ctx, glow?'#aaffc0':'#c64030', sx-10, sy+1, 4, 3);
+  px(ctx, '#f0d4a0', sx+7, sy+2, 2, 3);
+  px(ctx, glow?'#aaffc0':'#c64030', sx+6, sy+0, 4, 3);
+}
+
+function drawStoneCircle(ctx, sx, sy) {
+  // Ring of 6 standing stones, with grass tufts between
+  px(ctx, 'rgba(0,0,0,0.3)', sx-22, sy+10, 44, 6);
+  const stones = [[-18,-2],[-10,-10],[6,-12],[18,-4],[14,8],[-8,10]];
+  stones.forEach(([dx,dy]) => {
+    px(ctx, '#3a3328', sx+dx-1, sy+dy+6, 6, 4); // base shadow
+    px(ctx, '#6a6258', sx+dx-2, sy+dy-2, 6, 10);
+    px(ctx, '#8a857a', sx+dx-1, sy+dy-3, 4, 9);
+    px(ctx, '#4a4438', sx+dx-2, sy+dy-3, 1, 11);
+    // moss top
+    px(ctx, 'rgba(60,140,40,0.55)', sx+dx-1, sy+dy-3, 3, 1);
+  });
+  // Center: small altar slab
+  px(ctx, '#5a544a', sx-4, sy-1, 8, 4);
+  px(ctx, '#7a7468', sx-3, sy-2, 6, 2);
+}
+
+function drawRuinedPillar(ctx, sx, sy) {
+  // Broken stone pillar, half-fallen
+  px(ctx, 'rgba(0,0,0,0.3)', sx-10, sy+8, 22, 5);
+  // Standing base
+  px(ctx, '#4a4338', sx-5, sy-4, 8, 12);
+  px(ctx, '#7a7468', sx-4, sy-6, 6, 14);
+  px(ctx, '#3a342a', sx-4, sy-5, 2, 13);
+  // Crack
+  px(ctx, '#2a241a', sx-2, sy-2, 1, 6);
+  // Fallen top section beside it
+  px(ctx, '#6a6258', sx+3, sy+2, 12, 4);
+  px(ctx, '#8a857a', sx+3, sy+1, 12, 2);
+  px(ctx, '#3a342a', sx+3, sy+2, 1, 4);
+  // Carvings (tiny lines)
+  px(ctx, '#2a241a', sx-3, sy-1, 4, 1);
+  px(ctx, '#2a241a', sx-3, sy+1, 4, 1);
+  // Moss / vines
+  px(ctx, 'rgba(50,120,40,0.55)', sx-5, sy-6, 8, 2);
+  px(ctx, 'rgba(50,120,40,0.4)', sx+3, sy+1, 5, 1);
+}
+
+function drawFern(ctx, sx, sy) {
+  // Fronds radiating from a central point
+  const sway = Math.sin(state.frameCount * 0.02 + sx * 0.1) * 1.5;
+  px(ctx, 'rgba(0,0,0,0.2)', sx-6, sy+5, 12, 3);
+  const fronds = [[-8,-2],[-6,-6],[-2,-8],[2,-7],[6,-5],[8,-1],[5,3],[-5,3]];
+  fronds.forEach(([dx,dy],i) => {
+    ctx.fillStyle = i%2===0 ? '#2a6a18' : '#3a8a22';
+    ctx.fillRect(sx+dx+sway*0.3, sy+dy, 2, 5);
+    ctx.fillRect(sx+dx-1+sway*0.3, sy+dy+1, 4, 2);
+  });
+  // Center
+  px(ctx, '#3a5a18', sx-1, sy-1, 2, 4);
+}
+
+function drawTribalMarker(ctx, sx, sy) {
+  // Wooden stake with a skull or carved warning
+  px(ctx, 'rgba(0,0,0,0.3)', sx-5, sy+8, 10, 3);
+  // Stake
+  px(ctx, '#3a2008', sx-1, sy-4, 3, 14);
+  px(ctx, '#5a3010', sx-1, sy-4, 1, 14);
+  // Skull on top
+  px(ctx, '#e8e0c8', sx-4, sy-12, 8, 7);
+  px(ctx, '#c8b8a0', sx-4, sy-7, 8, 2);
+  // Eye sockets
+  px(ctx, '#111', sx-3, sy-10, 2, 2);
+  px(ctx, '#111', sx+1, sy-10, 2, 2);
+  // Teeth
+  px(ctx, '#111', sx-2, sy-6, 1, 1);
+  px(ctx, '#111', sx+0, sy-6, 1, 1);
+  px(ctx, '#111', sx+2, sy-6, 1, 1);
+  // Red paint streak on stake
+  px(ctx, '#a02020', sx-1, sy+2, 1, 4);
+}
+
+function drawVineCurtain(ctx, sx, sy) {
+  // Hanging vines from above
+  ctx.strokeStyle = '#2a5a12';
+  ctx.lineWidth = 1;
+  const sway = Math.sin(state.frameCount * 0.015 + sx * 0.05);
+  for (let i = -8; i <= 8; i += 3) {
+    const len = 14 + ((i*7+sx*3) & 7);
+    ctx.beginPath();
+    ctx.moveTo(sx+i, sy-12);
+    ctx.quadraticCurveTo(sx+i+sway*2, sy-4, sx+i+sway*3, sy-12+len);
+    ctx.stroke();
+  }
+  // Tiny leaves
+  for (let i = -8; i <= 8; i += 3) {
+    ctx.fillStyle = '#3a8a22';
+    ctx.fillRect(sx+i-1+sway*2, sy-12 + ((i*5+sx*2)&5)+2, 2, 2);
+  }
 }
 
 function drawTreasureChest(ctx, sx, sy, opened, glowOrange) {
@@ -6338,7 +6530,7 @@ function handleClick(sx, sy) {
   let nearestObj = null, nearestClickDist = 120; // generous click radius
   for (let i = state.objects.length-1; i >= 0; i--) {
     const obj = state.objects[i];
-    if (obj.placed || obj.type === 'death_pack' || obj.type === 'shipwreck') continue;
+    if (obj.placed || obj.decor || obj.type === 'death_pack' || obj.type === 'shipwreck') continue;
     const clickDist = Math.hypot(wx-obj.x, wy-obj.y); // click proximity
     const playerDist = Math.hypot(p.x-obj.x, p.y-obj.y); // player proximity
     if (clickDist < nearestClickDist && playerDist < 160) {
@@ -7626,14 +7818,98 @@ function drawTile(ctx, type, sx, sy) {
   }
   ctx.fillRect(sx, sy, TSIZE+1, TSIZE+1);
 
-  // Micro-variation: slight brightness offset per tile based on position hash
-  // No per-frame tile overlays
+  // ── Deterministic ground detail: makes the floor look lived-in instead of flat ──
+  // World-tile coords from screen pos + camera (exact, no shimmer as camera scrolls)
+  const wtx = Math.floor((sx + state.cam.x) / TSIZE);
+  const wty = Math.floor((sy + state.cam.y) / TSIZE);
+  const h = ((wtx * 374761393) ^ (wty * 668265263)) >>> 0; // cheap hash
+  const r5 = h % 100;
+  const sub = (h >>> 7) & 0xff;  // 0-255 sub-tile data
+  const subX = sub & 0xf, subY = (sub >> 4) & 0xf; // 0-15 each
 
-  // Tile variation
   if (type === T.BEACH) {
-    const tx = Math.round(sx/TSIZE), ty = Math.round(sy/TSIZE);
-    const v = (tx * 7 + ty * 13) % 5;
-    if (v === 0) { ctx.fillStyle = 'rgba(0,0,0,0.06)'; ctx.fillRect(sx, sy, TSIZE+1, TSIZE+1); }
+    // Beach: scattered shell flecks, dark sand patches, footprint-sized darker spots
+    if (r5 < 18) { ctx.fillStyle = 'rgba(0,0,0,0.07)'; ctx.fillRect(sx+subX, sy+subY, 4, 3); }
+    if (r5 >= 18 && r5 < 24) { ctx.fillStyle = 'rgba(255,250,235,0.55)'; ctx.fillRect(sx+subX, sy+subY, 2, 2); } // shell
+    if (r5 >= 24 && r5 < 27) { ctx.fillStyle = 'rgba(120,90,55,0.35)'; ctx.fillRect(sx+(subX%12), sy+(subY%12), 3, 2); } // driftbit
+  } else if (type === T.JUNGLE_LIGHT) {
+    // Light jungle: grass tufts, flower dots, dirt patches, fern fronds
+    if (r5 < 35) { // grass tuft
+      ctx.fillStyle = 'rgba(80,140,40,0.55)';
+      ctx.fillRect(sx+subX, sy+subY, 2, 3);
+      ctx.fillRect(sx+subX+2, sy+subY+1, 1, 2);
+    }
+    if (r5 >= 35 && r5 < 42) { // dirt patch
+      ctx.fillStyle = 'rgba(95,65,30,0.32)';
+      ctx.fillRect(sx+(subX%10), sy+(subY%10), 5, 4);
+    }
+    if (r5 >= 42 && r5 < 47) { // flower (yellow/white/red)
+      const fc = (h >>> 15) & 3;
+      ctx.fillStyle = fc===0 ? '#f0d860' : fc===1 ? '#f8f0e0' : fc===2 ? '#d04040' : '#c060d0';
+      ctx.fillRect(sx+subX, sy+subY, 2, 2);
+      ctx.fillStyle = '#3a6a1a';
+      ctx.fillRect(sx+subX+1, sy+subY+2, 1, 2);
+    }
+    if (r5 >= 47 && r5 < 53) { // fallen leaf
+      ctx.fillStyle = 'rgba(140,110,40,0.5)';
+      ctx.fillRect(sx+(subX%12), sy+(subY%12), 3, 2);
+    }
+    // Lighter sun-dapple
+    if (r5 >= 80 && r5 < 90) {
+      ctx.fillStyle = 'rgba(220,240,180,0.07)';
+      ctx.fillRect(sx, sy, TSIZE+1, TSIZE+1);
+    }
+  } else if (type === T.JUNGLE_DARK) {
+    // Dark jungle: moss, dead leaves, glowing mushrooms at night, vine bits
+    if (r5 < 30) { // moss patch
+      ctx.fillStyle = 'rgba(40,90,30,0.55)';
+      ctx.fillRect(sx+(subX%10), sy+(subY%10), 6, 4);
+    }
+    if (r5 >= 30 && r5 < 40) { // dead leaves
+      ctx.fillStyle = 'rgba(80,55,25,0.55)';
+      ctx.fillRect(sx+subX, sy+subY, 3, 2);
+      ctx.fillRect(sx+(subX+4)%14, sy+(subY+3)%14, 2, 2);
+    }
+    if (r5 >= 40 && r5 < 46) { // small mushroom
+      const isGlow = state.isNight;
+      ctx.fillStyle = isGlow ? 'rgba(180,255,180,0.85)' : '#9a7a4a';
+      ctx.fillRect(sx+subX+1, sy+subY, 3, 2);
+      ctx.fillStyle = '#e8d4a8';
+      ctx.fillRect(sx+subX+1, sy+subY+2, 3, 2);
+      if (isGlow) {
+        ctx.fillStyle = 'rgba(120,255,160,0.25)';
+        ctx.fillRect(sx+subX-1, sy+subY-1, 7, 6);
+      }
+    }
+    if (r5 >= 46 && r5 < 52) { // root bump
+      ctx.fillStyle = 'rgba(45,30,15,0.6)';
+      ctx.fillRect(sx+(subX%12), sy+(subY%12), 5, 2);
+    }
+    // Sparse undergrowth speckle
+    if (r5 >= 90) {
+      ctx.fillStyle = 'rgba(10,30,10,0.25)';
+      ctx.fillRect(sx+(subX%14), sy+(subY%14), 2, 2);
+    }
+  } else if (type === T.VOLCANIC) {
+    // Volcanic: ash piles, glowing cracks, small obsidian flecks
+    if (r5 < 22) {
+      ctx.fillStyle = 'rgba(20,10,5,0.45)';
+      ctx.fillRect(sx+(subX%10), sy+(subY%10), 5, 3);
+    }
+    if (r5 >= 22 && r5 < 28) { // ember crack
+      ctx.fillStyle = 'rgba(255,120,30,0.55)';
+      ctx.fillRect(sx+subX, sy+subY, 4, 1);
+    }
+    if (r5 >= 28 && r5 < 32) { // obsidian fleck
+      ctx.fillStyle = 'rgba(20,15,30,0.85)';
+      ctx.fillRect(sx+subX, sy+subY, 2, 2);
+    }
+  } else if (type === T.SHALLOW_WATER) {
+    // Subtle shimmer points (mostly handled by water shader elsewhere)
+    if (r5 < 8) {
+      ctx.fillStyle = 'rgba(255,255,255,0.18)';
+      ctx.fillRect(sx+subX, sy+subY, 2, 1);
+    }
   }
 
   // Shallow water tide visual: as tide drops, near-beach shallow water fades to wet sand
@@ -8468,6 +8744,14 @@ function render(ctx, minimapCtx) {
         case 'fish_spot': drawFishSpot(ctx,ssx,ssy); break;
         case 'step_stone': px(ctx,'rgba(0,0,0,0.3)',ssx-11,ssy+4,22,5); px(ctx,'#3a2e20',ssx-10,ssy+0,20,6); px(ctx,'#6a5a4a',ssx-10,ssy-5,20,8); px(ctx,'#9a8a7a',ssx-8,ssy-7,16,4); px(ctx,'#7a6a5a',ssx-6,ssy-6,4,2); break;
         case 'mossy_log': drawMossyLog(ctx,ssx,ssy); break;
+        case 'tree_stump': drawTreeStump(ctx,ssx,ssy); break;
+        case 'flower_patch': drawFlowerPatch(ctx,ssx,ssy); break;
+        case 'mushroom_cluster': drawMushroomCluster(ctx,ssx,ssy); break;
+        case 'stone_circle': drawStoneCircle(ctx,ssx,ssy); break;
+        case 'ruined_pillar': drawRuinedPillar(ctx,ssx,ssy); break;
+        case 'fern': drawFern(ctx,ssx,ssy); break;
+        case 'tribal_marker': drawTribalMarker(ctx,ssx,ssy); break;
+        case 'vine_curtain': drawVineCurtain(ctx,ssx,ssy); break;
         case 'cave': drawCave(ctx,ssx,ssy); break;
         case 'altar': drawAltar(ctx,ssx,ssy); break;
         case 'bottle': if(!capturedObj.read) drawBottle(ctx,ssx,ssy); break;
