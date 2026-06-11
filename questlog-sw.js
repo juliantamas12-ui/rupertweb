@@ -5,7 +5,7 @@
  *   - Offline fallback: serves last cached questlog.html when offline
  * Bump VERSION on breaking cache shape changes.
  */
-const VERSION = 'questlog-v5-2026-05-19';
+const VERSION = 'questlog-v6-2026-06-11-access-bypass';
 const STATIC_CACHE = `${VERSION}-static`;
 const RUNTIME_CACHE = `${VERSION}-runtime`;
 
@@ -46,13 +46,17 @@ self.addEventListener('fetch', (event) => {
   // Only handle same-origin requests; let cross-origin (Steam CDN, etc.) fall through.
   if (url.origin !== self.location.origin) return;
 
-  // Navigation (HTML page loads): network-first, fall back to cached questlog.html
+  // Navigation (HTML page loads): network-first, fall back to cached questlog.html.
+  // Only cache real same-origin 200 HTML; never cache redirects or opaque responses
+  // (Cloudflare Access redirects HTML pages too when sessions expire).
   if (req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html')) {
     event.respondWith(
       fetch(req)
         .then((res) => {
-          const copy = res.clone();
-          caches.open(RUNTIME_CACHE).then((c) => c.put(req, copy)).catch(() => {});
+          if (res.ok && res.type === 'basic' && (res.headers.get('content-type') || '').includes('text/html')) {
+            const copy = res.clone();
+            caches.open(RUNTIME_CACHE).then((c) => c.put(req, copy)).catch(() => {});
+          }
           return res;
         })
         .catch(() =>
@@ -69,13 +73,19 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // JSON / API: network-first, short cache fallback for offline
+  // JSON / API: network-first, short cache fallback for offline.
+  // Only cache real JSON 200s; never cache redirects or HTML
+  // (Cloudflare Access bounces /api/* to a login HTML page when the
+  // session expires, and we don't want that getting cached and replayed).
   if (url.pathname.endsWith('.json') || url.pathname.startsWith('/api/')) {
     event.respondWith(
       fetch(req)
         .then((res) => {
-          const copy = res.clone();
-          caches.open(RUNTIME_CACHE).then((c) => c.put(req, copy)).catch(() => {});
+          const ct = res.headers.get('content-type') || '';
+          if (res.ok && res.type === 'basic' && ct.includes('application/json')) {
+            const copy = res.clone();
+            caches.open(RUNTIME_CACHE).then((c) => c.put(req, copy)).catch(() => {});
+          }
           return res;
         })
         .catch(() => caches.match(req))
