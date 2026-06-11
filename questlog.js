@@ -112,8 +112,31 @@ document.querySelectorAll('.nav-tab').forEach(tab => {
   });
 });
 
+// API base: when the page is served from rupertweb.com (behind Cloudflare
+// Access), /api/* paths get intercepted by the Access login redirect, so
+// fetches from the page return 302/HTML and break the dashboard. Globally
+// rewrite same-origin /api/* fetches to the workers.dev origin so they
+// bypass Access. Same worker, no Access wall.
+const API_BASE = (typeof location !== 'undefined' && /rupertweb\.com$/.test(location.hostname))
+  ? 'https://rupertweb.julian-tamas12.workers.dev'
+  : '';
+
+if (API_BASE) {
+  const _origFetch = window.fetch.bind(window);
+  window.fetch = function (input, init) {
+    let url = (typeof input === 'string') ? input : (input && input.url);
+    if (url && url.startsWith('/api/')) {
+      url = API_BASE + url;
+      if (typeof input === 'string') input = url;
+      else input = new Request(url, input);
+    }
+    return _origFetch(input, init);
+  };
+}
+
 async function api(path) {
-  const r = await fetch(`${path}${path.includes('?') ? '&' : '?'}sid=${STATE.sid}`);
+  const url = `${path}${path.includes('?') ? '&' : '?'}sid=${STATE.sid}`;
+  const r = await fetch(url);
   if (!r.ok) throw new Error(`API error: ${r.status}`);
   return r.json();
 }
