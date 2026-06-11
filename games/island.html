@@ -384,6 +384,9 @@ canvas#c{pointer-events:none}
 
 
 const TSIZE = 16;
+// Realistic human reach: ~3 tiles. Used for tree chop, rock mine,
+// pickup, hover highlight, and any "is this in arm's length?" check.
+const PLAYER_REACH = 48;
 const MSIZE = 150;
 const WORLD_W = MSIZE * TSIZE;
 const WORLD_H = MSIZE * TSIZE;
@@ -1255,7 +1258,7 @@ function drawPlayer(ctx, sx, sy, p) {
   const isWalking = p.walkTimer > 0;
   const bodyBob = isWalking ? Math.round(Math.sin(wf * Math.PI / 4) * 1.5) : 0;
   const breathBob = (!isWalking && p.onGround) ? (Math.floor(state.frameCount / 60) % 2 === 0 ? 0 : -1) : 0;
-  const bobOff = bodyBob + breathBob;
+  var bobOff = bodyBob + breathBob; // var so it's reachable from the equipped-tool overlay below
 
   let lLegX, lLegY, rLegX, rLegY, lArmAngle, rArmAngle;
   if (p.jumping) {
@@ -1292,34 +1295,183 @@ function drawPlayer(ctx, sx, sy, p) {
   px(ctx, '#1a0a00', sx+1, ay-11+bobOff, 2, 2);
   } // end else (not swimming)
 
-  // Torch glow at night
-  if (p.torch) {
+  // ── EQUIPPED TOOL OVERLAY ──
+  // Renders the currently-selected hotbar tool on the player's right side.
+  // Hidden when swimming. Disappears when tool is dropped or different slot active.
+  const equipped = (typeof getActiveTool === 'function') ? getActiveTool() : null;
+
+  // Torch / crystal_torch are special: night glow even when held
+  const _torchActive = equipped === 'torch' || equipped === 'crystal_torch' || p.torch;
+  if (_torchActive) {
     ctx.save();
     const glowSize = state.isNight ? 160 : 80;
     const glowAlpha = state.isNight ? 0.35 : 0.15;
     const grd = ctx.createRadialGradient(sx, ay-5, 0, sx, ay-5, glowSize);
-    grd.addColorStop(0, `rgba(255,180,50,${glowAlpha})`);
-    grd.addColorStop(0.5, `rgba(255,140,20,${glowAlpha*0.5})`);
-    grd.addColorStop(1, 'rgba(255,100,0,0)');
+    grd.addColorStop(0, equipped === 'crystal_torch' ? `rgba(180,160,255,${glowAlpha})` : `rgba(255,180,50,${glowAlpha})`);
+    grd.addColorStop(0.5, equipped === 'crystal_torch' ? `rgba(140,120,255,${glowAlpha*0.5})` : `rgba(255,140,20,${glowAlpha*0.5})`);
+    grd.addColorStop(1, equipped === 'crystal_torch' ? 'rgba(120,100,255,0)' : 'rgba(255,100,0,0)');
     ctx.fillStyle = grd;
     ctx.beginPath();
     ctx.arc(sx, ay-5, glowSize, 0, Math.PI*2);
     ctx.fill();
     ctx.restore();
-    // Torch item
-    px(ctx, '#5c3d1e', sx+10, ay-18, 3, 14);
-    px(ctx, '#ff8800', sx+9, ay-22, 5, 6);
-    px(ctx, '#ffcc00', sx+10, ay-24, 3, 4);
   }
 
-  // Weapon
-  if (p.inv.fire_spear > 0) {
-    px(ctx, '#5c3d1e', sx+12, ay-24, 3, 32);
-    px(ctx, '#ff6600', sx+9, ay-28, 8, 8);
-    px(ctx, '#ffcc00', sx+11, ay-30, 4, 4);
-  } else if (p.inv.spear > 0) {
-    px(ctx, '#5c3d1e', sx+12, ay-24, 3, 32);
-    px(ctx, '#aaaaaa', sx+10, ay-28, 6, 6);
+  // Per-tool sprite. Drawn at the player's hand on the right side (sx+8..sx+18).
+  // Keep these small — 16-20px tall — so they read clearly without obscuring body.
+  if (!isSwimming && equipped) {
+    const hx = sx + 8;          // hand x
+    const _bo = (typeof bobOff === 'number') ? bobOff : 0;
+    const hy = ay - 4 + _bo;    // hand y (matches body bob)
+    switch (equipped) {
+      case 'axe': {
+        // wooden haft + grey head
+        px(ctx, '#7a4a18', hx+2, hy-10, 2, 18);
+        px(ctx, '#aaaaaa', hx, hy-12, 7, 5);
+        px(ctx, '#dddddd', hx+1, hy-11, 5, 2);
+        break;
+      }
+      case 'fire_axe': {
+        px(ctx, '#5c3d1e', hx+2, hy-10, 2, 18);
+        px(ctx, '#cc2200', hx, hy-12, 7, 5);
+        px(ctx, '#ff8800', hx+1, hy-11, 5, 2);
+        // ember flicker
+        if ((state.frameCount % 8) < 4) px(ctx, '#ffcc00', hx+5, hy-14, 1, 1);
+        break;
+      }
+      case 'pickaxe': {
+        px(ctx, '#7a4a18', hx+2, hy-10, 2, 18);
+        px(ctx, '#888899', hx-1, hy-12, 9, 3);
+        px(ctx, '#aaaacc', hx, hy-11, 7, 1);
+        break;
+      }
+      case 'obsidian_pickaxe': {
+        px(ctx, '#3a2010', hx+2, hy-10, 2, 18);
+        px(ctx, '#1a0a2a', hx-1, hy-12, 9, 3);
+        px(ctx, '#5a3a7a', hx, hy-11, 7, 1);
+        break;
+      }
+      case 'sword': {
+        // silvery blade
+        px(ctx, '#4a2e10', hx+1, hy-2, 4, 4);     // hilt guard
+        px(ctx, '#2a1808', hx+2, hy-2, 2, 6);     // grip
+        px(ctx, '#cccccc', hx+1, hy-18, 4, 16);   // blade
+        px(ctx, '#ffffff', hx+2, hy-18, 2, 16);   // shine
+        break;
+      }
+      case 'lava_blade': {
+        px(ctx, '#3a1a08', hx+1, hy-2, 4, 4);
+        px(ctx, '#2a1808', hx+2, hy-2, 2, 6);
+        px(ctx, '#cc3300', hx+1, hy-18, 4, 16);
+        const f = Math.sin(state.frameCount*0.15)*0.5+0.5;
+        px(ctx, `rgba(255,${Math.round(120+f*100)},0,1)`, hx+2, hy-18, 2, 16);
+        break;
+      }
+      case 'magma_hammer': {
+        px(ctx, '#3a1a08', hx+2, hy-10, 2, 18);
+        px(ctx, '#4a1a00', hx-1, hy-14, 9, 8);
+        px(ctx, '#ff4400', hx, hy-13, 7, 2);
+        px(ctx, '#ffaa00', hx+1, hy-12, 5, 1);
+        break;
+      }
+      case 'crystal_blade': {
+        px(ctx, '#3a2a3a', hx+1, hy-2, 4, 4);
+        px(ctx, '#2a1a2a', hx+2, hy-2, 2, 6);
+        px(ctx, '#9050cc', hx+1, hy-18, 4, 16);
+        px(ctx, '#dda0ff', hx+2, hy-18, 2, 16);
+        break;
+      }
+      case 'spear': {
+        px(ctx, '#5c3d1e', hx+3, hy-24, 2, 32);
+        px(ctx, '#aaaaaa', hx+1, hy-28, 6, 6);
+        px(ctx, '#cccccc', hx+2, hy-27, 4, 4);
+        break;
+      }
+      case 'fire_spear': {
+        px(ctx, '#5c3d1e', hx+3, hy-24, 2, 32);
+        px(ctx, '#ff6600', hx, hy-28, 8, 8);
+        px(ctx, '#ffcc00', hx+2, hy-30, 4, 4);
+        break;
+      }
+      case 'depth_spear': {
+        px(ctx, '#1a3a4a', hx+3, hy-24, 2, 32);
+        px(ctx, '#3dd6d0', hx, hy-28, 8, 6);
+        px(ctx, '#a0fff8', hx+2, hy-27, 4, 3);
+        break;
+      }
+      case 'bone_spear': {
+        px(ctx, '#e8d4a8', hx+3, hy-24, 2, 32);
+        px(ctx, '#fff0d0', hx+1, hy-28, 6, 6);
+        px(ctx, '#888', hx+2, hy-27, 4, 4);
+        break;
+      }
+      case 'tribal_weapon': {
+        px(ctx, '#3a2010', hx+3, hy-20, 2, 28);
+        px(ctx, '#a02020', hx, hy-22, 8, 4);
+        px(ctx, '#e8d4a8', hx+1, hy-23, 6, 2);
+        break;
+      }
+      case 'stone_knife': {
+        px(ctx, '#4a2e10', hx+2, hy-2, 3, 4);
+        px(ctx, '#888899', hx+2, hy-12, 3, 10);
+        break;
+      }
+      case 'bow': {
+        // C-shaped bow on the side
+        ctx.save();
+        ctx.strokeStyle = '#7a4a18';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(hx+3, hy-4, 11, -Math.PI/2.2, Math.PI/2.2);
+        ctx.stroke();
+        ctx.strokeStyle = '#cccccc';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(hx+3, hy-13);
+        ctx.lineTo(hx+3, hy+5);
+        ctx.stroke();
+        ctx.restore();
+        break;
+      }
+      case 'torch': {
+        px(ctx, '#5c3d1e', hx+2, hy-12, 3, 14);
+        px(ctx, '#ff8800', hx+1, hy-16, 5, 6);
+        px(ctx, '#ffcc00', hx+2, hy-18, 3, 4);
+        break;
+      }
+      case 'crystal_torch': {
+        px(ctx, '#3a2a4a', hx+2, hy-12, 3, 14);
+        px(ctx, '#a060ff', hx+1, hy-16, 5, 6);
+        px(ctx, '#dda0ff', hx+2, hy-18, 3, 4);
+        break;
+      }
+      case 'fire_bottle': {
+        px(ctx, '#5a3010', hx, hy-10, 6, 8);
+        px(ctx, '#ff6600', hx+1, hy-8, 4, 4);
+        px(ctx, '#5c3d1e', hx+1, hy-12, 4, 2);
+        break;
+      }
+      case 'lava_bomb': {
+        px(ctx, '#2a1010', hx, hy-8, 6, 6);
+        px(ctx, '#ff4400', hx+1, hy-7, 4, 4);
+        // fuse
+        px(ctx, '#444', hx+2, hy-10, 1, 2);
+        if ((state.frameCount % 6) < 3) px(ctx, '#ffcc00', hx+2, hy-11, 1, 1);
+        break;
+      }
+      case 'signal_mirror': {
+        px(ctx, '#dddddd', hx, hy-8, 6, 8);
+        px(ctx, '#ffffff', hx+1, hy-7, 4, 6);
+        if ((state.frameCount % 16) < 8) px(ctx, '#ffff80', hx+2, hy-6, 2, 2);
+        break;
+      }
+      case 'coconut': {
+        px(ctx, '#5c3d1e', hx, hy-6, 7, 7);
+        px(ctx, '#3a2010', hx+1, hy-5, 5, 5);
+        px(ctx, '#7a5828', hx+2, hy-4, 2, 2);
+        break;
+      }
+    }
   }
 
   // Attack flash — brief white flash when swinging
@@ -3057,18 +3209,25 @@ function spawnEnemies(n, type) {
     const r = (30 + Math.random() * 24) * TSIZE;
     const cx = 75 * TSIZE, cy = 75 * TSIZE;
     const t = type || (state.isNight ? 'shadow' : 'scout');
-    const hp = (t==='shadow'?40:32) + state.day * 5;
     const ex = cx + Math.cos(angle)*r;
     const ey = cy + Math.sin(angle)*r;
     // Don't spawn within 30 tiles of lagoon or 40 tiles of spawn
     if (Math.hypot(ex-lagoonCx, ey-lagoonCy) < 15*TSIZE) continue;
     if (Math.hypot(ex - 62*TSIZE, ey - 87*TSIZE) < 20*TSIZE) continue;
+    // Zone-based difficulty scaling: each gate the player unlocks toughens
+    // every NEW spawn. Light jungle (z0) -> dark (z1) -> deep (z2) -> volcanic (z3) -> village (z4).
+    const zoneMult = 1 + (state.zoneUnlocked || 0) * 0.45;
+    const baseHp = (t==='shadow'?40:32) + state.day * 5;
+    const hp = Math.round(baseHp * zoneMult);
+    const baseSpd = (t==='shadow'?0.84:0.49) + state.day*0.014;
+    const spd = baseSpd * (1 + (state.zoneUnlocked || 0) * 0.06);
     state.enemies.push({
       x: ex,
       y: ey,
       hp, maxHp: hp,
-      spd: (t==='shadow'?0.84:0.49) + state.day*0.014,
+      spd,
       type: t,
+      zone: state.zoneUnlocked || 0,
       attackTimer: 0,
       walkTimer: 0,
       state: 'patrol',
@@ -3090,6 +3249,191 @@ function spawnChief() {
   showMsg('THE TRIBAL CHIEF HAS APPEARED!', '#ff4444');
 }
 
+// ── FINAL BOSS: NICALER ANDERDINGUS (the volcano elite) ──
+// Spawns at the volcano summit when the player first walks into the inner lava ring.
+// Elite ball: huge HP, two phases, charges + AoE lava slam.
+function spawnNicaler() {
+  if (state.nicaler || state.nicalerDefeated) return;
+  const cx = 75*TSIZE, cy = 39*TSIZE; // volcano centre
+  state.nicaler = {
+    x: cx, y: cy,
+    hp: 1200, maxHp: 1200,
+    spd: 0.55,
+    type: 'nicaler',
+    name: 'Nicaler Anderdingus',
+    attackTimer: 0,
+    walkTimer: 0,
+    phase: 1,            // 1 = walk+swing, 2 = charge+slam at <50% HP
+    phaseTimer: 0,
+    slamTimer: 240,
+    chargeTimer: 0,
+    charging: false,
+    chargeDir: {x: 0, y: 0},
+    rageFrames: 0,
+  };
+  showMsg('NICALER ANDERDINGUS RISES FROM THE LAVA!', '#ff4400');
+  // Big screen-shake intro
+  state.screenShake = Math.max(state.screenShake, 22);
+  if (typeof SFX !== 'undefined' && SFX.enemyDie) try { SFX.enemyDie(); } catch(e){}
+}
+
+function updateNicaler() {
+  const n = state.nicaler;
+  if (!n) return;
+  if (n.hp <= 0) {
+    showMsg('NICALER ANDERDINGUS DEFEATED! The volcano is yours.', '#c8f135');
+    state.nicalerDefeated = true;
+    state.nicaler = null;
+    // Big loot drop
+    const p = state.player;
+    p.inv.volcanic_stone = (p.inv.volcanic_stone||0) + 15;
+    p.inv.gold = (p.inv.gold||0) + 50;
+    if (state.runStats) state.runStats.bossesKilled = (state.runStats.bossesKilled||0) + 1;
+    state.screenShake = Math.max(state.screenShake, 30);
+    return;
+  }
+  const p = state.player;
+  n.walkTimer++;
+  // Phase transition at half HP
+  if (n.phase === 1 && n.hp < n.maxHp * 0.5) {
+    n.phase = 2;
+    n.rageFrames = 90;
+    showMsg('NICALER ENRAGED — “thats elite ball”', '#ff2200');
+    state.screenShake = Math.max(state.screenShake, 14);
+  }
+  if (n.rageFrames > 0) n.rageFrames--;
+  const dx = p.x - n.x, dy = p.y - n.y;
+  const dist = Math.hypot(dx, dy) || 1;
+  // Phase 2: charge attack
+  if (n.phase === 2 && !n.charging) {
+    n.chargeTimer = (n.chargeTimer||0) - 1;
+    if (n.chargeTimer <= 0 && dist < 320) {
+      n.charging = true;
+      n.chargeDir = {x: dx/dist, y: dy/dist};
+      n.chargeTimer = 90; // ~1.5s charge
+      showMsg('NICALER CHARGES!', '#ff6600');
+    }
+  }
+  if (n.charging) {
+    n.chargeTimer--;
+    n.x += n.chargeDir.x * 4.2;
+    n.y += n.chargeDir.y * 4.2;
+    // Lava trail
+    if ((state.frameCount & 1) === 0) spawnParticles(n.x, n.y, '#ff4400', 2);
+    // Hit player on contact
+    if (Math.hypot(p.x - n.x, p.y - n.y) < 28) {
+      p.hp = Math.max(0, p.hp - 18);
+      p.hitFlash = 14;
+      state.lastDamageCause = 'NICALER CHARGE';
+      n.charging = false;
+      n.chargeTimer = 180; // cooldown
+    }
+    if (n.chargeTimer <= 0) { n.charging = false; n.chargeTimer = 180; }
+  } else {
+    // Walk toward player
+    const spd = n.phase === 2 ? n.spd * 1.4 : n.spd;
+    n.x += (dx/dist) * spd;
+    n.y += (dy/dist) * spd;
+  }
+  // Slam AoE every ~4s when close
+  n.slamTimer--;
+  if (n.slamTimer <= 0 && dist < 90) {
+    // AoE damage
+    if (dist < 70) {
+      p.hp = Math.max(0, p.hp - (n.phase === 2 ? 16 : 11));
+      p.hitFlash = 12;
+      state.lastDamageCause = 'NICALER SLAM';
+      state.screenShake = Math.max(state.screenShake, 10);
+    }
+    // Particles ring
+    for (let i = 0; i < 16; i++) {
+      const a = (i/16) * Math.PI*2;
+      spawnParticles(n.x + Math.cos(a)*40, n.y + Math.sin(a)*40, '#ff6600', 2);
+    }
+    n.slamTimer = n.phase === 2 ? 150 : 240;
+  }
+  // Melee swing
+  n.attackTimer--;
+  if (n.attackTimer <= 0 && dist < 40) {
+    p.hp = Math.max(0, p.hp - (n.phase === 2 ? 12 : 9));
+    p.hitFlash = 10;
+    state.lastDamageCause = 'NICALER';
+    n.attackTimer = n.phase === 2 ? 30 : 50;
+  }
+}
+
+function drawNicaler(ctx, sx, sy) {
+  const n = state.nicaler;
+  if (!n) return;
+  const wf = Math.floor(state.frameCount / 7) % 4;
+  const bob = Math.sin(state.frameCount * 0.06) * 1.5;
+  // Big shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.55)';
+  ctx.beginPath(); ctx.ellipse(sx, sy + 22, 24, 7, 0, 0, Math.PI*2); ctx.fill();
+  // Rage glow when phase 2
+  if (n.phase === 2) {
+    const r = 0.35 + Math.sin(state.frameCount * 0.12) * 0.15;
+    ctx.fillStyle = `rgba(255,60,0,${r})`;
+    ctx.beginPath(); ctx.arc(sx, sy, 40, 0, Math.PI*2); ctx.fill();
+  }
+  // Legs (thick)
+  px(ctx, '#3a1808', sx-9, sy+8+bob, 6, 14);
+  px(ctx, '#3a1808', sx+3, sy+8+bob, 6, 14);
+  // Body (dark red volcanic armor)
+  px(ctx, '#5a0a0a', sx-13, sy-12+bob, 26, 22);
+  px(ctx, '#8a1818', sx-12, sy-11+bob, 24, 8);
+  // Belt of skulls
+  px(ctx, '#3a2010', sx-13, sy+4+bob, 26, 4);
+  for (let i = 0; i < 4; i++) {
+    px(ctx, '#e8d4a8', sx-11+i*7, sy+5+bob, 4, 3);
+    px(ctx, '#111', sx-10+i*7, sy+6+bob, 1, 1);
+    px(ctx, '#111', sx-8+i*7, sy+6+bob, 1, 1);
+  }
+  // Arms (with massive hammer mace on right)
+  px(ctx, '#5a0a0a', sx-18, sy-8+bob, 5, 14);
+  px(ctx, '#5a0a0a', sx+13, sy-8+bob, 5, 14);
+  // Hammer haft
+  px(ctx, '#2a1408', sx+18, sy-26+bob, 3, 22);
+  // Hammer head (glowing)
+  px(ctx, '#2a0808', sx+14, sy-32+bob, 12, 10);
+  const hammerGlow = n.phase === 2 ? '#ffaa00' : '#cc4400';
+  px(ctx, hammerGlow, sx+15, sy-31+bob, 10, 5);
+  px(ctx, '#ffcc44', sx+16, sy-30+bob, 8, 2);
+  // Head (helmet + horns)
+  px(ctx, '#2a0a0a', sx-9, sy-28+bob, 18, 16);
+  px(ctx, '#c8956a', sx-7, sy-22+bob, 14, 6); // exposed face slit
+  // Glowing eyes
+  const eyeColor = n.phase === 2 ? '#ffaa00' : '#ff2200';
+  px(ctx, eyeColor, sx-5, sy-20+bob, 3, 2);
+  px(ctx, eyeColor, sx+2, sy-20+bob, 3, 2);
+  // Horns
+  px(ctx, '#2a0a0a', sx-12, sy-32+bob, 4, 6);
+  px(ctx, '#2a0a0a', sx+8, sy-32+bob, 4, 6);
+  px(ctx, '#1a0606', sx-13, sy-34+bob, 3, 4);
+  px(ctx, '#1a0606', sx+10, sy-34+bob, 3, 4);
+  // Hit flash
+  if (n.hitFlash > 0) {
+    n.hitFlash--;
+    ctx.fillStyle = `rgba(255,255,255,${n.hitFlash/12 * 0.6})`;
+    ctx.fillRect(sx-20, sy-36, 40, 60);
+  }
+  // Big HP bar with name above
+  const barW = 80, barX = sx - barW/2, barY = sy - 50;
+  ctx.fillStyle = '#330000'; ctx.fillRect(barX, barY, barW, 6);
+  ctx.fillStyle = n.phase === 2 ? '#ffaa00' : '#cc2222';
+  ctx.fillRect(barX, barY, Math.round(barW * n.hp / n.maxHp), 6);
+  ctx.strokeStyle = '#000'; ctx.lineWidth = 1; ctx.strokeRect(barX, barY, barW, 6);
+  // Name banner
+  ctx.font = 'bold 11px Lato, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = 'rgba(0,0,0,0.85)';
+  const nameW = ctx.measureText(n.name).width;
+  ctx.fillRect(sx - nameW/2 - 6, barY - 18, nameW + 12, 14);
+  ctx.fillStyle = '#ff8844';
+  ctx.fillText(n.name, sx, barY - 8);
+  ctx.textAlign = 'left';
+}
+
 function updateEnemies() {
   const p = state.player;
   const inSafeZone = Math.hypot(p.x - 62*TSIZE, p.y - 87*TSIZE) < 18*TSIZE;
@@ -3102,6 +3446,15 @@ function updateEnemies() {
       e.y = 144 * TSIZE;
     }
   });
+
+  // Nicaler Anderdingus boss trigger: player crosses into volcano inner ring
+  // (zone 3 unlocked AND within 6 tiles of summit at 75,39). Spawns once.
+  if (state.zoneUnlocked >= 3 && !state.nicaler && !state.nicalerDefeated) {
+    const ptx = Math.floor(p.x / TSIZE), pty = Math.floor(p.y / TSIZE);
+    if (Math.hypot(ptx - 75, pty - 39) < 6) spawnNicaler();
+  }
+  // Tick boss AI
+  if (state.nicaler) updateNicaler();
 
   // Ritual timer update
   if (state.ritual && state.ritual.active) {
@@ -3494,7 +3847,7 @@ function updateProjectiles() {
     if (proj.type === 'fire_bottle') {
       // Explode on hitting an enemy or running out of life
       let exploded = false;
-      const allTargets = [...state.enemies, ...(state.chief?[state.chief]:[])];
+      const allTargets = [...state.enemies, ...(state.chief?[state.chief]:[]), ...(state.nicaler?[state.nicaler]:[])];
       for (const e of allTargets) {
         if (Math.hypot(proj.x-e.x, proj.y-e.y) < 20) { exploded = true; break; }
       }
@@ -3530,7 +3883,7 @@ function updateProjectiles() {
     if (proj.type === 'lava_bomb') {
       // AoE explosion on enemy contact or life end
       let exploded = false;
-      const allTargetsLB = [...state.enemies, ...(state.chief?[state.chief]:[]), ...(state.bountyHunterActive && state.bountyHunter ? [state.bountyHunter] : [])];
+      const allTargetsLB = [...state.enemies, ...(state.chief?[state.chief]:[]), ...(state.nicaler?[state.nicaler]:[]), ...(state.bountyHunterActive && state.bountyHunter ? [state.bountyHunter] : [])];
       for (const e of allTargetsLB) {
         if (Math.hypot(proj.x-e.x, proj.y-e.y) < 22) { exploded = true; break; }
       }
@@ -3562,7 +3915,7 @@ function updateProjectiles() {
 
     if (proj.type === 'knife_throw') {
       let hit = false;
-      const allTargets2 = [...state.enemies, ...(state.chief?[state.chief]:[]), ...state.creatures.filter(c=>c.type!=='crab'), ...(state.bountyHunterActive && state.bountyHunter ? [state.bountyHunter] : [])];
+      const allTargets2 = [...state.enemies, ...(state.chief?[state.chief]:[]), ...(state.nicaler?[state.nicaler]:[]), ...state.creatures.filter(c=>c.type!=='crab'), ...(state.bountyHunterActive && state.bountyHunter ? [state.bountyHunter] : [])];
       for (const e of allTargets2) {
         if (Math.hypot(proj.x-e.x, proj.y-e.y) < 18) {
           e.hp -= 10;
@@ -3580,7 +3933,7 @@ function updateProjectiles() {
 
     if (proj.type === 'player_arrow') {
       let hit = false;
-      const allTargets2 = [...state.enemies, ...(state.chief?[state.chief]:[]), ...state.creatures.filter(c=>c.type!=='crab'), ...(state.bountyHunterActive && state.bountyHunter ? [state.bountyHunter] : [])];
+      const allTargets2 = [...state.enemies, ...(state.chief?[state.chief]:[]), ...(state.nicaler?[state.nicaler]:[]), ...state.creatures.filter(c=>c.type!=='crab'), ...(state.bountyHunterActive && state.bountyHunter ? [state.bountyHunter] : [])];
       for (const e of allTargets2) {
         if (Math.hypot(proj.x-e.x, proj.y-e.y) < 16) {
           e.hp -= 12;
@@ -3598,7 +3951,7 @@ function updateProjectiles() {
 
     if (proj.type === 'coconut_throw') {
       let hit = false;
-      const allTargets = [...state.enemies, ...(state.chief ? [state.chief] : []), ...state.creatures.filter(c=>c.type!=='crab')];
+      const allTargets = [...state.enemies, ...(state.chief ? [state.chief] : []), ...(state.nicaler?[state.nicaler]:[]), ...state.creatures.filter(c=>c.type!=='crab')];
       for (const e of allTargets) {
         if (!e || e.x === undefined) continue;
         if (Math.hypot(proj.x-e.x, proj.y-e.y) < 24) {
@@ -5320,7 +5673,7 @@ function updatePlayer() {
         }
       }
       // Damage enemies in fire
-      [...state.enemies, ...(state.chief?[state.chief]:[])].forEach(e => {
+      [...state.enemies, ...(state.chief?[state.chief]:[]), ...(state.nicaler?[state.nicaler]:[])].forEach(e => {
         const ex = Math.floor(e.x / TSIZE), ey = Math.floor(e.y / TSIZE);
         if (Math.abs(ex - ftx) <= 1 && Math.abs(ey - fty) <= 1) {
           if (state.frameCount % 60 === 0) {
@@ -6164,7 +6517,7 @@ function handleClick(sx, sy) {
     // Durability is now consumed only on actual hits (see end of attack block).
     // Empty swings (missing) no longer wear the weapon.
     let hit = false;
-    const allTargets = [...state.enemies, ...(state.chief?[state.chief]:[]), ...(state.raid||[]), ...(state.bountyHunterActive && state.bountyHunter ? [state.bountyHunter] : [])];
+    const allTargets = [...state.enemies, ...(state.chief?[state.chief]:[]), ...(state.nicaler?[state.nicaler]:[]), ...(state.raid||[]), ...(state.bountyHunterActive && state.bountyHunter ? [state.bountyHunter] : [])];
 
     if (tool === 'spear' || tool === 'fire_spear' || tool === 'depth_spear' || tool === 'bone_spear') {
       // Spear: hit up to 2 enemies in a line (sorted by distance)
@@ -6391,7 +6744,7 @@ function handleClick(sx, sy) {
   // ── SIGNAL MIRROR: stuns nearest enemy for 3s ──
   if (tool === 'signal_mirror') {
     if ((p.inv.signal_mirror||0) <= 0) return;
-    const allEnems = [...state.enemies, ...(state.chief?[state.chief]:[])];
+    const allEnems = [...state.enemies, ...(state.chief?[state.chief]:[]), ...(state.nicaler?[state.nicaler]:[])];
     const nearest = allEnems.reduce((best, e) => {
       const d = Math.hypot(p.x-e.x, p.y-e.y);
       return (!best || d < best.d) ? {e, d} : best;
@@ -6425,19 +6778,21 @@ function handleClick(sx, sy) {
 
   // ── AXE TOOL: click on tree ──
   if (tool === 'axe') {
-    // find nearest tree within 80px of WORLD click position
-    let nearest = null, nearestDist = 80;
+    // Find nearest tree to the click that is also within arm's reach of the player
+    let nearest = null, nearestDist = PLAYER_REACH;
     for (const obj of state.objects) {
       if (obj.placed) continue;
       const isTree = ['tree','breadfruit','mape','purau','pandanus','filao','hutu','palm'].includes(obj.type);
       if (!isTree) continue;
-      const d = Math.hypot(wx-obj.x, wy-obj.y);
-      if (d < nearestDist) { nearest = obj; nearestDist = d; }
+      const dClick = Math.hypot(wx-obj.x, wy-obj.y);
+      const dPlayer = Math.hypot(p.x-obj.x, p.y-obj.y);
+      if (dPlayer > PLAYER_REACH) continue;
+      if (dClick < nearestDist) { nearest = obj; nearestDist = dClick; }
     }
     if (nearest) {
       startChopMinigame(nearest);
     } else {
-      showMsg('No tree in range — click closer to a tree', '#888');
+      showMsg('No tree in arm’s reach — walk up to one', '#888');
     }
     return;
   }
@@ -6446,13 +6801,15 @@ function handleClick(sx, sy) {
   if (tool === 'fire_axe') {
     // fire_axe also attacks enemies (handled in weapon block above)
     // here: click on tree for instant chop
-    let nearest = null, nearestDist = 80;
+    let nearest = null, nearestDist = PLAYER_REACH;
     for (const obj of state.objects) {
       if (obj.placed) continue;
       const isTree = ['tree','breadfruit','mape','purau','pandanus','filao','hutu','palm'].includes(obj.type);
       if (!isTree) continue;
-      const d = Math.hypot(wx-obj.x, wy-obj.y);
-      if (d < nearestDist) { nearest = obj; nearestDist = d; }
+      const dClick = Math.hypot(wx-obj.x, wy-obj.y);
+      const dPlayer = Math.hypot(p.x-obj.x, p.y-obj.y);
+      if (dPlayer > PLAYER_REACH) continue;
+      if (dClick < nearestDist) { nearest = obj; nearestDist = dClick; }
     }
     if (nearest) {
       // Instant chop, 3 wood
@@ -6475,10 +6832,12 @@ function handleClick(sx, sy) {
 
   // ── PICKAXE TOOL: click on rock ──
   if (tool === 'pickaxe') {
-    let nearest = null, nearestDist = 80;
+    let nearest = null, nearestDist = PLAYER_REACH;
     for (const obj of state.objects) {
       if (obj.placed) continue;
       if (obj.type !== 'rock' && obj.type !== 'vol_rock') continue;
+      const dPlayer = Math.hypot(p.x-obj.x, p.y-obj.y);
+      if (dPlayer > PLAYER_REACH) continue;
       const d = Math.hypot(wx-obj.x, wy-obj.y);
       if (d < nearestDist) { nearest = obj; nearestDist = d; }
     }
@@ -6521,7 +6880,7 @@ function handleClick(sx, sy) {
   const combatDmg = 4;
   const attackReach = 56;
   SFX.swing();
-  [...state.enemies, ...(state.chief?[state.chief]:[])].forEach(e => {
+  [...state.enemies, ...(state.chief?[state.chief]:[]), ...(state.nicaler?[state.nicaler]:[])].forEach(e => {
     if (Math.hypot(p.x-e.x, p.y-e.y) < attackReach) {
       e.hp -= combatDmg;
       e.hitFlash = 6;
@@ -6535,19 +6894,19 @@ function handleClick(sx, sy) {
 
   // Harvest objects - find nearest to CLICK POSITION, then check player is in reach
   // First find nearest object to where player clicked
-  let nearestObj = null, nearestClickDist = 120; // generous click radius
+  let nearestObj = null, nearestClickDist = PLAYER_REACH + 8;
   for (let i = state.objects.length-1; i >= 0; i--) {
     const obj = state.objects[i];
     if (obj.placed || obj.decor || obj.type === 'death_pack' || obj.type === 'shipwreck') continue;
     const clickDist = Math.hypot(wx-obj.x, wy-obj.y); // click proximity
     const playerDist = Math.hypot(p.x-obj.x, p.y-obj.y); // player proximity
-    if (clickDist < nearestClickDist && playerDist < 160) {
+    if (clickDist < nearestClickDist && playerDist < PLAYER_REACH) {
       nearestClickDist = clickDist;
       nearestObj = obj;
     }
   }
   // Process only the nearest clicked object
-  const interactReach = 160;
+  const interactReach = PLAYER_REACH;
   for (let i = state.objects.length-1; i >= 0; i--) {
     const obj = state.objects[i];
     if (obj !== nearestObj) continue; // only process the nearest clicked object
@@ -8116,37 +8475,23 @@ function drawHoverHighlight(ctx, camX, camY) {
   const screenCX = canvas.width / 2, screenCY = canvas.height / 2;
   const mouseWX = (mx - screenCX) / zoom + screenCX + camX;
   const mouseWY = (my - screenCY) / zoom + screenCY + camY;
-  let hoverObj = null, hoverDist = 80;
+  let hoverObj = null, hoverDist = 40;
   state.objects.forEach(obj => {
     if (obj.placed || obj.type === 'death_pack' || obj.decor) return;
     const d = Math.hypot(mouseWX - obj.x, mouseWY - obj.y);
     if (d < hoverDist) { hoverDist = d; hoverObj = obj; }
   });
   if (!hoverObj) return;
+  // Only highlight things within actual reach (~3 tiles like a real human arm)
   const playerDist = Math.hypot(state.player.x - hoverObj.x, state.player.y - hoverObj.y);
-  if (playerDist > 100) return;
+  if (playerDist > PLAYER_REACH) return;
   const hsx = Math.floor(hoverObj.x - camX);
   const hsy = Math.floor(hoverObj.y - camY);
   ctx.save();
-  ctx.strokeStyle = '#ffff00';
-  ctx.lineWidth = 4;
-  ctx.shadowColor = '#ffff00';
-  ctx.shadowBlur = 10;
-  ctx.strokeRect(hsx - 16, hsy - 24, 32, 36);
-  ctx.shadowBlur = 0;
-  ctx.strokeStyle = '#ffffff';
+  // Minimal white outline only — no label, no yellow, no glow
+  ctx.strokeStyle = 'rgba(255,255,255,0.85)';
   ctx.lineWidth = 1;
-  ctx.strokeRect(hsx - 13, hsy - 21, 26, 30);
-  ctx.font = 'bold 11px "Courier New"';
-  ctx.textAlign = 'center';
-  const rawLabel = hoverObj.type.replace(/_/g, ' ');
-  const label = rawLabel.charAt(0).toUpperCase() + rawLabel.slice(1);
-  const lw = ctx.measureText(label).width;
-  ctx.fillStyle = 'rgba(0,0,0,0.9)';
-  ctx.fillRect(hsx - lw/2 - 5, hsy - 44, lw + 10, 16);
-  ctx.fillStyle = '#ffff00';
-  ctx.fillText(label, hsx, hsy - 32);
-  ctx.textAlign = 'left';
+  ctx.strokeRect(hsx - 10, hsy - 16, 20, 22);
   ctx.restore();
 }
 
@@ -8875,6 +9220,12 @@ function render(ctx, minimapCtx) {
     drawList.push({y: state.chief.y, draw: () => {
       capturedChief.walkTimer++;
       drawEnemy(ctx, capturedChief.x - camX, capturedChief.y - camY, capturedChief);
+    }});
+  }
+  if (state.nicaler) {
+    const capturedNicaler = state.nicaler;
+    drawList.push({y: state.nicaler.y, draw: () => {
+      drawNicaler(ctx, capturedNicaler.x - camX, capturedNicaler.y - camY);
     }});
   }
 
