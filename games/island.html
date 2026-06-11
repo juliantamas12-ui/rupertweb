@@ -447,8 +447,8 @@ const state = {
     slashAngle: 0,     // angle of last sword swing
     bowCharge: 0,      // 0-30 frames bow charge
     bowCharging: false,
-    toolDurability: {axe:20, pickaxe:15, sword:25, spear:20, fire_axe:20, fire_spear:15, stone_knife:10, bow:30},
-    knifeThrows: 3,    // throws remaining before knife breaks
+    toolDurability: {axe:40, pickaxe:30, sword:60, spear:50, fire_axe:40, fire_spear:35, stone_knife:20, bow:60},
+    knifeThrows: 6,    // throws remaining before knife breaks
     inv: {
       wood:0, stone:0, coconut:0, fruit:0, fish:0,
       fish_cooked:0, fruit_cooked:0, raw_meat:0, cooked_meat:0,
@@ -923,7 +923,7 @@ function genObjects() {
         if (r < 0.008) state.objects.push({type:selectTree(t,nearWater), x:wx, y:wy, hp:5, maxHp:5, scale:_treeScale(), flipX:_treeFlip()});
         else if (r < 0.012) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4, scale:0.85+Math.random()*0.45});
         else if (r < 0.015) state.objects.push({type:'jungle_chest', x:wx, y:wy, opened:false});
-        else if (r < 0.017) state.creatures.push({type:'spider', x:wx, y:wy, hp:25, maxHp:25, spd:1.05, attackTimer:0, walkTimer:0});
+        else if (r < 0.017) state.creatures.push({type:'spider', x:wx, y:wy, hp:35, maxHp:35, spd:1.05, attackTimer:0, walkTimer:0});
         // jungle_floor removed entirely
       } else if (t === T.BEACH) {
         if (r < 0.004) state.objects.push({type:'palm', x:wx, y:wy, hp:4, maxHp:4, respawn:0, scale:_treeScale(), flipX:_treeFlip()});
@@ -939,14 +939,14 @@ function genObjects() {
         }
       } else if (t === T.SHALLOW_WATER) {
         if (r < 0.002) state.objects.push({type:'fish_spot', x:wx, y:wy, shimmer:Math.random()*100});
-        else if (r < 0.003) state.creatures.push({type:'shark', x:wx, y:wy, hp:50, maxHp:50, spd:0.9, attackTimer:0, walkTimer:0});
+        else if (r < 0.003) state.creatures.push({type:'shark', x:wx, y:wy, hp:70, maxHp:70, spd:0.9, attackTimer:0, walkTimer:0});
       } else if (t === T.VOLCANIC) {
         if (r < 0.04) state.objects.push({type:'vol_rock', x:wx, y:wy, hp:3, maxHp:3});
       }
       // Boar spawn: light jungle only, rare, away from start
       if (t === T.JUNGLE_LIGHT && Math.random() < 0.0018) {
         const distFromStart = Math.hypot(x - 62, y - 85);
-        if (distFromStart > 12) state.creatures.push({type:'boar', x:wx, y:wy, hp:30, maxHp:30, spd:1.4, attackTimer:0, walkTimer:0, graze:Math.random()*200, dir:1, chargeTimer:0, charging:false});
+        if (distFromStart > 12) state.creatures.push({type:'boar', x:wx, y:wy, hp:45, maxHp:45, spd:1.4, attackTimer:0, walkTimer:0, graze:Math.random()*200, dir:1, chargeTimer:0, charging:false});
       }
     }
   }
@@ -2878,7 +2878,7 @@ function spawnEnemies(n, type) {
     const r = (30 + Math.random() * 24) * TSIZE;
     const cx = 75 * TSIZE, cy = 75 * TSIZE;
     const t = type || (state.isNight ? 'shadow' : 'scout');
-    const hp = (t==='shadow'?25:20) + state.day * 3;
+    const hp = (t==='shadow'?40:32) + state.day * 5;
     const ex = cx + Math.cos(angle)*r;
     const ey = cy + Math.sin(angle)*r;
     // Don't spawn within 30 tiles of lagoon or 40 tiles of spawn
@@ -5335,7 +5335,7 @@ function throwCoconut() {
       vx:dist>0?dx/dist*9:9, vy:dist>0?dy/dist*9:0,
       life:50, damage:10
     });
-    p.knifeThrows = (p.knifeThrows||3) - 1;
+    p.knifeThrows = (p.knifeThrows||6) - 1;
     if (p.knifeThrows <= 0) { p.inv.stone_knife = 0; showMsg('KNIFE BROKE!', '#888'); updateUI(); }
     return;
   }
@@ -5490,10 +5490,10 @@ function handleInteract() {
       if (fd < reach) {
         if ((p.inv.stone||0) >= 1) {
           p.inv.stone--;
-          const maxDur = {axe:20,pickaxe:15,sword:25,spear:20,fire_axe:20,fire_spear:15,stone_knife:10,bow:30};
+          const maxDur = {axe:40,pickaxe:30,sword:60,spear:50,fire_axe:40,fire_spear:35,stone_knife:20,bow:60,lava_blade:60,depth_spear:50};
           if (!p.toolDurability) p.toolDurability = {};
           Object.keys(maxDur).forEach(k => { if ((p.inv[k]||0) > 0) p.toolDurability[k] = maxDur[k]; });
-          p.knifeThrows = 3;
+          p.knifeThrows = 6;
           showMsg('TOOLS REPAIRED! (used 1 stone)', '#c8f135');
           spawnParticles(fobj.x, fobj.y, '#ffaa00',3);
         } else {
@@ -5961,18 +5961,8 @@ function handleClick(sx, sy) {
       p.slashAngle = Math.atan2((my + camY2) - p.y, (mx + camX2) - p.x);
     }
 
-    // Durability check
-    if (p.toolDurability && p.toolDurability[tool] !== undefined) {
-      p.toolDurability[tool]--;
-      if (p.toolDurability[tool] <= 0) {
-        p.inv[tool] = 0;
-        p.toolDurability[tool] = 0;
-        showMsg(tool.toUpperCase().replace('_',' ') + ' BROKE — craft a new one', '#e74c3c');
-        updateUI();
-        return;
-      }
-    }
-
+    // Durability is now consumed only on actual hits (see end of attack block).
+    // Empty swings (missing) no longer wear the weapon.
     let hit = false;
     const allTargets = [...state.enemies, ...(state.chief?[state.chief]:[]), ...(state.raid||[]), ...(state.bountyHunterActive && state.bountyHunter ? [state.bountyHunter] : [])];
 
@@ -6140,6 +6130,16 @@ function handleClick(sx, sy) {
       }
     }
     if (!hit) showMsg('NO ENEMIES IN RANGE', '#888');
+    // Consume durability only on a successful hit (no penalty for whiffs)
+    if (hit && p.toolDurability && p.toolDurability[tool] !== undefined) {
+      p.toolDurability[tool]--;
+      if (p.toolDurability[tool] <= 0) {
+        p.inv[tool] = 0;
+        p.toolDurability[tool] = 0;
+        showMsg(tool.toUpperCase().replace('_',' ') + ' BROKE — craft a new one', '#e74c3c');
+        updateUI();
+      }
+    }
     return;
   }
 
@@ -6886,8 +6886,8 @@ function tryCraft(id) {
   if (id === 'ancient_artifact') { showMsg('ANCIENT ARTIFACT — the island knows you. A new ending awaits.', '#3dd6d0'); state.ancientArtifactHeld = true; }
 
   // Add new weapon durability tracking
-  if (id === 'lava_blade') { if (!p.toolDurability) p.toolDurability = {}; p.toolDurability.lava_blade = 30; }
-  if (id === 'depth_spear') { if (!p.toolDurability) p.toolDurability = {}; p.toolDurability.depth_spear = 25; }
+  if (id === 'lava_blade') { if (!p.toolDurability) p.toolDurability = {}; p.toolDurability.lava_blade = 60; }
+  if (id === 'depth_spear') { if (!p.toolDurability) p.toolDurability = {}; p.toolDurability.depth_spear = 50; }
 
   renderCraftMenu();
   renderInvMenu();
@@ -7574,7 +7574,7 @@ function drawHotbarIcons(ctx) {
   const startX = (ctx.canvas.width - totalW) / 2;
   const slotY = ctx.canvas.height - 52;
 
-  const durabilityMax = {axe:20, pickaxe:15, sword:25, spear:20, fire_axe:20, fire_spear:15, stone_knife:10, bow:30, lava_blade:30, depth_spear:25};
+  const durabilityMax = {axe:40, pickaxe:30, sword:60, spear:50, fire_axe:40, fire_spear:35, stone_knife:20, bow:60, lava_blade:60, depth_spear:50};
 
   for (let i = 0; i < toolSlots.length; i++) {
     const sl = toolSlots[i];
@@ -10165,7 +10165,7 @@ function updateLivingIsland() {
       const spawnCount = Math.min(2, shallowTiles.length);
       for (let i = 0; i < spawnCount; i++) {
         const [stx, sty] = shallowTiles[i];
-        state.creatures.push({type:'shark', x:stx*TSIZE, y:sty*TSIZE, hp:50, maxHp:50, spd:0.9, attackTimer:0, walkTimer:0, tideSpawned:true});
+        state.creatures.push({type:'shark', x:stx*TSIZE, y:sty*TSIZE, hp:70, maxHp:70, spd:0.9, attackTimer:0, walkTimer:0, tideSpawned:true});
       }
     }
     if (shouldDespawnExtra) {
@@ -12404,7 +12404,7 @@ function updateUI() {
         else if (slot.id === 'torch') ec.textContent = p.torch ? 'ON' : '';
         else if (slot.id === 'bow') ec.textContent = 'x'+(p.inv.arrows||0);
         else if (slot.id === 'fire_bottle') ec.textContent = 'x'+(p.inv.fire_bottle||0);
-        else if (slot.id === 'stone_knife') ec.textContent = (p.knifeThrows||3)+' left';
+        else if (slot.id === 'stone_knife') ec.textContent = (p.knifeThrows||6)+' left';
         else ec.textContent = '';
       }
       // Durability color
