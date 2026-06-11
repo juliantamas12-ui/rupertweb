@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Night of 28 June 1948 in Bucharest When Stalin Expelled Tito from the Cominform and Lost the Cold War He Had Not Yet Started",
+    date: "2026-06-11",
+    category: "History",
+    excerpt: "On the evening of Monday, 28 June 1948 — the Feast of St Vitus, the Serbian national holiday, the anniversary of Kosovo Polje in 1389 and of the Sarajevo assassination in 1914 — the Cominform meeting in Bucharest issued its resolution expelling the Communist Party of Yugoslavia from the international communist movement. The timing was Stalin's choice. The date was meant to humiliate Tito on the day Serbs reserved for their saints and their martyrs. The resolution called on 'healthy elements' within the Yugoslav party to overthrow Tito and his clique. It assumed that those healthy elements existed, that they would respond, and that Tito would be deposed within weeks. Stalin reportedly told Khrushchev that he had only to shake his little finger and Tito would fall. Within three months it was clear that Stalin had shaken his finger and nothing had fallen at all. The expulsion of Yugoslavia from the Cominform was the single greatest strategic error of Stalin's career and the moment at which the Soviet bloc, before it had finished consolidating, acquired the structural weakness that would in the end destroy it...",
+    url: "essays/2026-06-11-the-night-of-28-june-1948-in-bucharest-when-stalin-expelled-tito-from-the-cominform-and-lost-the-cold-war-he-had-not-yet-started.html"
+  },
+  {
     title: "The Afternoon of 4 August 1914 in Downing Street When Grey's Ultimatum Was Designed to Expire Unanswered and Britain Chose the Balance of Power Over Belgium",
     date: "2026-06-10",
     category: "History",
