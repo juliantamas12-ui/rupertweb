@@ -902,24 +902,29 @@ function genObjects() {
       }
 
       // Tree visual variation: per-tree scale 0.75-1.35 and slight flip for organic look
-      const _treeScale = () => 0.75 + Math.random() * 0.6;
+      // Wider scale + flip range and a unique seed per tree, used by the
+      // draw functions for colour/shape/fruit variation so the canopy
+      // doesn't read like a uniform hedge.
+      const _treeScale = () => 0.55 + Math.random() * 1.05;   // 0.55..1.60
       const _treeFlip  = () => Math.random() < 0.5 ? -1 : 1;
+      const _treeSeed  = () => (Math.random() * 65535) | 0;
       if (t === T.JUNGLE_LIGHT) {
-        if (r < 0.080) state.objects.push({type:selectTree(t,nearWater), x:wx, y:wy, hp:5, maxHp:5, scale:_treeScale(), flipX:_treeFlip()});
+        if (r < 0.080) state.objects.push({type:selectTree(t,nearWater), x:wx, y:wy, hp:5, maxHp:5, scale:_treeScale(), flipX:_treeFlip(), seed:_treeSeed()});
         else if (r < 0.084) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4, scale:0.85+Math.random()*0.45});
         else if (r < 0.090) state.objects.push({type:'berry', x:wx, y:wy, hp:1, maxHp:1, respawn:0});
         else if (r < 0.094) state.objects.push({type:'vine_pickup', x:wx, y:wy, collected:false});
       } else if (t === T.JUNGLE_DARK) {
-        if (r < 0.280) state.objects.push({type:selectTree(t,nearWater), x:wx, y:wy, hp:5, maxHp:5, scale:_treeScale(), flipX:_treeFlip()});
+        // Cut dark-jungle tree density 28% → 18% so canopies have room to breathe
+        if (r < 0.180) state.objects.push({type:selectTree(t,nearWater), x:wx, y:wy, hp:5, maxHp:5, scale:_treeScale(), flipX:_treeFlip(), seed:_treeSeed()});
         else if (r < 0.285) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4, scale:0.85+Math.random()*0.45});
         else if (r < 0.287) state.objects.push({type:'jungle_chest', x:wx, y:wy, opened:false});
         else if (r < 0.289) state.creatures.push({type:'spider', x:wx, y:wy, hp:35, maxHp:35, spd:1.05, attackTimer:0, walkTimer:0});
         // jungle_floor removed entirely
       } else if (t === T.BEACH) {
-        if (r < 0.004) state.objects.push({type:'palm', x:wx, y:wy, hp:4, maxHp:4, respawn:0, scale:_treeScale(), flipX:_treeFlip()});
+        if (r < 0.004) state.objects.push({type:'palm', x:wx, y:wy, hp:4, maxHp:4, respawn:0, scale:_treeScale(), flipX:_treeFlip(), seed:_treeSeed()});
         else if (r < 0.009) state.objects.push({type:'driftwood', x:wx, y:wy, collected:false});
         else if (r < 0.011) state.objects.push({type:'fish_spot', x:wx, y:wy, shimmer:Math.random()*100});
-        else if (r < 0.015) state.objects.push({type:selectTree(t,nearWater), x:wx, y:wy, hp:4, maxHp:4, scale:_treeScale(), flipX:_treeFlip()});
+        else if (r < 0.015) state.objects.push({type:selectTree(t,nearWater), x:wx, y:wy, hp:4, maxHp:4, scale:_treeScale(), flipX:_treeFlip(), seed:_treeSeed()});
         // Crabs: very rare, only on beach far from spawn
         if (t === T.BEACH && Math.random() < 0.0005) {
           const distFromStart = Math.hypot(x - 62, y - 85);
@@ -1696,33 +1701,118 @@ function drawEnemy(ctx, sx, sy, e) {
   _drawEnemyName(ctx, sx, ay, e);
 }
 
-function drawTree(ctx, sx, sy) {
-  const sway = Math.sin(state.frameCount * 0.02 + sx * 0.1) * 2;
-  ctx.save(); ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(sx+2, sy+14, 8, 3, 0, 0, Math.PI*2); ctx.fill(); ctx.restore();
-  px(ctx, '#5c3d1e', sx-3, sy+2, 7, 14);
-  px(ctx, '#1a5c1a', sx-12+sway, sy-6, 24, 10);
-  px(ctx, '#226622', sx-8+sway, sy-14, 16, 10);
-  px(ctx, '#2d8a2d', sx-4+sway, sy-20, 9, 8);
+// ── SEED-BASED VARIATION HELPERS ──
+// Given a tree's seed (0..65535) return stable [0,1) values for shape decisions.
+function _treeRand(obj, salt) {
+  const s = (obj && obj.seed != null) ? obj.seed : 0;
+  // Mulberry32-ish: deterministic per (seed, salt)
+  let h = (s ^ (salt * 0x9E3779B9)) >>> 0;
+  h = Math.imul(h ^ (h >>> 16), 0x85EBCA6B);
+  h = Math.imul(h ^ (h >>> 13), 0xC2B2AE35);
+  h ^= h >>> 16;
+  return (h >>> 0) / 0xFFFFFFFF;
 }
 
-function drawJungleTree(ctx, sx, sy) {
+function drawTree(ctx, sx, sy, obj) {
+  const sway = Math.sin(state.frameCount * 0.02 + sx * 0.1) * 2;
+  ctx.save(); ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(sx+2, sy+14, 8, 3, 0, 0, Math.PI*2); ctx.fill(); ctx.restore();
+  // Per-tree variation
+  const r1 = _treeRand(obj, 1), r2 = _treeRand(obj, 2), r3 = _treeRand(obj, 3), r4 = _treeRand(obj, 4);
+  // Canopy palette variants — lush mid greens with hue shifts
+  const palettes = [
+    ['#1a5c1a','#226622','#2d8a2d'],
+    ['#2a6a18','#3a8a22','#4aa030'],
+    ['#1a522a','#2a6a3a','#3a8246'],
+    ['#2a5a12','#3a7018','#4a8a22'],
+    ['#1d4818','#256020','#357a30'],
+  ];
+  const pal = palettes[Math.floor(r1 * palettes.length)];
+  const trunkPalette = ['#5c3d1e','#4a3018','#6a4628','#3a2410'];
+  const trunkColor = trunkPalette[Math.floor(r2 * trunkPalette.length)];
+  // Trunk lean (+- 1px)
+  const lean = (r3 < 0.4) ? -1 : (r3 > 0.6 ? 1 : 0);
+  px(ctx, trunkColor, sx-3+lean, sy+2, 7, 14);
+  // Canopy width varies
+  const w = 22 + Math.round(r4 * 6); // 22..28
+  px(ctx, pal[0], sx-w/2+sway, sy-6, w, 10);
+  px(ctx, pal[1], sx-w/2+3+sway, sy-14, w-6, 10);
+  px(ctx, pal[2], sx-4+sway, sy-20, 9, 8);
+  // Fruit varies: some trees red berries, some yellow mango, some bare
+  const fruitKind = Math.floor(_treeRand(obj, 5) * 5); // 0..4 — 0/1/2 means fruit, 3/4 bare
+  if (fruitKind === 0) {
+    // Red berry clusters
+    px(ctx, '#c8323a', sx-5+sway, sy-12, 2, 2);
+    px(ctx, '#c8323a', sx+3+sway, sy-8, 2, 2);
+    px(ctx, '#c8323a', sx+0+sway, sy-16, 2, 2);
+  } else if (fruitKind === 1) {
+    // Yellow mango dots
+    px(ctx, '#e8c440', sx-4+sway, sy-10, 3, 3);
+    px(ctx, '#e8c440', sx+2+sway, sy-13, 3, 3);
+  } else if (fruitKind === 2) {
+    // White flowers
+    px(ctx, '#f8f0e0', sx-6+sway, sy-9, 2, 2);
+    px(ctx, '#f8f0e0', sx+4+sway, sy-11, 2, 2);
+    px(ctx, '#f8c060', sx-5+sway, sy-8, 1, 1);
+    px(ctx, '#f8c060', sx+5+sway, sy-10, 1, 1);
+  }
+}
+
+function drawJungleTree(ctx, sx, sy, obj) {
   const sway = Math.sin(state.frameCount * 0.018 + sx * 0.09) * 2.5;
   ctx.save(); ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(sx+2, sy+14, 9, 3, 0, 0, Math.PI*2); ctx.fill(); ctx.restore();
-  // Thick darker trunk
-  px(ctx, '#3d2010', sx-4, sy+2, 9, 16);
-  // Moss dots on trunk
-  px(ctx, '#2d5a1a', sx-3, sy+6, 2, 2);
-  px(ctx, '#2d5a1a', sx+2, sy+10, 2, 2);
-  px(ctx, '#2d5a1a', sx-1, sy+13, 2, 2);
-  // Three canopy layers
-  px(ctx, '#0d3d0d', sx-14+sway, sy-4, 28, 12);
-  px(ctx, '#1a4a1a', sx-11+sway, sy-12, 22, 12);
-  px(ctx, '#226622', sx-7+sway, sy-20, 15, 10);
-  // Hanging vines
-  ctx.fillStyle = 'rgba(30,80,20,0.7)';
-  ctx.fillRect(Math.round(sx-8+sway), Math.round(sy-2), 1, 10+Math.round(Math.sin(sx)*4));
-  ctx.fillRect(Math.round(sx+2+sway), Math.round(sy-4), 1, 8+Math.round(Math.cos(sy)*4));
-  ctx.fillRect(Math.round(sx-3+sway), Math.round(sy-1), 1, 14+Math.round(Math.sin(sx+1)*3));
+  const r1 = _treeRand(obj, 1), r2 = _treeRand(obj, 2), r3 = _treeRand(obj, 3), r4 = _treeRand(obj, 4), r5 = _treeRand(obj, 5);
+  // Dark-jungle canopy palettes — still dark but with hue range so the
+  // forest doesn't look like one solid blob.
+  const palettes = [
+    ['#0d3d0d','#1a4a1a','#226622'],   // standard deep green
+    ['#103a14','#1d4f20','#256a30'],   // emerald
+    ['#08321a','#185028','#256838'],   // teal-tint
+    ['#1a3a08','#284e10','#3a6a18'],   // olive
+    ['#0a3a2a','#15523a','#225a48'],   // jade
+    ['#14401c','#205428','#2c6e38'],   // moss
+  ];
+  const pal = palettes[Math.floor(r1 * palettes.length)];
+  const trunkPalette = ['#3d2010','#2a1408','#4a2c18','#5a3818','#1a0a04'];
+  const trunkColor = trunkPalette[Math.floor(r2 * trunkPalette.length)];
+  // Number of canopy layers: 2 or 3 (some are stubby)
+  const layers = (r3 < 0.3) ? 2 : 3;
+  // Trunk thickness varies
+  const trunkW = 7 + Math.round(r4 * 3); // 7..10
+  px(ctx, trunkColor, sx-trunkW/2, sy+2, trunkW, 16);
+  // Moss on some trunks only
+  if (r5 < 0.5) {
+    px(ctx, '#2d5a1a', sx-3, sy+6, 2, 2);
+    px(ctx, '#2d5a1a', sx+2, sy+10, 2, 2);
+    px(ctx, '#2d5a1a', sx-1, sy+13, 2, 2);
+  }
+  // Canopy widths vary
+  const w1 = 26 + Math.round(r4 * 8); // 26..34
+  const w2 = w1 - 6;
+  const w3 = w1 - 14;
+  if (layers === 3) {
+    px(ctx, pal[0], sx-w1/2+sway, sy-4, w1, 12);
+  }
+  px(ctx, pal[1], sx-w2/2+sway, sy-12, w2, 12);
+  px(ctx, pal[2], sx-w3/2+sway, sy-20, w3, 10);
+  // Fruit clusters — only sometimes (40%) and 3 colour variants
+  const fruitKind = Math.floor(_treeRand(obj, 6) * 5);
+  if (fruitKind === 0) {
+    // Red fruits
+    px(ctx, '#a83030', sx-5+sway, sy-12, 2, 2);
+    px(ctx, '#a83030', sx+3+sway, sy-8, 2, 2);
+    px(ctx, '#c84040', sx+0+sway, sy-16, 2, 2);
+  } else if (fruitKind === 1) {
+    // Purple jungle fruit
+    px(ctx, '#5a2a6a', sx-4+sway, sy-10, 2, 2);
+    px(ctx, '#7a3a8a', sx+2+sway, sy-13, 2, 2);
+  }
+  // Hanging vines on some trees
+  if (r5 > 0.4) {
+    ctx.fillStyle = 'rgba(30,80,20,0.7)';
+    ctx.fillRect(Math.round(sx-8+sway), Math.round(sy-2), 1, 10+Math.round(Math.sin(sx)*4));
+    ctx.fillRect(Math.round(sx+2+sway), Math.round(sy-4), 1, 8+Math.round(Math.cos(sy)*4));
+    ctx.fillRect(Math.round(sx-3+sway), Math.round(sy-1), 1, 14+Math.round(Math.sin(sx+1)*3));
+  }
 }
 
 function drawSpider(ctx, sx, sy) {
@@ -1792,23 +1882,31 @@ function drawBat(ctx, sx, sy) {
   px(ctx, '#cc0000', sx+1, sy-3, 2, 2);
 }
 
-function drawPalm(ctx, sx, sy) {
+function drawPalm(ctx, sx, sy, obj) {
   const sway = Math.sin(state.frameCount * 0.015 + sx * 0.08) * 3;
+  const r1 = _treeRand(obj, 1), r2 = _treeRand(obj, 2);
   ctx.save(); ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(sx, sy+14, 7, 3, 0, 0, Math.PI*2); ctx.fill(); ctx.restore();
-  px(ctx, '#7a5c2e', sx-3, sy, 6, 20);
-  px(ctx, '#5c3d1e', sx-3, sy-4, 4, 8);
+  // Trunk height varies a lot: short stubby palm vs tall classic
+  const trunkH = 16 + Math.round(r1 * 14); // 16..30
+  px(ctx, '#7a5c2e', sx-3, sy+20-trunkH, 6, trunkH);
+  px(ctx, '#5c3d1e', sx-3, sy+16-trunkH, 4, 8);
+  // Frond colour varies
+  const frondPalette = ['#2d8c2d','#3a9a3a','#3a8826','#46a236','#287a22'];
+  const frondColor = frondPalette[Math.floor(r2 * frondPalette.length)];
   // Fronds
-  px(ctx, '#2d8c2d', sx-22+sway, sy-10, 18, 4);
-  px(ctx, '#2d8c2d', sx+4+sway, sy-10, 18, 4);
-  px(ctx, '#2d8c2d', sx-12+sway, sy-18, 24, 4);
-  // Coconuts — 3 clustered at frond base, more visible
-  px(ctx, '#4a2a08', sx-6, sy-5, 5, 5);
-  px(ctx, '#2a1800', sx-5, sy-4, 1, 1); // highlight
-  px(ctx, '#6a4a18', sx-6, sy-5, 2, 2); // lighter highlight
-  px(ctx, '#4a2a08', sx+1, sy-5, 5, 5);
-  px(ctx, '#6a4a18', sx+1, sy-5, 2, 2);
-  px(ctx, '#4a2a08', sx-2, sy-7, 5, 5);
-  px(ctx, '#6a4a18', sx-2, sy-7, 2, 2);
+  px(ctx, frondColor, sx-22+sway, sy-10, 18, 4);
+  px(ctx, frondColor, sx+4+sway, sy-10, 18, 4);
+  px(ctx, frondColor, sx-12+sway, sy-18, 24, 4);
+  // Coconuts — only some palms have them
+  if (r1 > 0.25) {
+    px(ctx, '#4a2a08', sx-6, sy-5, 5, 5);
+    px(ctx, '#2a1800', sx-5, sy-4, 1, 1);
+    px(ctx, '#6a4a18', sx-6, sy-5, 2, 2);
+    px(ctx, '#4a2a08', sx+1, sy-5, 5, 5);
+    px(ctx, '#6a4a18', sx+1, sy-5, 2, 2);
+    px(ctx, '#4a2a08', sx-2, sy-7, 5, 5);
+    px(ctx, '#6a4a18', sx-2, sy-7, 2, 2);
+  }
 }
 
 function drawRock(ctx, sx, sy) {
@@ -2314,59 +2412,101 @@ function drawHut(ctx, sx, sy) {
 
 // ── TAHITIAN TREE SPECIES ──────────────────────────────────
 
-function drawBreadfruitTree(ctx, sx, sy) {
+function drawBreadfruitTree(ctx, sx, sy, obj) {
   // 'Uru — wide round deep-green canopy, thick dark trunk, round fruit
   const sway = Math.sin(state.frameCount * 0.016 + sx * 0.08) * 2;
+  const r1 = _treeRand(obj, 1), r2 = _treeRand(obj, 2);
+  // Canopy palette — keep breadfruit-ish but allow lighter/darker
+  const palettes = [
+    ['#0d3a06','#1a5210','#226a18'],
+    ['#103e0a','#1d5612','#256e1a'],
+    ['#0a3a14','#185228','#266a36'],
+    ['#143a06','#205012','#306420'],
+  ];
+  const pal = palettes[Math.floor(r1 * palettes.length)];
   px(ctx, 'rgba(0,0,0,0.3)', sx-12, sy+14, 24, 6);
   px(ctx, '#2a1408', sx-5, sy+2, 10, 18);      // thick trunk
   px(ctx, '#1a3a08', sx-5, sy+6, 4, 6);        // trunk shadow
-  // Wide round canopy layers
-  px(ctx, '#0d3a06', sx-18+sway, sy-6, 36, 14);
-  px(ctx, '#1a5210', sx-14+sway, sy-14, 28, 12);
-  px(ctx, '#226a18', sx-10+sway, sy-20, 20, 10);
-  px(ctx, '#1a5210', sx-6+sway, sy-24, 12, 6);
-  // Round fruit (hanging breadfruit)
-  px(ctx, '#8B6914', sx-10+sway, sy-4, 6, 7);
+  // Wide round canopy layers — width varies
+  const ww = 32 + Math.round(r2 * 8);
+  px(ctx, pal[0], sx-ww/2+sway, sy-6, ww, 14);
+  px(ctx, pal[1], sx-ww/2+4+sway, sy-14, ww-8, 12);
+  px(ctx, pal[2], sx-ww/2+8+sway, sy-20, ww-16, 10);
+  px(ctx, pal[1], sx-6+sway, sy-24, 12, 6);
+  // Round fruit — sometimes ripe yellow, sometimes green-tinged
+  const ripe = r2 > 0.5;
+  const fruitColor = ripe ? '#a07820' : '#7a6818';
+  px(ctx, fruitColor, sx-10+sway, sy-4, 6, 7);
   px(ctx, '#6a5010', sx-9+sway, sy-4, 2, 2);
-  px(ctx, '#8B6914', sx+4+sway, sy-8, 6, 7);
-  px(ctx, '#a07820', sx+4+sway, sy-7, 2, 2);
-  px(ctx, '#8B6914', sx-2+sway, sy-12, 5, 6);
+  px(ctx, fruitColor, sx+4+sway, sy-8, 6, 7);
+  px(ctx, ripe ? '#d8a050' : '#a07820', sx+4+sway, sy-7, 2, 2);
+  px(ctx, fruitColor, sx-2+sway, sy-12, 5, 6);
 }
 
-function drawMapeTree(ctx, sx, sy) {
+function drawMapeTree(ctx, sx, sy, obj) {
   // Pacific Chestnut — tall straight, oval canopy, light green, chestnuts
   const sway = Math.sin(state.frameCount * 0.019 + sx * 0.07) * 1.5;
+  const r1 = _treeRand(obj, 1), r2 = _treeRand(obj, 2);
+  const palettes = [
+    ['#1a6010','#2a7a18','#3a8a22'],
+    ['#226020','#327a28','#42924a'],
+    ['#1a5818','#2a7028','#3a8a3a'],
+    ['#206818','#3a8a22','#4ea026'],
+  ];
+  const pal = palettes[Math.floor(r1 * palettes.length)];
+  // Trunk height variation
+  const trunkH = 18 + Math.round(r2 * 8); // 18..26
   px(ctx, 'rgba(0,0,0,0.25)', sx-8, sy+14, 18, 5);
-  px(ctx, '#3a1e08', sx-3, sy+0, 6, 22);       // tall straight trunk
-  px(ctx, '#2a1206', sx-2, sy+4, 2, 12);
-  // Oval canopy — lighter green
-  px(ctx, '#1a6010', sx-12+sway, sy-8, 24, 14);
-  px(ctx, '#2a7a18', sx-9+sway, sy-16, 18, 12);
-  px(ctx, '#3a8a22', sx-6+sway, sy-22, 12, 8);
-  px(ctx, '#2a7a18', sx-4+sway, sy-26, 8, 6);
-  // Chestnuts (small brown dots)
-  px(ctx, '#5a3008', sx-7+sway, sy-6, 3, 3);
-  px(ctx, '#5a3008', sx+3+sway, sy-10, 3, 3);
-  px(ctx, '#5a3008', sx-2+sway, sy-14, 3, 3);
-  px(ctx, '#7a4a14', sx-7+sway, sy-5, 1, 1);
-  px(ctx, '#7a4a14', sx+3+sway, sy-9, 1, 1);
+  px(ctx, '#3a1e08', sx-3, sy+22-trunkH, 6, trunkH);
+  px(ctx, '#2a1206', sx-2, sy+26-trunkH, 2, trunkH-10);
+  // Oval canopy
+  const ww = 22 + Math.round(r2 * 6);
+  px(ctx, pal[0], sx-ww/2+sway, sy-8, ww, 14);
+  px(ctx, pal[1], sx-ww/2+3+sway, sy-16, ww-6, 12);
+  px(ctx, pal[2], sx-ww/2+6+sway, sy-22, ww-12, 8);
+  px(ctx, pal[1], sx-4+sway, sy-26, 8, 6);
+  // Chestnuts: only some trees have them
+  if (r1 > 0.3) {
+    px(ctx, '#5a3008', sx-7+sway, sy-6, 3, 3);
+    px(ctx, '#5a3008', sx+3+sway, sy-10, 3, 3);
+    px(ctx, '#5a3008', sx-2+sway, sy-14, 3, 3);
+    px(ctx, '#7a4a14', sx-7+sway, sy-5, 1, 1);
+    px(ctx, '#7a4a14', sx+3+sway, sy-9, 1, 1);
+  }
 }
 
-function drawPurauTree(ctx, sx, sy) {
+function drawPurauTree(ctx, sx, sy, obj) {
   // Hibiscus tiliaceus — spreading low canopy, yellow-green, coastal
   const sway = Math.sin(state.frameCount * 0.02 + sx * 0.09) * 3;
+  const r1 = _treeRand(obj, 1), r2 = _treeRand(obj, 2);
+  // Palette: spread-canopy greens with a yellow lean
+  const palettes = [
+    ['#2a5a08','#3a7010','#4a8818','#5a9820'],
+    ['#306810','#487a18','#5a9822','#6aa830'],
+    ['#2a6010','#467820','#5a8a28','#6a9a36'],
+  ];
+  const pal = palettes[Math.floor(r1 * palettes.length)];
+  // Width varies
+  const w0 = 38 + Math.round(r2 * 12);
   px(ctx, 'rgba(0,0,0,0.25)', sx-14, sy+12, 28, 5);
   px(ctx, '#4a2e0a', sx-4, sy+2, 8, 14);
   px(ctx, '#3a2008', sx-2, sy+4, 4, 8);
-  // Very wide spreading canopy, wider than tall
-  px(ctx, '#2a5a08', sx-22+sway, sy-4, 44, 12);
-  px(ctx, '#3a7010', sx-18+sway, sy-10, 36, 10);
-  px(ctx, '#4a8818', sx-12+sway, sy-14, 24, 8);
-  px(ctx, '#5a9820', sx-8+sway, sy-17, 16, 6);
-  // Yellow-green tints (younger leaves)
-  px(ctx, '#8ab030', sx-16+sway, sy-2, 8, 5);
-  px(ctx, '#8ab030', sx+8+sway, sy-4, 8, 5);
-  px(ctx, '#6a9020', sx-4+sway, sy-16, 8, 4);
+  px(ctx, pal[0], sx-w0/2+sway, sy-4, w0, 12);
+  px(ctx, pal[1], sx-w0/2+4+sway, sy-10, w0-8, 10);
+  px(ctx, pal[2], sx-w0/2+10+sway, sy-14, w0-20, 8);
+  px(ctx, pal[3], sx-8+sway, sy-17, 16, 6);
+  // Yellow-green tints (younger leaves) — only some trees
+  if (r2 > 0.3) {
+    px(ctx, '#8ab030', sx-16+sway, sy-2, 8, 5);
+    px(ctx, '#8ab030', sx+8+sway, sy-4, 8, 5);
+    px(ctx, '#6a9020', sx-4+sway, sy-16, 8, 4);
+  }
+  // Pink hibiscus flowers — rare
+  if (r1 > 0.7) {
+    px(ctx, '#e85a8a', sx-10+sway, sy-6, 2, 2);
+    px(ctx, '#f070a0', sx+6+sway, sy-9, 2, 2);
+    px(ctx, '#f8c060', sx-9+sway, sy-5, 1, 1);
+  }
 }
 
 function drawPandanusTree(ctx, sx, sy) {
@@ -2421,22 +2561,31 @@ function drawFilaoTree(ctx, sx, sy) {
   }
 }
 
-function drawHutuTree(ctx, sx, sy) {
+function drawHutuTree(ctx, sx, sy, obj) {
   // Fish-poison tree — spreading coastal canopy, distinctive box-shaped fruit
   const sway = Math.sin(state.frameCount * 0.018 + sx * 0.08) * 2.5;
+  const r1 = _treeRand(obj, 1), r2 = _treeRand(obj, 2);
+  const palettes = [
+    ['#1a4a10','#2a5a18','#3a6a20'],
+    ['#205020','#306030','#407040'],
+    ['#185018','#286a28','#3a8038'],
+  ];
+  const pal = palettes[Math.floor(r1 * palettes.length)];
+  const ww = 32 + Math.round(r2 * 8);
   px(ctx, 'rgba(0,0,0,0.3)', sx-12, sy+12, 24, 5);
   px(ctx, '#4a2e10', sx-4, sy+0, 8, 16);
-  // Spreading canopy (mid-height)
-  px(ctx, '#1a4a10', sx-18+sway, sy-6, 36, 12);
-  px(ctx, '#2a5a18', sx-14+sway, sy-14, 28, 10);
-  px(ctx, '#3a6a20', sx-10+sway, sy-18, 20, 8);
-  px(ctx, '#2a5a18', sx-6+sway, sy-21, 12, 5);
-  // Distinctive hanging box-shaped fruit
-  px(ctx, '#8a6a1a', sx-12+sway, sy-4, 8, 10);
-  px(ctx, '#6a4a10', sx-12+sway, sy-4, 2, 10);
-  px(ctx, '#8a6a1a', sx+4+sway, sy-8, 7, 9);
-  px(ctx, '#aaa030', sx-10+sway, sy-3, 4, 2);  // fruit highlight
-  px(ctx, '#aaa030', sx+5+sway, sy-7, 3, 2);
+  px(ctx, pal[0], sx-ww/2+sway, sy-6, ww, 12);
+  px(ctx, pal[1], sx-ww/2+4+sway, sy-14, ww-8, 10);
+  px(ctx, pal[2], sx-ww/2+8+sway, sy-18, ww-16, 8);
+  px(ctx, pal[1], sx-6+sway, sy-21, 12, 5);
+  // Distinctive hanging box-shaped fruit — only mature trees
+  if (r2 > 0.35) {
+    px(ctx, '#8a6a1a', sx-12+sway, sy-4, 8, 10);
+    px(ctx, '#6a4a10', sx-12+sway, sy-4, 2, 10);
+    px(ctx, '#8a6a1a', sx+4+sway, sy-8, 7, 9);
+    px(ctx, '#aaa030', sx-10+sway, sy-3, 4, 2);
+    px(ctx, '#aaa030', sx+5+sway, sy-7, 3, 2);
+  }
 }
 
 // ── SEA CREATURE DRAWINGS ─────────────────────────────────
@@ -9065,16 +9214,16 @@ function render(ctx, minimapCtx) {
         ctx.translate(-ssx, -ssy);
       }
       switch (capturedObj.type) {
-        case 'tree': { const ttx2=Math.floor(capturedObj.x/TSIZE),tty2=Math.floor(capturedObj.y/TSIZE); const tt2=(state.map[tty2]&&state.map[tty2][ttx2])||0; if(tt2===T.JUNGLE_DARK)drawJungleTree(ctx,ssx,ssy); else drawTree(ctx,ssx,ssy); break; }
+        case 'tree': { const ttx2=Math.floor(capturedObj.x/TSIZE),tty2=Math.floor(capturedObj.y/TSIZE); const tt2=(state.map[tty2]&&state.map[tty2][ttx2])||0; if(tt2===T.JUNGLE_DARK)drawJungleTree(ctx,ssx,ssy,capturedObj); else drawTree(ctx,ssx,ssy,capturedObj); break; }
         // Tahitian species
-        case 'breadfruit': drawBreadfruitTree(ctx,ssx,ssy); break;
-        case 'mape': drawMapeTree(ctx,ssx,ssy); break;
-        case 'purau': drawPurauTree(ctx,ssx,ssy); break;
-        case 'pandanus': drawPandanusTree(ctx,ssx,ssy); break;
-        case 'filao': drawFilaoTree(ctx,ssx,ssy); break;
-        case 'hutu': drawHutuTree(ctx,ssx,ssy); break;
+        case 'breadfruit': drawBreadfruitTree(ctx,ssx,ssy,capturedObj); break;
+        case 'mape': drawMapeTree(ctx,ssx,ssy,capturedObj); break;
+        case 'purau': drawPurauTree(ctx,ssx,ssy,capturedObj); break;
+        case 'pandanus': drawPandanusTree(ctx,ssx,ssy,capturedObj); break;
+        case 'filao': drawFilaoTree(ctx,ssx,ssy,capturedObj); break;
+        case 'hutu': drawHutuTree(ctx,ssx,ssy,capturedObj); break;
         case 'coral': drawCoral(ctx,ssx,ssy); break;
-        case 'palm': drawPalm(ctx,ssx,ssy); break;
+        case 'palm': drawPalm(ctx,ssx,ssy,capturedObj); break;
         case 'rock': case 'vol_rock': drawRock(ctx,ssx,ssy); if(capturedObj.type==='vol_rock')drawVolRock(ctx,ssx,ssy); break;
         case 'berry': case 'fruit': drawBerry(ctx,ssx,ssy); break;
         case 'fish_spot': drawFishSpot(ctx,ssx,ssy); break;
