@@ -610,7 +610,7 @@ const SCHOOL_TASKS = [
     "status": "upcoming"
   },
   {
-    "title": "Semester 2 Exam",
+    "title": "There are no upcoming tasks or deadlines",
     "due": "",
     "subject": "",
     "status": "upcoming"
