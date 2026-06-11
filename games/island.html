@@ -915,15 +915,15 @@ function genObjects() {
       const _treeScale = () => 0.75 + Math.random() * 0.6;
       const _treeFlip  = () => Math.random() < 0.5 ? -1 : 1;
       if (t === T.JUNGLE_LIGHT) {
-        if (r < 0.0055) state.objects.push({type:selectTree(t,nearWater), x:wx, y:wy, hp:5, maxHp:5, scale:_treeScale(), flipX:_treeFlip()});
-        else if (r < 0.0095) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4, scale:0.85+Math.random()*0.45});
-        else if (r < 0.0155) state.objects.push({type:'berry', x:wx, y:wy, hp:1, maxHp:1, respawn:0});
-        else if (r < 0.0195) state.objects.push({type:'vine_pickup', x:wx, y:wy, collected:false});
+        if (r < 0.020) state.objects.push({type:selectTree(t,nearWater), x:wx, y:wy, hp:5, maxHp:5, scale:_treeScale(), flipX:_treeFlip()});
+        else if (r < 0.024) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4, scale:0.85+Math.random()*0.45});
+        else if (r < 0.030) state.objects.push({type:'berry', x:wx, y:wy, hp:1, maxHp:1, respawn:0});
+        else if (r < 0.034) state.objects.push({type:'vine_pickup', x:wx, y:wy, collected:false});
       } else if (t === T.JUNGLE_DARK) {
-        if (r < 0.008) state.objects.push({type:selectTree(t,nearWater), x:wx, y:wy, hp:5, maxHp:5, scale:_treeScale(), flipX:_treeFlip()});
-        else if (r < 0.012) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4, scale:0.85+Math.random()*0.45});
-        else if (r < 0.015) state.objects.push({type:'jungle_chest', x:wx, y:wy, opened:false});
-        else if (r < 0.017) state.creatures.push({type:'spider', x:wx, y:wy, hp:35, maxHp:35, spd:1.05, attackTimer:0, walkTimer:0});
+        if (r < 0.028) state.objects.push({type:selectTree(t,nearWater), x:wx, y:wy, hp:5, maxHp:5, scale:_treeScale(), flipX:_treeFlip()});
+        else if (r < 0.033) state.objects.push({type:'rock', x:wx, y:wy, hp:4, maxHp:4, scale:0.85+Math.random()*0.45});
+        else if (r < 0.035) state.objects.push({type:'jungle_chest', x:wx, y:wy, opened:false});
+        else if (r < 0.037) state.creatures.push({type:'spider', x:wx, y:wy, hp:35, maxHp:35, spd:1.05, attackTimer:0, walkTimer:0});
         // jungle_floor removed entirely
       } else if (t === T.BEACH) {
         if (r < 0.004) state.objects.push({type:'palm', x:wx, y:wy, hp:4, maxHp:4, respawn:0, scale:_treeScale(), flipX:_treeFlip()});
@@ -1029,14 +1029,14 @@ function genObjects() {
       }
       if (blocked) continue;
       if (tt === T.JUNGLE_LIGHT) {
-        if (r < 8)      state.objects.push({type:'tree_stump', x:wxL, y:wyL, decor:true});
-        else if (r<24)  state.objects.push({type:'flower_patch', x:wxL, y:wyL, decor:true});
-        else if (r<36)  state.objects.push({type:'fern', x:wxL, y:wyL, decor:true});
+        if (r < 2)      state.objects.push({type:'tree_stump', x:wxL, y:wyL, decor:true, solid:true});
+        else if (r<10)  state.objects.push({type:'flower_patch', x:wxL, y:wyL, decor:true});
+        else if (r<18)  state.objects.push({type:'fern', x:wxL, y:wyL, decor:true});
       } else if (tt === T.JUNGLE_DARK) {
-        if (r < 10)     state.objects.push({type:'mushroom_cluster', x:wxL, y:wyL, decor:true});
-        else if (r<22)  state.objects.push({type:'fern', x:wxL, y:wyL, decor:true});
-        else if (r<32)  state.objects.push({type:'vine_curtain', x:wxL, y:wyL, decor:true});
-        else if (r<40)  state.objects.push({type:'tree_stump', x:wxL, y:wyL, decor:true});
+        if (r < 3)      state.objects.push({type:'mushroom_cluster', x:wxL, y:wyL, decor:true});
+        else if (r<12)  state.objects.push({type:'fern', x:wxL, y:wyL, decor:true});
+        else if (r<18)  state.objects.push({type:'vine_curtain', x:wxL, y:wyL, decor:true});
+        else if (r<21)  state.objects.push({type:'tree_stump', x:wxL, y:wyL, decor:true, solid:true});
       }
     }
   }
@@ -5157,13 +5157,32 @@ function getTile(x, y) {
 
 function checkCollisions(nx, ny) {
   const playerR = 8;
+  // Trees + harvest objects with collision
+  const SOLID_TYPES = new Set([
+    'tree','rock','palm','vol_rock','wall',
+    // Tahitian species (previously walked through)
+    'breadfruit','mape','purau','pandanus','filao','hutu',
+    // Big decor landmarks (visual-only objects that should still block)
+    'tree_stump','mossy_log','stone_circle','ruined_pillar','tribal_marker','altar'
+  ]);
   for (const obj of state.objects) {
     if (obj.placed && obj.type !== 'wall') continue;
-    if (!['tree','rock','palm','vol_rock','wall'].includes(obj.type)) continue;
+    if (!SOLID_TYPES.has(obj.type) && !obj.solid) continue;
     if (obj.placed && obj.type === 'wall') {
       if (nx > obj.x - 12 && nx < obj.x + 12 && ny > obj.y - 12 && ny < obj.y + 12) return true;
     } else {
-      const r = obj.type === 'tree' ? 10 : 8;
+      // Per-type collision radius
+      let r;
+      if (obj.type === 'stone_circle') r = 22;
+      else if (obj.type === 'ruined_pillar') r = 10;
+      else if (obj.type === 'altar') r = 14;
+      else if (obj.type === 'tree_stump') r = 7;
+      else if (obj.type === 'tribal_marker') r = 5;
+      else if (obj.type === 'mossy_log') r = 12;
+      else if (obj.type === 'tree') r = 10;
+      else r = 8;
+      // Apply object scale if present
+      if (obj.scale) r = Math.round(r * obj.scale);
       const dx = nx - obj.x, dy = ny - obj.y;
       if (dx*dx + dy*dy < (r + playerR) * (r + playerR)) return true;
     }
