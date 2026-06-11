@@ -122,6 +122,10 @@ export default {
       if (p === '/api/steam/resolve-vanity')                          return steamResolveVanity(url, env, request);
       if (p === '/api/steam/games')                                   return steamGames(url);
       if (p === '/api/steam/recent')                                  return steamRecent(url);
+      if (p === '/api/steam/inventory')                               return steamInventory(url, env);
+      if (p === '/api/steam/inventory/value')                         return steamInventoryValue(url, env);
+      if (p === '/api/steam/inventory/history')                       return steamInventoryHistory(url, env);
+      if (p === '/api/steam/inventory/snapshot' && request.method === 'POST') return steamInventorySnapshot(url, env);
       if (p.startsWith('/api/steam/achievements/'))                   return steamAchievements(url, p);
       if (p.startsWith('/api/steam/game-stats/'))                     return steamGameStats(p);
       if (p.startsWith('/api/steam/news/'))                           return steamNews(p);
@@ -447,6 +451,239 @@ async function steamRecent(url) {
     img: `https://cdn.cloudflare.steamstatic.com/steam/apps/${g.appid}/header.jpg`,
   }));
   return jsonResponse({ games });
+}
+
+// ════════════════════════════════════════════════════════
+// STEAM INVENTORY (CS2, Dota 2, Rust, TF2)
+// ════════════════════════════════════════════════════════
+//
+// Supports four marketable inventories: CS2 (730), Dota 2 (570),
+// Rust (252490), TF2 (440). Steam returns the raw inventory at
+// /inventory/<sid>/<appid>/2 — no key required, but the endpoint is
+// IP-rate-limited and frequently 429s. We:
+//   1. Cache the raw inventory in KV for 15 min per (sid,appid).
+//   2. Look up each unique market_hash_name on Steam's price overview
+//      and cache the price in KV for 6h (Steam refresh interval).
+//   3. Snapshot total per-game inventory value once per UTC day for
+//      history tracking.
+//
+// Profile/inventory must be public on Steam for this to work.
+
+const INV_GAMES = {
+  '730':    { name: 'CS2',    short: 'cs2',    icon: 'https://cdn.cloudflare.steamstatic.com/steam/apps/730/header.jpg' },
+  '570':    { name: 'Dota 2', short: 'dota2',  icon: 'https://cdn.cloudflare.steamstatic.com/steam/apps/570/header.jpg' },
+  '252490': { name: 'Rust',   short: 'rust',   icon: 'https://cdn.cloudflare.steamstatic.com/steam/apps/252490/header.jpg' },
+  '440':    { name: 'TF2',    short: 'tf2',    icon: 'https://cdn.cloudflare.steamstatic.com/steam/apps/440/header.jpg' },
+};
+
+// Steam currency code 2 = GBP
+const INV_CURRENCY = 2;
+const INV_CURRENCY_SYM = '£';
+
+function parseSteamPrice(str) {
+  // Steam returns prices like "£0.85" or "€1,23" — strip non-digits, handle comma.
+  if (!str) return null;
+  const m = String(str).replace(/[^0-9.,-]/g, '').replace(',', '.');
+  const n = parseFloat(m);
+  return Number.isFinite(n) ? n : null;
+}
+
+// Steam inventory: GET /inventory/<sid>/<appid>/2?l=english&count=5000
+// Response: { assets: [...], descriptions: [...], total_inventory_count, success }
+async function fetchSteamInventory(sid, appid) {
+  // Steam rejects count over ~5000; default cap is plenty for normal inventories.
+  // Omitting `count` returns the default (1000 items) which suits non-trader profiles.
+  const u = `https://steamcommunity.com/inventory/${sid}/${appid}/2?l=english&count=2000`;
+  const r = await fetch(u, { headers: { 'User-Agent': 'QuestLog/1.0', 'Accept': 'application/json' } });
+  if (r.status === 403) throw new Error('Inventory is private. Set Steam profile + inventory to Public in Steam privacy settings.');
+  if (r.status === 429) throw new Error('Steam rate-limited inventory fetch. Try again in a minute.');
+  // Steam returns 401 for an empty/no-content inventory; surface as a clean no-items state.
+  if (r.status === 401) return { assets: [], descriptions: [], total_inventory_count: 0, success: true, _empty: true };
+  if (!r.ok) throw new Error(`Steam inventory HTTP ${r.status}`);
+  const data = await r.json();
+  if (!data || data.success === false) throw new Error('Steam returned empty inventory (often means private profile).');
+  return data;
+}
+
+async function fetchItemPrice(appid, marketHashName, env) {
+  const key = `inv:price:${appid}:${marketHashName}`;
+  const cached = await kvGet(env, key);
+  if (cached && cached.fetchedAt && (Date.now() - cached.fetchedAt) < 6 * 3600 * 1000) {
+    return cached;
+  }
+  const u = `https://steamcommunity.com/market/priceoverview/?appid=${appid}&currency=${INV_CURRENCY}&market_hash_name=${encodeURIComponent(marketHashName)}`;
+  try {
+    const r = await fetch(u, { headers: { 'User-Agent': 'QuestLog/1.0' } });
+    if (r.status === 429) {
+      // back off; surface stale price if we have one
+      return cached || { median: null, lowest: null, volume: null, fetchedAt: Date.now(), stale: true };
+    }
+    if (!r.ok) return cached || { median: null, lowest: null, volume: null, fetchedAt: Date.now(), error: `HTTP ${r.status}` };
+    const j = await r.json();
+    const out = {
+      median: parseSteamPrice(j.median_price),
+      lowest: parseSteamPrice(j.lowest_price),
+      volume: j.volume ? parseInt(String(j.volume).replace(/[,]/g, ''), 10) : null,
+      fetchedAt: Date.now(),
+    };
+    await kvPut(env, key, out, 7 * 24 * 3600); // 7d TTL; we refresh at 6h
+    return out;
+  } catch (e) {
+    return cached || { median: null, lowest: null, volume: null, fetchedAt: Date.now(), error: e.message };
+  }
+}
+
+function collapseInventory(invData) {
+  // descriptions[].classid+instanceid is the dedupe key; assets[].classid+instanceid maps to a description.
+  const descMap = new Map();
+  for (const d of (invData.descriptions || [])) {
+    const key = `${d.classid}_${d.instanceid}`;
+    descMap.set(key, d);
+  }
+  const groups = new Map();
+  for (const a of (invData.assets || [])) {
+    const key = `${a.classid}_${a.instanceid}`;
+    const d = descMap.get(key);
+    if (!d) continue;
+    if (d.marketable === 0 && d.tradable === 0) continue; // skip junk like Souvenir Tokens that have no value
+    const name = d.market_hash_name || d.market_name || d.name;
+    if (!groups.has(name)) {
+      groups.set(name, {
+        name,
+        marketHashName: d.market_hash_name || name,
+        marketName: d.market_name || name,
+        icon: d.icon_url ? `https://community.cloudflare.steamstatic.com/economy/image/${d.icon_url}/96fx96f` : null,
+        type: d.type || '',
+        rarity: (d.tags || []).find(t => t.category === 'Rarity')?.localized_tag_name || null,
+        rarityColor: (d.tags || []).find(t => t.category === 'Rarity')?.color || null,
+        quality: (d.tags || []).find(t => t.category === 'Quality')?.localized_tag_name || null,
+        exterior: (d.tags || []).find(t => t.category === 'Exterior')?.localized_tag_name || null,
+        weapon: (d.tags || []).find(t => t.category === 'Weapon')?.localized_tag_name || null,
+        marketable: !!d.marketable,
+        tradable: !!d.tradable,
+        count: 0,
+      });
+    }
+    groups.get(name).count += 1;
+  }
+  return [...groups.values()];
+}
+
+async function steamInventory(url, env) {
+  const sid = url.searchParams.get('sid');
+  const appid = url.searchParams.get('appid');
+  if (!sid || !appid) return jsonResponse({ error: 'sid and appid required' }, 400);
+  if (!INV_GAMES[appid]) return jsonResponse({ error: 'unsupported appid (CS2 730, Dota2 570, Rust 252490, TF2 440)' }, 400);
+  const cacheKey = `inv:raw:${sid}:${appid}`;
+  let raw = await kvGet(env, cacheKey);
+  if (!raw || (Date.now() - raw.fetchedAt) > 15 * 60 * 1000) {
+    try {
+      const data = await fetchSteamInventory(sid, appid);
+      raw = { items: collapseInventory(data), totalAssets: data.total_inventory_count || 0, fetchedAt: Date.now() };
+      await kvPut(env, cacheKey, raw, 6 * 3600);
+    } catch (e) {
+      if (raw) raw.stale = true; // serve last known
+      else return jsonResponse({ error: e.message, appid, sid, items: [], totalValue: 0, totalCount: 0 });
+    }
+  }
+  // Price each unique item (parallel, bounded)
+  const items = raw.items;
+  const BATCH = 8;
+  for (let i = 0; i < items.length; i += BATCH) {
+    const slice = items.slice(i, i + BATCH);
+    await Promise.all(slice.map(async it => {
+      const p = await fetchItemPrice(appid, it.marketHashName, env);
+      it.priceMedian = p.median;
+      it.priceLowest = p.lowest;
+      it.volume = p.volume;
+      it.priceStale = !!p.stale;
+      it.value = (p.median ?? p.lowest ?? 0) * it.count;
+    }));
+  }
+  items.sort((a, b) => (b.value || 0) - (a.value || 0));
+  const totalValue = items.reduce((s, it) => s + (it.value || 0), 0);
+  const totalCount = items.reduce((s, it) => s + it.count, 0);
+  return jsonResponse({
+    appid,
+    sid,
+    game: INV_GAMES[appid],
+    items,
+    totalValue,
+    totalCount,
+    currency: { code: INV_CURRENCY, symbol: INV_CURRENCY_SYM },
+    fetchedAt: raw.fetchedAt,
+    stale: !!raw.stale,
+  });
+}
+
+// Aggregated value across all four games. Lightweight: returns just totals,
+// not the full item list. Useful for the inventory tab summary cards.
+async function steamInventoryValue(url, env) {
+  const sid = url.searchParams.get('sid');
+  if (!sid) return jsonResponse({ error: 'sid required' }, 400);
+  const out = {};
+  let total = 0;
+  for (const appid of Object.keys(INV_GAMES)) {
+    const cacheKey = `inv:summary:${sid}:${appid}`;
+    let summary = await kvGet(env, cacheKey);
+    if (!summary || (Date.now() - summary.fetchedAt) > 30 * 60 * 1000) {
+      try {
+        // Reuse the full endpoint via direct call; it's a fast KV-hit if recently fetched.
+        const u = new URL(url);
+        u.searchParams.set('appid', appid);
+        const r = await steamInventory(u, env);
+        const j = await r.json();
+        summary = {
+          totalValue: j.totalValue || 0,
+          totalCount: j.totalCount || 0,
+          itemTypes: (j.items || []).length,
+          topItem: (j.items || [])[0] ? { name: j.items[0].name, value: j.items[0].value, icon: j.items[0].icon } : null,
+          fetchedAt: Date.now(),
+          private: false,
+        };
+        await kvPut(env, cacheKey, summary, 6 * 3600);
+      } catch (e) {
+        summary = { totalValue: 0, totalCount: 0, itemTypes: 0, topItem: null, fetchedAt: Date.now(), error: e.message };
+      }
+    }
+    out[appid] = { game: INV_GAMES[appid], ...summary };
+    total += summary.totalValue || 0;
+  }
+  return jsonResponse({ sid, totals: out, grandTotal: total, currency: { code: INV_CURRENCY, symbol: INV_CURRENCY_SYM } });
+}
+
+// Per-day snapshot of grand total for charting. Stored under inv:hist:<sid>.
+async function steamInventoryHistory(url, env) {
+  const sid = url.searchParams.get('sid');
+  if (!sid) return jsonResponse({ error: 'sid required' }, 400);
+  const hist = (await kvGet(env, `inv:hist:${sid}`)) || { points: [] };
+  return jsonResponse({ sid, history: hist.points || [], currency: { code: INV_CURRENCY, symbol: INV_CURRENCY_SYM } });
+}
+
+// Append a snapshot (called by cron or on demand when the tab is opened
+// and the last snapshot is >18h old).
+async function steamInventorySnapshot(url, env) {
+  const sid = url.searchParams.get('sid');
+  if (!sid) return jsonResponse({ error: 'sid required' }, 400);
+  // Build snapshot from cached summaries (no live re-fetch — don't tax Steam from per-user cron)
+  const point = { ts: Date.now(), perGame: {}, total: 0 };
+  for (const appid of Object.keys(INV_GAMES)) {
+    const summary = await kvGet(env, `inv:summary:${sid}:${appid}`);
+    if (summary) {
+      point.perGame[appid] = summary.totalValue || 0;
+      point.total += summary.totalValue || 0;
+    }
+  }
+  if (!point.total) return jsonResponse({ ok: false, reason: 'no cached inventory data to snapshot' });
+  const hist = (await kvGet(env, `inv:hist:${sid}`)) || { points: [] };
+  const today = new Date(point.ts).toISOString().slice(0, 10);
+  // Replace today's snapshot if it exists (idempotent within the same UTC day)
+  hist.points = (hist.points || []).filter(p => new Date(p.ts).toISOString().slice(0, 10) !== today);
+  hist.points.push(point);
+  // Keep last 180 days
+  hist.points = hist.points.slice(-180);
+  await kvPut(env, `inv:hist:${sid}`, hist);
+  return jsonResponse({ ok: true, point });
 }
 
 async function steamAchievements(url, path) {

@@ -533,6 +533,7 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
   <div class="nav-tabs" id="navTabs" style="display:none">
     <button class="nav-tab active" data-view="more">Home</button>
     <button class="nav-tab" data-view="library">Library</button>
+    <button class="nav-tab" data-view="inventory">Inventory</button>
     <button class="nav-tab" data-view="deals">Deals</button>
     <button class="nav-tab" data-view="recs">Discover</button>
     <button class="nav-tab" data-view="utility">Utility</button>
@@ -725,6 +726,60 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
     </div>
 
     <div id="buyRecList"><div class="empty"><span class="loading"></span> Finding games...</div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     INVENTORY VIEW — Steam item inventory + estimated value for
+     CS2, Dota 2, Rust, TF2. All client rendering happens in questlog.js.
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div class="view" id="view-inventory">
+  <div class="section">
+    <div class="section-head" style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px">
+      <div>
+        <h2 style="margin:0">Inventory <span style="color:var(--dim);font-weight:400;font-size:14px;letter-spacing:0;text-transform:none">CS2 · Dota 2 · Rust · TF2</span></h2>
+        <p style="color:var(--dim);font-size:13px;margin:6px 0 0;letter-spacing:0;text-transform:none">Live Steam market prices for every tradable item you own. Profile + inventory must be public.</p>
+      </div>
+      <div style="text-align:right">
+        <div style="color:var(--dim);font-size:11px;letter-spacing:1px;text-transform:uppercase">Grand Total</div>
+        <div id="invGrandTotal" style="color:var(--accent);font-size:28px;font-weight:800;line-height:1">—</div>
+        <div id="invGrandSub" style="color:var(--dim);font-size:11px;margin-top:4px">across 4 games</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game cards summary -->
+  <div id="invSummaryGrid" class="section" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px"></div>
+
+  <!-- 30-day value chart -->
+  <div class="section">
+    <div class="section-head"><h2>Value Over Time</h2></div>
+    <div id="invHistoryChart" style="position:relative;height:180px;background:rgba(0,0,0,0.2);border:1px solid var(--border);padding:12px">
+      <div class="empty" style="text-align:center;padding:60px 0;color:var(--dim);font-size:12px">Snapshots build over time. First snapshot saves on your first inventory load.</div>
+    </div>
+  </div>
+
+  <!-- Game tab selector -->
+  <div class="section">
+    <div id="invGameTabs" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border)"></div>
+
+    <!-- Filters + sort -->
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px">
+      <input type="text" id="invSearch" placeholder="Search items…" style="flex:1;min-width:200px;background:rgba(0,0,0,0.3);border:1px solid var(--border);color:var(--text-bright);padding:8px 12px;font-family:inherit;font-size:13px">
+      <select id="invSort" style="background:rgba(0,0,0,0.3);border:1px solid var(--border);color:var(--text-bright);padding:8px 12px;font-family:inherit;font-size:13px">
+        <option value="value">Sort: Total Value</option>
+        <option value="price">Sort: Item Price</option>
+        <option value="count">Sort: Quantity</option>
+        <option value="name">Sort: Name (A–Z)</option>
+        <option value="volume">Sort: Trade Volume</option>
+      </select>
+      <button id="invRefreshBtn" class="mood-btn">Refresh prices</button>
+    </div>
+
+    <!-- Item grid -->
+    <div id="invItemsHolder">
+      <div class="empty" style="text-align:center;padding:40px 0;color:var(--dim)">Pick a game above to load its inventory.</div>
+    </div>
   </div>
 </div>
 
@@ -1616,7 +1671,7 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
 
 </main>
 
-<script defer src="/questlog.js?v=01605068de45"></script>
+<script defer src="/questlog.js?v=155f92115db8"></script>
 
 <script>
 // PWA: capture install prompt for our custom button

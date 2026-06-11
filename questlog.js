@@ -106,6 +106,9 @@ document.querySelectorAll('.nav-tab').forEach(tab => {
     if (view === 'library') {
       if (!STATE.achLoaded && STATE.games?.length) { loadAchievements(); STATE.achLoaded = true; }
     }
+    if (view === 'inventory') {
+      if (!STATE.inventoryInitDone) { initInventory(); STATE.inventoryInitDone = true; }
+    }
   });
 });
 
@@ -3213,3 +3216,332 @@ if (typeof applyTheme === 'function') applyTheme(savedTheme);
   }, { passive: true });
   update();
 })();
+
+// ═══════════════════════════════════════════════════════════════
+// INVENTORY (CS2 / Dota 2 / Rust / TF2)
+// ═══════════════════════════════════════════════════════════════
+//
+// Loads each game's tradable inventory + live Steam Market prices,
+// caches per-game results in STATE.inventory[appid].
+//
+// Snapshots historic value via POST /api/steam/inventory/snapshot
+// on first daily open, so the chart fills out automatically.
+
+const INV_DEFS = [
+  { appid: '730',    name: 'CS2',    short: 'cs2',   accent: '#d97a2e' },
+  { appid: '570',    name: 'Dota 2', short: 'dota',  accent: '#c83838' },
+  { appid: '252490', name: 'Rust',   short: 'rust',  accent: '#cd5b1e' },
+  { appid: '440',    name: 'TF2',    short: 'tf2',   accent: '#b75d3a' },
+];
+const INV_CURRENCY = '£';
+STATE.inventory = STATE.inventory || {};   // { appid: { items, totalValue, ... } }
+STATE.invActiveAppid = STATE.invActiveAppid || '730';
+STATE.invFilter = STATE.invFilter || '';
+STATE.invSort = STATE.invSort || 'value';
+
+function fmtMoney(n) {
+  if (n == null || !Number.isFinite(n)) return '—';
+  if (n >= 1000) return INV_CURRENCY + n.toFixed(0);
+  return INV_CURRENCY + n.toFixed(2);
+}
+
+// Marketplace deep links — opens search for a market_hash_name on each site.
+// All four sites accept a plain text search query in their URL.
+function marketplaceLinks(appid, marketHashName) {
+  const q = encodeURIComponent(marketHashName);
+  const out = [
+    { name: 'Steam Market', url: `https://steamcommunity.com/market/listings/${appid}/${encodeURIComponent(marketHashName)}` },
+  ];
+  // CS2 / Rust / Dota2 all use the same external markets
+  if (appid === '730') {
+    out.push({ name: 'Skinport',  url: `https://skinport.com/market?search=${q}` });
+    out.push({ name: 'CSFloat',   url: `https://csfloat.com/search?type=any&market_hash_name=${q}` });
+    out.push({ name: 'DMarket',   url: `https://dmarket.com/ingame-items/item-list/csgo-skins?title=${q}` });
+    out.push({ name: 'BUFF163',   url: `https://buff.163.com/market/csgo#tab=selling&page_num=1&search=${q}` });
+  } else if (appid === '570') {
+    out.push({ name: 'Skinport',  url: `https://skinport.com/dota2/market?search=${q}` });
+    out.push({ name: 'DMarket',   url: `https://dmarket.com/ingame-items/item-list/dota2?title=${q}` });
+    out.push({ name: 'BUFF163',   url: `https://buff.163.com/market/dota2#tab=selling&page_num=1&search=${q}` });
+  } else if (appid === '252490') {
+    out.push({ name: 'Skinport',  url: `https://skinport.com/rust/market?search=${q}` });
+    out.push({ name: 'DMarket',   url: `https://dmarket.com/ingame-items/item-list/rust?title=${q}` });
+  } else if (appid === '440') {
+    out.push({ name: 'Backpack.tf', url: `https://backpack.tf/search?text=${q}&item_type=any` });
+    out.push({ name: 'Marketplace.tf', url: `https://marketplace.tf/items?text=${q}` });
+    out.push({ name: 'Scrap.tf', url: `https://scrap.tf/search?q=${q}` });
+  }
+  return out;
+}
+
+async function initInventory() {
+  renderInvSummary();   // skeletons
+  renderInvGameTabs();
+  bindInvControls();
+  await loadInvAll();
+  renderInvHistory();
+  // Save a snapshot so the history chart starts populating
+  try { await fetch(`/api/steam/inventory/snapshot?sid=${STATE.sid}`, { method: 'POST' }); } catch(e){}
+}
+
+function renderInvGameTabs() {
+  const holder = document.getElementById('invGameTabs');
+  if (!holder) return;
+  holder.innerHTML = INV_DEFS.map(g => `
+    <button class="sub-tab ${g.appid === STATE.invActiveAppid ? 'active' : ''}"
+            data-appid="${g.appid}"
+            style="border:1px solid var(--border);background:transparent;color:var(--text-bright);padding:8px 16px;font-family:inherit;font-size:12px;letter-spacing:1px;text-transform:uppercase;font-weight:700;cursor:pointer;${g.appid === STATE.invActiveAppid ? `color:${g.accent};border-color:${g.accent}` : ''}">
+      ${g.name}
+    </button>
+  `).join('');
+  holder.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      STATE.invActiveAppid = btn.dataset.appid;
+      renderInvGameTabs();
+      renderInvItems();
+    });
+  });
+}
+
+function bindInvControls() {
+  const search = document.getElementById('invSearch');
+  const sort = document.getElementById('invSort');
+  const refresh = document.getElementById('invRefreshBtn');
+  if (search) search.addEventListener('input', e => { STATE.invFilter = e.target.value.toLowerCase(); renderInvItems(); });
+  if (sort) sort.addEventListener('change', e => { STATE.invSort = e.target.value; renderInvItems(); });
+  if (refresh) refresh.addEventListener('click', async () => {
+    refresh.textContent = 'Refreshing…'; refresh.disabled = true;
+    // Invalidate cache: re-fetch the currently-active game (the server
+    // controls TTL, but we re-request to surface latest cached prices).
+    STATE.inventory[STATE.invActiveAppid] = null;
+    await loadInvSingle(STATE.invActiveAppid);
+    renderInvSummary();
+    renderInvItems();
+    refresh.textContent = 'Refresh prices'; refresh.disabled = false;
+  });
+}
+
+async function loadInvAll() {
+  // Fire all four in parallel so the summary grid fills as each lands.
+  await Promise.all(INV_DEFS.map(g => loadInvSingle(g.appid)));
+  renderInvSummary();
+  renderInvItems();
+  updateInvGrandTotal();
+}
+
+async function loadInvSingle(appid) {
+  const card = document.querySelector(`[data-inv-card="${appid}"]`);
+  if (card) card.classList.add('inv-loading');
+  try {
+    const r = await fetch(`/api/steam/inventory?sid=${STATE.sid}&appid=${appid}`);
+    const j = await r.json();
+    if (j.error) {
+      STATE.inventory[appid] = { error: j.error, items: [], totalValue: 0, totalCount: 0 };
+    } else {
+      STATE.inventory[appid] = j;
+    }
+  } catch (e) {
+    STATE.inventory[appid] = { error: e.message, items: [], totalValue: 0, totalCount: 0 };
+  } finally {
+    if (card) card.classList.remove('inv-loading');
+  }
+  // Re-render the affected card immediately
+  renderInvSummary();
+  updateInvGrandTotal();
+}
+
+function renderInvSummary() {
+  const grid = document.getElementById('invSummaryGrid');
+  if (!grid) return;
+  grid.innerHTML = INV_DEFS.map(g => {
+    const data = STATE.inventory[g.appid];
+    if (!data) {
+      return `<div class="stat-card" data-inv-card="${g.appid}" style="border-left:3px solid ${g.accent};padding:16px">
+        <div style="color:var(--dim);font-size:11px;letter-spacing:1px;text-transform:uppercase">${g.name}</div>
+        <div style="color:var(--text-bright);font-size:22px;font-weight:800;margin-top:8px"><span class="loading"></span></div>
+      </div>`;
+    }
+    if (data.error) {
+      const isPrivate = /private/i.test(data.error);
+      return `<div class="stat-card" data-inv-card="${g.appid}" style="border-left:3px solid var(--dim);padding:16px;opacity:0.7">
+        <div style="color:var(--dim);font-size:11px;letter-spacing:1px;text-transform:uppercase">${g.name}</div>
+        <div style="color:var(--text-bright);font-size:14px;margin-top:8px;font-weight:600">${isPrivate ? 'Private' : 'Unavailable'}</div>
+        <div style="color:var(--dim);font-size:11px;margin-top:4px">${isPrivate ? 'Set inventory to Public in Steam' : (data.error.slice(0, 60))}</div>
+      </div>`;
+    }
+    const top = data.items && data.items[0];
+    const isEmpty = !data.totalCount;
+    return `<div class="stat-card" data-inv-card="${g.appid}" style="border-left:3px solid ${g.accent};padding:16px;cursor:pointer;${isEmpty ? 'opacity:0.55' : ''}" onclick="switchInvTab('${g.appid}')">
+      <div style="color:var(--dim);font-size:11px;letter-spacing:1px;text-transform:uppercase">${g.name}</div>
+      <div style="color:${isEmpty ? 'var(--dim)' : 'var(--accent)'};font-size:24px;font-weight:800;margin-top:6px;line-height:1">${isEmpty ? '—' : fmtMoney(data.totalValue)}</div>
+      <div style="color:var(--dim);font-size:11px;margin-top:6px">${isEmpty ? 'No tradable items' : `${data.totalCount} items · ${(data.items||[]).length} types`}</div>
+      ${top ? `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;color:var(--text-bright);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${top.name}">Top: ${top.name}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function updateInvGrandTotal() {
+  const totalEl = document.getElementById('invGrandTotal');
+  const subEl = document.getElementById('invGrandSub');
+  if (!totalEl) return;
+  let total = 0, loaded = 0, count = 0;
+  for (const g of INV_DEFS) {
+    const d = STATE.inventory[g.appid];
+    if (d && !d.error) { total += (d.totalValue || 0); count += (d.totalCount || 0); loaded++; }
+  }
+  totalEl.textContent = fmtMoney(total);
+  if (subEl) subEl.textContent = `${count} items · ${loaded}/4 games loaded`;
+}
+
+function switchInvTab(appid) {
+  STATE.invActiveAppid = appid;
+  renderInvGameTabs();
+  renderInvItems();
+  // Scroll to the items section
+  const holder = document.getElementById('invItemsHolder');
+  if (holder) holder.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function renderInvItems() {
+  const holder = document.getElementById('invItemsHolder');
+  if (!holder) return;
+  const data = STATE.inventory[STATE.invActiveAppid];
+  if (!data) {
+    holder.innerHTML = `<div class="empty" style="text-align:center;padding:40px 0;color:var(--dim)"><span class="loading"></span> Loading inventory…</div>`;
+    return;
+  }
+  if (data.error) {
+    const isPrivate = /private/i.test(data.error);
+    holder.innerHTML = `<div class="empty" style="text-align:center;padding:40px 20px;color:var(--dim)">
+      <div style="font-size:14px;color:var(--text-bright);margin-bottom:12px">${isPrivate ? 'This inventory is private.' : 'Could not load inventory.'}</div>
+      <div style="font-size:12px;max-width:480px;margin:0 auto;line-height:1.6">${isPrivate
+        ? 'Open Steam → your profile → Edit Profile → Privacy Settings. Set <b>My profile</b> and <b>Inventory</b> to Public, then refresh.'
+        : data.error}</div>
+    </div>`;
+    return;
+  }
+  let items = (data.items || []).slice();
+  // Filter
+  if (STATE.invFilter) {
+    items = items.filter(it => (it.name || '').toLowerCase().includes(STATE.invFilter));
+  }
+  // Sort
+  const sort = STATE.invSort;
+  items.sort((a, b) => {
+    if (sort === 'price') return (b.priceMedian || b.priceLowest || 0) - (a.priceMedian || a.priceLowest || 0);
+    if (sort === 'count') return b.count - a.count;
+    if (sort === 'name')  return (a.name || '').localeCompare(b.name || '');
+    if (sort === 'volume') return (b.volume || 0) - (a.volume || 0);
+    return (b.value || 0) - (a.value || 0); // value
+  });
+
+  if (!items.length) {
+    holder.innerHTML = `<div class="empty" style="text-align:center;padding:40px 0;color:var(--dim)">No items match.</div>`;
+    return;
+  }
+  holder.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px">
+      ${items.map(it => renderInvCard(STATE.invActiveAppid, it)).join('')}
+    </div>
+    <div style="color:var(--dim);font-size:11px;margin-top:16px;text-align:center">
+      Showing ${items.length} of ${(data.items||[]).length} items · Prices via Steam Community Market${data.stale ? ' · Cached (Steam rate-limited)' : ''}
+    </div>
+  `;
+}
+
+function renderInvCard(appid, it) {
+  const price = it.priceMedian ?? it.priceLowest;
+  const rarityColor = it.rarityColor ? `#${it.rarityColor}` : '#888';
+  const links = marketplaceLinks(appid, it.marketHashName);
+  const linkHtml = links.map(l => `<a href="${l.url}" target="_blank" rel="noopener" style="font-size:10px;padding:3px 6px;background:rgba(200,241,53,0.08);color:var(--accent);text-decoration:none;border:1px solid rgba(200,241,53,0.2);letter-spacing:0.5px">${l.name}</a>`).join('');
+  return `
+    <div style="border:1px solid var(--border);background:rgba(0,0,0,0.2);padding:12px;display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;gap:10px;align-items:flex-start">
+        ${it.icon ? `<img src="${it.icon}" alt="" style="width:64px;height:64px;object-fit:contain;background:linear-gradient(135deg,${rarityColor}20,transparent);border-left:3px solid ${rarityColor};flex-shrink:0" loading="lazy">` : '<div style="width:64px;height:64px;background:rgba(0,0,0,0.4);flex-shrink:0"></div>'}
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;color:var(--text-bright);font-weight:700;line-height:1.3;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${escapeHtml(it.name)}</div>
+          ${it.exterior ? `<div style="font-size:10px;color:var(--dim);margin-top:2px">${escapeHtml(it.exterior)}</div>` : ''}
+          ${it.rarity ? `<div style="font-size:10px;color:${rarityColor};margin-top:2px;font-weight:600">${escapeHtml(it.rarity)}</div>` : ''}
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--border);padding-top:8px">
+        <div>
+          <div style="color:var(--accent);font-size:16px;font-weight:800">${price != null ? fmtMoney(price) : '—'}</div>
+          ${it.count > 1 ? `<div style="color:var(--dim);font-size:10px">× ${it.count} = ${fmtMoney(it.value)}</div>` : ''}
+        </div>
+        <div style="text-align:right">
+          ${it.volume ? `<div style="color:var(--dim);font-size:10px">vol ${it.volume}/day</div>` : ''}
+          ${it.priceStale ? `<div style="color:#cc7722;font-size:9px">stale</div>` : ''}
+        </div>
+      </div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap">${linkHtml}</div>
+    </div>
+  `;
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+}
+
+async function renderInvHistory() {
+  const holder = document.getElementById('invHistoryChart');
+  if (!holder) return;
+  try {
+    const r = await fetch(`/api/steam/inventory/history?sid=${STATE.sid}`);
+    const j = await r.json();
+    const points = j.history || [];
+    if (points.length < 2) {
+      holder.innerHTML = `<div class="empty" style="text-align:center;padding:60px 0;color:var(--dim);font-size:12px">
+        ${points.length === 0 ? 'No snapshots yet. Reload the Inventory tab tomorrow to see the chart fill in.' : 'Need at least 2 snapshots before charting. Come back tomorrow.'}
+      </div>`;
+      return;
+    }
+    drawInvHistoryChart(holder, points);
+  } catch (e) {
+    holder.innerHTML = `<div class="empty" style="text-align:center;padding:60px 0;color:var(--dim);font-size:12px">Could not load history.</div>`;
+  }
+}
+
+function drawInvHistoryChart(holder, points) {
+  holder.innerHTML = '';
+  const w = holder.clientWidth || 600, h = 160;
+  const svg = `<svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}" preserveAspectRatio="none" style="display:block">
+    ${buildInvChartSVG(points, w, h)}
+  </svg>
+  <div style="display:flex;justify-content:space-between;color:var(--dim);font-size:10px;margin-top:6px">
+    <span>${new Date(points[0].ts).toLocaleDateString()}</span>
+    <span>${new Date(points[points.length-1].ts).toLocaleDateString()}</span>
+  </div>`;
+  holder.innerHTML = svg;
+}
+
+function buildInvChartSVG(points, w, h) {
+  const pad = 8;
+  const ws = w - pad * 2, hs = h - pad * 2;
+  const values = points.map(p => p.total || 0);
+  const max = Math.max(...values, 1);
+  const min = Math.min(...values, 0);
+  const range = Math.max(max - min, 0.01);
+  const xStep = ws / Math.max(points.length - 1, 1);
+  const pts = points.map((p, i) => {
+    const x = pad + i * xStep;
+    const y = pad + hs - ((p.total - min) / range) * hs;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+  const linePath = `M ${pts.join(' L ')}`;
+  const fillPath = `${linePath} L ${(pad + (points.length - 1) * xStep).toFixed(1)},${(pad + hs).toFixed(1)} L ${pad},${(pad + hs).toFixed(1)} Z`;
+  return `
+    <defs>
+      <linearGradient id="invFill" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#c8f135" stop-opacity="0.35"/>
+        <stop offset="100%" stop-color="#c8f135" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <path d="${fillPath}" fill="url(#invFill)"/>
+    <path d="${linePath}" stroke="#c8f135" stroke-width="2" fill="none"/>
+    <text x="${w-4}" y="${pad+12}" text-anchor="end" fill="#888" font-size="10">${INV_CURRENCY}${max.toFixed(2)}</text>
+    <text x="${w-4}" y="${h-pad}" text-anchor="end" fill="#888" font-size="10">${INV_CURRENCY}${min.toFixed(2)}</text>
+  `;
+}
+
+// Make switchInvTab globally callable from inline onclick
+window.switchInvTab = switchInvTab;
