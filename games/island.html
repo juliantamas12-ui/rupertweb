@@ -7700,8 +7700,10 @@ function drawDialogue(ctx) {
   const cw = ctx.canvas.width, ch = ctx.canvas.height;
   const hasOptions = d.charIdx >= d.text.length && d.options && d.options.length > 0;
   const bh = hasOptions ? 168 : 138;
-  // Lift above the hotbar (which sits ~80px from bottom in CSS)
-  const bx = 36, by = ch - bh - 96, bw = cw - 72;
+  // Lift above the hotbar (~80px from bottom) and clear the bottom-left
+  // minimap (~144px wide). Mobile shrinks the minimap; mirror that here.
+  const minimapClearance = (cw < 768) ? 100 : 152;
+  const bx = minimapClearance, by = ch - bh - 96, bw = cw - bx - 36;
 
   // Shadow
   ctx.fillStyle = 'rgba(0,0,0,0.45)';
