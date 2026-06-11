@@ -409,7 +409,7 @@ const T = { DEEP_OCEAN:0, SHALLOW_WATER:1, BEACH:2, JUNGLE_LIGHT:3, JUNGLE_DARK:
 
 const TILE_COLORS = {
   0: '#1a4a6a', 1: '#3dd6d0', 2: '#e8d49a',
-  3: '#2d7a2d', 4: '#1a4a1a', 5: '#4a2020', 6: '#ff4400'
+  3: '#2d7a2d', 4: '#22622a', 5: '#4a2020', 6: '#ff4400'
 };
 
 // Game state
@@ -802,21 +802,8 @@ function genMap() {
     }
   }
 
-  // Jungle maze walls — add impassable rock wall tiles in dark jungle
-  for (let i = 0; i < 40; i++) {
-    const wx = 45 + Math.floor(Math.random() * 60);
-    const wy = 45 + Math.floor(Math.random() * 60);
-    if (state.map[wy] && state.map[wy][wx] === T.JUNGLE_DARK) {
-      const len = 3 + Math.floor(Math.random() * 6);
-      const horiz = Math.random() > 0.5;
-      for (let j = 0; j < len; j++) {
-        const tx = horiz ? wx + j : wx;
-        const ty = horiz ? wy : wy + j;
-        if (ty >= 0 && ty < MSIZE && tx >= 0 && tx < MSIZE)
-          state.map[ty][tx] = T.VOLCANIC;
-      }
-    }
-  }
+  // Jungle maze walls disabled — they used VOLCANIC tiles which read as
+  // dark-red lava traps (visual artifact + damaged the player on contact).
 
   // Hidden lagoon on north side (scaled for 150-tile world)
   for (let ly = 8; ly <= 15; ly++) {
@@ -4150,13 +4137,14 @@ function updateMinigame(canvas) {
 function drawMinigame(ctx) {
   const mg = state.minigame;
   if (!mg) return;
+  // Force screen-space: the main render leaves the zoom transform active.
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
   const cw = ctx.canvas.width, ch = ctx.canvas.height;
   // Dim the world so the minigame box reads clearly
   if (mg.type === 'chop' || mg.type === 'mine' || mg.type === 'fish_wait' || mg.type === 'fish_bite' || mg.type === 'fish_reel') {
-    ctx.save();
     ctx.fillStyle = 'rgba(0,0,0,0.45)';
     ctx.fillRect(0, 0, cw, ch);
-    ctx.restore();
   }
   const bw = 480, bh = 170;
   const bx = cw/2 - bw/2, by = ch/2 - bh/2;
@@ -4267,6 +4255,7 @@ function drawMinigame(ctx) {
   }
 
   ctx.textAlign = 'left';
+  ctx.restore(); // restore the zoom transform we temporarily reset
 }
 
 function handleMinigameKey(key) {
@@ -7346,10 +7335,14 @@ function updateDialogue() {
 function drawDialogue(ctx) {
   const d = state.dialogue;
   if (!d) return;
+  // Force screen-space drawing: the main render leaves the zoom transform active.
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
   const cw = ctx.canvas.width, ch = ctx.canvas.height;
   const hasOptions = d.charIdx >= d.text.length && d.options && d.options.length > 0;
   const bh = hasOptions ? 168 : 138;
-  const bx = 36, by = ch - bh - 14, bw = cw - 72;
+  // Lift above the hotbar (which sits ~80px from bottom in CSS)
+  const bx = 36, by = ch - bh - 96, bw = cw - 72;
 
   // Shadow
   ctx.fillStyle = 'rgba(0,0,0,0.45)';
@@ -7448,6 +7441,7 @@ function drawDialogue(ctx) {
       ctx.textAlign = 'left';
     }
   }
+  ctx.restore(); // restore the zoom transform we temporarily reset
 }
 
 // ============================================================
@@ -7852,62 +7846,38 @@ function drawTile(ctx, type, sx, sy) {
     if (r5 >= 18 && r5 < 24) { ctx.fillStyle = 'rgba(255,250,235,0.55)'; ctx.fillRect(sx+subX, sy+subY, 2, 2); } // shell
     if (r5 >= 24 && r5 < 27) { ctx.fillStyle = 'rgba(120,90,55,0.35)'; ctx.fillRect(sx+(subX%12), sy+(subY%12), 3, 2); } // driftbit
   } else if (type === T.JUNGLE_LIGHT) {
-    // Light jungle: grass tufts, flower dots, dirt patches, fern fronds
-    if (r5 < 35) { // grass tuft
-      ctx.fillStyle = 'rgba(80,140,40,0.55)';
-      ctx.fillRect(sx+subX, sy+subY, 2, 3);
-      ctx.fillRect(sx+subX+2, sy+subY+1, 1, 2);
-    }
-    if (r5 >= 35 && r5 < 42) { // dirt patch
-      ctx.fillStyle = 'rgba(95,65,30,0.32)';
-      ctx.fillRect(sx+(subX%10), sy+(subY%10), 5, 4);
-    }
-    if (r5 >= 42 && r5 < 47) { // flower (yellow/white/red)
-      const fc = (h >>> 15) & 3;
-      ctx.fillStyle = fc===0 ? '#f0d860' : fc===1 ? '#f8f0e0' : fc===2 ? '#d04040' : '#c060d0';
+    // Light jungle: subtle texture only — grass shimmer, occasional flower
+    if (r5 < 22) { // grass tuft (brighter than base — reads as highlight)
+      ctx.fillStyle = 'rgba(120,180,80,0.35)';
       ctx.fillRect(sx+subX, sy+subY, 2, 2);
-      ctx.fillStyle = '#3a6a1a';
-      ctx.fillRect(sx+subX+1, sy+subY+2, 1, 2);
     }
-    if (r5 >= 47 && r5 < 53) { // fallen leaf
-      ctx.fillStyle = 'rgba(140,110,40,0.5)';
-      ctx.fillRect(sx+(subX%12), sy+(subY%12), 3, 2);
+    if (r5 >= 22 && r5 < 27) { // small flower (rare, single dot of colour)
+      const fc = (h >>> 15) & 3;
+      ctx.fillStyle = fc===0 ? '#f0d860' : fc===1 ? '#f8f0e0' : fc===2 ? '#e07050' : '#c890e0';
+      ctx.fillRect(sx+subX, sy+subY, 2, 2);
     }
-    // Lighter sun-dapple
-    if (r5 >= 80 && r5 < 90) {
-      ctx.fillStyle = 'rgba(220,240,180,0.07)';
+    // Sun-dapple: lighter wash on a few tiles
+    if (r5 >= 70 && r5 < 78) {
+      ctx.fillStyle = 'rgba(220,240,180,0.06)';
       ctx.fillRect(sx, sy, TSIZE+1, TSIZE+1);
     }
   } else if (type === T.JUNGLE_DARK) {
-    // Dark jungle: moss, dead leaves, glowing mushrooms at night, vine bits
-    if (r5 < 30) { // moss patch
-      ctx.fillStyle = 'rgba(40,90,30,0.55)';
-      ctx.fillRect(sx+(subX%10), sy+(subY%10), 6, 4);
+    // Dark jungle: only subtle highlights (lighter, never darker than base)
+    if (r5 < 18) { // moss highlight — lighter than base
+      ctx.fillStyle = 'rgba(80,140,50,0.35)';
+      ctx.fillRect(sx+(subX%10), sy+(subY%10), 3, 2);
     }
-    if (r5 >= 30 && r5 < 40) { // dead leaves
-      ctx.fillStyle = 'rgba(80,55,25,0.55)';
-      ctx.fillRect(sx+subX, sy+subY, 3, 2);
-      ctx.fillRect(sx+(subX+4)%14, sy+(subY+3)%14, 2, 2);
-    }
-    if (r5 >= 40 && r5 < 46) { // small mushroom
+    if (r5 >= 18 && r5 < 24) { // glowing mushroom dot (at night)
       const isGlow = state.isNight;
-      ctx.fillStyle = isGlow ? 'rgba(180,255,180,0.85)' : '#9a7a4a';
-      ctx.fillRect(sx+subX+1, sy+subY, 3, 2);
-      ctx.fillStyle = '#e8d4a8';
-      ctx.fillRect(sx+subX+1, sy+subY+2, 3, 2);
       if (isGlow) {
-        ctx.fillStyle = 'rgba(120,255,160,0.25)';
-        ctx.fillRect(sx+subX-1, sy+subY-1, 7, 6);
+        ctx.fillStyle = 'rgba(140,255,180,0.55)';
+        ctx.fillRect(sx+subX+1, sy+subY, 2, 2);
+        ctx.fillStyle = 'rgba(120,255,160,0.18)';
+        ctx.fillRect(sx+subX, sy+subY-1, 4, 4);
+      } else {
+        ctx.fillStyle = 'rgba(220,200,140,0.5)'; // pale dot during day
+        ctx.fillRect(sx+subX+1, sy+subY, 2, 2);
       }
-    }
-    if (r5 >= 46 && r5 < 52) { // root bump
-      ctx.fillStyle = 'rgba(45,30,15,0.6)';
-      ctx.fillRect(sx+(subX%12), sy+(subY%12), 5, 2);
-    }
-    // Sparse undergrowth speckle
-    if (r5 >= 90) {
-      ctx.fillStyle = 'rgba(10,30,10,0.25)';
-      ctx.fillRect(sx+(subX%14), sy+(subY%14), 2, 2);
     }
   } else if (type === T.VOLCANIC) {
     // Volcanic: ash piles, glowing cracks, small obsidian flecks
