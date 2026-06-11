@@ -3365,7 +3365,7 @@ function spawnEnemies(n, type) {
     if (Math.hypot(ex - 62*TSIZE, ey - 87*TSIZE) < 20*TSIZE) continue;
     // Zone-based difficulty scaling: each gate the player unlocks toughens
     // every NEW spawn. Light jungle (z0) -> dark (z1) -> deep (z2) -> volcanic (z3) -> village (z4).
-    const zoneMult = 1 + (state.zoneUnlocked || 0) * 0.45;
+    const zoneMult = 1 + (state.zoneUnlocked || 0) * 0.30;
     const baseHp = (t==='shadow'?40:32) + state.day * 5;
     const hp = Math.round(baseHp * zoneMult);
     const baseSpd = (t==='shadow'?0.84:0.49) + state.day*0.014;
@@ -6617,7 +6617,7 @@ function handleClick(sx, sy) {
     const _baseCooldowns = {sword:20, spear:30, fire_spear:45, fire_axe:25, stone_knife:15, lava_blade:22, magma_hammer:40, depth_spear:28, bone_spear:28, crystal_blade:20, tribal_weapon:25};
     const _baseRanges    = {sword:48, spear:80, fire_spear:64, fire_axe:56, stone_knife:36, lava_blade:52, magma_hammer:60, depth_spear:72, bone_spear:80, crystal_blade:52, tribal_weapon:56};
     const cooldownMap = Object.fromEntries(Object.entries(_baseCooldowns).map(([k,v])=>[k, getSkillAttackCooldown(v)]));
-    const dmgMap = {sword:15, spear:18, fire_spear:30, fire_axe:22, stone_knife:8, lava_blade:35, magma_hammer:45, depth_spear:50, bone_spear:25, crystal_blade:40, tribal_weapon:22};
+    const dmgMap = {sword:25, spear:30, fire_spear:45, fire_axe:35, stone_knife:14, lava_blade:55, magma_hammer:70, depth_spear:75, bone_spear:40, crystal_blade:60, tribal_weapon:35};
     const rangeMap = Object.fromEntries(Object.entries(_baseRanges).map(([k,v])=>[k, getSkillCombatRange(v)]));
     const combatColor = (tool==='fire_spear'||tool==='fire_axe'||tool==='lava_blade'||tool==='magma_hammer') ? '#ff6600' : (tool==='depth_spear' ? '#3dd6d0' : tool==='crystal_blade' ? '#aa44ff' : '#e74c3c');
     const attackReach = rangeMap[tool] || getSkillCombatRange(56);
