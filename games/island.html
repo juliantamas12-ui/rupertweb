@@ -151,7 +151,14 @@ canvas#c{pointer-events:none}
   padding:20px 18px;z-index:300;display:none;max-height:75vh;overflow-y:auto;border-radius:16px;
 }
 #inv-panel{top:50%;left:50%;transform:translate(-50%,-50%);min-width:320px}
-#craft-panel{top:50%;left:70%;transform:translate(-50%,-50%);min-width:290px}
+#craft-panel{top:50%;left:50%;transform:translate(-50%,-50%);min-width:290px}
+/* Dim overlay so menus read as modal and the world behind them stays out of the way */
+#inv-panel::before,#craft-panel::before,#build-menu::before{
+  content:'';position:fixed;inset:0;
+  background:rgba(0,0,0,0.55);
+  z-index:-1;
+  pointer-events:none;
+}
 .panel-title{
   font-family:'Cinzel',serif;color:#e8d490;font-size:13px;letter-spacing:3px;
   margin-bottom:14px;
@@ -14609,6 +14616,21 @@ function _gameLoopBody() {
   if (state.hitStopFrames > 0) {
     state.hitStopFrames--;
     render(ctx, minimapCtx); // still render (frozen frame is the point)
+    return;
+  }
+  // ── MENUS PAUSE THE WORLD ──
+  // Opening WORKBENCH / PACK / BUILD or the wreck interior should freeze the
+  // world so nothing kills you while you're crafting or organizing.
+  const _invOpen   = document.getElementById('inv-panel');
+  const _craftOpen = document.getElementById('craft-panel');
+  const _buildOpen = document.getElementById('build-menu');
+  const _menuOpen = (_invOpen && _invOpen.style.display === 'block')
+                 || (_craftOpen && _craftOpen.style.display === 'block')
+                 || (_buildOpen && _buildOpen.style.display === 'block')
+                 || state.inWreck;
+  if (_menuOpen) {
+    // Still render so UI updates (panel content, HP bar etc.), but skip all world updates.
+    render(ctx, minimapCtx);
     return;
   }
   updatePlayer();
