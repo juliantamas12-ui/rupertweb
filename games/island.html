@@ -9109,40 +9109,45 @@ function drawHoverHighlight(ctx, camX, camY) {
   const hsx = Math.floor(hoverObj.x - camX);
   const hsy = Math.floor(hoverObj.y - camY);
   ctx.save();
-  // Minimal white outline — sized to the object's actual interactive footprint.
-  // Trees use a tight box around the TRUNK (where you click), not the wide canopy,
-  // so the outline visibly hugs the thing the player is targeting.
-  // [w, h, yOffset] in world units. yOffset is relative to obj.y (the base).
+  // White outline — sized to the actual sprite bounding box from each draw function.
+  // [w, h, yOffset] in world units. yOffset is the TOP of the box relative to obj.y (the sprite base).
+  // These match the real pixel extents drawn by the corresponding draw* functions.
   const OUTLINE_BOX = {
-    tree:        [10, 22, -18],
-    breadfruit:  [12, 24, -20],
-    mape:        [12, 24, -20],
-    purau:       [10, 22, -18],
-    pandanus:    [10, 22, -18],
-    filao:       [8,  22, -18],
-    hutu:        [12, 24, -20],
-    rock:        [14, 10, -8],
-    vol_rock:    [14, 10, -8],
-    palm:        [10, 28, -24],
-    coconut_palm:[10, 28, -24],
-    berry:       [12, 10, -7],
-    driftwood:   [18, 6,  -3],
+    // Trees — trunk + canopy (canopy extends y=-20 to y=+4 from base)
+    tree:        [28, 36, -20],
+    breadfruit:  [30, 38, -22],
+    mape:        [30, 38, -22],
+    purau:       [26, 34, -20],
+    pandanus:    [26, 34, -20],
+    filao:       [22, 34, -20],
+    hutu:        [30, 38, -22],
+    // Rocks (full body: sy-10 to sy+12)
+    rock:        [20, 24, -12],
+    vol_rock:    [18, 18, -10],
+    // Palms — tall trunk + fronds
+    palm:        [26, 42, -28],
+    coconut_palm:[26, 42, -28],
+    // Ground bushes / fruit (drawBerry: sy-8 to sy+6, 16 wide)
+    berry:       [18, 16, -9],
+    fruit:       [14, 14, -9],
+    // Beach/ground items
+    driftwood:   [22, 8,  -4],
     pebble:      [10, 6,  -4],
-    flotsam:     [18, 8,  -5],
-    bottle:      [8,  12, -9],
-    fruit:       [10, 10, -7],
-    fish_cooked: [12, 8,  -5],
-    journal:     [10, 12, -9],
-    snare_trap:  [16, 10, -7],
-    chest:       [20, 16, -11],
-    bed:         [24, 16, -9],
-    campfire:    [20, 16, -11],
-    forge:       [22, 20, -13],
-    waterfall:   [22, 26, -20],
-    supply_cache:[20, 16, -11],
-    underwater_wreck:[36, 24, -14],
-    dive_spot:   [18, 12, -7],
-    death_pack:  [16, 12, -9],
+    flotsam:     [22, 12, -6],
+    bottle:      [12, 18, -14],
+    fish_cooked: [16, 10, -5],
+    journal:     [14, 16, -10],
+    snare_trap:  [20, 12, -8],
+    // Buildings / placed structures
+    chest:       [24, 20, -14],
+    bed:         [32, 20, -10],
+    campfire:    [24, 20, -14],
+    forge:       [26, 26, -18],
+    waterfall:   [30, 36, -28],
+    supply_cache:[24, 20, -14],
+    underwater_wreck:[44, 32, -18],
+    dive_spot:   [22, 18, -10],
+    death_pack:  [20, 16, -10],
   };
   const box = OUTLINE_BOX[hoverObj.type] || [14, 14, -10];
   const ow = box[0], oh = box[1], oy = box[2];
