@@ -376,7 +376,9 @@ canvas#c{pointer-events:none}
       <div class="pm-brightness-label">BRIGHTNESS</div>
       <input type="range" id="brightness-slider" min="30" max="100" value="100" oninput="setBrightness(this.value)" onclick="event.stopPropagation()">
     </div>
-    <button class="pm-btn" onclick="restartGame()">RESTART</button>
+    <button class="pm-btn" onclick="saveGame()">SAVE</button>
+    <button class="pm-btn" onclick="saveAndQuit()">SAVE &amp; QUIT</button>
+    <button class="pm-btn" onclick="if(confirm('Restart now? Your current save will be wiped.')) restartGame();">RESTART</button>
     <button class="pm-btn" id="music-btn" onclick="toggleMusic()" style="cursor:pointer">MUSIC: ON</button>
     <div id="pause-leaderboard" style="margin-top:14px;border-top:1px solid rgba(120,80,20,0.4);padding-top:10px"></div>
   </div>
@@ -388,6 +390,14 @@ canvas#c{pointer-events:none}
   <div id="win-score"></div>
   <p id="win-text">You survived. You escaped. The island fades behind the horizon.</p>
   <button class="pm-btn" style="margin-top:18px;" onclick="restartGame()">PLAY AGAIN</button>
+</div>
+
+<!-- LOAD/START SCREEN: only shown when a save exists on page load -->
+<div id="start-screen" style="position:fixed;inset:0;background:radial-gradient(ellipse at center,#0e0802 0%,#060402 100%);z-index:400;display:none;flex-direction:column;align-items:center;justify-content:center;font-family:'Cinzel',serif;">
+  <h1 style="color:#c8d060;font-size:30px;letter-spacing:6px;margin-bottom:28px;text-shadow:0 0 30px rgba(200,210,50,0.4);">ISLAND SURVIVAL</h1>
+  <div id="start-save-info" style="color:#8a7030;font-family:'Lato',sans-serif;font-size:12px;letter-spacing:1px;margin-bottom:18px;"></div>
+  <button id="start-continue" class="pm-btn" style="min-width:200px;margin-bottom:10px;">CONTINUE</button>
+  <button id="start-new" class="pm-btn" style="min-width:200px;">NEW GAME</button>
 </div>
 
 <script>
@@ -11463,6 +11473,8 @@ function updateDayNight() {
     state.day++;
     document.getElementById('day-display').textContent = `DAY ${state.day}`;
     fireDayMilestone(state.day);
+    // Auto-save once per day so progress isn't lost mid-run.
+    try { saveGame(); } catch(e){_logError('autosave',e);}
 
     // === LIVING ISLAND: advance weather forecast per day ===
     state.weatherForecastDayCount = (state.weatherForecastDayCount || 0) + 1;
@@ -13905,16 +13917,189 @@ function resumeGame() {
   if (pm) pm.style.display = 'none';
 }
 
-// Restart the game cleanly. There is no world save yet — just reload the page for a fresh world.
-// Meta progress (skills, achievements, recipes) is still persisted so it isn't lost between runs.
+// ── SAVE / LOAD SYSTEM ──
+// One save slot. localStorage key: 'island_save_v1'. Includes the world map, player,
+// objects, npcs, day/weather/tide, quests, story flags, wreck state.
+const SAVE_VERSION = 1;
+const SAVE_KEY = 'island_save_v1';
+
+function saveGame() {
+  try {
+    // Strip companions of their cached follow target (it'll re-resolve on load)
+    const npcsLite = (state.npcs || []).map(n => ({
+      id: n.id,
+      x: n.x, y: n.y, hp: n.hp, maxHp: n.maxHp,
+      _lineIdx: n._lineIdx || 0,
+      companion: !!n.companion,
+      atCamp: !!n.atCamp,
+      _bedX: n._bedX, _bedY: n._bedY,
+      unconscious: !!n.unconscious,
+      crashSurvivor: !!n.crashSurvivor,
+      questGiven: !!n.questGiven,
+      questDone: !!(n.quest && n.quest.done),
+      itemsGathered: n.itemsGathered || 0,
+      _firedLines: (n.lines||[]).map(l => !!l._fired),
+    }));
+    const objectsLite = (state.objects || []).map(o => {
+      // Only persist fields that change over a run; the rest reload from worldgen defaults
+      const out = { type: o.type, x: o.x, y: o.y };
+      if (o.placed) out.placed = true;
+      if (o.collected) out.collected = true;
+      if (o.read) out.read = true;
+      if (o.opened) out.opened = true;
+      if (o.hp !== undefined) out.hp = o.hp;
+      if (o.maxHp !== undefined) out.maxHp = o.maxHp;
+      if (o.respawn) out.respawn = o.respawn;
+      if (o.seed !== undefined) out.seed = o.seed;
+      if (o.flipX !== undefined) out.flipX = o.flipX;
+      if (o.scale !== undefined) out.scale = o.scale;
+      if (o.decor) out.decor = true;
+      if (o.inv) out.inv = o.inv;
+      if (o.lootItems) out.lootItems = o.lootItems;
+      if (o._placedDay !== undefined) out._placedDay = o._placedDay;
+      if (o.text !== undefined) out.text = o.text;
+      return out;
+    });
+    const loreStonesLite = (state.loreStones || []).map(s => ({ x: s.x, y: s.y, text: s.text, read: !!s.read }));
+
+    const blob = {
+      version: SAVE_VERSION,
+      savedAt: Date.now(),
+      // Player — full clone, inventory and all
+      player: JSON.parse(JSON.stringify(state.player)),
+      // World
+      map: state.map,
+      objects: objectsLite,
+      npcs: npcsLite,
+      loreStones: loreStonesLite,
+      // Time + weather
+      day: state.day,
+      season: state.season,
+      dayTime: state.dayTime,
+      tideLevel: state.tideLevel,
+      isNight: state.isNight,
+      // Story / quest flags
+      zoneUnlocked: state.zoneUnlocked || 0,
+      storyChoices: state.storyChoices || {},
+      wreckItems: state.wreckItems || {},
+      hasOpenedCrafting: !!state.hasOpenedCrafting,
+      crewWoken: state.crewWoken || 0,
+      tutorials: state.tutorials || {},
+      // Run stats
+      runStats: state.runStats || {},
+      // Meta (also persisted separately for between-run carry)
+      skills: state.skills || {},
+      discoveredRecipes: [...(state.discoveredRecipes || [])],
+      unlockedAchievements: [...(state.unlockedAchievements || [])],
+    };
+    localStorage.setItem(SAVE_KEY, JSON.stringify(blob));
+    showMsg('GAME SAVED.', '#c8f135');
+    return true;
+  } catch (e) {
+    _logError('saveGame', e);
+    showMsg('SAVE FAILED — storage full?', '#e74c3c');
+    return false;
+  }
+}
+
+function hasSave() {
+  try { return !!localStorage.getItem(SAVE_KEY); } catch (_) { return false; }
+}
+
+// Apply a save blob over freshly-generated world state. Must be called AFTER genMap+genObjects.
+function applyLoadedSave(blob) {
+  if (!blob || blob.version !== SAVE_VERSION) return false;
+  // Map
+  if (blob.map) state.map = blob.map;
+  // Player — merge so any new fields keep defaults
+  if (blob.player) Object.assign(state.player, blob.player);
+  // World objects: replace wholesale
+  if (blob.objects) state.objects = blob.objects;
+  // Lore stones
+  if (blob.loreStones) state.loreStones = blob.loreStones;
+  // NPCs: merge saved fields onto the freshly-spawned NPC definitions (so .lines etc survive)
+  if (blob.npcs && state.npcs) {
+    for (const savedNpc of blob.npcs) {
+      const npc = state.npcs.find(n => n.id === savedNpc.id);
+      if (!npc) continue;
+      npc.x = savedNpc.x; npc.y = savedNpc.y;
+      npc.hp = savedNpc.hp; npc.maxHp = savedNpc.maxHp;
+      npc._lineIdx = savedNpc._lineIdx || 0;
+      npc.companion = !!savedNpc.companion;
+      npc.atCamp = !!savedNpc.atCamp;
+      if (savedNpc._bedX !== undefined) npc._bedX = savedNpc._bedX;
+      if (savedNpc._bedY !== undefined) npc._bedY = savedNpc._bedY;
+      npc.unconscious = !!savedNpc.unconscious;
+      npc.questGiven = !!savedNpc.questGiven;
+      if (npc.quest) npc.quest.done = !!savedNpc.questDone;
+      npc.itemsGathered = savedNpc.itemsGathered || 0;
+      // Re-apply the one-shot _fired flag on each line so spawn triggers don't refire
+      if (savedNpc._firedLines && npc.lines) {
+        savedNpc._firedLines.forEach((f, i) => { if (npc.lines[i] && f) npc.lines[i]._fired = true; });
+      }
+    }
+  }
+  // Time + weather
+  if (blob.day !== undefined) state.day = blob.day;
+  if (blob.season !== undefined) state.season = blob.season;
+  if (blob.dayTime !== undefined) state.dayTime = blob.dayTime;
+  if (blob.tideLevel !== undefined) state.tideLevel = blob.tideLevel;
+  if (blob.isNight !== undefined) state.isNight = blob.isNight;
+  // Story / quest flags
+  if (blob.zoneUnlocked !== undefined) state.zoneUnlocked = blob.zoneUnlocked;
+  if (blob.storyChoices) state.storyChoices = blob.storyChoices;
+  if (blob.wreckItems) state.wreckItems = blob.wreckItems;
+  if (blob.hasOpenedCrafting) state.hasOpenedCrafting = true;
+  if (blob.crewWoken) state.crewWoken = blob.crewWoken;
+  if (blob.tutorials) state.tutorials = blob.tutorials;
+  // Run stats
+  if (blob.runStats) state.runStats = blob.runStats;
+  // Meta
+  if (blob.skills) state.skills = blob.skills;
+  if (blob.discoveredRecipes) state.discoveredRecipes = new Set(blob.discoveredRecipes);
+  if (blob.unlockedAchievements) state.unlockedAchievements = new Set(blob.unlockedAchievements);
+  // Invalidate caches so the new map/objects are seen
+  if (typeof _invalidateObjectsCache === 'function') _invalidateObjectsCache();
+  // Clear transient combat state
+  state.enemies = [];
+  state.creatures = state.creatures.filter(c => false); // wipe; respawners will repopulate
+  state.projectiles = [];
+  state.particles = [];
+  state.collapsing = false; state.collapsed = false;
+  state.dialogue = null; state.minigame = null;
+  return true;
+}
+
+function loadSavedGame() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch (e) { _logError('loadSavedGame', e); return null; }
+}
+
+function deleteSave() {
+  try { localStorage.removeItem(SAVE_KEY); } catch (_) {}
+}
+
+// Save and reload the page (returns the player to the load screen with Continue available).
+function saveAndQuit() {
+  saveGame();
+  // Persist meta too
+  try { localStorage.setItem('island_skills', JSON.stringify(state.skills||{})); } catch(e){_logError('saveAndQuit',e);}
+  try { localStorage.setItem('island_achievements', JSON.stringify([...(state.unlockedAchievements||[])])); } catch(e){_logError('saveAndQuit',e);}
+  try { localStorage.setItem('island_recipes', JSON.stringify([...(state.discoveredRecipes||[])])); } catch(e){_logError('saveAndQuit',e);}
+  window.location.reload();
+}
+
+// Restart fresh — wipes the save so the next load starts a new world.
 function restartGame() {
+  deleteSave();
   try { localStorage.setItem('island_skills', JSON.stringify(state.skills||{})); } catch(e){_logError('restart',e);}
   try { localStorage.setItem('island_achievements', JSON.stringify([...(state.unlockedAchievements||[])])); } catch(e){_logError('restart',e);}
   try { localStorage.setItem('island_recipes', JSON.stringify([...(state.discoveredRecipes||[])])); } catch(e){_logError('restart',e);}
   window.location.reload();
 }
-// Back-compat alias so any old callers still work.
-function saveAndQuit() { restartGame(); }
 
 function setBrightness(val) {
   const v = Math.max(30, Math.min(100, Number(val)));
@@ -14132,7 +14317,7 @@ function renderBuildMenu() {
 // GAME INIT
 // ============================================================
 
-// NEW SIMPLE START SCREEN
+// START + LOAD HANDLING
 window.addEventListener('DOMContentLoaded', () => {
   state.shirtColor = '#2d7a2d';
   state.skinColor = '#c8a07a';
@@ -14152,9 +14337,53 @@ window.addEventListener('DOMContentLoaded', () => {
   state.boardingTarget = null;
   initCanoes();
   state.player.x = 75*TSIZE; state.player.y = 110*TSIZE; // South beach center
-  state.invincible = 600; state.player.hp = 200;
+  state.invincible = 600; state.player.hp = state.player.maxHp;
   state.cam.x = state.player.x - canvas.width/2;
   state.cam.y = state.player.y - canvas.height/2;
+
+  // If a save exists, hold here on the start screen until the player picks Continue or New.
+  const _saveBlob = loadSavedGame();
+  if (_saveBlob) {
+    const screen = document.getElementById('start-screen');
+    const info   = document.getElementById('start-save-info');
+    const btnCont= document.getElementById('start-continue');
+    const btnNew = document.getElementById('start-new');
+    if (screen) screen.style.display = 'flex';
+    if (info) {
+      const when = new Date(_saveBlob.savedAt || Date.now()).toLocaleString();
+      info.textContent = `Saved game found · Day ${_saveBlob.day || '?'} · ${when}`;
+    }
+    const beginRun = () => {
+      if (screen) screen.style.display = 'none';
+      state.running = true;
+      AMBIENT.start();
+      const _bgmEl = document.getElementById('bgm');
+      if (_bgmEl) { _bgmEl.volume = 0.5; _bgmEl.play().catch(() => {}); }
+      // Common touch/zoom prevention
+      canvas.addEventListener('touchstart', e => e.preventDefault(), {passive: false});
+      canvas.addEventListener('touchmove', e => e.preventDefault(), {passive: false});
+      if ('wakeLock' in navigator) navigator.wakeLock.request('screen').catch(() => {});
+      requestAnimationFrame(gameLoopWithUI);
+    };
+    if (btnCont) btnCont.onclick = () => {
+      if (applyLoadedSave(_saveBlob)) {
+        state.cam.x = state.player.x - canvas.width/2;
+        state.cam.y = state.player.y - canvas.height/2;
+        showMsg('Game loaded — Day ' + state.day, '#c8f135');
+      } else {
+        showMsg('Save was incompatible. Starting fresh.', '#e74c3c');
+        deleteSave();
+      }
+      beginRun();
+    };
+    if (btnNew) btnNew.onclick = () => {
+      deleteSave();
+      showMsg('YOU WASHED ASHORE. FIND THE OTHER SURVIVORS.', '#c8f135');
+      beginRun();
+    };
+    return; // wait for the player's choice
+  }
+
   state.running = true;
   AMBIENT.start();
   // Start background music at half volume
