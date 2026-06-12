@@ -4792,8 +4792,8 @@ function updateMinigame(canvas) {
 
   if (mg.type === 'chop') {
     mg.indicatorPos += mg.indicatorDir * mg.speed;
-    if (mg.indicatorPos > 1) { mg.indicatorPos = 1; mg.indicatorDir = -1; }
-    if (mg.indicatorPos < 0) { mg.indicatorPos = 0; mg.indicatorDir = 1; }
+    if (mg.indicatorPos > 1) { mg.indicatorPos = 1; mg.indicatorDir = -1; mg._sweepUsed = false; }
+    if (mg.indicatorPos < 0) { mg.indicatorPos = 0; mg.indicatorDir = 1; mg._sweepUsed = false; }
     if (mg.result) {
       mg.resultTimer = (mg.resultTimer||40) - 1;
       if (mg.resultTimer <= 0) mg.result = null;
@@ -5006,6 +5006,13 @@ function handleMinigameKey(key) {
   if (!mg) return;
 
   if (mg.type === 'chop' && key === ' ') {
+    // One input per sweep: ignore spam. A "sweep" is one full pass of the indicator
+    // from one side to the other (direction-change resets the lockout).
+    if (mg._sweepUsed) {
+      SFX.click && SFX.click();
+      return;
+    }
+    mg._sweepUsed = true;
     const pos = mg.indicatorPos;
     let result;
     if (pos >= 0.35 && pos <= 0.6) result = 'green';
@@ -9283,6 +9290,14 @@ function _getSpriteBBox(obj) {
 
 function drawHoverHighlight(ctx, camX, camY) {
   if (!state.running || state.cutscenePlaying) return;
+  // Don't draw the hover box when a minigame, dialogue, build mode, or any open menu is active.
+  if (state.minigame || state.dialogue || state.buildMode) return;
+  const _invOpen   = document.getElementById('inv-panel');
+  const _craftOpen = document.getElementById('craft-panel');
+  const _buildOpen = document.getElementById('build-menu');
+  if ((_invOpen && _invOpen.style.display === 'block')
+   || (_craftOpen && _craftOpen.style.display === 'block')
+   || (_buildOpen && _buildOpen.style.display === 'block')) return;
   const zoom = state.zoom || 1.8;
   const screenCX = canvas.width / 2, screenCY = canvas.height / 2;
   const mouseWX = (mx - screenCX) / zoom + screenCX + camX;
