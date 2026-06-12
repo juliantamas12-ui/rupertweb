@@ -14410,10 +14410,33 @@ function drawLightning(ctx, camX, camY) {
   }
 }
 
+// Guard rail: if the loop ever throws, keep the next frame queued so the game self-heals.
+let _gameLoopErrors = 0;
 function gameLoopWithUI() {
   if (!state.running && !state.cutscenePlaying) return;
   requestAnimationFrame(gameLoopWithUI);
   if (document.hidden) { state._lastFrameTime = 0; return; }
+  try { _gameLoopBody(); }
+  catch (err) {
+    _gameLoopErrors++;
+    // Log once per session, never spam
+    if (_gameLoopErrors < 5) { try { console.error('[island] gameloop crash', err); } catch(_){} }
+    // Try to soft-recover bad state that commonly causes the loop to wedge.
+    try {
+      const p = state.player;
+      if (p) {
+        if (!Number.isFinite(p.hp)) p.hp = 50;
+        if (!Number.isFinite(p.x) || !Number.isFinite(p.y)) { p.x = 75*TSIZE; p.y = 100*TSIZE; }
+        if (!Number.isFinite(p.maxHp) || p.maxHp <= 0) p.maxHp = 200;
+      }
+      if (state.cam && (!Number.isFinite(state.cam.x) || !Number.isFinite(state.cam.y))) {
+        state.cam.x = (p?p.x:0) - canvas.width/2;
+        state.cam.y = (p?p.y:0) - canvas.height/2;
+      }
+    } catch(_){}
+  }
+}
+function _gameLoopBody() {
   // === DELTA TIME TRACKING ===
   // state.dt is a multiplier: 1.0 = 60fps target. Use for time-scaled updates.
   // frameCount logic is unchanged to avoid regressions; use dt where fidelity matters.
@@ -14548,6 +14571,7 @@ function gameLoopWithUI() {
   }
   render(ctx, minimapCtx);
 }
+// (end of _gameLoopBody)
 
 </script>
 
