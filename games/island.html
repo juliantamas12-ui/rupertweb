@@ -10746,9 +10746,11 @@ function render(ctx, minimapCtx) {
     }
   }
 
-  // Draw death packs in world (glowing white chest)
+  // Draw death packs in world (glowing white chest).
+  // Hide them while a modal dialogue / minigame is open so the skull glyphs don't render over the text box.
+  const _hideDeathMarkers = !!(state.dialogue || state.minigame);
   state.objects.forEach(obj => {
-    if (obj.type !== 'death_pack') return;
+    if (obj.type !== 'death_pack' || _hideDeathMarkers) return;
     const dpsx = obj.x - camX, dpsy = obj.y - camY;
     if (dpsx < -40 || dpsx > canvas.width+40 || dpsy < -40 || dpsy > canvas.height+40) return;
     const glow = 0.4 + Math.sin(state.frameCount*0.1)*0.4;
@@ -10769,7 +10771,7 @@ function render(ctx, minimapCtx) {
   });
 
   // === DEATH GHOSTS ===
-  if (state.deathGhosts && state.deathGhosts.length > 0) {
+  if (!_hideDeathMarkers && state.deathGhosts && state.deathGhosts.length > 0) {
     state.deathGhosts.forEach(ghost => {
       const gsx = ghost.x - camX, gsy = ghost.y - camY;
       if (gsx < -40 || gsx > canvas.width+40 || gsy < -40 || gsy > canvas.height+40) return;
