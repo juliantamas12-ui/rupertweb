@@ -488,7 +488,7 @@ const state = {
     artifacts: [],
     quests: {},
     npcTalked: {},
-    air: 15, maxAir: 15,
+    air: 100, maxAir: 100,
   },
 
   // Wreck state
@@ -1094,19 +1094,10 @@ function genObjects() {
   // Underwater wreck — explorable, in deep water southwest ~[12,87]
   state.objects.push({type:'underwater_wreck', x:12*TSIZE, y:87*TSIZE, decor:false});
 
-  // ONE dive spot — randomly placed somewhere in SHALLOW_WATER (light blue) tiles.
-  (function placeRandomDiveSpot() {
-    const shallowTiles = [];
-    for (let y = 0; y < MSIZE; y++) {
-      for (let x = 0; x < MSIZE; x++) {
-        if (state.map[y] && state.map[y][x] === T.SHALLOW_WATER) shallowTiles.push([x,y]);
-      }
-    }
-    if (shallowTiles.length) {
-      const [dx, dy] = shallowTiles[Math.floor(Math.random() * shallowTiles.length)];
-      state.objects.push({type:'dive_spot', x:dx*TSIZE, y:dy*TSIZE, decor:false});
-    }
-  })();
+  // Dive spots in shallow water near southwest beach
+  [[25,92],[22,90],[27,89]].forEach(([dx,dy]) => {
+    state.objects.push({type:'dive_spot', x:dx*TSIZE, y:dy*TSIZE, decor:false});
+  });
 
   // Tribal village — deep jungle interior, well away from any water
   const villageHuts = [{x:102,y:56},{x:104,y:57},{x:106,y:55},{x:103,y:59},{x:105,y:57}];
@@ -3814,8 +3805,7 @@ function updateEnemies() {
       const attackR = e.type==='chief' ? 40 : 28;
       if (dist < attackR && e.attackTimer > 80 && !e.fleeing && e.scatterTimer <= 0 && !state.invincible) {
         e.attackTimer = 0;
-        // Tribe hits hard now: chief 30, warrior/shadow 20.
-        let dmg = e.type==='chief' ? 30 : 20;
+        let dmg = e.type==='chief' ? 8 : (e.type==='shadow'?3:3);
         if (state.bloodMoonActive && state.bloodMoonPhase === 1) dmg = Math.ceil(dmg * 1.25);
         if (state._volcanicArmorActive) dmg = Math.round(dmg * 0.7);
         p.hp = Math.max(0, p.hp - dmg);
@@ -4198,18 +4188,12 @@ function updateCreatures() {
       c.attackTimer++;
       if (dist < 20 && c.attackTimer > 90 && !inSafeZone) {
         c.attackTimer = 0;
-        // Spider: 15 on bite + 5 dmg/s for 5s poison (no armour assumed)
-        const bite = 15;
-        p.hp = Math.max(0, p.hp - bite);
-        p.hitFlash = 8;
-        p.poison = 300;        // 5s @ 60fps
-        p.poisonDps = 5;       // 5 dmg/s
+        p.hp = Math.max(0, p.hp - 1);
+        p.poison = 60; // short poison, near harmless
         state.lastDamageCause = 'spider bite';
-        if (state.runStats) state.runStats.damageTaken += bite;
-        spawnParticles(p.x, p.y, '#22cc33',5);
-        addFloatingText(p.x, p.y - 20, '-'+bite, '#ff4444');
-        showMsg('SPIDER BITE — POISONED (5 dmg/s for 5s)', '#22cc44');
-        SFX.hurt && SFX.hurt();
+        if (state.runStats) state.runStats.damageTaken += 1;
+        spawnParticles(p.x, p.y, '#22cc33',3);
+        showMsg('POISONED BY SPIDER!', '#22cc44');
       }
     }
 
@@ -4256,14 +4240,9 @@ function updateCreatures() {
         c.attackTimer++;
         if (dist < 20 && c.attackTimer > 60) {
           c.attackTimer = 0;
-          const batDmg = 5;
-          p.hp = Math.max(0, p.hp - batDmg);
-          p.hitFlash = 4;
-          state.lastDamageCause = 'bat bite';
-          if (state.runStats) state.runStats.damageTaken += batDmg;
+          p.hp = Math.max(0, p.hp - 5);
+          
           spawnParticles(p.x, p.y, '#2a1030',3);
-          addFloatingText(p.x, p.y - 20, '-'+batDmg, '#ff4444');
-          SFX.hurt && SFX.hurt();
         }
       }
     }
@@ -4389,19 +4368,16 @@ function drawCreatures(ctx, camX, camY) {
       ctx.restore();
     }
 
-    // Idle micro-motion so creatures don't look frozen when far from player
-    const _idleBob = Math.sin((state.frameCount + c.walkTimer*3) * 0.08 + sx * 0.05) * 1.5;
     if (c.type === 'spider') {
-      drawSpider(ctx, sx, sy + _idleBob*0.4);
+      drawSpider(ctx, sx, sy);
       px(ctx, '#333', sx-10, sy-18, 20, 3);
       px(ctx, '#22cc44', sx-10, sy-18, Math.round(20*c.hp/c.maxHp), 3);
     } else if (c.type === 'shark') {
-      const _sharkSway = Math.sin((state.frameCount + sx)*0.06) * 2;
-      drawShark(ctx, sx + _sharkSway, sy + _idleBob*0.6);
+      drawShark(ctx, sx, sy);
       px(ctx, '#333', sx-14, sy-18, 28, 3);
       px(ctx, '#2d8a22', sx-14, sy-18, Math.round(28*c.hp/c.maxHp), 3);
     } else if (c.type === 'bat') {
-      drawBat(ctx, sx, sy + _idleBob);
+      drawBat(ctx, sx, sy);
       px(ctx, '#333', sx-8, sy-14, 16, 3);
       px(ctx, '#2a1040', sx-8, sy-14, Math.round(16*c.hp/c.maxHp), 3);
     } else if (c.type === 'boar') {
@@ -5723,7 +5699,7 @@ function updatePlayer() {
   if (state.frenzyActive) spd *= state.frenzySpeedMult;
   if (inWater && !((p.inv.raft||0) > 0)) spd *= 0.5; // raft negates water slow
   if (inWater && (p.inv.raft||0) > 0) spd *= 1.0; // raft: normal speed
-  // Deep ocean is treated as walkable land now — no speed penalty (shark roulette is the cost)
+  if (inDeepOcean) spd *= 0.6;
   if (inDense) spd *= 0.6;
   if (p.stamina <= 0) spd *= 0.8;
 
@@ -5901,46 +5877,26 @@ function updatePlayer() {
   }
 
   // Air / underwater mechanics
-  // Deep ocean is now walkable land — air only drains underwater at the wreck interior.
-  if (!state.inWreck) {
-    state._airTimer = 0;
-    p.air = Math.min(p.maxAir, p.air + 3);
-    if (p.air > p.maxAir) p.air = p.maxAir;
-  } else {
-    // Underwater wreck: 15s of air, drain 1/sec
+  if (inDeepOcean) {
+    // Deplete air ~1 per second (60fps)
     state._airTimer = (state._airTimer||0) + 1;
     if (state._airTimer >= 60) { state._airTimer = 0; p.air = Math.max(0, p.air - 1); }
+    // Bubble particles occasionally
     if (Math.random() < 0.05) spawnParticle(p.x+(Math.random()-0.5)*8, p.y-4, (Math.random()-0.5)*0.3, -0.8, 'rgba(160,230,255,0.7)', 40);
     if (p.air <= 0) {
+      // Drowning: drain health slowly
       state.lastDamageCause = 'DROWNING';
       if (state.frameCount % 30 === 0) {
         p.hp = Math.max(0, p.hp - 2);
         addFloatingText(p.x, p.y-20, '-2', '#0088cc');
       }
-    } else if (p.air <= 5) {
-      if (state.frameCount % 60 === 0) showMsg('LOW AIR!', '#40d8f0');
+    } else if (p.air <= 20) {
+      if (state.frameCount % 120 === 0) showMsg('LOW AIR!', '#40d8f0');
     }
-  }
-
-  // Deep ocean = walkable but lethal: 80% chance a shark appears and instakills you
-  if (inDeepOcean && !state.invincible) {
-    if (!p._deepOceanRolled) {
-      p._deepOceanRolled = true;
-      if (Math.random() < 0.80) {
-        // Spawn shark, then instakill
-        state.creatures.push({type:'shark', x:p.x+20, y:p.y+10, hp:50, maxHp:50, spd:1.5, attackTimer:999, walkTimer:0});
-        spawnParticles(p.x, p.y, '#cc1010', 12);
-        showMsg('A SHARK STRIKES FROM THE DEEP!', '#ff2020');
-        state.lastDamageCause = 'SHARK';
-        p.hp = 0;
-        SFX.hurt && SFX.hurt();
-        if (navigator.vibrate) navigator.vibrate([200, 50, 200]);
-      } else {
-        showMsg('You wade through the dark water. Lucky.', '#40d8d0');
-      }
-    }
-  } else if (!inDeepOcean) {
-    p._deepOceanRolled = false;
+  } else if (tile === T.BEACH || tile === T.SHALLOW_WATER) {
+    state._airTimer = 0;
+    p.air = Math.min(p.maxAir, p.air + 3);
+    if (p.air > p.maxAir) p.air = p.maxAir;
   }
 
   // Stamina
@@ -5987,22 +5943,7 @@ function updatePlayer() {
   if (p.water <= 0) p.hp = Math.max(0, p.hp - 0.05);
   if (p.food <= 0) p.hp = Math.max(0, p.hp - 0.05);
   if (p.sick > 0) { p.sick--; p.hp = Math.max(0, p.hp - 0.02); }
-  if (p.poison > 0) {
-    p.poison--;
-    // Default trickle damage; spider bite sets p.poisonDps for per-second loss
-    const dps = p.poisonDps || 0;
-    if (dps > 0) {
-      // dps dmg per 60 frames
-      p.hp = Math.max(0, p.hp - dps/60);
-      if (state.frameCount % 60 === 0) {
-        addFloatingText(p.x, p.y - 18, '-'+dps+' POISON', '#22cc44');
-        spawnParticles(p.x, p.y, '#22cc33', 1);
-      }
-    } else {
-      p.hp = Math.max(0, p.hp - 0.008);
-    }
-    if (p.poison === 0) p.poisonDps = 0;
-  }
+  if (p.poison > 0) { p.poison--; p.hp = Math.max(0, p.hp - 0.008); } // ~0.5 total over 60 frames
 
   // Torch auto-equip
   // torch toggled manually via hotbar
@@ -7785,15 +7726,13 @@ function startDialogue(npc) {
     charIdx: 0,
     _lineRef: line,
   };
-  // Tutorial spawn triggers from Oonga lines (one-time per line — guard against E-spam re-firing)
-  if (line._onShow === 'spawnTutorialWood' && !line._fired) {
-    line._fired = true;
+  // Tutorial spawn triggers from Oonga lines
+  if (line._onShow === 'spawnTutorialWood') {
     const p2 = state.player;
     for (let ti = 0; ti < 3; ti++) {
       state.objects.push({type:'driftwood', x:p2.x + (ti-1)*20 + Math.random()*10, y:p2.y + 30 + Math.random()*10, collected:false, _tutGlow:60});
     }
-  } else if (line._onShow === 'spawnTutorialRocks' && !line._fired) {
-    line._fired = true;
+  } else if (line._onShow === 'spawnTutorialRocks') {
     const p2 = state.player;
     for (let ti = 0; ti < 2; ti++) {
       state.objects.push({type:'rock', x:p2.x + (ti*24 - 12) + Math.random()*8, y:p2.y + 32 + Math.random()*8, hp:4, maxHp:4});
@@ -8700,43 +8639,10 @@ function drawHoverHighlight(ctx, camX, camY) {
   const hsx = Math.floor(hoverObj.x - camX);
   const hsy = Math.floor(hoverObj.y - camY);
   ctx.save();
-  // Minimal white outline — sized to the object so it doesn't look detached
-  // Per-type bounding boxes (w, h, vertical offset). Default to a small box.
-  const OUTLINE_BOX = {
-    tree:        [22, 30, -22],
-    breadfruit:  [24, 32, -24],
-    mape:        [24, 32, -24],
-    purau:       [22, 28, -22],
-    pandanus:    [22, 28, -22],
-    filao:       [18, 28, -22],
-    hutu:        [24, 32, -24],
-    rock:        [18, 14, -10],
-    vol_rock:    [18, 14, -10],
-    palm:        [22, 36, -28],
-    coconut_palm:[22, 36, -28],
-    berry:       [14, 12, -8],
-    driftwood:   [20, 8,  -4],
-    flotsam:     [20, 10, -6],
-    bottle:      [10, 14, -10],
-    fruit:       [12, 12, -8],
-    fish_cooked: [14, 10, -6],
-    journal:     [12, 14, -10],
-    snare_trap:  [18, 12, -8],
-    chest:       [22, 18, -12],
-    bed:         [28, 18, -10],
-    campfire:    [22, 18, -12],
-    forge:       [24, 22, -14],
-    waterfall:   [26, 30, -22],
-    supply_cache:[22, 18, -12],
-    underwater_wreck:[40, 28, -16],
-    dive_spot:   [20, 14, -8],
-    death_pack:  [18, 14, -10],
-  };
-  const box = OUTLINE_BOX[hoverObj.type] || [18, 18, -12];
-  const ow = box[0], oh = box[1], oy = box[2];
+  // Minimal white outline only — no label, no yellow, no glow
   ctx.strokeStyle = 'rgba(255,255,255,0.85)';
   ctx.lineWidth = 1;
-  ctx.strokeRect(hsx - ow/2, hsy + oy, ow, oh);
+  ctx.strokeRect(hsx - 10, hsy - 16, 20, 22);
   ctx.restore();
 }
 
@@ -9333,7 +9239,7 @@ function render(ctx, minimapCtx) {
         case 'vine_curtain': drawVineCurtain(ctx,ssx,ssy); break;
         case 'cave': drawCave(ctx,ssx,ssy); break;
         case 'altar': drawAltar(ctx,ssx,ssy); break;
-        case 'bottle': if(!capturedObj.read) { const _bx = Math.sin((state.frameCount + capturedObj.x*0.1)*0.04)*2; const _by = Math.sin((state.frameCount + capturedObj.y*0.1)*0.05)*1.5; drawBottle(ctx,ssx+_bx,ssy+_by); } break;
+        case 'bottle': if(!capturedObj.read) drawBottle(ctx,ssx,ssy); break;
         case 'shipwreck': drawShipwreck(ctx,ssx,ssy); break;
         case 'underwater_wreck': drawUnderwaterWreck(ctx,ssx,ssy); break;
         case 'dive_spot': drawDiveSpot(ctx,ssx,ssy); break;
