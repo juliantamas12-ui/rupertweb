@@ -369,7 +369,7 @@ canvas#c{pointer-events:none}
       <div class="pm-brightness-label">BRIGHTNESS</div>
       <input type="range" id="brightness-slider" min="30" max="100" value="100" oninput="setBrightness(this.value)" onclick="event.stopPropagation()">
     </div>
-    <button class="pm-btn" onclick="saveAndQuit()">SAVE &amp; QUIT</button>
+    <button class="pm-btn" onclick="restartGame()">RESTART</button>
     <button class="pm-btn" id="music-btn" onclick="toggleMusic()" style="cursor:pointer">MUSIC: ON</button>
     <div id="pause-leaderboard" style="margin-top:14px;border-top:1px solid rgba(120,80,20,0.4);padding-top:10px"></div>
   </div>
@@ -380,6 +380,7 @@ canvas#c{pointer-events:none}
   <canvas id="yacht-canvas" width="400" height="200"></canvas>
   <div id="win-score"></div>
   <p id="win-text">You survived. You escaped. The island fades behind the horizon.</p>
+  <button class="pm-btn" style="margin-top:18px;" onclick="restartGame()">PLAY AGAIN</button>
 </div>
 
 <script>
@@ -13426,14 +13427,16 @@ function resumeGame() {
   if (pm) pm.style.display = 'none';
 }
 
-function saveAndQuit() {
-  // Persist skills and achievements before quitting
-  try { localStorage.setItem('island_skills', JSON.stringify(state.skills||{})); } catch(e){_logError('saveAndQuit',e);}
-  try { localStorage.setItem('island_achievements', JSON.stringify([...(state.unlockedAchievements||[])])); } catch(e){_logError('saveAndQuit',e);}
-  try { localStorage.setItem('island_recipes', JSON.stringify([...(state.discoveredRecipes||[])])); } catch(e){_logError('saveAndQuit',e);}
-  // Reload page to return to start
+// Restart the game cleanly. There is no world save yet — just reload the page for a fresh world.
+// Meta progress (skills, achievements, recipes) is still persisted so it isn't lost between runs.
+function restartGame() {
+  try { localStorage.setItem('island_skills', JSON.stringify(state.skills||{})); } catch(e){_logError('restart',e);}
+  try { localStorage.setItem('island_achievements', JSON.stringify([...(state.unlockedAchievements||[])])); } catch(e){_logError('restart',e);}
+  try { localStorage.setItem('island_recipes', JSON.stringify([...(state.discoveredRecipes||[])])); } catch(e){_logError('restart',e);}
   window.location.reload();
 }
+// Back-compat alias so any old callers still work.
+function saveAndQuit() { restartGame(); }
 
 function setBrightness(val) {
   const v = Math.max(30, Math.min(100, Number(val)));
