@@ -4341,6 +4341,33 @@ function updateCreatures() {
     }
 
     if (c.type === 'shark') {
+      // STALKER variant: spawned by deep-water roulette. Charges straight at the player and
+      // instakills on contact. Only chases through ocean tiles — hits a beach and gives up.
+      if (c.stalker) {
+        const dxs = p.x - c.x, dys = p.y - c.y;
+        const ds = Math.sqrt(dxs*dxs + dys*dys) || 1;
+        const nx = c.x + dxs/ds * c.spd;
+        const ny = c.y + dys/ds * c.spd;
+        const ttype = getTile(nx, ny);
+        if (ttype === T.SHALLOW_WATER || ttype === T.DEEP_OCEAN) {
+          c.x = nx; c.y = ny;
+        } else {
+          // Hit the beach or a wall — stalker can't follow inland. Despawn.
+          c.hp = 0;
+          return;
+        }
+        // Contact kill
+        if (ds < 18 && !state.invincible) {
+          spawnParticles(p.x, p.y, '#cc1010', 16);
+          showMsg('THE SHARK CATCHES YOU.', '#ff2020');
+          state.lastDamageCause = 'SHARK';
+          p.hp = 0;
+          SFX.hurt && SFX.hurt();
+          if (navigator.vibrate) navigator.vibrate([200, 50, 200]);
+          c.hp = 0;
+        }
+        return;
+      }
       // Shark: stays in water only, never on beach
       const sharkTile = getTile(c.x, c.y);
       if (sharkTile === T.BEACH || sharkTile === T.JUNGLE_LIGHT || sharkTile === T.JUNGLE_DARK) {
@@ -4524,9 +4551,46 @@ function drawCreatures(ctx, camX, camY) {
       px(ctx, '#22cc44', sx-10, sy-18, Math.round(20*c.hp/c.maxHp), 3);
     } else if (c.type === 'shark') {
       const _sharkSway = Math.sin((state.frameCount + sx)*0.06) * 2;
-      drawShark(ctx, sx + _sharkSway, sy + _idleBob*0.6);
-      px(ctx, '#333', sx-14, sy-18, 28, 3);
-      px(ctx, '#2d8a22', sx-14, sy-18, Math.round(28*c.hp/c.maxHp), 3);
+      // Stalker shark: only the dorsal fin shows above the water, slicing toward the player.
+      // Massive, very visible, with a wake/trail behind it.
+      if (c.stalker) {
+        ctx.save();
+        // Wake/foam trail
+        ctx.fillStyle = 'rgba(255,255,255,0.6)';
+        for (let i = 1; i <= 4; i++) {
+          const tx = sx - i*4 + Math.sin((state.frameCount + i*8)*0.2)*1.2;
+          const ty = sy + 4 + Math.sin((state.frameCount + i*6)*0.18)*0.8;
+          ctx.fillRect(tx, ty, 2, 2);
+        }
+        // Body shadow under the water
+        ctx.fillStyle = 'rgba(0,0,0,0.35)';
+        ctx.beginPath();
+        ctx.ellipse(sx + _sharkSway, sy + 4, 14, 5, 0, 0, Math.PI*2);
+        ctx.fill();
+        // Dorsal fin
+        ctx.fillStyle = '#1a2630';
+        ctx.beginPath();
+        ctx.moveTo(sx + _sharkSway - 6, sy + 2);
+        ctx.lineTo(sx + _sharkSway, sy - 14);
+        ctx.lineTo(sx + _sharkSway + 6, sy + 2);
+        ctx.closePath();
+        ctx.fill();
+        // Highlight on the fin edge
+        ctx.fillStyle = '#3a4a5a';
+        ctx.fillRect(sx + _sharkSway - 1, sy - 12, 2, 10);
+        // Warning '!' icon above
+        const pulse = (state.frameCount % 30) < 15;
+        ctx.fillStyle = pulse ? '#ff2020' : '#ff8040';
+        ctx.font = 'bold 14px Lato, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('!', sx + _sharkSway, sy - 18);
+        ctx.textAlign = 'left';
+        ctx.restore();
+      } else {
+        drawShark(ctx, sx + _sharkSway, sy + _idleBob*0.6);
+        px(ctx, '#333', sx-14, sy-18, 28, 3);
+        px(ctx, '#2d8a22', sx-14, sy-18, Math.round(28*c.hp/c.maxHp), 3);
+      }
     } else if (c.type === 'bat') {
       drawBat(ctx, sx, sy + _idleBob);
       px(ctx, '#333', sx-8, sy-14, 16, 3);
@@ -6050,25 +6114,41 @@ function updatePlayer() {
     }
   }
 
-  // Deep ocean = walkable but lethal: 80% chance a shark appears and instakills you
+  // Deep ocean = walkable but lethal: 80% chance a STALKING SHARK appears once you wade in.
+  // It spawns far away with a visible dorsal fin and swims at you fast — the player has a few
+  // seconds to bolt back to shallow water before contact kills them. No more silent instakills.
   if (inDeepOcean && !state.invincible) {
     if (!p._deepOceanRolled) {
       p._deepOceanRolled = true;
       if (Math.random() < 0.80) {
-        // Spawn shark, then instakill
-        state.creatures.push({type:'shark', x:p.x+20, y:p.y+10, hp:50, maxHp:50, spd:1.5, attackTimer:999, walkTimer:0});
-        spawnParticles(p.x, p.y, '#cc1010', 12);
-        showMsg('A SHARK STRIKES FROM THE DEEP!', '#ff2020');
-        state.lastDamageCause = 'SHARK';
-        p.hp = 0;
+        // Pick a spawn point ~6 tiles away in the deep ocean (favor north/west since that's open water).
+        const ang = Math.random() * Math.PI * 2;
+        const dist = 6 * TSIZE + Math.random() * 3 * TSIZE;
+        const spawnX = p.x + Math.cos(ang) * dist;
+        const spawnY = p.y + Math.sin(ang) * dist;
+        state.creatures.push({
+          type: 'shark',
+          x: spawnX, y: spawnY,
+          hp: 80, maxHp: 80,
+          spd: 2.4,            // faster than the player so it WILL catch you if you don't flee
+          attackTimer: 0, walkTimer: 0,
+          stalker: true,       // flagged so the renderer draws a giant dorsal fin
+          stalkerTargetId: 'player',
+          stalkerInstakill: true,
+          tideSpawned: true,   // cleaned up like other water-roaming sharks when leaving deep water
+        });
+        spawnParticles(spawnX, spawnY, '#cc1010', 6);
+        showMsg('SHARK FIN — GET TO SHALLOW WATER!', '#ff4040');
         SFX.hurt && SFX.hurt();
-        if (navigator.vibrate) navigator.vibrate([200, 50, 200]);
+        if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
       } else {
         showMsg('You wade through the dark water. Lucky.', '#40d8d0');
       }
     }
   } else if (!inDeepOcean) {
     p._deepOceanRolled = false;
+    // Despawn any stalking sharks once the player is back on safe ground.
+    state.creatures = state.creatures.filter(c => !c.stalker);
   }
 
   // Stamina
