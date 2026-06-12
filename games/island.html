@@ -6114,10 +6114,16 @@ function updatePlayer() {
     }
   }
 
+  // Shark immunity: while inside the wreck OR standing close to it, no roll happens.
+  // The wreck is a safe pocket of ocean — you came up through the hatch, not into open water.
+  const _wreckObj = state.objects.find(o => o.type === 'underwater_wreck');
+  const _atWreck = _wreckObj && Math.hypot(p.x - _wreckObj.x, p.y - _wreckObj.y) < 80;
+  const _sharkImmune = state.inWreck || _atWreck;
+
   // Deep ocean = walkable but lethal: 80% chance a STALKING SHARK appears once you wade in.
   // It spawns far away with a visible dorsal fin and swims at you fast — the player has a few
   // seconds to bolt back to shallow water before contact kills them. No more silent instakills.
-  if (inDeepOcean && !state.invincible) {
+  if (inDeepOcean && !state.invincible && !_sharkImmune) {
     if (!p._deepOceanRolled) {
       p._deepOceanRolled = true;
       if (Math.random() < 0.80) {
@@ -13453,7 +13459,18 @@ window.addEventListener('keydown', e => {
   }
   // Quick-consume hotkeys 1-5 }else{pl.food=Math.min(pl.maxFood,pl.food+20);showMsg('+20 FOOD (FRUIT)','#e67e22');}updateUI();} else if(pl.inv.fruit_cooked>0){pl.inv.fruit_cooked--;pl.food=Math.min(pl.maxFood,pl.food+40);showMsg('+40 FOOD (COOKED FRUIT)','#e67e22');updateUI();} } else if(pl.inv.fish>0){pl.inv.fish--;if(Math.random()<0.2){pl.sick=200;showMsg('SICK FROM RAW FISH!','#e74c3c');}else{pl.food=Math.min(pl.maxFood,pl.food+25);showMsg('+25 FOOD (RAW FISH)','#e67e22');}updateUI();} } } }
   if (e.key === 'Escape') {
-    if (state.inWreck) { state.inWreck = false; showMsg('Left the wreck.', '#888'); return; }
+    if (state.inWreck) {
+      state.inWreck = false;
+      // Surface back at the dive spot so the player doesn't pop out into deep ocean
+      // (and get eaten by the stalker shark a frame later).
+      const _ds = state.objects.find(o => o.type === 'dive_spot');
+      if (_ds) { state.player.x = _ds.x; state.player.y = _ds.y; }
+      state.player._deepOceanRolled = false;
+      // Despawn any stalker shark that may have spawned earlier so the surface is safe
+      state.creatures = state.creatures.filter(c => !c.stalker);
+      showMsg('Surfaced at the dive spot. F to dive back.', '#40d8d0');
+      return;
+    }
     state.buildMode=false; state.buildItem=null; document.getElementById('build-menu').style.display='none'; state.minigame=null; state.dialogue=null;
     const anyOpen = ['inv-panel','craft-panel','build-menu'].some(id => { const el=document.getElementById(id); return el && el.style.display==='block'; });
     if (!anyOpen && state.running) {
