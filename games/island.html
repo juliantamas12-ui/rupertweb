@@ -710,24 +710,30 @@ const state = {
 const NPC_DATA = [
   {
     id: 'oonga', name: 'OONGA', color: '#6a3010',
-    x: 75*TSIZE, y: 112*TSIZE,
-    homeX: 75*TSIZE, homeY: 112*TSIZE,
+    // First NPC — sits on the wake-up beach. Tutorial guide.
+    x: 75*TSIZE, y: 108*TSIZE,
+    homeX: 75*TSIZE, homeY: 108*TSIZE,
     desc: "Tribe outcast. Your first guide on the island.",
     lines: [
-      { text: "You wake on the sand. Your ship \u2014 gone. I am Oonga. These are my old people\u2019s lands. Look \u2014 wood washed up with you. You will need it.", options: ["Tell me more", "What happened to my ship?"], optionNext: [1, 1], _onShow: 'spawnTutorialWood' },
-      { text: "Stone too. The beach has many gifts for those who look.", options: ["How do I use them?", "I need to survive"], optionNext: [2, 2], _onShow: 'spawnTutorialRocks' },
-      { text: "From wood and stone, tools. Press C \u2014 I will show you what your hands can make.", options: null, _waitForCraft: true },
-      { text: "Good. An axe \u2014 the jungle will open to you now. But first... understand this island. The chief uses old stone to turn away ships. Many came to take everything. So now... no ships come. But you survived. This is strange.", options: ["I need to escape", "I want to understand"], optionNext: [4, 4] },
-      { text: "If you want to live... learn this island. The jungle will test you. The volcano holds answers. Find Elder Kona \u2014 he knows the stone\u2019s secret. But beware the village.", options: null, questTrigger: 'find_kona' },
+      // LINE 1 — story hook + movement keys
+      { text: "You wake on the sand. Your ship sank in the storm. I am OONGA. The others from your crew may have washed up too \u2014 I will help you live long enough to find them.\n\nMOVE: W A S D (or arrows). Hold SHIFT to sprint.\nMAP: M for the world map. Your MINIMAP is bottom-left.", options: ["Got it", "Tell me how to survive"], optionNext: [1, 1], _onShow: 'spawnTutorialWood' },
+      // LINE 2 — gathering / crafting / combat keys
+      { text: "Wood and stone washed up with you. Walk to them, hover until a WHITE OUTLINE shows, press E to pick them up.\n\nE = interact (talk, pick up, take, drink)\nC = CRAFTING. B = BUILD. TAB or I = PACK.\nHotbar keys 1-6 swap tools. LEFT-CLICK uses the one in your hand.", options: ["And dangers?", "What about food?"], optionNext: [2, 2], _onShow: 'spawnTutorialRocks' },
+      // LINE 3 — survival keys + the quest
+      { text: "Eat what you find, drink from coconuts, sleep at night under a roof.\nSPACE = JUMP. F = secondary action. ESC = pause.\n\nMy people have a chief who keeps ships away with an old stone. Find your shipwrecked crew on the beaches \u2014 some still sleep on the sand. Then find ELDER KONA in the jungle. He knows the stone's secret.", options: null, questTrigger: 'find_kona' },
     ],
-    quest: { id:'oonga_q1', text:"Find Elder Kona", needs:{}, reward:{coconut:3}, done:false, questTrigger:'find_kona' },
+    quest: { id:'oonga_q1', text:"Wake your crew, then find Elder Kona", needs:{}, reward:{coconut:3}, done:false, questTrigger:'find_kona' },
     companion: false,
     _lineIdx: 0,
   },
   {
     id: 'mara', name: 'MARA', color: '#cc4422',
-    x: 42*TSIZE, y: 77*TSIZE,
-    desc: "Ship's cook. Has been watching the tribe's patrols.",
+    // Washed up unconscious on the south-west beach. Player wakes her with E.
+    x: 42*TSIZE, y: 95*TSIZE,
+    desc: "Ship's cook. Washed up unconscious on the south beach.",
+    unconscious: true,
+    crashSurvivor: true,
+    wakeLine: "Mara stirs and blinks at you. 'You... you made it too. I thought I was the only one.'",
     lines: [
       { text: "Thank god. I thought I was alone. Three days in this jungle — I've mapped every patrol route those warriors take. They're not random. They're organized.", options: ["What did you find?", "Are you hurt?"], optionNext: [1, 1] },
       { text: "There was a child. Separated from the village. I've been... looking after her. She's frightened. I don't know what to do with her. What do you think?", options: ["Return her to the village", "Keep her safe here"], optionNext: [2, 3] },
@@ -740,8 +746,12 @@ const NPC_DATA = [
   },
   {
     id: 'felix', name: 'FELIX', color: '#7ca0b0',
-    x: 40*TSIZE, y: 92*TSIZE,
-    desc: "Ship's engineer. Repairing the lifeboat.",
+    // Slumped against rocks on the west beach near the lifeboat — unconscious until you wake him.
+    x: 36*TSIZE, y: 100*TSIZE,
+    desc: "Ship's engineer. Slumped against rocks near the lifeboat.",
+    unconscious: true,
+    crashSurvivor: true,
+    wakeLine: "Felix coughs and shoves himself upright. 'Bloody hell. You're alive. Good \u2014 I need a hand with the lifeboat.'",
     lines: [
       { text: "Right. You're alive. Good. I've got the lifeboat 60% fixed. Need volcanic metal from near the summit — the hull has a crack only that heat-tempered ore can seal. Everything else, I don't care about.", options: ["What about the tribe?", "I'll get the metal"], optionNext: [1, 1] },
       { text: "I've looked at the ship's manifest. We were a survey vessel for Meridian Colonial Corp. You know what that means? We were mapping this island for extraction. Oil, rare earth, the lot. These people... they were right to sink us.", options: ["That changes things", "We still need to escape"], optionNext: [2, 2], choiceSet: { key:'learnedTruth', val:true } },
@@ -3032,6 +3042,48 @@ function drawNPCShelter(ctx, sx, sy, npcId) {
 function drawNPC(ctx, sx, sy, npc) {
   const bob = Math.sin(npc.bobTimer * 0.04) * 2;
   const ay = sy + bob;
+
+  // Unconscious crash survivors: draw lying on the sand with a wake-me prompt.
+  if (npc.unconscious) {
+    ctx.save();
+    // Sand-darkened shadow under them
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.beginPath();
+    ctx.ellipse(sx, sy + 8, 16, 5, 0, 0, Math.PI*2);
+    ctx.fill();
+    // Rotate the regular sprite 90deg so they look as if collapsed on their side.
+    ctx.translate(sx, sy);
+    ctx.rotate(-Math.PI/2);
+    ctx.translate(-sx, -sy);
+    if (npc.id === 'mara') drawMara(ctx, sx, sy);
+    else if (npc.id === 'felix') drawFelix(ctx, sx, sy);
+    else { px(ctx, npc.color || '#c8a07a', sx-5, sy-12, 10, 10); px(ctx, '#4a4a6a', sx-6, sy-4, 12, 10); }
+    ctx.restore();
+    // Slow snoring 'Z' above
+    if ((state.frameCount % 120) < 60) {
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 10px Courier New';
+      ctx.textAlign = 'center';
+      ctx.fillText('z', sx + 12, sy - 14);
+      ctx.textAlign = 'left';
+    }
+    // Prompt to wake when close
+    const distToPlayer = Math.hypot(sx - canvas.width/2, sy - canvas.height/2);
+    if (distToPlayer < 90) {
+      const pulse = 0.6 + 0.4*Math.sin(state.frameCount*0.15);
+      ctx.save();
+      ctx.globalAlpha = pulse;
+      ctx.fillStyle = 'rgba(0,0,0,0.85)';
+      ctx.fillRect(sx - 50, sy - 34, 100, 16);
+      ctx.fillStyle = '#ffe080';
+      ctx.font = 'bold 9px Lato, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('PRESS E TO WAKE', sx, sy - 22);
+      ctx.textAlign = 'left';
+      ctx.restore();
+    }
+    return;
+  }
 
   // Route to individual draw functions
   if (npc.id === 'oonga') { drawOonga(ctx, sx, ay); }
@@ -6285,6 +6337,26 @@ function handleInteract() {
   for (let npc of state.npcs) {
     const d = Math.hypot(p.x-npc.x, p.y-npc.y);
     if (d < reach) {
+      // Crash survivors are unconscious on the sand until you press E to wake them.
+      if (npc.unconscious) {
+        npc.unconscious = false;
+        npc._justWoken = 90; // sparkle frames
+        spawnParticles(npc.x, npc.y - 8, '#ffe080', 8);
+        SFX.pickup && SFX.pickup();
+        if (typeof addFloatingText === 'function') addFloatingText(npc.x, npc.y - 28, 'WOKEN', '#ffe080');
+        state.crewWoken = (state.crewWoken||0) + 1;
+        // Open dialogue with the wake line first, then proceed to normal lines.
+        state.dialogue = {
+          type: 'npc',
+          npc: npc,
+          text: npc.wakeLine || (npc.name + " wakes up."),
+          displayed: '', timer: 0, charIdx: 0,
+          options: null, optionNext: null,
+          _lineRef: { _isWake: true },
+        };
+        showMsg('Survivor woken: ' + npc.name, '#ffe080');
+        return;
+      }
       startDialogue(npc);
       return;
     }
@@ -7929,6 +8001,23 @@ function advanceDialogue() {
 
   if (d.npc) {
     const npc = d.npc;
+    // If this was the wake-up line, drop into the NPC's first real dialogue line.
+    if (d._lineRef && d._lineRef._isWake) {
+      const firstLine = npc.lines && npc.lines[0];
+      if (firstLine) {
+        state.dialogue = {
+          type: 'npc', npc: npc,
+          text: firstLine.text,
+          options: firstLine.options || null,
+          optionNext: firstLine.optionNext || null,
+          displayed: '', timer: 0, charIdx: 0,
+          _lineRef: firstLine,
+        };
+      } else {
+        state.dialogue = null;
+      }
+      return;
+    }
     _applyLineEffects(npc, d._lineRef || {});
     const nextIdx = (npc._lineIdx||0) + 1;
     if (nextIdx < npc.lines.length) {
@@ -7970,7 +8059,10 @@ function drawDialogue(ctx) {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   const cw = ctx.canvas.width, ch = ctx.canvas.height;
   const hasOptions = d.charIdx >= d.text.length && d.options && d.options.length > 0;
-  const bh = hasOptions ? 168 : 138;
+  // Auto-size: count newlines in text so tutorial blocks aren't clipped.
+  const _lineBreaks = (d.text || '').split('\n').length;
+  const _extra = Math.max(0, _lineBreaks - 2) * 18;
+  const bh = (hasOptions ? 168 : 138) + _extra;
   // Lift above the hotbar (~80px from bottom) and clear the bottom-left
   // minimap (~144px wide). Mobile shrinks the minimap; mirror that here.
   const minimapClearance = (cw < 768) ? 100 : 152;
@@ -8021,20 +8113,25 @@ function drawDialogue(ctx) {
     ctx.fillText(speakerName, bx+18, by+22);
   }
 
-  // Dialogue text
+  // Dialogue text — honors explicit \n line breaks (for tutorial blocks) plus word wrap.
   ctx.fillStyle = '#e8d8a0';
   ctx.font = '13px "Lato", sans-serif';
   const textX = bx + 16, textStartY = by + 42, maxW = bw - 34;
-  const words = d.displayed.split(' ');
-  let line = '', lineY = textStartY;
-  words.forEach(word => {
-    const testLine = line + word + ' ';
-    if (ctx.measureText(testLine).width > maxW && line !== '') {
-      ctx.fillText(line, textX, lineY);
-      line = word + ' '; lineY += 17;
-    } else { line = testLine; }
+  let lineY = textStartY;
+  const paragraphs = d.displayed.split('\n');
+  paragraphs.forEach((para, pi) => {
+    const words = para.split(' ');
+    let line = '';
+    words.forEach(word => {
+      const testLine = line + word + ' ';
+      if (ctx.measureText(testLine).width > maxW && line !== '') {
+        ctx.fillText(line, textX, lineY);
+        line = word + ' '; lineY += 17;
+      } else { line = testLine; }
+    });
+    if (line) { ctx.fillText(line, textX, lineY); lineY += 17; }
+    else if (pi < paragraphs.length - 1) { lineY += 8; } // blank-line spacer
   });
-  ctx.fillText(line, textX, lineY);
 
   if (d.charIdx >= d.text.length) {
     if (hasOptions) {
@@ -8677,6 +8774,17 @@ function drawMinimap(minimapCtx) {
       mc.fillRect(n.x/TSIZE*scale-1, n.y/TSIZE*scale-1, 3, 3);
     }
   });
+  // Crash‑survivor crewmates pulse on minimap while still unconscious so the player
+  // can actually find them on the beach.
+  {
+    const pulse = (state.frameCount % 60) < 30;
+    state.npcs.forEach(n => {
+      if (n.crashSurvivor && n.unconscious) {
+        mc.fillStyle = pulse ? '#ffe080' : '#cc8030';
+        mc.fillRect(n.x/TSIZE*scale-2, n.y/TSIZE*scale-2, 5, 5);
+      }
+    });
+  }
   // Pulsing quest-target dot for the NPC the player is supposed to find next.
   // Highlights Kona once Oonga's "find_kona" quest is active, until you've talked to him.
   {
