@@ -2864,15 +2864,17 @@ function drawOonga(ctx, sx, sy) {
   px(ctx, '#3a1800', sx+1, sy+4, 4, 10);
   px(ctx, '#5a3010', sx-6, sy+4, 2, 8);
   px(ctx, '#5a3010', sx+4, sy+4, 2, 8);
-  // Body
+  // Body (skin)
   px(ctx, '#6a3010', sx-5, sy-8, 10, 12);
-  // Tribal markings (white lines)
-  px(ctx, '#ffffff', sx-4, sy-6, 2, 1);
-  px(ctx, '#ffffff', sx+2, sy-6, 2, 1);
-  px(ctx, '#ffffff', sx-3, sy-3, 6, 1);
-  px(ctx, '#ffffff', sx-4, sy+1, 2, 1);
-  px(ctx, '#ffffff', sx+2, sy+1, 2, 1);
-  // Shell necklace
+  // Woven palm-fibre vest (covers chest)
+  px(ctx, '#9a6028', sx-5, sy-7, 10, 7);
+  px(ctx, '#7a4818', sx-5, sy-7, 10, 1);
+  px(ctx, '#7a4818', sx-5, sy+0, 10, 1);
+  // Tribal markings on the vest
+  px(ctx, '#ffffff', sx-3, sy-5, 2, 1);
+  px(ctx, '#ffffff', sx+1, sy-5, 2, 1);
+  px(ctx, '#ffffff', sx-3, sy-2, 6, 1);
+  // Shell necklace at collar
   px(ctx, '#e8d090', sx-3, sy-9, 2, 2);
   px(ctx, '#e8d090', sx+1, sy-9, 2, 2);
   px(ctx, '#e8d090', sx-1, sy-8, 2, 2);
@@ -2894,13 +2896,14 @@ function drawOonga(ctx, sx, sy) {
 }
 
 function drawMara(ctx, sx, sy) {
-  // Stocky Irish woman, red hair, apron remnants
+  // Stocky Irish ship's cook — long sleeves + canvas trousers, no bare skin on torso/arms.
   px(ctx, 'rgba(0,0,0,0.2)', sx-9, sy+11, 18, 4); // shadow
-  // Legs
-  px(ctx, '#4a3020', sx-5, sy+2, 4, 9);
-  px(ctx, '#4a3020', sx+1, sy+2, 4, 9);
-  // Body (wider build)
-  px(ctx, '#8a8a8a', sx-6, sy-8, 12, 10); // grey shirt
+  // Legs (full canvas trousers)
+  px(ctx, '#3a2818', sx-5, sy+2, 4, 9);
+  px(ctx, '#3a2818', sx+1, sy+2, 4, 9);
+  px(ctx, '#2a1c10', sx-5, sy+10, 10, 2); // boot line
+  // Body — grey workshirt covers full torso
+  px(ctx, '#7a7a82', sx-6, sy-8, 12, 11);
   // Apron remnant
   px(ctx, '#c8c0a0', sx-4, sy-6, 8, 8);
   px(ctx, '#a0a080', sx-4, sy-6, 8, 2); // apron ties
@@ -2917,19 +2920,23 @@ function drawMara(ctx, sx, sy) {
   px(ctx, '#cc4422', sx-4, sy-17, 2, 3); // side curl left
   px(ctx, '#cc4422', sx+2, sy-17, 2, 3); // side curl right
   px(ctx, '#aa3318', sx-3, sy-16, 6, 2); // hair shadow
-  // Arms (wider)
-  px(ctx, '#c8a07a', sx-10, sy-6, 4, 7);
-  px(ctx, '#c8a07a', sx+6, sy-6, 4, 7);
+  // Sleeved arms (shirt color, NOT skin)
+  px(ctx, '#7a7a82', sx-10, sy-6, 4, 7);
+  px(ctx, '#7a7a82', sx+6, sy-6, 4, 7);
+  // Hands at the end of the sleeves so it still reads as a person
+  px(ctx, '#c8a07a', sx-10, sy+1, 4, 2);
+  px(ctx, '#c8a07a', sx+6, sy+1, 4, 2);
 }
 
 function drawFelix(ctx, sx, sy) {
-  // British engineer, grey hair, grease-stained, tool belt
+  // British ship's engineer — full work clothes, no bare arms.
   px(ctx, 'rgba(0,0,0,0.2)', sx-8, sy+11, 16, 4); // shadow
   // Legs (dark trousers)
   px(ctx, '#2a2a3a', sx-5, sy+2, 4, 9);
   px(ctx, '#2a2a3a', sx+1, sy+2, 4, 9);
-  // Body
-  px(ctx, '#5a6070', sx-5, sy-8, 10, 10); // blue-grey work shirt
+  px(ctx, '#1a1a2a', sx-5, sy+10, 10, 2); // boot line
+  // Body — blue-grey work shirt covers full torso
+  px(ctx, '#5a6070', sx-5, sy-8, 10, 11);
   // Tool belt
   px(ctx, '#5a3818', sx-5, sy-1, 10, 3);
   px(ctx, '#8a6030', sx-1, sy-1, 4, 3); // belt buckle
@@ -2945,12 +2952,15 @@ function drawFelix(ctx, sx, sy) {
   // Grey hair (short)
   px(ctx, '#aaaaaa', sx-4, sy-18, 8, 4);
   px(ctx, '#888888', sx-4, sy-17, 8, 2);
-  // Arms
+  // Sleeved arms (shirt color)
   px(ctx, '#5a6070', sx-9, sy-6, 4, 8);
   px(ctx, '#5a6070', sx+5, sy-6, 4, 8);
+  // Hands sticking out of sleeves
+  px(ctx, '#c8a07a', sx-9, sy+2, 4, 2);
+  px(ctx, '#c8a07a', sx+5, sy+2, 4, 2);
   // Wrench in hand (right)
-  px(ctx, '#888', sx+6, sy+1, 2, 6);
-  px(ctx, '#888', sx+5, sy+1, 4, 2);
+  px(ctx, '#888', sx+6, sy+3, 2, 6);
+  px(ctx, '#888', sx+5, sy+3, 4, 2);
 }
 
 function drawKona(ctx, sx, sy) {
@@ -10696,16 +10706,38 @@ function render(ctx, minimapCtx) {
     });
   }
 
-  // === PASSING SHIP ON HORIZON ===
+  // === PASSING SHIP ===
+  // The ship lives in WORLD space far out in the deep ocean north of the island,
+  // so it only renders when the player can actually see that water. No more ships in the jungle.
   if (state.passingShipActive && !state.underground) {
-    // Find the nearest deep ocean tile row at the top of the visible area to anchor the horizon
-    // Ship is drawn in screen space at a fixed horizon-like Y position
-    ctx.restore(); // exit zoom transform temporarily
-    ctx.save();
     const shipProgress = state.passingShipProgress || 0;
-    const shipScreenX = Math.round(shipProgress * (canvas.width + 160) - 80);
-    // Horizon Y: roughly 18% from top of screen (sky/ocean meeting line)
-    const horizonY = Math.round(canvas.height * 0.18);
+    // Anchor a few tiles into the deep ocean north of the island. Island sits roughly y=65..145.
+    const shipWorldY = 12 * TSIZE;
+    const shipWorldX = shipProgress * (WORLD_W + 200*TSIZE) - 100*TSIZE;
+    const shipScreenX = Math.round(shipWorldX - camX);
+    const horizonY = Math.round(shipWorldY - camY);
+    // Only draw the ship if it'd actually be over water on screen.
+    const _shipOnScreen = shipScreenX > -120 && shipScreenX < canvas.width + 120 && horizonY > -60 && horizonY < canvas.height + 60 && camY < 40*TSIZE;
+    if (!_shipOnScreen) {
+      // Off-screen: show a tiny top-bar reminder so the player still knows it's passing.
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      const framesLeft = state.passingShipWindowRemain || 0;
+      const secsLeft = Math.ceil(framesLeft / 60);
+      const reminderColor = secsLeft < 30 ? '#ff4444' : secsLeft < 90 ? '#ffcc00' : '#c8e8f0';
+      ctx.fillStyle = 'rgba(20,12,4,0.85)';
+      ctx.fillRect(canvas.width/2 - 100, 6, 200, 22);
+      ctx.strokeStyle = '#5a3a14';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(canvas.width/2 - 100, 6, 200, 22);
+      ctx.font = 'bold 11px "Lato", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = reminderColor;
+      ctx.fillText('SHIP PASSING NORTH — ' + secsLeft + 's', canvas.width/2, 22);
+      ctx.textAlign = 'left';
+      ctx.restore();
+      // Skip the in-world drawing below since the ship isn't visible.
+    } else {
 
     // Glow/reflection on water beneath ship
     const grd2 = ctx.createLinearGradient(shipScreenX - 30, horizonY, shipScreenX + 30, horizonY + 18);
@@ -10747,12 +10779,7 @@ function render(ctx, minimapCtx) {
     ctx.fillStyle = secsLeft < 30 ? '#ff4444' : secsLeft < 90 ? '#ffcc00' : '#c8e8f0';
     ctx.fillText('SHIP — ' + secsLeft + 's', shipScreenX, horizonY - 28);
     ctx.textAlign = 'left';
-    ctx.restore();
-    // Re-enter zoom context for remaining draws
-    ctx.save();
-    ctx.translate(canvas.width/2, canvas.height/2);
-    ctx.scale(state.zoom || 1.8, state.zoom || 1.8);
-    ctx.translate(-canvas.width/2, -canvas.height/2);
+    } // end of in-world ship drawing
   }
 
   // === DRAW CANOES (on surface only) ===
