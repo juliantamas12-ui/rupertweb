@@ -8898,6 +8898,8 @@ function drawMinimap(minimapCtx) {
 
 function drawGuide(ctx) {
   if (!state.running || state.cutscenePlaying) return;
+  // Don't compete with dialogue, build menu, minigames, or pause — the player is busy.
+  if (state.dialogue || state.minigame || state.paused || state.buildMode) return;
   const p = state.player;
   let msg = null;
 
