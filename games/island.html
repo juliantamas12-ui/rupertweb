@@ -3665,7 +3665,7 @@ function updateNicaler() {
     if ((state.frameCount & 1) === 0) spawnParticles(n.x, n.y, '#ff4400', 2);
     // Hit player on contact
     if (Math.hypot(p.x - n.x, p.y - n.y) < 28) {
-      p.hp = Math.max(0, p.hp - 18);
+      p.hp = Math.max(0, p.hp - 20);
       p.hitFlash = 14;
       state.lastDamageCause = 'NICALER CHARGE';
       n.charging = false;
@@ -3683,7 +3683,7 @@ function updateNicaler() {
   if (n.slamTimer <= 0 && dist < 90) {
     // AoE damage
     if (dist < 70) {
-      p.hp = Math.max(0, p.hp - (n.phase === 2 ? 16 : 11));
+      p.hp = Math.max(0, p.hp - (n.phase === 2 ? 18 : 12));
       p.hitFlash = 12;
       state.lastDamageCause = 'NICALER SLAM';
       state.screenShake = Math.max(state.screenShake, 10);
@@ -3698,7 +3698,7 @@ function updateNicaler() {
   // Melee swing
   n.attackTimer--;
   if (n.attackTimer <= 0 && dist < 40) {
-    p.hp = Math.max(0, p.hp - (n.phase === 2 ? 12 : 9));
+    p.hp = Math.max(0, p.hp - (n.phase === 2 ? 13 : 10));
     p.hitFlash = 10;
     state.lastDamageCause = 'NICALER';
     n.attackTimer = n.phase === 2 ? 30 : 50;
@@ -3999,8 +3999,8 @@ function updateEnemies() {
       const attackR = e.type==='chief' ? 40 : 28;
       if (dist < attackR && e.attackTimer > 80 && !e.fleeing && e.scatterTimer <= 0 && !state.invincible) {
         e.attackTimer = 0;
-        // Tribe hits hard now: chief 30, warrior/shadow 20.
-        let dmg = e.type==='chief' ? 30 : 20;
+        // Tribe hits: chief 33, warrior/shadow 22 (base +10%)
+        let dmg = e.type==='chief' ? 33 : 22;
         if (state.bloodMoonActive && state.bloodMoonPhase === 1) dmg = Math.ceil(dmg * 1.25);
         if (state._volcanicArmorActive) dmg = Math.round(dmg * 0.7);
         p.hp = Math.max(0, p.hp - dmg);
@@ -4048,7 +4048,7 @@ function updateEnemies() {
         if (dist > 0) state.projectiles.push({
           x: e.x, y: e.y,
           vx: dx/dist * 5, vy: dy/dist * 5,
-          type: 'arrow', life: 60, damage: 10
+          type: 'arrow', life: 60, damage: 11 // +10%
         });
       }
     }
@@ -4383,12 +4383,12 @@ function updateCreatures() {
       c.attackTimer++;
       if (dist < 20 && c.attackTimer > 90 && !inSafeZone) {
         c.attackTimer = 0;
-        // Spider: 15 on bite + 5 dmg/s for 5s poison (no armour assumed)
-        const bite = 15;
+        // Spider: 17 on bite + 6 dmg/s for 5s poison (+10%)
+        const bite = 17;
         p.hp = Math.max(0, p.hp - bite);
         p.hitFlash = 8;
         p.poison = 300;        // 5s @ 60fps
-        p.poisonDps = 5;       // 5 dmg/s
+        p.poisonDps = 6;       // 6 dmg/s (+10%)
         state.lastDamageCause = 'spider bite';
         if (state.runStats) state.runStats.damageTaken += bite;
         spawnParticles(p.x, p.y, '#22cc33',5);
@@ -4463,7 +4463,7 @@ function updateCreatures() {
         c.attackTimer++;
         if (dist < 20 && c.attackTimer > 80) {
           c.attackTimer = 0;
-          p.hp = Math.max(0, p.hp - 4);
+          p.hp = Math.max(0, p.hp - 5);
           state.lastDamageCause = 'shark attack';
           if (state.runStats) state.runStats.damageTaken += 4;
           spawnParticles(p.x, p.y, '#3398db',3);
@@ -4485,7 +4485,7 @@ function updateCreatures() {
         c.attackTimer++;
         if (dist < 20 && c.attackTimer > 60) {
           c.attackTimer = 0;
-          const batDmg = 5;
+          const batDmg = 6;
           p.hp = Math.max(0, p.hp - batDmg);
           p.hitFlash = 4;
           state.lastDamageCause = 'bat bite';
@@ -4527,7 +4527,7 @@ function updateCreatures() {
           c.attackTimer++;
           if (dist < 22 && c.attackTimer > 10) {
             c.attackTimer = 0;
-            p.hp = Math.max(0, p.hp - 6);
+            p.hp = Math.max(0, p.hp - 7);
             p.hitFlash = 8;
             state.screenShake = Math.max(state.screenShake, 5);
             state.lastDamageCause = 'boar charge';
@@ -6123,8 +6123,8 @@ function updatePlayer() {
       const px2 = Math.floor(p.x / TSIZE), py2 = Math.floor(p.y / TSIZE);
       if (Math.abs(px2 - ftx) <= 1 && Math.abs(py2 - fty) <= 1) {
         if (state.frameCount % 60 === 0) {
-          p.hp = Math.max(0, p.hp - 5);
-          addFloatingText(p.x, p.y - 20, '-5', '#ff6600');
+          p.hp = Math.max(0, p.hp - 6);
+          addFloatingText(p.x, p.y - 20, '-6', '#ff6600');
           if (navigator.vibrate) navigator.vibrate([50,20,50]);
         }
       }
@@ -7461,7 +7461,7 @@ function handleClick(sx, sy) {
       const isCool = (obj.coolTimer || 0) <= 0;
       if (!isCool) {
         // Still hot — damages player but can still mine (risk/reward)
-        const heatDmg = 8;
+        const heatDmg = 9;
         p.hp = Math.max(0, p.hp - heatDmg);
         p.hitFlash = 6;
         addFloatingText(p.x, p.y-20, '-'+heatDmg+' HEAT!', '#ff4400');
@@ -12348,7 +12348,7 @@ function updateWorldEvents() {
       if (pDist < 20) {
         r.attackTimer = (r.attackTimer||0)+1;
         if (r.attackTimer % 60 === 0) {
-          const rawDmg = 12 + Math.floor(Math.random()*8);
+          const rawDmg = 13 + Math.floor(Math.random()*9); // +10%
           const dmg = Math.floor(rawDmg * (1 - (state.damageReduction||0)));
           p.hp = Math.max(0, p.hp - dmg);
           p.hitFlash = 8;
