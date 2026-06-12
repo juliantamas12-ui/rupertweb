@@ -8108,7 +8108,15 @@ function _applyLineEffects(npc, line) {
     // Oonga finished — unlock Zone 1
     state.zoneUnlocked = Math.max(1, state.zoneUnlocked);
     showMsg("ZONE UNLOCKED: The jungle opens to you.", '#c8f135');
-    showMsg("QUEST: Find Elder Kona (marked on minimap)", '#c8a060');
+    showMsg("QUEST: Find Elder Kona (marked on minimap + arrow)", '#c8a060');
+    // Hand the player a stone axe so they can actually clear a jungle path.
+    const _p = state.player;
+    if ((_p.inv.axe||0) === 0 && (_p.inv.fire_axe||0) === 0) {
+      _p.inv.axe = 1;
+      _p.toolDurability = _p.toolDurability || {};
+      _p.toolDurability.axe = 40;
+      showMsg("Oonga gives you a STONE AXE. (hotbar 1)", '#c8f135');
+    }
   }
   if (line.questTrigger === 'reach_summit') {
     // Kona finished — unlock Zone 4
@@ -11295,7 +11303,76 @@ function render(ctx, minimapCtx) {
 
   // === COMPANION PORTRAITS (bottom-left) ===
   drawCompanionPortraits(ctx);
+
+  // === QUEST WAYPOINT ARROW ===
+  // When an NPC is the current quest target, draw a screen-edge arrow pointing to them.
+  drawQuestWaypoint(ctx);
 } // end render
+
+function drawQuestWaypoint(ctx) {
+  if (state.dialogue || state.minigame || state.cutscenePlaying) return;
+  // Pick the active quest target.
+  let target = null;
+  let label = '';
+  const oonga = state.npcs && state.npcs.find(n => n.id === 'oonga');
+  const kona  = state.npcs && state.npcs.find(n => n.id === 'kona');
+  if (oonga && (oonga._lineIdx||0) >= 1 && kona && (kona._lineIdx||0) === 0) {
+    target = kona; label = 'KONA';
+  } else if (state.npcs) {
+    // Otherwise: unconscious crash survivors are next priority
+    const unc = state.npcs.find(n => n.crashSurvivor && n.unconscious);
+    if (unc) { target = unc; label = unc.name; }
+  }
+  if (!target) return;
+  const p = state.player;
+  const dx = target.x - p.x, dy = target.y - p.y;
+  const dist = Math.hypot(dx, dy);
+  // If target is roughly on-screen, no arrow needed (minimap is enough).
+  const sx = target.x - state.cam.x;
+  const sy = target.y - state.cam.y;
+  const onScreen = sx > 40 && sx < canvas.width - 40 && sy > 40 && sy < canvas.height - 40;
+  if (onScreen) return;
+  // Place an arrow on a ring just inside the screen edge pointing toward the target.
+  const cx = canvas.width / 2, cy = canvas.height / 2;
+  const ang = Math.atan2(dy, dx);
+  const margin = 80;
+  const ringR = Math.min(canvas.width, canvas.height) / 2 - margin;
+  const ax = cx + Math.cos(ang) * ringR;
+  const ay = cy + Math.sin(ang) * ringR;
+  const pulse = 0.6 + 0.4 * Math.sin(state.frameCount * 0.12);
+  ctx.save();
+  ctx.translate(ax, ay);
+  ctx.rotate(ang);
+  ctx.fillStyle = `rgba(255,204,64,${pulse})`;
+  ctx.beginPath();
+  ctx.moveTo(16, 0);
+  ctx.lineTo(-8, -10);
+  ctx.lineTo(-8, 10);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#3a2010';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.restore();
+  // Distance label next to the arrow
+  const tiles = Math.round(dist / TSIZE);
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.8)';
+  const labelText = label + ' — ' + tiles + ' tiles';
+  ctx.font = 'bold 11px Lato, sans-serif';
+  const w = ctx.measureText(labelText).width + 14;
+  const lx = ax - w/2;
+  const ly = ay + (Math.sin(ang) > 0 ? 22 : -32);
+  ctx.fillRect(lx, ly, w, 18);
+  ctx.strokeStyle = '#9a6828';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(lx, ly, w, 18);
+  ctx.fillStyle = '#ffcc40';
+  ctx.textAlign = 'center';
+  ctx.fillText(labelText, ax, ly + 13);
+  ctx.textAlign = 'left';
+  ctx.restore();
+}
 
 function drawCompanionPortraits(ctx) {
   // Only active companions (not the ones resting at camp).
