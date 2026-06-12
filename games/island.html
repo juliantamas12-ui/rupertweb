@@ -9109,40 +9109,42 @@ function drawHoverHighlight(ctx, camX, camY) {
   const hsx = Math.floor(hoverObj.x - camX);
   const hsy = Math.floor(hoverObj.y - camY);
   ctx.save();
-  // Minimal white outline — sized to the object so it doesn't look detached
-  // Per-type bounding boxes (w, h, vertical offset). Default to a small box.
+  // Minimal white outline — sized to the object's actual interactive footprint.
+  // Trees use a tight box around the TRUNK (where you click), not the wide canopy,
+  // so the outline visibly hugs the thing the player is targeting.
+  // [w, h, yOffset] in world units. yOffset is relative to obj.y (the base).
   const OUTLINE_BOX = {
-    tree:        [22, 30, -22],
-    breadfruit:  [24, 32, -24],
-    mape:        [24, 32, -24],
-    purau:       [22, 28, -22],
-    pandanus:    [22, 28, -22],
-    filao:       [18, 28, -22],
-    hutu:        [24, 32, -24],
-    rock:        [18, 14, -10],
-    vol_rock:    [18, 14, -10],
-    palm:        [22, 36, -28],
-    coconut_palm:[22, 36, -28],
-    berry:       [14, 12, -8],
-    driftwood:   [20, 8,  -4],
-    pebble:      [12, 8,  -5],
-    flotsam:     [20, 10, -6],
-    bottle:      [10, 14, -10],
-    fruit:       [12, 12, -8],
-    fish_cooked: [14, 10, -6],
-    journal:     [12, 14, -10],
-    snare_trap:  [18, 12, -8],
-    chest:       [22, 18, -12],
-    bed:         [28, 18, -10],
-    campfire:    [22, 18, -12],
-    forge:       [24, 22, -14],
-    waterfall:   [26, 30, -22],
-    supply_cache:[22, 18, -12],
-    underwater_wreck:[40, 28, -16],
-    dive_spot:   [20, 14, -8],
-    death_pack:  [18, 14, -10],
+    tree:        [10, 22, -18],
+    breadfruit:  [12, 24, -20],
+    mape:        [12, 24, -20],
+    purau:       [10, 22, -18],
+    pandanus:    [10, 22, -18],
+    filao:       [8,  22, -18],
+    hutu:        [12, 24, -20],
+    rock:        [14, 10, -8],
+    vol_rock:    [14, 10, -8],
+    palm:        [10, 28, -24],
+    coconut_palm:[10, 28, -24],
+    berry:       [12, 10, -7],
+    driftwood:   [18, 6,  -3],
+    pebble:      [10, 6,  -4],
+    flotsam:     [18, 8,  -5],
+    bottle:      [8,  12, -9],
+    fruit:       [10, 10, -7],
+    fish_cooked: [12, 8,  -5],
+    journal:     [10, 12, -9],
+    snare_trap:  [16, 10, -7],
+    chest:       [20, 16, -11],
+    bed:         [24, 16, -9],
+    campfire:    [20, 16, -11],
+    forge:       [22, 20, -13],
+    waterfall:   [22, 26, -20],
+    supply_cache:[20, 16, -11],
+    underwater_wreck:[36, 24, -14],
+    dive_spot:   [18, 12, -7],
+    death_pack:  [16, 12, -9],
   };
-  const box = OUTLINE_BOX[hoverObj.type] || [18, 18, -12];
+  const box = OUTLINE_BOX[hoverObj.type] || [14, 14, -10];
   const ow = box[0], oh = box[1], oy = box[2];
   ctx.strokeStyle = 'rgba(255,255,255,0.85)';
   ctx.lineWidth = 1;
