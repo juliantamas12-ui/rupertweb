@@ -6611,14 +6611,17 @@ function handleInteract() {
     }
   }
 
-  // Bed sleep
+  // Bed sleep — walk up, press E, advance to next morning.
   for (let obj of state.objects) {
     if (obj.placed && obj.type === 'bed') {
       const d = Math.hypot(p.x-obj.x, p.y-obj.y);
       if (d < reach) {
-        if (!state.isNight) { showMsg('NOT DARK ENOUGH TO SLEEP', '#888'); return; }
-        const nearEnemy = state.enemies.some(e => Math.hypot(p.x-e.x,p.y-e.y) < 200);
-        if (nearEnemy) { showMsg('ENEMIES TOO CLOSE TO SLEEP', '#e74c3c'); return; }
+        // Enemies very close? You can still try, but it costs HP (interrupted sleep).
+        const nearEnemy = state.enemies.some(e => Math.hypot(p.x-e.x,p.y-e.y) < 120);
+        if (nearEnemy) {
+          p.hp = Math.max(1, p.hp - 20);
+          showMsg('Restless night — enemies disturbed you. -20 HP', '#e74c3c');
+        }
         sleepToMorning();
         return;
       }
@@ -7678,17 +7681,21 @@ function handleClick(sx, sy) {
 
 function sleepToMorning() {
   const p = state.player;
-  if (p.food < 20) {
-    showMsg('Too hungry to sleep — find food first', '#e74c3c');
-    return;
-  }
-  p.food = Math.max(0, p.food - 20);
-  state.frameCount = Math.ceil(state.frameCount / state.DAY_FRAMES) * state.DAY_FRAMES;
-  p.hp = Math.min(p.maxHp, p.hp + 100);
-  p.water = Math.min(p.maxWater, p.water + 80);
-  state.enemies = [];
+  // Tiny food/water cost so it's not free. No hard gate — if you're starving you sleep anyway.
+  p.food = Math.max(0, p.food - 10);
+  p.water = Math.max(0, p.water - 5);
+  // Jump time forward to dawn of the next day.
+  const cur = state.frameCount % state.DAY_FRAMES;
+  state.frameCount += (state.DAY_FRAMES - cur);
+  // Heal up
+  p.hp = Math.min(p.maxHp, p.hp + 50);
+  p.stamina = p.maxStamina;
+  // Clear nighttime hostiles — you reset the day.
+  state.enemies = state.enemies.filter(e => e.villageGuard); // village guards stay
+  state.creatures = state.creatures.filter(c => c.type !== 'bat' && !c.stalker);
   state.day++;
-  showMsg('You slept deeply. Dawn breaks refreshed.', '#c8f135');
+  showMsg('You slept. Dawn breaks. +50 HP, +stamina', '#c8f135');
+  if (typeof saveGame === 'function') { try { saveGame(); } catch(_){} }
   spawnDayEnemies();
 }
 
@@ -9077,11 +9084,30 @@ function drawPlacedObject(ctx, obj, sx, sy) {
         ctx.fillRect(sx-8, sy-16, 16*(obj.hp/20), 3);
       }
       break;
-    case 'bed':
+    case 'bed': {
       px(ctx, '#8B6914', sx-10, sy-2, 20, 12);
       px(ctx, '#fff', sx-8, sy-6, 16, 8);
       px(ctx, '#c8a060', sx-12, sy-4, 6, 8);
+      // PRESS E TO SLEEP prompt when the player is close
+      if (state.player) {
+        const _dx = (sx + state.cam.x) - state.player.x;
+        const _dy = (sy + state.cam.y) - state.player.y;
+        if (Math.hypot(_dx, _dy) < 50) {
+          const pulse = 0.6 + 0.4 * Math.sin(state.frameCount * 0.12);
+          ctx.save();
+          ctx.globalAlpha = pulse;
+          ctx.fillStyle = 'rgba(0,0,0,0.85)';
+          ctx.fillRect(sx - 48, sy - 24, 96, 14);
+          ctx.fillStyle = '#c8f135';
+          ctx.font = 'bold 9px Lato, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('E — SLEEP TILL DAWN', sx, sy - 14);
+          ctx.textAlign = 'left';
+          ctx.restore();
+        }
+      }
       break;
+    }
     case 'chest':
       px(ctx, '#7a5c2e', sx-10, sy-6, 20, 16);
       px(ctx, '#c8a060', sx-10, sy-8, 20, 4);
