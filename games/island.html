@@ -13773,14 +13773,24 @@ window.addEventListener('keydown', e => {
   if (e.key.toLowerCase() === 'i') { const p=document.getElementById('inv-panel'); p.style.display=p.style.display==='block'?'none':'block'; if(p.style.display==='block')renderInvMenu(); }
   if (e.key.toLowerCase() === 'c') openCraftMenu();
   if (e.key.toLowerCase() === 'b') { openBuildMenu(); const bm=document.getElementById('build-menu'); bm.style.display=state.buildMode?'block':'none'; renderBuildMenu(); }
-  if (e.key.toLowerCase() === 'e') handleInteract();
+  if (e.key.toLowerCase() === 'e') {
+    // If a dialogue is open, E dismisses/advances it (same as clicking).
+    if (state.dialogue) { advanceDialogue(); e.preventDefault(); return; }
+    handleInteract();
+  }
   // Wreck interior navigation
   if (state.inWreck) {
     if (e.key === 'w' || e.key === 'W' || e.key === 'ArrowUp') { state.wreckCursor = (state.wreckCursor + 4) % 5; e.preventDefault(); }
     if (e.key === 's' || e.key === 'S' || e.key === 'ArrowDown') { state.wreckCursor = (state.wreckCursor + 1) % 5; e.preventDefault(); }
   }
   if (e.key.toLowerCase() === 'q') throwCoconut();
-  if (e.key === ' ') { handleMinigameKey(' '); handleJump(); e.preventDefault(); }
+  if (e.key === ' ') {
+    // Space also advances dialogue
+    if (state.dialogue) { advanceDialogue(); e.preventDefault(); return; }
+    handleMinigameKey(' ');
+    handleJump();
+    e.preventDefault();
+  }
   // Hotbar number keys
   const numKey = parseInt(e.key);
   if (numKey >= 1 && numKey <= 6) {
