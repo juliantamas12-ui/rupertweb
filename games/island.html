@@ -444,7 +444,7 @@ const state = {
     hp: 100, maxHp: 100,
     water: 100, maxWater: 100,
     food: 100, maxFood: 100,
-    stamina: 100, maxStamina: 100,
+    stamina: 50, maxStamina: 50,
     walkFrame: 0, walkTimer: 0,
     airTime: 0, onGround: true,
     lastY: 0, jumpStartY: 0,
@@ -10739,7 +10739,7 @@ function render(ctx, minimapCtx) {
       state.collapsing = false;
       state.collapsed = false;
       // Respawn — full reset, clear enemies, grant invincibility frames
-      p.hp = p.maxHp; p.water = 80; p.food = 80; p.stamina = 100;
+      p.hp = p.maxHp; p.water = 80; p.food = 80; p.stamina = p.maxStamina;
       p.x = 75*TSIZE; p.y = 110*TSIZE;
       state.cam.x = p.x - canvas.width/2;
       state.cam.y = p.y - canvas.height/2;
