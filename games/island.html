@@ -1720,44 +1720,92 @@ function drawEnemy(ctx, sx, sy, e) {
   const ay = sy + bob;
 
   // Body color
-  const bodyC = isShadow ? '#1a0a2a' : (isChief ? '#6a1010' : '#5c2e0a');
-  const skinC = isShadow ? '#2a1040' : '#7a4a20';
+  const bodyC = isShadow ? '#1a0a2a' : (isChief ? '#6a1010' : '#3a2010');
+  const skinC = isShadow ? '#2a1040' : '#8a5a28';
 
-  px(ctx, bodyC, sx - Math.round(7*sc), ay - 2, Math.round(14*sc), Math.round(11*sc));
-  // War paint
-  px(ctx, '#e74c3c', sx-5, ay, 4, 3);
-  px(ctx, '#e74c3c', sx+1, ay, 4, 3);
+  // Shadow / Chief use the legacy block design; regular warrior gets a redesign.
+  const isWarrior = !isShadow && !isChief && !isArcher;
 
-  // Head
-  px(ctx, skinC, sx - Math.round(6*sc), ay - Math.round(14*sc), Math.round(12*sc), Math.round(12*sc));
-
-  if (isShadow) {
-    // Glowing eyes
-    px(ctx, '#ff0000', sx-3, ay-10, 3, 3);
-    px(ctx, '#ff0000', sx+1, ay-10, 3, 3);
-    px(ctx, '#ff6600', sx-2, ay-9, 1, 1);
-    px(ctx, '#ff6600', sx+2, ay-9, 1, 1);
+  if (isWarrior) {
+    // Drop shadow
+    ctx.save(); ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.beginPath(); ctx.ellipse(sx, ay + 13, 9, 3, 0, 0, Math.PI*2); ctx.fill(); ctx.restore();
+    // Legs — darker tan with cross-lash sandals
+    px(ctx, '#5a3a14', sx-5, ay+4, 4, 9);
+    px(ctx, '#5a3a14', sx+1, ay+4, 4, 9);
+    px(ctx, '#3a2010', sx-6, ay+11, 12, 2); // sandals
+    // Tribal kilt (banded brown/red)
+    px(ctx, '#8a3020', sx-7, ay+2, 14, 5);
+    px(ctx, '#5a1a10', sx-7, ay+2, 14, 1);
+    px(ctx, '#5a1a10', sx-7, ay+5, 14, 1);
+    // Bare torso (tan), war-paint stripes
+    px(ctx, skinC, sx-6, ay-4, 12, 8);
+    px(ctx, '#c8323a', sx-5, ay-2, 3, 1);
+    px(ctx, '#c8323a', sx+2, ay-2, 3, 1);
+    px(ctx, '#c8323a', sx-3, ay+0, 6, 1);
+    // Arms
+    px(ctx, skinC, sx-9, ay-2, 3, 8);
+    px(ctx, skinC, sx+6, ay-2, 3, 8);
+    // Bicep cuffs
+    px(ctx, '#3a2010', sx-9, ay, 3, 2);
+    px(ctx, '#3a2010', sx+6, ay, 3, 2);
+    // Bone necklace
+    px(ctx, '#e8d4a8', sx-3, ay-5, 1, 2);
+    px(ctx, '#e8d4a8', sx-1, ay-5, 1, 2);
+    px(ctx, '#e8d4a8', sx+1, ay-5, 1, 2);
+    // Head
+    px(ctx, skinC, sx-5, ay-14, 10, 10);
+    // Face paint: black stripe across the eyes
+    px(ctx, '#1a0a00', sx-5, ay-11, 10, 2);
+    // White eyes peeking through
+    px(ctx, '#fff', sx-3, ay-11, 2, 1);
+    px(ctx, '#fff', sx+1, ay-11, 2, 1);
+    // Mohawk strip on top
+    px(ctx, '#1a0a00', sx-4, ay-16, 8, 3);
+    px(ctx, '#c83020', sx-2, ay-17, 4, 2);
+    // Small feather behind the head
+    px(ctx, '#c83020', sx-7, ay-15, 2, 4);
+    px(ctx, '#f39c12', sx-7, ay-12, 2, 2);
+    // Weapon (spear) gripped in right hand, angled
+    ctx.save();
+    ctx.translate(sx + 8, ay + 2);
+    ctx.rotate(0.3);
+    px(ctx, '#5c3d1e', -1, -22, 2, 26);   // shaft
+    px(ctx, '#dddddd', -3, -28, 6, 6);    // stone tip
+    px(ctx, '#aaaaaa', -2, -27, 4, 4);
+    px(ctx, '#3a1f08', -1, -2, 2, 3);     // grip wrap
+    ctx.restore();
   } else {
-    px(ctx, '#1a0a00', sx-3, ay-10, 2, 2);
-    px(ctx, '#1a0a00', sx+1, ay-10, 2, 2);
-  }
-
-  if (isChief) {
-    // Big headdress
-    for (let i = 0; i < 5; i++) {
-      px(ctx, i%2===0?'#e74c3c':'#f39c12', sx-12+i*5, ay-24-i*3, 4, 12+i*3);
+    px(ctx, bodyC, sx - Math.round(7*sc), ay - 2, Math.round(14*sc), Math.round(11*sc));
+    // War paint
+    px(ctx, '#e74c3c', sx-5, ay, 4, 3);
+    px(ctx, '#e74c3c', sx+1, ay, 4, 3);
+    // Head
+    px(ctx, skinC, sx - Math.round(6*sc), ay - Math.round(14*sc), Math.round(12*sc), Math.round(12*sc));
+    if (isShadow) {
+      px(ctx, '#ff0000', sx-3, ay-10, 3, 3);
+      px(ctx, '#ff0000', sx+1, ay-10, 3, 3);
+      px(ctx, '#ff6600', sx-2, ay-9, 1, 1);
+      px(ctx, '#ff6600', sx+2, ay-9, 1, 1);
+    } else {
+      px(ctx, '#1a0a00', sx-3, ay-10, 2, 2);
+      px(ctx, '#1a0a00', sx+1, ay-10, 2, 2);
     }
-    px(ctx, '#e74c3c', sx-14, ay-18, 28, 4);
-  }
-
-  // Weapon
-  if (isArcher) {
-    px(ctx, '#5c3d1e', sx+10, ay-16, 3, 3);
-    px(ctx, '#5c3d1e', sx+12, ay-20, 2, 8);
-    px(ctx, '#aaa', sx+10, ay-22, 5, 4);
-  } else {
-    px(ctx, '#5c3d1e', sx + Math.round(10*sc), ay - Math.round(22*sc), 3, Math.round(30*sc));
-    px(ctx, isChief?'#ff6600':'#aaaaaa', sx + Math.round(8*sc), ay - Math.round(26*sc), 6, 6);
+    if (isChief) {
+      // Big headdress
+      for (let i = 0; i < 5; i++) {
+        px(ctx, i%2===0?'#e74c3c':'#f39c12', sx-12+i*5, ay-24-i*3, 4, 12+i*3);
+      }
+      px(ctx, '#e74c3c', sx-14, ay-18, 28, 4);
+    }
+    if (isArcher) {
+      px(ctx, '#5c3d1e', sx+10, ay-16, 3, 3);
+      px(ctx, '#5c3d1e', sx+12, ay-20, 2, 8);
+      px(ctx, '#aaa', sx+10, ay-22, 5, 4);
+    } else {
+      px(ctx, '#5c3d1e', sx + Math.round(10*sc), ay - Math.round(22*sc), 3, Math.round(30*sc));
+      px(ctx, isChief?'#ff6600':'#aaaaaa', sx + Math.round(8*sc), ay - Math.round(26*sc), 6, 6);
+    }
   }
 
   // Tribal torch at night (for non-chief scouts/shadows)
@@ -6945,7 +6993,7 @@ function handleClick(sx, sy) {
     }
     // Cooldown and range per weapon (modified by combat skill)
     const _baseCooldowns = {sword:20, spear:30, fire_spear:45, fire_axe:25, stone_knife:15, lava_blade:22, magma_hammer:40, depth_spear:28, bone_spear:28, crystal_blade:20, tribal_weapon:25};
-    const _baseRanges    = {sword:48, spear:80, fire_spear:64, fire_axe:56, stone_knife:36, lava_blade:52, magma_hammer:60, depth_spear:72, bone_spear:80, crystal_blade:52, tribal_weapon:56};
+    const _baseRanges    = {sword:48, spear:56, fire_spear:60, fire_axe:56, stone_knife:36, lava_blade:52, magma_hammer:60, depth_spear:58, bone_spear:58, crystal_blade:52, tribal_weapon:56};
     const cooldownMap = Object.fromEntries(Object.entries(_baseCooldowns).map(([k,v])=>[k, getSkillAttackCooldown(v)]));
     const dmgMap = {sword:25, spear:30, fire_spear:45, fire_axe:35, stone_knife:14, lava_blade:55, magma_hammer:70, depth_spear:75, bone_spear:40, crystal_blade:60, tribal_weapon:35};
     const rangeMap = Object.fromEntries(Object.entries(_baseRanges).map(([k,v])=>[k, getSkillCombatRange(v)]));
@@ -7647,7 +7695,7 @@ const CRAFT_ITEMS = [
   {id:'axe',         label:'STONE AXE',    cost:{wood:2,stone:2},              desc:'Required to chop trees', requiredTier:0},
   {id:'pickaxe',     label:'PICKAXE',      cost:{wood:3,stone:4},              desc:'Required to mine rocks', requiredTier:0},
   {id:'sword',       label:'SWORD',        cost:{stone:2,wood:3},              desc:'15 dmg — combo: 3 kills = 2x next hit', requiredTier:0},
-  {id:'spear',       label:'STONE SPEAR',  cost:{wood:4,stone:2},              desc:'18 dmg, long range, hits 2 enemies', requiredTier:0},
+  {id:'spear',       label:'STONE SPEAR',  cost:{wood:4,stone:2},              desc:'30 dmg, slight extra reach, hits 2 enemies', requiredTier:0},
   {id:'stone_knife', label:'STONE KNIFE',  cost:{stone:1,wood:1},              desc:'8 dmg fast, Q to throw (3 throws)', requiredTier:0},
   {id:'bow',         label:'BOW',          cost:{wood:4,vine:2},               desc:'Ranged: hold click to charge, release to fire', requiredTier:0},
   {id:'arrows',      label:'ARROWS (x5)',  cost:{stone:1,wood:1},              desc:'Ammo for bow, 12 dmg each', requiredTier:0},
