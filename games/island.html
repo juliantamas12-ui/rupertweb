@@ -9090,6 +9090,116 @@ function drawGuide(ctx) {
 }
 
 // Hover highlight
+// ── Sprite bounding-box probe ──
+// Renders the object's actual sprite to a hidden canvas, then scans the alpha channel
+// to find the tight pixel bbox. Cached by type so each sprite is measured once per session.
+// Falls back to a generic 20x20 box if measurement fails.
+const _spriteBBoxCache = new Map();
+function _measureBBox(drawFn) {
+  const W = 96, H = 96;
+  const off = document.createElement('canvas');
+  off.width = W; off.height = H;
+  const octx = off.getContext('2d', { willReadFrequently: true });
+  octx.clearRect(0, 0, W, H);
+  try { drawFn(octx, W/2, H/2); } catch (_) { return null; }
+  let img;
+  try { img = octx.getImageData(0, 0, W, H).data; } catch (_) { return null; }
+  let minX = W, minY = H, maxX = -1, maxY = -1;
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      if (img[(y*W+x)*4 + 3] > 12) {
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      }
+    }
+  }
+  if (maxX < 0) return null;
+  // Translate to world units relative to the (sx, sy) anchor we passed (W/2, H/2).
+  return {
+    w: (maxX - minX) + 2,
+    h: (maxY - minY) + 2,
+    yOff: (minY - H/2) - 1,
+    xOff: (minX - W/2 + (maxX - minX)/2 - 0) // center; baked into the strokeRect call as hsx-w/2
+  };
+}
+function _getSpriteBBox(obj) {
+  const type = obj.type;
+  if (_spriteBBoxCache.has(type)) return _spriteBBoxCache.get(type);
+  // For procedural sprites (trees), sample several seeds and union the bboxes
+  // so the outline is wide enough for the widest variation of that type.
+  const sampledTree = (drawFn) => {
+    let best = null;
+    for (let s = 0; s < 6; s++) {
+      const probeObj = { ...obj, seed: s * 4099 + 17 };
+      const bb = _measureBBox((c, x, y) => drawFn(c, x, y, probeObj));
+      if (!bb) continue;
+      if (!best) { best = bb; continue; }
+      const left  = Math.min(-best.w/2, -bb.w/2);
+      const right = Math.max(best.w/2, bb.w/2);
+      const top   = Math.min(best.yOff, bb.yOff);
+      const bot   = Math.max(best.yOff + best.h, bb.yOff + bb.h);
+      best = { w: right - left, h: bot - top, yOff: top };
+    }
+    return best;
+  };
+  // Map type → the appropriate draw function.
+  const dispatch = {
+    tree:        (c, x, y) => drawTree(c, x, y, obj),
+    breadfruit:  (c, x, y) => (typeof drawBreadfruitTree === 'function' ? drawBreadfruitTree(c, x, y, obj) : drawTree(c, x, y, obj)),
+    mape:        (c, x, y) => (typeof drawMapeTree === 'function' ? drawMapeTree(c, x, y, obj) : drawTree(c, x, y, obj)),
+    purau:       (c, x, y) => (typeof drawPurauTree === 'function' ? drawPurauTree(c, x, y, obj) : drawTree(c, x, y, obj)),
+    pandanus:    (c, x, y) => (typeof drawPandanusTree === 'function' ? drawPandanusTree(c, x, y) : drawTree(c, x, y, obj)),
+    filao:       (c, x, y) => (typeof drawFilaoTree === 'function' ? drawFilaoTree(c, x, y) : drawTree(c, x, y, obj)),
+    hutu:        (c, x, y) => (typeof drawHutuTree === 'function' ? drawHutuTree(c, x, y, obj) : drawTree(c, x, y, obj)),
+    palm:        (c, x, y) => drawPalm(c, x, y, obj),
+    coconut_palm:(c, x, y) => drawPalm(c, x, y, obj),
+    rock:        drawRock,
+    vol_rock:    (typeof drawVolRock === 'function' ? drawVolRock : drawRock),
+    berry:       drawBerry,
+    fruit:       drawBerry,
+    driftwood:   (c, x, y) => { px(c,'#8B6914',x-10,y-2,20,4); px(c,'#7a5514',x-6,y-4,6,2); },
+    pebble:      (c, x, y) => { px(c,'#5a5a64',x-4,y-2,8,5); px(c,'#888894',x-3,y-3,6,3); px(c,'#aaaab4',x-2,y-3,3,1); },
+    flotsam:     (c, x, y) => { px(c,'#8b5e3c',x-10,y-3,20,8); px(c,'#c8a07a',x-8,y-1,16,4); },
+    bottle:      (typeof drawBottle === 'function' ? drawBottle : null),
+    fish_cooked: (c, x, y) => { px(c,'#c87830',x-8,y-4,16,8); px(c,'#e89850',x-6,y-3,12,4); },
+    journal:     (c, x, y) => { px(c,'#8B6020',x-6,y-8,12,14); px(c,'#c8a060',x-5,y-7,10,12); },
+    snare_trap:  (c, x, y) => { px(c,'#5c3d1e',x-8,y-2,16,4); px(c,'#3a2010',x-7,y-4,14,2); },
+    chest:       (c, x, y) => (typeof drawTreasureChest === 'function' ? drawTreasureChest(c, x, y, false, false) : null),
+    bed:         (c, x, y) => { px(c,'#5c3d1e',x-14,y-4,28,12); px(c,'#c8a07a',x-12,y-2,24,8); px(c,'#8b5e3c',x-14,y-8,4,4); },
+    campfire:    (c, x, y) => { px(c,'#3a2010',x-10,y-2,20,6); px(c,'#5c3d1e',x-8,y-6,4,8); px(c,'#5c3d1e',x+4,y-6,4,8); px(c,'#ff6600',x-4,y-12,8,8); px(c,'#ffaa00',x-2,y-14,4,4); },
+    forge:       (c, x, y) => { px(c,'#3a3030',x-10,y-2,20,10); px(c,'#5a5050',x-12,y-12,24,12); px(c,'#ff4400',x-6,y-8,12,6); px(c,'#ffcc00',x-4,y-7,8,2); },
+    waterfall:   (c, x, y) => { px(c,'#6a8aa0',x-12,y-20,24,28); px(c,'#a0c0d0',x-10,y-18,20,24); },
+    supply_cache:(c, x, y) => { px(c,'#5c3d1e',x-10,y-8,20,16); px(c,'#8b6020',x-9,y-7,18,14); },
+    underwater_wreck: (typeof drawUnderwaterWreck === 'function' ? drawUnderwaterWreck : null),
+    dive_spot:   (typeof drawDiveSpot === 'function' ? drawDiveSpot : null),
+    death_pack:  (c, x, y) => { c.strokeStyle='#fff'; c.lineWidth=2; c.strokeRect(x-10,y-8,20,16); c.fillStyle='#c8e8ff'; c.fillRect(x-9,y-7,18,14); },
+  };
+  const drawFn = dispatch[type];
+  let bb = null;
+  // For procedural trees/palms, sample several seeds and take the union.
+  const proceduralTypes = ['tree','breadfruit','mape','purau','hutu','palm','coconut_palm'];
+  if (drawFn && proceduralTypes.includes(type)) {
+    bb = sampledTree((c, x, y, probeObj) => {
+      switch (type) {
+        case 'tree': return drawTree(c, x, y, probeObj);
+        case 'breadfruit': return (typeof drawBreadfruitTree === 'function') ? drawBreadfruitTree(c, x, y, probeObj) : drawTree(c, x, y, probeObj);
+        case 'mape':       return (typeof drawMapeTree === 'function') ? drawMapeTree(c, x, y, probeObj) : drawTree(c, x, y, probeObj);
+        case 'purau':      return (typeof drawPurauTree === 'function') ? drawPurauTree(c, x, y, probeObj) : drawTree(c, x, y, probeObj);
+        case 'hutu':       return (typeof drawHutuTree === 'function') ? drawHutuTree(c, x, y, probeObj) : drawTree(c, x, y, probeObj);
+        case 'palm':
+        case 'coconut_palm': return drawPalm(c, x, y, probeObj);
+      }
+    });
+  } else if (drawFn) {
+    bb = _measureBBox(drawFn);
+  }
+  if (!bb) bb = { w: 20, h: 20, yOff: -10 };
+  _spriteBBoxCache.set(type, bb);
+  return bb;
+}
+
 function drawHoverHighlight(ctx, camX, camY) {
   if (!state.running || state.cutscenePlaying) return;
   const zoom = state.zoom || 1.8;
@@ -9109,50 +9219,13 @@ function drawHoverHighlight(ctx, camX, camY) {
   const hsx = Math.floor(hoverObj.x - camX);
   const hsy = Math.floor(hoverObj.y - camY);
   ctx.save();
-  // White outline — sized to the actual sprite bounding box from each draw function.
-  // [w, h, yOffset] in world units. yOffset is the TOP of the box relative to obj.y (the sprite base).
-  // These match the real pixel extents drawn by the corresponding draw* functions.
-  const OUTLINE_BOX = {
-    // Trees — trunk + canopy (canopy extends y=-20 to y=+4 from base)
-    tree:        [28, 36, -20],
-    breadfruit:  [30, 38, -22],
-    mape:        [30, 38, -22],
-    purau:       [26, 34, -20],
-    pandanus:    [26, 34, -20],
-    filao:       [22, 34, -20],
-    hutu:        [30, 38, -22],
-    // Rocks (full body: sy-10 to sy+12)
-    rock:        [20, 24, -12],
-    vol_rock:    [18, 18, -10],
-    // Palms — tall trunk + fronds
-    palm:        [26, 42, -28],
-    coconut_palm:[26, 42, -28],
-    // Ground bushes / fruit (drawBerry: sy-8 to sy+6, 16 wide)
-    berry:       [18, 16, -9],
-    fruit:       [14, 14, -9],
-    // Beach/ground items
-    driftwood:   [22, 8,  -4],
-    pebble:      [10, 6,  -4],
-    flotsam:     [22, 12, -6],
-    bottle:      [12, 18, -14],
-    fish_cooked: [16, 10, -5],
-    journal:     [14, 16, -10],
-    snare_trap:  [20, 12, -8],
-    // Buildings / placed structures
-    chest:       [24, 20, -14],
-    bed:         [32, 20, -10],
-    campfire:    [24, 20, -14],
-    forge:       [26, 26, -18],
-    waterfall:   [30, 36, -28],
-    supply_cache:[24, 20, -14],
-    underwater_wreck:[44, 32, -18],
-    dive_spot:   [22, 18, -10],
-    death_pack:  [20, 16, -10],
-  };
-  const box = OUTLINE_BOX[hoverObj.type] || [14, 14, -10];
-  const ow = box[0], oh = box[1], oy = box[2];
-  ctx.strokeStyle = 'rgba(255,255,255,0.85)';
-  ctx.lineWidth = 1;
+  // White outline — box is derived from the SPRITE'S ACTUAL RENDERED PIXELS.
+  // We draw the sprite once to a hidden canvas, scan for the real bbox, cache the result.
+  // Procedural variation (per-tree canopy width etc.) is absorbed by sampling multiple seeds.
+  const box = _getSpriteBBox(hoverObj);
+  const ow = box.w, oh = box.h, oy = box.yOff;
+  ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+  ctx.lineWidth = 1.25;
   ctx.strokeRect(hsx - ow/2, hsy + oy, ow, oh);
   ctx.restore();
 }
