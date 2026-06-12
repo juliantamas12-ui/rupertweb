@@ -1272,9 +1272,9 @@ function drawPlayer(ctx, sx, sy, p) {
   const ay = sy;
   const airTilt = p.jumping ? -4 : 0; // slight visual lift when airborne
 
-  // Check if swimming
+  // Check if swimming — both shallow and deep water trigger the swim sprite.
   const playerTile = getTile(p.x, p.y);
-  const isSwimming = playerTile === T.SHALLOW_WATER;
+  const isSwimming = playerTile === T.SHALLOW_WATER || playerTile === T.DEEP_OCEAN;
 
   if (isSwimming) {
     // Water ripple rings (expanding circles)
@@ -1304,8 +1304,9 @@ function drawPlayer(ctx, sx, sy, p) {
     px(ctx, state.skinColor, sx-5, ay-14, 10, 10);
     px(ctx, '#1a0a00', sx-3, ay-11, 2, 2);
     px(ctx, '#1a0a00', sx+1, ay-11, 2, 2);
-    // Water-colored mask over lower body - blends cleanly with tile
-    px(ctx, '#3dd6d0', sx-8, ay+2, 16, 14);
+    // Water-colored mask over lower body — matches the tile (shallow teal vs deep blue).
+    const _waterMask = (playerTile === T.DEEP_OCEAN) ? '#1a4a6a' : '#3dd6d0';
+    px(ctx, _waterMask, sx-8, ay+2, 16, 14);
   } else {
   // Shadow
   px(ctx, 'rgba(0,0,0,0.25)', sx-7, ay+16, 14, 3);
