@@ -7849,10 +7849,27 @@ function startDialogue(npc) {
     }
   }
 
+  // ── CAMP / COMPANION LIMITS ──
+  // One active companion at a time. Extra crew live at camp on BEDS you build.
+  function _activeCompanionCount() { return state.npcs.filter(n => n.companion && !n.atCamp).length; }
+  function _campBedCount() { return state.objects.filter(o => o.placed && o.type === 'bed').length; }
+  function _campResidentCount() { return state.npcs.filter(n => n.companion && n.atCamp).length; }
+
   // Companion offer for Oonga (quest done, zone >= 1, not yet companion)
   if (npc.id === 'oonga' && state.zoneUnlocked >= 1 && !npc.companion) {
     const dist = Math.hypot(state.player.x - npc.x, state.player.y - npc.y);
     if (dist < 60) {
+      const _activeC = _activeCompanionCount();
+      const _beds = _campBedCount();
+      const _resC = _campResidentCount();
+      if (_activeC >= 1 && _resC >= _beds) {
+        state.dialogue = {
+          type: 'lore',
+          text: 'Oonga shakes his head. "You travel with another already. Build a BED in your camp and send them to rest. Then I will follow you."',
+          displayed: '', timer: 0, charIdx: 0,
+        };
+        return;
+      }
       state.dialogue = {
         type: 'choice',
         text: 'Oonga stands ready. "You have proven yourself. I will fight with you if you wish it."',
@@ -7861,6 +7878,7 @@ function startDialogue(npc) {
         onChoice: (i) => {
           if (i === 0) {
             npc.companion = true;
+            npc.atCamp = false;
             npc.hp = 60; npc.maxHp = 60;
             npc.downTimer = 0; npc.attackTimer = 0;
             showMsg('OONGA JOINS YOU as combat companion.', '#c8f135');
@@ -7874,6 +7892,17 @@ function startDialogue(npc) {
   if (npc.id === 'mara' && npc.quest && npc.quest.done && !npc.companion) {
     const dist = Math.hypot(state.player.x - npc.x, state.player.y - npc.y);
     if (dist < 60) {
+      const _activeC = _activeCompanionCount();
+      const _beds = _campBedCount();
+      const _resC = _campResidentCount();
+      if (_activeC >= 1 && _resC >= _beds) {
+        state.dialogue = {
+          type: 'lore',
+          text: 'Mara hesitates. "You already have someone with you, and I have nowhere here to sleep. Build a BED in your camp and I will stay there until you need me."',
+          displayed: '', timer: 0, charIdx: 0,
+        };
+        return;
+      }
       state.dialogue = {
         type: 'choice',
         text: 'Mara nods. "I know these plants. I can gather while we move — if you want company."',
@@ -7882,6 +7911,7 @@ function startDialogue(npc) {
         onChoice: (i) => {
           if (i === 0) {
             npc.companion = true;
+            npc.atCamp = false;
             npc.hp = 40; npc.maxHp = 40;
             npc.gatherTimer = 0; npc.itemsGathered = 0;
             showMsg('MARA JOINS YOU as gatherer companion.', '#c8f135');
@@ -7891,13 +7921,63 @@ function startDialogue(npc) {
       return;
     }
   }
-  // Companion Mara stats on interaction
-  if (npc.id === 'mara' && npc.companion) {
-    state.dialogue = {
-      type: 'lore',
-      text: `MARA — Gatherer Companion\nHP: ${Math.ceil(npc.hp||0)}/${npc.maxHp||40}\nItems gathered: ${npc.itemsGathered||0}`,
-      displayed: '', timer: 0, charIdx: 0,
-    };
+  // ── Companion menu ──
+  // Any recruited NPC — active or resting at camp — gets this menu when you press E on them.
+  if (npc.companion) {
+    const stats = `${npc.name}\nHP: ${Math.ceil(npc.hp||0)}/${npc.maxHp||40}` +
+      (npc.itemsGathered !== undefined ? `\nItems gathered: ${npc.itemsGathered}` : '') +
+      (npc.atCamp ? '\nStatus: RESTING AT CAMP' : '\nStatus: WITH YOU');
+    if (npc.atCamp) {
+      // Try to swap them in. Block if another active companion already exists.
+      const _activeC = _activeCompanionCount();
+      const options = _activeC >= 1
+        ? ['Stay here for now']
+        : ['Travel with me again', 'Stay here for now'];
+      state.dialogue = {
+        type: 'choice',
+        text: stats + '\n\n' + (_activeC >= 1 ? 'Someone else already travels with you. Send them to a bed first.' : 'Will you come with me again?'),
+        options,
+        displayed: '', timer: 0, charIdx: 0,
+        onChoice: (i) => {
+          if (_activeC < 1 && i === 0) {
+            npc.atCamp = false;
+            npc.x = state.player.x + 24; npc.y = state.player.y + 12;
+            showMsg(npc.name + ' rejoins you.', '#c8f135');
+          }
+        }
+      };
+    } else {
+      const beds = _campBedCount();
+      const residents = _campResidentCount();
+      const freeBed = beds > residents;
+      const options = freeBed
+        ? ['Rest at camp', 'Keep travelling']
+        : ['Keep travelling'];
+      state.dialogue = {
+        type: 'choice',
+        text: stats + '\n\n' + (freeBed
+          ? 'Send them to rest on an empty bed in your camp?'
+          : 'No free bed in camp. Build one to let them stay.'),
+        options,
+        displayed: '', timer: 0, charIdx: 0,
+        onChoice: (i) => {
+          if (freeBed && i === 0) {
+            // Move them to the nearest bed and mark them at camp.
+            const beds = state.objects.filter(o => o.placed && o.type === 'bed');
+            // Pick the closest unoccupied bed.
+            const taken = new Set(state.npcs.filter(n => n.companion && n.atCamp && n._bedX != null).map(n => n._bedX+','+n._bedY));
+            const free = beds.filter(b => !taken.has(b.x+','+b.y));
+            const dest = free.sort((a,b) => Math.hypot(a.x-npc.x,a.y-npc.y) - Math.hypot(b.x-npc.x,b.y-npc.y))[0];
+            if (dest) {
+              npc.atCamp = true;
+              npc._bedX = dest.x; npc._bedY = dest.y;
+              npc.x = dest.x; npc.y = dest.y - 6;
+              showMsg(npc.name + ' settles in at camp.', '#c8f135');
+            }
+          }
+        }
+      };
+    }
     return;
   }
 
@@ -10689,7 +10769,8 @@ function render(ctx, minimapCtx) {
 } // end render
 
 function drawCompanionPortraits(ctx) {
-  const companions = state.npcs.filter(n => n && n.companion);
+  // Only active companions (not the ones resting at camp).
+  const companions = state.npcs.filter(n => n && n.companion && !n.atCamp);
   if (companions.length === 0) return;
   const portW = 32, portH = 32, barH = 4, pad = 6, margin = 8;
   let bx = margin, by = canvas.height - margin - (portW + barH + pad + 14) * companions.length;
@@ -11377,6 +11458,14 @@ function updateNPCCompanions() {
   const p = state.player;
   state.npcs.forEach(npc => {
     npc.bobTimer = (npc.bobTimer || 0) + 1;
+    // Camp resident: don't follow the player, just stay on the bed.
+    if (npc.companion && npc.atCamp) {
+      if (npc._bedX != null) {
+        npc.x += (npc._bedX - npc.x) * 0.1;
+        npc.y += ((npc._bedY - 6) - npc.y) * 0.1;
+      }
+      return;
+    }
     // Non-companion NPCs wander slowly
     if (!npc.companion) {
       if (!npc.homeX) { npc.homeX = npc.x; npc.homeY = npc.y; }
@@ -13420,6 +13509,25 @@ function updateUI() {
     }
   } else if (bountyEl) {
     bountyEl.textContent = '';
+  }
+
+  // CREW / CAMP badge — only show after the first companion exists.
+  let crewEl = document.getElementById('crew-hud');
+  const recruited = state.npcs.filter(n => n.companion);
+  if (recruited.length > 0) {
+    if (!crewEl) {
+      crewEl = document.createElement('span');
+      crewEl.id = 'crew-hud';
+      crewEl.style.cssText = 'font-size:9px;letter-spacing:1px;font-family:Lato,sans-serif;margin-top:2px;display:block;color:#c8f135;';
+      const dayPanel = document.getElementById('day-panel');
+      if (dayPanel) dayPanel.appendChild(crewEl);
+    }
+    const beds = state.objects.filter(o => o.placed && o.type === 'bed').length;
+    const camp = recruited.filter(n => n.atCamp).length;
+    const active = recruited.length - camp;
+    crewEl.textContent = `CREW: ${active}/1 active · ${camp}/${beds} at camp`;
+  } else if (crewEl) {
+    crewEl.textContent = '';
   }
   const hwEl = document.getElementById('hw'); if(hwEl) hwEl.textContent = p.inv.wood||0;
   const hsEl = document.getElementById('hs'); if(hsEl) hsEl.textContent = p.inv.stone||0;
