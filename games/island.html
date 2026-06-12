@@ -1346,161 +1346,201 @@ function drawPlayer(ctx, sx, sy, p) {
     ctx.restore();
   }
 
-  // Per-tool sprite. Drawn at the player's hand on the right side (sx+8..sx+18).
-  // Keep these small — 16-20px tall — so they read clearly without obscuring body.
+  // Per-tool sprite. Drawn so the tool is actually GRIPPED in the right hand of the
+  // walking sprite (no longer floating above the shoulder).
+  // Hand position is computed from the same arm anim as the body uses.
   if (!isSwimming && equipped) {
-    const hx = sx + 8;          // hand x
     const _bo = (typeof bobOff === 'number') ? bobOff : 0;
-    const hy = ay - 4 + _bo;    // hand y (matches body bob)
+    // Right arm rectangle: px(ctx, shirt, sx+6, ay-2+rArmAngle+bobOff, 4, 8)
+    // -> hand grip = bottom-center of that rectangle.
+    const handX = sx + 8;                 // middle of right arm
+    const handY = ay + 6 + (typeof rArmAngle === 'number' ? rArmAngle : 0) + _bo;
+    // Long tools sit at a natural carry angle (tilted back), short tools held straight.
+    // Drawing each tool relative to (handX, handY) with rotation applied via ctx.save().
+    ctx.save();
+    ctx.translate(handX, handY);
+    // Slight idle sway so it doesn't look stiff
+    const _sway = isWalking ? Math.sin(wf * Math.PI / 4) * 0.06 : Math.sin(state.frameCount * 0.04) * 0.03;
     switch (equipped) {
+      // ── LONG SHAFTED TOOLS (tilted back over shoulder when carried) ──
       case 'axe': {
-        // wooden haft + grey head
-        px(ctx, '#7a4a18', hx+2, hy-10, 2, 18);
-        px(ctx, '#aaaaaa', hx, hy-12, 7, 5);
-        px(ctx, '#dddddd', hx+1, hy-11, 5, 2);
+        ctx.rotate(0.5 + _sway);
+        // haft from hand upward
+        px(ctx, '#7a4a18', -1, -18, 2, 18);
+        // head at top of haft
+        px(ctx, '#aaaaaa', -4, -22, 8, 5);
+        px(ctx, '#dddddd', -3, -21, 6, 2);
+        // visible grip wrap
+        px(ctx, '#3a1f08', -1, -2, 2, 3);
         break;
       }
       case 'fire_axe': {
-        px(ctx, '#5c3d1e', hx+2, hy-10, 2, 18);
-        px(ctx, '#cc2200', hx, hy-12, 7, 5);
-        px(ctx, '#ff8800', hx+1, hy-11, 5, 2);
-        // ember flicker
-        if ((state.frameCount % 8) < 4) px(ctx, '#ffcc00', hx+5, hy-14, 1, 1);
+        ctx.rotate(0.5 + _sway);
+        px(ctx, '#5c3d1e', -1, -18, 2, 18);
+        px(ctx, '#cc2200', -4, -22, 8, 5);
+        px(ctx, '#ff8800', -3, -21, 6, 2);
+        if ((state.frameCount % 8) < 4) px(ctx, '#ffcc00', 2, -24, 1, 1);
+        px(ctx, '#3a1f08', -1, -2, 2, 3);
         break;
       }
       case 'pickaxe': {
-        px(ctx, '#7a4a18', hx+2, hy-10, 2, 18);
-        px(ctx, '#888899', hx-1, hy-12, 9, 3);
-        px(ctx, '#aaaacc', hx, hy-11, 7, 1);
+        ctx.rotate(0.5 + _sway);
+        px(ctx, '#7a4a18', -1, -18, 2, 18);
+        px(ctx, '#888899', -5, -22, 10, 3);
+        px(ctx, '#aaaacc', -4, -21, 8, 1);
+        px(ctx, '#3a1f08', -1, -2, 2, 3);
         break;
       }
       case 'obsidian_pickaxe': {
-        px(ctx, '#3a2010', hx+2, hy-10, 2, 18);
-        px(ctx, '#1a0a2a', hx-1, hy-12, 9, 3);
-        px(ctx, '#5a3a7a', hx, hy-11, 7, 1);
-        break;
-      }
-      case 'sword': {
-        // silvery blade
-        px(ctx, '#4a2e10', hx+1, hy-2, 4, 4);     // hilt guard
-        px(ctx, '#2a1808', hx+2, hy-2, 2, 6);     // grip
-        px(ctx, '#cccccc', hx+1, hy-18, 4, 16);   // blade
-        px(ctx, '#ffffff', hx+2, hy-18, 2, 16);   // shine
-        break;
-      }
-      case 'lava_blade': {
-        px(ctx, '#3a1a08', hx+1, hy-2, 4, 4);
-        px(ctx, '#2a1808', hx+2, hy-2, 2, 6);
-        px(ctx, '#cc3300', hx+1, hy-18, 4, 16);
-        const f = Math.sin(state.frameCount*0.15)*0.5+0.5;
-        px(ctx, `rgba(255,${Math.round(120+f*100)},0,1)`, hx+2, hy-18, 2, 16);
+        ctx.rotate(0.5 + _sway);
+        px(ctx, '#3a2010', -1, -18, 2, 18);
+        px(ctx, '#1a0a2a', -5, -22, 10, 3);
+        px(ctx, '#5a3a7a', -4, -21, 8, 1);
+        px(ctx, '#3a1f08', -1, -2, 2, 3);
         break;
       }
       case 'magma_hammer': {
-        px(ctx, '#3a1a08', hx+2, hy-10, 2, 18);
-        px(ctx, '#4a1a00', hx-1, hy-14, 9, 8);
-        px(ctx, '#ff4400', hx, hy-13, 7, 2);
-        px(ctx, '#ffaa00', hx+1, hy-12, 5, 1);
+        ctx.rotate(0.5 + _sway);
+        px(ctx, '#3a1a08', -1, -18, 2, 18);
+        px(ctx, '#4a1a00', -5, -24, 10, 8);
+        px(ctx, '#ff4400', -4, -23, 8, 2);
+        px(ctx, '#ffaa00', -3, -22, 6, 1);
+        px(ctx, '#3a1f08', -1, -2, 2, 3);
         break;
       }
-      case 'crystal_blade': {
-        px(ctx, '#3a2a3a', hx+1, hy-2, 4, 4);
-        px(ctx, '#2a1a2a', hx+2, hy-2, 2, 6);
-        px(ctx, '#9050cc', hx+1, hy-18, 4, 16);
-        px(ctx, '#dda0ff', hx+2, hy-18, 2, 16);
-        break;
-      }
+      // ── SPEARS / POLES (slightly less tilt, longer) ──
       case 'spear': {
-        px(ctx, '#5c3d1e', hx+3, hy-24, 2, 32);
-        px(ctx, '#aaaaaa', hx+1, hy-28, 6, 6);
-        px(ctx, '#cccccc', hx+2, hy-27, 4, 4);
+        ctx.rotate(0.35 + _sway);
+        px(ctx, '#5c3d1e', -1, -26, 2, 28);
+        px(ctx, '#aaaaaa', -3, -32, 6, 6);
+        px(ctx, '#cccccc', -2, -31, 4, 4);
+        px(ctx, '#3a1f08', -1, -2, 2, 3);
         break;
       }
       case 'fire_spear': {
-        px(ctx, '#5c3d1e', hx+3, hy-24, 2, 32);
-        px(ctx, '#ff6600', hx, hy-28, 8, 8);
-        px(ctx, '#ffcc00', hx+2, hy-30, 4, 4);
+        ctx.rotate(0.35 + _sway);
+        px(ctx, '#5c3d1e', -1, -26, 2, 28);
+        px(ctx, '#ff6600', -4, -32, 8, 8);
+        px(ctx, '#ffcc00', -2, -34, 4, 4);
         break;
       }
       case 'depth_spear': {
-        px(ctx, '#1a3a4a', hx+3, hy-24, 2, 32);
-        px(ctx, '#3dd6d0', hx, hy-28, 8, 6);
-        px(ctx, '#a0fff8', hx+2, hy-27, 4, 3);
+        ctx.rotate(0.35 + _sway);
+        px(ctx, '#1a3a4a', -1, -26, 2, 28);
+        px(ctx, '#3dd6d0', -4, -32, 8, 6);
+        px(ctx, '#a0fff8', -2, -31, 4, 3);
         break;
       }
       case 'bone_spear': {
-        px(ctx, '#e8d4a8', hx+3, hy-24, 2, 32);
-        px(ctx, '#fff0d0', hx+1, hy-28, 6, 6);
-        px(ctx, '#888', hx+2, hy-27, 4, 4);
+        ctx.rotate(0.35 + _sway);
+        px(ctx, '#e8d4a8', -1, -26, 2, 28);
+        px(ctx, '#fff0d0', -3, -32, 6, 6);
+        px(ctx, '#888', -2, -31, 4, 4);
         break;
       }
       case 'tribal_weapon': {
-        px(ctx, '#3a2010', hx+3, hy-20, 2, 28);
-        px(ctx, '#a02020', hx, hy-22, 8, 4);
-        px(ctx, '#e8d4a8', hx+1, hy-23, 6, 2);
+        ctx.rotate(0.35 + _sway);
+        px(ctx, '#3a2010', -1, -24, 2, 26);
+        px(ctx, '#a02020', -4, -28, 8, 4);
+        px(ctx, '#e8d4a8', -3, -29, 6, 2);
+        break;
+      }
+      // ── SWORDS / BLADES (held vertical, hilt at hand) ──
+      case 'sword': {
+        ctx.rotate(0.05 + _sway*0.5);
+        // hilt
+        px(ctx, '#4a2e10', -2, -2, 4, 4);
+        px(ctx, '#2a1808', -1, -2, 2, 6);
+        // blade above hilt
+        px(ctx, '#cccccc', -2, -18, 4, 16);
+        px(ctx, '#ffffff', -1, -18, 2, 16);
+        break;
+      }
+      case 'lava_blade': {
+        ctx.rotate(0.05 + _sway*0.5);
+        px(ctx, '#3a1a08', -2, -2, 4, 4);
+        px(ctx, '#2a1808', -1, -2, 2, 6);
+        px(ctx, '#cc3300', -2, -18, 4, 16);
+        const f = Math.sin(state.frameCount*0.15)*0.5+0.5;
+        px(ctx, `rgba(255,${Math.round(120+f*100)},0,1)`, -1, -18, 2, 16);
+        break;
+      }
+      case 'crystal_blade': {
+        ctx.rotate(0.05 + _sway*0.5);
+        px(ctx, '#3a2a3a', -2, -2, 4, 4);
+        px(ctx, '#2a1a2a', -1, -2, 2, 6);
+        px(ctx, '#9050cc', -2, -18, 4, 16);
+        px(ctx, '#dda0ff', -1, -18, 2, 16);
         break;
       }
       case 'stone_knife': {
-        px(ctx, '#4a2e10', hx+2, hy-2, 3, 4);
-        px(ctx, '#888899', hx+2, hy-12, 3, 10);
+        // small, held tight
+        ctx.rotate(0.1 + _sway*0.5);
+        px(ctx, '#4a2e10', -1, -2, 3, 4);
+        px(ctx, '#888899', -1, -12, 3, 10);
         break;
       }
+      // ── BOW ──
       case 'bow': {
-        // C-shaped bow on the side
-        ctx.save();
+        ctx.rotate(_sway*0.5);
         ctx.strokeStyle = '#7a4a18';
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(hx+3, hy-4, 11, -Math.PI/2.2, Math.PI/2.2);
+        ctx.arc(0, -8, 11, -Math.PI/2.2, Math.PI/2.2);
         ctx.stroke();
         ctx.strokeStyle = '#cccccc';
         ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.moveTo(hx+3, hy-13);
-        ctx.lineTo(hx+3, hy+5);
+        ctx.moveTo(0, -17);
+        ctx.lineTo(0, 1);
         ctx.stroke();
-        ctx.restore();
         break;
       }
+      // ── TORCHES (held upright in front of body) ──
       case 'torch': {
-        px(ctx, '#5c3d1e', hx+2, hy-12, 3, 14);
-        px(ctx, '#ff8800', hx+1, hy-16, 5, 6);
-        px(ctx, '#ffcc00', hx+2, hy-18, 3, 4);
+        ctx.rotate(_sway*0.4);
+        px(ctx, '#5c3d1e', -1, -14, 3, 14);
+        px(ctx, '#ff8800', -2, -18, 5, 6);
+        px(ctx, '#ffcc00', -1, -20, 3, 4);
+        // flicker ember
+        if ((state.frameCount % 5) < 2) px(ctx, '#fff080', 0, -21, 1, 1);
         break;
       }
       case 'crystal_torch': {
-        px(ctx, '#3a2a4a', hx+2, hy-12, 3, 14);
-        px(ctx, '#a060ff', hx+1, hy-16, 5, 6);
-        px(ctx, '#dda0ff', hx+2, hy-18, 3, 4);
+        ctx.rotate(_sway*0.4);
+        px(ctx, '#3a2a4a', -1, -14, 3, 14);
+        px(ctx, '#a060ff', -2, -18, 5, 6);
+        px(ctx, '#dda0ff', -1, -20, 3, 4);
         break;
       }
+      // ── SMALL HELD ITEMS (hand level) ──
       case 'fire_bottle': {
-        px(ctx, '#5a3010', hx, hy-10, 6, 8);
-        px(ctx, '#ff6600', hx+1, hy-8, 4, 4);
-        px(ctx, '#5c3d1e', hx+1, hy-12, 4, 2);
+        px(ctx, '#5a3010', -3, -10, 6, 8);
+        px(ctx, '#ff6600', -2, -8, 4, 4);
+        px(ctx, '#5c3d1e', -2, -12, 4, 2);
         break;
       }
       case 'lava_bomb': {
-        px(ctx, '#2a1010', hx, hy-8, 6, 6);
-        px(ctx, '#ff4400', hx+1, hy-7, 4, 4);
-        // fuse
-        px(ctx, '#444', hx+2, hy-10, 1, 2);
-        if ((state.frameCount % 6) < 3) px(ctx, '#ffcc00', hx+2, hy-11, 1, 1);
+        px(ctx, '#2a1010', -3, -8, 6, 6);
+        px(ctx, '#ff4400', -2, -7, 4, 4);
+        px(ctx, '#444', -1, -10, 1, 2);
+        if ((state.frameCount % 6) < 3) px(ctx, '#ffcc00', -1, -11, 1, 1);
         break;
       }
       case 'signal_mirror': {
-        px(ctx, '#dddddd', hx, hy-8, 6, 8);
-        px(ctx, '#ffffff', hx+1, hy-7, 4, 6);
-        if ((state.frameCount % 16) < 8) px(ctx, '#ffff80', hx+2, hy-6, 2, 2);
+        px(ctx, '#dddddd', -3, -8, 6, 8);
+        px(ctx, '#ffffff', -2, -7, 4, 6);
+        if ((state.frameCount % 16) < 8) px(ctx, '#ffff80', -1, -6, 2, 2);
         break;
       }
       case 'coconut': {
-        px(ctx, '#5c3d1e', hx, hy-6, 7, 7);
-        px(ctx, '#3a2010', hx+1, hy-5, 5, 5);
-        px(ctx, '#7a5828', hx+2, hy-4, 2, 2);
+        px(ctx, '#5c3d1e', -3, -6, 7, 7);
+        px(ctx, '#3a2010', -2, -5, 5, 5);
+        px(ctx, '#7a5828', -1, -4, 2, 2);
         break;
       }
     }
+    ctx.restore();
   }
 
   // Attack flash — brief white flash when swinging
