@@ -433,7 +433,7 @@ const state = {
   player: {
     x: 75*TSIZE, y: 100*TSIZE,
     vx: 0, vy: 0,
-    hp: 200, maxHp: 200,
+    hp: 100, maxHp: 100,
     water: 100, maxWater: 100,
     food: 100, maxFood: 100,
     stamina: 100, maxStamina: 100,
@@ -6175,8 +6175,8 @@ function updatePlayer() {
   // Volcanic armor: boost maxHp when first equipped
   if ((p.inv.volcanic_armor || 0) > 0 && !state._volcanicArmorActive) {
     state._volcanicArmorActive = true;
-    p.maxHp = Math.min(p.maxHp + 50, 350);
-    p.hp = Math.min(p.maxHp, p.hp + 50);
+    p.maxHp = Math.min(p.maxHp + 25, 175);
+    p.hp = Math.min(p.maxHp, p.hp + 25);
     showMsg('VOLCANIC ARMOR equipped — max HP +50, damage reduced 30%', '#ff6600');
   }
   if ((p.inv.volcanic_armor || 0) === 0 && state._volcanicArmorActive) {
@@ -6447,8 +6447,8 @@ function handleInteract() {
       } else if (key === 'survey_data') {
         state.dialogue = { type:'lore', text:"SURVEY DATA: Detailed charts. Timber estimates. A note reads: 'Tribe population manageable. Recommend pacification in Phase 2. Island designation: Colony Site 7-A.'", displayed:'', timer:0, charIdx:0 };
       } else if (key === 'medicine_chest') {
-        p.maxHp = Math.min(200, p.maxHp + 50);
-        p.hp = Math.min(p.maxHp, p.hp + 50);
+        p.maxHp = Math.min(150, p.maxHp + 25);
+        p.hp = Math.min(p.maxHp, p.hp + 25);
         showMsg('MEDICINE CHEST: +50 MAX HEALTH', '#40ff88');
         spawnParticles(p.x, p.y-20, '#40ff88', 3);
       } else if (key === 'signal_flare') {
@@ -10586,7 +10586,7 @@ function render(ctx, minimapCtx) {
       state.collapsing = false;
       state.collapsed = false;
       // Respawn — full reset, clear enemies, grant invincibility frames
-      p.hp = 200; p.water = 80; p.food = 80; p.stamina = 100;
+      p.hp = p.maxHp; p.water = 80; p.food = 80; p.stamina = 100;
       p.x = 75*TSIZE; p.y = 110*TSIZE;
       state.cam.x = p.x - canvas.width/2;
       state.cam.y = p.y - canvas.height/2;
@@ -14428,7 +14428,7 @@ function gameLoopWithUI() {
       if (p) {
         if (!Number.isFinite(p.hp)) p.hp = 50;
         if (!Number.isFinite(p.x) || !Number.isFinite(p.y)) { p.x = 75*TSIZE; p.y = 100*TSIZE; }
-        if (!Number.isFinite(p.maxHp) || p.maxHp <= 0) p.maxHp = 200;
+        if (!Number.isFinite(p.maxHp) || p.maxHp <= 0) p.maxHp = 100;
       }
       if (state.cam && (!Number.isFinite(state.cam.x) || !Number.isFinite(state.cam.y))) {
         state.cam.x = (p?p.x:0) - canvas.width/2;
