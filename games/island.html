@@ -753,7 +753,9 @@ const NPC_DATA = [
   },
   {
     id: 'kona', name: 'ELDER KONA', color: '#c87050',
-    x: 97*TSIZE, y: 54*TSIZE,
+    // Sits in a hermit clearing outside the village wall so the player can
+    // actually reach him before unlocking zone 4 (the village proper).
+    x: 88*TSIZE, y: 62*TSIZE,
     desc: "Former elder. Knows the artifact's secret.",
     lines: [
       { text: "I wondered when the sea would send a survivor. The artifact... it is like fire. Useful, then consuming. My brother learned this too late.", options: ["Your brother?", "What is the artifact?"], optionNext: [1, 1] },
@@ -8675,6 +8677,18 @@ function drawMinimap(minimapCtx) {
       mc.fillRect(n.x/TSIZE*scale-1, n.y/TSIZE*scale-1, 3, 3);
     }
   });
+  // Pulsing quest-target dot for the NPC the player is supposed to find next.
+  // Highlights Kona once Oonga's "find_kona" quest is active, until you've talked to him.
+  {
+    const oonga = state.npcs.find(n => n.id === 'oonga');
+    const kona  = state.npcs.find(n => n.id === 'kona');
+    const shouldShowKona = kona && oonga && (oonga._lineIdx||0) >= 1 && (kona._lineIdx||0) === 0;
+    if (shouldShowKona) {
+      const pulse = (state.frameCount % 60) < 30;
+      mc.fillStyle = pulse ? '#ffcc40' : '#c87050';
+      mc.fillRect(kona.x/TSIZE*scale-2, kona.y/TSIZE*scale-2, 5, 5);
+    }
+  }
   // Raid warriors on minimap
   if (state.raidActive && state.raid) {
     mc.fillStyle = '#ff2200';
