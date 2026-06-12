@@ -5965,6 +5965,16 @@ function getTile(x, y) {
 
 function checkCollisions(nx, ny) {
   const playerR = 8;
+  // Underground: cave walls block movement (the cave tile map decides this).
+  if (state.underground && state.caveMap && state.caveMap.length) {
+    const tx = Math.floor(nx / TSIZE), ty = Math.floor(ny / TSIZE);
+    if (tx < 0 || ty < 0 || tx >= CAVE_SIZE || ty >= CAVE_SIZE) return true; // off-map = solid
+    const ct = state.caveMap[ty] && state.caveMap[ty][tx];
+    // Only floor / chamber / crystal vein are walkable. Walls and unset tiles block.
+    // (Pool blocks too — you can't stand in water.)
+    if (ct === CT.CAVE_WALL || ct === undefined) return true;
+    if (ct === CT.CAVE_POOL) return true;
+  }
   // Trees + harvest objects with collision
   const SOLID_TYPES = new Set([
     'tree','rock','palm','vol_rock','wall',
@@ -14809,7 +14819,9 @@ function enterCave(caveObj) {
   // Position player at cave entrance in cave map (tile 15,28 = bottom entrance)
   p.x = 15 * TSIZE;
   p.y = 27 * TSIZE;
-  showMsg('ENTERING THE CAVE — dark and deep. E to exit near entrance.', '#aa44ff');
+  showMsg('ENTERING THE CAVE.', '#aa44ff');
+  showMsg('Find the ANCIENT CHAMBER (purple glow) for an ARTIFACT SHARD.', '#aa44ff');
+  showMsg('CRYSTAL VEINS drop crystal shards. E at entrance to leave.', '#aa44ff');
   spawnParticles(caveObj.x, caveObj.y, '#aa44ff', 3);
 }
 
@@ -14880,10 +14892,10 @@ function drawCaveScene(ctx, camX, camY) {
   const cmap = state.caveMap;
   if (!cmap || !cmap.length) return;
 
-  // Black background
-  ctx.fillStyle = '#000000';
+  // Pure black backdrop. We fill the WHOLE screen with cave-wall colour so that
+  // areas outside the 30x30 cave map don't leave the user staring at empty void.
+  ctx.fillStyle = '#0a0a0a';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-
   // Cool blue ambient tint
   ctx.fillStyle = 'rgba(0,20,50,0.6)';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
