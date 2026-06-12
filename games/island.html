@@ -240,7 +240,8 @@ canvas#c{pointer-events:none}
 
 /* ── NOTIFICATIONS — parchment scroll style ── */
 .notif-pill{
-  position:absolute;left:50%;transform:translateX(-50%);
+  /* Let the flex container stack pills — do NOT pull them out of flow with absolute positioning. */
+  position:relative;
   background:linear-gradient(180deg,rgba(52,28,8,0.96) 0%,rgba(38,18,4,0.95) 100%);
   border:1px solid rgba(160,110,40,0.7);
   border-top:2px solid rgba(200,150,60,0.6);
@@ -3389,18 +3390,18 @@ function showMsg(text, color) {
   else if (c === '#8899cc') c = '#7888b8';
   else if (c === '#888' || c === '#888899') c = '#806858';
   pill.style.color = c;
-  // Slide in from top
+  // Slide in from top (no translateX — the flex container centers the pill horizontally)
   pill.style.opacity = '0';
-  pill.style.transform = 'translateX(-50%) translateY(-8px)';
+  pill.style.transform = 'translateY(-8px)';
   pill.textContent = text;
   container.appendChild(pill);
   requestAnimationFrame(() => {
     pill.style.opacity = '1';
-    pill.style.transform = 'translateX(-50%) translateY(0)';
+    pill.style.transform = 'translateY(0)';
   });
   setTimeout(() => {
     pill.style.opacity = '0';
-    pill.style.transform = 'translateX(-50%) translateY(-6px)';
+    pill.style.transform = 'translateY(-6px)';
   }, 2800);
   setTimeout(() => { if (pill.parentNode) pill.parentNode.removeChild(pill); }, 3250);
   const pills = container.children;
