@@ -13330,10 +13330,11 @@ function setBrightness(val) {
 function updateUI() {
   const p = state.player;
 
-  // HP bar
+  // HP bar — must scale against maxHp (200), not raw value, or it never moves until HP < 100.
   const hpBar = document.getElementById('hp-bar');
-  hpBar.style.width = p.hp+'%';
-  if (p.hp < 25) hpBar.classList.add('bar-critical-red');
+  const hpPct = Math.max(0, Math.min(100, (p.hp / p.maxHp) * 100));
+  hpBar.style.width = hpPct + '%';
+  if (hpPct < 25) hpBar.classList.add('bar-critical-red');
   else hpBar.classList.remove('bar-critical-red');
 
   // Water bar
