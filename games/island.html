@@ -5898,6 +5898,15 @@ function _getObjectsCache() {
 function _getPlacedCampfires() {
   return _getObjectsCache().placedByType['campfire'] || [];
 }
+// True when the player is standing on (or within 1 tile of) a placed dock.
+function _atDock(p) {
+  const docks = _getObjectsCache().placedByType['dock'] || [];
+  if (docks.length === 0) return false;
+  for (const d of docks) {
+    if (Math.hypot(p.x - d.x, p.y - d.y) < TSIZE * 1.5) return true;
+  }
+  return false;
+}
 function _getPlacedObjects() {
   return _getObjectsCache().placed;
 }
@@ -6879,6 +6888,7 @@ function handleInteract() {
   const nearWater2 = [T.SHALLOW_WATER, T.BEACH].includes(tile2);
   if (nearWater2 && !state.minigame) {
     if (p.inv.fishing_rod <= 0) { showMsg('NEED A FISHING ROD TO FISH', '#e74c3c'); return; }
+    if (!_atDock(p)) { showMsg('Build a FISHING DOCK to fish (B menu)', '#3dd6d0'); return; }
     startFishMinigame();
     return;
   }
@@ -7376,14 +7386,13 @@ function handleClick(sx, sy) {
     return;
   }
 
-  // ── FISHING ROD: click on shallow water tile ──
+  // ── FISHING ROD: only works while standing on a placed DOCK ──
   if (tool === 'fishing_rod') {
-    const clickTile = getTile(wx, wy);
-    if (clickTile === 1) { // SHALLOW_WATER
-      if (!state.minigame) startFishMinigame();
-    } else {
-      showMsg('Click on shallow water to fish (F key also works)', '#3dd6d0');
+    if (!_atDock(p)) {
+      showMsg('Stand on a FISHING DOCK to fish. Build one in B menu.', '#3dd6d0');
+      return;
     }
+    if (!state.minigame) startFishMinigame();
     return;
   }
 
@@ -7679,6 +7688,7 @@ const BUILD_ITEMS = [
   {id:'campfire',  label:'CAMPFIRE',  cost:{wood:5},          desc:'Light + cook food'},
   {id:'wall',      label:'WALL',      cost:{wood:3,stone:1},  desc:'Blocks enemies'},
   {id:'wall_ring', label:'CAMP WALL', cost:{wood:60,stone:20},desc:'Auto-builds a wall ring around your campfire'},
+  {id:'dock',      label:'FISHING DOCK', cost:{wood:8,vine:1},desc:'Place at shallow water — fish from this spot only'},
   {id:'bed',       label:'BED',       cost:{wood:8,stone:3},  desc:'Sleep through night'},
   {id:'chest',     label:'CHEST',     cost:{wood:5,stone:2},  desc:'Storage'},
   {id:'watchtower',label:'WATCHTOWER',cost:{wood:10,stone:5}, desc:'Enemy warning'},
@@ -7835,6 +7845,15 @@ function placeBuildItem(sx, sy) {
   const p = state.player;
   const item = BUILD_ITEMS.find(b=>b.id===state.buildItem);
   if (!item) return;
+
+  // Dock can only be placed on shallow water (it's a pier).
+  if (state.buildItem === 'dock') {
+    const dockTile = getTile(wx, wy);
+    if (dockTile !== T.SHALLOW_WATER) {
+      showMsg('Place the DOCK on light‑blue shallow water.', '#3dd6d0');
+      return;
+    }
+  }
 
   // Check can afford
   for (const [k,v] of Object.entries(item.cost)) {
@@ -8998,6 +9017,35 @@ function drawPlacedObject(ctx, obj, sx, sy) {
       px(ctx, '#ff6600', sx-4, sy-8+flicker, 8, 8);
       px(ctx, '#ffcc00', sx-2, sy-12+flicker, 4, 6);
       break;
+    case 'dock': {
+      // Wooden pier: planks + side posts. Sits flat on water.
+      // Shadow ripple under the dock
+      ctx.save(); ctx.fillStyle = 'rgba(0,0,0,0.25)';
+      ctx.beginPath(); ctx.ellipse(sx, sy+8, 16, 4, 0, 0, Math.PI*2); ctx.fill(); ctx.restore();
+      // Planks (3 rows)
+      px(ctx, '#6b3d1e', sx-14, sy-4, 28, 12);
+      px(ctx, '#8b5e3c', sx-13, sy-3, 26, 10);
+      px(ctx, '#3d1e0a', sx-14, sy, 28, 1);
+      px(ctx, '#3d1e0a', sx-14, sy+4, 28, 1);
+      // Plank seams
+      for (let i = -10; i <= 10; i += 6) px(ctx, '#3d1e0a', sx+i, sy-3, 1, 10);
+      // Side support posts
+      px(ctx, '#5c3d1e', sx-13, sy+6, 3, 6);
+      px(ctx, '#5c3d1e', sx+10, sy+6, 3, 6);
+      // Small bait bucket on one corner
+      px(ctx, '#5c3d1e', sx+8, sy-7, 4, 4);
+      px(ctx, '#3d1e0a', sx+8, sy-7, 4, 1);
+      // Fishing line dangling off the end (only if a rod is equipped)
+      if (state.player && (state.player.inv.fishing_rod||0) > 0) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(sx+11, sy-6);
+        ctx.lineTo(sx+13, sy+8 + Math.sin(state.frameCount*0.08)*1.5);
+        ctx.stroke();
+      }
+      break;
+    }
     case 'wall':
       // Wooden wall
       px(ctx, '#5c3d1e', sx-8, sy-14, 16, 28);  // dark wood base
@@ -10164,6 +10212,48 @@ function render(ctx, minimapCtx) {
         drawShark(ctx, sx2, sy2);
         px(ctx, '#333', sx2-14, sy2-18, 28, 3);
         px(ctx, '#2d8a22', sx2-14, sy2-18, Math.round(28*capturedC.hp/capturedC.maxHp), 3);
+      } else if (capturedC.type === 'shark') {
+        // STALKER variant: only a dorsal fin breaks the surface, with a foamy wake.
+        if (capturedC.stalker) {
+          ctx.save();
+          // Wake/foam trail behind the fin
+          ctx.fillStyle = 'rgba(255,255,255,0.6)';
+          for (let i = 1; i <= 5; i++) {
+            const tx = sx2 - i*5 + Math.sin((state.frameCount + i*8)*0.2)*1.5;
+            const ty = sy2 + 6 + Math.sin((state.frameCount + i*6)*0.18)*1.0;
+            ctx.fillRect(tx, ty, 3, 2);
+          }
+          // Dark body shadow just under the surface
+          ctx.fillStyle = 'rgba(0,0,0,0.5)';
+          ctx.beginPath();
+          ctx.ellipse(sx2, sy2 + 4, 18, 6, 0, 0, Math.PI*2);
+          ctx.fill();
+          // Dorsal fin — a tall black triangle, the iconic silhouette
+          const sway = Math.sin((state.frameCount + sx2) * 0.08) * 1.5;
+          ctx.fillStyle = '#0a1018';
+          ctx.beginPath();
+          ctx.moveTo(sx2 - 7 + sway, sy2 + 2);
+          ctx.lineTo(sx2 + sway,     sy2 - 16);
+          ctx.lineTo(sx2 + 7 + sway, sy2 + 2);
+          ctx.closePath();
+          ctx.fill();
+          // Highlight stripe down the fin
+          ctx.fillStyle = '#2a3a4a';
+          ctx.fillRect(sx2 - 1 + sway, sy2 - 14, 2, 12);
+          // Pulsing red '!' warning above
+          const pulse = (state.frameCount % 30) < 15;
+          ctx.fillStyle = pulse ? '#ff2020' : '#ff8040';
+          ctx.font = 'bold 14px Lato, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('!', sx2 + sway, sy2 - 22);
+          ctx.textAlign = 'left';
+          ctx.restore();
+        } else {
+          // Normal shark: full body sprite
+          drawShark(ctx, sx2, sy2);
+          px(ctx, '#333', sx2-14, sy2-18, 28, 3);
+          px(ctx, '#2d8a22', sx2-14, sy2-18, Math.round(28*capturedC.hp/capturedC.maxHp), 3);
+        }
       } else if (capturedC.type === 'bat') {
         drawBat(ctx, sx2, sy2);
         px(ctx, '#333', sx2-8, sy2-14, 16, 3);
@@ -13706,10 +13796,10 @@ window.addEventListener('keydown', e => {
           break;
         }
       }
-      // Fishing
+      // Fishing (only while standing on a built dock)
       if (!nearDive && state.player.inv.fishing_rod > 0) {
-        const tile = getTile(state.player.x, state.player.y);
-        if ([1,2].includes(tile)) startFishMinigame();
+        if (_atDock(state.player)) startFishMinigame();
+        else showMsg('Stand on a FISHING DOCK to fish.', '#3dd6d0');
       }
     }
   }
