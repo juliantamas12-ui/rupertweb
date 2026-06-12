@@ -939,8 +939,10 @@ function genObjects() {
       } else if (t === T.BEACH) {
         if (r < 0.004) state.objects.push({type:'palm', x:wx, y:wy, hp:4, maxHp:4, respawn:0, scale:_treeScale(), flipX:_treeFlip(), seed:_treeSeed()});
         else if (r < 0.009) state.objects.push({type:'driftwood', x:wx, y:wy, collected:false});
-        else if (r < 0.011) state.objects.push({type:'fish_spot', x:wx, y:wy, shimmer:Math.random()*100});
-        else if (r < 0.015) state.objects.push({type:selectTree(t,nearWater), x:wx, y:wy, hp:4, maxHp:4, scale:_treeScale(), flipX:_treeFlip(), seed:_treeSeed()});
+        // Pebbles: rare scattered beach stones — 1 stone each, no tool needed.
+        else if (r < 0.014) state.objects.push({type:'pebble', x:wx, y:wy, collected:false});
+        else if (r < 0.016) state.objects.push({type:'fish_spot', x:wx, y:wy, shimmer:Math.random()*100});
+        else if (r < 0.020) state.objects.push({type:selectTree(t,nearWater), x:wx, y:wy, hp:4, maxHp:4, scale:_treeScale(), flipX:_treeFlip(), seed:_treeSeed()});
         // Crabs: very rare, only on beach far from spawn
         if (t === T.BEACH && Math.random() < 0.0005) {
           const distFromStart = Math.hypot(x - 62, y - 85);
@@ -4964,9 +4966,10 @@ function handleMinigameKey(key) {
 function handleMineClick(wx, wy) {
   const mg = state.minigame;
   if (!mg || mg.type !== 'mine') return;
-  const cw = window.innerWidth, ch = window.innerHeight;
-  const bx = cw/2 - 180, by = ch - 180;
-  // Zone positions: drawn at bx+20+z.x-12, by+28+z.y-60, size 24x24
+  // Match the draw code exactly (centered panel), not the old bottom-anchored values.
+  const cw = canvas.width, ch = canvas.height;
+  const bw = 480, bh = 170;
+  const bx = cw/2 - bw/2, by = ch/2 - bh/2;
   const z = mg.zones[mg.currentZone];
   if (!z || z.hit) return;
   const zx = bx + 20 + z.x - 12;
@@ -7293,21 +7296,30 @@ function handleClick(sx, sy) {
       return;
     }
 
-    // ROCKS: always interactable, no tool required
+    // ROCKS: require a pickaxe. Without one you bounce off and get nothing.
+    // (Bare-hand stone now comes from rare beach PEBBLES instead.)
     if (obj.type === 'rock' || obj.type === 'vol_rock') {
-      obj.hp--;
-      spawnParticles(obj.x, obj.y, '#888899', 2);
-      if (typeof SFX !== 'undefined' && SFX.mine) SFX.mine();
-      if (obj.hp <= 0) {
-        const bonus = (state.skills && state.skills.mining >= 25) ? 3 : (state.skills && state.skills.mining >= 10) ? 2 : 1;
-        const yield_ = (p.inv.pickaxe > 0 ? 2 : 1) + bonus - 1;
-        p.inv.stone = (p.inv.stone||0) + yield_;
-        if (typeof addFloatingText === 'function') addFloatingText(obj.x, obj.y-20, '+'+yield_+' STONE', '#888899');
-        if (typeof gainSkill === 'function') gainSkill('mining');
-        state.objects = state.objects.filter(o => o !== obj);
-        if (typeof SFX !== 'undefined' && SFX.pickup) SFX.pickup();
-        if (typeof updateUI === 'function') updateUI();
+      const hasPickaxe = (p.inv.pickaxe||0) > 0 || (p.inv.obsidian_pickaxe||0) > 0;
+      if (!hasPickaxe) {
+        showMsg('Need a PICKAXE to mine rocks. Look for pebbles on the beach.', '#c8a060');
+        spawnParticles(obj.x, obj.y, '#888899', 1);
+        return;
       }
+      // With a pickaxe: open the mining minigame instead of instant-yielding.
+      startMineMinigame(obj);
+      return;
+    }
+
+    // PEBBLES: rare beach stones — 1 stone each, no tool required.
+    if (obj.type === 'pebble' && !obj.collected) {
+      obj.collected = true;
+      p.inv.stone = (p.inv.stone||0) + 1;
+      addFloatingText(obj.x, obj.y - 18, '+1 STONE', '#888899');
+      showMsg('+PEBBLE', '#888899');
+      spawnParticles(obj.x, obj.y, '#888899', 3);
+      SFX.pickup && SFX.pickup();
+      state.objects.splice(i, 1);
+      if (typeof updateUI === 'function') updateUI();
       return;
     }
 
@@ -7335,23 +7347,7 @@ function handleClick(sx, sy) {
       }
       startChopMinigame(obj); return;
     }
-    if (obj.type === 'rock' || obj.type === 'vol_rock') {
-      // Instant mining - no minigame (minigame causes rendering issues)
-      obj.hp--;
-      spawnParticles(obj.x, obj.y, '#888899', 2);
-      if (typeof SFX !== 'undefined' && SFX.mine) SFX.mine();
-      if (obj.hp <= 0) {
-        const bonus = (state.skills && state.skills.mining >= 25) ? 3 : (state.skills && state.skills.mining >= 10) ? 2 : 1;
-        const yield_ = (state.player.inv.pickaxe > 0 ? 2 : 1) + bonus - 1;
-        state.player.inv.stone = (state.player.inv.stone||0) + yield_;
-        if (typeof addFloatingText === 'function') addFloatingText(obj.x, obj.y-20, '+'+yield_+' STONE', '#888899');
-        if (typeof gainSkill === 'function') gainSkill('mining');
-        state.objects = state.objects.filter(o => o !== obj);
-        if (typeof SFX !== 'undefined' && SFX.pickup) SFX.pickup();
-        if (typeof updateUI === 'function') updateUI();
-      }
-      return;
-    }
+    // (Duplicate rock-mining block removed — handled above with pickaxe gate + minigame.)
     if (obj.type === 'palm' && obj.respawn<=0) {
       obj.respawn = 1800;
       p.inv.coconut++;
@@ -8828,7 +8824,7 @@ function drawGuide(ctx) {
   if ((p.inv.wood||0) === 0 && (p.inv.driftwood||0) === 0) {
     msg = ["STEP 1", "Click the brown logs", "on the beach to get wood"];
   } else if ((p.inv.stone||0) < 2) {
-    msg = ["STEP 2", "Click grey rocks to mine stone", "(bare hands work, slowly)"];
+    msg = ["STEP 2", "Pick up small PEBBLES on the beach", "(rocks need a pickaxe)"];
   } else if ((p.inv.axe||0) === 0 && (p.inv.pickaxe||0) === 0) {
     msg = ["STEP 3", "Press C to open crafting", "Make a Stone Axe (2W+2S)"];
   } else if ((p.inv.axe||0) > 0 && state.activeSlot !== 1) {
@@ -8897,6 +8893,7 @@ function drawHoverHighlight(ctx, camX, camY) {
     coconut_palm:[22, 36, -28],
     berry:       [14, 12, -8],
     driftwood:   [20, 8,  -4],
+    pebble:      [12, 8,  -5],
     flotsam:     [20, 10, -6],
     bottle:      [10, 14, -10],
     fruit:       [12, 12, -8],
@@ -9581,6 +9578,13 @@ function render(ctx, minimapCtx) {
           break;
         }
         case 'driftwood': px(ctx,'#8B6914',ssx-10,ssy-2,20,4); px(ctx,'#7a5514',ssx-6,ssy-4,6,2); break;
+        case 'pebble': {
+          // Tiny smooth grey stone with a subtle shine so it reads against the sand
+          px(ctx, '#5a5a64', ssx-4, ssy-2, 8, 5);
+          px(ctx, '#888894', ssx-3, ssy-3, 6, 3);
+          px(ctx, '#aaaab4', ssx-2, ssy-3, 3, 1);
+          break;
+        }
         case 'tribal_child': {
           // Small child figure — crouching, frightened
           if (!capturedObj.collected) {
