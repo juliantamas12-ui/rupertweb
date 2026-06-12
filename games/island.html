@@ -96,11 +96,14 @@ canvas#c{pointer-events:none}
 /* ── MINIMAP ── */
 #minimap{
   position:fixed;top:auto;right:auto;bottom:84px;left:12px;
-  border:2px solid #7a5018;
-  border-top:3px solid #9a6828;
-  border-bottom:3px solid #120800;
-  box-shadow:3px 5px 15px rgba(0,0,0,0.7),inset 0 1px 0 rgba(255,200,80,0.1);
+  display:block;
+  /* Uniform brown frame on all four sides */
+  border:3px solid #7a5018;
+  outline:1px solid #2a1408;
+  background:#1a4a6a;
+  box-shadow:3px 5px 15px rgba(0,0,0,0.7),inset 0 0 0 1px rgba(255,200,80,0.15);
   z-index:10;image-rendering:pixelated;border-radius:10px;
+  box-sizing:content-box;
 }
 
 /* ── HOTBAR — carved bone/wood tray ── */
