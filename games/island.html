@@ -13918,8 +13918,18 @@ function updateCanoes() {
     }
     // Orbit island slowly
     c.orbitAngle += c.orbitSpeed;
-    c.x = islandCX + Math.cos(c.orbitAngle) * c.orbitR;
-    c.y = islandCY + Math.sin(c.orbitAngle) * c.orbitR;
+    let nx = islandCX + Math.cos(c.orbitAngle) * c.orbitR;
+    let ny = islandCY + Math.sin(c.orbitAngle) * c.orbitR;
+    // Keep canoes in water — if the orbit lands on a land tile, push outward until we hit deep/shallow water.
+    let _tile = getTile(nx, ny);
+    let _safety = 12;
+    while (_safety-- > 0 && _tile !== T.DEEP_OCEAN && _tile !== T.SHALLOW_WATER) {
+      c.orbitR += TSIZE;
+      nx = islandCX + Math.cos(c.orbitAngle) * c.orbitR;
+      ny = islandCY + Math.sin(c.orbitAngle) * c.orbitR;
+      _tile = getTile(nx, ny);
+    }
+    c.x = nx; c.y = ny;
     c.angle = c.orbitAngle + Math.PI / 2;
 
     // Show BOARD prompt if player has raft and is nearby
