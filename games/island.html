@@ -6296,6 +6296,13 @@ function updatePlayer() {
   if (p.water <= 0) p.hp = Math.max(0, p.hp - 0.05);
   if (p.food <= 0) p.hp = Math.max(0, p.hp - 0.05);
   if (p.sick > 0) { p.sick--; p.hp = Math.max(0, p.hp - 0.02); }
+
+  // ── PASSIVE REGEN ──
+  // 1 HP every 5 seconds, but only if not actively dying from thirst/hunger/poison.
+  if (state.frameCount % 300 === 0 && p.hp > 0 && p.hp < p.maxHp
+      && p.water > 0 && p.food > 0 && (p.poison||0) === 0 && p.sick === 0) {
+    p.hp = Math.min(p.maxHp, p.hp + 1);
+  }
   if (p.poison > 0) {
     p.poison--;
     // Default trickle damage; spider bite sets p.poisonDps for per-second loss
