@@ -8916,26 +8916,48 @@ function drawGuide(ctx) {
 
   if (!msg) return;
 
-  // Bottom-right corner, above the hotbar, so it never collides with the day panel.
-  const bx = canvas.width - 190, by = canvas.height - 160;
+  // Word-wrap helper — returns an array of lines that fit in maxW at the current font.
+  const wrap = (txt, maxW) => {
+    const words = txt.split(' ');
+    const lines = [];
+    let cur = '';
+    for (const w of words) {
+      const test = cur ? cur + ' ' + w : w;
+      if (ctx.measureText(test).width <= maxW) { cur = test; }
+      else { if (cur) lines.push(cur); cur = w; }
+    }
+    if (cur) lines.push(cur);
+    return lines;
+  };
+
+  // Wider, taller box so longer STEP texts don't overflow.
+  const bw = 220, padX = 12, padY = 14, lineH = 14;
+  ctx.font = '10px Lato, sans-serif';
+  const body = wrap(msg[1], bw - padX*2);
+  const sub  = wrap(msg[2], bw - padX*2);
+  const bh = padY + 16 + body.length*lineH + 4 + sub.length*lineH + padY - 8;
+  const bx = canvas.width - bw - 12, by = canvas.height - bh - 100;
+
   ctx.fillStyle = 'rgba(40,20,8,0.92)';
   ctx.strokeStyle = '#8b6020';
   ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.roundRect(bx, by, 170, 60, 8);
+  ctx.roundRect(bx, by, bw, bh, 8);
   ctx.fill();
   ctx.stroke();
-  
+
+  ctx.textAlign = 'left';
   ctx.font = 'bold 10px Cinzel, serif';
   ctx.fillStyle = '#c8f135';
-  ctx.textAlign = 'left';
-  ctx.fillText(msg[0], bx+10, by+16);
+  ctx.fillText(msg[0], bx + padX, by + padY + 4);
+
+  let ly = by + padY + 18;
   ctx.font = '10px Lato, sans-serif';
   ctx.fillStyle = '#e8d49a';
-  ctx.fillText(msg[1], bx+10, by+32);
+  body.forEach(l => { ctx.fillText(l, bx + padX, ly); ly += lineH; });
+  ly += 2;
   ctx.fillStyle = '#a08040';
-  ctx.fillText(msg[2], bx+10, by+48);
-  ctx.textAlign = 'left';
+  sub.forEach(l => { ctx.fillText(l, bx + padX, ly); ly += lineH; });
 }
 
 // Hover highlight
