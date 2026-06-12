@@ -1311,7 +1311,8 @@ function drawPlayer(ctx, sx, sy, p) {
   px(ctx, 'rgba(0,0,0,0.25)', sx-7, ay+16, 14, 3);
 
   // 8-frame walk cycle (wf already declared at top)
-  const isWalking = p.walkTimer > 0;
+  // var so isWalking is reachable from the equipped-tool overlay below (block-scoped const broke it).
+  var isWalking = p.walkTimer > 0;
   const bodyBob = isWalking ? Math.round(Math.sin(wf * Math.PI / 4) * 1.5) : 0;
   const breathBob = (!isWalking && p.onGround) ? (Math.floor(state.frameCount / 60) % 2 === 0 ? 0 : -1) : 0;
   var bobOff = bodyBob + breathBob; // var so it's reachable from the equipped-tool overlay below
@@ -1387,7 +1388,8 @@ function drawPlayer(ctx, sx, sy, p) {
     ctx.save();
     ctx.translate(handX, handY);
     // Slight idle sway so it doesn't look stiff
-    const _sway = isWalking ? Math.sin(wf * Math.PI / 4) * 0.06 : Math.sin(state.frameCount * 0.04) * 0.03;
+    const _isWalking = (typeof isWalking !== 'undefined') ? isWalking : (p.walkTimer > 0);
+    const _sway = _isWalking ? Math.sin(wf * Math.PI / 4) * 0.06 : Math.sin(state.frameCount * 0.04) * 0.03;
     switch (equipped) {
       // ── LONG SHAFTED TOOLS (tilted back over shoulder when carried) ──
       case 'axe': {
