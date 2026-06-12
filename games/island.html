@@ -964,28 +964,43 @@ function genObjects() {
   state.objects.push({type:'treasure_chest', x:77*TSIZE, y:107*TSIZE, opened:false, lootTier:'common', buried:true});
 
   // Waterfall (interactable)
-  // Tidal cave — force onto southwest beach/jungle-edge tile
+  // Tidal cave — find a real beach tile in the southwest and place the cave THERE.
+  // Previous version always pushed the cave at fixed (45,74) regardless of search result,
+  // which dropped it on top of jungle trees and looked completely out of place.
   {
-    const caveX = 27, caveY = 85;
-    let cavePlaced = false;
-    if (state.map[caveY] && state.map[caveY][caveX] === T.BEACH) {
-      state.objects.push({type:'cave', x:45*TSIZE, y:74*TSIZE, decor:false});
-      cavePlaced = true;
-    }
-    if (!cavePlaced) {
-      outerCave: for (let dy = -5; dy <= 5; dy++) {
-        for (let dx = -5; dx <= 5; dx++) {
-          if (state.map[caveY+dy] && state.map[caveY+dy][caveX+dx] === T.BEACH) {
-            state.objects.push({type:'cave', x:45*TSIZE, y:74*TSIZE, decor:false});
-            cavePlaced = true;
-            break outerCave;
-          }
+    let cavePX = -1, cavePY = -1;
+    // Search the southwest quadrant for a beach tile with empty space around it
+    const candidates = [];
+    for (let yy = 70; yy < 110 && yy < MSIZE; yy++) {
+      for (let xx = 10; xx < 50 && xx < MSIZE; xx++) {
+        if (!state.map[yy] || state.map[yy][xx] !== T.BEACH) continue;
+        // Prefer beach tiles adjacent to jungle (cave entrances at the jungle→beach edge)
+        let touchesJungle = false;
+        for (const [dx,dy] of [[-1,0],[1,0],[0,-1],[0,1]]) {
+          const nt = state.map[yy+dy] && state.map[yy+dy][xx+dx];
+          if (nt === T.JUNGLE_LIGHT || nt === T.JUNGLE_DARK) touchesJungle = true;
         }
+        candidates.push({x:xx, y:yy, edge:touchesJungle});
       }
     }
-    if (!cavePlaced) {
-      state.objects.push({type:'cave', x:45*TSIZE, y:74*TSIZE, decor:false});
-    }
+    const edgeOnes = candidates.filter(c => c.edge);
+    const pick = (edgeOnes.length ? edgeOnes : candidates)[Math.floor(Math.random() * Math.max(1, (edgeOnes.length || candidates.length)))];
+    if (pick) { cavePX = pick.x; cavePY = pick.y; }
+    else { cavePX = 27; cavePY = 85; } // last‑ditch fallback
+    const cavePxWorld = cavePX * TSIZE;
+    const cavePyWorld = cavePY * TSIZE;
+    state.objects.push({type:'cave', x:cavePxWorld, y:cavePyWorld, decor:false});
+    // Clear any trees/rocks within ~28px so the entrance has breathing room.
+    state.objects = state.objects.filter(o => {
+      if (o.type === 'cave') return true;
+      const blockers = ['tree','breadfruit','mape','purau','pandanus','filao','hutu','rock','vol_rock','palm','coconut_palm','berry'];
+      if (!blockers.includes(o.type)) return true;
+      const d = Math.hypot(o.x - cavePxWorld, o.y - cavePyWorld);
+      return d > 28;
+    });
+    // Drop a couple of decorative rocks framing the entrance so it reads as a real cave mouth
+    state.objects.push({type:'rock', x:cavePxWorld - 22, y:cavePyWorld + 14, hp:6, maxHp:6});
+    state.objects.push({type:'rock', x:cavePxWorld + 22, y:cavePyWorld + 14, hp:6, maxHp:6});
   }
 
   // Ancient altar
@@ -13834,40 +13849,92 @@ function drawCaveScene(ctx, camX, camY) {
   const psx = p.x - camX, psy = p.y - camY;
   drawPlayer(ctx, psx, psy, p);
 
-  // Torch/crystal torch light radius
+  // Torch/crystal torch light radius. Even without a torch you should be able to
+  // make out the cave — the previous tiny circle made the screen look broken.
   const hasTorch = (p.inv.torch||0) > 0 && p.torch;
   const hasCrystalTorch = (p.inv.crystal_torch||0) > 0;
-  if (hasTorch || hasCrystalTorch) {
-    const lightR = hasCrystalTorch ? 120 : 80;
+  ctx.save();
+  if (hasCrystalTorch) {
+    const lightR = 220;
     const grad = ctx.createRadialGradient(psx, psy, 0, psx, psy, lightR);
     grad.addColorStop(0, 'rgba(0,0,0,0)');
-    grad.addColorStop(0.6, 'rgba(0,0,0,0)');
-    grad.addColorStop(1, 'rgba(0,0,0,0.95)');
-    ctx.fillStyle = grad;
-    ctx.fillRect(psx - lightR, psy - lightR, lightR*2, lightR*2);
-  } else {
-    // No torch: very dark, only tiny circle
-    const lightR = 30;
-    const grad = ctx.createRadialGradient(psx, psy, 0, psx, psy, lightR);
-    grad.addColorStop(0, 'rgba(0,0,0,0)');
-    grad.addColorStop(0.5, 'rgba(0,0,0,0.5)');
-    grad.addColorStop(1, 'rgba(0,0,0,0.98)');
+    grad.addColorStop(0.55, 'rgba(0,0,0,0.15)');
+    grad.addColorStop(1, 'rgba(0,0,0,0.92)');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+  } else if (hasTorch) {
+    const lightR = 160;
+    const flick = 1 + Math.sin(state.frameCount * 0.25) * 0.04;
+    const grad = ctx.createRadialGradient(psx, psy, 0, psx, psy, lightR*flick);
+    grad.addColorStop(0, 'rgba(0,0,0,0)');
+    grad.addColorStop(0.5, 'rgba(0,0,0,0.2)');
+    grad.addColorStop(1, 'rgba(0,0,0,0.94)');
     ctx.fillStyle = grad;
-    ctx.fillRect(psx - lightR, psy - lightR, lightR*2, lightR*2);
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  } else {
+    // No torch: still mostly dark, but enough to navigate (~80px lit, soft falloff to 95% black)
+    const lightR = 90;
+    const grad = ctx.createRadialGradient(psx, psy, 0, psx, psy, lightR);
+    grad.addColorStop(0, 'rgba(0,0,0,0)');
+    grad.addColorStop(0.5, 'rgba(0,0,0,0.35)');
+    grad.addColorStop(1, 'rgba(0,0,0,0.95)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
+  ctx.restore();
 
-  // Underground HUD label
+  // Underground HUD: clear instructions so the player isn't lost.
   ctx.save();
-  ctx.fillStyle = 'rgba(0,0,0,0.7)';
-  ctx.fillRect(canvas.width/2-80, canvas.height-32, 160, 22);
+  ctx.fillStyle = 'rgba(0,0,0,0.85)';
+  ctx.fillRect(canvas.width/2 - 180, 12, 360, 44);
+  ctx.strokeStyle = '#aa44ff';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(canvas.width/2 - 180, 12, 360, 44);
   ctx.fillStyle = '#aa44ff';
-  ctx.font = '11px Lato, sans-serif';
+  ctx.font = 'bold 12px Lato, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('UNDERGROUND — E near [15,28] to exit', canvas.width/2, canvas.height-16);
+  ctx.fillText('UNDERGROUND — TIDAL CAVE', canvas.width/2, 28);
+  ctx.fillStyle = '#ccbbdd';
+  ctx.font = '10px Lato, sans-serif';
+  const hintMsg = (hasTorch || hasCrystalTorch)
+    ? 'Walk to the cave entrance and press E to leave.'
+    : 'It is DARK in here. Equip a TORCH (slot key) to see further.';
+  ctx.fillText(hintMsg, canvas.width/2, 46);
   ctx.textAlign = 'left';
   ctx.restore();
+
+  // Subtle exit beacon — pulsing arrow toward the cave exit (tile [15,28])
+  {
+    const exitWX = 15 * TSIZE, exitWY = 28 * TSIZE;
+    const dxe = exitWX - p.x, dye = exitWY - p.y;
+    const dEx = Math.hypot(dxe, dye);
+    const ang = Math.atan2(dye, dxe);
+    // Place beacon on a ring around the player so it's always visible
+    const ringR = 70;
+    const bx = psx + Math.cos(ang) * ringR;
+    const by = psy + Math.sin(ang) * ringR;
+    const pulse = 0.6 + Math.sin(state.frameCount * 0.12) * 0.4;
+    ctx.save();
+    ctx.translate(bx, by);
+    ctx.rotate(ang);
+    ctx.fillStyle = `rgba(170,68,255,${pulse})`;
+    ctx.beginPath();
+    ctx.moveTo(8, 0);
+    ctx.lineTo(-4, -5);
+    ctx.lineTo(-4, 5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+    if (dEx < 120) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(170,68,255,'+pulse+')';
+      ctx.font = 'bold 10px Lato, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('E TO EXIT', psx + Math.cos(ang)*40, psy + Math.sin(ang)*40);
+      ctx.textAlign = 'left';
+      ctx.restore();
+    }
+  }
 }
 
 function drawCrystalVein(ctx, tsx, tsy, size) {
