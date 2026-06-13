@@ -7651,9 +7651,9 @@ function handleClick(sx, sy) {
     // Tribal brew strength boost
     if (state._tribalBrewTimer > 0) combatDmg *= 2;
     // ── CRITICAL HIT SYSTEM ──
-    // Base 15% crit chance; +5% per 10 combat skill levels (up to +25% at skill 50)
+    // Base 5% crit chance; +5% per 10 combat skill levels (up to +25% at skill 50)
     const combatSk = (state.skills && state.skills.combat) || 0;
-    const critChance = 0.15 + Math.floor(combatSk / 10) * 0.05;
+    const critChance = 0.05 + Math.floor(combatSk / 10) * 0.05;
     const isCrit = Math.random() < critChance;
     if (isCrit) {
       combatDmg = Math.round(combatDmg * 2);
