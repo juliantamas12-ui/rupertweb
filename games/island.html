@@ -9119,7 +9119,7 @@ function drawPlacedObject(ctx, obj, sx, sy) {
           ctx.fillStyle = '#c8f135';
           ctx.font = 'bold 9px Lato, sans-serif';
           ctx.textAlign = 'center';
-          ctx.fillText('E — SLEEP TILL DAWN', sx, sy - 14);
+          ctx.fillText('L — SLEEP TILL DAWN', sx, sy - 14);
           ctx.textAlign = 'left';
           ctx.restore();
         }
@@ -13864,6 +13864,29 @@ window.addEventListener('keydown', e => {
     // If a dialogue is open, E dismisses/advances it (same as clicking).
     if (state.dialogue) { advanceDialogue(); e.preventDefault(); return; }
     handleInteract();
+  }
+  // L = sleep when near a bed (avoids conflict with E / Oonga talk)
+  if (e.key.toLowerCase() === 'l') {
+    if (state.dialogue || state.minigame || !state.running) { /* ignore */ }
+    else {
+      const p = state.player;
+      const reach = 40;
+      for (let obj of state.objects) {
+        if (obj.placed && obj.type === 'bed') {
+          const d = Math.hypot(p.x-obj.x, p.y-obj.y);
+          if (d < reach) {
+            const nearEnemy = state.enemies.some(en => Math.hypot(p.x-en.x,p.y-en.y) < 120);
+            if (nearEnemy) {
+              p.hp = Math.max(1, p.hp - 20);
+              showMsg('Restless night — enemies disturbed you. -20 HP', '#e74c3c');
+            }
+            sleepToMorning();
+            e.preventDefault();
+            break;
+          }
+        }
+      }
+    }
   }
   // Wreck interior navigation
   if (state.inWreck) {
