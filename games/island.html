@@ -351,6 +351,391 @@ canvas#c{pointer-events:none}
   <div id="inv-grid"></div>
 </div>
 
+<!-- ============================================================
+     JOURNAL (I key) — 5 tabs: Pack | Gear | Quests | Map | Help
+     ============================================================ -->
+<div id="journal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(880px,94vw);max-height:90vh;background:linear-gradient(180deg,#1a1208 0%,#0f0a05 100%);border:3px solid #c8a060;border-radius:10px;padding:0;z-index:9999;font-family:'Lato',sans-serif;color:#e8d49a;box-shadow:0 0 50px rgba(200,160,96,0.5),inset 0 0 30px rgba(0,0,0,0.6);overflow:hidden">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:linear-gradient(180deg,#3a2810 0%,#1a1208 100%);border-bottom:2px solid #c8a060">
+    <div style="font-family:'Cinzel',serif;letter-spacing:4px;font-size:16px;color:#e8d49a">JOURNAL</div>
+    <span id="journal-close" style="cursor:pointer;color:#e74c3c;font-weight:bold;padding:2px 10px;font-size:18px">✕</span>
+  </div>
+  <div id="journal-tabs" style="display:flex;background:#1a1208;border-bottom:1px solid #6a4818">
+    <div class="jtab" data-tab="pack">PACK</div>
+    <div class="jtab" data-tab="gear">GEAR</div>
+    <div class="jtab" data-tab="quests">QUESTS</div>
+    <div class="jtab" data-tab="map">MAP</div>
+    <div class="jtab" data-tab="help">HELP</div>
+  </div>
+  <div id="journal-body" style="padding:16px;height:calc(90vh - 110px);overflow-y:auto;background:radial-gradient(ellipse at top,rgba(50,30,10,0.4) 0%,transparent 60%)">
+    <div class="jpane" data-pane="pack">
+      <div style="color:#c8a060;font-family:'Cinzel',serif;letter-spacing:2px;font-size:13px;margin-bottom:10px">CARRIED ITEMS</div>
+      <div id="journal-pack-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:6px"></div>
+      <div id="journal-pack-empty" style="display:none;color:#8a7030;font-style:italic;text-align:center;padding:20px">Your pack is empty.</div>
+    </div>
+
+    <div class="jpane" data-pane="gear" style="display:none">
+      <div style="color:#c8a060;font-family:'Cinzel',serif;letter-spacing:2px;font-size:13px;margin-bottom:10px">EQUIPMENT</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div>
+          <div style="color:#a08040;font-size:11px;letter-spacing:1px;margin-bottom:6px">ACTIVE TOOL (hotbar slot)</div>
+          <div id="gear-tool" style="border:1px solid #6a4818;border-radius:4px;padding:10px;background:#1a1208;min-height:60px;display:flex;align-items:center;gap:10px"></div>
+          <div style="color:#a08040;font-size:11px;letter-spacing:1px;margin:14px 0 6px">ARMOR</div>
+          <div id="gear-armor" style="border:1px solid #6a4818;border-radius:4px;padding:10px;background:#1a1208;min-height:60px"></div>
+          <div style="color:#a08040;font-size:11px;letter-spacing:1px;margin:14px 0 6px">DIVE GEAR</div>
+          <div id="gear-dive" style="border:1px solid #6a4818;border-radius:4px;padding:10px;background:#1a1208;min-height:60px"></div>
+          <div style="color:#a08040;font-size:11px;letter-spacing:1px;margin:14px 0 6px">COMPANION</div>
+          <div id="gear-companion" style="border:1px solid #6a4818;border-radius:4px;padding:10px;background:#1a1208;min-height:60px"></div>
+        </div>
+        <div>
+          <div style="color:#a08040;font-size:11px;letter-spacing:1px;margin-bottom:6px">CHARACTER</div>
+          <div style="border:1px solid #6a4818;border-radius:4px;padding:14px;background:#1a1208;text-align:center">
+            <canvas id="gear-portrait" width="180" height="260" style="image-rendering:pixelated;background:linear-gradient(180deg,#2a1d10,#0a0805);border:1px solid #6a4818"></canvas>
+            <div id="gear-stats" style="margin-top:10px;font-size:11px;line-height:1.6;text-align:left;color:#d8c880"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="jpane" data-pane="quests" style="display:none">
+      <div style="color:#c8a060;font-family:'Cinzel',serif;letter-spacing:2px;font-size:13px;margin-bottom:10px">QUEST LOG</div>
+      <div id="journal-quests"></div>
+    </div>
+
+    <div class="jpane" data-pane="map" style="display:none">
+      <div style="color:#c8a060;font-family:'Cinzel',serif;letter-spacing:2px;font-size:13px;margin-bottom:10px">ISLAND MAP</div>
+      <canvas id="journal-map" width="720" height="480" style="display:block;margin:0 auto;background:#0a0805;border:1px solid #6a4818;image-rendering:pixelated;max-width:100%"></canvas>
+      <div style="color:#a08040;font-size:10px;text-align:center;margin-top:8px">Tap M anywhere in game for the in-world overlay map.</div>
+    </div>
+
+    <div class="jpane" data-pane="help" style="display:none">
+      <div style="color:#c8a060;font-family:'Cinzel',serif;letter-spacing:2px;font-size:13px;margin-bottom:10px">CONTROLS</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;font-size:12px;line-height:1.8">
+        <div>
+          <div style="color:#c8f135;font-family:'Cinzel',serif;letter-spacing:1px;margin-bottom:4px">MOVEMENT</div>
+          <div><b style="color:#c8a060">W A S D</b> — move</div>
+          <div><b style="color:#c8a060">SHIFT</b> — sprint (uses stamina)</div>
+          <div><b style="color:#c8a060">SPACE</b> — jump / advance dialogue</div>
+
+          <div style="color:#c8f135;font-family:'Cinzel',serif;letter-spacing:1px;margin:14px 0 4px">INTERACTION</div>
+          <div><b style="color:#c8a060">E</b> — interact (priority: NPC under mouse)</div>
+          <div><b style="color:#c8a060">F</b> — secondary action (fish / bribe / minigame)</div>
+          <div><b style="color:#c8a060">L</b> — sleep till dawn (near bed)</div>
+          <div><b style="color:#c8a060">Q</b> — throw stone knife / coconut</div>
+          <div><b style="color:#c8a060">LEFT-CLICK</b> — use active tool</div>
+        </div>
+        <div>
+          <div style="color:#c8f135;font-family:'Cinzel',serif;letter-spacing:1px;margin-bottom:4px">MENUS</div>
+          <div><b style="color:#c8a060">I</b> — open this journal</div>
+          <div><b style="color:#c8a060">C</b> — crafting / workbench</div>
+          <div><b style="color:#c8a060">B</b> — build mode</div>
+          <div><b style="color:#c8a060">M</b> — island map overlay</div>
+          <div><b style="color:#c8a060">TAB</b> — pack (alt)</div>
+          <div><b style="color:#c8a060">ESC</b> — pause</div>
+          <div><b style="color:#c8a060">?</b> — controls hint</div>
+
+          <div style="color:#c8f135;font-family:'Cinzel',serif;letter-spacing:1px;margin:14px 0 4px">HOTBAR</div>
+          <div><b style="color:#c8a060">1-6</b> — swap active tool</div>
+
+          <div style="color:#c8f135;font-family:'Cinzel',serif;letter-spacing:1px;margin:14px 0 4px">TIPS</div>
+          <div style="color:#a08040;font-size:11px">Sleep in a built bed to skip night. Eat raw fish and you might get sick. Cook food at a campfire for full value. Volcano eruptions hit the whole island — take cover.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<style>
+  #journal-tabs .jtab{flex:1;padding:10px 8px;text-align:center;cursor:pointer;font-family:'Cinzel',serif;letter-spacing:2px;font-size:11px;color:#8a7030;border-right:1px solid #3a2810;transition:all 0.15s;background:#0f0a05}
+  #journal-tabs .jtab:last-child{border-right:none}
+  #journal-tabs .jtab:hover{color:#e8d49a;background:#1a1208}
+  #journal-tabs .jtab.active{color:#c8f135;background:#1a1208;border-bottom:2px solid #c8f135;margin-bottom:-1px}
+  #journal .j-pack-slot{background:#1a1208;border:1px solid #6a4818;border-radius:4px;padding:4px;text-align:center;cursor:pointer;transition:all 0.12s}
+  #journal .j-pack-slot:hover{border-color:#c8a060;background:#2a1d10}
+  #journal .j-pack-slot .j-count{color:#c8f135;font-size:11px;font-weight:bold}
+  #journal .j-pack-slot .j-label{color:#a08040;font-size:8px;line-height:1.1;letter-spacing:0.5px}
+  #journal .j-quest{background:#1a1208;border:1px solid #6a4818;border-radius:4px;padding:10px 12px;margin-bottom:8px}
+  #journal .j-quest.done{opacity:0.55;border-color:#3a4818}
+  #journal .j-quest .j-qname{color:#c8f135;font-family:'Cinzel',serif;letter-spacing:1px;font-size:12px;margin-bottom:4px}
+  #journal .j-quest.done .j-qname{color:#7a9030;text-decoration:line-through}
+  #journal .j-quest .j-qdesc{color:#d8c880;font-size:11px;line-height:1.4}
+  #journal .j-quest .j-qhint{color:#a08040;font-size:10px;margin-top:6px;font-style:italic}
+  #journal .j-quest .j-qprog{color:#3dd6d0;font-size:10px;margin-top:4px}
+</style>
+<script>
+(function(){
+  const panel = document.getElementById('journal');
+  const closeBtn = document.getElementById('journal-close');
+  const tabs = panel.querySelectorAll('.jtab');
+  const panes = panel.querySelectorAll('.jpane');
+  let activeTab = 'pack';
+
+  function setTab(name){
+    activeTab = name;
+    tabs.forEach(t => t.classList.toggle('active', t.getAttribute('data-tab') === name));
+    panes.forEach(p => p.style.display = p.getAttribute('data-pane') === name ? 'block' : 'none');
+    refresh();
+  }
+  tabs.forEach(t => t.addEventListener('click', () => setTab(t.getAttribute('data-tab'))));
+  closeBtn.addEventListener('click', () => panel.style.display = 'none');
+  // initial active
+  tabs[0].classList.add('active');
+
+  // ── PACK ──
+  function renderPack(){
+    const grid = document.getElementById('journal-pack-grid');
+    const emptyEl = document.getElementById('journal-pack-empty');
+    if (!grid || !window.state || !state.player) return;
+    grid.innerHTML = '';
+    const p = state.player;
+    const items = Object.entries(p.inv).filter(([k,v]) => v > 0);
+    if (items.length === 0){ emptyEl.style.display='block'; return; }
+    emptyEl.style.display='none';
+    items.forEach(([k,v]) => {
+      const slot = document.createElement('div');
+      slot.className = 'j-pack-slot';
+      const c = document.createElement('canvas');
+      c.width = 32; c.height = 32;
+      c.style.cssText = 'image-rendering:pixelated;display:block;margin:0 auto 2px';
+      try { drawItemIcon(c.getContext('2d'), k, 0, 0, 32); } catch(_){}
+      slot.appendChild(c);
+      const cnt = document.createElement('div'); cnt.className = 'j-count'; cnt.textContent = v;
+      slot.appendChild(cnt);
+      const lbl = document.createElement('div'); lbl.className = 'j-label';
+      lbl.textContent = k.replace(/_/g,' ').toUpperCase();
+      slot.appendChild(lbl);
+      slot.title = 'Click to use (consumables only)';
+      slot.onclick = () => {
+        // Reuse the existing inv-grid click behavior by triggering renderInvMenu's logic.
+        // Simpler: call the consumable handlers inline (mirrors renderInvMenu use cases).
+        const before = JSON.stringify(p.inv);
+        try { _useItem(k); } catch(e){ console.error(e); }
+        if (JSON.stringify(p.inv) !== before){
+          if (typeof updateUI === 'function') updateUI();
+          renderPack();
+        }
+      };
+      grid.appendChild(slot);
+    });
+  }
+
+  function _useItem(k){
+    const p = state.player;
+    if (k==='coconut'&&p.inv.coconut>0){p.inv.coconut--;p.water=Math.min(p.maxWater||100,(p.water||0)+35);showMsg('+35 WATER','#3498db');}
+    else if (k==='fish'&&p.inv.fish>0){p.inv.fish--;if(Math.random()<0.2){p.sick=200;showMsg('SICK FROM RAW FISH!','#e74c3c');}else{p.food=Math.min(p.maxFood||100,(p.food||0)+25);showMsg('+25 FOOD (RAW)','#e67e22');}}
+    else if (k==='fish_cooked'&&p.inv.fish_cooked>0){p.inv.fish_cooked--;p.food=Math.min(p.maxFood||100,(p.food||0)+50);showMsg('+50 FOOD (COOKED)','#e67e22');}
+    else if (k==='fruit'&&p.inv.fruit>0){p.inv.fruit--;if(Math.random()<0.2){p.sick=200;showMsg('SICK FROM RAW FRUIT!','#e74c3c');}else{p.food=Math.min(p.maxFood||100,(p.food||0)+20);showMsg('+20 FOOD (RAW)','#e67e22');}}
+    else if (k==='fruit_cooked'&&p.inv.fruit_cooked>0){p.inv.fruit_cooked--;p.food=Math.min(p.maxFood||100,(p.food||0)+40);showMsg('+40 FOOD (COOKED)','#e67e22');}
+    else if (k==='raw_meat'&&p.inv.raw_meat>0){p.inv.raw_meat--;if(Math.random()<0.4){p.sick=300;showMsg('SICK FROM RAW MEAT!','#e74c3c');}else{p.food=Math.min(p.maxFood||100,(p.food||0)+30);showMsg('+30 FOOD (RAW MEAT)','#c0520a');}}
+    else if (k==='cooked_meat'&&p.inv.cooked_meat>0){p.inv.cooked_meat--;p.food=Math.min(p.maxFood||100,(p.food||0)+70);p.hp=Math.min(p.maxHp||100,p.hp+5);showMsg('+70 FOOD +5 HP','#e07830');}
+    else if (k==='hearty_meal'&&p.inv.hearty_meal>0){p.inv.hearty_meal--;p.food=Math.min(p.maxFood||100,(p.food||0)+40);p.hp=Math.min(p.maxHp||100,p.hp+20);showMsg('+40 FOOD +20 HP','#ffcc80');}
+    else if (k==='healing_potion'&&p.inv.healing_potion>0){p.inv.healing_potion--;p.hp=Math.min(p.maxHp||100,p.hp+30);showMsg('+30 HP','#40ff88');}
+    else if (k==='antidote'&&p.inv.antidote>0){p.inv.antidote--;p.poison=0;showMsg('POISON CURED','#40ff88');}
+  }
+
+  // ── GEAR ──
+  function renderGear(){
+    if (!window.state || !state.player) return;
+    const p = state.player;
+
+    // Active tool
+    const toolEl = document.getElementById('gear-tool');
+    const active = (typeof getActiveTool === 'function') ? getActiveTool() : null;
+    toolEl.innerHTML = '';
+    if (active){
+      const c = document.createElement('canvas'); c.width=40; c.height=40;
+      c.style.cssText='image-rendering:pixelated;background:#0a0805;border:1px solid #3a2810;border-radius:3px';
+      try { drawItemIcon(c.getContext('2d'), active, 4, 4, 32); } catch(_){}
+      toolEl.appendChild(c);
+      const lbl = document.createElement('div');
+      lbl.innerHTML = '<b style="color:#c8f135">'+active.replace(/_/g,' ').toUpperCase()+'</b><br><span style="color:#a08040;font-size:11px">Slot '+(state.activeSlot||'?')+'</span>';
+      toolEl.appendChild(lbl);
+    } else {
+      toolEl.innerHTML = '<span style="color:#8a7030;font-style:italic">Empty hand — press 1-6 to swap</span>';
+    }
+
+    // Armor
+    const armorEl = document.getElementById('gear-armor');
+    if ((p.inv.volcanic_armor||0) > 0){
+      armorEl.innerHTML = '<div style="color:#ff6600;font-weight:bold;letter-spacing:1px">VOLCANIC ARMOR</div><div style="color:#d8c880;font-size:11px;margin-top:3px">+50 max HP, -30% damage taken</div><div style="color:#3dd6d0;font-size:10px;margin-top:3px">● EQUIPPED</div>';
+    } else {
+      armorEl.innerHTML = '<span style="color:#8a7030;font-style:italic">No armor — craft volcanic armor at the workbench</span>';
+    }
+
+    // Dive gear
+    const diveEl = document.getElementById('gear-dive');
+    if ((p.inv.pressure_suit||0) > 0){
+      diveEl.innerHTML = '<div style="color:#3dd6d0;font-weight:bold;letter-spacing:1px">PRESSURE SUIT</div><div style="color:#d8c880;font-size:11px;margin-top:3px">Underwater air capacity x3</div><div style="color:#3dd6d0;font-size:10px;margin-top:3px">● EQUIPPED</div>';
+    } else {
+      diveEl.innerHTML = '<span style="color:#8a7030;font-style:italic">No dive gear — needed for deep wrecks</span>';
+    }
+
+    // Companion
+    const compEl = document.getElementById('gear-companion');
+    const comp = (state.npcs||[]).find(n => n.companion);
+    if (comp){
+      compEl.innerHTML = '<div style="color:'+(comp.color||'#c8a060')+';font-weight:bold;letter-spacing:1px">'+comp.name+'</div><div style="color:#d8c880;font-size:11px;margin-top:3px">'+(comp.desc||'Travels with you')+'</div>';
+    } else {
+      compEl.innerHTML = '<span style="color:#8a7030;font-style:italic">No companion — complete an NPC quest to recruit</span>';
+    }
+
+    // Portrait
+    const portC = document.getElementById('gear-portrait');
+    if (portC){
+      const pctx = portC.getContext('2d');
+      pctx.clearRect(0,0,portC.width,portC.height);
+      // Big-scaled player sprite: use existing draw function if available, else stick figure
+      pctx.save();
+      pctx.translate(portC.width/2, portC.height*0.62);
+      pctx.scale(5, 5);
+      // Body
+      pctx.fillStyle = (p.inv.volcanic_armor||0)>0 ? '#5a2010' : '#7a5c2e';
+      pctx.fillRect(-6, -10, 12, 14);
+      // Head
+      pctx.fillStyle = '#e8c890';
+      pctx.fillRect(-4, -18, 8, 8);
+      // Hair
+      pctx.fillStyle = '#3a2810';
+      pctx.fillRect(-4, -19, 8, 3);
+      // Legs
+      pctx.fillStyle = (p.inv.pressure_suit||0)>0 ? '#2a4a6a' : '#3a2810';
+      pctx.fillRect(-5, 4, 4, 8);
+      pctx.fillRect(1, 4, 4, 8);
+      // Armor accents
+      if ((p.inv.volcanic_armor||0)>0){
+        pctx.fillStyle = '#ff6600';
+        pctx.fillRect(-6, -8, 12, 2);
+        pctx.fillRect(-6, -4, 12, 2);
+      }
+      pctx.restore();
+      // Outline frame label
+      pctx.fillStyle = '#a08040';
+      pctx.font = '10px Lato, sans-serif';
+      pctx.textAlign = 'center';
+      pctx.fillText('LORD JULIAN', portC.width/2, portC.height - 8);
+    }
+
+    // Stats
+    const statsEl = document.getElementById('gear-stats');
+    const baseMax = (p.maxHp||100) + ((p.inv.volcanic_armor||0)>0 ? 0 : 0);
+    statsEl.innerHTML =
+      '<div>HP: <b style="color:#e74c3c">'+Math.round(p.hp)+' / '+(p.maxHp||100)+'</b></div>'+
+      '<div>Food: <b style="color:#e67e22">'+Math.round(p.food||0)+' / '+(p.maxFood||100)+'</b></div>'+
+      '<div>Water: <b style="color:#3498db">'+Math.round(p.water||0)+' / '+(p.maxWater||100)+'</b></div>'+
+      '<div>Stamina: <b style="color:#c8f135">'+Math.round(p.stamina||0)+' / 100</b></div>'+
+      '<div>Day: <b>'+(state.day||1)+'</b></div>'+
+      '<div>Zone unlocked: <b>'+(state.zoneUnlocked||0)+' / 4</b></div>';
+  }
+
+  // ── QUESTS ──
+  function renderQuests(){
+    const root = document.getElementById('journal-quests');
+    if (!root || !window.state) return;
+    root.innerHTML = '';
+    const npcs = state.npcs || [];
+    const sc = state.storyChoices || {};
+    let any = false;
+    npcs.forEach(npc => {
+      if (!npc.quest) return;
+      const q = npc.quest;
+      any = true;
+      const div = document.createElement('div');
+      div.className = 'j-quest' + (q.done ? ' done' : '');
+      let html = '<div class="j-qname">'+(q.done?'[✓] ':'')+npc.name+' — '+q.text+'</div>';
+      html += '<div class="j-qdesc">From '+npc.name+'. '+(q.done?'Completed.':'Active.')+'</div>';
+      // Progress
+      if (!q.done && q.needs && Object.keys(q.needs).length > 0){
+        const need = Object.entries(q.needs).map(([k,v]) => {
+          const have = (state.player.inv[k]||0);
+          return k.replace(/_/g,' ')+': <b style="color:'+(have>=v?'#c8f135':'#e74c3c')+'">'+have+' / '+v+'</b>';
+        }).join(' &middot; ');
+        html += '<div class="j-qprog">'+need+'</div>';
+      }
+      // Hint per NPC
+      const hints = {
+        oonga: 'Walk along the beach near the wreck. Wake any unconscious survivors with E.',
+        kona:  'Reach Elder Kona at tile (88, 62). Talk through every option for the next zone.',
+        mara:  'Tribal child is at tile (51, 66). Bring her to Mara.',
+        felix: 'Mine volcanic stone near the volcano base; bring 5 to Felix on the west beach.'
+      };
+      if (!q.done && hints[npc.id]) html += '<div class="j-qhint">Hint: '+hints[npc.id]+'</div>';
+      div.innerHTML = html;
+      root.appendChild(div);
+    });
+    // Story-flag summary
+    const flags = document.createElement('div');
+    flags.style.cssText = 'margin-top:14px;padding:10px;background:#0f0a05;border:1px dashed #3a2810;border-radius:4px;font-size:11px;color:#a08040';
+    flags.innerHTML = '<div style="color:#c8a060;letter-spacing:2px;margin-bottom:4px;font-family:Cinzel,serif">STORY FLAGS</div>'+
+      '<div>Learned truth (Felix): <b style="color:'+(sc.learnedTruth?'#c8f135':'#e74c3c')+'">'+(sc.learnedTruth?'YES':'NO')+'</b></div>'+
+      '<div>Returned child (Mara): <b style="color:'+(sc.returnedChild?'#c8f135':'#e74c3c')+'">'+(sc.returnedChild?'YES':'NO')+'</b></div>'+
+      '<div>Kona helping: <b style="color:'+(sc.konaHelping?'#c8f135':'#e74c3c')+'">'+(sc.konaHelping?'YES':'NO')+'</b></div>'+
+      '<div>Felix repair done: <b style="color:'+(sc.felixDone?'#c8f135':'#e74c3c')+'">'+(sc.felixDone?'YES':'NO')+'</b></div>'+
+      '<div>Chief defeated: <b style="color:'+(state.player.chiefDefeated?'#c8f135':'#e74c3c')+'">'+(state.player.chiefDefeated?'YES':'NO')+'</b></div>';
+    root.appendChild(flags);
+    if (!any && !flags){
+      root.innerHTML = '<div style="color:#8a7030;font-style:italic;text-align:center;padding:20px">No quests yet — talk to NPCs to discover them.</div>';
+    }
+  }
+
+  // ── MAP (renders into a static canvas inside the journal) ──
+  function renderMap(){
+    const c = document.getElementById('journal-map');
+    if (!c || !window.state || !state.map) return;
+    const mctx = c.getContext('2d');
+    mctx.fillStyle = '#0a0805'; mctx.fillRect(0,0,c.width,c.height);
+    const M = MSIZE;
+    const sX = c.width / M, sY = c.height / M;
+    const colors = ['#0d1f33','#2a7a7a','#d4b870','#1a5020','#0a2810','#3a2020','#cc3300'];
+    for (let y=0; y<M; y+=2){
+      for (let x=0; x<M; x+=2){
+        const t = state.map[y][x];
+        mctx.fillStyle = colors[t] || '#222';
+        mctx.fillRect(x*sX, y*sY, sX*2+1, sY*2+1);
+      }
+    }
+    // Player
+    if (state.player){
+      const px = (state.player.x/TSIZE)*sX;
+      const py = (state.player.y/TSIZE)*sY;
+      mctx.fillStyle = '#c8f135';
+      mctx.beginPath(); mctx.arc(px, py, 5, 0, Math.PI*2); mctx.fill();
+      mctx.strokeStyle = '#000'; mctx.lineWidth = 1; mctx.stroke();
+    }
+    // NPCs
+    (state.npcs||[]).forEach(npc => {
+      const nx = (npc.x/TSIZE)*sX;
+      const ny = (npc.y/TSIZE)*sY;
+      mctx.fillStyle = npc.color || '#4a9ab4';
+      mctx.beginPath(); mctx.arc(nx, ny, 4, 0, Math.PI*2); mctx.fill();
+      mctx.fillStyle = '#fff';
+      mctx.font = '9px Lato, sans-serif';
+      mctx.fillText(npc.name, nx + 6, ny + 3);
+    });
+    // Volcano marker
+    mctx.fillStyle = '#ff4400';
+    mctx.beginPath(); mctx.arc(75*sX, 39*sY, 6, 0, Math.PI*2); mctx.fill();
+    mctx.fillStyle = '#fff';
+    mctx.font = 'bold 10px Lato';
+    mctx.fillText('VOLCANO', 75*sX + 8, 39*sY + 3);
+  }
+
+  function refresh(){
+    if (activeTab === 'pack') renderPack();
+    else if (activeTab === 'gear') renderGear();
+    else if (activeTab === 'quests') renderQuests();
+    else if (activeTab === 'map') renderMap();
+  }
+
+  // Expose toggle so the I keypress can call it (defined later in main script)
+  window.toggleJournal = function(forceTab){
+    if (!window.state) return;
+    const showing = panel.style.display === 'block';
+    if (showing){ panel.style.display='none'; return; }
+    setTab(forceTab || activeTab || 'pack');
+    panel.style.display = 'block';
+  };
+  // Re-render on tab clicks already handled by setTab.
+})();
+</script>
+
 <div id="craft-panel">
   <span class="close-x" onclick="document.getElementById('craft-panel').style.display='none'">&#10005;</span>
   <div class="panel-title">&#9874; WORKBENCH</div>
@@ -13946,7 +14331,10 @@ window.addEventListener('keydown', e => {
   // If start screen is visible, any key advances it
   // start screen removed
   if (!state.running) return;
-  if (e.key.toLowerCase() === 'i') { const p=document.getElementById('inv-panel'); p.style.display=p.style.display==='block'?'none':'block'; if(p.style.display==='block')renderInvMenu(); }
+  if (e.key.toLowerCase() === 'i') {
+    if (typeof window.toggleJournal === 'function') { window.toggleJournal('pack'); }
+    else { const p=document.getElementById('inv-panel'); p.style.display=p.style.display==='block'?'none':'block'; if(p.style.display==='block')renderInvMenu(); }
+  }
   if (e.key.toLowerCase() === 'c') openCraftMenu();
   if (e.key.toLowerCase() === 'b') { openBuildMenu(); const bm=document.getElementById('build-menu'); bm.style.display=state.buildMode?'block':'none'; renderBuildMenu(); }
   if (e.key.toLowerCase() === 'e') {
@@ -14073,7 +14461,10 @@ window.addEventListener('keydown', e => {
       return;
     }
     state.buildMode=false; state.buildItem=null; document.getElementById('build-menu').style.display='none'; state.minigame=null; state.dialogue=null;
-    const anyOpen = ['inv-panel','craft-panel','build-menu'].some(id => { const el=document.getElementById(id); return el && el.style.display==='block'; });
+    // Close journal on ESC
+    const _j = document.getElementById('journal');
+    if (_j && _j.style.display==='block'){ _j.style.display='none'; return; }
+    const anyOpen = ['inv-panel','craft-panel','build-menu','journal'].some(id => { const el=document.getElementById(id); return el && el.style.display==='block'; });
     if (!anyOpen && state.running) {
       const pm = document.getElementById('pause-menu');
       const pmOpening = pm.style.display !== 'flex';
