@@ -655,7 +655,7 @@ canvas#c{pointer-events:none}
       // Hint per NPC
       const hints = {
         oonga: 'Walk along the beach near the wreck. Wake any unconscious survivors with E.',
-        kona:  'Reach Elder Kona at tile (88, 62). Talk through every option for the next zone.',
+        kona:  'Reach Elder Kona at tile (30, 65) — far west jungle. Talk through every option for the next zone.',
         mara:  'Tribal child is at tile (51, 66). Bring her to Mara.',
         felix: 'Mine volcanic stone near the volcano base; bring 5 to Felix on the west beach.'
       };
@@ -1173,9 +1173,10 @@ const NPC_DATA = [
   },
   {
     id: 'kona', name: 'ELDER KONA', color: '#c87050',
-    // Sits in a hermit clearing outside the village wall so the player can
-    // actually reach him before unlocking zone 4 (the village proper).
-    x: 88*TSIZE, y: 62*TSIZE,
+    // Sits alone in the FAR WEST jungle — opposite side of the island from
+    // the spawn beach (62, 87), giving the player a real journey.
+    // Still in zone 1's accessible band (y > 60) so reachable after Oonga's quest.
+    x: 30*TSIZE, y: 65*TSIZE,
     desc: "Former elder. Knows the artifact's secret.",
     lines: [
       { text: "I wondered when the sea would send a survivor. The artifact... it is like fire. Useful, then consuming. My brother learned this too late.", options: ["Your brother?", "What is the artifact?"], optionNext: [1, 1] },
@@ -16316,7 +16317,7 @@ function _gameLoopBody() {
 
   <div style="color:#c8a060;font-size:10px;margin-top:10px;letter-spacing:1px">TELEPORT</div>
   <button class="dv-btn" data-act="tp-oonga">TP to Oonga (beach)</button>
-  <button class="dv-btn" data-act="tp-kona">TP to Kona (88,62)</button>
+  <button class="dv-btn" data-act="tp-kona">TP to Kona (30,65)</button>
   <button class="dv-btn" data-act="tp-felix">TP to Felix (west beach)</button>
   <button class="dv-btn" data-act="tp-mara">TP to Mara</button>
   <button class="dv-btn" data-act="tp-altar">TP to Altar (69,25)</button>
@@ -16510,7 +16511,7 @@ function _gameLoopBody() {
       showMsg('BOUNTY HUNTER SPAWNED', '#e74c3c');
     },
     'tp-oonga'(){ const n = state.npcs.find(x=>x.id==='oonga'); if(n) tpTile(Math.floor(n.x/TSIZE), Math.floor(n.y/TSIZE)); },
-    'tp-kona'(){ tpTile(88, 62); },
+    'tp-kona'(){ tpTile(30, 65); },
     'tp-felix'(){ const n = state.npcs.find(x=>x.id==='felix'); if(n) tpTile(Math.floor(n.x/TSIZE), Math.floor(n.y/TSIZE)); },
     'tp-mara'(){ const n = state.npcs.find(x=>x.id==='mara'); if(n) tpTile(Math.floor(n.x/TSIZE), Math.floor(n.y/TSIZE)); },
     'tp-altar'(){ tpTile(69, 25); },
