@@ -352,419 +352,370 @@ canvas#c{pointer-events:none}
   <div id="inv-grid"></div>
 </div>
 
-<!-- ============================================================
-     JOURNAL (I key) — 5 tabs: Pack | Gear | Quests | Map | Help
-     ============================================================ -->
-<div id="journal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(880px,94vw);max-height:90vh;background:linear-gradient(180deg,#1a1208 0%,#0f0a05 100%);border:3px solid #c8a060;border-radius:10px;padding:0;z-index:9999;font-family:'Lato',sans-serif;color:#e8d49a;box-shadow:0 0 50px rgba(200,160,96,0.5),inset 0 0 30px rgba(0,0,0,0.6);overflow:hidden">
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:linear-gradient(180deg,#3a2810 0%,#1a1208 100%);border-bottom:2px solid #c8a060">
-    <div style="font-family:'Cinzel',serif;letter-spacing:4px;font-size:16px;color:#e8d49a">JOURNAL</div>
-    <span id="journal-close" style="cursor:pointer;color:#e74c3c;font-weight:bold;padding:2px 10px;font-size:18px">✕</span>
-  </div>
-  <div id="journal-tabs" style="display:flex;background:#1a1208;border-bottom:1px solid #6a4818">
-    <div class="jtab" data-tab="pack">PACK</div>
-    <div class="jtab" data-tab="gear">GEAR</div>
-    <div class="jtab" data-tab="quests">QUESTS</div>
-    <div class="jtab" data-tab="map">MAP</div>
-    <div class="jtab" data-tab="help">HELP</div>
-  </div>
-  <div id="journal-body" style="padding:16px;height:calc(90vh - 110px);overflow-y:auto;background:radial-gradient(ellipse at top,rgba(50,30,10,0.4) 0%,transparent 60%)">
-    <div class="jpane" data-pane="pack">
-      <div style="color:#c8a060;font-family:'Cinzel',serif;letter-spacing:2px;font-size:13px;margin-bottom:10px">CARRIED ITEMS</div>
-      <div id="journal-pack-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:6px"></div>
-      <div id="journal-pack-empty" style="display:none;color:#8a7030;font-style:italic;text-align:center;padding:20px">Your pack is empty.</div>
-    </div>
-
-    <div class="jpane" data-pane="gear" style="display:none">
-      <div style="color:#c8a060;font-family:'Cinzel',serif;letter-spacing:2px;font-size:13px;margin-bottom:10px">EQUIPMENT</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-        <div>
-          <div style="color:#a08040;font-size:11px;letter-spacing:1px;margin-bottom:6px">ACTIVE TOOL (hotbar slot)</div>
-          <div id="gear-tool" style="border:1px solid #6a4818;border-radius:4px;padding:10px;background:#1a1208;min-height:60px;display:flex;align-items:center;gap:10px"></div>
-          <div style="color:#a08040;font-size:11px;letter-spacing:1px;margin:14px 0 6px">ARMOR</div>
-          <div id="gear-armor" style="border:1px solid #6a4818;border-radius:4px;padding:10px;background:#1a1208;min-height:60px"></div>
-          <div style="color:#a08040;font-size:11px;letter-spacing:1px;margin:14px 0 6px">DIVE GEAR</div>
-          <div id="gear-dive" style="border:1px solid #6a4818;border-radius:4px;padding:10px;background:#1a1208;min-height:60px"></div>
-          <div style="color:#a08040;font-size:11px;letter-spacing:1px;margin:14px 0 6px">COMPANION</div>
-          <div id="gear-companion" style="border:1px solid #6a4818;border-radius:4px;padding:10px;background:#1a1208;min-height:60px"></div>
-        </div>
-        <div>
-          <div style="color:#a08040;font-size:11px;letter-spacing:1px;margin-bottom:6px">CHARACTER</div>
-          <div style="border:1px solid #6a4818;border-radius:4px;padding:14px;background:#1a1208;text-align:center">
-            <canvas id="gear-portrait" width="180" height="260" style="image-rendering:pixelated;background:linear-gradient(180deg,#2a1d10,#0a0805);border:1px solid #6a4818"></canvas>
-            <div id="gear-stats" style="margin-top:10px;font-size:11px;line-height:1.6;text-align:left;color:#d8c880"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="jpane" data-pane="quests" style="display:none">
-      <div style="color:#c8a060;font-family:'Cinzel',serif;letter-spacing:2px;font-size:13px;margin-bottom:10px">QUEST LOG</div>
-      <div id="journal-quests"></div>
-    </div>
-
-    <div class="jpane" data-pane="map" style="display:none">
-      <div style="color:#c8a060;font-family:'Cinzel',serif;letter-spacing:2px;font-size:13px;margin-bottom:10px">ISLAND MAP</div>
-      <canvas id="journal-map" width="720" height="480" style="display:block;margin:0 auto;background:#0a0805;border:1px solid #6a4818;image-rendering:pixelated;max-width:100%"></canvas>
-      <div style="color:#a08040;font-size:10px;text-align:center;margin-top:8px">Tap M anywhere in game for the in-world overlay map.</div>
-    </div>
-
-    <div class="jpane" data-pane="help" style="display:none">
-      <div style="color:#c8a060;font-family:'Cinzel',serif;letter-spacing:2px;font-size:13px;margin-bottom:10px">CONTROLS</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;font-size:12px;line-height:1.8">
-        <div>
-          <div style="color:#c8f135;font-family:'Cinzel',serif;letter-spacing:1px;margin-bottom:4px">MOVEMENT</div>
-          <div><b style="color:#c8a060">W A S D</b> — move</div>
-          <div><b style="color:#c8a060">SHIFT</b> — sprint (uses stamina)</div>
-          <div><b style="color:#c8a060">SPACE</b> — jump / advance dialogue</div>
-
-          <div style="color:#c8f135;font-family:'Cinzel',serif;letter-spacing:1px;margin:14px 0 4px">INTERACTION</div>
-          <div><b style="color:#c8a060">E</b> — interact (priority: NPC under mouse)</div>
-          <div><b style="color:#c8a060">F</b> — secondary action (fish / bribe / minigame)</div>
-          <div><b style="color:#c8a060">L</b> — sleep till dawn (near bed)</div>
-          <div><b style="color:#c8a060">Q</b> — throw stone knife / coconut</div>
-          <div><b style="color:#c8a060">LEFT-CLICK</b> — use active tool</div>
-        </div>
-        <div>
-          <div style="color:#c8f135;font-family:'Cinzel',serif;letter-spacing:1px;margin-bottom:4px">MENUS</div>
-          <div><b style="color:#c8a060">I</b> or <b style="color:#c8a060">TAB</b> — open this journal</div>
-          <div><b style="color:#c8a060">H</b> — jump to help tab</div>
-          <div><b style="color:#c8a060">C</b> — crafting / workbench</div>
-          <div><b style="color:#c8a060">B</b> — build mode</div>
-          <div><b style="color:#c8a060">X</b> — demolish nearby placed building (50% refund)</div>
-          <div><b style="color:#c8a060">M</b> — island map overlay</div>
-          <div><b style="color:#c8a060">ESC</b> — close menu / pause</div>
-          <div><b style="color:#c8a060">?</b> — controls hint</div>
-
-          <div style="color:#c8f135;font-family:'Cinzel',serif;letter-spacing:1px;margin:14px 0 4px">HOTBAR</div>
-          <div><b style="color:#c8a060">1-6</b> — swap active tool</div>
-
-          <div style="color:#c8f135;font-family:'Cinzel',serif;letter-spacing:1px;margin:14px 0 4px">TIPS</div>
-          <div style="color:#a08040;font-size:11px">Sleep in a built bed to skip night. Eat raw fish and you might get sick. Cook food at a campfire for full value. Volcano eruptions hit the whole island — take cover.</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-<style>
-  #journal-tabs .jtab{flex:1;padding:10px 8px;text-align:center;cursor:pointer;font-family:'Cinzel',serif;letter-spacing:2px;font-size:11px;color:#8a7030;border-right:1px solid #3a2810;transition:all 0.15s;background:#0f0a05}
-  #journal-tabs .jtab:last-child{border-right:none}
-  #journal-tabs .jtab:hover{color:#e8d49a;background:#1a1208}
-  #journal-tabs .jtab.active{color:#c8f135;background:#1a1208;border-bottom:2px solid #c8f135;margin-bottom:-1px}
-  #journal .j-pack-slot{background:#1a1208;border:1px solid #6a4818;border-radius:4px;padding:4px;text-align:center;cursor:pointer;transition:all 0.12s}
-  #journal .j-pack-slot:hover{border-color:#c8a060;background:#2a1d10}
-  #journal .j-pack-slot .j-count{color:#c8f135;font-size:11px;font-weight:bold}
-  #journal .j-pack-slot .j-label{color:#a08040;font-size:8px;line-height:1.1;letter-spacing:0.5px}
-  #journal .j-quest{background:#1a1208;border:1px solid #6a4818;border-radius:4px;padding:10px 12px;margin-bottom:8px}
-  #journal .j-quest.done{opacity:0.55;border-color:#3a4818}
-  #journal .j-quest .j-qname{color:#c8f135;font-family:'Cinzel',serif;letter-spacing:1px;font-size:12px;margin-bottom:4px}
-  #journal .j-quest.done .j-qname{color:#7a9030;text-decoration:line-through}
-  #journal .j-quest .j-qdesc{color:#d8c880;font-size:11px;line-height:1.4}
-  #journal .j-quest .j-qhint{color:#a08040;font-size:10px;margin-top:6px;font-style:italic}
-  #journal .j-quest .j-qprog{color:#3dd6d0;font-size:10px;margin-top:4px}
-</style>
+<!-- JOURNAL v2 (rewritten 2026-06-13): DOM built dynamically by JS, no inline HTML race -->
 <script>
 (function(){
-  function init(){
-  const panel = document.getElementById('journal');
-  if (!panel){ console.warn('[journal] panel not found'); return; }
-  const closeBtn = document.getElementById('journal-close');
-  const tabs = panel.querySelectorAll('.jtab');
-  const panes = panel.querySelectorAll('.jpane');
-  let activeTab = 'pack';
+  // === STATE ===
+  let panel, body, activeTab = 'pack';
+  const TABS = ['pack', 'gear', 'quests', 'map', 'help'];
 
-  function setTab(name){
-    activeTab = name;
-    tabs.forEach(t => t.classList.toggle('active', t.getAttribute('data-tab') === name));
-    panes.forEach(p => p.style.display = p.getAttribute('data-pane') === name ? 'block' : 'none');
-    refresh();
+  // === BUILD DOM ===
+  function build() {
+    if (document.getElementById('journal-v2')) return; // idempotent
+
+    // Outer panel
+    panel = document.createElement('div');
+    panel.id = 'journal-v2';
+    panel.style.cssText = [
+      'display:none',
+      'position:fixed',
+      'inset:0',
+      'z-index:2147483647',           // top of stack
+      'background:rgba(0,0,0,0.55)',  // backdrop
+      'font-family:Lato, sans-serif',
+      'color:#e8d49a',
+      'pointer-events:auto',
+    ].join(';');
+
+    // Inner card
+    const card = document.createElement('div');
+    card.style.cssText = [
+      'position:absolute',
+      'top:50%;left:50%',
+      'transform:translate(-50%,-50%)',
+      'width:min(880px,94vw)',
+      'max-height:90vh',
+      'background:linear-gradient(180deg,#1a1208 0%,#0f0a05 100%)',
+      'border:3px solid #c8a060',
+      'border-radius:10px',
+      'overflow:hidden',
+      'display:flex;flex-direction:column',
+      'box-shadow:0 0 50px rgba(200,160,96,0.5)',
+    ].join(';');
+
+    // Header
+    const header = document.createElement('div');
+    header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#3a2810;border-bottom:2px solid #c8a060';
+    const title = document.createElement('div');
+    title.textContent = 'JOURNAL';
+    title.style.cssText = "font-family:'Cinzel',serif;letter-spacing:4px;font-size:16px";
+    const close = document.createElement('span');
+    close.textContent = '\u2715';
+    close.style.cssText = 'cursor:pointer;color:#e74c3c;font-weight:bold;padding:2px 10px;font-size:18px';
+    close.onclick = hide;
+    header.appendChild(title);
+    header.appendChild(close);
+
+    // Tabs
+    const tabRow = document.createElement('div');
+    tabRow.style.cssText = 'display:flex;background:#1a1208;border-bottom:1px solid #6a4818';
+    TABS.forEach(t => {
+      const tab = document.createElement('div');
+      tab.dataset.tab = t;
+      tab.textContent = t.toUpperCase();
+      tab.style.cssText = "flex:1;padding:10px 8px;text-align:center;cursor:pointer;font-family:'Cinzel',serif;letter-spacing:2px;font-size:11px;color:#8a7030;border-right:1px solid #3a2810;background:#0f0a05";
+      tab.onclick = () => setTab(t);
+      tabRow.appendChild(tab);
+    });
+
+    // Body
+    body = document.createElement('div');
+    body.id = 'journal-v2-body';
+    body.style.cssText = 'padding:16px;flex:1;overflow-y:auto;background:#0f0a05';
+
+    card.appendChild(header);
+    card.appendChild(tabRow);
+    card.appendChild(body);
+    panel.appendChild(card);
+
+    // Click backdrop to close (but not inside card)
+    panel.onclick = (e) => { if (e.target === panel) hide(); };
+
+    document.body.appendChild(panel);
   }
-  tabs.forEach(t => t.addEventListener('click', () => setTab(t.getAttribute('data-tab'))));
-  closeBtn.addEventListener('click', () => panel.style.display = 'none');
-  // initial active
-  tabs[0].classList.add('active');
 
-  // ── PACK ──
-  function renderPack(){
-    const grid = document.getElementById('journal-pack-grid');
-    const emptyEl = document.getElementById('journal-pack-empty');
-    if (!grid || !window.state || !state.player) return;
-    grid.innerHTML = '';
-    const p = state.player;
-    const items = Object.entries(p.inv).filter(([k,v]) => v > 0);
-    if (items.length === 0){ emptyEl.style.display='block'; return; }
-    emptyEl.style.display='none';
-    items.forEach(([k,v]) => {
+  function setTab(t) {
+    activeTab = t;
+    // Highlight tab
+    panel.querySelectorAll('[data-tab]').forEach(el => {
+      const active = el.dataset.tab === t;
+      el.style.color = active ? '#c8f135' : '#8a7030';
+      el.style.borderBottom = active ? '2px solid #c8f135' : '';
+      el.style.background = active ? '#1a1208' : '#0f0a05';
+    });
+    render();
+  }
+
+  function show(tab) {
+    build();
+    setTab(tab || activeTab || 'pack');
+    panel.style.display = 'block';
+  }
+  function hide() { if (panel) panel.style.display = 'none'; }
+  function toggle(tab) {
+    build();
+    if (panel.style.display === 'block') { hide(); return; }
+    show(tab);
+  }
+
+  // === RENDER ===
+  function render() {
+    const p = window.state && window.state.player;
+    if (!p) { body.innerHTML = '<div style="color:#888;text-align:center;padding:20px">Game not loaded.</div>'; return; }
+    body.innerHTML = '';
+    if (activeTab === 'pack') renderPack(p);
+    else if (activeTab === 'gear') renderGear(p);
+    else if (activeTab === 'quests') renderQuests(p);
+    else if (activeTab === 'map') renderMap(p);
+    else if (activeTab === 'help') renderHelp(p);
+  }
+
+  function renderPack(p) {
+    const h = document.createElement('div');
+    h.textContent = 'CARRIED ITEMS';
+    h.style.cssText = "color:#c8a060;font-family:'Cinzel',serif;letter-spacing:2px;font-size:13px;margin-bottom:10px";
+    body.appendChild(h);
+    const items = Object.entries(p.inv || {}).filter(([, v]) => v > 0);
+    if (!items.length) {
+      const empty = document.createElement('div');
+      empty.textContent = 'Your pack is empty.';
+      empty.style.cssText = 'color:#8a7030;font-style:italic;text-align:center;padding:20px';
+      body.appendChild(empty);
+      return;
+    }
+    const grid = document.createElement('div');
+    grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:6px';
+    items.forEach(([k, v]) => {
       const slot = document.createElement('div');
-      slot.className = 'j-pack-slot';
+      slot.style.cssText = 'background:#1a1208;border:1px solid #6a4818;border-radius:4px;padding:6px 4px;text-align:center;cursor:pointer';
+      slot.onmouseenter = () => slot.style.borderColor = '#c8a060';
+      slot.onmouseleave = () => slot.style.borderColor = '#6a4818';
       const c = document.createElement('canvas');
       c.width = 32; c.height = 32;
-      c.style.cssText = 'image-rendering:pixelated;display:block;margin:0 auto 2px';
-      try { drawItemIcon(c.getContext('2d'), k, 0, 0, 32); } catch(_){}
+      c.style.cssText = 'image-rendering:pixelated;display:block;margin:0 auto';
+      try { if (typeof drawItemIcon === 'function') drawItemIcon(c.getContext('2d'), k, 0, 0, 32); } catch(_){}
       slot.appendChild(c);
-      const cnt = document.createElement('div'); cnt.className = 'j-count'; cnt.textContent = v;
+      const cnt = document.createElement('div');
+      cnt.textContent = v;
+      cnt.style.cssText = 'color:#c8f135;font-size:11px;font-weight:bold;margin-top:2px';
       slot.appendChild(cnt);
-      const lbl = document.createElement('div'); lbl.className = 'j-label';
-      lbl.textContent = k.replace(/_/g,' ').toUpperCase();
+      const lbl = document.createElement('div');
+      lbl.textContent = k.replace(/_/g, ' ').toUpperCase();
+      lbl.style.cssText = 'color:#a08040;font-size:8px;line-height:1.1';
       slot.appendChild(lbl);
-      slot.title = 'Click to use (consumables only)';
-      slot.onclick = () => {
-        // Reuse the existing inv-grid click behavior by triggering renderInvMenu's logic.
-        // Simpler: call the consumable handlers inline (mirrors renderInvMenu use cases).
-        const before = JSON.stringify(p.inv);
-        try { _useItem(k); } catch(e){ console.error(e); }
-        if (JSON.stringify(p.inv) !== before){
-          if (typeof updateUI === 'function') updateUI();
-          renderPack();
-        }
-      };
+      slot.onclick = () => { useItem(p, k); render(); if (typeof updateUI === 'function') updateUI(); };
       grid.appendChild(slot);
     });
+    body.appendChild(grid);
   }
 
-  function _useItem(k){
-    const p = state.player;
-    if (k==='coconut'&&p.inv.coconut>0){p.inv.coconut--;p.water=Math.min(p.maxWater||100,(p.water||0)+35);showMsg('+35 WATER','#3498db');}
-    else if (k==='fish'&&p.inv.fish>0){p.inv.fish--;if(Math.random()<0.2){p.sick=200;showMsg('SICK FROM RAW FISH!','#e74c3c');}else{p.food=Math.min(p.maxFood||100,(p.food||0)+25);showMsg('+25 FOOD (RAW)','#e67e22');}}
-    else if (k==='fish_cooked'&&p.inv.fish_cooked>0){p.inv.fish_cooked--;p.food=Math.min(p.maxFood||100,(p.food||0)+50);showMsg('+50 FOOD (COOKED)','#e67e22');}
-    else if (k==='fruit'&&p.inv.fruit>0){p.inv.fruit--;if(Math.random()<0.2){p.sick=200;showMsg('SICK FROM RAW FRUIT!','#e74c3c');}else{p.food=Math.min(p.maxFood||100,(p.food||0)+20);showMsg('+20 FOOD (RAW)','#e67e22');}}
-    else if (k==='fruit_cooked'&&p.inv.fruit_cooked>0){p.inv.fruit_cooked--;p.food=Math.min(p.maxFood||100,(p.food||0)+40);showMsg('+40 FOOD (COOKED)','#e67e22');}
-    else if (k==='raw_meat'&&p.inv.raw_meat>0){p.inv.raw_meat--;if(Math.random()<0.4){p.sick=300;showMsg('SICK FROM RAW MEAT!','#e74c3c');}else{p.food=Math.min(p.maxFood||100,(p.food||0)+30);showMsg('+30 FOOD (RAW MEAT)','#c0520a');}}
-    else if (k==='cooked_meat'&&p.inv.cooked_meat>0){p.inv.cooked_meat--;p.food=Math.min(p.maxFood||100,(p.food||0)+70);p.hp=Math.min(p.maxHp||100,p.hp+5);showMsg('+70 FOOD +5 HP','#e07830');}
-    else if (k==='hearty_meal'&&p.inv.hearty_meal>0){p.inv.hearty_meal--;p.food=Math.min(p.maxFood||100,(p.food||0)+40);p.hp=Math.min(p.maxHp||100,p.hp+20);showMsg('+40 FOOD +20 HP','#ffcc80');}
-    else if (k==='healing_potion'&&p.inv.healing_potion>0){p.inv.healing_potion--;p.hp=Math.min(p.maxHp||100,p.hp+30);showMsg('+30 HP','#40ff88');}
-    else if (k==='antidote'&&p.inv.antidote>0){p.inv.antidote--;p.poison=0;showMsg('POISON CURED','#40ff88');}
-    else if (k==='glow_shroom'&&p.inv.glow_shroom>0){p.inv.glow_shroom--;p.hp=Math.min(p.maxHp||100,p.hp+15);if(p.poison>0)p.poison=0;showMsg('+15 HP (GLOW SHROOM)','#88ff88');}
+  function useItem(p, k) {
+    const max = (k2) => p['max'+k2.charAt(0).toUpperCase()+k2.slice(1)] || 100;
+    if (k === 'coconut' && p.inv.coconut > 0) { p.inv.coconut--; p.water = Math.min(max('water'), (p.water||0)+35); flash('+35 WATER', '#3498db'); }
+    else if (k === 'fish_cooked' && p.inv.fish_cooked > 0) { p.inv.fish_cooked--; p.food = Math.min(max('food'), (p.food||0)+50); flash('+50 FOOD', '#e67e22'); }
+    else if (k === 'cooked_meat' && p.inv.cooked_meat > 0) { p.inv.cooked_meat--; p.food = Math.min(max('food'), (p.food||0)+70); p.hp = Math.min(p.maxHp||100, p.hp+5); flash('+70 FOOD +5 HP', '#e07830'); }
+    else if (k === 'hearty_meal' && p.inv.hearty_meal > 0) { p.inv.hearty_meal--; p.food = Math.min(max('food'), (p.food||0)+40); p.hp = Math.min(p.maxHp||100, p.hp+20); flash('+40 FOOD +20 HP', '#ffcc80'); }
+    else if (k === 'healing_potion' && p.inv.healing_potion > 0) { p.inv.healing_potion--; p.hp = Math.min(p.maxHp||100, p.hp+30); flash('+30 HP', '#40ff88'); }
+    else if (k === 'glow_shroom' && p.inv.glow_shroom > 0) { p.inv.glow_shroom--; p.hp = Math.min(p.maxHp||100, p.hp+15); if (p.poison) p.poison = 0; flash('+15 HP', '#88ff88'); }
+    else if (k === 'antidote' && p.inv.antidote > 0) { p.inv.antidote--; p.poison = 0; flash('POISON CURED', '#40ff88'); }
+  }
+  function flash(msg, col) { if (typeof showMsg === 'function') showMsg(msg, col); }
+
+  function renderGear(p) {
+    const wrap = document.createElement('div');
+    wrap.innerHTML =
+      '<div style="color:#c8a060;font-family:Cinzel,serif;letter-spacing:2px;font-size:13px;margin-bottom:10px">EQUIPMENT</div>' +
+      '<div style="line-height:1.8">' +
+        '<div>Active tool: <b style="color:#c8f135">' + ((typeof getActiveTool === 'function' && getActiveTool()) ? getActiveTool().replace(/_/g,' ').toUpperCase() : 'EMPTY HAND') + '</b></div>' +
+        '<div>Armor: <b style="color:#ff6600">' + ((p.inv.volcanic_armor||0) > 0 ? 'VOLCANIC ARMOR (+50 HP, -30% dmg)' : 'NONE') + '</b></div>' +
+        '<div>Dive gear: <b style="color:#3dd6d0">' + ((p.inv.pressure_suit||0) > 0 ? 'PRESSURE SUIT (3x air)' : 'NONE') + '</b></div>' +
+        '<div>Companion: <b style="color:#c8a060">' + ((state.npcs || []).filter(n => n.companion).map(n => n.name).join(', ') || 'NONE') + '</b></div>' +
+      '</div>' +
+      '<div style="margin-top:20px;padding:12px;background:#0a0805;border:1px solid #3a2810;border-radius:4px;font-size:11px;line-height:1.8">' +
+        '<div>HP: <b style="color:#e74c3c">' + Math.round(p.hp||0) + ' / ' + (p.maxHp||100) + '</b></div>' +
+        '<div>Food: <b style="color:#e67e22">' + Math.round(p.food||0) + ' / ' + (p.maxFood||100) + '</b></div>' +
+        '<div>Water: <b style="color:#3498db">' + Math.round(p.water||0) + ' / ' + (p.maxWater||100) + '</b></div>' +
+        '<div>Stamina: <b style="color:#c8f135">' + Math.round(p.stamina||0) + ' / ' + (p.maxStamina||100) + '</b></div>' +
+        '<div>Day: <b>' + (state.day||1) + '</b> &middot; Zone unlocked: <b>' + (state.zoneUnlocked||0) + ' / 4</b></div>' +
+      '</div>';
+    body.appendChild(wrap);
   }
 
-  // ── GEAR ──
-  function renderGear(){
-    if (!window.state || !state.player) return;
-    const p = state.player;
-
-    // Active tool
-    const toolEl = document.getElementById('gear-tool');
-    const active = (typeof getActiveTool === 'function') ? getActiveTool() : null;
-    toolEl.innerHTML = '';
-    if (active){
-      const c = document.createElement('canvas'); c.width=40; c.height=40;
-      c.style.cssText='image-rendering:pixelated;background:#0a0805;border:1px solid #3a2810;border-radius:3px';
-      try { drawItemIcon(c.getContext('2d'), active, 4, 4, 32); } catch(_){}
-      toolEl.appendChild(c);
-      const lbl = document.createElement('div');
-      lbl.innerHTML = '<b style="color:#c8f135">'+active.replace(/_/g,' ').toUpperCase()+'</b><br><span style="color:#a08040;font-size:11px">Slot '+(state.activeSlot||'?')+'</span>';
-      toolEl.appendChild(lbl);
+  function renderQuests(p) {
+    const h = document.createElement('div');
+    h.style.cssText = "color:#c8a060;font-family:'Cinzel',serif;letter-spacing:2px;font-size:13px;margin-bottom:10px";
+    h.textContent = 'QUEST LOG';
+    body.appendChild(h);
+    const npcs = (state.npcs || []).filter(n => n.quest);
+    if (!npcs.length) {
+      const empty = document.createElement('div');
+      empty.textContent = 'No quests yet. Explore the island and talk to people.';
+      empty.style.cssText = 'color:#888;text-align:center;padding:20px;font-style:italic';
+      body.appendChild(empty);
     } else {
-      toolEl.innerHTML = '<span style="color:#8a7030;font-style:italic">Empty hand — press 1-6 to swap</span>';
+      npcs.forEach(npc => {
+        const q = npc.quest;
+        const div = document.createElement('div');
+        div.style.cssText = 'background:#1a1208;border:1px solid ' + (q.done ? '#3a4818' : '#6a4818') + ';border-radius:4px;padding:10px;margin-bottom:8px;' + (q.done ? 'opacity:0.6' : '');
+        div.innerHTML = '<div style="color:' + (q.done ? '#7a9030' : '#c8f135') + ';font-family:Cinzel,serif;letter-spacing:1px;font-size:12px">' + (q.done ? '[\u2713] ' : '') + npc.name + ' \u2014 ' + (q.text || '(no description)') + '</div>';
+        if (!q.done && q.needs) {
+          const need = Object.entries(q.needs).map(([k, v]) => {
+            const have = p.inv[k] || 0;
+            return k.replace(/_/g, ' ') + ': <b style="color:' + (have >= v ? '#c8f135' : '#e74c3c') + '">' + have + ' / ' + v + '</b>';
+          }).join(' &middot; ');
+          div.innerHTML += '<div style="color:#3dd6d0;font-size:10px;margin-top:6px">' + need + '</div>';
+        }
+        body.appendChild(div);
+      });
     }
-
-    // Armor
-    const armorEl = document.getElementById('gear-armor');
-    if ((p.inv.volcanic_armor||0) > 0){
-      armorEl.innerHTML = '<div style="color:#ff6600;font-weight:bold;letter-spacing:1px">VOLCANIC ARMOR</div><div style="color:#d8c880;font-size:11px;margin-top:3px">+50 max HP, -30% damage taken</div><div style="color:#3dd6d0;font-size:10px;margin-top:3px">● EQUIPPED</div>';
-    } else {
-      armorEl.innerHTML = '<span style="color:#8a7030;font-style:italic">No armor — craft volcanic armor at the workbench</span>';
-    }
-
-    // Dive gear
-    const diveEl = document.getElementById('gear-dive');
-    if ((p.inv.pressure_suit||0) > 0){
-      diveEl.innerHTML = '<div style="color:#3dd6d0;font-weight:bold;letter-spacing:1px">PRESSURE SUIT</div><div style="color:#d8c880;font-size:11px;margin-top:3px">Underwater air capacity x3</div><div style="color:#3dd6d0;font-size:10px;margin-top:3px">● EQUIPPED</div>';
-    } else {
-      diveEl.innerHTML = '<span style="color:#8a7030;font-style:italic">No dive gear — needed for deep wrecks</span>';
-    }
-
-    // Companion
-    const compEl = document.getElementById('gear-companion');
-    const comp = (state.npcs||[]).find(n => n.companion);
-    if (comp){
-      compEl.innerHTML = '<div style="color:'+(comp.color||'#c8a060')+';font-weight:bold;letter-spacing:1px">'+comp.name+'</div><div style="color:#d8c880;font-size:11px;margin-top:3px">'+(comp.desc||'Travels with you')+'</div>';
-    } else {
-      compEl.innerHTML = '<span style="color:#8a7030;font-style:italic">No companion — complete an NPC quest to recruit</span>';
-    }
-
-    // Portrait
-    const portC = document.getElementById('gear-portrait');
-    if (portC){
-      const pctx = portC.getContext('2d');
-      pctx.clearRect(0,0,portC.width,portC.height);
-      // Big-scaled player sprite: use existing draw function if available, else stick figure
-      pctx.save();
-      pctx.translate(portC.width/2, portC.height*0.62);
-      pctx.scale(5, 5);
-      // Body
-      pctx.fillStyle = (p.inv.volcanic_armor||0)>0 ? '#5a2010' : '#7a5c2e';
-      pctx.fillRect(-6, -10, 12, 14);
-      // Head
-      pctx.fillStyle = '#e8c890';
-      pctx.fillRect(-4, -18, 8, 8);
-      // Hair
-      pctx.fillStyle = '#3a2810';
-      pctx.fillRect(-4, -19, 8, 3);
-      // Legs
-      pctx.fillStyle = (p.inv.pressure_suit||0)>0 ? '#2a4a6a' : '#3a2810';
-      pctx.fillRect(-5, 4, 4, 8);
-      pctx.fillRect(1, 4, 4, 8);
-      // Armor accents
-      if ((p.inv.volcanic_armor||0)>0){
-        pctx.fillStyle = '#ff6600';
-        pctx.fillRect(-6, -8, 12, 2);
-        pctx.fillRect(-6, -4, 12, 2);
-      }
-      pctx.restore();
-      // Outline frame label
-      pctx.fillStyle = '#a08040';
-      pctx.font = '10px Lato, sans-serif';
-      pctx.textAlign = 'center';
-      pctx.fillText('LORD JULIAN', portC.width/2, portC.height - 8);
-    }
-
-    // Stats
-    const statsEl = document.getElementById('gear-stats');
-    const baseMax = (p.maxHp||100) + ((p.inv.volcanic_armor||0)>0 ? 0 : 0);
-    statsEl.innerHTML =
-      '<div>HP: <b style="color:#e74c3c">'+Math.round(p.hp)+' / '+(p.maxHp||100)+'</b></div>'+
-      '<div>Food: <b style="color:#e67e22">'+Math.round(p.food||0)+' / '+(p.maxFood||100)+'</b></div>'+
-      '<div>Water: <b style="color:#3498db">'+Math.round(p.water||0)+' / '+(p.maxWater||100)+'</b></div>'+
-      '<div>Stamina: <b style="color:#c8f135">'+Math.round(p.stamina||0)+' / 100</b></div>'+
-      '<div>Day: <b>'+(state.day||1)+'</b></div>'+
-      '<div>Zone unlocked: <b>'+(state.zoneUnlocked||0)+' / 4</b></div>';
-  }
-
-  // ── QUESTS ──
-  function renderQuests(){
-    const root = document.getElementById('journal-quests');
-    if (!root || !window.state) return;
-    root.innerHTML = '';
-    const npcs = state.npcs || [];
+    // Story flags
     const sc = state.storyChoices || {};
-    let any = false;
-    npcs.forEach(npc => {
-      if (!npc.quest) return;
-      const q = npc.quest;
-      any = true;
-      const div = document.createElement('div');
-      div.className = 'j-quest' + (q.done ? ' done' : '');
-      let html = '<div class="j-qname">'+(q.done?'[✓] ':'')+npc.name+' — '+q.text+'</div>';
-      html += '<div class="j-qdesc">From '+npc.name+'. '+(q.done?'Completed.':'Active.')+'</div>';
-      // Progress
-      if (!q.done && q.needs && Object.keys(q.needs).length > 0){
-        const need = Object.entries(q.needs).map(([k,v]) => {
-          const have = (state.player.inv[k]||0);
-          return k.replace(/_/g,' ')+': <b style="color:'+(have>=v?'#c8f135':'#e74c3c')+'">'+have+' / '+v+'</b>';
-        }).join(' &middot; ');
-        html += '<div class="j-qprog">'+need+'</div>';
-      }
-      // Hint per NPC
-      const hints = {
-        oonga: 'Walk along the beach near the wreck. Wake any unconscious survivors with E.',
-        kona:  'Reach Elder Kona at tile (30, 65) — far west jungle. Talk through every option for the next zone.',
-        mara:  'Tribal child is at tile (51, 66). Bring her to Mara.',
-        felix: 'Mine volcanic stone near the volcano base; bring 5 to Felix on the west beach.'
-      };
-      if (!q.done && hints[npc.id]) html += '<div class="j-qhint">Hint: '+hints[npc.id]+'</div>';
-      div.innerHTML = html;
-      root.appendChild(div);
-    });
-    // Story-flag summary
     const flags = document.createElement('div');
-    flags.style.cssText = 'margin-top:14px;padding:10px;background:#0f0a05;border:1px dashed #3a2810;border-radius:4px;font-size:11px;color:#a08040';
-    flags.innerHTML = '<div style="color:#c8a060;letter-spacing:2px;margin-bottom:4px;font-family:Cinzel,serif">STORY FLAGS</div>'+
-      '<div>Learned truth (Felix): <b style="color:'+(sc.learnedTruth?'#c8f135':'#e74c3c')+'">'+(sc.learnedTruth?'YES':'NO')+'</b></div>'+
-      '<div>Returned child (Mara): <b style="color:'+(sc.returnedChild?'#c8f135':'#e74c3c')+'">'+(sc.returnedChild?'YES':'NO')+'</b></div>'+
-      '<div>Kona helping: <b style="color:'+(sc.konaHelping?'#c8f135':'#e74c3c')+'">'+(sc.konaHelping?'YES':'NO')+'</b></div>'+
-      '<div>Felix repair done: <b style="color:'+(sc.felixDone?'#c8f135':'#e74c3c')+'">'+(sc.felixDone?'YES':'NO')+'</b></div>'+
-      '<div>Chief defeated: <b style="color:'+(state.player.chiefDefeated?'#c8f135':'#e74c3c')+'">'+(state.player.chiefDefeated?'YES':'NO')+'</b></div>';
-    root.appendChild(flags);
-    if (!any && !flags){
-      root.innerHTML = '<div style="color:#8a7030;font-style:italic;text-align:center;padding:20px">No quests yet — talk to NPCs to discover them.</div>';
-    }
+    flags.style.cssText = 'margin-top:14px;padding:10px;background:#0a0805;border:1px dashed #3a2810;border-radius:4px;font-size:11px';
+    flags.innerHTML = '<div style="color:#c8a060;letter-spacing:2px;margin-bottom:4px;font-family:Cinzel,serif">STORY FLAGS</div>' +
+      flagRow('Learned truth', sc.learnedTruth) +
+      flagRow('Returned child', sc.returnedChild) +
+      flagRow('Kona helping', sc.konaHelping) +
+      flagRow('Felix repair done', sc.felixDone) +
+      flagRow('Chief defeated', state.player.chiefDefeated);
+    body.appendChild(flags);
+  }
+  function flagRow(label, val) {
+    return '<div>' + label + ': <b style="color:' + (val ? '#c8f135' : '#888') + '">' + (val ? 'YES' : 'NO') + '</b></div>';
   }
 
-  // ── MAP (renders into a static canvas inside the journal) ──
-  function renderMap(){
-    const c = document.getElementById('journal-map');
-    if (!c || !window.state || !state.map) return;
+  function renderMap(p) {
+    const h = document.createElement('div');
+    h.style.cssText = "color:#c8a060;font-family:'Cinzel',serif;letter-spacing:2px;font-size:13px;margin-bottom:10px";
+    h.textContent = 'ISLAND MAP';
+    body.appendChild(h);
+    if (!state.map) {
+      const err = document.createElement('div');
+      err.textContent = 'Map not loaded.';
+      err.style.cssText = 'color:#888;text-align:center;padding:20px';
+      body.appendChild(err);
+      return;
+    }
+    const c = document.createElement('canvas');
+    c.width = 720; c.height = 480;
+    c.style.cssText = 'display:block;margin:0 auto;background:#0a0805;border:1px solid #6a4818;image-rendering:pixelated;max-width:100%';
     const mctx = c.getContext('2d');
-    mctx.fillStyle = '#0a0805'; mctx.fillRect(0,0,c.width,c.height);
-    const M = MSIZE;
+    const M = (typeof MSIZE !== 'undefined') ? MSIZE : 150;
     const sX = c.width / M, sY = c.height / M;
     const colors = ['#0d1f33','#2a7a7a','#d4b870','#1a5020','#0a2810','#3a2020','#cc3300'];
-    for (let y=0; y<M; y+=2){
-      for (let x=0; x<M; x+=2){
+    for (let y = 0; y < M; y += 2) {
+      if (!state.map[y]) continue;
+      for (let x = 0; x < M; x += 2) {
         const t = state.map[y][x];
         mctx.fillStyle = colors[t] || '#222';
         mctx.fillRect(x*sX, y*sY, sX*2+1, sY*2+1);
       }
     }
     // Player
-    if (state.player){
-      const px = (state.player.x/TSIZE)*sX;
-      const py = (state.player.y/TSIZE)*sY;
+    if (p) {
+      const px = (p.x/TSIZE)*sX, py = (p.y/TSIZE)*sY;
       mctx.fillStyle = '#c8f135';
       mctx.beginPath(); mctx.arc(px, py, 5, 0, Math.PI*2); mctx.fill();
       mctx.strokeStyle = '#000'; mctx.lineWidth = 1; mctx.stroke();
     }
     // NPCs
-    (state.npcs||[]).forEach(npc => {
-      const nx = (npc.x/TSIZE)*sX;
-      const ny = (npc.y/TSIZE)*sY;
+    (state.npcs || []).forEach(npc => {
+      const nx = (npc.x/TSIZE)*sX, ny = (npc.y/TSIZE)*sY;
       mctx.fillStyle = npc.color || '#4a9ab4';
       mctx.beginPath(); mctx.arc(nx, ny, 4, 0, Math.PI*2); mctx.fill();
       mctx.fillStyle = '#fff';
       mctx.font = '9px Lato, sans-serif';
       mctx.fillText(npc.name, nx + 6, ny + 3);
     });
-    // Death packs (your dropped gear)
-    (state.objects||[]).forEach(o => {
+    // Death packs
+    (state.objects || []).forEach(o => {
       if (o.type !== 'death_pack') return;
       const dx = (o.x/TSIZE)*sX, dy = (o.y/TSIZE)*sY;
       mctx.fillStyle = '#ff4400';
-      mctx.fillRect(dx - 4, dy - 4, 8, 8);
+      mctx.fillRect(dx-4, dy-4, 8, 8);
       mctx.strokeStyle = '#fff'; mctx.lineWidth = 1;
-      mctx.strokeRect(dx - 4, dy - 4, 8, 8);
-      mctx.fillStyle = '#ff4400';
+      mctx.strokeRect(dx-4, dy-4, 8, 8);
       mctx.font = 'bold 9px Lato';
-      mctx.fillText('PACK', dx + 6, dy + 3);
+      mctx.fillText('PACK', dx+6, dy+3);
     });
-    // Volcano marker
+    // Volcano
     mctx.fillStyle = '#ff4400';
     mctx.beginPath(); mctx.arc(75*sX, 39*sY, 6, 0, Math.PI*2); mctx.fill();
-    mctx.fillStyle = '#fff';
     mctx.font = 'bold 10px Lato';
+    mctx.fillStyle = '#fff';
     mctx.fillText('VOLCANO', 75*sX + 8, 39*sY + 3);
+    body.appendChild(c);
   }
 
-  function refresh(){
-    if (activeTab === 'pack') renderPack();
-    else if (activeTab === 'gear') renderGear();
-    else if (activeTab === 'quests') renderQuests();
-    else if (activeTab === 'map') renderMap();
+  function renderHelp(p) {
+    body.innerHTML =
+      '<div style="color:#c8a060;font-family:Cinzel,serif;letter-spacing:2px;font-size:13px;margin-bottom:10px">CONTROLS</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;font-size:12px;line-height:1.8">' +
+        '<div>' +
+          '<div style="color:#c8f135;font-family:Cinzel,serif;letter-spacing:1px;margin-bottom:4px">MOVEMENT</div>' +
+          '<div><b style="color:#c8a060">W A S D</b> &mdash; move</div>' +
+          '<div><b style="color:#c8a060">SHIFT</b> &mdash; sprint</div>' +
+          '<div><b style="color:#c8a060">SPACE</b> &mdash; jump / advance dialogue</div>' +
+          '<div style="color:#c8f135;font-family:Cinzel,serif;letter-spacing:1px;margin:14px 0 4px">INTERACTION</div>' +
+          '<div><b style="color:#c8a060">E</b> &mdash; interact (hover priority)</div>' +
+          '<div><b style="color:#c8a060">F</b> &mdash; secondary (fish, bribe)</div>' +
+          '<div><b style="color:#c8a060">L</b> &mdash; sleep near bed</div>' +
+          '<div><b style="color:#c8a060">Q</b> &mdash; throw stone knife / coconut</div>' +
+          '<div><b style="color:#c8a060">CLICK</b> &mdash; use active tool</div>' +
+        '</div>' +
+        '<div>' +
+          '<div style="color:#c8f135;font-family:Cinzel,serif;letter-spacing:1px;margin-bottom:4px">MENUS</div>' +
+          '<div><b style="color:#c8a060">I</b> or <b style="color:#c8a060">TAB</b> &mdash; this journal</div>' +
+          '<div><b style="color:#c8a060">H</b> &mdash; jump to help</div>' +
+          '<div><b style="color:#c8a060">C</b> &mdash; crafting</div>' +
+          '<div><b style="color:#c8a060">B</b> &mdash; build mode</div>' +
+          '<div><b style="color:#c8a060">M</b> &mdash; map overlay</div>' +
+          '<div><b style="color:#c8a060">X</b> &mdash; demolish (50% refund)</div>' +
+          '<div><b style="color:#c8a060">ESC</b> &mdash; close menu / pause</div>' +
+          '<div style="color:#c8f135;font-family:Cinzel,serif;letter-spacing:1px;margin:14px 0 4px">HOTBAR</div>' +
+          '<div><b style="color:#c8a060">1-6</b> &mdash; swap tool (same number = unequip)</div>' +
+        '</div>' +
+      '</div>';
   }
 
-  // Expose toggle so the I keypress can call it (defined later in main script)
-  window.toggleJournal = function(forceTab){
-    if (!window.state) return;
-    const showing = panel.style.display === 'block';
-    if (showing){ panel.style.display='none'; return; }
-    setTab(forceTab || activeTab || 'pack');
-    panel.style.display = 'block';
-  };
-  // Belt-and-braces: bind a dedicated document-level listener so I/TAB also work
-  // when the canvas hasn't been clicked yet (Chrome sometimes routes early
-  // keystrokes to body, not canvas; window-level handlers can be late).
-  document.addEventListener('keydown', function(e){
-    if (e.key.toLowerCase() !== 'i' && e.key !== 'Tab') return;
+  // === EXPOSE GLOBAL ===
+  window.toggleJournal = toggle;
+  window.showJournal = show;
+  window.hideJournal = hide;
+
+  // === KEY BINDINGS (multiple levels for resilience) ===
+  function isTypingTarget() {
     const ae = document.activeElement;
-    if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable)) return;
-    if (!window.state) return;
-    e.preventDefault();
-    e.stopPropagation();
-    window.toggleJournal('pack');
-  }, true); // capture phase so we win over other listeners
-  // Re-render on tab clicks already handled by setTab.
-  } // end init
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-  else init();
+    return ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable);
+  }
+  function keyHandler(e) {
+    if (isTypingTarget()) return;
+    const k = (e.key || '').toLowerCase();
+    if (k === 'i' || e.key === 'Tab' || e.code === 'KeyI' || e.code === 'Tab') {
+      e.preventDefault();
+      e.stopPropagation();
+      toggle('pack');
+    } else if (k === 'h' || e.code === 'KeyH') {
+      // Don't intercept if journal is closed and player wants in-world hotkey
+      // Actually H opens help tab too — keep behavior
+      e.preventDefault();
+      e.stopPropagation();
+      toggle('help');
+    } else if (e.key === 'Escape' && panel && panel.style.display === 'block') {
+      e.preventDefault();
+      e.stopPropagation();
+      hide();
+    }
+  }
+  // Capture phase on document + window so we win over any other listener.
+  document.addEventListener('keydown', keyHandler, true);
+  window.addEventListener('keydown', keyHandler, true);
+
+  // Build immediately if DOM ready, else on DOMContentLoaded
+  if (document.body) build();
+  else document.addEventListener('DOMContentLoaded', build);
+
+  console.log('[journal-v2] initialized');
 })();
 </script>
 
