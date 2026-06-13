@@ -14990,26 +14990,32 @@ window.addEventListener('keydown', e => {
     if (e.key === ' ' || e.key === 'Enter') { advanceCutscene(); e.preventDefault(); }
     return;
   }
-  // If start screen is visible, any key advances it
-  // start screen removed
-  if (!state.running) return;
+  // I or TAB open the journal — work BEFORE the running gate so you can always inspect pack.
+  // Skip when an input field is focused so typing in the crafting search bar still works.
   if (e.key.toLowerCase() === 'i' || e.key === 'Tab') {
-    // I or TAB both open the journal. TAB also prevented so it doesn't switch browser tabs.
+    const ae = document.activeElement;
+    const isInput = ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable);
+    if (isInput) return; // let TAB navigate inputs / let I be typed
     e.preventDefault();
+    console.log('[journal] I/TAB pressed. toggleJournal type=', typeof window.toggleJournal);
     try {
       if (typeof window.toggleJournal === 'function') {
         window.toggleJournal('pack');
       } else {
         console.warn('[I-key] toggleJournal missing — falling back to old inv panel');
         const p=document.getElementById('inv-panel');
-        if (p){ p.style.display=p.style.display==='block'?'none':'block'; if(p.style.display==='block')renderInvMenu(); }
+        if (p){ p.style.display=p.style.display==='block'?'none':'block'; if(p.style.display==='block') { try { renderInvMenu(); } catch(_){} } }
       }
     } catch(err){
       console.error('[I-key] error opening journal, falling back', err);
       const p=document.getElementById('inv-panel');
-      if (p){ p.style.display=p.style.display==='block'?'none':'block'; if(p.style.display==='block')renderInvMenu(); }
+      if (p){ p.style.display=p.style.display==='block'?'none':'block'; if(p.style.display==='block') { try { renderInvMenu(); } catch(_){} } }
     }
+    return;
   }
+  // If start screen is visible, any key advances it
+  // start screen removed
+  if (!state.running) return;
   if (e.key.toLowerCase() === 'c') openCraftMenu();
   if (e.key.toLowerCase() === 'b') { openBuildMenu(); const bm=document.getElementById('build-menu'); bm.style.display=state.buildMode?'block':'none'; renderBuildMenu(); }
   if (e.key.toLowerCase() === 'e') {
