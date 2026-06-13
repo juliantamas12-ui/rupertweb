@@ -322,6 +322,7 @@ canvas#c{pointer-events:none}
   <div id="day-panel">
     <span id="day-display">DAY 1</span>
     <span id="time-icon" style="font-size:10px;letter-spacing:2px;font-family:'Lato',sans-serif;"></span>
+    <span id="coord-display" style="font-size:9px;letter-spacing:1px;font-family:'Lato',sans-serif;color:#a08040;">[--, --]</span>
     <span id="settle-badge">SURVIVOR</span>
     <span id="weather-icon"></span>
   </div>
@@ -425,13 +426,13 @@ canvas#c{pointer-events:none}
         </div>
         <div>
           <div style="color:#c8f135;font-family:'Cinzel',serif;letter-spacing:1px;margin-bottom:4px">MENUS</div>
-          <div><b style="color:#c8a060">I</b> — open this journal</div>
+          <div><b style="color:#c8a060">I</b> or <b style="color:#c8a060">TAB</b> — open this journal</div>
+          <div><b style="color:#c8a060">H</b> — jump to help tab</div>
           <div><b style="color:#c8a060">C</b> — crafting / workbench</div>
           <div><b style="color:#c8a060">B</b> — build mode</div>
           <div><b style="color:#c8a060">X</b> — demolish nearby placed building (50% refund)</div>
           <div><b style="color:#c8a060">M</b> — island map overlay</div>
-          <div><b style="color:#c8a060">TAB</b> — pack (alt)</div>
-          <div><b style="color:#c8a060">ESC</b> — pause</div>
+          <div><b style="color:#c8a060">ESC</b> — close menu / pause</div>
           <div><b style="color:#c8a060">?</b> — controls hint</div>
 
           <div style="color:#c8f135;font-family:'Cinzel',serif;letter-spacing:1px;margin:14px 0 4px">HOTBAR</div>
@@ -1128,7 +1129,7 @@ const NPC_DATA = [
       // LINE 1 — story hook + movement keys
       { text: "You wake on the sand. Your ship sank in the storm. I am OONGA. The others from your crew may have washed up too \u2014 I will help you live long enough to find them.\n\nMOVE: W A S D (or arrows). Hold SHIFT to sprint.\nMAP: M for the world map. Your MINIMAP is bottom-left.", options: ["Got it", "Tell me how to survive"], optionNext: [1, 1], _onShow: 'spawnTutorialWood' },
       // LINE 2 — gathering / crafting / combat keys
-      { text: "Wood and stone washed up with you. Walk to them, hover until a WHITE OUTLINE shows, press E to pick them up.\n\nE = interact (talk, pick up, take, drink)\nC = CRAFTING. B = BUILD. TAB or I = PACK.\nHotbar keys 1-6 swap tools. LEFT-CLICK uses the one in your hand.", options: ["And dangers?", "What about food?"], optionNext: [2, 2], _onShow: 'spawnTutorialRocks' },
+      { text: "Wood and stone washed up with you. Walk to them, hover until a WHITE OUTLINE shows, press E to pick them up.\n\nE = interact (talk, pick up, take, drink)\nI or TAB = JOURNAL (pack / quests / map / help)\nC = CRAFT, B = BUILD, X = demolish, L = sleep near bed\nHotbar 1-6 swap tools (press the same number to unequip)\nLEFT-CLICK uses the one in your hand.", options: ["And dangers?", "What about food?"], optionNext: [2, 2], _onShow: 'spawnTutorialRocks' },
       // LINE 3 — survival keys + the quest
       { text: "Eat what you find, drink from coconuts, sleep at night under a roof.\nSPACE = JUMP. F = secondary action. ESC = pause.\n\nMy people have a chief who keeps ships away with an old stone. Find your shipwrecked crew on the beaches \u2014 some still sleep on the sand. Then find ELDER KONA in the jungle. He knows the stone's secret.", options: null, questTrigger: 'find_kona' },
     ],
@@ -6339,19 +6340,21 @@ document.addEventListener('mousedown', () => { mouseDown = true; });
 document.addEventListener('mouseup', () => {
   mouseDown = false;
   const p = state.player;
-  if (p && p.bowCharging && (p.bowCharge||0) >= 15) {
-    // Fire arrow
+  if (p && p.bowCharging && (p.bowCharge||0) >= 8) {
+    // Fire arrow — charge faster, hit harder. Full charge = ~doubled damage.
     const camX2 = state.cam.x, camY2 = state.cam.y;
     const wx2 = mx + camX2, wy2 = my + camY2;
     const dx2 = wx2 - p.x, dy2 = wy2 - p.y;
     const dist2 = Math.sqrt(dx2*dx2+dy2*dy2);
-    const speed = 10 + (p.bowCharge/30) * 4;
+    const chargeRatio = Math.min(1, p.bowCharge / 22);
+    const speed = 12 + chargeRatio * 8;
+    const dmg = Math.round(20 + chargeRatio * 25); // 20-45 damage
     if ((p.inv.arrows||0) > 0) {
       p.inv.arrows--;
       state.projectiles.push({
         type:'player_arrow', x:p.x, y:p.y,
         vx:dist2>0?dx2/dist2*speed:speed, vy:dist2>0?dy2/dist2*speed:0,
-        life:80, damage:12
+        life:120, damage:dmg
       });
       SFX.bowRelease();
       addFloatingText(p.x, p.y-24, 'ARROW!', '#c8a060');
@@ -6426,9 +6429,10 @@ function updatePlayer() {
   const inDense = inDarkJungle; // slowed in dark jungle
 
   let spd = 1.35;
-  if (sprinting) spd = 1.95;
-  // Bloodlust frenzy speed boost
-  if (state.frenzyActive) spd *= state.frenzySpeedMult;
+  // Sprint doesn't help in water — you wade, you don't run.
+  if (sprinting && !inWater && !inDeepOcean) spd = 1.95;
+  // Bloodlust frenzy speed boost (skipped in water for the same reason)
+  if (state.frenzyActive && !inWater && !inDeepOcean) spd *= state.frenzySpeedMult;
   // Swimming is slow. Raft helps but doesn't fully negate it.
   const hasRaft = (p.inv.raft||0) > 0;
   if (inWater) spd *= hasRaft ? 0.55 : 0.30;            // shallow: 55% w/ raft, 30% without
@@ -6505,22 +6509,28 @@ function updatePlayer() {
     if (canShowGateMsg) { showMsg("The deep jungle blocks your path. Complete Mara's quest first.", '#888'); state._gateMsg = 180; }
   }
   // Gate 3: Volcanic approach (within 30 tiles of volcano centre at ~75,39) requires zone 3
+  // Gate 4: Village area (within 10 tiles of ~104,57) requires zone 4
+  // Throttled snap-back to prevent the volcano-area freeze bug — only snap once every 6 frames.
   else {
-    const volcX = 75, volcY = 39;
-    const distFromVolcano = Math.hypot(ptx - volcX, pty - volcY);
-    if (distFromVolcano < 30 && state.zoneUnlocked < 3) {
-      const angle = Math.atan2(pty - volcY, ptx - volcX);
-      p.x = (volcX + Math.cos(angle) * 31) * TSIZE;
-      p.y = (volcY + Math.sin(angle) * 31) * TSIZE;
-      if (canShowGateMsg) { showMsg("FELIX: 'I wouldn't go near that mountain without proper preparation.'", '#7ca0b0'); state._gateMsg = 180; }
-    }
-    // Gate 4: Village area (within 10 tiles of ~104,57) requires zone 4
-    const distFromVillage = Math.hypot(ptx - 104, pty - 57);
-    if (distFromVillage < 10 && state.zoneUnlocked < 4) {
-      const ang = Math.atan2(pty - 57, ptx - 104);
-      p.x = (104 + Math.cos(ang) * 11) * TSIZE;
-      p.y = (57 + Math.sin(ang) * 11) * TSIZE;
-      if (canShowGateMsg) { showMsg("KONA: 'You are not ready to face my brother. Find me first.'", '#c87050'); state._gateMsg = 180; }
+    state._gateSnapCooldown = (state._gateSnapCooldown || 0) - 1;
+    if (state._gateSnapCooldown <= 0) {
+      const volcX = 75, volcY = 39;
+      const distFromVolcano = Math.hypot(ptx - volcX, pty - volcY);
+      if (distFromVolcano < 30 && state.zoneUnlocked < 3) {
+        const angle = Math.atan2(pty - volcY, ptx - volcX);
+        p.x = (volcX + Math.cos(angle) * 32) * TSIZE;
+        p.y = (volcY + Math.sin(angle) * 32) * TSIZE;
+        state._gateSnapCooldown = 6;
+        if (canShowGateMsg) { showMsg("FELIX: 'I wouldn't go near that mountain without proper preparation.'", '#7ca0b0'); state._gateMsg = 180; }
+      }
+      const distFromVillage = Math.hypot(ptx - 104, pty - 57);
+      if (distFromVillage < 10 && state.zoneUnlocked < 4) {
+        const ang = Math.atan2(pty - 57, ptx - 104);
+        p.x = (104 + Math.cos(ang) * 12) * TSIZE;
+        p.y = (57 + Math.sin(ang) * 12) * TSIZE;
+        state._gateSnapCooldown = 6;
+        if (canShowGateMsg) { showMsg("KONA: 'You are not ready to face my brother. Find me first.'", '#c87050'); state._gateMsg = 180; }
+      }
     }
   }
   if (state._gateMsg > 0) state._gateMsg--;
@@ -6680,9 +6690,10 @@ function updatePlayer() {
     }
   }
 
-  // Stamina
-  if (sprinting && moving) p.stamina = Math.max(0, p.stamina - 0.4);
-  else p.stamina = Math.min(p.maxStamina, p.stamina + 0.3);
+  // Stamina — sprinting actually costs, and regen is slow enough that it matters.
+  if (sprinting && moving) p.stamina = Math.max(0, p.stamina - 0.8);
+  else if (moving) p.stamina = Math.min(p.maxStamina, p.stamina + 0.10);   // slow regen while walking
+  else p.stamina = Math.min(p.maxStamina, p.stamina + 0.22);                // faster regen standing still
 
   // Walk animation
   if (moving) {
@@ -6713,16 +6724,26 @@ function updatePlayer() {
     p.walkFrame = 0;
   }
 
-  // Survival timers
+  // Survival timers — tuned so a session needs you to actually drink/eat.
   state.waterDecay = (state.waterDecay||0) + 1;
   state.foodDecay = (state.foodDecay||0) + 1;
-  const waterRate = state.objects.find(o=>o.placed&&o.type==='smoker') ? 400 : 240;
-  const foodRate = state.objects.find(o=>o.placed&&o.type==='smoker') ? 600 : 360;
+  const waterRate = state.objects.find(o=>o.placed&&o.type==='smoker') ? 220 : 130;
+  const foodRate  = state.objects.find(o=>o.placed&&o.type==='smoker') ? 340 : 200;
 
   if (state.waterDecay > waterRate) { state.waterDecay=0; p.water=Math.max(0,p.water-1); }
   if (state.foodDecay > foodRate) { state.foodDecay=0; p.food=Math.max(0,p.food-1); }
   if (p.water <= 0) p.hp = Math.max(0, p.hp - 0.05);
   if (p.food <= 0) p.hp = Math.max(0, p.hp - 0.05);
+  // One-time hint when health gets dangerously low and player has no obvious heal
+  if (!state._lowHpHinted && p.hp < p.maxHp * 0.3) {
+    state._lowHpHinted = true;
+    const hasHeal = (p.inv.healing_potion||0) > 0 || (p.inv.cooked_meat||0) > 0 || (p.inv.hearty_meal||0) > 0;
+    const tip = hasHeal
+      ? 'LOW HP — open journal (I), use a HEALING POTION / COOKED MEAT / HEARTY MEAL'
+      : 'LOW HP — craft a HEALING POTION (2 coconut + 2 fruit) or sleep in a bed for +50 HP';
+    showMsg(tip, '#ff6060');
+  }
+  if (state._lowHpHinted && p.hp > p.maxHp * 0.7) state._lowHpHinted = false; // re-arm
   if (p.sick > 0) { p.sick--; p.hp = Math.max(0, p.hp - 0.02); }
 
   // ── PASSIVE REGEN ──
@@ -8101,6 +8122,7 @@ function handleClick(sx, sy) {
     }
     if (obj.type === 'treasure_chest' && !obj.opened) {
       obj.opened = true;
+      obj._openedFrame = state.frameCount; // for later despawn
       // Always give food/water bonus
       p.food = Math.min(p.maxFood, p.food + 15);
       p.water = Math.min(p.maxWater, p.water + 10);
@@ -9816,7 +9838,7 @@ function drawGuide(ctx) {
     msg = ["STEP 2", "Pick up small PEBBLES on the beach", "(rocks need a pickaxe)"];
   } else if ((p.inv.axe||0) === 0 && (p.inv.pickaxe||0) === 0) {
     msg = ["STEP 3", "Press C to open crafting", "Make a Stone Axe (2W+2S)"];
-  } else if ((p.inv.axe||0) > 0 && state.activeSlot !== 1) {
+  } else if ((p.inv.axe||0) > 0 && state.activeSlot !== 1 && state.day <= 2) {
     msg = ["TIP", "Press 1 to equip your AXE", "Then click a tree"];
   } else if (state.zoneUnlocked < 1) {
     msg = ["NEXT", "Talk to OONGA", "Press E near him"];
@@ -12356,21 +12378,23 @@ function updateDayNight() {
         bomb.landed = true;
         SFX.lavaBoom();
         state.screenShake = Math.max(state.screenShake, 12);
-        // Damage player if close to impact point — larger blast radius, can kill
-        // (dev god mode and explicit invincible flag still bypass)
+        // Damage player if close to impact point. Tuned for SURVIVABILITY with awareness:
+        //   - direct hit (<14px) is heavy but no longer instant-death
+        //   - splash falls off fast so quick reflexes save you
         const godOn = !!(window._dev && window._dev.god);
         if (!state.invincible && !godOn) {
           const dx = p2.x - bomb.landX, dy = p2.y - bomb.landY;
           const dist = Math.sqrt(dx*dx + dy*dy);
-          if (dist < 70) {
-            // Falloff: closer = more damage. Direct hit = lethal.
+          if (dist < 50) {
             let dmg;
-            if (dist < 18) dmg = 100 + Math.floor(Math.random() * 30);          // direct hit — you die
-            else if (dist < 36) dmg = 45 + Math.floor(Math.random() * 20);      // close — huge damage
-            else dmg = 20 + Math.floor(Math.random() * 15);                     // splash
+            if (dist < 14) dmg = 55 + Math.floor(Math.random() * 20);     // direct hit (kills if at low HP)
+            else if (dist < 28) dmg = 25 + Math.floor(Math.random() * 12); // close
+            else dmg = 10 + Math.floor(Math.random() * 8);                 // splash
+            // Volcanic armor reduces lava damage by 30% (already general 30%, but make obvious)
+            if (state._volcanicArmorActive) dmg = Math.round(dmg * 0.6);
             p2.hp = Math.max(0, p2.hp - dmg);
             p2.hitFlash = 12;
-            state.screenShake = Math.max(state.screenShake, 20);
+            state.screenShake = Math.max(state.screenShake, 18);
             addFloatingText(p2.x, p2.y - 20, '-'+dmg+' LAVA!', '#ff4400');
             SFX.hurt();
             if (p2.hp <= 0) state.lastDamageCause = 'VOLCANIC ERUPTION';
@@ -12406,8 +12430,14 @@ function updateDayNight() {
       if (o.coolTimer > 0) o.coolTimer--;
       if (o.mined && o.coolTimer <= 0) o._dead = true;
     }
+    // Opened chests despawn after one in-game day so they don't litter the map.
+    if (o.opened && o._openedFrame !== undefined) {
+      if ((state.frameCount - o._openedFrame) > (state.DAY_FRAMES || 14400)) {
+        o._dead = true;
+      }
+    }
   });
-  // Clean up dead magma deposits
+  // Clean up dead magma deposits + despawned chests
   state.objects = state.objects.filter(o => !o._dead);
 }
 
@@ -12957,7 +12987,8 @@ function spawnDailyBounty() {
   state.dailyBountyDay = state.day;
 
   setTimeout(() => {
-    showMsg('BOUNTY HUNT: ' + def.label + ' spotted on the island!', def.color);
+    const _spot = (def.type === 'shark') ? 'in the waters' : 'on the island';
+    showMsg('BOUNTY HUNT: ' + def.label + ' spotted ' + _spot + '!', def.color);
     addFloatingText(p.x, p.y - 40, 'NEW BOUNTY!', def.color);
     SFX.raidAlert && SFX.raidAlert();
   }, 1500);
@@ -14444,7 +14475,9 @@ window.addEventListener('keydown', e => {
   // If start screen is visible, any key advances it
   // start screen removed
   if (!state.running) return;
-  if (e.key.toLowerCase() === 'i') {
+  if (e.key.toLowerCase() === 'i' || e.key === 'Tab') {
+    // I or TAB both open the journal. TAB also prevented so it doesn't switch browser tabs.
+    e.preventDefault();
     try {
       if (typeof window.toggleJournal === 'function') {
         window.toggleJournal('pack');
@@ -14458,7 +14491,6 @@ window.addEventListener('keydown', e => {
       const p=document.getElementById('inv-panel');
       if (p){ p.style.display=p.style.display==='block'?'none':'block'; if(p.style.display==='block')renderInvMenu(); }
     }
-    e.preventDefault();
   }
   if (e.key.toLowerCase() === 'c') openCraftMenu();
   if (e.key.toLowerCase() === 'b') { openBuildMenu(); const bm=document.getElementById('build-menu'); bm.style.display=state.buildMode?'block':'none'; renderBuildMenu(); }
@@ -14501,6 +14533,11 @@ window.addEventListener('keydown', e => {
     demolishNearestBuilding();
     e.preventDefault();
   }
+  // H = quick help overlay with current objective + key reminders
+  if (e.key.toLowerCase() === 'h') {
+    if (typeof window.toggleJournal === 'function') { window.toggleJournal('help'); }
+    e.preventDefault();
+  }
   if (e.key === ' ') {
     // Space also advances dialogue
     if (state.dialogue) { advanceDialogue(); e.preventDefault(); return; }
@@ -14514,8 +14551,15 @@ window.addEventListener('keydown', e => {
     e.preventDefault();
   }
   // Hotbar number keys — pressing the SAME number twice unequips (slot 0 = empty hand)
+  // Also cancels build mode (you can't fight while ghost-placing buildings).
   const numKey = parseInt(e.key);
   if (numKey >= 1 && numKey <= 6) {
+    if (state.buildMode) {
+      state.buildMode = false;
+      state.buildItem = null;
+      const bm = document.getElementById('build-menu');
+      if (bm) bm.style.display = 'none';
+    }
     if (state.activeSlot === numKey) {
       state.activeSlot = 0; // empty hand
       showMsg('UNEQUIPPED — empty hand', '#888');
@@ -14912,6 +14956,13 @@ function updateUI() {
   const dayEl = document.getElementById('day-display');
   const seasonNames = ['DRY', 'WET', 'STORM'];
   dayEl.textContent = `DAY ${state.day} · ${seasonNames[state.season]||'DRY'}`;
+  // Coordinates display
+  const coordEl = document.getElementById('coord-display');
+  if (coordEl) {
+    const tx = Math.floor(p.x / TSIZE);
+    const ty = Math.floor(p.y / TSIZE);
+    coordEl.textContent = '[' + tx + ', ' + ty + ']';
+  }
   // Day counter glow: flash for 120 frames after day changes
   if (!state._lastDay) state._lastDay = state.day;
   if (state.day !== state._lastDay) {
@@ -16202,13 +16253,14 @@ function _gameLoopBody() {
     if (btn === 'jmp') handleJump();
     if (btn === 'use') handleInteract();
     if (btn === 'mine') {
-      // Find nearest rock/vol_rock and start mining minigame
+      // Find nearest rock/vol_rock and start mining minigame — pickaxe REQUIRED
       const p = state.player;
       const reach = 60;
+      const hasPickaxe = (p.inv.pickaxe||0) > 0 || (p.inv.obsidian_pickaxe||0) > 0;
+      if (!hasPickaxe) { showMsg('Need a PICKAXE to mine rocks', '#c8a060'); return; }
       for (const obj of state.objects) {
         if (['rock','vol_rock'].includes(obj.type)) {
           if (Math.hypot(p.x-obj.x, p.y-obj.y) < reach) {
-            // pickaxe not required
             startMineMinigame(obj); return;
           }
         }
