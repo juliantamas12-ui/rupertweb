@@ -10894,11 +10894,14 @@ function render(ctx, minimapCtx) {
     }
   });
 
-  // Placed objects
+  // Placed objects — push into drawList so they sort by Y with the player.
+  // (Was drawn before the sort, which meant walls always rendered behind the player.)
   _getPlacedObjects().forEach(obj => {
     const sx = obj.x - camX, sy = obj.y - camY;
     if (sx < -50 || sx > canvas.width+50) return;
-    drawPlacedObject(ctx, obj, sx, sy);
+    const capturedObj = obj;
+    const capturedSx = sx, capturedSy = sy;
+    drawList.push({ y: obj.y, draw: () => drawPlacedObject(ctx, capturedObj, capturedSx, capturedSy) });
   });
 
   // Build ghost
