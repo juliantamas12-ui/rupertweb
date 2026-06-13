@@ -989,7 +989,7 @@ const state = {
   surgeWashLoot: false,    // whether flotsam has been spawned for this surge
 
   // === PASSING SHIP EVENT ===
-  passingShipTimer: 60*60*(5 + Math.random()*3), // first ship in 5-8 in-game days
+  passingShipTimer: 14400 * (1 + Math.random() * 35), // first ship at a random moment in days 1-35
   passingShipActive: false,      // true while ship is crossing
   passingShipProgress: 0,        // 0-1: how far across horizon (left to right)
   passingShipWindow: 60*60*3,    // 3 min real-time to signal it (180 frames/sec)
@@ -7325,21 +7325,24 @@ function handleInteract() {
     }
   }
 
-  // Signal flare on beach
+  // Signal flare on beach — ONLY works when a passing ship is actively visible.
+  // Ships pass once per 35-day window at a random time, so the flare is not a
+  // one-tap speedrun anymore: you have to wait for the right moment.
   if ((p.inv.signal_flare||0) > 0) {
     const flTile = getTile(p.x, p.y);
     if (flTile === T.BEACH) {
+      if (!state.passingShipActive) {
+        showMsg('No ship in sight. A flare needs something to signal — scan the horizon and wait.', '#888');
+        return;
+      }
       p.inv.signal_flare = 0;
       updateUI();
-      // If a passing ship is active, mark it as signaled (overrides normal flare behaviour with urgency)
-      if (state.passingShipActive) {
-        state.passingShipSignaled = true;
-        state.passingShipActive = false;
-        showMsg('THE SHIP SAW YOUR FLARE — IT IS TURNING TOWARDS YOU!', '#c8f135');
-        SFX.shipHorn && SFX.shipHorn();
-        spawnParticles(p.x, p.y, '#ff8800', 12);
-        addFloatingText(p.x, p.y - 40, 'SHIP SIGNALED!', '#ffcc00');
-      }
+      state.passingShipSignaled = true;
+      state.passingShipActive = false;
+      showMsg('THE SHIP SAW YOUR FLARE — IT IS TURNING TOWARDS YOU!', '#c8f135');
+      SFX.shipHorn && SFX.shipHorn();
+      spawnParticles(p.x, p.y, '#ff8800', 12);
+      addFloatingText(p.x, p.y - 40, 'SHIP SIGNALED!', '#ffcc00');
       // Trigger rescue ending
       state.cutscenesSeen.delete('ending_rescue');
       const csDef = CUTSCENES['ending_rescue'];
@@ -13641,8 +13644,8 @@ function updateWorldEvents() {
 
   // === STORM SURGE EVENT ===
   // === PASSING SHIP EVENT ===
-  // A merchant vessel crosses the horizon every 5-8 in-game days.
-  // The player has a 3-minute window to signal it with the flare (or a bonfire).
+  // A merchant vessel crosses the horizon ONCE per 35-day window, at a random moment.
+  // The player has a 3-minute window to signal it with the flare.
   if (!state.passingShipActive && !state.peaceAchieved) {
     state.passingShipTimer = (state.passingShipTimer || 1) - 1;
     if (state.passingShipTimer <= 0 && state.eruptionPhase === 0 && !state.raidActive) {
@@ -13651,8 +13654,9 @@ function updateWorldEvents() {
       state.passingShipWindowRemain = state.passingShipWindow;
       state.passingShipSignaled = false;
       state.passingShipMissed = false;
-      state.passingShipTimer = state.DAY_FRAMES * (5 + Math.random() * 3); // reset for next time
-      showMsg('A SHIP ON THE HORIZON — signal it before it passes!', '#e8d490');
+      // Reset for next time: random offset within next 35-day window
+      state.passingShipTimer = state.DAY_FRAMES * (1 + Math.random() * 35);
+      showMsg('A SHIP ON THE HORIZON — signal it with a FLARE before it passes!', '#e8d490');
       SFX.shipHorn && SFX.shipHorn();
       if (navigator.vibrate) navigator.vibrate([100, 80, 100, 80, 100]);
     }
