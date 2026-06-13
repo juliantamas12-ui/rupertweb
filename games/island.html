@@ -14504,8 +14504,13 @@ window.addEventListener('keydown', e => {
   if (e.key === ' ') {
     // Space also advances dialogue
     if (state.dialogue) { advanceDialogue(); e.preventDefault(); return; }
-    handleMinigameKey(' ');
-    handleJump();
+    // If a minigame is active (chop, mine, fish), SPACE is the minigame input only.
+    // Otherwise SPACE is jump.
+    if (state.minigame) {
+      handleMinigameKey(' ');
+    } else {
+      handleJump();
+    }
     e.preventDefault();
   }
   // Hotbar number keys — pressing the SAME number twice unequips (slot 0 = empty hand)
