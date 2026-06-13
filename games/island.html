@@ -3948,6 +3948,9 @@ function checkRecipeDiscovery() {
 
 function spawnEnemies(n, type) {
   const lagoonCx = 75*TSIZE, lagoonCy = 12*TSIZE;
+  // Precompute placed campfires once — each one creates a no-spawn safe radius.
+  const CAMPFIRE_SAFE_R = 9 * TSIZE; // ~144px around any placed campfire
+  const safeCampfires = (state.objects || []).filter(o => o.placed && o.type === 'campfire');
   for (let i = 0; i < n; i++) {
     const angle = Math.random() * Math.PI * 2;
     const r = (30 + Math.random() * 24) * TSIZE;
@@ -3958,6 +3961,12 @@ function spawnEnemies(n, type) {
     // Don't spawn within 30 tiles of lagoon or 40 tiles of spawn
     if (Math.hypot(ex-lagoonCx, ey-lagoonCy) < 15*TSIZE) continue;
     if (Math.hypot(ex - 62*TSIZE, ey - 87*TSIZE) < 20*TSIZE) continue;
+    // Don't spawn inside any placed campfire's safe radius.
+    let _inSafe = false;
+    for (const cf of safeCampfires) {
+      if (Math.hypot(ex - cf.x, ey - cf.y) < CAMPFIRE_SAFE_R) { _inSafe = true; break; }
+    }
+    if (_inSafe) continue;
     // Zone-based difficulty scaling: each gate the player unlocks toughens
     // every NEW spawn. Light jungle (z0) -> dark (z1) -> deep (z2) -> volcanic (z3) -> village (z4).
     const zoneMult = 1 + (state.zoneUnlocked || 0) * 0.30;
@@ -12055,6 +12064,8 @@ function updateDayNight() {
     // Nightfall — spawn bat swarms at jungle edge
     const batCount = 3 + Math.floor(Math.random() * 3);
     const cx = 75*TSIZE, cy = 75*TSIZE;
+    const CAMPFIRE_SAFE_R = 9 * TSIZE;
+    const safeCampfires = (state.objects || []).filter(o => o.placed && o.type === 'campfire');
     for (let i = 0; i < batCount; i++) {
       const angle = Math.random() * Math.PI * 2;
       const r = (22 + Math.random() * 10) * TSIZE;
@@ -12062,6 +12073,12 @@ function updateDayNight() {
       const by2 = cy + Math.sin(angle) * r;
       // Don't spawn near start position
       if (Math.hypot(bx2 - 62*TSIZE, by2 - 87*TSIZE) < 20*TSIZE) continue;
+      // Don't spawn inside a campfire safe radius
+      let _inSafe = false;
+      for (const cf of safeCampfires) {
+        if (Math.hypot(bx2 - cf.x, by2 - cf.y) < CAMPFIRE_SAFE_R) { _inSafe = true; break; }
+      }
+      if (_inSafe) continue;
       state.creatures.push({
         type: 'bat',
         x: bx2,
