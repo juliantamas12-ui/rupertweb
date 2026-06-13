@@ -7367,7 +7367,8 @@ function getActiveTool() {
     {id:'stone_knife'}, {id:'bow'},
     {id:'fire_bottle'}, {id:'lava_bomb'}, {id:'signal_mirror'}, {id:'torch'}, {id:'crystal_torch'}, {id:'coconut'}
   ].filter(t => (p.inv[t.id]||0) > 0);
-  if (!state.activeSlot) state.activeSlot = 1;
+  if (state.activeSlot === undefined) state.activeSlot = 1;
+  if (state.activeSlot === 0) return null; // explicitly unequipped (empty hand)
   const slot = tools[state.activeSlot - 1];
   return slot ? slot.id : null;
 }
@@ -14378,9 +14379,16 @@ window.addEventListener('keydown', e => {
     handleJump();
     e.preventDefault();
   }
-  // Hotbar number keys
+  // Hotbar number keys — pressing the SAME number twice unequips (slot 0 = empty hand)
   const numKey = parseInt(e.key);
   if (numKey >= 1 && numKey <= 6) {
+    if (state.activeSlot === numKey) {
+      state.activeSlot = 0; // empty hand
+      showMsg('UNEQUIPPED — empty hand', '#888');
+      // update UI/HUD
+      if (typeof updateUI === 'function') updateUI();
+      return;
+    }
     state.activeSlot = numKey;
     const activeT = getActiveTool ? getActiveTool() : null;
     if (activeT === 'axe') showMsg('AXE ready — click a tree to chop (2 hits)', '#c8a060');
