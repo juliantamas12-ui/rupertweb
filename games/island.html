@@ -533,6 +533,7 @@ canvas#c{pointer-events:none}
     else if (k==='hearty_meal'&&p.inv.hearty_meal>0){p.inv.hearty_meal--;p.food=Math.min(p.maxFood||100,(p.food||0)+40);p.hp=Math.min(p.maxHp||100,p.hp+20);showMsg('+40 FOOD +20 HP','#ffcc80');}
     else if (k==='healing_potion'&&p.inv.healing_potion>0){p.inv.healing_potion--;p.hp=Math.min(p.maxHp||100,p.hp+30);showMsg('+30 HP','#40ff88');}
     else if (k==='antidote'&&p.inv.antidote>0){p.inv.antidote--;p.poison=0;showMsg('POISON CURED','#40ff88');}
+    else if (k==='glow_shroom'&&p.inv.glow_shroom>0){p.inv.glow_shroom--;p.hp=Math.min(p.maxHp||100,p.hp+15);if(p.poison>0)p.poison=0;showMsg('+15 HP (GLOW SHROOM)','#88ff88');}
   }
 
   // ── GEAR ──
@@ -770,6 +771,7 @@ canvas#c{pointer-events:none}
     </div>
     <button class="pm-btn" onclick="saveGame()">SAVE</button>
     <button class="pm-btn" onclick="saveAndQuit()">SAVE &amp; QUIT</button>
+    <button class="pm-btn" onclick="replayTutorial()">TUTORIAL / HELP</button>
     <button class="pm-btn" onclick="if(confirm('Restart now? Your current save will be wiped.')) restartGame();">RESTART</button>
     <button class="pm-btn" id="music-btn" onclick="toggleMusic()" style="cursor:pointer">MUSIC: ON</button>
     <div id="pause-leaderboard" style="margin-top:14px;border-top:1px solid rgba(120,80,20,0.4);padding-top:10px"></div>
@@ -883,7 +885,7 @@ const state = {
       basket:0, signal_mirror:0,
       lava_blade:0, volcanic_armor:0, obsidian_pickaxe:0, lava_bomb:0,
       depth_spear:0, pressure_suit:0, ancient_artifact:0,
-      hearty_meal:0, healing_potion:0, tribal_brew:0, antidote:0,
+      hearty_meal:0, healing_potion:0, tribal_brew:0, antidote:0, glow_shroom:0,
       tribal_shield:0,
       // Cave resources
       crystal:0, ancient_bone:0,
@@ -1350,9 +1352,9 @@ function genObjects() {
         // jungle_floor removed entirely
       } else if (t === T.BEACH) {
         if (r < 0.004) state.objects.push({type:'palm', x:wx, y:wy, hp:4, maxHp:4, respawn:0, scale:_treeScale(), flipX:_treeFlip(), seed:_treeSeed()});
-        else if (r < 0.009) state.objects.push({type:'driftwood', x:wx, y:wy, collected:false});
-        // Pebbles: rare scattered beach stones — 1 stone each, no tool needed.
-        else if (r < 0.014) state.objects.push({type:'pebble', x:wx, y:wy, collected:false});
+        else if (r < 0.014) state.objects.push({type:'driftwood', x:wx, y:wy, collected:false});
+        // Pebbles: scattered beach stones — 1 stone each, no tool needed. ~3% per tile now (was ~0.5%).
+        else if (r < 0.044) state.objects.push({type:'pebble', x:wx, y:wy, collected:false});
         else if (r < 0.016) state.objects.push({type:'fish_spot', x:wx, y:wy, shimmer:Math.random()*100});
         else if (r < 0.020) state.objects.push({type:selectTree(t,nearWater), x:wx, y:wy, hp:4, maxHp:4, scale:_treeScale(), flipX:_treeFlip(), seed:_treeSeed()});
         // Crabs: very rare, only on beach far from spawn
@@ -1448,10 +1450,10 @@ function genObjects() {
   state.objects.push({type:'tribal_marker', x:90*TSIZE, y:62*TSIZE, decor:true});
   state.objects.push({type:'tribal_marker', x:50*TSIZE, y:70*TSIZE, decor:true});
   // Mushroom rings in dark jungle (3 spots)
-  state.objects.push({type:'mushroom_cluster', x:70*TSIZE, y:50*TSIZE, decor:true});
-  state.objects.push({type:'mushroom_cluster', x:85*TSIZE, y:58*TSIZE, decor:true});
-  state.objects.push({type:'mushroom_cluster', x:60*TSIZE, y:65*TSIZE, decor:true});
-  state.objects.push({type:'mushroom_cluster', x:78*TSIZE, y:72*TSIZE, decor:true});
+  state.objects.push({type:'mushroom_cluster', x:70*TSIZE, y:50*TSIZE, harvested:false});
+  state.objects.push({type:'mushroom_cluster', x:85*TSIZE, y:58*TSIZE, harvested:false});
+  state.objects.push({type:'mushroom_cluster', x:60*TSIZE, y:65*TSIZE, harvested:false});
+  state.objects.push({type:'mushroom_cluster', x:78*TSIZE, y:72*TSIZE, harvested:false});
 
   // Scattered decoration: tree stumps, flower patches, ferns, vine curtains.
   // Deterministic per-tile sampling keeps placement stable across runs.
@@ -1473,7 +1475,7 @@ function genObjects() {
         else if (r<10)  state.objects.push({type:'flower_patch', x:wxL, y:wyL, decor:true});
         else if (r<18)  state.objects.push({type:'fern', x:wxL, y:wyL, decor:true});
       } else if (tt === T.JUNGLE_DARK) {
-        if (r < 3)      state.objects.push({type:'mushroom_cluster', x:wxL, y:wyL, decor:true});
+        if (r < 3)      state.objects.push({type:'mushroom_cluster', x:wxL, y:wyL, harvested:false});
         else if (r<12)  state.objects.push({type:'fern', x:wxL, y:wyL, decor:true});
         else if (r<18)  state.objects.push({type:'vine_curtain', x:wxL, y:wyL, decor:true});
         else if (r<21)  state.objects.push({type:'tree_stump', x:wxL, y:wyL, decor:true, solid:true});
@@ -1487,9 +1489,27 @@ function genObjects() {
     "The tribe fears nothing except the mask of their ancestors. Find it on their chief.",
     "There is a lagoon to the north. The warriors never go there. I know not why."
   ];
-  [[81,111],[69,117],[93,108]].forEach(([bx,by],i) => {
-    state.objects.push({type:'bottle', x:bx*TSIZE, y:by*TSIZE, decor:false, read:false, msgIdx:i});
-  });
+  // Find 3 beach tiles for bottles. Don't hard-code coords — walk the map so they ALWAYS
+  // land on actual beach tiles, never floating on jungle or ocean.
+  {
+    const beachCandidates = [];
+    for (let by = 70; by < 115 && beachCandidates.length < 60; by++) {
+      for (let bx = 30; bx < 120; bx++) {
+        if (state.map[by] && state.map[by][bx] === T.BEACH) beachCandidates.push([bx, by]);
+      }
+    }
+    if (beachCandidates.length >= 3) {
+      // Pick 3 spread out
+      const picks = [];
+      while (picks.length < 3 && beachCandidates.length) {
+        const idx = Math.floor(Math.random() * beachCandidates.length);
+        picks.push(beachCandidates.splice(idx, 1)[0]);
+      }
+      picks.forEach(([bx, by], i) => {
+        state.objects.push({type:'bottle', x:bx*TSIZE+TSIZE/2, y:by*TSIZE+TSIZE/2, decor:false, read:false, msgIdx:i});
+      });
+    }
+  }
 
   // Hidden lagoon: decorative palms around it + fish spots inside (scaled)
   const lagoonCx = 75, lagoonCy = 12;
@@ -1607,12 +1627,16 @@ function genObjects() {
     [75,59],[75,58],[75,57],[75,41]
   ];
 
-  parkourCourse.forEach(([px2, py2]) => {
+  parkourCourse.forEach(([px2, py2], _idx) => {
     if (py2 >= 0 && py2 < MSIZE && px2 >= 0 && px2 < MSIZE) {
       if (state.map[py2][px2] === T.LAVA) state.map[py2][px2] = T.VOLCANIC;
       state.pits.delete(py2 * MSIZE + px2);
     }
-    state.objects.push({type:'step_stone', x:px2*TSIZE+TSIZE/2, y:py2*TSIZE+TSIZE/2});
+    state.objects.push({
+      type:'step_stone',
+      x:px2*TSIZE+TSIZE/2, y:py2*TSIZE+TSIZE/2,
+      _isStart: _idx === 0,  // first stone gets the signpost
+    });
   });
 
   // Lore stones hidden in jungle (scaled)
@@ -2438,10 +2462,48 @@ function drawPalm(ctx, sx, sy, obj) {
   // Frond colour varies
   const frondPalette = ['#2d8c2d','#3a9a3a','#3a8826','#46a236','#287a22'];
   const frondColor = frondPalette[Math.floor(r2 * frondPalette.length)];
-  // Fronds
-  px(ctx, frondColor, sx-22+sway, sy-10, 18, 4);
-  px(ctx, frondColor, sx+4+sway, sy-10, 18, 4);
-  px(ctx, frondColor, sx-12+sway, sy-18, 24, 4);
+  // Fronds — drawn as drooping pointed leaves with a darker center vein.
+  const frondDark = frondPalette[(Math.floor(r2 * frondPalette.length) + 2) % frondPalette.length];
+  function _frond(cx, cy, dir, len) {
+    // dir = -1 left, +1 right
+    ctx.save();
+    ctx.fillStyle = frondColor;
+    // 3-segment droop
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.quadraticCurveTo(cx + dir * len * 0.5, cy - 4, cx + dir * len, cy + 4);
+    ctx.quadraticCurveTo(cx + dir * len * 0.5, cy + 4, cx, cy + 2);
+    ctx.closePath();
+    ctx.fill();
+    // Spine
+    ctx.strokeStyle = frondDark;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy + 1);
+    ctx.quadraticCurveTo(cx + dir * len * 0.5, cy - 2, cx + dir * len, cy + 4);
+    ctx.stroke();
+    // Tiny side spokes
+    for (let s = 0; s < 3; s++) {
+      const t = (s + 1) / 4;
+      const xx = cx + dir * len * t;
+      const yy = cy + (t * t * 5) - 1;
+      ctx.strokeStyle = frondColor;
+      ctx.beginPath();
+      ctx.moveTo(xx, yy);
+      ctx.lineTo(xx + dir * 3, yy + 4);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(xx, yy);
+      ctx.lineTo(xx + dir * 3, yy - 4);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  // Left, right, and two upright fronds
+  _frond(sx + sway, sy - 10, -1, 16 + r1*4);
+  _frond(sx + sway, sy - 10, +1, 16 + r1*4);
+  _frond(sx + sway, sy - 14, -1, 12);
+  _frond(sx + sway, sy - 14, +1, 12);
   // Coconuts — only some palms have them
   if (r1 > 0.25) {
     px(ctx, '#4a2a08', sx-6, sy-5, 5, 5);
@@ -5037,9 +5099,27 @@ function drawCreatures(ctx, camX, camY) {
     // Idle micro-motion so creatures don't look frozen when far from player
     const _idleBob = Math.sin((state.frameCount + c.walkTimer*3) * 0.08 + sx * 0.05) * 1.5;
     if (c.type === 'spider') {
-      drawSpider(ctx, sx, sy + _idleBob*0.4);
+      // Spider Queen (bounty): bigger sprite + purple tint + crown so she reads as different.
+      if (c.isBounty) {
+        ctx.save();
+        ctx.translate(sx, sy + _idleBob*0.4);
+        ctx.scale(1.7, 1.7);
+        drawSpider(ctx, 0, 0);
+        ctx.restore();
+        // Crown spikes
+        ctx.fillStyle = '#cc44ff';
+        ctx.fillRect(Math.round(sx-6), Math.round(sy-12), 2, 4);
+        ctx.fillRect(Math.round(sx-2), Math.round(sy-15), 2, 7);
+        ctx.fillRect(Math.round(sx+2), Math.round(sy-12), 2, 4);
+        // Purple glow eyes
+        ctx.fillStyle = '#ff44ff';
+        ctx.fillRect(Math.round(sx-3), Math.round(sy-5), 2, 2);
+        ctx.fillRect(Math.round(sx+1), Math.round(sy-5), 2, 2);
+      } else {
+        drawSpider(ctx, sx, sy + _idleBob*0.4);
+      }
       px(ctx, '#333', sx-10, sy-18, 20, 3);
-      px(ctx, '#22cc44', sx-10, sy-18, Math.round(20*c.hp/c.maxHp), 3);
+      px(ctx, c.isBounty ? '#cc44ff' : '#22cc44', sx-10, sy-18, Math.round(20*c.hp/c.maxHp), 3);
     } else if (c.type === 'shark') {
       const _sharkSway = Math.sin((state.frameCount + sx)*0.06) * 2;
       // Stalker shark: only the dorsal fin shows above the water, slicing toward the player.
@@ -5053,22 +5133,39 @@ function drawCreatures(ctx, camX, camY) {
           const ty = sy + 4 + Math.sin((state.frameCount + i*6)*0.18)*0.8;
           ctx.fillRect(tx, ty, 2, 2);
         }
-        // Body shadow under the water
-        ctx.fillStyle = 'rgba(0,0,0,0.35)';
+        // Body shadow under the water (longer, more visible)
+        ctx.fillStyle = 'rgba(0,0,0,0.45)';
         ctx.beginPath();
-        ctx.ellipse(sx + _sharkSway, sy + 4, 14, 5, 0, 0, Math.PI*2);
+        ctx.ellipse(sx + _sharkSway, sy + 5, 22, 6, 0, 0, Math.PI*2);
         ctx.fill();
-        // Dorsal fin
-        ctx.fillStyle = '#1a2630';
+        // Lighter body silhouette
+        ctx.fillStyle = 'rgba(40,60,80,0.55)';
         ctx.beginPath();
-        ctx.moveTo(sx + _sharkSway - 6, sy + 2);
-        ctx.lineTo(sx + _sharkSway, sy - 14);
-        ctx.lineTo(sx + _sharkSway + 6, sy + 2);
+        ctx.ellipse(sx + _sharkSway - 2, sy + 3, 18, 4, 0, 0, Math.PI*2);
+        ctx.fill();
+        // Tail fin trace (behind body)
+        ctx.fillStyle = 'rgba(20,30,40,0.55)';
+        ctx.beginPath();
+        ctx.moveTo(sx + _sharkSway + 18, sy + 3);
+        ctx.lineTo(sx + _sharkSway + 24, sy - 2);
+        ctx.lineTo(sx + _sharkSway + 24, sy + 8);
         ctx.closePath();
         ctx.fill();
-        // Highlight on the fin edge
-        ctx.fillStyle = '#3a4a5a';
-        ctx.fillRect(sx + _sharkSway - 1, sy - 12, 2, 10);
+        // Curved dorsal fin
+        ctx.fillStyle = '#1a2630';
+        ctx.beginPath();
+        ctx.moveTo(sx + _sharkSway - 8, sy + 2);
+        ctx.quadraticCurveTo(sx + _sharkSway - 4, sy - 18, sx + _sharkSway + 1, sy - 17);
+        ctx.quadraticCurveTo(sx + _sharkSway + 4, sy - 10, sx + _sharkSway + 8, sy + 2);
+        ctx.closePath();
+        ctx.fill();
+        // Fin edge highlight
+        ctx.strokeStyle = '#3a4a5a';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(sx + _sharkSway - 6, sy + 1);
+        ctx.quadraticCurveTo(sx + _sharkSway - 2, sy - 16, sx + _sharkSway + 1, sy - 15);
+        ctx.stroke();
         // Warning '!' icon above
         const pulse = (state.frameCount % 30) < 15;
         ctx.fillStyle = pulse ? '#ff2020' : '#ff8040';
@@ -5199,15 +5296,14 @@ function checkSettlement() {
 
   const labels = ['SURVIVOR','SETTLEMENT','FORTIFIED CAMP','VILLAGE'];
   if (p.settlementLevel > prev) {
-    showMsg(`STATUS: ${labels[p.settlementLevel]}`, '#c8f135');
+    showMsg(`STATUS: ${labels[p.settlementLevel]} — a marker has been raised at your camp (75,85)`, '#c8f135');
     SFX.achievement && SFX.achievement();
-    // NPC comments on settlement level
     if (p.settlementLevel === 1) {
       setTimeout(() => showMsg('OONGA: "You build well. The island accepts you."', '#c8a060'), 1500);
     } else if (p.settlementLevel === 2) {
       setTimeout(() => showMsg('MARA: "This is starting to look like somewhere we could actually survive."', '#cc4422'), 1500);
     } else if (p.settlementLevel === 3) {
-      setTimeout(() => showMsg('FELIX: "I\'ll admit... you\'ve done something here."', '#7ca0b0'), 1500);
+      setTimeout(() => showMsg('FELIX: "I\'ll admit... you\'ve done something here. RUPERT ISLAND CAMP is yours."', '#7ca0b0'), 1500);
     }
   }
 }
@@ -6429,14 +6525,15 @@ function updatePlayer() {
   const inDense = inDarkJungle; // slowed in dark jungle
 
   let spd = 1.35;
-  // Sprint doesn't help in water — you wade, you don't run.
-  if (sprinting && !inWater && !inDeepOcean) spd = 1.95;
-  // Bloodlust frenzy speed boost (skipped in water for the same reason)
-  if (state.frenzyActive && !inWater && !inDeepOcean) spd *= state.frenzySpeedMult;
-  // Swimming is slow. Raft helps but doesn't fully negate it.
+  // Standing on a FISHING DOCK overrides water-tile slow — you're on planks, not wading.
+  const _onDock = state.objects.some(o => o.placed && o.type === 'dock' && Math.hypot(p.x - o.x, p.y - o.y) < 22);
+  // Sprint doesn't help in water — you wade, you don't run. Dock counts as land.
+  if (sprinting && (!inWater || _onDock) && (!inDeepOcean || _onDock)) spd = 1.95;
+  if (state.frenzyActive && (!inWater || _onDock) && (!inDeepOcean || _onDock)) spd *= state.frenzySpeedMult;
+  // Swimming is slow. Raft helps but doesn't fully negate it. Dock overrides slow.
   const hasRaft = (p.inv.raft||0) > 0;
-  if (inWater) spd *= hasRaft ? 0.55 : 0.30;            // shallow: 55% w/ raft, 30% without
-  if (inDeepOcean) spd *= hasRaft ? 0.45 : 0.22;        // deep: 45% w/ raft, 22% without (drag is real)
+  if (inWater && !_onDock) spd *= hasRaft ? 0.55 : 0.30;
+  if (inDeepOcean && !_onDock) spd *= hasRaft ? 0.45 : 0.22;
   if (inDense) spd *= 0.6;
   if (p.stamina <= 0) spd *= 0.8;
 
@@ -7891,10 +7988,21 @@ function handleClick(sx, sy) {
     return;
   }
 
-  // ── FISHING ROD: only works while standing on a placed DOCK ──
+  // ── FISHING ROD: works on a placed DOCK, or from BEACH adjacent to water ──
   if (tool === 'fishing_rod') {
-    if (!_atDock(p)) {
-      showMsg('Stand on a FISHING DOCK to fish. Build one in B menu.', '#3dd6d0');
+    const tile = getTile(p.x, p.y);
+    let nearWater = false;
+    if (tile === T.BEACH) {
+      // Check a 3-tile ring for water tiles
+      for (let dx = -1; dx <= 1 && !nearWater; dx++) {
+        for (let dy = -1; dy <= 1 && !nearWater; dy++) {
+          const tt = getTile(p.x + dx * TSIZE, p.y + dy * TSIZE);
+          if (tt === T.SHALLOW_WATER || tt === T.DEEP_OCEAN) nearWater = true;
+        }
+      }
+    }
+    if (!_atDock(p) && !nearWater) {
+      showMsg('Stand on a DOCK or on the BEACH next to water to fish', '#3dd6d0');
       return;
     }
     if (!state.minigame) startFishMinigame();
@@ -8060,6 +8168,19 @@ function handleClick(sx, sy) {
       else { p.food = Math.min(p.maxFood, p.food+15); showMsg('+BERRIES (RAW)', '#e67e22'); SFX.pickup(); }
       return;
     }
+    // GLOWING MUSHROOMS — harvest 1-3 glow shrooms (heal +15 HP, cure poison)
+    if (obj.type === 'mushroom_cluster' && !obj.harvested) {
+      obj.harvested = true;
+      const yieldQ = 1 + Math.floor(Math.random() * 3);
+      p.inv.glow_shroom = (p.inv.glow_shroom||0) + yieldQ;
+      addFloatingText(obj.x, obj.y - 18, '+' + yieldQ + ' GLOW SHROOM', '#88ff88');
+      showMsg('GLOWING MUSHROOMS — +' + yieldQ + ' GLOW SHROOM (use from pack: +15 HP, cures poison)', '#88ff88');
+      spawnParticles(obj.x, obj.y, '#88ff88', 5);
+      SFX.pickup && SFX.pickup();
+      // Set respawn timer
+      obj._respawnTimer = state.frameCount + (state.DAY_FRAMES || 14400) * 2;
+      return;
+    }
     if (obj.type === 'fruit') {
       if (Math.random() < 0.2) { p.sick = 200; showMsg('SICK FROM RAW FRUIT!', '#e74c3c'); SFX.hurt(); }
       else { p.food = Math.min(p.maxFood, p.food+20); showMsg('+FRUIT (RAW)', '#e67e22'); SFX.pickup(); }
@@ -8216,10 +8337,10 @@ const BUILD_ITEMS = [
   {id:'dock',      label:'FISHING DOCK', cost:{wood:8,vine:1},desc:'Place at shallow water — fish from this spot only'},
   {id:'bed',       label:'BED',       cost:{wood:8,stone:3},  desc:'Sleep through night'},
   {id:'chest',     label:'CHEST',     cost:{wood:5,stone:2},  desc:'Storage'},
-  {id:'watchtower',label:'WATCHTOWER',cost:{wood:10,stone:5}, desc:'Enemy warning'},
+  {id:'watchtower',label:'WATCHTOWER',cost:{wood:10,stone:5}, desc:'Pings when enemies are within 350px'},
   {id:'gate',      label:'GATE',      cost:{wood:5,stone:2},  desc:'Passable wall'},
-  {id:'forge',     label:'FORGE',     cost:{stone:8,wood:3},  desc:'Craft fire weapons'},
-  {id:'smoker',    label:'SMOKER',    cost:{stone:3,wood:2},  desc:'Slows food decay'},
+  {id:'forge',     label:'FORGE',     cost:{stone:8,wood:3},  desc:'Required to craft FIRE AXE / FIRE SPEAR (stand near it + open C)'},
+  {id:'smoker',    label:'SMOKER',    cost:{stone:3,wood:2},  desc:'Slows hunger + thirst decay while in camp'},
   {id:'vessel',    label:'VESSEL',    cost:{wood:2,stone:2},  desc:'Collects rain water'},
   {id:'snare_trap',label:'SNARE TRAP',cost:{wood:2,vine:1},   desc:'Place in jungle — catches boars for raw meat'},
 ];
@@ -8238,7 +8359,7 @@ const CRAFT_ITEMS = [
   {id:'vine',        label:'VINE (x2)',    cost:{coconut:3},                   desc:'Craft 2 vine from 3 coconut leaves', requiredTier:0},
   {id:'fishing_rod', label:'FISHING ROD',  cost:{wood:3,stone:1},              desc:'Required to fish', requiredTier:0},
   {id:'water_barrel',label:'WATER BARREL', cost:{wood:5,stone:2},              desc:'+50 max water', requiredTier:0},
-  {id:'raft',        label:'RAFT',         cost:{wood:10},                     desc:'Needed for yacht', requiredTier:0},
+  {id:'raft',        label:'RAFT',         cost:{wood:10},                     desc:'Faster swimming + needed for the SUPERYACHT', requiredTier:0},
   {id:'basket',      label:'BASKET',       cost:{wood:2},                      desc:'+20 carry capacity (visual + weight UI)', requiredTier:0},
   {id:'signal_mirror',label:'SIGNAL MIRROR',cost:{stone:3},                   desc:'Use from inventory: stuns 1 nearby enemy for 3s', requiredTier:0},
   // VOLCANIC AGE (tier 1)
@@ -8454,11 +8575,40 @@ function placeBuildItem(sx, sy) {
 }
 
 function openChest(chestObj) {
-  // Simple chest UI
-  const existingChestPanel = document.getElementById('chest-panel');
-  if (existingChestPanel) {
-    existingChestPanel.style.display = existingChestPanel.style.display==='block'?'none':'block';
-    return;
+  // Toggle: first press deposits raw resources (wood/stone/coconut/fruit/berries/vine/feathers),
+  // second press (or pressing E with empty pack) withdraws back to player.
+  const p = state.player;
+  if (!chestObj.stash) chestObj.stash = {};
+  const STASHABLE = ['wood','stone','coconut','fruit','berry','vine','rope','feather','ancient_bone','crystal','volcanic_stone','raw_meat','cooked_meat','fish','fish_cooked','fruit_cooked','survey_data'];
+  // Count how much player carries vs how much chest carries
+  const carrying = STASHABLE.reduce((n,k) => n + (p.inv[k]||0), 0);
+  const stashed  = STASHABLE.reduce((n,k) => n + (chestObj.stash[k]||0), 0);
+  if (carrying > 0) {
+    // Deposit
+    let depKinds = 0;
+    STASHABLE.forEach(k => {
+      const v = p.inv[k]||0;
+      if (v > 0) {
+        chestObj.stash[k] = (chestObj.stash[k]||0) + v;
+        p.inv[k] = 0;
+        depKinds++;
+      }
+    });
+    showMsg('CHEST: stashed ' + carrying + ' resources (' + depKinds + ' kinds)', '#c8a060');
+    spawnParticles(chestObj.x, chestObj.y - 8, '#c8a060', 5);
+    SFX.pickup && SFX.pickup();
+    if (typeof updateUI === 'function') updateUI();
+  } else if (stashed > 0) {
+    // Withdraw all
+    STASHABLE.forEach(k => {
+      if (chestObj.stash[k]) { p.inv[k] = (p.inv[k]||0) + chestObj.stash[k]; chestObj.stash[k] = 0; }
+    });
+    showMsg('CHEST: withdrew ' + stashed + ' resources', '#c8f135');
+    spawnParticles(chestObj.x, chestObj.y - 8, '#c8f135', 5);
+    SFX.pickup && SFX.pickup();
+    if (typeof updateUI === 'function') updateUI();
+  } else {
+    showMsg('CHEST is empty — carry resources here and press E to stash them', '#888');
   }
 }
 
@@ -8622,10 +8772,12 @@ function tryCraft(id) {
   }
 
   p.inv[id] = (p.inv[id]||0) + 1;
-  // Initialize durability for new crafted tools
-  if (p.toolDurability && p.toolDurability[id] !== undefined) {
-    // Only set if not already tracking (don't reset on duplicate craft)
-    // Just keep existing durability or set fresh
+  // Re-crafting REFILLS durability. The earlier behaviour left a depleted weapon
+  // at 1 durability when re-crafted — fixed here.
+  const _maxDur = { axe:40, fire_axe:40, pickaxe:30, sword:60, spear:50, fire_spear:35, stone_knife:20, bow:60, lava_blade:60, depth_spear:50, magma_hammer:60, crystal_blade:60, bone_spear:50, obsidian_pickaxe:80, tribal_weapon:40 };
+  if (_maxDur[id] !== undefined) {
+    if (!p.toolDurability) p.toolDurability = {};
+    p.toolDurability[id] = _maxDur[id];
   }
   showMsg(`CRAFTED: ${item.label}`, '#c8f135');
   SFX.craft();
@@ -8633,6 +8785,7 @@ function tryCraft(id) {
 
   if (id === 'water_barrel') p.maxWater += 50;
   if (id === 'torch') p.torch = true;
+  if (id === 'raft') showMsg('RAFT crafted — you now swim faster (auto-active while it\'s in your pack)', '#c8a060');
   if (id === 'basket') { state._basketBonus = (state._basketBonus||0) + 20; showMsg('BASKET crafted — carry capacity +20', '#c8f135'); }
   if (id === 'ancient_artifact') { showMsg('ANCIENT ARTIFACT — the island knows you. A new ending awaits.', '#3dd6d0'); state.ancientArtifactHeld = true; }
 
@@ -9312,6 +9465,7 @@ function renderInvMenu() {
       if (k==='hearty_meal'&&p.inv.hearty_meal>0){p.inv.hearty_meal--;p.food=Math.min(p.maxFood,p.food+40);p.hp=Math.min(p.maxHp,p.hp+20);showMsg('+40 FOOD +20 HP (HEARTY MEAL)','#ffcc80');}
       if (k==='healing_potion'&&p.inv.healing_potion>0){p.inv.healing_potion--;p.hp=Math.min(p.maxHp,p.hp+30);showMsg('+30 HP (HEALING POTION)','#40ff88');}
       if (k==='antidote'&&p.inv.antidote>0){p.inv.antidote--;p.poison=0;showMsg('POISON CURED (ANTIDOTE)','#40ff88');}
+      if (k==='glow_shroom'&&p.inv.glow_shroom>0){p.inv.glow_shroom--;p.hp=Math.min(p.maxHp,p.hp+15);if(p.poison>0)p.poison=0;showMsg('+15 HP (GLOW SHROOM)','#88ff88');}
       renderInvMenu();
     };
     grid.appendChild(div);
@@ -9562,10 +9716,24 @@ function drawTile(ctx, type, sx, sy) {
       ctx.fillRect(sx+subX, sy+subY, 2, 2);
     }
   } else if (type === T.SHALLOW_WATER) {
-    // Subtle shimmer points (mostly handled by water shader elsewhere)
+    // Subtle shimmer points
     if (r5 < 8) {
       ctx.fillStyle = 'rgba(255,255,255,0.18)';
       ctx.fillRect(sx+subX, sy+subY, 2, 1);
+    }
+    // Animated wavelets — small horizontal white lines that slowly drift
+    const wavePhase = (state.frameCount * 0.04 + wtx * 0.3 + wty * 0.5) % 8;
+    if (wavePhase < 1.2 && r5 < 40) {
+      ctx.fillStyle = 'rgba(255,255,255,0.28)';
+      const wOff = (subX % 8);
+      ctx.fillRect(sx + wOff, sy + 6 + ((wty * 3 + Math.floor(state.frameCount*0.04)) % 5), 5, 1);
+    }
+  } else if (type === T.DEEP_OCEAN) {
+    // Deep ocean wavelets — fewer, longer, slower
+    const wavePhase2 = (state.frameCount * 0.03 + wtx * 0.4 + wty * 0.25) % 10;
+    if (wavePhase2 < 0.8 && r5 < 30) {
+      ctx.fillStyle = 'rgba(180,220,240,0.22)';
+      ctx.fillRect(sx + (subX % 10), sy + 8 + ((wty * 2) % 4), 7, 1);
     }
   }
 
@@ -10620,11 +10788,29 @@ function render(ctx, minimapCtx) {
         case 'rock': case 'vol_rock': drawRock(ctx,ssx,ssy); if(capturedObj.type==='vol_rock')drawVolRock(ctx,ssx,ssy); break;
         case 'berry': case 'fruit': drawBerry(ctx,ssx,ssy); break;
         case 'fish_spot': drawFishSpot(ctx,ssx,ssy); break;
-        case 'step_stone': px(ctx,'rgba(0,0,0,0.3)',ssx-11,ssy+4,22,5); px(ctx,'#3a2e20',ssx-10,ssy+0,20,6); px(ctx,'#6a5a4a',ssx-10,ssy-5,20,8); px(ctx,'#9a8a7a',ssx-8,ssy-7,16,4); px(ctx,'#7a6a5a',ssx-6,ssy-6,4,2); break;
+        case 'step_stone': {
+          px(ctx,'rgba(0,0,0,0.3)',ssx-11,ssy+4,22,5);
+          px(ctx,'#3a2e20',ssx-10,ssy+0,20,6);
+          px(ctx,'#6a5a4a',ssx-10,ssy-5,20,8);
+          px(ctx,'#9a8a7a',ssx-8,ssy-7,16,4);
+          px(ctx,'#7a6a5a',ssx-6,ssy-6,4,2);
+          // Signpost on the FIRST step stone of the parkour course — makes the path readable.
+          if (capturedObj._isStart) {
+            px(ctx,'#5c3d1e',ssx+8,ssy-22,3,18); // post
+            px(ctx,'#8b5e3c',ssx-2,ssy-30,22,8); // sign
+            px(ctx,'#5c2e0a',ssx-1,ssy-29,20,6);
+            ctx.fillStyle = '#f0d890';
+            ctx.font = 'bold 6px Lato, monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText('TO VOLCANO ↑', ssx+8, ssy-23);
+            ctx.textAlign = 'left';
+          }
+          break;
+        }
         case 'mossy_log': drawMossyLog(ctx,ssx,ssy); break;
         case 'tree_stump': drawTreeStump(ctx,ssx,ssy); break;
         case 'flower_patch': drawFlowerPatch(ctx,ssx,ssy); break;
-        case 'mushroom_cluster': drawMushroomCluster(ctx,ssx,ssy); break;
+        case 'mushroom_cluster': if (!capturedObj.harvested) drawMushroomCluster(ctx,ssx,ssy); break;
         case 'stone_circle': drawStoneCircle(ctx,ssx,ssy); break;
         case 'ruined_pillar': drawRuinedPillar(ctx,ssx,ssy); break;
         case 'fern': drawFern(ctx,ssx,ssy); break;
@@ -11321,32 +11507,36 @@ function render(ctx, minimapCtx) {
     ctx.textAlign = 'left';
     ctx.restore();
   } else if (state.surgePhase === 2) {
-    // Active surge: sweeping wave wall
+    // Active surge: water rises UP from the south and floods inland.
+    // Less of a single wave wall, more of a tide that swallows the low beach.
     const wx2 = state.surgeWaveX || 0;
-    const waveW = 80; // wave visual width
-    // Flood tint behind wave
-    if (wx2 > 0) {
-      const floodAlpha = Math.min(0.45, 0.02 * (wx2 / (canvas.width * 0.5)));
-      ctx.fillStyle = `rgba(10,100,160,${floodAlpha})`;
-      ctx.fillRect(0, 0, Math.min(canvas.width, wx2 - waveW * 0.3), canvas.height);
-    }
-    // Wave wall gradient
-    const grad = ctx.createLinearGradient(wx2 - waveW, 0, wx2 + waveW * 0.3, 0);
-    grad.addColorStop(0, 'rgba(10,80,140,0.0)');
-    grad.addColorStop(0.4, 'rgba(20,140,200,0.55)');
-    grad.addColorStop(0.7, 'rgba(60,200,230,0.85)');
-    grad.addColorStop(0.85, 'rgba(180,240,255,0.9)');
-    grad.addColorStop(1.0, 'rgba(255,255,255,0.6)');
+    const progress = Math.max(0, Math.min(1, wx2 / canvas.width));
+    // Flood tint from the bottom (south) up
+    const floodH = canvas.height * (0.45 + 0.35 * progress);
+    const floodY = canvas.height - floodH;
+    const grad = ctx.createLinearGradient(0, floodY, 0, canvas.height);
+    grad.addColorStop(0,   'rgba(20,80,140,0.0)');
+    grad.addColorStop(0.1, 'rgba(20,80,140,0.30)');
+    grad.addColorStop(0.5, 'rgba(30,110,170,0.55)');
+    grad.addColorStop(1.0, 'rgba(40,150,200,0.78)');
     ctx.fillStyle = grad;
-    ctx.fillRect(wx2 - waveW, 0, waveW * 2, canvas.height);
-    // Foam streaks on the crest
+    ctx.fillRect(0, floodY, canvas.width, floodH);
+    // Curly foam line along the leading edge
     ctx.save();
-    ctx.globalAlpha = 0.55;
-    ctx.fillStyle = '#e0f8ff';
-    for (let fi = 0; fi < 8; fi++) {
-      const fy = (fi / 8) * canvas.height + ((state.frameCount * 1.5 + fi * 40) % (canvas.height / 4));
-      const fw = 6 + Math.sin(state.frameCount * 0.3 + fi) * 3;
-      ctx.fillRect(wx2 - fw/2 + 4, fy % canvas.height, fw, 3);
+    ctx.fillStyle = 'rgba(220,245,255,0.85)';
+    for (let i = 0; i < canvas.width; i += 6) {
+      const yJit = Math.sin((state.frameCount + i) * 0.15) * 3;
+      ctx.fillRect(i, floodY - 1 + yJit, 4, 2);
+    }
+    ctx.restore();
+    // Drifting wavelets in the flooded area
+    ctx.save();
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    for (let wi = 0; wi < 18; wi++) {
+      const wx = ((state.frameCount * 0.8 + wi * 89) % canvas.width);
+      const wy = floodY + 10 + (wi * 27) % (floodH - 15);
+      const wl = 6 + (wi % 3) * 4;
+      ctx.fillRect(wx, wy, wl, 1);
     }
     ctx.restore();
     // Danger flash text
@@ -11389,8 +11579,10 @@ function render(ctx, minimapCtx) {
       ctx.fillStyle = '#c8a07a';
       ctx.fillRect(sx2-3, sy2+2, 7, 4);
       ctx.fillStyle = '#c8f135';
-      ctx.font = '8px Lato,sans-serif';
-      ctx.fillText(obj.resource && obj.resource.substring(0,3).toUpperCase() || 'LOG', sx2-5, sy2-6);
+      ctx.font = 'bold 8px Lato,sans-serif';
+      const _flotsamLabels = { wood:'+WOOD', stone:'+STONE', coconut:'+COCO', vine:'+VINE', fish:'+FISH' };
+      const _flabel = (obj.resource && _flotsamLabels[obj.resource]) || (obj.resource ? '+' + obj.resource.toUpperCase().replace(/_/g,' ') : '+LOOT');
+      ctx.fillText(_flabel + ' x' + (obj.qty||1), sx2 - 12, sy2 - 6);
       ctx.restore();
     }
   }
@@ -12436,6 +12628,10 @@ function updateDayNight() {
         o._dead = true;
       }
     }
+    // Mushrooms respawn after 2 in-game days
+    if (o.type === 'mushroom_cluster' && o.harvested && o._respawnTimer !== undefined) {
+      if (state.frameCount >= o._respawnTimer) { o.harvested = false; o._respawnTimer = undefined; }
+    }
   });
   // Clean up dead magma deposits + despawned chests
   state.objects = state.objects.filter(o => !o._dead);
@@ -12752,10 +12948,10 @@ function updateNPCCompanions() {
         npc.y += fdy/fd * spd;
       }
 
-      // Attack nearest enemy within 200px every 90 frames
+      // Attack nearest enemy within 240px every 50 frames — faster + harder so she's useful.
       npc.attackTimer = (npc.attackTimer || 0) + 1;
-      if (npc.attackTimer >= 90) {
-        let nearest = null, nearDist = 200;
+      if (npc.attackTimer >= 50) {
+        let nearest = null, nearDist = 240;
         state.enemies.forEach(e => {
           const ed = Math.hypot(e.x-npc.x, e.y-npc.y);
           if (ed < nearDist) { nearest = e; nearDist = ed; }
@@ -12770,10 +12966,10 @@ function updateNPCCompanions() {
           const adx = nearest.x - npc.x, ady = nearest.y - npc.y;
           const ad = Math.sqrt(adx*adx+ady*ady);
           state.projectiles.push({
-            type: 'companion_spear', dmg: 18,
+            type: 'companion_spear', dmg: 30,
             x: npc.x, y: npc.y,
-            vx: adx/ad * 6, vy: ady/ad * 6,
-            life: 40, owner: 'oonga'
+            vx: adx/ad * 8, vy: ady/ad * 8,
+            life: 60, owner: 'oonga'
           });
           npc.faceDir = Math.atan2(ady, adx);
         }
@@ -13019,6 +13215,27 @@ function claimBountyReward(def) {
 // ============================================================
 function updateWorldEvents() {
   const p = state.player;
+
+  // === WATCHTOWER ENEMY-PROXIMITY ALERTS ===
+  // Every 5 seconds, scan: if any enemy is within 350px of any placed watchtower, broadcast a warning.
+  if (state.frameCount % 300 === 0) {
+    const towers = state.objects.filter(o => o.placed && o.type === 'watchtower');
+    if (towers.length > 0) {
+      const allHostiles = [...state.enemies, ...(state.chief?[state.chief]:[]), ...(state.raid||[])];
+      let alerted = false;
+      for (const t of towers) {
+        for (const e of allHostiles) {
+          if (Math.hypot(e.x - t.x, e.y - t.y) < 350) { alerted = true; break; }
+        }
+        if (alerted) break;
+      }
+      if (alerted && !state._towerAlertedRecently) {
+        showMsg('WATCHTOWER: hostiles spotted nearby!', '#ffaa00');
+        state._towerAlertedRecently = true;
+        setTimeout(() => { state._towerAlertedRecently = false; }, 30000);
+      }
+    }
+  }
 
   // === TRIBAL RAID ===
   if (!state.raidActive) {
@@ -14728,6 +14945,16 @@ function resumeGame() {
   const pm = document.getElementById('pause-menu');
   if (pm) pm.style.display = 'none';
 }
+
+// Pause-menu "TUTORIAL / HELP" button — closes pause + opens journal Help tab.
+function replayTutorial() {
+  const pm = document.getElementById('pause-menu');
+  if (pm) pm.style.display = 'none';
+  if (typeof window.toggleJournal === 'function') {
+    window.toggleJournal('help');
+  }
+}
+window.replayTutorial = replayTutorial;
 
 // ── SAVE / LOAD SYSTEM ──
 // One save slot. localStorage key: 'island_save_v1'. Includes the world map, player,
