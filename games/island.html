@@ -6458,6 +6458,50 @@ function handleInteract() {
   const p = state.player;
   const reach = 80; // generous - 10 tiles
 
+  // ── HOVER PRIORITY ──
+  // If the mouse is hovering over an NPC (and that NPC is within reach),
+  // talk to THAT NPC first — even if another NPC is closer to the player.
+  // Fixes the "E always talks to Oonga" problem when multiple NPCs overlap reach.
+  try {
+    const wx = (typeof mx === 'number') ? (mx + state.cam.x) : null;
+    const wy = (typeof my === 'number') ? (my + state.cam.y) : null;
+    if (wx !== null && wy !== null) {
+      const HOVER_R = 32; // px radius around NPC sprite center
+      let hovered = null, hoveredDist = Infinity;
+      for (let npc of state.npcs) {
+        const hd = Math.hypot(wx - npc.x, wy - npc.y);
+        if (hd < HOVER_R && hd < hoveredDist) { hovered = npc; hoveredDist = hd; }
+      }
+      if (hovered) {
+        const pd = Math.hypot(p.x - hovered.x, p.y - hovered.y);
+        if (pd < reach) {
+          if (hovered.unconscious) {
+            hovered.unconscious = false;
+            hovered._justWoken = 90;
+            spawnParticles(hovered.x, hovered.y - 8, '#ffe080', 8);
+            SFX.pickup && SFX.pickup();
+            if (typeof addFloatingText === 'function') addFloatingText(hovered.x, hovered.y - 28, 'WOKEN', '#ffe080');
+            state.crewWoken = (state.crewWoken||0) + 1;
+            state.dialogue = {
+              type: 'npc', npc: hovered,
+              text: hovered.wakeLine || (hovered.name + ' wakes up.'),
+              displayed: '', timer: 0, charIdx: 0,
+              options: null, optionNext: null,
+              _lineRef: { _isWake: true },
+            };
+            showMsg('Survivor woken: ' + hovered.name, '#ffe080');
+          } else {
+            startDialogue(hovered);
+          }
+          return;
+        } else {
+          showMsg(hovered.name + ' is too far — move closer', '#888');
+          return;
+        }
+      }
+    }
+  } catch(_e) { /* fall through to normal interact */ }
+
   // Flotsam pickup (from storm surge)
   for (let i = state.objects.length-1; i >= 0; i--) {
     const obj = state.objects[i];
