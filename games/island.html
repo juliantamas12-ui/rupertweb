@@ -4484,15 +4484,19 @@ function updateEnemies() {
       }
     }
 
-    // Peace behavior: village guards stop attacking, watch player approach
+    // Peace behavior: village guards stop attacking, watch player approach.
+    // They face you and stand still (no back-shuffle — used to look like they were fleeing).
     if (state.peaceAchieved && e.villageGuard && e.type !== 'chief') {
-      if (dist < 80 && dist > 0) {
-        // Face toward player but don't attack — gentle slow drift away if too close
-        if (dist < 24) { e.x -= dx/dist * 0.5; e.y -= dy/dist * 0.5; }
+      // Solid collision so they don't get pushed inside the player either
+      if (dist > 0 && dist < 18) {
+        // Hard separation to prevent overlap, but don't drift further
+        const overlap = 18 - dist;
+        e.x -= dx/dist * overlap;
+        e.y -= dy/dist * overlap;
       }
-      // Ritual rather than patrol when peaceful
-      if (state.frameCount % 300 === 0) {
-        e.patrolTarget = {x: 104*TSIZE + (Math.random()-0.5)*80, y: 57*TSIZE + (Math.random()-0.5)*80};
+      // Drift slowly toward village fire when player is far away
+      if (state.frameCount % 600 === 0) {
+        e.patrolTarget = {x: 104*TSIZE + (Math.random()-0.5)*60, y: 57*TSIZE + (Math.random()-0.5)*60};
       }
       return; // skip attack logic
     }
