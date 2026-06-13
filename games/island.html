@@ -749,6 +749,18 @@ canvas#c{pointer-events:none}
     setTab(forceTab || activeTab || 'pack');
     panel.style.display = 'block';
   };
+  // Belt-and-braces: bind a dedicated document-level listener so I/TAB also work
+  // when the canvas hasn't been clicked yet (Chrome sometimes routes early
+  // keystrokes to body, not canvas; window-level handlers can be late).
+  document.addEventListener('keydown', function(e){
+    if (e.key.toLowerCase() !== 'i' && e.key !== 'Tab') return;
+    const ae = document.activeElement;
+    if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable)) return;
+    if (!window.state) return;
+    e.preventDefault();
+    e.stopPropagation();
+    window.toggleJournal('pack');
+  }, true); // capture phase so we win over other listeners
   // Re-render on tab clicks already handled by setTab.
   } // end init
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
