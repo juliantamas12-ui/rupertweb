@@ -6507,6 +6507,7 @@ function checkCollisions(nx, ny) {
     // Only floor / chamber / crystal vein are walkable. Walls and unset tiles block.
     // (Pool blocks too — you can't stand in water.)
     if (ct === CT.CAVE_WALL || ct === undefined) return true;
+    // CAVE_POOL blocks (water). FLOOR/VEIN/CHAMBER/ENTRANCE all walkable.
     if (ct === CT.CAVE_POOL) return true;
   }
   // Trees + harvest objects with collision
@@ -7437,59 +7438,87 @@ function handleInteract() {
     }
   }
 
-  // === UNDERGROUND: exit cave (press E near entrance) ===
+  // === UNDERGROUND interactions ===
   if (state.underground) {
+    const cmap = state.caveMap;
     const caveTileX = Math.floor(p.x / TSIZE), caveTileY = Math.floor(p.y / TSIZE);
-    if (Math.abs(caveTileX - 15) < 3 && Math.abs(caveTileY - 28) < 3) {
+    const onTile = cmap[caveTileY] && cmap[caveTileY][caveTileX];
+
+    // EXIT: on the entrance tile (15, 28) — the green-glow square
+    if (onTile === CT.CAVE_ENTRANCE || (caveTileX === 15 && caveTileY === 28)) {
       exitCave();
       return;
     }
-    // Cave altar / ancient chamber
-    const ac = state.ancientChamberPos;
-    if (Math.abs(caveTileX - ac.cx) < 3 && Math.abs(caveTileY - ac.cy) < 3 && !state.ancientChamberUsed) {
+    // ANCIENT CHAMBER — single use
+    if (onTile === CT.ANCIENT_CHAMBER && !state.ancientChamberUsed) {
       state.ancientChamberUsed = true;
       p.inv.artifact_shard = (p.inv.artifact_shard||0) + 1;
-      state.dialogue = { type:'lore', text:"This stone was placed here by the first people. The volcano's heart speaks through it.", displayed:'', timer:0, charIdx:0 };
+      state.dialogue = { type:'lore', text:"This stone was placed here by the first people. The volcano's heart speaks through it.\n\n+1 ARTIFACT SHARD acquired. Craft an ANCIENT ARTIFACT to unlock the island's secret ending.", displayed:'', timer:0, charIdx:0 };
       addFloatingText(p.x, p.y-30, '+ARTIFACT SHARD', '#aa44ff');
+      spawnParticles(p.x, p.y, '#aa44ff', 12);
       updateUI();
       return;
     }
-    // Blind fish catch
+    // BLIND FISH catch (pixel-coord distance, fish are in PX now)
     for (let i = state.creatures.length-1; i >= 0; i--) {
       const c = state.creatures[i];
-      if (c.type === 'blind_fish') {
-        const caveSX = c.x * TSIZE, caveSY = c.y * TSIZE;
-        if (Math.hypot(p.x - caveSX, p.y - caveSY) < 32) {
+      if (c.type === 'blind_fish' && c.inCave) {
+        if (Math.hypot(p.x - c.x, p.y - c.y) < 28) {
           p.inv.fish = (p.inv.fish||0) + 1;
           state.creatures.splice(i, 1);
-          showMsg('+1 FISH (BLIND FISH)', '#3dd6d0');
+          addFloatingText(p.x, p.y-20, '+1 FISH', '#3dd6d0');
+          showMsg('CAUGHT A BLIND FISH', '#3dd6d0');
           updateUI();
           return;
         }
       }
     }
-    // Crystal vein mining
-    const hitVein = state.crystalVeins.find(v => Math.abs(caveTileX - v.cx) < 2 && Math.abs(caveTileY - v.cy) < 2);
+    // CRYSTAL VEIN mining — must be adjacent
+    const hitVein = state.crystalVeins && state.crystalVeins.find(v => !v.depleted && Math.abs(caveTileX - v.cx) <= 1 && Math.abs(caveTileY - v.cy) <= 1);
     if (hitVein) {
-      const gain = 1 + Math.floor(Math.random()*2);
+      // Need pickaxe (any kind)
+      if ((p.inv.pickaxe||0) === 0 && (p.inv.obsidian_pickaxe||0) === 0) {
+        showMsg('Need a PICKAXE to mine crystal veins', '#aa44ff');
+        return;
+      }
+      const gain = 1 + Math.floor(Math.random()*3);
       p.inv.crystal = (p.inv.crystal||0) + gain;
+      hitVein.depleted = true;
+      hitVein._respawn = (state.DAY_FRAMES || 14400); // 1 in-game day
+      if (cmap[hitVein.cy] && cmap[hitVein.cy][hitVein.cx] === CT.CRYSTAL_VEIN) cmap[hitVein.cy][hitVein.cx] = CT.CAVE_FLOOR;
       addFloatingText(p.x, p.y-20, '+'+gain+' CRYSTAL', '#aa44ff');
-      showMsg('+CRYSTAL (CAVE VEIN)', '#aa44ff');
+      showMsg('+'+gain+' CRYSTAL (vein depleted, regrows over 1 day)', '#aa44ff');
+      spawnParticles(p.x, p.y, '#aa44ff', 5);
       updateUI();
       return;
     }
-    // Bone pile
-    const hitBone = state.bonePiles.find(b => Math.abs(caveTileX - b.cx) < 2 && Math.abs(caveTileY - b.cy) < 2 && !b.collected);
+    // BONE PILE
+    const hitBone = state.bonePiles && state.bonePiles.find(b => !b.collected && Math.abs(caveTileX - b.cx) <= 1 && Math.abs(caveTileY - b.cy) <= 1);
     if (hitBone) {
       hitBone.collected = true;
-      const gain = 1 + Math.floor(Math.random()*2);
+      const gain = 1 + Math.floor(Math.random()*3);
       p.inv.ancient_bone = (p.inv.ancient_bone||0) + gain;
-      addFloatingText(p.x, p.y-20, '+'+gain+' ANCIENT BONE', '#ccbbaa');
-      showMsg('+ANCIENT BONES', '#ccbbaa');
+      addFloatingText(p.x, p.y-20, '+'+gain+' BONE', '#ccbbaa');
+      showMsg('+'+gain+' ANCIENT BONE', '#ccbbaa');
+      spawnParticles(p.x, p.y, '#ccbbaa', 5);
       updateUI();
       return;
     }
-    showMsg('Underground: E to exit near entrance [15,28]', '#888');
+    // CAVE POOL: drink water
+    let pool = null;
+    for (let dy = -1; dy <= 1 && !pool; dy++) {
+      for (let dx = -1; dx <= 1 && !pool; dx++) {
+        const tt = cmap[caveTileY+dy] && cmap[caveTileY+dy][caveTileX+dx];
+        if (tt === CT.CAVE_POOL) pool = true;
+      }
+    }
+    if (pool) {
+      p.water = Math.min(p.maxWater, (p.water||0) + 35);
+      addFloatingText(p.x, p.y-20, '+35 WATER', '#3dd6d0');
+      showMsg('DRANK FROM UNDERGROUND POOL', '#3dd6d0');
+      return;
+    }
+    showMsg('Underground — walk to the green tile to exit. Mine crystal, drink from pools, find the altar.', '#888');
     return;
   }
 
@@ -7831,32 +7860,22 @@ function handleClick(sx, sy) {
       }
     }
 
-    // Also hit creatures
+    // Also hit creatures — ALL creatures (surface + cave) now use pixel coords.
     for (let i = state.creatures.length-1; i >= 0; i--) {
       const c = state.creatures[i];
       if (c.type === 'crab') continue;
-      // Cave creatures use tile coords
-      const cx2 = c.inCave ? c.x * TSIZE : c.x;
-      const cy2 = c.inCave ? c.y * TSIZE : c.y;
+      // Filter by realm: don't hit surface creatures while underground or vice versa
       if (!c.inCave && state.underground) continue;
       if (c.inCave && !state.underground) continue;
+      const cx2 = c.x, cy2 = c.y;
       if (Math.hypot(p.x-cx2, p.y-cy2) < attackReach) {
         c.hp -= combatDmg;
         c.hitFlash = isCrit ? 12 : 6;
-        if (c.inCave) {
-          // Cave tile coords — knockback in tile space
-          const knockAngle = Math.atan2(c.y - p.y/TSIZE, c.x - p.x/TSIZE);
-          c.x += Math.cos(knockAngle) * (isCrit ? 2.5 : 1.5);
-          c.y += Math.sin(knockAngle) * (isCrit ? 2.5 : 1.5);
-          if (isCrit) { addFloatingText(cx2, cy2 - 30, 'CRIT! -'+combatDmg, '#ffe040'); spawnParticles(cx2, cy2, '#ffe040', 10); }
-          else { addFloatingText(cx2, cy2 - 20, '-'+combatDmg, combatColor); spawnParticles(cx2, cy2, '#cc44ff',3); }
-        } else {
-          const knockAngle = Math.atan2(c.y - p.y, c.x - p.x);
-          c.x += Math.cos(knockAngle) * (isCrit ? 36 : 20);
-          c.y += Math.sin(knockAngle) * (isCrit ? 36 : 20);
-          if (isCrit) { addFloatingText(c.x, c.y - 30, 'CRIT! -'+combatDmg, '#ffe040'); spawnParticles(c.x, c.y, '#ffe040', 10); }
-          else { addFloatingText(c.x, c.y - 20, '-'+combatDmg, combatColor); spawnParticles(c.x, c.y, '#22cc33',3); }
-        }
+        const knockAngle = Math.atan2(c.y - p.y, c.x - p.x);
+        c.x += Math.cos(knockAngle) * (isCrit ? 36 : 20);
+        c.y += Math.sin(knockAngle) * (isCrit ? 36 : 20);
+        if (isCrit) { addFloatingText(c.x, c.y - 30, 'CRIT! -'+combatDmg, '#ffe040'); spawnParticles(c.x, c.y, '#ffe040', 10); }
+        else { addFloatingText(c.x, c.y - 20, '-'+combatDmg, combatColor); spawnParticles(c.x, c.y, c.inCave ? '#cc44ff' : '#22cc33', 3); }
         if (isCrit) { SFX.critHit(); state.screenShake = Math.max(state.screenShake, 7); if (navigator.vibrate) navigator.vibrate([20,10,40]); }
         else { SFX.hit(); state.screenShake = Math.max(state.screenShake, 3); }
         if (c.hp <= 0) {
@@ -15944,103 +15963,157 @@ function updateCanoeProjectiles() {
 // ============================================================
 
 // Cave tile types for underground
-const CT = { CAVE_WALL:0, CAVE_FLOOR:1, CRYSTAL_VEIN:2, CAVE_POOL:3, ANCIENT_CHAMBER:4 };
+const CT = { CAVE_WALL:0, CAVE_FLOOR:1, CRYSTAL_VEIN:2, CAVE_POOL:3, ANCIENT_CHAMBER:4, CAVE_ENTRANCE:5 };
 const CAVE_SIZE = 30;
 
+// ============================================================
+// CAVE SYSTEM — fully reworked.
+// All cave entities live in PIXEL world coords (matching player.x/y).
+// Cave map is 30x30 tiles. (0,0) to (CAVE_SIZE*TSIZE, CAVE_SIZE*TSIZE) in px.
+// Entrance: tile (15, 28) = pixel (240, 448).
+// Ancient chamber: tile (15, 15) = pixel (240, 240).
+// ============================================================
 function generateCaveMap() {
   const cmap = [];
   for (let y = 0; y < CAVE_SIZE; y++) {
     cmap[y] = [];
-    for (let x = 0; x < CAVE_SIZE; x++) {
-      cmap[y][x] = CT.CAVE_WALL;
-    }
+    for (let x = 0; x < CAVE_SIZE; x++) cmap[y][x] = CT.CAVE_WALL;
   }
-  // Carve passages using drunkard's walk
+  // Cellular-automata-ish carve: drunkard's walk from multiple seeds for organic feel.
   function carve(cx, cy, steps) {
-    const dirs = [[0,1],[0,-1],[1,0],[-1,0]];
     let x = cx, y = cy;
+    const dirs = [[0,1],[0,-1],[1,0],[-1,0]];
     for (let i = 0; i < steps; i++) {
       x = Math.max(1, Math.min(CAVE_SIZE-2, x));
       y = Math.max(1, Math.min(CAVE_SIZE-2, y));
       cmap[y][x] = CT.CAVE_FLOOR;
+      // Widen path 1 tile in a random direction so corridors aren't 1-wide
+      const w = dirs[Math.floor(Math.random()*4)];
+      const wx = x + w[0], wy = y + w[1];
+      if (wx > 0 && wx < CAVE_SIZE-1 && wy > 0 && wy < CAVE_SIZE-1) cmap[wy][wx] = CT.CAVE_FLOOR;
       const d = dirs[Math.floor(Math.random()*4)];
       x += d[0]; y += d[1];
     }
   }
-  // Main passage from entrance (15,28) up to center (15,15) and branches
-  carve(15, 28, 40);
+  // Trunk from entrance (south) up to ancient chamber (center)
+  carve(15, 28, 80);
+  carve(15, 22, 40);
   carve(15, 15, 60);
-  carve(8, 10, 30);
-  carve(22, 10, 30);
-  // Ancient chamber at center — clear a room
-  for (let dy = -3; dy <= 3; dy++) {
-    for (let dx = -3; dx <= 3; dx++) {
-      cmap[15+dy][15+dx] = CT.CAVE_FLOOR;
-    }
+  // Side branches
+  carve(8, 10, 50);
+  carve(22, 10, 50);
+  carve(6, 18, 40);
+  carve(24, 18, 40);
+  // Ancient chamber at center — clear a 5-tile room around (15, 15)
+  for (let dy = -2; dy <= 2; dy++) {
+    for (let dx = -2; dx <= 2; dx++) cmap[15+dy][15+dx] = CT.CAVE_FLOOR;
   }
   cmap[15][15] = CT.ANCIENT_CHAMBER;
+  // Entrance corridor always open (tiles y=25..28 along x=15)
+  for (let yy = 25; yy <= 28; yy++) cmap[yy][15] = CT.CAVE_FLOOR;
+  // Mark entrance tile specially so we can draw a glow + show "E to exit"
+  cmap[28][15] = CT.CAVE_ENTRANCE;
 
-  // Entrance always open
-  for (let y = 25; y < 30; y++) cmap[y][15] = CT.CAVE_FLOOR;
-
-  // Place crystal veins
+  // Crystal veins (5 random, embedded in walls adjacent to floor)
   state.crystalVeins = [];
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 5; i++) {
     let vx, vy, attempts = 0;
-    do { vx = 2 + Math.floor(Math.random()*(CAVE_SIZE-4)); vy = 2 + Math.floor(Math.random()*(CAVE_SIZE-4)); attempts++; }
-    while (cmap[vy][vx] !== CT.CAVE_WALL && attempts < 50);
-    if (attempts < 50) { cmap[vy][vx] = CT.CRYSTAL_VEIN; state.crystalVeins.push({cx:vx, cy:vy}); }
+    do {
+      vx = 2 + Math.floor(Math.random()*(CAVE_SIZE-4));
+      vy = 2 + Math.floor(Math.random()*(CAVE_SIZE-4));
+      attempts++;
+      // Must be a wall tile adjacent to a floor tile (so reachable)
+      const isWall = cmap[vy][vx] === CT.CAVE_WALL;
+      const adj = (cmap[vy-1]?.[vx] === CT.CAVE_FLOOR) || (cmap[vy+1]?.[vx] === CT.CAVE_FLOOR)
+               || (cmap[vy]?.[vx-1] === CT.CAVE_FLOOR) || (cmap[vy]?.[vx+1] === CT.CAVE_FLOOR);
+      if (isWall && adj) break;
+    } while (attempts < 80);
+    if (attempts < 80) {
+      cmap[vy][vx] = CT.CRYSTAL_VEIN;
+      state.crystalVeins.push({cx:vx, cy:vy, depleted:false, _respawn:0});
+    }
   }
 
-  // Place bone piles on floor
+  // Bone piles (3, on floor, away from entrance)
   state.bonePiles = [];
-  for (let i = 0; i < 2; i++) {
+  for (let i = 0; i < 3; i++) {
     let bx, by, attempts = 0;
-    do { bx = 2 + Math.floor(Math.random()*(CAVE_SIZE-4)); by = 2 + Math.floor(Math.random()*(CAVE_SIZE-4)); attempts++; }
-    while (cmap[by][bx] !== CT.CAVE_FLOOR && attempts < 50);
-    if (attempts < 50) { state.bonePiles.push({cx:bx, cy:by, collected:false}); }
+    do {
+      bx = 2 + Math.floor(Math.random()*(CAVE_SIZE-4));
+      by = 2 + Math.floor(Math.random()*(CAVE_SIZE-4));
+      attempts++;
+    } while ((!cmap[by] || cmap[by][bx] !== CT.CAVE_FLOOR || Math.hypot(bx-15, by-28) < 5) && attempts < 80);
+    if (attempts < 80) state.bonePiles.push({cx:bx, cy:by, collected:false});
   }
 
-  // Underground pools
+  // Pools (2, in fixed corner spots if floor exists)
   const poolSpots = [[5,5],[24,5],[5,20],[24,20]];
-  poolSpots.slice(0,2).forEach(([px2,py2]) => {
-    if (cmap[py2] && cmap[py2][px2] !== undefined) cmap[py2][px2] = CT.CAVE_POOL;
+  poolSpots.forEach(([px2, py2]) => {
+    if (!cmap[py2]) return;
+    // Carve a small floor around the pool so the player can reach it
+    cmap[py2][px2] = CT.CAVE_POOL;
+    [[0,1],[1,0],[0,-1],[-1,0]].forEach(([dx,dy]) => {
+      if (cmap[py2+dy] && cmap[py2+dy][px2+dx] === CT.CAVE_WALL) cmap[py2+dy][px2+dx] = CT.CAVE_FLOOR;
+    });
   });
 
   state.caveMap = cmap;
   state.caveMapGenerated = true;
 
-  // Spawn cave creatures
   spawnCaveCreatures();
 }
 
 function spawnCaveCreatures() {
-  // Remove old cave creatures
-  state.creatures = state.creatures.filter(c => c.type !== 'cave_spider' && c.type !== 'blind_fish' && c.type !== 'cave_guardian');
+  // Remove any old cave creatures
+  state.creatures = state.creatures.filter(c => !c.inCave);
 
   const cmap = state.caveMap;
-  // Cave spiders
-  for (let i = 0; i < 5; i++) {
+
+  // ALL cave creatures use PIXEL world coords — matches player coord system.
+  // Cave spiders: 4 placed on floor tiles, away from entrance.
+  for (let i = 0; i < 4; i++) {
     let sx, sy, attempts = 0;
-    do { sx = 2 + Math.floor(Math.random()*(CAVE_SIZE-4)); sy = 2 + Math.floor(Math.random()*(CAVE_SIZE-4)); attempts++; }
-    while ((!cmap[sy] || cmap[sy][sx] !== CT.CAVE_FLOOR) && attempts < 40);
-    if (attempts < 40) {
-      state.creatures.push({type:'cave_spider', x:sx, y:sy, hp:20, maxHp:20, spd:1.6, attackTimer:0, walkTimer:0, inCave:true});
+    do {
+      sx = 3 + Math.floor(Math.random()*(CAVE_SIZE-6));
+      sy = 3 + Math.floor(Math.random()*(CAVE_SIZE-6));
+      attempts++;
+    } while ((!cmap[sy] || cmap[sy][sx] !== CT.CAVE_FLOOR || Math.hypot(sx-15, sy-28) < 7) && attempts < 60);
+    if (attempts < 60) {
+      state.creatures.push({
+        type:'cave_spider', inCave:true,
+        x: sx * TSIZE + TSIZE/2,
+        y: sy * TSIZE + TSIZE/2,
+        hp: 20, maxHp: 20, spd: 1.0,
+        attackTimer: 0, walkTimer: 0, hitFlash: 0,
+      });
     }
   }
-  // Blind fish in pools
-  const cmap2 = state.caveMap;
+
+  // Blind fish: 1 per pool tile, pixel coords.
   for (let y = 0; y < CAVE_SIZE; y++) {
     for (let x = 0; x < CAVE_SIZE; x++) {
-      if (cmap2[y] && cmap2[y][x] === CT.CAVE_POOL) {
-        state.creatures.push({type:'blind_fish', x:x, y:y, hp:5, maxHp:5, spd:0.3, attackTimer:0, walkTimer:0, inCave:true});
+      if (cmap[y] && cmap[y][x] === CT.CAVE_POOL) {
+        state.creatures.push({
+          type:'blind_fish', inCave:true,
+          x: x * TSIZE + TSIZE/2,
+          y: y * TSIZE + TSIZE/2,
+          hp: 5, maxHp: 5, spd: 0.4,
+          attackTimer: 0, walkTimer: 0, hitFlash: 0,
+        });
       }
     }
   }
-  // Cave guardian at ancient chamber
+
+  // Cave guardian (boss) at ancient chamber. Pixel coords.
   state.creatures.push({
-    type:'cave_guardian', x:15, y:14, hp:100, maxHp:100, spd:1.2, attackTimer:0, walkTimer:0,
-    inCave:true, chargeTimer:0, chargeCooldown:180
+    type:'cave_guardian', inCave:true,
+    x: 15 * TSIZE + TSIZE/2,
+    y: 14 * TSIZE + TSIZE/2,
+    hp: 100, maxHp: 100, spd: 1.4,
+    attackTimer: 0, walkTimer: 0, hitFlash: 0,
+    chargeCooldown: 240,
+    homeX: 15 * TSIZE,
+    homeY: 14 * TSIZE,
   });
 }
 
@@ -16050,72 +16123,144 @@ function enterCave(caveObj) {
   state.cavedoorX = caveObj.x;
   state.cavedoorY = caveObj.y;
   state.underground = true;
-  // Position player at cave entrance in cave map (tile 15,28 = bottom entrance)
-  p.x = 15 * TSIZE;
-  p.y = 27 * TSIZE;
-  showMsg('ENTERING THE CAVE.', '#aa44ff');
-  showMsg('Find the ANCIENT CHAMBER (purple glow) for an ARTIFACT SHARD.', '#aa44ff');
-  showMsg('CRYSTAL VEINS drop crystal shards. E at entrance to leave.', '#aa44ff');
-  spawnParticles(caveObj.x, caveObj.y, '#aa44ff', 3);
+  // Spawn just above the entrance tile so the player isn't stuck on it
+  p.x = 15 * TSIZE + TSIZE/2;
+  p.y = 27 * TSIZE + TSIZE/2;
+  // Camera reset for smooth transition
+  state.cam.x = p.x - (canvas ? canvas.width : 1600) / 2;
+  state.cam.y = p.y - (canvas ? canvas.height : 900) / 2;
+  // Re-spawn creatures every cave entry so they don't pile up
+  spawnCaveCreatures();
+  showMsg('ENTERING THE CAVE. Find the ANCIENT CHAMBER (purple altar).', '#aa44ff');
+  showMsg('Mine CRYSTAL VEINS with a pickaxe. Drink from pools. Walk to the GREEN TILE and press E to exit.', '#aa44ff');
+  spawnParticles(caveObj.x, caveObj.y, '#aa44ff', 6);
 }
 
 function exitCave() {
   const p = state.player;
   state.underground = false;
+  // Clear cave creatures so they don't leak into the overworld
+  state.creatures = state.creatures.filter(c => !c.inCave);
+  // Restore player to where the cave entrance is on the overworld
   p.x = state.cavedoorX || 90 * TSIZE;
-  p.y = state.cavedoorY || 148 * TSIZE;
-  showMsg('RETURNED TO SURFACE', '#c8f135');
-  spawnParticles(p.x, p.y, '#c8f135', 3);
+  p.y = (state.cavedoorY || 148 * TSIZE) + TSIZE; // step out below the entrance
+  // Reset camera so we don't get a sudden snap
+  state.cam.x = p.x - (canvas ? canvas.width : 1600) / 2;
+  state.cam.y = p.y - (canvas ? canvas.height : 900) / 2;
+  showMsg('RETURNED TO THE SURFACE', '#c8f135');
+  spawnParticles(p.x, p.y, '#c8f135', 6);
 }
 
 function updateCaveCreatures() {
   if (!state.underground) return;
   const p = state.player;
   const cmap = state.caveMap;
+  if (!cmap || !cmap.length) return;
+
+  // Helper: is this pixel coord inside walkable cave terrain?
+  function _caveWalkable(px, py) {
+    const tx = Math.floor(px / TSIZE), ty = Math.floor(py / TSIZE);
+    if (tx < 0 || ty < 0 || tx >= CAVE_SIZE || ty >= CAVE_SIZE) return false;
+    const ct = cmap[ty] && cmap[ty][tx];
+    return ct === CT.CAVE_FLOOR || ct === CT.ANCIENT_CHAMBER || ct === CT.CAVE_ENTRANCE;
+  }
 
   for (let i = state.creatures.length - 1; i >= 0; i--) {
     const c = state.creatures[i];
     if (!c.inCave) continue;
+    if (c.hitFlash > 0) c.hitFlash--;
 
-    if (c.type === 'blind_fish') continue; // passive, handled in interact
+    // Blind fish: passive, swim in tiny circle around their pool. No movement code needed.
+    if (c.type === 'blind_fish') continue;
 
-    // Cave guardian charge attack
+    // Pixel-coord distance to player
+    const dx = p.x - c.x, dy = p.y - c.y;
+    const dist = Math.hypot(dx, dy);
+
+    // ====== CAVE GUARDIAN (boss) ======
     if (c.type === 'cave_guardian') {
-      c.chargeCooldown = (c.chargeCooldown||180) - 1;
-      if (c.chargeCooldown <= 0) {
-        // Charge toward player
-        const dx = p.x/TSIZE - c.x, dy = p.y/TSIZE - c.y;
-        const dist = Math.sqrt(dx*dx+dy*dy)||1;
-        c.x += dx/dist * 4;
-        c.y += dy/dist * 4;
-        c.chargeCooldown = 180;
+      c.chargeCooldown = (c.chargeCooldown||240) - 1;
+      // Don't roam too far from ancient chamber
+      const homeDx = (c.homeX || 15*TSIZE) - c.x;
+      const homeDy = (c.homeY || 14*TSIZE) - c.y;
+      const homeDist = Math.hypot(homeDx, homeDy);
+
+      if (dist < 300 && dist > 2) {
+        const dirX = dx / dist, dirY = dy / dist;
+        // Player in range: stalk toward, with a periodic CHARGE burst
+        if (c.chargeCooldown <= 0 && dist < 200) {
+          // Charge: 4x speed for 30 frames
+          c.chargeActive = 30;
+          c.chargeCooldown = 240;
+          showMsg('THE GUARDIAN CHARGES!', '#aa44ff');
+        }
+        const moveSpd = (c.chargeActive > 0) ? c.spd * 4 : c.spd;
+        if (c.chargeActive > 0) c.chargeActive--;
+        const nx = c.x + dirX * moveSpd;
+        const ny = c.y + dirY * moveSpd;
+        if (_caveWalkable(nx, ny)) { c.x = nx; c.y = ny; }
+        else if (_caveWalkable(nx, c.y)) c.x = nx;
+        else if (_caveWalkable(c.x, ny)) c.y = ny;
+      } else if (homeDist > 80) {
+        // Player far away: drift back toward chamber
+        const hd = homeDist || 1;
+        const nx = c.x + (homeDx/hd) * c.spd * 0.5;
+        const ny = c.y + (homeDy/hd) * c.spd * 0.5;
+        if (_caveWalkable(nx, ny)) { c.x = nx; c.y = ny; }
       }
+
+      // Attack: 28px reach, 18 dmg, 60-frame cooldown
+      c.attackTimer = (c.attackTimer||0) + 1;
+      if (dist < 32 && c.attackTimer > 60) {
+        c.attackTimer = 0;
+        const dmg = 18;
+        p.hp = Math.max(0, p.hp - dmg);
+        p.hitFlash = 8;
+        addFloatingText(p.x, p.y-20, '-'+dmg, '#cc4422');
+        SFX.hurt && SFX.hurt();
+        if (p.hp <= 0) { state.lastDamageCause = 'CAVE GUARDIAN'; }
+      }
+      continue;
     }
 
-    // Move toward player
-    const px2 = p.x / TSIZE, py2 = p.y / TSIZE;
-    const dist = Math.hypot(px2 - c.x, py2 - c.y);
-    if (dist < 25 && dist > 1) {
-      const ddx = (px2 - c.x) / dist, ddy = (py2 - c.y) / dist;
-      const nx = c.x + ddx * c.spd * 0.1;
-      const ny = c.y + ddy * c.spd * 0.1;
-      // Check cave floor
-      const ntx = Math.floor(nx), nty = Math.floor(ny);
-      if (ntx >= 0 && ntx < CAVE_SIZE && nty >= 0 && nty < CAVE_SIZE && cmap[nty] && cmap[nty][ntx] !== CT.CAVE_WALL) {
-        c.x = nx; c.y = ny;
+    // ====== CAVE SPIDER ======
+    if (c.type === 'cave_spider') {
+      // Approach player if within 200px
+      if (dist < 200 && dist > 2) {
+        const dirX = dx / dist, dirY = dy / dist;
+        const nx = c.x + dirX * c.spd;
+        const ny = c.y + dirY * c.spd;
+        if (_caveWalkable(nx, ny)) { c.x = nx; c.y = ny; }
+        else if (_caveWalkable(nx, c.y)) c.x = nx;
+        else if (_caveWalkable(c.x, ny)) c.y = ny;
       }
+      // Bite: 20px reach, 8 dmg + poison
+      c.attackTimer = (c.attackTimer||0) + 1;
+      if (dist < 22 && c.attackTimer > 50) {
+        c.attackTimer = 0;
+        const dmg = 8;
+        p.hp = Math.max(0, p.hp - dmg);
+        p.hitFlash = 6;
+        p.poison = Math.max(p.poison||0, 120);
+        addFloatingText(p.x, p.y-20, '-'+dmg, '#cc4422');
+        addFloatingText(p.x, p.y-30, 'POISONED', '#aa44ff');
+        SFX.hurt && SFX.hurt();
+        if (p.hp <= 0) { state.lastDamageCause = 'CAVE SPIDER'; }
+      }
+      continue;
     }
-    // Attack player
-    c.attackTimer = (c.attackTimer||0) + 1;
-    const atkDist = c.type === 'cave_guardian' ? 4 : 2;
-    if (dist < atkDist && c.attackTimer > 60) {
-      c.attackTimer = 0;
-      const dmg = c.type === 'cave_guardian' ? 15 : 8;
-      p.hp -= dmg;
-      p.hitFlash = 8;
-      if (c.type === 'cave_spider') p.poison = (p.poison||0) + 120;
-      addFloatingText(p.x, p.y-20, '-'+dmg, '#cc4422');
-      if (p.hp <= 0) { showMsg('KILLED BY CAVE CREATURE', '#cc4422'); }
+  }
+
+  // Crystal vein respawn after harvest (one full in-game day)
+  if (state.crystalVeins) {
+    for (const v of state.crystalVeins) {
+      if (v.depleted && v._respawn > 0) {
+        v._respawn--;
+        if (v._respawn <= 0) {
+          v.depleted = false;
+          if (cmap[v.cy] && cmap[v.cy][v.cx] === CT.CAVE_FLOOR) cmap[v.cy][v.cx] = CT.CRYSTAL_VEIN;
+        }
+      }
     }
   }
 }
@@ -16176,13 +16321,46 @@ function drawCaveScene(ctx, camX, camY) {
           ctx.fillStyle = '#7a50a0';
           ctx.fillRect(tsx+3, tsy+3, CTILE-6, 3);
           if (!state.ancientChamberUsed) {
+            // Pulsing rune
+            const pulse = 0.5 + 0.5 * Math.sin(state.frameCount * 0.08);
+            ctx.save();
+            ctx.globalAlpha = 0.4 + pulse * 0.5;
             ctx.fillStyle = '#aa44ff';
-            ctx.font = '8px Courier New';
+            ctx.font = 'bold 10px Cinzel';
             ctx.textAlign = 'center';
-            ctx.fillText('?', tsx+CTILE/2, tsy-2);
+            ctx.fillText('♦', tsx+CTILE/2, tsy+CTILE/2+4);
+            ctx.restore();
             ctx.textAlign = 'left';
           }
           break;
+        case CT.CAVE_ENTRANCE: {
+          // Floor + green entrance halo + 'EXIT' prompt when near
+          ctx.fillStyle = '#2a2a2a';
+          ctx.fillRect(tsx, tsy, CTILE, CTILE);
+          // Glow
+          const eg = 0.4 + 0.3 * Math.sin(state.frameCount * 0.08);
+          ctx.save();
+          ctx.globalAlpha = eg;
+          ctx.fillStyle = '#88ff88';
+          ctx.beginPath();
+          ctx.arc(tsx + CTILE/2, tsy + CTILE/2, CTILE * 0.7, 0, Math.PI*2);
+          ctx.fill();
+          ctx.restore();
+          // Player near? show EXIT prompt
+          const ed = Math.hypot(p.x - (tsx + camX + CTILE/2), p.y - (tsy + camY + CTILE/2));
+          if (ed < 36) {
+            ctx.save();
+            ctx.fillStyle = 'rgba(0,0,0,0.85)';
+            ctx.fillRect(tsx + CTILE/2 - 40, tsy - 14, 80, 12);
+            ctx.fillStyle = '#88ff88';
+            ctx.font = 'bold 9px Lato';
+            ctx.textAlign = 'center';
+            ctx.fillText('E — EXIT CAVE', tsx + CTILE/2, tsy - 5);
+            ctx.textAlign = 'left';
+            ctx.restore();
+          }
+          break;
+        }
       }
     }
   }
@@ -16194,10 +16372,10 @@ function drawCaveScene(ctx, camX, camY) {
     drawBonePile(ctx, bsx, bsy, CTILE);
   });
 
-  // Draw cave creatures
+  // Draw cave creatures (PIXEL world coords, just like player)
   state.creatures.forEach(c => {
     if (!c.inCave) return;
-    const csx = c.x * CTILE - camX, csy = c.y * CTILE - camY;
+    const csx = c.x - camX, csy = c.y - camY;
     if (csx < -20 || csx > canvas.width+20 || csy < -20 || csy > canvas.height+20) return;
     if (c.type === 'cave_spider') {
       ctx.fillStyle = c.hitFlash ? '#fff' : '#333';
