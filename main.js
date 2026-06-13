@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Morning of 20 July 1936 at Estoril When General Sanjurjo's Suitcase Killed Him and Made Franco the Caudillo of Spain by Default",
+    date: "2026-06-13",
+    category: "History",
+    excerpt: "On the morning of Monday, 20 July 1936, at approximately 11:00 local time, a Puss Moth biplane piloted by the Falangist aviator Juan Antonio Ansaldo took off from a small grass strip outside Estoril, Portugal, bound for the Spanish nationalist headquarters at Burgos. Its passenger was General José Sanjurjo y Sacanell, the Marqués del Rif, the man designated by the conspirators of the Unión Militar Española to lead the military uprising that had begun two days earlier against the Spanish Republic. The Puss Moth was overloaded. Sanjurjo had insisted on bringing two heavy leather suitcases containing his dress uniforms, his decorations, and the ceremonial wardrobe in which he intended to enter Madrid as head of state. Ansaldo had warned him that the field was short, the engine was modest, and the cypress trees at the end of the strip were tall. The Puss Moth lifted, stalled at the tree line, clipped the cypresses, and burned. Franco became caudillo because the three men who outranked him in the conspiracy — Sanjurjo, Goded, and Fanjul — were dead or in prison within eight weeks of the rising's outbreak, and because the fourth, Mola, was killed in another aircraft accident at exactly the moment Franco needed him gone. The Spanish nationalist state that emerged from the war was the product of an actuarial accident...",
+    url: "essays/2026-06-13-the-morning-of-20-july-1936-at-estoril-when-general-sanjurjos-suitcase-killed-him-and-made-franco-the-caudillo-of-spain-by-default.html"
+  },
+  {
     title: "The Night of 28 June 1948 in Bucharest When Stalin Expelled Tito from the Cominform and Lost the Cold War He Had Not Yet Started",
     date: "2026-06-11",
     category: "History",
