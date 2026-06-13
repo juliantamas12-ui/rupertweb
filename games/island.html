@@ -428,6 +428,7 @@ canvas#c{pointer-events:none}
           <div><b style="color:#c8a060">I</b> — open this journal</div>
           <div><b style="color:#c8a060">C</b> — crafting / workbench</div>
           <div><b style="color:#c8a060">B</b> — build mode</div>
+          <div><b style="color:#c8a060">X</b> — demolish nearby placed building (50% refund)</div>
           <div><b style="color:#c8a060">M</b> — island map overlay</div>
           <div><b style="color:#c8a060">TAB</b> — pack (alt)</div>
           <div><b style="color:#c8a060">ESC</b> — pause</div>
@@ -4345,9 +4346,9 @@ function updateEnemies() {
         moveY = td > 0 ? e.y + tdy/td * spd : e.y;
       }
 
-      // Wall collision check
+      // Wall + gate collision check (gates block enemies but stay passable to player)
       const tileAt = state.map[Math.floor(moveY/TSIZE)]?.[Math.floor(moveX/TSIZE)];
-      const wallHere = state.objects.find(o => o.type==='wall' && Math.abs(o.x-moveX)<TSIZE && Math.abs(o.y-moveY)<TSIZE);
+      const wallHere = state.objects.find(o => (o.type==='wall' || o.type==='gate') && o.placed && Math.abs(o.x-moveX)<TSIZE && Math.abs(o.y-moveY)<TSIZE);
 
       if (!wallHere && tileAt !== T.LAVA) {
         e.x = moveX; e.y = moveY;
@@ -4355,11 +4356,15 @@ function updateEnemies() {
         e.attackTimer++;
         if (e.attackTimer > 60) {
           e.attackTimer = 0;
-          wallHere.hp = (wallHere.hp||20) - 5;
+          const maxHp = wallHere.maxHp || (wallHere.type==='gate' ? 25 : 20);
+          if (wallHere.hp === undefined) wallHere.hp = maxHp;
+          if (!wallHere.maxHp) wallHere.maxHp = maxHp;
+          wallHere.hp -= 5;
           spawnParticles(wallHere.x, wallHere.y, '#888',3);
           if (wallHere.hp <= 0) {
+            const label = wallHere.type === 'gate' ? 'GATE' : 'WALL';
             state.objects = state.objects.filter(o => o !== wallHere);
-            showMsg('A WALL WAS DESTROYED!', '#e74c3c');
+            showMsg('A '+label+' WAS DESTROYED!', '#e74c3c');
           }
         }
       }
@@ -8319,11 +8324,50 @@ function _buildCampWallRing() {
       x: gateTile.x * TSIZE + TSIZE/2,
       y: gateTile.y * TSIZE + TSIZE/2,
       placed: true,
+      hp: 25, maxHp: 25,
       _placedDay: state.day,
     });
   }
   spawnParticles(cf.x, cf.y, '#c8f135', 8);
   return placed.length;
+}
+
+// Player demolishes the nearest placed building within reach.
+// Refunds 50% of cost (rounded down). Walls give back 1 wood at least.
+function demolishNearestBuilding() {
+  if (!state.running || state.paused) return;
+  const p = state.player;
+  const reach = 60; // a bit shorter than interact reach so you don't nuke the wrong thing
+  let best = null, bestD = Infinity;
+  for (const obj of state.objects) {
+    if (!obj.placed) continue;
+    const d = Math.hypot(p.x - obj.x, p.y - obj.y);
+    if (d < reach && d < bestD) { best = obj; bestD = d; }
+  }
+  if (!best) {
+    showMsg('Nothing to demolish here — stand next to a placed building', '#888');
+    return;
+  }
+  // Look up cost from BUILD_ITEMS to refund half
+  const def = (typeof BUILD_ITEMS !== 'undefined') ? BUILD_ITEMS.find(b => b.id === best.type) : null;
+  let refunded = [];
+  if (def && def.cost) {
+    for (const [k, v] of Object.entries(def.cost)) {
+      const r = Math.max(1, Math.floor(v / 2));
+      p.inv[k] = (p.inv[k] || 0) + r;
+      refunded.push(r + ' ' + k);
+    }
+  }
+  // Special: water barrel removed -> drop max water back
+  if (best.type === 'water_barrel' && p.maxWater > 100) {
+    p.maxWater = Math.max(100, p.maxWater - 50);
+  }
+  state.objects = state.objects.filter(o => o !== best);
+  const label = best.type.replace(/_/g, ' ').toUpperCase();
+  if (refunded.length) showMsg(label + ' DEMOLISHED (+ ' + refunded.join(', ') + ')', '#c8a060');
+  else showMsg(label + ' DEMOLISHED', '#c8a060');
+  spawnParticles(best.x, best.y, '#c8a060', 5);
+  if (typeof updateUI === 'function') updateUI();
 }
 
 function placeBuildItem(sx, sy) {
@@ -8350,13 +8394,21 @@ function placeBuildItem(sx, sy) {
   for (const [k,v] of Object.entries(item.cost)) p.inv[k] -= v;
 
   const buildingSkill = (state.skills && state.skills.building) || 0;
-  const wallHp = state.buildItem === 'wall' ? (buildingSkill >= 5 ? 30 : 20) : undefined;
+  let placedHp, placedMaxHp;
+  if (state.buildItem === 'wall') {
+    placedHp = buildingSkill >= 5 ? 30 : 20;
+    placedMaxHp = placedHp;
+  } else if (state.buildItem === 'gate') {
+    placedHp = buildingSkill >= 5 ? 35 : 25;  // gates a touch tougher than walls
+    placedMaxHp = placedHp;
+  }
   state.objects.push({
     type: state.buildItem,
     x: Math.round(wx/TSIZE)*TSIZE + TSIZE/2,
     y: Math.round(wy/TSIZE)*TSIZE + TSIZE/2,
     placed: true,
-    hp: wallHp,
+    hp: placedHp,
+    maxHp: placedMaxHp,
     _placedDay: state.day,
     _extendedLife: buildingSkill >= 10,
   });
@@ -9596,6 +9648,24 @@ function drawPlacedObject(ctx, obj, sx, sy) {
       px(ctx, '#ff4400', sx-4, sy-16+fFlicker, 8, 8);
       px(ctx, '#ffaa00', sx-2, sy-18+fFlicker, 4, 4);
       break;
+    case 'gate': {
+      // Wooden gate: two side posts + crossbeams, lower than a wall so it reads as 'door'
+      px(ctx, '#3d2010', sx-9, sy-14, 3, 26);   // left post
+      px(ctx, '#3d2010', sx+6, sy-14, 3, 26);   // right post
+      px(ctx, '#8b6020', sx-9, sy-14, 18, 3);   // top cap
+      // Crossbeams (planks)
+      px(ctx, '#7a5c2e', sx-7, sy-8, 14, 4);
+      px(ctx, '#7a5c2e', sx-7, sy+0, 14, 4);
+      px(ctx, '#7a5c2e', sx-7, sy+8, 14, 4);
+      // Iron ring (handle)
+      px(ctx, '#999', sx-1, sy-2, 3, 3);
+      // HP bar if damaged
+      if (obj.hp !== undefined && obj.hp < (obj.maxHp||20)) {
+        ctx.fillStyle = '#e74c3c';
+        ctx.fillRect(sx-8, sy-18, 16*(obj.hp/(obj.maxHp||20)), 3);
+      }
+      break;
+    }
     case 'smoker':
       px(ctx, '#555', sx-8, sy-2, 16, 12);
       px(ctx, '#333', sx-6, sy-8, 12, 8);
@@ -14408,6 +14478,11 @@ window.addEventListener('keydown', e => {
     if (e.key === 's' || e.key === 'S' || e.key === 'ArrowDown') { state.wreckCursor = (state.wreckCursor + 1) % 5; e.preventDefault(); }
   }
   if (e.key.toLowerCase() === 'q') throwCoconut();
+  // X = demolish nearest placed building within reach (refunds 50% of cost)
+  if (e.key.toLowerCase() === 'x') {
+    demolishNearestBuilding();
+    e.preventDefault();
+  }
   if (e.key === ' ') {
     // Space also advances dialogue
     if (state.dialogue) { advanceDialogue(); e.preventDefault(); return; }
