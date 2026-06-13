@@ -15662,5 +15662,286 @@ function _gameLoopBody() {
 
 })();
 </script>
+<!-- ============================================================
+     DEV TOOLS PANEL (Julian only)
+     Open: Ctrl+Shift+D. First time: enter password (whale12).
+     ============================================================ -->
+<div id="dev-panel" style="display:none;position:fixed;top:20px;right:20px;width:280px;max-height:90vh;overflow-y:auto;background:rgba(10,8,5,0.95);border:2px solid #c8a060;border-radius:8px;padding:12px;z-index:99999;font-family:'Lato',sans-serif;color:#e8d49a;font-size:11px;box-shadow:0 0 30px rgba(200,160,96,0.4)">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;border-bottom:1px solid #c8a060;padding-bottom:6px">
+    <span style="font-family:'Cinzel',serif;letter-spacing:2px;color:#c8f135">DEV TOOLS</span>
+    <span id="dev-close" style="cursor:pointer;color:#e74c3c;font-weight:bold;padding:0 6px">X</span>
+  </div>
+  <div style="color:#8a7030;font-size:10px;margin-bottom:8px">Ctrl+Shift+D to toggle</div>
+
+  <div style="color:#c8a060;font-size:10px;margin-top:4px;letter-spacing:1px">PLAYER</div>
+  <button class="dv-btn" data-act="heal">Full Heal / Refill</button>
+  <button class="dv-btn" data-act="god">Toggle God Mode (<span id="dv-god">OFF</span>)</button>
+  <button class="dv-btn" data-act="fly">Toggle Fly / Noclip (<span id="dv-fly">OFF</span>)</button>
+  <button class="dv-btn" data-act="speed">Toggle Super Speed (<span id="dv-spd">OFF</span>)</button>
+
+  <div style="color:#c8a060;font-size:10px;margin-top:10px;letter-spacing:1px">ITEMS</div>
+  <button class="dv-btn" data-act="give-all">Give EVERY Item (999 each)</button>
+  <button class="dv-btn" data-act="give-tools">Give All Weapons + Tools</button>
+  <button class="dv-btn" data-act="give-resources">Give Resources Stack</button>
+  <button class="dv-btn" data-act="give-wreck">Give All Wreck Items (incl. flare)</button>
+  <button class="dv-btn" data-act="give-artifact">Give Ancient Artifact</button>
+
+  <div style="color:#c8a060;font-size:10px;margin-top:10px;letter-spacing:1px">WORLD</div>
+  <button class="dv-btn" data-act="zone-max">Unlock All Zones</button>
+  <button class="dv-btn" data-act="day-15">Set Day = 15</button>
+  <button class="dv-btn" data-act="day-plus">Day +1</button>
+  <button class="dv-btn" data-act="daynight">Force Daytime</button>
+  <button class="dv-btn" data-act="clear-enemies">Wipe All Enemies</button>
+
+  <div style="color:#c8a060;font-size:10px;margin-top:10px;letter-spacing:1px">BOSSES</div>
+  <button class="dv-btn" data-act="spawn-chief">Spawn Chief</button>
+  <button class="dv-btn" data-act="kill-chief">Insta-Kill Chief (marks defeated)</button>
+  <button class="dv-btn" data-act="spawn-bounty">Spawn Bounty Hunter</button>
+
+  <div style="color:#c8a060;font-size:10px;margin-top:10px;letter-spacing:1px">TELEPORT</div>
+  <button class="dv-btn" data-act="tp-oonga">TP to Oonga (beach)</button>
+  <button class="dv-btn" data-act="tp-kona">TP to Kona (88,62)</button>
+  <button class="dv-btn" data-act="tp-felix">TP to Felix (west beach)</button>
+  <button class="dv-btn" data-act="tp-mara">TP to Mara</button>
+  <button class="dv-btn" data-act="tp-altar">TP to Altar (69,25)</button>
+  <button class="dv-btn" data-act="tp-volcano">TP to Volcano Summit</button>
+  <button class="dv-btn" data-act="tp-village">TP to Village (104,57)</button>
+  <button class="dv-btn" data-act="tp-child">TP to Tribal Child (51,66)</button>
+
+  <div style="color:#c8a060;font-size:10px;margin-top:10px;letter-spacing:1px">STORY FLAGS</div>
+  <button class="dv-btn" data-act="flag-all">Set All Story Flags (peace path)</button>
+  <button class="dv-btn" data-act="flag-felix">Set learnedTruth + felixDone</button>
+  <button class="dv-btn" data-act="flag-kona">Set konaHelping + returnedChild</button>
+
+  <div style="color:#c8a060;font-size:10px;margin-top:10px;letter-spacing:1px">WIN</div>
+  <button class="dv-btn" data-act="trigger-win">Trigger Win Now (uses current flags)</button>
+
+  <div style="color:#8a7030;font-size:9px;margin-top:10px;text-align:center;border-top:1px solid #3a2810;padding-top:6px">v1 — Julian only</div>
+</div>
+<style>
+  #dev-panel .dv-btn{display:block;width:100%;margin:3px 0;padding:5px 8px;background:#1a120a;color:#e8d49a;border:1px solid #6a4818;border-radius:3px;cursor:pointer;font-family:inherit;font-size:10px;text-align:left;letter-spacing:0.5px}
+  #dev-panel .dv-btn:hover{background:#2a1d10;border-color:#c8a060;color:#c8f135}
+</style>
+<script>
+(function(){
+  const PW = 'whale12';
+  const KEY = 'island_dev_unlock';
+  const panel = document.getElementById('dev-panel');
+  const closeBtn = document.getElementById('dev-close');
+  let unlocked = localStorage.getItem(KEY) === '1';
+
+  function togglePanel(){
+    if (!unlocked){
+      const a = prompt('Dev tools password:');
+      if (a !== PW){ alert('Nope.'); return; }
+      localStorage.setItem(KEY,'1');
+      unlocked = true;
+    }
+    panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+  }
+
+  // Hidden hotkey: Ctrl+Shift+D
+  document.addEventListener('keydown', function(e){
+    if (e.ctrlKey && e.shiftKey && (e.key === 'D' || e.key === 'd')){
+      e.preventDefault();
+      togglePanel();
+    }
+  });
+  closeBtn.addEventListener('click', () => panel.style.display = 'none');
+
+  // Dev state
+  window._dev = window._dev || { god:false, fly:false, speed:false };
+
+  function tpTile(tx, ty){
+    if (!window.state || !state.player) return;
+    const TS = (typeof TSIZE !== 'undefined') ? TSIZE : 32;
+    state.player.x = tx * TS;
+    state.player.y = ty * TS;
+    if (typeof showMsg === 'function') showMsg('Teleported to ('+tx+','+ty+')', '#c8f135');
+  }
+
+  function allItems(){
+    // Walk all CRAFT_ITEMS + CAMPFIRE_RECIPES + known inv keys to find every id
+    const ids = new Set();
+    if (typeof CRAFT_ITEMS !== 'undefined') CRAFT_ITEMS.forEach(i => ids.add(i.id));
+    if (typeof CAMPFIRE_RECIPES !== 'undefined') CAMPFIRE_RECIPES.forEach(i => ids.add(i.id));
+    // Add raw resources / known keys
+    ['wood','stone','coconut','berry','fish','raw_meat','cooked_meat','fish_cooked','volcanic_stone','vine','rope','feather','ancient_bone','crystal','survey_data','tribal_child','arrows','signal_flare','signal_mirror','medicine_chest','captains_log','crew_manifest','ancient_artifact','artifact_shard','raft','axe','fire_axe','pickaxe','sword','spear','fire_spear','torch','crystal_torch','stone_knife','bow','fire_bottle','lava_bomb','depth_spear','pressure_suit','basket','hearty_meal','fishing_rod'].forEach(k=>ids.add(k));
+    return [...ids];
+  }
+
+  const actions = {
+    'heal'(){
+      const p = state.player;
+      p.hp = p.maxHp || 100;
+      if (p.food !== undefined) p.food = 100;
+      if (p.water !== undefined) p.water = 100;
+      if (p.stamina !== undefined) p.stamina = 100;
+      if (p.air !== undefined) p.air = p.maxAir || 100;
+      showMsg('FULL HEAL', '#c8f135');
+    },
+    'god'(){
+      window._dev.god = !window._dev.god;
+      document.getElementById('dv-god').textContent = window._dev.god ? 'ON' : 'OFF';
+      showMsg('God mode: ' + (window._dev.god ? 'ON' : 'OFF'), '#c8f135');
+    },
+    'fly'(){
+      window._dev.fly = !window._dev.fly;
+      document.getElementById('dv-fly').textContent = window._dev.fly ? 'ON' : 'OFF';
+      showMsg('Fly/noclip: ' + (window._dev.fly ? 'ON (walk over anything)' : 'OFF'), '#c8f135');
+    },
+    'speed'(){
+      window._dev.speed = !window._dev.speed;
+      document.getElementById('dv-spd').textContent = window._dev.speed ? 'ON' : 'OFF';
+      showMsg('Super speed: ' + (window._dev.speed ? 'ON (3x)' : 'OFF'), '#c8f135');
+    },
+    'give-all'(){
+      const p = state.player;
+      allItems().forEach(k => { p.inv[k] = 999; });
+      if (p.toolDurability){ ['axe','fire_axe','pickaxe','sword','spear','fire_spear','stone_knife','bow'].forEach(t => p.toolDurability[t] = 9999); }
+      showMsg('Gave 999 of EVERY item', '#c8f135');
+      if (typeof updateUI === 'function') updateUI();
+    },
+    'give-tools'(){
+      const p = state.player;
+      ['axe','fire_axe','pickaxe','sword','spear','fire_spear','torch','crystal_torch','stone_knife','bow','fire_bottle','lava_bomb','depth_spear','pressure_suit','arrows','signal_mirror','fishing_rod'].forEach(k => p.inv[k] = (p.inv[k]||0) + 10);
+      p.inv.arrows = 99;
+      showMsg('Gave all weapons & tools', '#c8f135');
+      if (typeof updateUI === 'function') updateUI();
+    },
+    'give-resources'(){
+      const p = state.player;
+      ['wood','stone','coconut','berry','fish','volcanic_stone','vine','rope','feather','ancient_bone','crystal','survey_data','raft'].forEach(k => p.inv[k] = (p.inv[k]||0) + 100);
+      showMsg('Gave 100 of each resource', '#c8f135');
+      if (typeof updateUI === 'function') updateUI();
+    },
+    'give-wreck'(){
+      const p = state.player;
+      ['captains_log','crew_manifest','survey_data','medicine_chest','signal_flare'].forEach(k => p.inv[k] = 1);
+      if (state.wreckItems){
+        Object.keys(state.wreckItems).forEach(k => state.wreckItems[k] = true);
+      }
+      showMsg('Gave all wreck items (incl. signal_flare)', '#c8f135');
+      if (typeof updateUI === 'function') updateUI();
+    },
+    'give-artifact'(){
+      state.player.inv.ancient_artifact = 1;
+      state.ancientArtifactHeld = true;
+      showMsg('Ancient Artifact acquired', '#3dd6d0');
+      if (typeof updateUI === 'function') updateUI();
+    },
+    'zone-max'(){ state.zoneUnlocked = 4; showMsg('All zones unlocked', '#c8f135'); },
+    'day-15'(){ state.day = 15; showMsg('Day set to 15 (chief will spawn)', '#c8f135'); },
+    'day-plus'(){ state.day = (state.day||1) + 1; showMsg('Day = ' + state.day, '#c8f135'); },
+    'daynight'(){
+      if (state.timeOfDay !== undefined){ state.timeOfDay = 0.4; showMsg('Forced midday', '#c8f135'); }
+      else if (state.dayPhase !== undefined){ state.dayPhase = 'day'; showMsg('Forced day phase', '#c8f135'); }
+      else { showMsg('No day/night var found', '#888'); }
+    },
+    'clear-enemies'(){
+      const n = state.enemies.length;
+      state.enemies = [];
+      if (state.creatures) state.creatures = state.creatures.filter(c => c.type === 'crab');
+      showMsg('Wiped ' + n + ' enemies', '#c8f135');
+    },
+    'spawn-chief'(){
+      if (typeof spawnChief === 'function'){ spawnChief(); showMsg('Chief spawned', '#e74c3c'); }
+      else showMsg('spawnChief not available', '#e74c3c');
+    },
+    'kill-chief'(){
+      if (state.chief){ state.chief.hp = 0; }
+      state.player.chiefDefeated = true;
+      showMsg('Chief defeated flag set', '#c8f135');
+    },
+    'spawn-bounty'(){
+      state.bountyHunterActive = true;
+      showMsg('Bounty hunter activated (may need time to spawn)', '#e74c3c');
+    },
+    'tp-oonga'(){ const n = state.npcs.find(x=>x.id==='oonga'); if(n) tpTile(Math.floor(n.x/TSIZE), Math.floor(n.y/TSIZE)); },
+    'tp-kona'(){ tpTile(88, 62); },
+    'tp-felix'(){ const n = state.npcs.find(x=>x.id==='felix'); if(n) tpTile(Math.floor(n.x/TSIZE), Math.floor(n.y/TSIZE)); },
+    'tp-mara'(){ const n = state.npcs.find(x=>x.id==='mara'); if(n) tpTile(Math.floor(n.x/TSIZE), Math.floor(n.y/TSIZE)); },
+    'tp-altar'(){ tpTile(69, 25); },
+    'tp-volcano'(){ tpTile(75, 39); },
+    'tp-village'(){ tpTile(104, 57); },
+    'tp-child'(){ tpTile(51, 66); },
+    'flag-all'(){
+      state.storyChoices.learnedTruth = true;
+      state.storyChoices.returnedChild = true;
+      state.storyChoices.konaHelping = true;
+      state.storyChoices.felixDone = true;
+      showMsg('All story flags set', '#c8f135');
+    },
+    'flag-felix'(){
+      state.storyChoices.learnedTruth = true;
+      state.storyChoices.felixDone = true;
+      showMsg('Felix path flags set', '#c8f135');
+    },
+    'flag-kona'(){
+      state.storyChoices.konaHelping = true;
+      state.storyChoices.returnedChild = true;
+      showMsg('Kona path flags set', '#c8f135');
+    },
+    'trigger-win'(){
+      if (typeof triggerWin === 'function'){ triggerWin(); }
+      else showMsg('triggerWin not found', '#e74c3c');
+    }
+  };
+
+  panel.addEventListener('click', function(e){
+    const t = e.target.closest('.dv-btn');
+    if (!t) return;
+    const a = t.getAttribute('data-act');
+    if (actions[a]){
+      try { actions[a](); }
+      catch(err){ console.error('[dev]', a, err); alert('Dev action failed: '+err.message); }
+    }
+  });
+
+  // ── God mode + fly + speed hooks ──
+  // Patch damage entry points by intercepting any direct hp decrement is brittle.
+  // Instead use a frame guard: each frame, if god mode is on, restore hp.
+  setInterval(function(){
+    if (!window.state || !state.player) return;
+    const p = state.player;
+    if (window._dev.god){
+      p.hp = p.maxHp || 100;
+      if (p.food !== undefined) p.food = Math.max(p.food, 50);
+      if (p.water !== undefined) p.water = Math.max(p.water, 50);
+      if (p.air !== undefined) p.air = p.maxAir || 100;
+    }
+  }, 100);
+
+  // Fly mode: WASD moves through anything at high speed; bypasses tile collision by overriding position each frame from input.
+  // Speed mode: triples normal speed via a flag the input loop respects.
+  // We piggyback on existing keys array if present, otherwise install a parallel listener.
+  const flyKeys = { w:false, a:false, s:false, d:false, ArrowUp:false, ArrowLeft:false, ArrowDown:false, ArrowRight:false };
+  document.addEventListener('keydown', e => { if (e.key in flyKeys) flyKeys[e.key] = true; if (e.key.toLowerCase() in flyKeys) flyKeys[e.key.toLowerCase()] = true; });
+  document.addEventListener('keyup', e => { if (e.key in flyKeys) flyKeys[e.key] = false; if (e.key.toLowerCase() in flyKeys) flyKeys[e.key.toLowerCase()] = false; });
+
+  function flyTick(){
+    if (window.state && state.player && window._dev.fly && state.running){
+      const sp = window._dev.speed ? 12 : 6;
+      const p = state.player;
+      if (flyKeys.w || flyKeys.ArrowUp) p.y -= sp;
+      if (flyKeys.s || flyKeys.ArrowDown) p.y += sp;
+      if (flyKeys.a || flyKeys.ArrowLeft) p.x -= sp;
+      if (flyKeys.d || flyKeys.ArrowRight) p.x += sp;
+    } else if (window.state && state.player && window._dev.speed && state.running){
+      // Speed-only: nudge normal movement by reading the same keys (additive on top of normal walk)
+      const sp = 3;
+      const p = state.player;
+      if (flyKeys.w || flyKeys.ArrowUp) p.y -= sp;
+      if (flyKeys.s || flyKeys.ArrowDown) p.y += sp;
+      if (flyKeys.a || flyKeys.ArrowLeft) p.x -= sp;
+      if (flyKeys.d || flyKeys.ArrowRight) p.x += sp;
+    }
+    requestAnimationFrame(flyTick);
+  }
+  requestAnimationFrame(flyTick);
+
+  console.log('[dev] Loaded. Ctrl+Shift+D to open. PW: whale12');
+})();
+</script>
 </body>
 </html>
