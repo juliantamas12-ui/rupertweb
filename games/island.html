@@ -6024,9 +6024,10 @@ function updatePlayer() {
   if (sprinting) spd = 1.95;
   // Bloodlust frenzy speed boost
   if (state.frenzyActive) spd *= state.frenzySpeedMult;
-  if (inWater && !((p.inv.raft||0) > 0)) spd *= 0.5; // raft negates water slow
-  if (inWater && (p.inv.raft||0) > 0) spd *= 1.0; // raft: normal speed
-  // Deep ocean is treated as walkable land now — no speed penalty (shark roulette is the cost)
+  // Swimming is slow. Raft helps but doesn't fully negate it.
+  const hasRaft = (p.inv.raft||0) > 0;
+  if (inWater) spd *= hasRaft ? 0.55 : 0.30;            // shallow: 55% w/ raft, 30% without
+  if (inDeepOcean) spd *= hasRaft ? 0.45 : 0.22;        // deep: 45% w/ raft, 22% without (drag is real)
   if (inDense) spd *= 0.6;
   if (p.stamina <= 0) spd *= 0.8;
 
