@@ -1364,7 +1364,18 @@ function genObjects() {
         else if (r < 0.289) state.creatures.push({type:'spider', x:wx, y:wy, hp:35, maxHp:35, spd:1.05, attackTimer:0, walkTimer:0});
         // jungle_floor removed entirely
       } else if (t === T.BEACH) {
-        if (r < 0.004) state.objects.push({type:'palm', x:wx, y:wy, hp:4, maxHp:4, respawn:0, scale:_treeScale(), flipX:_treeFlip(), seed:_treeSeed()});
+        // Palms only spawn on INTERIOR beach tiles (no water/shallow within 1 tile),
+        // so when the tide rises they don't end up floating with their feet in the water.
+        let _palmOK = true;
+        if (r < 0.004) {
+          for (let dy = -1; dy <= 1 && _palmOK; dy++) {
+            for (let dx = -1; dx <= 1 && _palmOK; dx++) {
+              const nt = state.map[y+dy] && state.map[y+dy][x+dx];
+              if (nt === T.SHALLOW_WATER || nt === T.DEEP_OCEAN) _palmOK = false;
+            }
+          }
+        }
+        if (r < 0.004 && _palmOK) state.objects.push({type:'palm', x:wx, y:wy, hp:4, maxHp:4, respawn:0, scale:_treeScale(), flipX:_treeFlip(), seed:_treeSeed()});
         else if (r < 0.014) state.objects.push({type:'driftwood', x:wx, y:wy, collected:false});
         // Pebbles: scattered beach stones — 1 stone each, no tool needed. ~3% per tile now (was ~0.5%).
         else if (r < 0.044) state.objects.push({type:'pebble', x:wx, y:wy, collected:false});
