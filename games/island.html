@@ -1578,6 +1578,8 @@ function genObjects() {
   villageHuts.forEach(h => {
     state.objects.push({type:'hut', x:h.x*TSIZE, y:h.y*TSIZE, decor:false});
   });
+  // Signpost at the south entrance so the player knows what the village is
+  state.objects.push({type:'village_sign', x:104*TSIZE, y:60*TSIZE, decor:true});
   // Central fire
   state.objects.push({type:'tribal_fire', x:104*TSIZE, y:57*TSIZE, decor:true});
   // Village warriors (stronger, always present)
@@ -7253,11 +7255,20 @@ function handleInteract() {
     return;
   }
 
-  // Underwater wreck — enter interior
+  // Underwater wreck — enter interior. Locked behind progression so it isn't a speedrun.
   for (let obj of state.objects) {
     if (obj.type === 'underwater_wreck') {
       const d = Math.hypot(p.x-obj.x, p.y-obj.y);
       if (d < 60) {
+        // Gating: zone 1 (Oonga's quest done) AND day >= 3 — so the speedrun route is closed.
+        if (state.zoneUnlocked < 1) {
+          showMsg('You can\'t free-dive the wreck yet. Talk to OONGA first — he knows the tides.', '#40d8d0');
+          return;
+        }
+        if (state.day < 3) {
+          showMsg('The current is too strong by day. Try after day 3 (tide cycles must build).', '#40d8d0');
+          return;
+        }
         state.inWreck = true;
         state.wreckCursor = 0;
         showMsg("ENTERING THE WRECK — W/S to navigate, E to take, ESC to exit", '#40d8d0');
@@ -9986,6 +9997,20 @@ function drawMinimap(minimapCtx) {
     mc.fillRect(state.bountyHunter.x/TSIZE*scale-3, state.bountyHunter.y/TSIZE*scale-3, 6, 6);
   }
 
+  // Daily bounty creature: bright pulsing dot in their colour
+  if (state.dailyBounty && !state.dailyBounty.killed) {
+    const bc = state.creatures.find(c => c.isBounty);
+    if (bc) {
+      const def = state.dailyBounty.def;
+      const pulse = (state.frameCount % 40 < 20) ? 1 : 0.5;
+      mc.save();
+      mc.globalAlpha = pulse;
+      mc.fillStyle = def && def.color ? def.color : '#ffd700';
+      mc.fillRect(bc.x/TSIZE*scale-4, bc.y/TSIZE*scale-4, 8, 8);
+      mc.restore();
+    }
+  }
+
   // Player
   mc.fillStyle = '#ffffff';
   mc.fillRect(state.player.x/TSIZE*scale-2, state.player.y/TSIZE*scale-2, 5, 5);
@@ -10829,6 +10854,20 @@ function render(ctx, minimapCtx) {
         case 'crab': drawCrab(ctx,ssx,ssy,capturedObj.dir||1); break;
         case 'hut': drawHut(ctx,ssx,ssy); break;
         case 'tribal_fire': { const tf=Math.sin(state.frameCount*0.2)*2; px(ctx,'#5c3d1e',ssx-6,ssy,12,8); px(ctx,'#ff6600',ssx-4,ssy-8+tf,8,8); px(ctx,'#ffcc00',ssx-2,ssy-12+tf,4,6); break; }
+        case 'village_sign': {
+          // Wooden signpost reading TRIBAL VILLAGE
+          px(ctx,'#5c3d1e',ssx-2,ssy-20,4,26); // post
+          px(ctx,'#8b5e3c',ssx-20,ssy-28,40,12); // board
+          px(ctx,'#5c2e0a',ssx-19,ssy-27,38,10);
+          // Animal skull decoration
+          px(ctx,'#e8d4a0',ssx-22,ssy-22,4,3);
+          ctx.fillStyle = '#f0d890';
+          ctx.font = 'bold 7px Lato, monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText('TRIBAL VILLAGE', ssx, ssy-19);
+          ctx.textAlign = 'left';
+          break;
+        }
         case 'supply_cache': {
           if (!capturedObj.opened) {
             // Glowing crate
@@ -11818,8 +11857,28 @@ function render(ctx, minimapCtx) {
     state.collapseDeathY = p.y;
     // Save inventory copy
     state.collapseInvCopy = Object.assign({}, p.inv);
-    // Place death pack
-    state.objects.push({type:'death_pack', x:p.x, y:p.y, inv:Object.assign({},p.inv)});
+    // Drop death pack — if player died in water, walk outward to the nearest BEACH tile
+    // so it isn't lost across shark-infested ocean.
+    let packX = p.x, packY = p.y;
+    const dTile = getTile(p.x, p.y);
+    if (dTile === T.SHALLOW_WATER || dTile === T.DEEP_OCEAN) {
+      // Spiral outward looking for a beach tile (max 20 tile radius)
+      const startTx = Math.floor(p.x / TSIZE), startTy = Math.floor(p.y / TSIZE);
+      outer: for (let r = 1; r <= 20; r++) {
+        for (let dx = -r; dx <= r; dx++) {
+          for (let dy = -r; dy <= r; dy++) {
+            if (Math.abs(dx) !== r && Math.abs(dy) !== r) continue; // ring edge only
+            const tx = startTx + dx, ty = startTy + dy;
+            if (state.map[ty] && state.map[ty][tx] === T.BEACH) {
+              packX = tx * TSIZE + TSIZE/2;
+              packY = ty * TSIZE + TSIZE/2;
+              break outer;
+            }
+          }
+        }
+      }
+    }
+    state.objects.push({type:'death_pack', x:packX, y:packY, inv:Object.assign({},p.inv)});
     // === DEATH GHOST: save to localStorage and state ===
     const _deathData = { x: p.x, y: p.y, cause: state.lastDamageCause || 'unknown', day: state.day, timestamp: Date.now() };
     try {
@@ -12708,7 +12767,7 @@ function updateLivingIsland() {
   // === DUSK EVENTS (dayTime 0.62-0.67) ===
   if (dt >= 0.62 && dt < 0.67 && !state.duskFired) {
     state.duskFired = true;
-    showMsg('Night falls. Find shelter.', '#8060b0');
+    showMsg('Night falls. Find shelter — stand near a CAMPFIRE or sleep in a BED.', '#8060b0');
   }
   if (dt < 0.62 || dt >= 0.67) state.duskFired = false;
 
@@ -13178,8 +13237,9 @@ function spawnDailyBounty() {
   target.isBounty   = true;
   target.bountyDef  = def;
   target.glowPhase  = 0;
+  target.bountyMarker = true; // for minimap pulse
 
-  state.dailyBounty = { type: def.type, label: def.label, killed: false, def };
+  state.dailyBounty = { type: def.type, label: def.label, killed: false, def, x: target.x, y: target.y };
   state.dailyBountyDay = state.day;
 
   setTimeout(() => {
@@ -16116,7 +16176,7 @@ function updateLightning() {
     p.hp = Math.max(0, p.hp - _ltDmg);
     p.hitFlash = 12;
     addFloatingText(p.x, p.y - 30, '-22 LIGHTNING!', '#aaccff');
-    showMsg('STRUCK BY LIGHTNING! Find shelter!', '#aaccff');
+    showMsg('STRUCK BY LIGHTNING! Get under a CAMPFIRE / wall ring — don\'t stand in open water.', '#aaccff');
     state.lastDamageCause = 'lightning strike';
     if (state.runStats) state.runStats.damageTaken += _ltDmg;
     SFX.hurt && SFX.hurt();
