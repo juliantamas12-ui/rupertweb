@@ -15219,7 +15219,8 @@ window.addEventListener('touchend', e => {
 }, {passive: true});
 canvas.addEventListener('wheel', (e) => {
   e.preventDefault();
-  state.targetZoom = Math.max(0.8, Math.min(3.0, (state.targetZoom || state.zoom || 1.8) - e.deltaY * 0.002));
+  // Zoom 1.4 - 3.0. Below 1.4 the world reads tiny and player movement looks too fast.
+  state.targetZoom = Math.max(1.4, Math.min(3.0, (state.targetZoom || state.zoom || 1.8) - e.deltaY * 0.002));
 }, {passive: false});
 
 window.addEventListener('resize', () => {
@@ -16736,6 +16737,9 @@ function _gameLoopBody() {
   // Smooth zoom lerp
   if (!state.zoom) state.zoom = 1.8;
   if (!state.targetZoom) state.targetZoom = 1.8;
+  // Clamp BOTH live and target zoom in case an old save persisted a sub-1.4 value.
+  if (state.targetZoom < 1.4) state.targetZoom = 1.8;
+  if (state.zoom < 1.4) state.zoom = 1.4;
   state.zoom += (state.targetZoom - state.zoom) * 0.12; // don't render when tab not visible
   if (state.cutscenePlaying) {
     renderCutscene(ctx);
