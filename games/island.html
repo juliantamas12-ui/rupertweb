@@ -8122,12 +8122,27 @@ function handleClick(sx, sy) {
 
 function sleepToMorning() {
   const p = state.player;
+  // ── 12 in-game-hour sleep cooldown ──
+  // Prevents the spam-sleep exploit (skip to day 365 in seconds).
+  // 12 in-game hours = state.DAY_FRAMES / 2 frames (~2 real minutes).
+  const COOLDOWN = Math.floor(state.DAY_FRAMES / 2);
+  if (state._lastSleepFrame !== undefined) {
+    const elapsed = state.frameCount - state._lastSleepFrame;
+    if (elapsed < COOLDOWN) {
+      const remainFrames = COOLDOWN - elapsed;
+      const remainInGameHours = Math.ceil((remainFrames / state.DAY_FRAMES) * 24);
+      showMsg('Too soon to sleep again — wait ' + remainInGameHours + 'h (in-game)', '#888');
+      return;
+    }
+  }
   // Tiny food/water cost so it's not free. No hard gate — if you're starving you sleep anyway.
   p.food = Math.max(0, p.food - 10);
   p.water = Math.max(0, p.water - 5);
   // Jump time forward to dawn of the next day.
   const cur = state.frameCount % state.DAY_FRAMES;
   state.frameCount += (state.DAY_FRAMES - cur);
+  // Mark sleep AFTER the time jump so the 12h cooldown always runs in post-sleep time.
+  state._lastSleepFrame = state.frameCount;
   // Heal up
   p.hp = Math.min(p.maxHp, p.hp + 50);
   p.stamina = p.maxStamina;
