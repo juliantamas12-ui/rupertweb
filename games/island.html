@@ -462,7 +462,9 @@ canvas#c{pointer-events:none}
 </style>
 <script>
 (function(){
+  function init(){
   const panel = document.getElementById('journal');
+  if (!panel){ console.warn('[journal] panel not found'); return; }
   const closeBtn = document.getElementById('journal-close');
   const tabs = panel.querySelectorAll('.jtab');
   const panes = panel.querySelectorAll('.jpane');
@@ -733,6 +735,9 @@ canvas#c{pointer-events:none}
     panel.style.display = 'block';
   };
   // Re-render on tab clicks already handled by setTab.
+  } // end init
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
 })();
 </script>
 
@@ -14350,8 +14355,20 @@ window.addEventListener('keydown', e => {
   // start screen removed
   if (!state.running) return;
   if (e.key.toLowerCase() === 'i') {
-    if (typeof window.toggleJournal === 'function') { window.toggleJournal('pack'); }
-    else { const p=document.getElementById('inv-panel'); p.style.display=p.style.display==='block'?'none':'block'; if(p.style.display==='block')renderInvMenu(); }
+    try {
+      if (typeof window.toggleJournal === 'function') {
+        window.toggleJournal('pack');
+      } else {
+        console.warn('[I-key] toggleJournal missing — falling back to old inv panel');
+        const p=document.getElementById('inv-panel');
+        if (p){ p.style.display=p.style.display==='block'?'none':'block'; if(p.style.display==='block')renderInvMenu(); }
+      }
+    } catch(err){
+      console.error('[I-key] error opening journal, falling back', err);
+      const p=document.getElementById('inv-panel');
+      if (p){ p.style.display=p.style.display==='block'?'none':'block'; if(p.style.display==='block')renderInvMenu(); }
+    }
+    e.preventDefault();
   }
   if (e.key.toLowerCase() === 'c') openCraftMenu();
   if (e.key.toLowerCase() === 'b') { openBuildMenu(); const bm=document.getElementById('build-menu'); bm.style.display=state.buildMode?'block':'none'; renderBuildMenu(); }
