@@ -12288,9 +12288,11 @@ function updateDayNight() {
             if (p2.hp <= 0) state.lastDamageCause = 'VOLCANIC ERUPTION';
           }
         }
-        // Damage nearby enemies too (lava doesn't pick sides)
+        // Damage nearby HOSTILE enemies. Skip village guards (in their fortified village),
+        // bosses (chief/nicaler are tracked elsewhere), and any priest/healer NPC.
         if (state.enemies && state.enemies.length) {
           state.enemies.forEach(en => {
+            if (en.villageGuard || en.type === 'priest' || en.type === 'chief') return;
             const edx = en.x - bomb.landX, edy = en.y - bomb.landY;
             const ed = Math.sqrt(edx*edx + edy*edy);
             if (ed < 60) {
@@ -16320,7 +16322,8 @@ function _gameLoopBody() {
     'give-all'(){
       const p = state.player;
       allItems().forEach(k => { p.inv[k] = 999; });
-      if (p.toolDurability){ ['axe','fire_axe','pickaxe','sword','spear','fire_spear','stone_knife','bow'].forEach(t => p.toolDurability[t] = 9999); }
+      if (!p.toolDurability) p.toolDurability = {};
+      ['axe','fire_axe','pickaxe','sword','spear','fire_spear','stone_knife','bow','lava_blade','depth_spear','crystal_blade','bone_spear','obsidian_pickaxe','magma_hammer','fire_bottle','lava_bomb','tribal_weapon'].forEach(t => { p.toolDurability[t] = 9999; });
       showMsg('Gave 999 of EVERY item', '#c8f135');
       if (typeof updateUI === 'function') updateUI();
     },
@@ -16356,9 +16359,18 @@ function _gameLoopBody() {
     'day-15'(){ state.day = 15; showMsg('Day set to 15 (chief will spawn)', '#c8f135'); },
     'day-plus'(){ state.day = (state.day||1) + 1; showMsg('Day = ' + state.day, '#c8f135'); },
     'daynight'(){
-      if (state.timeOfDay !== undefined){ state.timeOfDay = 0.4; showMsg('Forced midday', '#c8f135'); }
-      else if (state.dayPhase !== undefined){ state.dayPhase = 'day'; showMsg('Forced day phase', '#c8f135'); }
-      else { showMsg('No day/night var found', '#888'); }
+      // Force midday: align frameCount so dayTime ratio = 0.4 (mid-morning, clear sky).
+      const target = 0.4;
+      const dayF = state.DAY_FRAMES || 14400;
+      const cur = state.frameCount % dayF;
+      const desired = Math.floor(target * dayF);
+      state.frameCount += (desired - cur + dayF) % dayF;
+      state.dayTime = target;
+      state.isNight = false;
+      // Clear any night events
+      state.bioNightTimer = (state.bioNightTimer || 60*60*5);
+      state.bloodMoonTimer = (state.bloodMoonTimer || 60*60*5);
+      showMsg('Forced midday', '#c8f135');
     },
     'clear-enemies'(){
       const n = state.enemies.length;
@@ -16367,17 +16379,43 @@ function _gameLoopBody() {
       showMsg('Wiped ' + n + ' enemies', '#c8f135');
     },
     'spawn-chief'(){
-      if (typeof spawnChief === 'function'){ spawnChief(); showMsg('Chief spawned', '#e74c3c'); }
-      else showMsg('spawnChief not available', '#e74c3c');
+      // Spawn the chief next to the player so you can actually fight him.
+      if (typeof spawnChief === 'function'){
+        spawnChief();
+        // Reposition next to player after spawn
+        if (state.chief){
+          state.chief.x = state.player.x + 80;
+          state.chief.y = state.player.y;
+        }
+        showMsg('Chief spawned next to you', '#e74c3c');
+      } else showMsg('spawnChief not available', '#e74c3c');
     },
     'kill-chief'(){
-      if (state.chief){ state.chief.hp = 0; }
-      state.player.chiefDefeated = true;
-      showMsg('Chief defeated flag set', '#c8f135');
+      // Full proper death: HP 0 + grant mask + run any cascade. Game loop handles next frame.
+      const p = state.player;
+      if (state.chief){
+        state.chief.hp = 0;
+      } else {
+        // Chief never spawned. Set flags directly + grant the mask drop.
+        p.chiefDefeated = true;
+        p.inv.chiefs_mask = 1;
+      }
+      showMsg('Chief defeated', '#c8f135');
     },
     'spawn-bounty'(){
+      // Manually create a bounty hunter near the player. Mirrors the natural spawn shape.
+      if (state.bountyHunter){ showMsg('Bounty hunter already active', '#888'); return; }
+      const ang = Math.random() * Math.PI * 2;
+      state.bountyHunter = {
+        x: state.player.x + Math.cos(ang) * 180,
+        y: state.player.y + Math.sin(ang) * 180,
+        hp: 250, maxHp: 250,
+        spd: 1.6,
+        attackTimer: 0, walkTimer: 0,
+        type: 'bounty_hunter', hitFlash: 0,
+      };
       state.bountyHunterActive = true;
-      showMsg('Bounty hunter activated (may need time to spawn)', '#e74c3c');
+      showMsg('BOUNTY HUNTER SPAWNED', '#e74c3c');
     },
     'tp-oonga'(){ const n = state.npcs.find(x=>x.id==='oonga'); if(n) tpTile(Math.floor(n.x/TSIZE), Math.floor(n.y/TSIZE)); },
     'tp-kona'(){ tpTile(88, 62); },
