@@ -4826,8 +4826,8 @@ function updateCreatures() {
           c.hp = 0;
           return;
         }
-        // Contact kill
-        if (ds < 18 && !state.invincible) {
+        // Contact kill — bigger hitbox so you can't graze past
+        if (ds < 28 && !state.invincible) {
           spawnParticles(p.x, p.y, '#cc1010', 16);
           showMsg('THE SHARK CATCHES YOU.', '#ff2020');
           state.lastDamageCause = 'SHARK';
@@ -4849,16 +4849,16 @@ function updateCreatures() {
       const playerTile = getTile(p.x, p.y);
       const playerInWater = playerTile === T.SHALLOW_WATER;
       // Keep shark in water tiles
-      if (dist < 200 && playerInWater) {
-        const burstSpd = dist < 60 ? 2.0 : 0.9;
+      if (dist < 240 && playerInWater) {
+        const burstSpd = dist < 80 ? 2.6 : 1.4;
         const nx = c.x + dx/dist * burstSpd;
         const ny = c.y + dy/dist * burstSpd;
         const tt = getTile(nx, ny);
         if ([T.SHALLOW_WATER, T.DEEP_OCEAN].includes(tt)) { c.x = nx; c.y = ny; }
         c.attackTimer++;
-        if (dist < 20 && c.attackTimer > 80) {
+        if (dist < 24 && c.attackTimer > 50) {
           c.attackTimer = 0;
-          p.hp = Math.max(0, p.hp - 5);
+          p.hp = Math.max(0, p.hp - 18);
           state.lastDamageCause = 'shark attack';
           if (state.runStats) state.runStats.damageTaken += 4;
           spawnParticles(p.x, p.y, '#3398db',3);
@@ -6624,10 +6624,8 @@ function updatePlayer() {
     if (!p._deepOceanRolled) {
       p._deepOceanRolled = true;
       const _existingStalker = state.creatures.some(c => c.stalker);
-      if (!_existingStalker && Math.random() < 0.80) {
-        // Spawn the shark CLOSE so the fin is visible immediately, but with a wind-up
-        // delay during which it drifts slowly. Player can see + react before the charge.
-        // Drop point: 4 tiles from the player at a guaranteed on-screen angle.
+      if (!_existingStalker && Math.random() < 0.95) {
+        // Spawn the shark CLOSE with a SHORT wind-up. Charge speed is now lethal.
         const ang = Math.random() * Math.PI * 2;
         const dist = 4 * TSIZE;
         const spawnX = p.x + Math.cos(ang) * dist;
@@ -6635,27 +6633,31 @@ function updatePlayer() {
         state.creatures.push({
           type: 'shark',
           x: spawnX, y: spawnY,
-          hp: 80, maxHp: 80,
-          spd: 1.3,                    // slightly slower than sprinting player so escape is possible
+          hp: 120, maxHp: 120,
+          spd: 2.8,                    // FAST — outruns sprinting player even with raft
           attackTimer: 0, walkTimer: 0,
           stalker: true,
           stalkerTargetId: 'player',
           stalkerInstakill: true,
-          stalkerWindup: 150,          // 2.5s of slow drifting before the charge — your warning window
+          stalkerWindup: 75,           // 1.25s warning — you have to react, not stroll
           tideSpawned: true,
         });
-        spawnParticles(spawnX, spawnY, '#cc1010', 6);
-        showMsg('SHARK FIN — GET TO SHALLOW WATER!', '#ff4040');
+        spawnParticles(spawnX, spawnY, '#cc1010', 8);
+        showMsg('SHARK FIN — RUN TO THE BEACH, SHALLOW WON\'T SAVE YOU!', '#ff4040');
         SFX.hurt && SFX.hurt();
-        if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
+        if (navigator.vibrate) navigator.vibrate([80, 40, 80, 40, 80]);
       } else if (!_existingStalker) {
         showMsg('You wade through the dark water. Lucky.', '#40d8d0');
       }
     }
-  } else if (!inDeepOcean) {
-    p._deepOceanRolled = false;
-    // Despawn any stalking sharks once the player is back on safe ground.
-    state.creatures = state.creatures.filter(c => !c.stalker);
+  } else {
+    // Stalker shark now FOLLOWS the player into shallow water too. Only true land (beach/jungle)
+    // is safe. Despawn only when the player reaches dry ground.
+    const _safeLand = (tile === T.BEACH || tile === T.JUNGLE_LIGHT || tile === T.JUNGLE_DARK || tile === T.VOLCANIC);
+    if (_safeLand) {
+      p._deepOceanRolled = false;
+      state.creatures = state.creatures.filter(c => !c.stalker);
+    }
   }
 
   // Stamina
