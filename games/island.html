@@ -714,6 +714,18 @@ canvas#c{pointer-events:none}
       mctx.font = '9px Lato, sans-serif';
       mctx.fillText(npc.name, nx + 6, ny + 3);
     });
+    // Death packs (your dropped gear)
+    (state.objects||[]).forEach(o => {
+      if (o.type !== 'death_pack') return;
+      const dx = (o.x/TSIZE)*sX, dy = (o.y/TSIZE)*sY;
+      mctx.fillStyle = '#ff4400';
+      mctx.fillRect(dx - 4, dy - 4, 8, 8);
+      mctx.strokeStyle = '#fff'; mctx.lineWidth = 1;
+      mctx.strokeRect(dx - 4, dy - 4, 8, 8);
+      mctx.fillStyle = '#ff4400';
+      mctx.font = 'bold 9px Lato';
+      mctx.fillText('PACK', dx + 6, dy + 3);
+    });
     // Volcano marker
     mctx.fillStyle = '#ff4400';
     mctx.beginPath(); mctx.arc(75*sX, 39*sY, 6, 0, Math.PI*2); mctx.fill();
@@ -747,6 +759,7 @@ canvas#c{pointer-events:none}
 <div id="craft-panel">
   <span class="close-x" onclick="document.getElementById('craft-panel').style.display='none'">&#10005;</span>
   <div class="panel-title">&#9874; WORKBENCH</div>
+  <input id="craft-search" type="text" placeholder="Search recipes..." style="width:calc(100% - 16px);margin:6px 8px;padding:6px 10px;background:#0f0805;color:#e8d49a;border:1px solid #6a4818;border-radius:4px;font-family:'Lato',sans-serif;font-size:11px;outline:none">
   <div id="craft-list"></div>
 </div>
 
@@ -6789,10 +6802,10 @@ function updatePlayer() {
     }
   }
 
-  // Stamina — sprinting actually costs, and regen is slow enough that it matters.
-  if (sprinting && moving) p.stamina = Math.max(0, p.stamina - 0.8);
-  else if (moving) p.stamina = Math.min(p.maxStamina, p.stamina + 0.10);   // slow regen while walking
-  else p.stamina = Math.min(p.maxStamina, p.stamina + 0.22);                // faster regen standing still
+  // Stamina — sprinting actually costs. ~4-5 sec full sprint, regen ~3 sec standing.
+  if (sprinting && moving) p.stamina = Math.max(0, p.stamina - 0.45);
+  else if (moving) p.stamina = Math.min(p.maxStamina, p.stamina + 0.18);
+  else p.stamina = Math.min(p.maxStamina, p.stamina + 0.55);
 
   // Walk animation
   if (moving) {
@@ -8704,6 +8717,14 @@ function renderCraftMenu() {
   list.innerHTML = '';
   const p = state.player;
   const hasForge = state.objects.some(o=>o.placed&&o.type==='forge');
+  // Search filter
+  const searchEl = document.getElementById('craft-search');
+  const searchQ = searchEl ? (searchEl.value || '').toLowerCase().trim() : '';
+  // Wire input handler once
+  if (searchEl && !searchEl._wired) {
+    searchEl._wired = true;
+    searchEl.addEventListener('input', () => renderCraftMenu());
+  }
 
   // Journal header (worn paper aesthetic)
   const journalHdr = document.createElement('div');
@@ -8724,6 +8745,11 @@ function renderCraftMenu() {
     if (item.needsChief && !p.chiefDefeated) return;
     const tier = item.requiredTier || 0;
     if (tier > state.craftingTier) return;
+    // Search filter — match label, id, or any cost ingredient name
+    if (searchQ) {
+      const hay = (item.label + ' ' + item.id + ' ' + Object.keys(item.cost||{}).join(' ')).toLowerCase();
+      if (!hay.includes(searchQ)) return;
+    }
 
     const discovered = state.discoveredRecipes && state.discoveredRecipes.has(item.id);
 
@@ -9031,8 +9057,10 @@ function startDialogue(npc) {
   } else if (line._onShow === 'spawnTutorialRocks' && !line._fired) {
     line._fired = true;
     const p2 = state.player;
-    for (let ti = 0; ti < 2; ti++) {
-      state.objects.push({type:'rock', x:p2.x + (ti*24 - 12) + Math.random()*8, y:p2.y + 32 + Math.random()*8, hp:4, maxHp:4});
+    // Spawn PEBBLES (bare-hand stone), not full rocks — player can't mine rocks without
+    // a pickaxe, and crafting a pickaxe requires stone. Tutorial gives them what they need.
+    for (let ti = 0; ti < 5; ti++) {
+      state.objects.push({type:'pebble', x:p2.x + (ti*16 - 32) + Math.random()*8, y:p2.y + 32 + Math.random()*12, collected:false});
     }
   }
 }
@@ -9822,20 +9850,30 @@ function drawPlacedObject(ctx, obj, sx, sy) {
       px(ctx, '#8B6914', sx-10, sy-2, 20, 12);
       px(ctx, '#fff', sx-8, sy-6, 16, 8);
       px(ctx, '#c8a060', sx-12, sy-4, 6, 8);
-      // PRESS E TO SLEEP prompt when the player is close
+      // PRESS L TO SLEEP prompt when the player is close. Shows cooldown if recently slept.
       if (state.player) {
         const _dx = (sx + state.cam.x) - state.player.x;
         const _dy = (sy + state.cam.y) - state.player.y;
         if (Math.hypot(_dx, _dy) < 50) {
           const pulse = 0.6 + 0.4 * Math.sin(state.frameCount * 0.12);
+          let label = 'L — SLEEP TILL DAWN', color = '#c8f135';
+          if (state._lastSleepFrame !== undefined) {
+            const cooldown = Math.floor((state.DAY_FRAMES || 14400) / 2);
+            const elapsed = state.frameCount - state._lastSleepFrame;
+            if (elapsed < cooldown) {
+              const remainSec = Math.ceil((cooldown - elapsed) / 60);
+              label = 'NOT TIRED YET (~' + remainSec + 's)';
+              color = '#888';
+            }
+          }
           ctx.save();
           ctx.globalAlpha = pulse;
           ctx.fillStyle = 'rgba(0,0,0,0.85)';
-          ctx.fillRect(sx - 48, sy - 24, 96, 14);
-          ctx.fillStyle = '#c8f135';
+          ctx.fillRect(sx - 64, sy - 24, 128, 14);
+          ctx.fillStyle = color;
           ctx.font = 'bold 9px Lato, sans-serif';
           ctx.textAlign = 'center';
-          ctx.fillText('L — SLEEP TILL DAWN', sx, sy - 14);
+          ctx.fillText(label, sx, sy - 14);
           ctx.textAlign = 'left';
           ctx.restore();
         }
@@ -9969,16 +10007,28 @@ function drawMinimap(minimapCtx) {
       }
     });
   }
-  // Pulsing quest-target dot for the NPC the player is supposed to find next.
-  // Highlights Kona once Oonga's "find_kona" quest is active, until you've talked to him.
+  // Pulsing quest-target dots for whichever NPC the player should find next.
+  // Cycles based on progression: Oonga → Kona → Mara → Felix → volcano → chief.
   {
     const oonga = state.npcs.find(n => n.id === 'oonga');
     const kona  = state.npcs.find(n => n.id === 'kona');
-    const shouldShowKona = kona && oonga && (oonga._lineIdx||0) >= 1 && (kona._lineIdx||0) === 0;
-    if (shouldShowKona) {
-      const pulse = (state.frameCount % 60) < 30;
-      mc.fillStyle = pulse ? '#ffcc40' : '#c87050';
-      mc.fillRect(kona.x/TSIZE*scale-2, kona.y/TSIZE*scale-2, 5, 5);
+    const mara  = state.npcs.find(n => n.id === 'mara');
+    const felix = state.npcs.find(n => n.id === 'felix');
+    const sc = state.storyChoices || {};
+    const pulse = (state.frameCount % 60) < 30;
+    let target = null, color = '#ffcc40';
+    if (oonga && (oonga._lineIdx||0) === 0) { target = oonga; color = '#c8f135'; }
+    else if (kona && (kona._lineIdx||0) === 0) { target = kona; color = '#ffcc40'; }
+    else if (state.zoneUnlocked < 2 && mara && !mara.quest.done) { target = mara; color = '#cc4422'; }
+    else if (state.zoneUnlocked < 3 && felix && !sc.felixDone) { target = felix; color = '#7ca0b0'; }
+    if (target) {
+      mc.fillStyle = pulse ? color : '#444';
+      mc.fillRect(target.x/TSIZE*scale-3, target.y/TSIZE*scale-3, 7, 7);
+    }
+    // Volcano marker once zone 3 unlocked, until chief defeated
+    if (state.zoneUnlocked >= 3 && !state.player.chiefDefeated) {
+      mc.fillStyle = pulse ? '#ff4400' : '#cc2200';
+      mc.fillRect(75*scale-3, 39*scale-3, 7, 7);
     }
   }
   // Raid warriors on minimap
@@ -10017,6 +10067,70 @@ function drawMinimap(minimapCtx) {
 }
 
 
+// Screen-edge arrow pointing to current objective target when off-screen.
+function drawObjectiveArrow(ctx) {
+  if (!state.running || state.cutscenePlaying || state.dialogue || state.minigame || state.paused) return;
+  const p = state.player;
+  // Determine target
+  const oonga = state.npcs.find(n => n.id === 'oonga');
+  const kona  = state.npcs.find(n => n.id === 'kona');
+  const mara  = state.npcs.find(n => n.id === 'mara');
+  const felix = state.npcs.find(n => n.id === 'felix');
+  const sc = state.storyChoices || {};
+  let target = null, color = '#ffcc40', label = '';
+  if (oonga && (oonga._lineIdx||0) === 0) { target = oonga; color = '#c8f135'; label = 'OONGA'; }
+  else if (kona && (kona._lineIdx||0) === 0 && state.zoneUnlocked >= 1) { target = kona; color = '#ffcc40'; label = 'KONA'; }
+  else if (state.zoneUnlocked < 2 && mara && mara.quest && !mara.quest.done) { target = mara; color = '#cc4422'; label = 'MARA'; }
+  else if (state.zoneUnlocked < 3 && felix && !sc.felixDone) { target = felix; color = '#7ca0b0'; label = 'FELIX'; }
+  else if (state.zoneUnlocked >= 3 && !state.player.chiefDefeated) { target = { x: 75*TSIZE, y: 39*TSIZE }; color = '#ff4400'; label = 'VOLCANO'; }
+  if (!target) return;
+  // Convert to screen coords
+  const cw = ctx.canvas.width, ch = ctx.canvas.height;
+  const tsx = target.x - state.cam.x;
+  const tsy = target.y - state.cam.y;
+  // If on screen, no arrow
+  if (tsx >= 40 && tsx <= cw - 40 && tsy >= 40 && tsy <= ch - 40) return;
+  // Compute angle from center to target
+  const dx = tsx - cw/2, dy = tsy - ch/2;
+  const ang = Math.atan2(dy, dx);
+  // Clamp position to a rect just inside the edges
+  const margin = 50;
+  const maxX = cw/2 - margin, maxY = ch/2 - margin;
+  const t = Math.min(maxX / Math.abs(Math.cos(ang) || 0.0001), maxY / Math.abs(Math.sin(ang) || 0.0001));
+  const ax = cw/2 + Math.cos(ang) * t;
+  const ay = ch/2 + Math.sin(ang) * t;
+  // Draw arrow
+  ctx.save();
+  ctx.translate(ax, ay);
+  ctx.rotate(ang);
+  const pulse = 0.6 + 0.4 * Math.sin(state.frameCount * 0.15);
+  ctx.globalAlpha = pulse;
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(18, 0);
+  ctx.lineTo(-12, -12);
+  ctx.lineTo(-6, 0);
+  ctx.lineTo(-12, 12);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.restore();
+  // Label next to arrow (not rotated)
+  ctx.save();
+  ctx.globalAlpha = pulse;
+  ctx.font = 'bold 10px Lato, sans-serif';
+  ctx.fillStyle = color;
+  ctx.textAlign = 'center';
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 3;
+  ctx.strokeText(label, ax, ay + 28);
+  ctx.fillText(label, ax, ay + 28);
+  ctx.textAlign = 'left';
+  ctx.restore();
+}
+
 function drawGuide(ctx) {
   if (!state.running || state.cutscenePlaying) return;
   // Don't compete with dialogue, build menu, minigames, or pause — the player is busy.
@@ -10024,17 +10138,40 @@ function drawGuide(ctx) {
   const p = state.player;
   let msg = null;
 
-  // Determine what the player should do next
+  // Determine what the player should do next — a full progression guide.
+  const oonga = state.npcs.find(n => n.id === 'oonga');
+  const kona  = state.npcs.find(n => n.id === 'kona');
+  const mara  = state.npcs.find(n => n.id === 'mara');
+  const felix = state.npcs.find(n => n.id === 'felix');
+  const sc = state.storyChoices || {};
   if ((p.inv.wood||0) === 0 && (p.inv.driftwood||0) === 0) {
-    msg = ["STEP 1", "Click the brown logs", "on the beach to get wood"];
+    msg = ["STEP 1", "Pick up DRIFTWOOD on the beach", "Press E when the white outline shows"];
   } else if ((p.inv.stone||0) < 2) {
-    msg = ["STEP 2", "Pick up small PEBBLES on the beach", "(rocks need a pickaxe)"];
+    msg = ["STEP 2", "Pick up PEBBLES on the beach", "(grey dots — rocks need a pickaxe)"];
   } else if ((p.inv.axe||0) === 0 && (p.inv.pickaxe||0) === 0) {
-    msg = ["STEP 3", "Press C to open crafting", "Make a Stone Axe (2W+2S)"];
+    msg = ["STEP 3", "Press C to open crafting", "Make a STONE AXE (2 wood + 2 stone)"];
   } else if ((p.inv.axe||0) > 0 && state.activeSlot !== 1 && state.day <= 2) {
-    msg = ["TIP", "Press 1 to equip your AXE", "Then click a tree"];
+    msg = ["TIP", "Press 1 to equip your AXE", "Then click a tree to chop"];
+  } else if (oonga && (oonga._lineIdx||0) < 1) {
+    msg = ["NEXT", "Talk to OONGA on the beach", "Press E next to him"];
   } else if (state.zoneUnlocked < 1) {
-    msg = ["NEXT", "Talk to OONGA", "Press E near him"];
+    msg = ["NEXT", "Finish talking to OONGA", "Press E to advance dialogue"];
+  } else if ((p.inv.pickaxe||0) === 0 && (p.inv.obsidian_pickaxe||0) === 0) {
+    msg = ["STEP 4", "Craft a PICKAXE (3 wood + 4 stone)", "Mine rocks for stone, chop trees for wood"];
+  } else if (kona && (kona._lineIdx||0) === 0) {
+    msg = ["QUEST", "Find ELDER KONA in the far WEST jungle", "Yellow dot on the minimap"];
+  } else if (state.zoneUnlocked < 2 && mara && !mara.quest.done) {
+    msg = ["QUEST", "Find MARA — a tribal child needs rescuing", "Check the inner jungle"];
+  } else if (state.zoneUnlocked < 3 && felix && !sc.felixDone) {
+    msg = ["QUEST", "Find FELIX on the WEST beach", "He needs 5 volcanic stone for his lifeboat"];
+  } else if (state.zoneUnlocked < 3) {
+    msg = ["NEXT", "Approach the VOLCANO", "Open the third zone"];
+  } else if (!state.player.chiefDefeated && state.day < 15) {
+    msg = ["WAIT", "The TRIBAL CHIEF arrives on day 15", "Stock up on weapons, food, healing"];
+  } else if (!state.player.chiefDefeated) {
+    msg = ["BOSS", "Defeat the TRIBAL CHIEF", "Drops the chief's mask — needed for the yacht"];
+  } else if ((p.inv.wood||0) < 25 || (p.inv.stone||0) < 10 || (p.inv.raft||0) < 1) {
+    msg = ["ESCAPE", "Craft the SUPERYACHT (25 wood + 10 stone + 1 raft)", "Open C — it's at the bottom of the list"];
   }
 
   if (!msg) return;
@@ -11893,7 +12030,7 @@ function render(ctx, minimapCtx) {
       if (!keepKeys.includes(k)) p.inv[k] = 0;
     }
     const tileX = Math.floor(p.x/TSIZE), tileY = Math.floor(p.y/TSIZE);
-    showMsg(`YOU COLLAPSED. YOUR PACK DROPPED AT [${tileX},${tileY}]. Recover it or lose everything.`, '#ff4444');
+    showMsg(`YOU COLLAPSED. PACK DROPPED AT [${tileX},${tileY}]. Walk back to it to reclaim everything. (TAB → Map shows the spot.)`, '#ff4444');
   }
   if (state.collapsing) {
     state.collapseTimer++;
@@ -12112,6 +12249,7 @@ function render(ctx, minimapCtx) {
 
   // World map overlay (M key) and tutorial guide — drawn outside zoom transform
   drawWorldMap(ctx);
+  drawObjectiveArrow(ctx);
   drawGuide(ctx);
 
   // HUD hotbar icons overlay (draw pixel icons on canvas)
@@ -12400,8 +12538,8 @@ function updateDayNight() {
     state.day++;
     document.getElementById('day-display').textContent = `DAY ${state.day}`;
     fireDayMilestone(state.day);
-    // Auto-save once per day so progress isn't lost mid-run.
-    try { saveGame(); } catch(e){_logError('autosave',e);}
+    // Auto-save once per day so progress isn't lost mid-run. (Silent.)
+    try { saveGame(true); } catch(e){_logError('autosave',e);}
 
     // === LIVING ISLAND: advance weather forecast per day ===
     state.weatherForecastDayCount = (state.weatherForecastDayCount || 0) + 1;
@@ -15022,7 +15160,7 @@ window.replayTutorial = replayTutorial;
 const SAVE_VERSION = 1;
 const SAVE_KEY = 'island_save_v1';
 
-function saveGame() {
+function saveGame(silent) {
   try {
     // Strip companions of their cached follow target (it'll re-resolve on load)
     const npcsLite = (state.npcs || []).map(n => ({
@@ -15092,7 +15230,8 @@ function saveGame() {
       unlockedAchievements: [...(state.unlockedAchievements || [])],
     };
     localStorage.setItem(SAVE_KEY, JSON.stringify(blob));
-    showMsg('GAME SAVED.', '#c8f135');
+    if (!silent) showMsg('GAME SAVED.', '#c8f135');
+    else showMsg('Auto-saved.', '#666');
     return true;
   } catch (e) {
     _logError('saveGame', e);
@@ -15388,15 +15527,43 @@ function updateUI() {
     }
   }
 
-  // Day/night clock icon
+  // Day/night clock face — reads like a sundial. 12 positions, sun rotates around it.
   const timeEl = document.getElementById('time-icon');
   if (timeEl) {
     const dt = state.dayTime;
-    timeEl.textContent = (dt >= 0.1 && dt <= 0.65) ? 'DAY' : 'NIGHT';
-    timeEl.style.color = (dt >= 0.1 && dt <= 0.65) ? '#e8d49a' : '#a0b0cc';
-    timeEl.style.fontSize = '11px';
-    timeEl.style.letterSpacing = '2px';
+    // Convert 0-1 dayTime to a 12-hour clock face position.
+    // dawn ~0.10, noon ~0.38, dusk ~0.65, midnight ~0.88.
+    const positions = ['▖','▗','▘','▙','▚','▛','▜','▝','▞','▟','▀','▄'];
+    // Simpler: pick an emoji-free sun/moon glyph based on time
+    const isDay = dt >= 0.1 && dt <= 0.65;
+    // Phase symbol: rises in morning, peak at noon, sets evening, moon at night
+    let glyph = '°';
+    if (dt < 0.1) glyph = '··';        // pre-dawn dark
+    else if (dt < 0.20) glyph = '/°';   // dawn rising
+    else if (dt < 0.32) glyph = '/';     // morning
+    else if (dt < 0.45) glyph = '°';      // noon
+    else if (dt < 0.55) glyph = '\\';    // afternoon
+    else if (dt < 0.65) glyph = '\\°';  // dusk
+    else if (dt < 0.75) glyph = ')';     // crescent rising
+    else if (dt < 0.90) glyph = 'O';     // full moon
+    else glyph = '(';                    // crescent setting
+    // Hours remaining to next phase boundary
+    const dayF = state.DAY_FRAMES || 14400;
+    const framesToNextPhase = (() => {
+      // dawn 0.10, noon 0.38, dusk 0.65, midnight 0.88
+      const phases = [0.10, 0.38, 0.65, 0.88, 1.10];
+      for (const ph of phases) if (ph > dt) return Math.round((ph - dt) * dayF / 60);
+      return 0;
+    })();
+    const phaseLabel = isDay
+      ? (dt < 0.38 ? 'MORNING' : dt < 0.55 ? 'NOON' : 'AFTERNOON')
+      : (dt < 0.75 ? 'EVENING' : dt < 0.90 ? 'NIGHT' : 'LATE NIGHT');
+    timeEl.textContent = glyph + ' ' + phaseLabel;
+    timeEl.style.color = isDay ? '#e8d49a' : '#a0b0cc';
+    timeEl.style.fontSize = '10px';
+    timeEl.style.letterSpacing = '1px';
     timeEl.style.fontFamily = "'Lato', sans-serif";
+    timeEl.title = framesToNextPhase + 's until next phase';
   }
 
 }
