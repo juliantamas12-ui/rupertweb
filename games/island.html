@@ -7232,6 +7232,26 @@ function handleInteract() {
         return;
       }
     }
+    // Tribal fire (village center) — rest action when standing nearby
+    if (obj.type === 'tribal_fire') {
+      const d = Math.hypot(p.x-obj.x, p.y-obj.y);
+      if (d < reach) {
+        // Hostile village (warriors alive, no peace): warning only
+        const aliveGuards = state.enemies.filter(en => en.villageGuard && en.type !== 'priest').length;
+        if (!state.peaceAchieved && aliveGuards > 0) {
+          showMsg('The warriors watch you closely. You\'re not welcome here yet.', '#cc4422');
+          return;
+        }
+        // Peace achieved OR all guards dead: rest + heal
+        p.hp = Math.min(p.maxHp, p.hp + 40);
+        p.food = Math.min(p.maxFood, p.food + 20);
+        p.water = Math.min(p.maxWater, p.water + 20);
+        showMsg('You rest by the tribal fire. +40 HP, +20 food, +20 water.', '#ffcc40');
+        spawnParticles(p.x, p.y - 8, '#ffcc40', 6);
+        SFX.pickup && SFX.pickup();
+        return;
+      }
+    }
     // Campfire cook
     if (obj.placed && obj.type === 'campfire') {
       const d = Math.hypot(p.x-obj.x, p.y-obj.y);
@@ -13427,6 +13447,48 @@ function claimBountyReward(def) {
 // ============================================================
 function updateWorldEvents() {
   const p = state.player;
+
+  // === VILLAGE GUARD RESPAWN ===
+  // If all the original village guards are dead (and you're not at peace), respawn them
+  // after a few in-game days so the village doesn't become a ghost town.
+  if (!state.peaceAchieved && state.frameCount % 300 === 0) {
+    const guards = state.enemies.filter(e => e.villageGuard && e.type !== 'priest');
+    if (guards.length === 0) {
+      if (state._villageRespawnAt === undefined) {
+        state._villageRespawnAt = state.frameCount + (state.DAY_FRAMES || 14400) * 3;
+        showMsg('The village mourns its fallen. They will rebuild.', '#888');
+      } else if (state.frameCount >= state._villageRespawnAt) {
+        const villageSpawns = [{x:103,y:56},{x:106,y:55},{x:107,y:58},{x:104,y:58}];
+        villageSpawns.forEach((vs, idx) => {
+          state.enemies.push({
+            type:'shadow', x:vs.x*TSIZE, y:vs.y*TSIZE, hp:37, maxHp:37, spd:1.1,
+            attackTimer:0, walkTimer:0, patrolTarget:{x:vs.x*TSIZE,y:vs.y*TSIZE},
+            fleeing:false, fleeTimer:0, scatterTimer:0, flankOffset:{x:0,y:0},
+            villageGuard:true, respawnTimer:0,
+            name: (state.enemyNames && state.enemyNames[idx % state.enemyNames.length]) || ('Warrior ' + (idx+1)),
+            bribable: idx === 0
+          });
+        });
+        // Also restore priest if missing
+        const priestExists = state.enemies.some(e => e.type === 'priest');
+        if (!priestExists) {
+          state.enemies.push({
+            type:'priest', x:104*TSIZE, y:57*TSIZE,
+            hp:40, maxHp:40, spd:0.3,
+            attackTimer:0, walkTimer:0,
+            patrolTarget:{x:104*TSIZE, y:57*TSIZE},
+            fleeing:false, fleeTimer:0, scatterTimer:0,
+            flankOffset:{x:0,y:0}, villageGuard:true, respawnTimer:0,
+            healTimer:0, name:'Kahu'
+          });
+        }
+        state._villageRespawnAt = undefined;
+        showMsg('NEW WARRIORS HAVE RISEN AT THE TRIBAL VILLAGE.', '#cc4422');
+      }
+    } else {
+      state._villageRespawnAt = undefined;
+    }
+  }
 
   // === WATCHTOWER ENEMY-PROXIMITY ALERTS ===
   // Every 5 seconds, scan: if any enemy is within 350px of any placed watchtower, broadcast a warning.
