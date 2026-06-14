@@ -809,6 +809,10 @@ const TILE_COLORS = {
 };
 
 // Game state
+// Exposed on `window` (below) so the Journal v2 IIFE — which lives in a
+// separate <script> block and therefore can't see this top-level `const` —
+// can find the live state object. Without this the Journal renders
+// "Game not loaded." forever.
 const state = {
   running: false, paused: false, showControls: false, showMap: false, lastDamageCause: '',
   playerName: 'SURVIVOR',
@@ -1094,6 +1098,10 @@ const state = {
   boardingTarget: null, // canoe being boarded
   groundLoot: [],       // {x, y, item, qty, life, bobPhase}
 };
+
+// Expose state on window so cross-script-block code (Journal v2 IIFE,
+// future devtools helpers) can reach the live game state.
+try { window.state = state; } catch (e) {}
 
 // NPC definitions
 const NPC_DATA = [
