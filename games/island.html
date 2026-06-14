@@ -13,8 +13,10 @@
 }
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#0a1a06;overflow:hidden;position:fixed;width:100%;height:100%;font-family:'Lato',sans-serif;letter-spacing:0.5px;user-select:none;font-size:12px;touch-action:none}
-canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;position:fixed;top:0;left:0;z-index:1}
-canvas#c{pointer-events:none}
+/* Main game canvas only — don't let position:fixed leak to in-panel canvases (journal map etc.) */
+canvas#c{display:block;image-rendering:pixelated;image-rendering:crisp-edges;position:fixed;top:0;left:0;z-index:1;pointer-events:none}
+/* Other canvases (minimap, yacht preview, journal map, ...) keep their own positioning */
+canvas:not(#c){display:block;image-rendering:pixelated;image-rendering:crisp-edges}
 
 /* ── TOP UI — PREMIUM REDESIGN ── */
 #ui{position:fixed;top:0;left:0;right:0;padding:10px 14px;pointer-events:none;z-index:50;display:flex;justify-content:space-between;align-items:flex-start}
@@ -598,7 +600,7 @@ canvas#c{pointer-events:none}
     }
     const c = document.createElement('canvas');
     c.width = 720; c.height = 480;
-    c.style.cssText = 'display:block;margin:0 auto;background:#0a0805;border:1px solid #6a4818;image-rendering:pixelated;max-width:100%';
+    c.style.cssText = 'display:block;margin:0 auto;background:#0a0805;border:1px solid #6a4818;image-rendering:pixelated;max-width:100%;height:auto';
     const mctx = c.getContext('2d');
     const M = (typeof MSIZE !== 'undefined') ? MSIZE : 150;
     const sX = c.width / M, sY = c.height / M;
