@@ -6777,11 +6777,16 @@ function updatePlayer() {
   }
 
   // ── ZONE GATES ──
+  // Surface-only. The cave uses its own 30-tile map at the same coord origin,
+  // so without this guard cave tile y < 72 trips Gate 1 and slams the player
+  // back to surface tile 72 (= 1152 px) the frame after enterCave().
   const ptx = Math.floor(p.x / TSIZE);
   const pty = Math.floor(p.y / TSIZE);
   const gateMsg = (state._gateMsg || 0);
   const canShowGateMsg = gateMsg <= 0;
-
+  if (state.underground) {
+    // Cave handles its own walls + entrance/exit; skip surface gates entirely.
+  } else
   // Gate 1: Jungle wall - can't enter until Oonga quest done
   if (pty < 72 && state.zoneUnlocked < 1) {
     p.y = 72 * TSIZE;
