@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Sunday Afternoon at the Plaza Hotel on 22 September 1985 When James Baker Engineered the World's Largest Currency Devaluation in a Ballroom and Accidentally Created Japan's Lost Decade",
+    date: "2026-06-14",
+    category: "Economics",
+    excerpt: "On the afternoon of Sunday, 22 September 1985, in the gold-leaf ballroom of the Plaza Hotel on Fifth Avenue in New York, the finance ministers and central bank governors of the United States, Japan, West Germany, France, and the United Kingdom signed a one-page communiqué declaring that 'some further orderly appreciation of the main non-dollar currencies against the dollar is desirable.' The phrasing was bureaucratic. The intent was a coordinated devaluation of the United States dollar against the Japanese yen and the West German Deutsche mark on a scale unprecedented in the history of floating exchange rates. The meeting had been convened over a single weekend by the new United States Treasury Secretary, James A. Baker III, who had taken office only seven months earlier in the second-term reshuffle of the Reagan administration. By the Tokyo open the next morning the yen had moved from 240 to the dollar to roughly 230. Within thirty months it touched 121. The standard account treats Plaza as a triumph of international economic coordination. But the price of that success, paid not by the United States but by Japan, was the destruction of the Japanese economic model and the thirty-year deflationary depression that the Japanese now call ushinawareta sanjūnen — the lost three decades...",
+    url: "essays/2026-06-14-the-sunday-afternoon-at-the-plaza-hotel-on-22-september-1985-when-james-baker-engineered-the-worlds-largest-currency-devaluation-in-a-ballroom-and-accidentally-created-japans-lost-decade.html"
+  },
+  {
     title: "The Morning of 20 July 1936 at Estoril When General Sanjurjo's Suitcase Killed Him and Made Franco the Caudillo of Spain by Default",
     date: "2026-06-13",
     category: "History",
