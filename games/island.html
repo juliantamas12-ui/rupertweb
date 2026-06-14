@@ -10903,6 +10903,11 @@ function render(ctx, minimapCtx) {
     }
   });
 
+  // --- Depth-sorted entity rendering ---
+  // Declared before placed-objects push so the TDZ doesn't crash the render loop
+  // the moment the player builds their first structure.
+  const drawList = [];
+
   // Placed objects — push into drawList so they sort by Y with the player.
   // (Was drawn before the sort, which meant walls always rendered behind the player.)
   _getPlacedObjects().forEach(obj => {
@@ -10929,9 +10934,6 @@ function render(ctx, minimapCtx) {
 
   // Projectiles
   drawProjectiles(ctx, camX, camY);
-
-  // --- Depth-sorted entity rendering ---
-  const drawList = [];
 
   // World objects (non-placed, already filtered above for shadow ellipses)
   // We draw the objects again here in sorted order, skip the old forEach above for world objects
