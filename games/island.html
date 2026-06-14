@@ -10583,7 +10583,7 @@ function render(ctx, minimapCtx) {
     drawMinigame(ctx);
     drawDialogue(ctx);
     drawMsgs(ctx);
-    drawHotbarIcons(ctx);
+    // Canvas hotbar removed — DOM #hotbar handles slots + durability bars now.
     return;
   }
 
@@ -12277,8 +12277,7 @@ function render(ctx, minimapCtx) {
   drawObjectiveArrow(ctx);
   drawGuide(ctx);
 
-  // HUD hotbar icons overlay (draw pixel icons on canvas)
-  drawHotbarIcons(ctx);
+  // Canvas hotbar removed — DOM #hotbar handles slots + durability bars now.
 
   // === COMPANION PORTRAITS (bottom-left) ===
   drawCompanionPortraits(ctx);
@@ -15581,24 +15580,51 @@ function updateUI() {
         else if (slot.id === 'stone_knife') ec.textContent = (p.knifeThrows||6)+' left';
         else ec.textContent = '';
       }
-      // Durability color
+      // Durability color + bar
+      // Values match the player init in Script 0 (toolDurability + durabilityMax in drawHotbarIcons).
+      // The earlier table used half the real maxima, so pct was >1 forever and the bar/colour never moved.
       if (hs) {
         const dur = p.toolDurability ? p.toolDurability[slot.id] : undefined;
-        const maxDur = {axe:20,pickaxe:15,sword:25,spear:20,fire_axe:20,fire_spear:15,stone_knife:10,bow:30};
+        const maxDur = {axe:40, pickaxe:30, sword:60, spear:50, fire_axe:40, fire_spear:35, stone_knife:20, bow:60, lava_blade:60, depth_spear:50};
         let durColor = '';
+        let pct = 1;
         if (dur !== undefined && maxDur[slot.id]) {
-          const pct = dur / maxDur[slot.id];
+          pct = Math.max(0, Math.min(1, dur / maxDur[slot.id]));
           if (pct <= 0.2) durColor = '#cc2222';
           else if (pct <= 0.5) durColor = '#ccaa00';
         }
         hs.style.borderColor = isActive ? '#d4a020' : (durColor || '');
         hs.style.background = isActive ? 'rgba(212,160,32,0.18)' : '';
         hs.style.boxShadow = isActive ? '0 0 14px rgba(212,160,32,0.6),inset 0 0 6px rgba(212,160,32,0.25)' : '';
+
+        // Inline durability bar at bottom of slot (only for tools that track durability)
+        let durBar = hs.querySelector('.hdur');
+        if (maxDur[slot.id] && dur !== undefined) {
+          if (!durBar) {
+            durBar = document.createElement('div');
+            durBar.className = 'hdur';
+            durBar.style.cssText = 'position:absolute;left:4px;right:4px;bottom:3px;height:3px;background:rgba(0,0,0,0.55);border-radius:2px;overflow:hidden;pointer-events:none';
+            const fill = document.createElement('div');
+            fill.className = 'hdurfill';
+            fill.style.cssText = 'height:100%;width:100%;transition:width 0.2s,background 0.2s';
+            durBar.appendChild(fill);
+            hs.appendChild(durBar);
+          }
+          const fill = durBar.firstChild;
+          fill.style.width = (pct * 100).toFixed(1) + '%';
+          fill.style.background = pct > 0.5 ? '#44cc44' : pct > 0.2 ? '#ccaa00' : '#cc2222';
+          durBar.style.display = '';
+        } else if (durBar) {
+          durBar.style.display = 'none';
+        }
       }
     } else {
       el.textContent = '-';
       if (ec) ec.textContent = '';
-      if (hs) { hs.style.borderColor = ''; hs.style.background = ''; hs.style.boxShadow = ''; }
+      if (hs) {
+        hs.style.borderColor = ''; hs.style.background = ''; hs.style.boxShadow = '';
+        const durBar = hs.querySelector('.hdur'); if (durBar) durBar.style.display = 'none';
+      }
     }
   }
 
