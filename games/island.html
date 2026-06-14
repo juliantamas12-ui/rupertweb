@@ -438,6 +438,8 @@ canvas:not(#c){display:block;image-rendering:pixelated;image-rendering:crisp-edg
 
   function setTab(t) {
     activeTab = t;
+    // Clear hotbar-editor selection when leaving PACK so it doesn't dangle.
+    if (t !== 'pack' && typeof hotbarEditor !== 'undefined') hotbarEditor.selected = null;
     // Highlight tab
     panel.querySelectorAll('[data-tab]').forEach(el => {
       const active = el.dataset.tab === t;
@@ -472,7 +474,82 @@ canvas:not(#c){display:block;image-rendering:pixelated;image-rendering:crisp-edg
     else if (activeTab === 'help') renderHelp(p);
   }
 
+  // Hotbar editor state: persists across re-renders of the PACK tab so the
+  // user can pick an item then click a slot without losing the selection.
+  const hotbarEditor = { selected: null };
   function renderPack(p) {
+    // === HOTBAR EDITOR ===
+    const ELIGIBLE = window.HOTBAR_ELIGIBLE || {};
+    const layout = state.hotbarLayout || [null,null,null,null,null,null];
+    const resolved = (typeof window.getResolvedHotbar === 'function') ? window.getResolvedHotbar() : layout.slice();
+    const editor = hotbarEditor;
+
+    const hotHdr = document.createElement('div');
+    hotHdr.textContent = 'HOTBAR — click a slot to clear, click an item below to assign';
+    hotHdr.style.cssText = "color:#c8a060;font-family:'Cinzel',serif;letter-spacing:2px;font-size:13px;margin-bottom:8px";
+    body.appendChild(hotHdr);
+
+    const hotRow = document.createElement('div');
+    hotRow.style.cssText = 'display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:14px';
+    function refresh() { body.innerHTML = ''; renderPack(p); }
+
+    for (let i = 0; i < 6; i++) {
+      const id = resolved[i];
+      const bound = layout[i]; // explicitly bound (vs auto-filled)
+      const cell = document.createElement('div');
+      const isTargeting = editor.selected !== null;
+      cell.style.cssText = 'background:#1a1208;border:2px solid ' + (isTargeting ? '#c8f135' : (bound ? '#c8a060' : '#3a2810')) +
+        ';border-radius:6px;padding:6px 4px;text-align:center;cursor:pointer;min-height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative';
+      const slotNum = document.createElement('div');
+      slotNum.textContent = (i+1);
+      slotNum.style.cssText = 'position:absolute;top:3px;left:5px;color:#8a7030;font-size:9px;font-family:Courier New';
+      cell.appendChild(slotNum);
+      if (id) {
+        const c = document.createElement('canvas');
+        c.width = 28; c.height = 28;
+        c.style.cssText = 'image-rendering:pixelated;display:block';
+        try { if (typeof drawItemIcon === 'function') drawItemIcon(c.getContext('2d'), id, 0, 0, 28); } catch(_){}
+        cell.appendChild(c);
+        const lbl = document.createElement('div');
+        lbl.textContent = (ELIGIBLE[id] && ELIGIBLE[id].label) || id.replace(/_/g,' ').toUpperCase();
+        lbl.style.cssText = 'color:#a08040;font-size:8px;line-height:1.1;margin-top:2px';
+        cell.appendChild(lbl);
+        if (!bound) {
+          const auto = document.createElement('div');
+          auto.textContent = 'auto';
+          auto.style.cssText = 'position:absolute;top:3px;right:5px;color:#6a4818;font-size:8px;font-style:italic';
+          cell.appendChild(auto);
+        }
+      } else {
+        const empty = document.createElement('div');
+        empty.textContent = isTargeting ? 'place here' : 'empty';
+        empty.style.cssText = 'color:' + (isTargeting ? '#c8f135' : '#5a3a20') + ';font-size:9px;font-style:italic';
+        cell.appendChild(empty);
+      }
+      cell.onclick = () => {
+        if (editor.selected) {
+          // Place selected item into this slot. If already bound elsewhere, unbind there.
+          for (let j = 0; j < 6; j++) if (layout[j] === editor.selected) layout[j] = null;
+          layout[i] = editor.selected;
+          state.hotbarLayout = layout;
+          if (typeof window.saveHotbarLayout === 'function') window.saveHotbarLayout();
+          editor.selected = null;
+          if (typeof updateUI === 'function') updateUI();
+          refresh();
+        } else if (bound) {
+          // Click bound slot to clear binding
+          layout[i] = null;
+          state.hotbarLayout = layout;
+          if (typeof window.saveHotbarLayout === 'function') window.saveHotbarLayout();
+          if (typeof updateUI === 'function') updateUI();
+          refresh();
+        }
+      };
+      hotRow.appendChild(cell);
+    }
+    body.appendChild(hotRow);
+
+    // === CARRIED ITEMS ===
     const h = document.createElement('div');
     h.textContent = 'CARRIED ITEMS';
     h.style.cssText = "color:#c8a060;font-family:'Cinzel',serif;letter-spacing:2px;font-size:13px;margin-bottom:10px";
@@ -488,10 +565,15 @@ canvas:not(#c){display:block;image-rendering:pixelated;image-rendering:crisp-edg
     const grid = document.createElement('div');
     grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:6px';
     items.forEach(([k, v]) => {
+      const eligible = !!ELIGIBLE[k];
+      const assignedAt = layout.indexOf(k); // -1 if not
+      const isSelected = editor.selected === k;
       const slot = document.createElement('div');
-      slot.style.cssText = 'background:#1a1208;border:1px solid #6a4818;border-radius:4px;padding:6px 4px;text-align:center;cursor:pointer';
-      slot.onmouseenter = () => slot.style.borderColor = '#c8a060';
-      slot.onmouseleave = () => slot.style.borderColor = '#6a4818';
+      const border = isSelected ? '#c8f135' : (assignedAt >= 0 ? '#c8a060' : '#6a4818');
+      slot.style.cssText = 'background:' + (isSelected ? 'rgba(200,241,53,0.08)' : '#1a1208') +
+        ';border:1px solid ' + border + ';border-radius:4px;padding:6px 4px;text-align:center;cursor:pointer;position:relative';
+      slot.onmouseenter = () => { if (!isSelected) slot.style.borderColor = '#c8a060'; };
+      slot.onmouseleave = () => { if (!isSelected) slot.style.borderColor = (assignedAt >= 0 ? '#c8a060' : '#6a4818'); };
       const c = document.createElement('canvas');
       c.width = 32; c.height = 32;
       c.style.cssText = 'image-rendering:pixelated;display:block;margin:0 auto';
@@ -505,10 +587,31 @@ canvas:not(#c){display:block;image-rendering:pixelated;image-rendering:crisp-edg
       lbl.textContent = k.replace(/_/g, ' ').toUpperCase();
       lbl.style.cssText = 'color:#a08040;font-size:8px;line-height:1.1';
       slot.appendChild(lbl);
-      slot.onclick = () => { useItem(p, k); render(); if (typeof updateUI === 'function') updateUI(); };
+      if (assignedAt >= 0) {
+        const badge = document.createElement('div');
+        badge.textContent = (assignedAt + 1);
+        badge.style.cssText = 'position:absolute;top:2px;right:4px;background:#c8a060;color:#1a1208;font-weight:bold;font-size:9px;width:14px;height:14px;border-radius:50%;display:flex;align-items:center;justify-content:center';
+        slot.appendChild(badge);
+      }
+      if (eligible) {
+        slot.onclick = () => {
+          editor.selected = isSelected ? null : k;
+          refresh();
+        };
+      } else {
+        slot.style.opacity = '0.7';
+        slot.onclick = () => { useItem(p, k); render(); if (typeof updateUI === 'function') updateUI(); };
+      }
       grid.appendChild(slot);
     });
     body.appendChild(grid);
+
+    if (editor.selected) {
+      const hint = document.createElement('div');
+      hint.textContent = 'Selected: ' + editor.selected.replace(/_/g,' ').toUpperCase() + ' — click a hotbar slot above to place it (or click the item again to cancel)';
+      hint.style.cssText = 'margin-top:10px;color:#c8f135;font-size:11px;text-align:center;padding:6px;background:rgba(200,241,53,0.05);border:1px solid rgba(200,241,53,0.2);border-radius:4px';
+      body.appendChild(hint);
+    }
   }
 
   function useItem(p, k) {
@@ -1104,6 +1207,86 @@ const state = {
 // Expose state on window so cross-script-block code (Journal v2 IIFE,
 // future devtools helpers) can reach the live game state.
 try { window.state = state; } catch (e) {}
+
+// ============================================================
+// HOTBAR LAYOUT (user-customizable via Journal > PACK)
+// ============================================================
+// Allowlist of tools/consumables that can be bound to a hotbar slot.
+// Anything else in the inventory (raw resources, recipes, quest items)
+// is hidden from the hotbar UI entirely.
+const HOTBAR_ELIGIBLE = {
+  axe:         { label: 'AXE' },
+  fire_axe:    { label: 'F.AXE' },
+  pickaxe:     { label: 'PICK' },
+  obsidian_pickaxe: { label: 'OB.PICK' },
+  sword:       { label: 'SWORD' },
+  spear:       { label: 'SPEAR' },
+  fire_spear:  { label: 'F.SPEAR' },
+  lava_blade:  { label: 'L.BLADE' },
+  magma_hammer:{ label: 'M.HAMMER' },
+  depth_spear: { label: 'D.SPEAR' },
+  bone_spear:  { label: 'B.SPEAR' },
+  crystal_blade:{ label: 'C.BLADE' },
+  tribal_weapon:{ label: 'T.WEAPON' },
+  stone_knife: { label: 'KNIFE' },
+  bow:         { label: 'BOW' },
+  fire_bottle: { label: 'F.BOTTLE' },
+  lava_bomb:   { label: 'L.BOMB' },
+  signal_mirror:{ label: 'MIRROR' },
+  torch:       { label: 'TORCH' },
+  crystal_torch:{ label: 'C.TORCH' },
+  coconut:     { label: 'COCONUT' },
+  hearty_meal: { label: 'MEAL' },
+  healing_potion: { label: 'POTION' },
+  glow_shroom: { label: 'SHROOM' },
+  antidote:    { label: 'ANTIDOTE' },
+  tribal_brew: { label: 'BREW' },
+  signal_flare:{ label: 'FLARE' },
+};
+
+// state.hotbarLayout: [slot1..slot6] of tool ids or null. If a slot is null
+// it auto-fills with the first eligible carried tool not already assigned
+// (preserves old "first 6 owned" behaviour for new games).
+state.hotbarLayout = state.hotbarLayout || [null, null, null, null, null, null];
+
+function loadHotbarLayout() {
+  try {
+    const raw = localStorage.getItem('island_hotbar_layout');
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed) && parsed.length === 6) {
+      state.hotbarLayout = parsed.map(x => (x && HOTBAR_ELIGIBLE[x]) ? x : null);
+    }
+  } catch (e) {}
+}
+function saveHotbarLayout() {
+  try { localStorage.setItem('island_hotbar_layout', JSON.stringify(state.hotbarLayout)); } catch (e) {}
+}
+loadHotbarLayout();
+
+// Compute the resolved hotbar (6 ids, with nulls filled from carried-eligible).
+// Used by both updateUI and getActiveTool so click/key/UI agree.
+function getResolvedHotbar() {
+  const p = state.player;
+  if (!p) return [null,null,null,null,null,null];
+  const layout = state.hotbarLayout || [null,null,null,null,null,null];
+  const assigned = new Set(layout.filter(Boolean));
+  // Auto-fill order matches the historical hotbar ordering so existing players
+  // see the same layout until they customize.
+  const autoOrder = ['axe','fire_axe','pickaxe','sword','spear','fire_spear','stone_knife','bow','magma_hammer','fire_bottle','torch','coconut'];
+  const carried = autoOrder.filter(k => (p.inv[k]||0) > 0 && !assigned.has(k));
+  const resolved = [];
+  for (let i = 0; i < 6; i++) {
+    let id = layout[i];
+    if (id && (p.inv[id]||0) > 0) { resolved.push(id); }
+    else if (id) { resolved.push(null); }      // bound but not carried → show empty until item returns
+    else { resolved.push(carried.shift() || null); }
+  }
+  return resolved;
+}
+window.getResolvedHotbar = getResolvedHotbar;
+window.HOTBAR_ELIGIBLE = HOTBAR_ELIGIBLE;
+window.saveHotbarLayout = saveHotbarLayout;
 
 // NPC definitions
 const NPC_DATA = [
@@ -7560,21 +7743,16 @@ function handleInteract() {
 }
 
 
-// Get currently equipped tool from hotbar
+// Get currently equipped tool from hotbar.
+// Reads the resolved hotbar (user layout merged with auto-fill carried tools)
+// so 1-6 keys, click, and the UI all agree on what's in each slot.
 function getActiveTool() {
   const p = state.player;
-  // Build tool list: same order as hotbar (excluding fishing_rod from hotbar — use F key)
-  const tools = [
-    {id:'axe'}, {id:'fire_axe'}, {id:'obsidian_pickaxe'}, {id:'pickaxe'}, {id:'sword'},
-    {id:'spear'}, {id:'fire_spear'}, {id:'lava_blade'}, {id:'magma_hammer'}, {id:'depth_spear'},
-    {id:'bone_spear'}, {id:'crystal_blade'}, {id:'tribal_weapon'},
-    {id:'stone_knife'}, {id:'bow'},
-    {id:'fire_bottle'}, {id:'lava_bomb'}, {id:'signal_mirror'}, {id:'torch'}, {id:'crystal_torch'}, {id:'coconut'}
-  ].filter(t => (p.inv[t.id]||0) > 0);
+  if (!p) return null;
   if (state.activeSlot === undefined) state.activeSlot = 1;
   if (state.activeSlot === 0) return null; // explicitly unequipped (empty hand)
-  const slot = tools[state.activeSlot - 1];
-  return slot ? slot.id : null;
+  const resolved = getResolvedHotbar();
+  return resolved[state.activeSlot - 1] || null;
 }
 function handleClick(sx, sy) {
   if (state.cutscenePlaying) { advanceCutscene(); return; }
@@ -15557,24 +15735,13 @@ function updateUI() {
   const htEl=document.getElementById('ht'); if(htEl) htEl.textContent='';
   const hdEl=document.getElementById('hd'); if(hdEl) hdEl.textContent=state.day;
 
-  // Hotbar - tools only (fishing_rod excluded from hotbar — use F key)
-  const toolSlots = [
-    {id:'axe', label:'AXE'},
-    {id:'fire_axe', label:'F.AXE'},
-    {id:'pickaxe', label:'PICK'},
-    {id:'sword', label:'SWORD'},
-    {id:'spear', label:'SPEAR'},
-    {id:'fire_spear', label:'F.SPEAR'},
-    {id:'stone_knife', label:'KNIFE'},
-    {id:'bow', label:'BOW'},
-    {id:'magma_hammer', label:'M.HAMMER'},
-    {id:'fire_bottle', label:'F.BOTTLE'},
-    {id:'torch', label:'TORCH'},
-    {id:'coconut', label:'COCONUT'},
-  ].filter(t => (p.inv[t.id]||0) > 0);
-
+  // Hotbar slots are driven by state.hotbarLayout (user-customizable from
+  // Journal > PACK). getResolvedHotbar() merges that with auto-fill of
+  // carried-but-unbound tools so a fresh game still shows something.
+  const resolved = getResolvedHotbar();
   for (let i = 1; i <= 6; i++) {
-    const slot = toolSlots[i-1];
+    const id = resolved[i-1];
+    const slot = id ? { id, label: (HOTBAR_ELIGIBLE[id] && HOTBAR_ELIGIBLE[id].label) || id.toUpperCase() } : null;
     const el = document.getElementById('h'+i+'name'); if (!el) continue;
     const ec = document.getElementById('h'+i+'count');
     const hs = document.getElementById('hslot'+i);
