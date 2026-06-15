@@ -1,63 +1,69 @@
 {
-  "lastUpdated": "2026-06-15T02:03:59.946Z",
+  "lastUpdated": "2026-06-15T06:04:01.759Z",
   "vessels": [
     {
       "name": "WHISPER",
       "port": "Saint Tropez, France, sailing at",
-      "updated": "2026-06-15T02:03:29.916Z"
+      "updated": "2026-06-15T06:03:29.152Z"
     },
     {
       "name": "PROJECT X",
       "port": "the Tyrrhenian Sea",
-      "updated": "2026-06-15T02:03:45.115Z"
+      "updated": "2026-06-15T06:03:58.700Z"
     },
     {
       "name": "BARBARA",
       "port": "the West Mediterranean",
-      "updated": "2026-06-15T02:03:41.231Z"
+      "updated": "2026-06-15T06:03:54.290Z"
     },
     {
       "name": "LADY S",
       "port": "Portofino, Italy, sailing at",
-      "updated": "2026-06-15T02:03:25.458Z"
+      "updated": "2026-06-15T06:03:16.079Z"
     },
     {
       "name": "KENSHO",
       "port": "the Ligurean Sea",
-      "updated": "2026-06-15T02:03:36.008Z"
+      "updated": "2026-06-15T06:03:42.422Z"
     },
     {
       "name": "RENAISSANCE",
       "port": "Nice, France on Jun",
-      "updated": "2026-06-15T02:03:33.842Z"
+      "updated": "2026-06-15T06:03:38.896Z"
     },
     {
       "name": "DRAGONFLY",
       "port": "the West Mediterranean",
-      "updated": "2026-06-15T02:03:31.768Z"
+      "updated": "2026-06-15T06:03:35.926Z"
     },
     {
       "name": "BREAKTHROUGH",
       "port": "the West Mediterranean",
-      "updated": "2026-06-15T02:03:18.657Z"
+      "updated": "2026-06-15T06:03:14.353Z"
     },
     {
       "name": "LEVIATHAN",
       "port": "the Rotterdam Area",
-      "updated": "2026-06-15T02:03:38.174Z"
+      "updated": "2026-06-15T06:03:49.119Z"
     },
     {
       "name": "CC SUMMER",
-      "port": "Monaco, Monaco, sailing at",
-      "updated": "2026-06-15T02:03:58.944Z"
+      "port": "Monaco, Monaco",
+      "updated": "2026-06-15T06:04:00.757Z"
     },
     {
       "name": "KISMET",
       "port": "the Ligurean Sea",
-      "updated": "2026-06-15T02:03:28.076Z"
+      "updated": "2026-06-15T06:03:25.078Z"
     }
   ],
   "recentMoves": [
+    {
+      "vessel": "CC SUMMER",
+      "from": "Monaco, Monaco, sailing at",
+      "to": "Monaco, Monaco",
+      "time": "2026-06-15T06:04:01.759Z"
+    },
     {
       "vessel": "BREAKTHROUGH",
       "from": "the US East Coast",
@@ -170,12 +176,6 @@
       "vessel": "RENAISSANCE",
       "from": "Saint Tropez, France",
       "to": "the West Mediterranean",
-      "time": "2026-05-15T10:04:06.104Z"
-    },
-    {
-      "vessel": "CC SUMMER",
-      "from": "Gibraltar, Gibraltar",
-      "to": "Gibraltar, Gibraltar on May",
       "time": "2026-05-15T10:04:06.104Z"
     }
   ]
