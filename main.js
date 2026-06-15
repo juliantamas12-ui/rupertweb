@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Afternoon of 22 November 1975 in the Cortes When Juan Carlos Swore Loyalty to Franco's Movimiento and Began Dismantling It That Same Week",
+    date: "2026-06-15",
+    category: "History",
+    excerpt: "On the afternoon of Saturday, 22 November 1975, two days after the death of Francisco Franco, the thirty-seven-year-old Juan Carlos de Borbón stood before the Cortes Españolas and swore, on the four Gospels held by the cardinal-primate Vicente Enrique y Tarancón, to uphold the Fundamental Laws of the Kingdom and the Principles of the National Movement. He spoke the formula in a flat, careful voice. He gave nothing away. The Francoist generals, the procuradores of the rump Cortes, the surviving veterans of the Civil War in their blue Falange shirts — all of them watched him take the oath that bound him, in law, to the regime that had spent twenty years preparing him for this throne. Within ten weeks Juan Carlos would dismiss the Francoist prime minister. Within twelve months he would have legalised the Communist Party. The standard account treats the Spanish transition as a national miracle of pact and compromise. But it began with a single decision taken by the king during the first nine weeks of his reign: to use the legal machinery of the Franco regime to dismantle the Franco regime, from within, with the consent and signatures of the men who had built it — and that required a calculated act of deception against the political class that had placed him on the throne...",
+    url: "essays/2026-06-15-the-afternoon-of-22-november-1975-in-the-cortes-when-juan-carlos-swore-loyalty-to-francos-movimiento-and-began-dismantling-it-that-same-week.html"
+  },
+  {
     title: "The Sunday Afternoon at the Plaza Hotel on 22 September 1985 When James Baker Engineered the World's Largest Currency Devaluation in a Ballroom and Accidentally Created Japan's Lost Decade",
     date: "2026-06-14",
     category: "Economics",
