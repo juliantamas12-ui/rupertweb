@@ -1,63 +1,75 @@
 {
-  "lastUpdated": "2026-06-16T06:03:45.613Z",
+  "lastUpdated": "2026-06-16T10:03:50.919Z",
   "vessels": [
     {
       "name": "WHISPER",
-      "port": "Portofino, Italy, sailing at",
-      "updated": "2026-06-16T06:03:24.559Z"
+      "port": "the West Mediterranean",
+      "updated": "2026-06-16T10:03:26.907Z"
     },
     {
       "name": "PROJECT X",
       "port": "the Tyrrhenian Sea",
-      "updated": "2026-06-16T06:03:39.484Z"
+      "updated": "2026-06-16T10:03:47.639Z"
     },
     {
       "name": "BARBARA",
       "port": "the West Mediterranean",
-      "updated": "2026-06-16T06:03:37.689Z"
+      "updated": "2026-06-16T10:03:42.979Z"
     },
     {
       "name": "LADY S",
       "port": "Portofino, Italy, and expected to",
-      "updated": "2026-06-16T06:03:15.775Z"
+      "updated": "2026-06-16T10:03:13.354Z"
     },
     {
       "name": "KENSHO",
       "port": "the Ligurean Sea",
-      "updated": "2026-06-16T06:03:31.746Z"
+      "updated": "2026-06-16T10:03:35.345Z"
     },
     {
       "name": "RENAISSANCE",
       "port": "the Ligurean Sea",
-      "updated": "2026-06-16T06:03:28.737Z"
+      "updated": "2026-06-16T10:03:32.869Z"
     },
     {
       "name": "DRAGONFLY",
       "port": "the West Mediterranean",
-      "updated": "2026-06-16T06:03:26.704Z"
+      "updated": "2026-06-16T10:03:30.688Z"
     },
     {
       "name": "BREAKTHROUGH",
       "port": "the West Mediterranean",
-      "updated": "2026-06-16T06:03:12.291Z"
+      "updated": "2026-06-16T10:03:10.295Z"
     },
     {
       "name": "LEVIATHAN",
       "port": "Poole, United Kingdom",
-      "updated": "2026-06-16T06:03:34.890Z"
+      "updated": "2026-06-16T10:03:39.438Z"
     },
     {
       "name": "CC SUMMER",
-      "port": "Monaco, Monaco",
-      "updated": "2026-06-16T06:03:44.610Z"
+      "port": "Monaco, Monaco, sailing at",
+      "updated": "2026-06-16T10:03:49.917Z"
     },
     {
       "name": "KISMET",
       "port": "the Ligurean Sea",
-      "updated": "2026-06-16T06:03:21.717Z"
+      "updated": "2026-06-16T10:03:15.349Z"
     }
   ],
   "recentMoves": [
+    {
+      "vessel": "WHISPER",
+      "from": "Portofino, Italy, sailing at",
+      "to": "the West Mediterranean",
+      "time": "2026-06-16T10:03:50.919Z"
+    },
+    {
+      "vessel": "CC SUMMER",
+      "from": "Monaco, Monaco",
+      "to": "Monaco, Monaco, sailing at",
+      "time": "2026-06-16T10:03:50.919Z"
+    },
     {
       "vessel": "WHISPER",
       "from": "Saint Tropez, France, and expected",
@@ -164,18 +176,6 @@
       "vessel": "RENAISSANCE",
       "from": "the Ligurean Sea",
       "to": "Nice, France on Jun",
-      "time": "2026-06-15T02:03:59.946Z"
-    },
-    {
-      "vessel": "KENSHO",
-      "from": "Palma de Mallorca, Spain on May",
-      "to": "the Ligurean Sea",
-      "time": "2026-06-15T02:03:59.946Z"
-    },
-    {
-      "vessel": "PROJECT X",
-      "from": "the Bermuda",
-      "to": "the Tyrrhenian Sea",
       "time": "2026-06-15T02:03:59.946Z"
     }
   ]
