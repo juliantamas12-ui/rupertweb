@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Night of 14–15 August 1947 at the Viceroy's House in Delhi When Mountbatten Brought Independence Forward by Ten Months and Made Partition Logistically Impossible to Carry Out",
+    date: "2026-06-16",
+    category: "History",
+    excerpt: "On the night of 14–15 August 1947, in the white sandstone palace that Edwin Lutyens had built on Raisina Hill, Lord Louis Mountbatten signed the instruments transferring sovereignty over the subcontinent to two new dominions whose borders nobody had yet been told. The line that would divide Punjab and Bengal had been drawn the previous week by Sir Cyril Radcliffe, a British barrister who had never set foot in India before his arrival on 8 July. Mountbatten had received the completed award on 13 August. He sealed it in an envelope and ordered that it not be published until 17 August — two days after independence. The two new states would come into existence not knowing where they ended. Within six weeks an estimated one to two million people would be dead and twelve to fifteen million displaced in the largest forced migration in human history. The standard account treats the violence as a tragedy of communal hatreds the British could not contain. The truth is that the violence was the predictable consequence of a single administrative decision Mountbatten took in his first month in office: to bring the date of British withdrawal forward from June 1948 to August 1947, and to do so without telling the Indian political class until the calendar was already set...",
+    url: "essays/2026-06-16-the-night-of-14-15-august-1947-at-the-viceroys-house-in-delhi-when-mountbatten-brought-independence-forward-by-ten-months-and-made-partition-logistically-impossible-to-carry-out.html"
+  },
+  {
     title: "The Afternoon of 22 November 1975 in the Cortes When Juan Carlos Swore Loyalty to Franco's Movimiento and Began Dismantling It That Same Week",
     date: "2026-06-15",
     category: "History",
