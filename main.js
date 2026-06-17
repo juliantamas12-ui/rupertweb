@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Four Hours on 11 March 1985 in the Kremlin When Andrei Gromyko Nominated Gorbachev Before the Old Guard Could Caucus — and Decided the End of the Soviet Union by Procedural Ambush",
+    date: "2026-06-17",
+    category: "History",
+    excerpt: "On the morning of Monday, 11 March 1985, at 10:00 Moscow time, the Politburo convened in the Kremlin Senate building to choose a successor to Konstantin Chernenko, who had died at 19:20 the previous evening. The meeting had been scheduled for 14:00. Andrei Gromyko, the seventy-five-year-old foreign minister who had served every Soviet leader since Stalin, telephoned the duty secretary at 07:30 and asked that the time be brought forward by four hours. The reason he gave was that a foreign delegation was waiting at Vnukovo. The reason he meant was that Viktor Grishin, the Moscow party boss, and Grigory Romanov, the Leningrad first secretary, were on aircraft returning from regional inspections and could not reach the Kremlin before noon. By the time the two men landed, Mikhail Gorbachev had been nominated, seconded, voted on, and confirmed as General Secretary. The collapse of the Soviet Union in 1991 is usually dated to the failed coup of August that year, or to the Polish elections of June 1989. The procedural date is 11 March 1985, at approximately 11:15 Moscow time, when Gromyko named Gorbachev in a room that had been deliberately convened without the men who would have named anyone else...",
+    url: "essays/2026-06-17-the-four-hours-on-11-march-1985-in-the-kremlin-when-andrei-gromyko-nominated-gorbachev-before-the-old-guard-could-caucus-and-decided-the-end-of-the-soviet-union-by-procedural-ambush.html"
+  },
+  {
     title: "The Night of 14–15 August 1947 at the Viceroy's House in Delhi When Mountbatten Brought Independence Forward by Ten Months and Made Partition Logistically Impossible to Carry Out",
     date: "2026-06-16",
     category: "History",
