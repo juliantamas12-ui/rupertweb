@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Saturday Afternoon of 1 December 2001 in Buenos Aires When Domingo Cavallo Froze the Deposits and Killed the Convertibility Regime He Had Spent a Decade Defending",
+    date: "2026-06-18",
+    category: "History",
+    excerpt: "On the afternoon of Saturday, 1 December 2001, in a conference room on the fifth floor of the Ministry of Economy on Hipólito Yrigoyen in Buenos Aires, Domingo Cavallo signed Decree 1570/2001 limiting cash withdrawals from Argentine bank accounts to 250 pesos per week. The decree, which the Argentine public would within hours name el corralito, was presented to the press as an emergency measure to halt the bank run that had taken seven billion dollars out of the financial system in three weeks. It was the opposite. It was the moment at which Cavallo, the architect of the 1991 convertibility law he had spent the subsequent decade defending against every challenger from the left and the right, conceded that the regime could not be saved and chose the form of its destruction. The standard account treats the corralito as a defensive measure that failed and forced devaluation. The truth is that the corralito was the first act of devaluation. Cavallo signed it not to save convertibility but to control which Argentines would lose what, in the collapse he now knew was unavoidable...",
+    url: "essays/2026-06-18-the-saturday-afternoon-of-1-december-2001-in-buenos-aires-when-domingo-cavallo-froze-the-deposits-and-killed-the-convertibility-regime-he-had-spent-a-decade-defending.html"
+  },
+  {
     title: "The Four Hours on 11 March 1985 in the Kremlin When Andrei Gromyko Nominated Gorbachev Before the Old Guard Could Caucus — and Decided the End of the Soviet Union by Procedural Ambush",
     date: "2026-06-17",
     category: "History",
