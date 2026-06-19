@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Three Hours on 16 July 1979 in Baghdad When Saddam Hussein Read 66 Names from a List in the Khuld Hall and Made the Ba'ath Party Personal Property",
+    date: "2026-06-19",
+    category: "History",
+    excerpt: "On the morning of Wednesday, 18 July 1979, in the Khuld Conference Hall of the Republican Palace in Baghdad, Saddam Hussein convened an extraordinary session of the Iraqi Regional Command of the Ba'ath Party. He had become President six days earlier, following the resignation of his cousin and patron Ahmed Hassan al-Bakr — who had been forced to resign at gunpoint in the early hours of 16 July. The Khuld Hall session, filmed by Iraqi Television and surviving in a sixty-eight-minute recording, was the second act. It was the act in which Saddam established that the Iraqi state, the Ba'ath Party, and the lives of the men assembled in the room were now his personal property, to be disposed of at his discretion, on the basis of a list he held in his hand. The standard account treats the Khuld Hall session as a purge of rivals who had plotted against him. The truth is that the plot did not exist. Saddam invented it for the specific purpose of staging a public ritual in which the entire Ba'ath leadership would be made complicit in the murders of its own members, and would therefore be bound to him by the shared knowledge that they had voted, on camera, for the executions of men they knew to be innocent...",
+    url: "essays/2026-06-19-the-three-hours-on-16-july-1979-in-baghdad-when-saddam-hussein-read-66-names-from-a-list-in-the-khuld-hall-and-made-the-baath-party-personal-property.html"
+  },
+  {
     title: "The Saturday Afternoon of 1 December 2001 in Buenos Aires When Domingo Cavallo Froze the Deposits and Killed the Convertibility Regime He Had Spent a Decade Defending",
     date: "2026-06-18",
     category: "History",
