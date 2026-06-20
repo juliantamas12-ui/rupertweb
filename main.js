@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Weekend at Camp David from 13 to 15 August 1971 When Nixon Closed the Gold Window to Win a Domestic Political Argument and Ended Bretton Woods as a Side Effect",
+    date: "2026-06-20",
+    category: "History",
+    excerpt: "On the evening of Friday, 13 August 1971, fifteen men flew by helicopter from the South Lawn of the White House to Camp David in the Catoctin Mountains of Maryland, where they would spend the next forty-eight hours drafting the announcement that Richard Nixon would deliver from the Oval Office at 9:00 p.m. on Sunday, 15 August. The announcement, which Nixon would name the New Economic Policy in deliberate echo of Lenin, comprised three elements: a ninety-day freeze on wages and prices, a ten per cent surcharge on imports, and the suspension of the convertibility of the dollar into gold at the official rate of thirty-five dollars an ounce that had governed the international monetary system since Bretton Woods in July 1944. The standard account treats the closing of the gold window as the technically unavoidable response to a balance-of-payments crisis. The truth is that the gold window was closed because Nixon's Treasury Secretary, John Connally, needed a dramatic break with the existing system in order to seize control of American economic policy from the Federal Reserve, the Council of Economic Advisers, and the State Department, and to establish himself as the indispensable man of the second Nixon term. The end of Bretton Woods was not the goal of the Camp David weekend. It was the instrument by which Connally won an internal Republican argument about who would run American economic policy in 1972...",
+    url: "essays/2026-06-20-the-weekend-at-camp-david-from-13-to-15-august-1971-when-nixon-closed-the-gold-window-to-win-a-domestic-political-argument-and-ended-bretton-woods-as-a-side-effect.html"
+  },
+  {
     title: "The Three Hours on 16 July 1979 in Baghdad When Saddam Hussein Read 66 Names from a List in the Khuld Hall and Made the Ba'ath Party Personal Property",
     date: "2026-06-19",
     category: "History",
