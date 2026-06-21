@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Four Days in August 1965 When Tunku Abdul Rahman Expelled Singapore from Malaysia and Built the Twentieth Century's Most Improbable Sovereign State by Administrative Eviction",
+    date: "2026-06-21",
+    category: "History",
+    excerpt: "On the morning of Monday, 9 August 1965, at 10:00 local time, Radio Singapore interrupted its scheduled broadcast to play a recording of Lee Kuan Yew, the forty-one-year-old prime minister of the State of Singapore, announcing in English that the island had ceased to be part of the Federation of Malaysia and was, as of that moment, an independent and sovereign nation. At the point in the broadcast where Lee was required to explain why the constitutional union that he had spent eight years negotiating, defending, and selling to a sceptical Chinese-majority electorate had collapsed after twenty-three months, he stopped speaking, removed his spectacles, and wept on air for approximately twenty seconds. The standard account treats the expulsion of Singapore as a tragedy imposed on Lee by Tunku Abdul Rahman. The truth is more interesting and considerably less flattering to both men. The expulsion was not imposed on Lee. It was the outcome that Lee had been quietly engineering since at least March 1965, through a calculated campaign of provocation directed at the Malay political establishment, in the belief that Singapore could not survive economically inside a federation whose ruling party was committed to Malay supremacy, and could not be released from that federation through any normal political process. The tears were real. The surprise was theatre...",
+    url: "essays/2026-06-21-the-four-days-in-august-1965-when-tunku-abdul-rahman-expelled-singapore-from-malaysia-and-built-the-twentieth-centurys-most-improbable-sovereign-state-by-administrative-eviction.html"
+  },
+  {
     title: "The Weekend at Camp David from 13 to 15 August 1971 When Nixon Closed the Gold Window to Win a Domestic Political Argument and Ended Bretton Woods as a Side Effect",
     date: "2026-06-20",
     category: "History",
