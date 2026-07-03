@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Three Days at Spa from 8 to 10 November 1918 When Wilhelm Groener Lied to the Kaiser About the Army's Loyalty and Ended the Hohenzollern Dynasty by Staff Officer's Bluff",
+    date: "2026-07-03",
+    category: "History",
+    excerpt: "On the morning of Saturday, 9 November 1918, at approximately 9:30 local time, in the map room of the Grand Hôtel Britannique at Spa in occupied Belgium, the First Quartermaster-General of the Imperial German Army, Wilhelm Groener, informed Kaiser Wilhelm II that the army had ceased to obey its Supreme War Lord. The information Groener delivered was based on a canvass of thirty-nine regimental commanders conducted overnight by Colonel Wilhelm Heye of the General Staff. The standard account treats the abdication of Wilhelm II as the inevitable consequence of the military collapse of November 1918. The truth is that the army had not collapsed, the front was still intact on 9 November, and the Heye canvass was a document of extraordinary methodological weakness that no serious general staff would have accepted as the basis for a strategic decision. Groener used it because he had already made the decision to force the abdication before the canvass was conducted, and required only a piece of paper he could hold up to the Kaiser as evidence. The German dynasty fell not because the army refused to fight for it, but because two staff officers in a Belgian hotel decided that the army should not be asked...",
+    url: "essays/2026-07-03-the-three-days-at-spa-from-8-to-10-november-1918-when-wilhelm-groener-lied-to-the-kaiser-about-the-armys-loyalty-and-ended-the-hohenzollern-dynasty-by-staff-officers-bluff.html"
+  },
+  {
     title: "The Four Days in August 1965 When Tunku Abdul Rahman Expelled Singapore from Malaysia and Built the Twentieth Century's Most Improbable Sovereign State by Administrative Eviction",
     date: "2026-06-21",
     category: "History",
