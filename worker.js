@@ -512,35 +512,42 @@ async function fetchItemPrice(appid, marketHashName, env) {
     return cached;
   }
   const u = `https://steamcommunity.com/market/priceoverview/?appid=${appid}&currency=${INV_CURRENCY}&market_hash_name=${encodeURIComponent(marketHashName)}`;
+  let out = { median: null, lowest: null, volume: null, fetchedAt: Date.now() };
+  let steamOk = false;
   try {
     const r = await fetch(u, { headers: { 'User-Agent': 'QuestLog/1.0' } });
     if (r.status === 429) {
-      // back off; surface stale price if we have one
-      return cached || { median: null, lowest: null, volume: null, fetchedAt: Date.now(), stale: true };
+      out.stale = true;
+      // don't return yet — try fallback below
+    } else if (r.ok) {
+      const j = await r.json();
+      out.median = parseSteamPrice(j.median_price);
+      out.lowest = parseSteamPrice(j.lowest_price);
+      out.volume = j.volume ? parseInt(String(j.volume).replace(/[,]/g, ''), 10) : null;
+      steamOk = true;
+    } else {
+      out.error = `HTTP ${r.status}`;
     }
-    if (!r.ok) return cached || { median: null, lowest: null, volume: null, fetchedAt: Date.now(), error: `HTTP ${r.status}` };
-    const j = await r.json();
-    const out = {
-      median: parseSteamPrice(j.median_price),
-      lowest: parseSteamPrice(j.lowest_price),
-      volume: j.volume ? parseInt(String(j.volume).replace(/[,]/g, ''), 10) : null,
-      fetchedAt: Date.now(),
-    };
-    // Fallback for CS2 items with no Steam Market data (e.g. rare gloves with no active listings).
-    // Use Buff163 aggregate as a secondary source, converted to GBP.
-    if (appid === '730' && out.median == null && out.lowest == null) {
-      const buff = await fetchBuff163Price(marketHashName, env);
-      if (buff && buff.gbp != null) {
-        out.lowest = buff.gbp;
-        out.median = buff.gbp;
-        out.fallbackSource = 'buff163';
-      }
-    }
-    await kvPut(env, key, out, 7 * 24 * 3600); // 7d TTL; we refresh at 6h
-    return out;
   } catch (e) {
-    return cached || { median: null, lowest: null, volume: null, fetchedAt: Date.now(), error: e.message };
+    out.error = e.message;
   }
+  // Fallback for CS2 items with no Steam Market data (rate-limited OR no listings, e.g. rare gloves).
+  // Use Buff163 aggregate as a secondary source, converted to GBP.
+  if (appid === '730' && out.median == null && out.lowest == null) {
+    const buff = await fetchBuff163Price(marketHashName, env);
+    if (buff && buff.gbp != null) {
+      out.lowest = buff.gbp;
+      out.median = buff.gbp;
+      out.fallbackSource = 'buff163';
+      out.stale = false;
+    }
+  }
+  // Persist only if we got useful data (steam OK, or fallback found). If nothing worked and we have a cache, keep cache.
+  if (steamOk || out.fallbackSource) {
+    await kvPut(env, key, out, 7 * 24 * 3600);
+    return out;
+  }
+  return cached || out;
 }
 
 // Buff163 aggregate feed from csgotrader.app (community-maintained mirror).
