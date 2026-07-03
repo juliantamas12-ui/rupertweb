@@ -3494,6 +3494,7 @@ function renderInvCard(appid, it) {
         <div style="text-align:right">
           ${it.volume ? `<div style="color:var(--dim);font-size:10px">vol ${it.volume}/day</div>` : ''}
           ${it.priceStale ? `<div style="color:#cc7722;font-size:9px">stale</div>` : ''}
+          ${it.priceSource && it.priceSource !== 'steam' ? `<div style="color:#8899cc;font-size:9px" title="Steam has no market data; using ${it.priceSource} aggregate">via ${it.priceSource}</div>` : ''}
         </div>
       </div>
       <div style="display:flex;gap:4px;flex-wrap:wrap">${linkHtml}</div>

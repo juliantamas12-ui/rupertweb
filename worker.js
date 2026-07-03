@@ -526,10 +526,68 @@ async function fetchItemPrice(appid, marketHashName, env) {
       volume: j.volume ? parseInt(String(j.volume).replace(/[,]/g, ''), 10) : null,
       fetchedAt: Date.now(),
     };
+    // Fallback for CS2 items with no Steam Market data (e.g. rare gloves with no active listings).
+    // Use Buff163 aggregate as a secondary source, converted to GBP.
+    if (appid === '730' && out.median == null && out.lowest == null) {
+      const buff = await fetchBuff163Price(marketHashName, env);
+      if (buff && buff.gbp != null) {
+        out.lowest = buff.gbp;
+        out.median = buff.gbp;
+        out.fallbackSource = 'buff163';
+      }
+    }
     await kvPut(env, key, out, 7 * 24 * 3600); // 7d TTL; we refresh at 6h
     return out;
   } catch (e) {
     return cached || { median: null, lowest: null, volume: null, fetchedAt: Date.now(), error: e.message };
+  }
+}
+
+// Buff163 aggregate feed from csgotrader.app (community-maintained mirror).
+// Cached in KV for 24h; the source itself refreshes daily.
+// Prices are USD; we convert to GBP using a cached exchange rate.
+async function fetchBuff163Price(marketHashName, env) {
+  const cacheKey = 'inv:buff163:all';
+  let feed = await kvGet(env, cacheKey);
+  if (!feed || (Date.now() - feed.fetchedAt) > 24 * 3600 * 1000) {
+    try {
+      const r = await fetch('https://prices.csgotrader.app/latest/buff163.json', {
+        headers: { 'User-Agent': 'QuestLog/1.0', 'Accept': 'application/json', 'Accept-Encoding': 'gzip' },
+      });
+      if (!r.ok) return null;
+      const data = await r.json();
+      feed = { data, fetchedAt: Date.now() };
+      await kvPut(env, cacheKey, feed, 48 * 3600); // 48h TTL, refresh at 24h
+    } catch (e) {
+      return null;
+    }
+  }
+  const entry = feed.data && feed.data[marketHashName];
+  if (!entry) return null;
+  // Prefer starting_at (ask) as it's the current market price; fall back to highest_order (bid).
+  const usd = (entry.starting_at && entry.starting_at.price) || (entry.highest_order && entry.highest_order.price) || null;
+  if (usd == null) return null;
+  const rate = await fetchUsdToGbpRate(env);
+  return { usd, gbp: rate ? +(usd * rate).toFixed(2) : null };
+}
+
+// USD->GBP rate, cached for 12h. Uses exchangerate.host (free, no key).
+async function fetchUsdToGbpRate(env) {
+  const cacheKey = 'inv:fxrate:usd_gbp';
+  const cached = await kvGet(env, cacheKey);
+  if (cached && (Date.now() - cached.fetchedAt) < 12 * 3600 * 1000) return cached.rate;
+  try {
+    const r = await fetch('https://open.er-api.com/v6/latest/USD', {
+      headers: { 'User-Agent': 'QuestLog/1.0', 'Accept': 'application/json' },
+    });
+    if (!r.ok) return cached ? cached.rate : 0.79; // sensible default
+    const j = await r.json();
+    const rate = j && j.rates && j.rates.GBP;
+    if (!rate) return cached ? cached.rate : 0.79;
+    await kvPut(env, cacheKey, { rate, fetchedAt: Date.now() }, 48 * 3600);
+    return rate;
+  } catch (e) {
+    return cached ? cached.rate : 0.79;
   }
 }
 
@@ -597,6 +655,7 @@ async function steamInventory(url, env) {
       it.priceLowest = p.lowest;
       it.volume = p.volume;
       it.priceStale = !!p.stale;
+      it.priceSource = p.fallbackSource || 'steam';
       it.value = (p.median ?? p.lowest ?? 0) * it.count;
     }));
   }
