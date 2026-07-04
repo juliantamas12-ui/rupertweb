@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Night of 31 October 1961 in Red Square When Nikolai Shvernik's Commission Removed Stalin's Body from the Lenin Mausoleum in Six Hours and Severed the Soviet Succession from Its Founding Cult by Administrative Fiat",
+    date: "2026-07-04",
+    category: "History",
+    excerpt: "On the evening of Tuesday, 31 October 1961, at approximately 22:15 Moscow time, a detachment of troops from the Kremlin garrison under the direct command of Colonel Fyodor Konev sealed the perimeter of Red Square, extinguished the exterior lights of the Lenin Mausoleum, and erected plywood screens around the entrance. Between that moment and 04:00 the following morning, a commission chaired by the seventy-three-year-old Nikolai Shvernik supervised the physical removal of the embalmed corpse of Joseph Stalin from the granite sarcophagus in which it had lain since March 1953. The standard account treats the operation as the ceremonial culmination of the Twenty-Second Party Congress. The truth is that the Congress vote was staged after the operational decision had been taken, and the timing of the removal was dictated not by de-Stalinisation as a political programme but by the specific tactical requirement to complete the exhumation before the anniversary of the October Revolution on 7 November, at which the mausoleum would necessarily be the reviewing platform. Khrushchev needed Stalin gone by 7 November because he could not stand on top of Stalin's body to salute the parade...",
+    url: "essays/2026-07-04-the-night-of-31-october-1961-in-red-square-when-nikolai-shverniks-commission-removed-stalins-body-from-the-lenin-mausoleum-in-six-hours-and-severed-the-soviet-succession-from-its-founding-cult-by-administrative-fiat.html"
+  },
+  {
     title: "The Three Days at Spa from 8 to 10 November 1918 When Wilhelm Groener Lied to the Kaiser About the Army's Loyalty and Ended the Hohenzollern Dynasty by Staff Officer's Bluff",
     date: "2026-07-03",
     category: "History",
