@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Six Hours on 25 April 1974 in Lisbon When a Song on Rádio Renascença Triggered a Military Coup That No One in the Caetano Government Had Detected and Ended the Portuguese Empire in a Single Night by Broadcast Signal",
+    date: "2026-07-05",
+    category: "History",
+    excerpt: "At 00:20 on Thursday, 25 April 1974, the Catholic radio station Rádio Renascença, broadcasting from studios on the Rua Ivens in central Lisbon, played a song by the folk singer José Afonso titled Grândola, Vila Morena. The song had been banned by the Portuguese state since its release in 1971, and its inclusion in the station's playlist had been arranged three days earlier through the personal intervention of the assistant programme director. Between two coded radio signals, four hundred officers of the Movimento das Forças Armadas moved units from garrisons at Santarém, Mafra, Vendas Novas, Tancos and Beja along five converging axes toward the Portuguese capital. By 18:00, Caetano had surrendered, and the Estado Novo — the dictatorship that Antonio Salazar had built in 1933 and that had governed Portugal without interruption for forty-one years — had ceased to exist. The standard account treats the coup as the outcome of a long ideological maturation. The truth is more precise and considerably more contingent. The MFA had approximately six hundred active conspirators out of an officer corps of approximately nine thousand, no support in the Navy High Command, no support in the Air Force General Staff, and no confirmed support in the Lisbon garrison itself. It had four hundred junior officers, five hundred conscripts, and two radio signals. The Portuguese state fell not because it lacked the means to defend itself but because its decision cycle was longer than the operation designed to destroy it. The MFA had won by six hours of paperwork...",
+    url: "essays/2026-07-05-the-six-hours-on-25-april-1974-in-lisbon-when-a-song-on-radio-renascenca-triggered-a-military-coup-that-no-one-in-the-caetano-government-had-detected-and-ended-the-portuguese-empire-in-a-single-night-by-broadcast-signal.html"
+  },
+  {
     title: "The Night of 31 October 1961 in Red Square When Nikolai Shvernik's Commission Removed Stalin's Body from the Lenin Mausoleum in Six Hours and Severed the Soviet Succession from Its Founding Cult by Administrative Fiat",
     date: "2026-07-04",
     category: "History",
