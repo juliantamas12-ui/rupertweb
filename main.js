@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Three Weeks in January 1959 in Havana When Fidel Castro Decided That Cuba Would Align With the Soviet Union Before Either Washington or Moscow Understood What Had Happened",
+    date: "2026-07-06",
+    category: "History",
+    excerpt: "At 09:00 on Thursday, 8 January 1959, Fidel Castro entered Havana at the head of a column of approximately three thousand rebels from the Sierra Maestra, riding on the turret of a captured M4 Sherman tank. The Eisenhower administration had extended diplomatic recognition the previous day. Herbert Matthews of the New York Times predicted a two-year democratic transition. The CIA station in Havana assessed Castro as 'a nationalist of the Peronist school' with 'no discernible Communist sympathies'. Both assessments were wrong within three weeks. The standard chronology places Cuba's alignment with Moscow in April or December 1961. The archival record establishes that the strategic decision was taken by the end of January 1959, in a series of conversations at the Hotel Nacional between Fidel, Raúl, Che Guevara, and the Spanish Communist exile Alberto Bayo. The decision was not the consequence of a radicalising process. It was the initial condition of the revolutionary programme. Everything that followed — the agrarian reform, the nationalisations, the Bay of Pigs, the Missile Crisis — was the working out of a decision that had been taken three days after they entered the city, by four men who had understood the American Republic better than the American Republic understood itself...",
+    url: "essays/2026-07-06-the-three-weeks-in-january-1959-in-havana-when-fidel-castro-decided-that-cuba-would-align-with-the-soviet-union-before-either-washington-or-moscow-understood-what-had-happened.html"
+  },
+  {
     title: "The Six Hours on 25 April 1974 in Lisbon When a Song on Rádio Renascença Triggered a Military Coup That No One in the Caetano Government Had Detected and Ended the Portuguese Empire in a Single Night by Broadcast Signal",
     date: "2026-07-05",
     category: "History",
