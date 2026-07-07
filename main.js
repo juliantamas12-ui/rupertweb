@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Four Nights in October 1907 in J.P. Morgan's Library on Madison Avenue When One Banker Rescued the American Financial System and Made the Federal Reserve Inevitable by Doing So",
+    date: "2026-07-07",
+    category: "History",
+    excerpt: "At 21:00 on Saturday, 19 October 1907, J.P. Morgan boarded a private railway car at Richmond, Virginia and directed the conductor to make no scheduled stops until the train reached Jersey City. He arrived at 219 Madison Avenue at 09:30 on Sunday morning and spent the next four nights in his library — Sunday 20 October through Thursday 24 October — running the largest financial rescue operation in American history from a single room, without government authority, without a central bank, and without any legal framework that permitted what he was doing. He succeeded. The consequence of his success was the National Monetary Commission of 1908, the Aldrich Plan of 1910, the Jekyll Island conference of November 1910, and the Federal Reserve Act of 23 December 1913. The standard historiography treats the Panic of 1907 as the emergency that revealed the need for a central bank. It is more accurate to say that Morgan's rescue was itself the emergency, and the Federal Reserve was the political system's response to the discovery that a single private citizen possessed powers that ought to belong to the state. The Federal Reserve was not designed to prevent bank panics. It was designed to prevent J.P. Morgan...",
+    url: "essays/2026-07-07-the-four-nights-in-october-1907-in-jp-morgans-library-on-madison-avenue-when-one-banker-rescued-the-american-financial-system-and-made-the-federal-reserve-inevitable-by-doing-so.html"
+  },
+  {
     title: "The Three Weeks in January 1959 in Havana When Fidel Castro Decided That Cuba Would Align With the Soviet Union Before Either Washington or Moscow Understood What Had Happened",
     date: "2026-07-06",
     category: "History",
