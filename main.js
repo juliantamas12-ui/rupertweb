@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Afternoon of 12 September 1683 on the Kahlenberg Above Vienna When Jan Sobieski Won the Battle That Destroyed Poland",
+    date: "2026-07-08",
+    category: "History",
+    excerpt: "At approximately 17:30 on Sunday, 12 September 1683, King Jan III Sobieski led the largest cavalry charge in European history — 18,000 horsemen including 3,000 winged hussars in full plate — down the western slope of the Kahlenberg into the flank of the Ottoman army besieging Vienna. The charge broke the Ottoman line in under three hours. Sobieski dispatched the vizier's green banner of the Prophet to Pope Innocent XI with a paraphrase of Caesar: Venimus, vidimus, Deus vicit. The relief of Vienna is conventionally described as the moment at which the Ottoman advance was halted and Poland reached the apex of its power. Both descriptions are true. Both are also misleading. The victory at Vienna was the single most consequential foreign policy disaster in Polish history. It committed the Commonwealth to a strategic alliance with Habsburg Austria that structurally prevented Polish domestic reform for the following century, guaranteed the collapse of Polish state capacity, and made the three partitions of 1772, 1793, and 1795 not merely possible but overdetermined. Sobieski saved Vienna. In doing so, he killed Poland...",
+    url: "essays/2026-07-08-the-afternoon-of-12-september-1683-on-the-kahlenberg-above-vienna-when-jan-sobieski-won-the-battle-that-destroyed-poland.html"
+  },
+  {
     title: "The Four Nights in October 1907 in J.P. Morgan's Library on Madison Avenue When One Banker Rescued the American Financial System and Made the Federal Reserve Inevitable by Doing So",
     date: "2026-07-07",
     category: "History",
