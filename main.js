@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Twenty-Nine Days in February and March 1979 When Deng Xiaoping Lost a War Against Vietnam on Purpose and Bought the Sino-American Alliance With the Corpses of His Own Soldiers",
+    date: "2026-07-09",
+    category: "History",
+    excerpt: "At 05:00 on Saturday, 17 February 1979, approximately 200,000 soldiers of the People's Liberation Army crossed the Sino-Vietnamese border in the largest Chinese military operation since Korea. Twenty-nine days later they were back on Chinese soil, having lost roughly 26,000 dead and 37,000 wounded — casualties exceeding total American losses in the entire Vietnam War, compressed into four weeks — in exchange for the destruction of three border towns. Every Western military historian has read this as a Chinese defeat. The reading is factually accurate and strategically illiterate. Deng Xiaoping did not fight the 1979 war to win it. He fought it to lose it in a specific way, in front of a specific audience: the American national security establishment. The purpose was to demonstrate — through the willing sacrifice of tens of thousands of soldiers he could have kept alive by not invading — that the People's Republic was prepared to act as a strategic partner of the United States against the Soviet Union, and that Chinese resolve was expressible in blood. The corpses bought the Sino-American alignment that structured the last decade of the Cold War, the American technology transfer that transformed the Chinese economy, and four decades of diplomatic patience. Twenty-six thousand dead soldiers is the price Deng paid for Reform and Opening. The war against Vietnam was the down payment on the Chinese miracle...",
+    url: "essays/2026-07-09-the-twenty-nine-days-in-february-and-march-1979-when-deng-xiaoping-lost-a-war-against-vietnam-on-purpose-and-bought-the-sino-american-alliance-with-the-corpses-of-his-own-soldiers.html"
+  },
+  {
     title: "The Afternoon of 12 September 1683 on the Kahlenberg Above Vienna When Jan Sobieski Won the Battle That Destroyed Poland",
     date: "2026-07-08",
     category: "History",
