@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Nine Days in October and November 1962 When Mao Zedong Fought the Sino-Indian War to Discipline Nikita Khrushchev and Used Jawaharlal Nehru's Army as the Instrument of Instruction",
+    date: "2026-07-10",
+    category: "History",
+    excerpt: "At 07:00 on 20 October 1962, the People's Liberation Army launched simultaneous offensives across a two-thousand-mile front from Ladakh to the North-East Frontier Agency, broke the Indian Army with a speed that startled every attaché in Delhi, advanced to within sight of the Assam plain — and then, on 21 November, without negotiation and without any Indian military recovery having occurred, unilaterally declared a ceasefire, withdrew twenty kilometres behind the pre-war line, and repatriated its prisoners with their equipment. In every military metric, the war was a Chinese victory of a completeness that had no precedent in modern Asian warfare. And in every metric that ordinarily determines whether a state exploits a victory, China did the opposite of what a victor does. The standard interpretation mistakes both the object and the audience of the operation. Mao Zedong did not fight the 1962 war against India. He fought it against the Soviet Union, using the Indian Army as the instrument by which a specific ideological argument would be made to Nikita Khrushchev. The war was applied Marxist-Leninist theatre, staged for one man in one Kremlin office, and it succeeded so completely that it broke the Sino-Soviet alliance six months later and set the terms of the split that would define world communism for the next twenty-seven years...",
+    url: "essays/2026-07-10-the-nine-days-in-october-and-november-1962-when-mao-zedong-fought-the-sino-indian-war-to-discipline-nikita-khrushchev-and-used-jawaharlal-nehrus-army-as-the-instrument-of-instruction.html"
+  },
+  {
     title: "The Twenty-Nine Days in February and March 1979 When Deng Xiaoping Lost a War Against Vietnam on Purpose and Bought the Sino-American Alliance With the Corpses of His Own Soldiers",
     date: "2026-07-09",
     category: "History",
