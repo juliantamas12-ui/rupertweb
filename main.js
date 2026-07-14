@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Six Weeks in October and November 1517 When Martin Luther Wrote Ninety-Five Theses for an Academic Debate and an Anonymous Printer in Nuremberg Made the Reformation by Publishing Them Without His Permission",
+    date: "2026-07-14",
+    category: "History",
+    excerpt: "On the afternoon of Wednesday, 31 October 1517, an Augustinian friar at the young University of Wittenberg posted a Latin document — ninety-five propositions on the doctrine of indulgences — on the north door of the Castle Church, which functioned as the university's notice board. He expected a heated exchange within the Faculty of Theology and a possible summons to explain himself. He did not expect a movement. He did not want a movement. And he certainly did not know, when he posted the theses, that the document was already, by its nature, uncontainable. The standard narrative treats the Ninety-Five Theses as the founding act of the Protestant Reformation and Luther as the intentional author of a religious revolution. Both claims are wrong. The document was an academic proposal that no one in Wittenberg read as revolutionary; the revolution was manufactured, between roughly 15 November and 25 December 1517, by an anonymous printer in Nuremberg — almost certainly Hieronymus Höltzel — who obtained a copy without Luther's knowledge and printed it in quarto pamphlet format for sale at the Frankfurt book fair. By the time Luther learned that his theses were being read in Nuremberg, Basel, and Leipzig, they had already ceased to be his property. The Reformation was not the achievement of a heroic individual conscience against the corruption of the Roman Church; it was the first mass-media event in European history, and the man usually named as its author was, in the crucial six weeks, its passenger rather than its driver...",
+    url: "essays/2026-07-14-the-six-weeks-in-october-and-november-1517-when-martin-luther-wrote-ninety-five-theses-for-an-academic-debate-and-an-anonymous-printer-in-nuremberg-made-the-reformation-by-publishing-them-without-his-permission.html"
+  },
+  {
     title: "The Nine Days in October and November 1962 When Mao Zedong Fought the Sino-Indian War to Discipline Nikita Khrushchev and Used Jawaharlal Nehru's Army as the Instrument of Instruction",
     date: "2026-07-10",
     category: "History",
