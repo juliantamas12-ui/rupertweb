@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Hundred Days Between March and June 1953 When Lavrentiy Beria Attempted to End the Cold War, Dismantle the Gulag, and Reunify Germany — and Was Shot by His Terrified Colleagues for Being the Most Radical Reformer the Soviet Union Would Ever Produce",
+    date: "2026-07-15",
+    category: "History",
+    excerpt: "Lavrentiy Pavlovich Beria — Georgian by birth, chief of Soviet state security from 1938 to 1946, director of the atomic weapons project from 1945 to 1953, and the single most feared human being in the Soviet Union at the moment of Stalin's death — spent the last hundred days of his life attempting to liquidate the political system he had spent twenty-five years constructing. Between 5 March 1953, when Stalin died, and 26 June 1953, when Beria was arrested at a Presidium meeting and shot in a military bunker six months later, he amnestied 1.2 million Gulag prisoners, shut down the Doctors' Plot investigation, proposed the reunification of Germany as a neutral state, suggested the dissolution of the collective farms in the Baltic republics, recommended a rapprochement with Yugoslavia, and drafted a memorandum arguing that the socialist bloc's East European satellites were an economic burden that should be released. The standard Western narrative treats Beria as a monster whose removal was a moral necessity. The archival record establishes that he was removed not because his colleagues opposed his methods but because they were terrified by the direction of his conclusions. Beria was executed for proposing that the Soviet Union should stop being an empire. The counterfactual in which he lives is one of the most consequential unrealised possibilities in twentieth-century history...",
+    url: "essays/2026-07-15-the-hundred-days-between-march-and-june-1953-when-lavrentiy-beria-attempted-to-end-the-cold-war-and-was-shot-for-being-the-most-radical-reformer-the-soviet-union-would-ever-produce.html"
+  },
+  {
     title: "The Six Weeks in October and November 1517 When Martin Luther Wrote Ninety-Five Theses for an Academic Debate and an Anonymous Printer in Nuremberg Made the Reformation by Publishing Them Without His Permission",
     date: "2026-07-14",
     category: "History",
