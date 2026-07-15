@@ -1,20 +1,20 @@
 {
-  "lastUpdated": "2026-07-15T02:04:06.153Z",
+  "lastUpdated": "2026-07-15T06:04:33.448Z",
   "vessels": [
     {
       "name": "WHISPER",
       "port": "Tivat, Montenegro, and expected to",
-      "updated": "2026-07-15T02:03:20.812Z"
+      "updated": "2026-07-15T06:03:43.413Z"
     },
     {
       "name": "PROJECT X",
-      "port": "the Ligurean Sea",
-      "updated": "2026-07-15T02:03:53.905Z"
+      "port": "Monaco Anch",
+      "updated": "2026-07-15T06:04:28.959Z"
     },
     {
       "name": "BARBARA",
       "port": "the West Mediterranean",
-      "updated": "2026-07-15T02:03:48.705Z"
+      "updated": "2026-07-15T06:04:26.587Z"
     },
     {
       "name": "LADY S",
@@ -23,18 +23,18 @@
     },
     {
       "name": "KENSHO",
-      "port": "PALMA DE MALLORCA, is currently located at position",
-      "updated": "2026-07-15T02:03:42.006Z"
+      "port": "the Balearic Sea",
+      "updated": "2026-07-15T06:03:59.466Z"
     },
     {
       "name": "RENAISSANCE",
       "port": "the Aegean Sea",
-      "updated": "2026-07-15T02:03:28.765Z"
+      "updated": "2026-07-15T06:03:57.654Z"
     },
     {
       "name": "DRAGONFLY",
       "port": "Napoli Anch",
-      "updated": "2026-07-15T02:03:26.773Z"
+      "updated": "2026-07-15T06:03:54.506Z"
     },
     {
       "name": "BREAKTHROUGH",
@@ -49,15 +49,27 @@
     {
       "name": "CC SUMMER",
       "port": "the Tyrrhenian Sea",
-      "updated": "2026-07-15T02:04:05.151Z"
+      "updated": "2026-07-15T06:04:32.447Z"
     },
     {
       "name": "KISMET",
       "port": "the Ligurean Sea",
-      "updated": "2026-07-15T02:03:19.216Z"
+      "updated": "2026-07-15T06:03:40.704Z"
     }
   ],
   "recentMoves": [
+    {
+      "vessel": "KENSHO",
+      "from": "PALMA DE MALLORCA, is currently located at position",
+      "to": "the Balearic Sea",
+      "time": "2026-07-15T06:04:33.448Z"
+    },
+    {
+      "vessel": "PROJECT X",
+      "from": "the Ligurean Sea",
+      "to": "Monaco Anch",
+      "time": "2026-07-15T06:04:33.448Z"
+    },
     {
       "vessel": "BREAKTHROUGH",
       "from": "Monaco Anch",
@@ -164,18 +176,6 @@
       "vessel": "RENAISSANCE",
       "from": "Cannes, France, and expected",
       "to": "Cannes, France, sailing at",
-      "time": "2026-06-17T18:03:45.408Z"
-    },
-    {
-      "vessel": "PROJECT X",
-      "from": "Mediterranean",
-      "to": "the Tyrrhenian Sea",
-      "time": "2026-06-17T18:03:45.408Z"
-    },
-    {
-      "vessel": "CC SUMMER",
-      "from": "Monaco, Monaco",
-      "to": "Monaco, Monaco, sailing at",
       "time": "2026-06-17T18:03:45.408Z"
     }
   ]
