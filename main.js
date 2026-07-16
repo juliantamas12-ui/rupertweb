@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Three Weeks in April 1945 When Heinrich Himmler Attempted to Surrender Germany to the Western Allies Through a Swedish Count and Discovered That the War Had Already Passed Him By",
+    date: "2026-07-16",
+    category: "History",
+    excerpt: "Heinrich Himmler — Reichsführer-SS, chief of the German police, and, from July 1944, the second most powerful human being in the Third Reich — spent the last three weeks of April 1945 attempting to negotiate the surrender of Germany to the Western Allies over the head of Adolf Hitler, and discovered, in the small hours of 28 April at a police station in Lübeck, that the war he thought he was ending had ended without him three days earlier in a Reims schoolroom, that the American president he thought he was negotiating with had been dead for two weeks, and that the peace he thought he was purchasing was worth exactly what a war criminal's signature is worth on a document nobody had authorised him to sign. The Bernadotte affair — the negotiations between Himmler and Count Folke Bernadotte, vice-president of the Swedish Red Cross — is one of the most instructive episodes of the collapse of the Third Reich, because it establishes with unusual precision what the leadership of the Nazi state actually believed about its own position at the moment of maximum crisis, and how comprehensively that belief diverged from the reality that the Western Allies had already imposed on it. Himmler was six months too late: his approach would have found a hearing in Washington and London twelve months later, but the war ended in May, and the Truman administration was two weeks old, and the last echo of Roosevelt's Grand Alliance had not yet been drowned out by the first sounds of the Cold War...",
+    url: "essays/2026-07-16-the-three-weeks-in-april-1945-when-heinrich-himmler-attempted-to-surrender-germany-to-the-western-allies-through-a-swedish-count-and-discovered-that-the-war-had-already-passed-him-by.html"
+  },
+  {
     title: "The Hundred Days Between March and June 1953 When Lavrentiy Beria Attempted to End the Cold War, Dismantle the Gulag, and Reunify Germany — and Was Shot by His Terrified Colleagues for Being the Most Radical Reformer the Soviet Union Would Ever Produce",
     date: "2026-07-15",
     category: "History",
