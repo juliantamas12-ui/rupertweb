@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Night of 28 February 1986 on Sveavägen When Olof Palme Was Shot Walking Home From the Cinema and Swedish Social Democracy Lost the Confidence in Permanent Power That It Would Never Recover",
+    date: "2026-07-17",
+    category: "History",
+    excerpt: "At 23:21 on the evening of Friday, 28 February 1986, on the corner of Sveavägen and Tunnelgatan in central Stockholm, a man in a dark overcoat drew a .357 Magnum revolver, fired two shots at point-blank range into the back of Prime Minister Olof Palme — who was walking home from the Grand Cinema with his wife Lisbet after seeing Bröderna Mozart, without security, at his own insistence — and disappeared up the concrete steps of Tunnelgatan into the winter dark. The killer has never been convicted. The murder weapon has never been recovered. The Swedish state, thirty-nine years and one closed investigation later, has produced a single official theory — that the assassin was Stig Engström, a graphic designer at the insurance firm Skandia who died in 2000 — but has never proven it in court. The historical significance of the Palme assassination is not its unsolved character but the specific effect it had on the country in which it took place: Sweden in February 1986 was the most confident social democracy on earth, and the state's inability to solve the murder of its own prime minister punctured the operating premise that had held the Swedish welfare state together for forty years. Palme's Sweden ended on Sveavägen, and the Sweden that replaced it has been searching for a replacement philosophy ever since...",
+    url: "essays/2026-07-17-the-night-of-28-february-1986-on-sveavagen-when-olof-palme-was-shot-walking-home-from-the-cinema-and-swedish-social-democracy-lost-the-confidence-in-permanent-power-that-it-would-never-recover.html"
+  },
+  {
     title: "The Three Weeks in April 1945 When Heinrich Himmler Attempted to Surrender Germany to the Western Allies Through a Swedish Count and Discovered That the War Had Already Passed Him By",
     date: "2026-07-16",
     category: "History",
