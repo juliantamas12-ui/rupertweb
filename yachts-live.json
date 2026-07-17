@@ -1,25 +1,25 @@
 {
-  "lastUpdated": "2026-07-16T22:04:21.333Z",
+  "lastUpdated": "2026-07-17T02:04:15.033Z",
   "vessels": [
     {
       "name": "WHISPER",
       "port": "Dubrovnik, Croatia on Jul",
-      "updated": "2026-07-16T22:03:33.089Z"
+      "updated": "2026-07-17T02:03:35.614Z"
     },
     {
       "name": "PROJECT X",
-      "port": "Monaco, Monaco on Jul",
-      "updated": "2026-07-16T22:04:13.489Z"
+      "port": "the Ligurean Sea",
+      "updated": "2026-07-17T02:04:11.727Z"
     },
     {
       "name": "BARBARA",
       "port": "the West Mediterranean",
-      "updated": "2026-07-16T22:04:07.827Z"
+      "updated": "2026-07-17T02:04:09.234Z"
     },
     {
       "name": "LADY S",
       "port": "the Tyrrhenian Sea",
-      "updated": "2026-07-16T22:03:24.080Z"
+      "updated": "2026-07-17T02:03:25.849Z"
     },
     {
       "name": "KENSHO",
@@ -29,35 +29,47 @@
     {
       "name": "RENAISSANCE",
       "port": "Kerkira",
-      "updated": "2026-07-16T22:03:50.094Z"
+      "updated": "2026-07-17T02:03:42.982Z"
     },
     {
       "name": "DRAGONFLY",
-      "port": "the Ligurean Sea",
-      "updated": "2026-07-16T22:03:44.979Z"
+      "port": "Blanche cruises comfortably at",
+      "updated": "2026-07-17T02:03:38.835Z"
     },
     {
       "name": "BREAKTHROUGH",
       "port": "La Ciotat, France on Jul",
-      "updated": "2026-07-16T22:03:22.054Z"
+      "updated": "2026-07-17T02:03:13.894Z"
     },
     {
       "name": "LEVIATHAN",
       "port": "Bergen, Norway on Jul",
-      "updated": "2026-07-16T22:04:05.788Z"
+      "updated": "2026-07-17T02:04:01.125Z"
     },
     {
       "name": "CC SUMMER",
       "port": "the Tyrrhenian Sea",
-      "updated": "2026-07-16T22:04:20.332Z"
+      "updated": "2026-07-17T02:04:14.028Z"
     },
     {
       "name": "KISMET",
       "port": "the Ligurean Sea",
-      "updated": "2026-07-16T22:03:27.157Z"
+      "updated": "2026-07-17T02:03:28.513Z"
     }
   ],
   "recentMoves": [
+    {
+      "vessel": "DRAGONFLY",
+      "from": "the Ligurean Sea",
+      "to": "Blanche cruises comfortably at",
+      "time": "2026-07-17T02:04:15.033Z"
+    },
+    {
+      "vessel": "PROJECT X",
+      "from": "Monaco, Monaco on Jul",
+      "to": "the Ligurean Sea",
+      "time": "2026-07-17T02:04:15.033Z"
+    },
     {
       "vessel": "KISMET",
       "from": "Saint Tropez, France, and expected",
@@ -165,18 +177,6 @@
       "from": "Napoli Anch",
       "to": "the Ligurean Sea",
       "time": "2026-07-15T14:04:19.763Z"
-    },
-    {
-      "vessel": "PROJECT X",
-      "from": "Monaco Anch",
-      "to": "the Ligurean Sea",
-      "time": "2026-07-15T10:03:58.000Z"
-    },
-    {
-      "vessel": "KENSHO",
-      "from": "PALMA DE MALLORCA, is currently located at position",
-      "to": "the Balearic Sea",
-      "time": "2026-07-15T06:04:33.448Z"
     }
   ]
 }
