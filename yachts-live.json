@@ -1,20 +1,20 @@
 {
-  "lastUpdated": "2026-07-17T06:04:08.851Z",
+  "lastUpdated": "2026-07-17T10:04:20.670Z",
   "vessels": [
     {
       "name": "WHISPER",
       "port": "Dubrovnik, Croatia, and expected to arrive",
-      "updated": "2026-07-17T06:03:30.099Z"
+      "updated": "2026-07-17T10:03:41.480Z"
     },
     {
       "name": "PROJECT X",
       "port": "Monaco, Monaco on Jul",
-      "updated": "2026-07-17T06:03:55.847Z"
+      "updated": "2026-07-17T10:04:17.778Z"
     },
     {
       "name": "BARBARA",
       "port": "the West Mediterranean",
-      "updated": "2026-07-17T06:03:53.355Z"
+      "updated": "2026-07-17T10:04:13.879Z"
     },
     {
       "name": "LADY S",
@@ -24,40 +24,52 @@
     {
       "name": "KENSHO",
       "port": "the Balearic Sea",
-      "updated": "2026-07-17T06:03:41.673Z"
+      "updated": "2026-07-17T10:03:55.377Z"
     },
     {
       "name": "RENAISSANCE",
       "port": "Kerkira",
-      "updated": "2026-07-17T06:03:38.375Z"
+      "updated": "2026-07-17T10:03:47.287Z"
     },
     {
       "name": "DRAGONFLY",
-      "port": "Mediterranean",
-      "updated": "2026-07-17T06:03:33.740Z"
+      "port": "Lipari, Italy, sailing at",
+      "updated": "2026-07-17T10:03:43.787Z"
     },
     {
       "name": "BREAKTHROUGH",
-      "port": "La Ciotat, France on Jul",
-      "updated": "2026-07-17T06:03:18.740Z"
+      "port": "the West Mediterranean",
+      "updated": "2026-07-17T10:03:23.011Z"
     },
     {
       "name": "LEVIATHAN",
       "port": "Bergen, Norway on Jul",
-      "updated": "2026-07-17T06:03:47.354Z"
+      "updated": "2026-07-17T10:04:01.620Z"
     },
     {
       "name": "CC SUMMER",
       "port": "the Tyrrhenian Sea",
-      "updated": "2026-07-17T02:04:14.028Z"
+      "updated": "2026-07-17T10:04:19.669Z"
     },
     {
       "name": "KISMET",
       "port": "the Ligurean Sea",
-      "updated": "2026-07-17T06:03:22.970Z"
+      "updated": "2026-07-17T10:03:37.427Z"
     }
   ],
   "recentMoves": [
+    {
+      "vessel": "BREAKTHROUGH",
+      "from": "La Ciotat, France on Jul",
+      "to": "the West Mediterranean",
+      "time": "2026-07-17T10:04:20.670Z"
+    },
+    {
+      "vessel": "DRAGONFLY",
+      "from": "Mediterranean",
+      "to": "Lipari, Italy, sailing at",
+      "time": "2026-07-17T10:04:20.670Z"
+    },
     {
       "vessel": "WHISPER",
       "from": "Dubrovnik, Croatia on Jul",
@@ -164,18 +176,6 @@
       "vessel": "WHISPER",
       "from": "Tivat, Montenegro, and expected to",
       "to": "Dubrovnik, Croatia on Jul",
-      "time": "2026-07-16T02:04:42.296Z"
-    },
-    {
-      "vessel": "RENAISSANCE",
-      "from": "the Aegean Sea",
-      "to": "Kerkira",
-      "time": "2026-07-16T02:04:42.296Z"
-    },
-    {
-      "vessel": "PROJECT X",
-      "from": "Monaco Anch",
-      "to": "the Ligurean Sea",
       "time": "2026-07-16T02:04:42.296Z"
     }
   ]
