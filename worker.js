@@ -172,19 +172,19 @@ export default {
       if (p === '/api/spend/log' && request.method === 'POST')        return spendLog(request, env);
       if (p === '/api/cron/run-now')                                  return cronRunNow(url, env, request);
 
-      // ── Ranked Reading ──
-      if (p === '/api/rr/signup' && request.method === 'POST')        return rrSignup(request, env);
-      if (p === '/api/rr/me')                                         return rrMe(url, env);
-      if (p === '/api/rr/search')                                     return rrSearch(url);
-      if (p === '/api/rr/books' && request.method === 'GET')          return rrBooksGet(url, env);
-      if (p === '/api/rr/books' && request.method === 'POST')         return rrBooksAdd(request, env);
-      if (p === '/api/rr/books' && request.method === 'DELETE')       return rrBooksDelete(url, env);
-      if (p === '/api/rr/books/status' && request.method === 'POST')  return rrBooksStatus(request, env);
-      if (p === '/api/rr/log' && request.method === 'POST')           return rrLog(request, env);
-      if (p === '/api/rr/leaderboard')                                return rrLeaderboard(url, env);
-      if (p === '/api/rr/friends' && request.method === 'GET')        return rrFriendsGet(url, env);
-      if (p === '/api/rr/friends' && request.method === 'POST')       return rrFriendsAdd(request, env);
-      if (p === '/api/rr/friends' && request.method === 'DELETE')     return rrFriendsDelete(url, env);
+      // ── Ukufunda (reading tracker) ──
+      if (p === '/api/uf/signup' && request.method === 'POST')        return ufSignup(request, env);
+      if (p === '/api/uf/me')                                         return ufMe(url, env);
+      if (p === '/api/uf/search')                                     return ufSearch(url);
+      if (p === '/api/uf/books' && request.method === 'GET')          return ufBooksGet(url, env);
+      if (p === '/api/uf/books' && request.method === 'POST')         return ufBooksAdd(request, env);
+      if (p === '/api/uf/books' && request.method === 'DELETE')       return ufBooksDelete(url, env);
+      if (p === '/api/uf/books/status' && request.method === 'POST')  return ufBooksStatus(request, env);
+      if (p === '/api/uf/log' && request.method === 'POST')           return ufLog(request, env);
+      if (p === '/api/uf/leaderboard')                                return ufLeaderboard(url, env);
+      if (p === '/api/uf/friends' && request.method === 'GET')        return ufFriendsGet(url, env);
+      if (p === '/api/uf/friends' && request.method === 'POST')       return ufFriendsAdd(request, env);
+      if (p === '/api/uf/friends' && request.method === 'DELETE')     return ufFriendsDelete(url, env);
 
     } catch (e) {
       return jsonResponse({ error: e.message }, 500);
@@ -218,11 +218,14 @@ export default {
       }
     }
 
-    // Pretty-URL routing for the main rupertweb domain (Glossa, etc.)
+    // Pretty-URL routing for the main rupertweb domain (Glossa, Ukufunda, etc.)
     if (p === '/glossa' || p === '/glossa/') {
       const rewritten = new Request(new URL('/glossa.html', request.url).toString(), request);
       return env.ASSETS.fetch(rewritten);
     }
+
+
+
 
     // Long-cache the fingerprinted questlog.js bundle. The HTML references
     // /questlog.js?v=<sha256-12>; the v= query is rewritten by scripts/hash-questlog-js.mjs
@@ -6903,35 +6906,34 @@ async function praefatioVote(request, env) {
     return jsonResponse({ error: e.message }, 500);
   }
 }
-
 // ════════════════════════════════════════════════════════
-// RANKED READING
+// UKUFUNDA
 // ════════════════════════════════════════════════════════
 // A social/competitive reading tracker. Users have a handle, log pages read
 // per book, earn XP, streaks, and tier up (Bronze → Master).
 //
 // Storage (KV, share QUESTLOG_KV):
-//   rr:user:${id}      → { id, name, handle, createdAt, totalXp, streak, lastLogDay, booksFinished }
-//   rr:handle:${h}     → id           (lowercase handle → id lookup)
-//   rr:books:${uid}    → [ book ]     (book = {id,title,author,pages,cover,current,status,addedAt,finishedAt})
-//   rr:friends:${uid}  → [ friendId ]
-//   rr:logs:${uid}     → { YYYY-MM-DD: pages }  (last 60 days, rolling)
-//   rr:global          → [id, id, ...]  (small, capped at ~500 for v1)
+//   uf:user:${id}      → { id, name, handle, createdAt, totalXp, streak, lastLogDay, booksFinished }
+//   uf:handle:${h}     → id           (lowercase handle → id lookup)
+//   uf:books:${uid}    → [ book ]     (book = {id,title,author,pages,cover,current,status,addedAt,finishedAt})
+//   uf:friends:${uid}  → [ friendId ]
+//   uf:logs:${uid}     → { YYYY-MM-DD: pages }  (last 60 days, rolling)
+//   uf:global          → [id, id, ...]  (small, capped at ~500 for v1)
 // v1 uses honor system, no password. Handle is identity.
 
-function _rrToday() { return new Date().toISOString().slice(0,10); }
-function _rrYesterday() {
+function _ufToday() { return new Date().toISOString().slice(0,10); }
+function _ufYesterday() {
   const d = new Date(); d.setUTCDate(d.getUTCDate() - 1);
   return d.toISOString().slice(0,10);
 }
-function _rrWeekStart() {
+function _ufWeekStart() {
   // ISO week: Monday-anchored, in UTC
   const d = new Date();
   const day = (d.getUTCDay() + 6) % 7; // Mon=0..Sun=6
   d.setUTCDate(d.getUTCDate() - day);
   return d.toISOString().slice(0,10);
 }
-function _rrDayList(days) {
+function _ufDayList(days) {
   const out = [];
   const d = new Date();
   for (let i = 0; i < days; i++) {
@@ -6940,14 +6942,14 @@ function _rrDayList(days) {
   }
   return out;
 }
-function _rrRandId() {
+function _ufRandId() {
   return 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 }
-function _rrBookId() {
+function _ufBookId() {
   return 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 }
 
-function _rrTierFromXp(xp) {
+function _ufTierFromXp(xp) {
   if (xp >= 5000) return 'MASTER';
   if (xp >= 3000) return 'DIAMOND';
   if (xp >= 1500) return 'PLATINUM';
@@ -6956,39 +6958,39 @@ function _rrTierFromXp(xp) {
   return 'BRONZE';
 }
 
-async function _rrGetUser(env, id) {
-  return await kvGet(env, `rr:user:${id}`);
+async function _ufGetUser(env, id) {
+  return await kvGet(env, `uf:user:${id}`);
 }
-async function _rrPutUser(env, u) {
-  await kvPut(env, `rr:user:${u.id}`, u);
+async function _ufPutUser(env, u) {
+  await kvPut(env, `uf:user:${u.id}`, u);
 }
-async function _rrGetBooks(env, uid) {
-  return (await kvGet(env, `rr:books:${uid}`)) || [];
+async function _ufGetBooks(env, uid) {
+  return (await kvGet(env, `uf:books:${uid}`)) || [];
 }
-async function _rrPutBooks(env, uid, books) {
-  await kvPut(env, `rr:books:${uid}`, books);
+async function _ufPutBooks(env, uid, books) {
+  await kvPut(env, `uf:books:${uid}`, books);
 }
-async function _rrGetLogs(env, uid) {
-  return (await kvGet(env, `rr:logs:${uid}`)) || {};
+async function _ufGetLogs(env, uid) {
+  return (await kvGet(env, `uf:logs:${uid}`)) || {};
 }
-async function _rrPutLogs(env, uid, logs) {
+async function _ufPutLogs(env, uid, logs) {
   // Trim to last 60 days
-  const keep = new Set(_rrDayList(60));
+  const keep = new Set(_ufDayList(60));
   const trimmed = {};
   for (const k of Object.keys(logs)) if (keep.has(k)) trimmed[k] = logs[k];
-  await kvPut(env, `rr:logs:${uid}`, trimmed);
+  await kvPut(env, `uf:logs:${uid}`, trimmed);
 }
 
-async function _rrAddToGlobal(env, id) {
-  const list = (await kvGet(env, 'rr:global')) || [];
+async function _ufAddToGlobal(env, id) {
+  const list = (await kvGet(env, 'uf:global')) || [];
   if (!list.includes(id)) {
     list.push(id);
     if (list.length > 500) list.shift(); // cap
-    await kvPut(env, 'rr:global', list);
+    await kvPut(env, 'uf:global', list);
   }
 }
 
-async function rrSignup(request, env) {
+async function ufSignup(request, env) {
   try {
     const { name, handle } = await request.json();
     const cleanName = String(name || '').trim().slice(0, 24);
@@ -6996,40 +6998,40 @@ async function rrSignup(request, env) {
     if (!cleanName || cleanHandle.length < 3) {
       return jsonResponse({ error: 'Name required, handle min 3 chars (a-z, 0-9, _).' }, 400);
     }
-    const existing = await kvGet(env, `rr:handle:${cleanHandle}`);
+    const existing = await kvGet(env, `uf:handle:${cleanHandle}`);
     if (existing) {
       // Handle already taken. If this is really the same person coming back,
       // return their user so they don't lose progress.
-      const u = await _rrGetUser(env, existing);
+      const u = await _ufGetUser(env, existing);
       if (u && u.name === cleanName) {
         return jsonResponse({ id: u.id, name: u.name, handle: u.handle });
       }
       return jsonResponse({ error: 'Handle taken. Try another.' }, 409);
     }
-    const id = _rrRandId();
+    const id = _ufRandId();
     const u = {
       id, name: cleanName, handle: cleanHandle,
       createdAt: Date.now(),
       totalXp: 0, streak: 0, lastLogDay: null,
       booksFinished: 0
     };
-    await _rrPutUser(env, u);
-    await kvPut(env, `rr:handle:${cleanHandle}`, id);
-    await _rrAddToGlobal(env, id);
+    await _ufPutUser(env, u);
+    await kvPut(env, `uf:handle:${cleanHandle}`, id);
+    await _ufAddToGlobal(env, id);
     return jsonResponse({ id, name: u.name, handle: u.handle });
   } catch (e) {
     return jsonResponse({ error: e.message }, 500);
   }
 }
 
-async function rrMe(url, env) {
+async function ufMe(url, env) {
   try {
     const id = url.searchParams.get('id');
     if (!id) return jsonResponse({ error: 'id required' }, 400);
-    const u = await _rrGetUser(env, id);
+    const u = await _ufGetUser(env, id);
     if (!u) return jsonResponse({ error: 'not found' }, 404);
-    const logs = await _rrGetLogs(env, id);
-    const weekStart = _rrWeekStart();
+    const logs = await _ufGetLogs(env, id);
+    const weekStart = _ufWeekStart();
     let weekPages = 0;
     let weekXp = 0;
     for (const [day, pages] of Object.entries(logs)) {
@@ -7043,7 +7045,7 @@ async function rrMe(url, env) {
       totalXp: u.totalXp || 0,
       streak: u.streak || 0,
       booksFinished: u.booksFinished || 0,
-      tier: _rrTierFromXp(u.totalXp || 0),
+      tier: _ufTierFromXp(u.totalXp || 0),
       weekPages, weekXp
     });
   } catch (e) {
@@ -7051,7 +7053,7 @@ async function rrMe(url, env) {
   }
 }
 
-async function rrSearch(url) {
+async function ufSearch(url) {
   try {
     const q = (url.searchParams.get('q') || '').trim();
     if (q.length < 2) return jsonResponse({ results: [] });
@@ -7073,29 +7075,29 @@ async function rrSearch(url) {
   }
 }
 
-async function rrBooksGet(url, env) {
+async function ufBooksGet(url, env) {
   try {
     const id = url.searchParams.get('id');
     if (!id) return jsonResponse({ error: 'id required' }, 400);
-    const books = await _rrGetBooks(env, id);
+    const books = await _ufGetBooks(env, id);
     return jsonResponse({ books });
   } catch (e) {
     return jsonResponse({ error: e.message }, 500);
   }
 }
 
-async function rrBooksAdd(request, env) {
+async function ufBooksAdd(request, env) {
   try {
     const { userId, book } = await request.json();
     if (!userId || !book || !book.title) return jsonResponse({ error: 'invalid' }, 400);
-    const u = await _rrGetUser(env, userId);
+    const u = await _ufGetUser(env, userId);
     if (!u) return jsonResponse({ error: 'user not found' }, 404);
     const pages = Math.max(10, Math.min(9999, parseInt(book.pages, 10) || 0));
     if (!pages) return jsonResponse({ error: 'invalid page count' }, 400);
-    const books = await _rrGetBooks(env, userId);
+    const books = await _ufGetBooks(env, userId);
     if (books.length >= 50) return jsonResponse({ error: 'library full (50 books max)' }, 400);
     const newBook = {
-      id: _rrBookId(),
+      id: _ufBookId(),
       title: String(book.title).slice(0, 200),
       author: String(book.author || 'Unknown').slice(0, 120),
       pages,
@@ -7106,50 +7108,50 @@ async function rrBooksAdd(request, env) {
       finishedAt: null
     };
     books.unshift(newBook);
-    await _rrPutBooks(env, userId, books);
+    await _ufPutBooks(env, userId, books);
     return jsonResponse({ book: newBook });
   } catch (e) {
     return jsonResponse({ error: e.message }, 500);
   }
 }
 
-async function rrBooksDelete(url, env) {
+async function ufBooksDelete(url, env) {
   try {
     const id = url.searchParams.get('id');
     const bookId = url.searchParams.get('bookId');
     if (!id || !bookId) return jsonResponse({ error: 'id and bookId required' }, 400);
-    const books = await _rrGetBooks(env, id);
+    const books = await _ufGetBooks(env, id);
     const filtered = books.filter(b => b.id !== bookId);
-    await _rrPutBooks(env, id, filtered);
+    await _ufPutBooks(env, id, filtered);
     return jsonResponse({ ok: true });
   } catch (e) {
     return jsonResponse({ error: e.message }, 500);
   }
 }
 
-async function rrBooksStatus(request, env) {
+async function ufBooksStatus(request, env) {
   try {
     const { userId, bookId, status } = await request.json();
     if (!['active','paused','done'].includes(status)) return jsonResponse({ error: 'bad status' }, 400);
-    const books = await _rrGetBooks(env, userId);
+    const books = await _ufGetBooks(env, userId);
     const b = books.find(x => x.id === bookId);
     if (!b) return jsonResponse({ error: 'not found' }, 404);
     b.status = status;
     if (status === 'done') b.finishedAt = Date.now();
-    await _rrPutBooks(env, userId, books);
+    await _ufPutBooks(env, userId, books);
     return jsonResponse({ ok: true });
   } catch (e) {
     return jsonResponse({ error: e.message }, 500);
   }
 }
 
-async function rrLog(request, env) {
+async function ufLog(request, env) {
   try {
     const { userId, bookId, page } = await request.json();
     if (!userId || !bookId) return jsonResponse({ error: 'invalid' }, 400);
-    const u = await _rrGetUser(env, userId);
+    const u = await _ufGetUser(env, userId);
     if (!u) return jsonResponse({ error: 'user not found' }, 404);
-    const books = await _rrGetBooks(env, userId);
+    const books = await _ufGetBooks(env, userId);
     const b = books.find(x => x.id === bookId);
     if (!b) return jsonResponse({ error: 'book not found' }, 404);
     const newPage = Math.max(0, Math.min(b.pages, parseInt(page, 10) || 0));
@@ -7157,8 +7159,8 @@ async function rrLog(request, env) {
     if (pagesRead <= 0) return jsonResponse({ error: 'no progress' }, 400);
 
     // Suspicious-pace flag: > 400 pages/day is unusual for v1 honor system
-    const today = _rrToday();
-    const logs = await _rrGetLogs(env, userId);
+    const today = _ufToday();
+    const logs = await _ufGetLogs(env, userId);
     logs[today] = (logs[today] || 0) + pagesRead;
     if (logs[today] > 800) return jsonResponse({ error: 'daily cap reached (800/day)' }, 400);
 
@@ -7172,7 +7174,7 @@ async function rrLog(request, env) {
     }
 
     // Streak: if lastLogDay was yesterday or today, keep/extend. Otherwise reset to 1.
-    const yesterday = _rrYesterday();
+    const yesterday = _ufYesterday();
     if (u.lastLogDay === today) {
       // already logged today, streak unchanged
     } else if (u.lastLogDay === yesterday) {
@@ -7187,24 +7189,24 @@ async function rrLog(request, env) {
     const xp = Math.round(pagesRead * streakMult) + finishBonus;
     u.totalXp = (u.totalXp || 0) + xp;
 
-    await _rrPutUser(env, u);
-    await _rrPutBooks(env, userId, books);
-    await _rrPutLogs(env, userId, logs);
-    await _rrAddToGlobal(env, userId);
+    await _ufPutUser(env, u);
+    await _ufPutBooks(env, userId, books);
+    await _ufPutLogs(env, userId, logs);
+    await _ufAddToGlobal(env, userId);
 
     return jsonResponse({
       ok: true, xp, pagesRead,
       totalXp: u.totalXp, streak: u.streak,
       finished: finishBonus > 0,
-      tier: _rrTierFromXp(u.totalXp)
+      tier: _ufTierFromXp(u.totalXp)
     });
   } catch (e) {
     return jsonResponse({ error: e.message }, 500);
   }
 }
 
-async function _rrUserSummary(env, id) {
-  const u = await _rrGetUser(env, id);
+async function _ufUserSummary(env, id) {
+  const u = await _ufGetUser(env, id);
   if (!u) return null;
   return {
     id: u.id, name: u.name, handle: u.handle,
@@ -7214,23 +7216,23 @@ async function _rrUserSummary(env, id) {
   };
 }
 
-async function rrLeaderboard(url, env) {
+async function ufLeaderboard(url, env) {
   try {
     const id = url.searchParams.get('id');
     const mode = url.searchParams.get('mode') || 'friends';
     if (!id) return jsonResponse({ error: 'id required' }, 400);
     let ids = [];
     if (mode === 'friends') {
-      const me = await _rrGetUser(env, id);
+      const me = await _ufGetUser(env, id);
       if (!me) return jsonResponse({ rows: [] });
-      const friends = (await kvGet(env, `rr:friends:${id}`)) || [];
+      const friends = (await kvGet(env, `uf:friends:${id}`)) || [];
       ids = [id, ...friends];
     } else {
-      ids = (await kvGet(env, 'rr:global')) || [];
+      ids = (await kvGet(env, 'uf:global')) || [];
     }
     const rows = [];
     for (const uid of ids) {
-      const s = await _rrUserSummary(env, uid);
+      const s = await _ufUserSummary(env, uid);
       if (s) rows.push(s);
     }
     rows.sort((a, b) => (b.totalXp || 0) - (a.totalXp || 0));
@@ -7240,14 +7242,14 @@ async function rrLeaderboard(url, env) {
   }
 }
 
-async function rrFriendsGet(url, env) {
+async function ufFriendsGet(url, env) {
   try {
     const id = url.searchParams.get('id');
     if (!id) return jsonResponse({ error: 'id required' }, 400);
-    const friendIds = (await kvGet(env, `rr:friends:${id}`)) || [];
+    const friendIds = (await kvGet(env, `uf:friends:${id}`)) || [];
     const friends = [];
     for (const fid of friendIds) {
-      const s = await _rrUserSummary(env, fid);
+      const s = await _ufUserSummary(env, fid);
       if (s) friends.push(s);
     }
     friends.sort((a, b) => (b.totalXp || 0) - (a.totalXp || 0));
@@ -7257,23 +7259,23 @@ async function rrFriendsGet(url, env) {
   }
 }
 
-async function rrFriendsAdd(request, env) {
+async function ufFriendsAdd(request, env) {
   try {
     const { userId, handle } = await request.json();
     if (!userId || !handle) return jsonResponse({ error: 'invalid' }, 400);
     const cleanHandle = String(handle).toLowerCase().replace(/[^a-z0-9_]/g, '');
-    const fid = await kvGet(env, `rr:handle:${cleanHandle}`);
+    const fid = await kvGet(env, `uf:handle:${cleanHandle}`);
     if (!fid) return jsonResponse({ error: 'no user with that handle' }, 404);
     if (fid === userId) return jsonResponse({ error: "can't add yourself" }, 400);
-    const list = (await kvGet(env, `rr:friends:${userId}`)) || [];
+    const list = (await kvGet(env, `uf:friends:${userId}`)) || [];
     if (list.includes(fid)) return jsonResponse({ ok: true, alreadyFriends: true });
     list.push(fid);
-    await kvPut(env, `rr:friends:${userId}`, list);
+    await kvPut(env, `uf:friends:${userId}`, list);
     // Symmetric: also add me to their friends list
-    const other = (await kvGet(env, `rr:friends:${fid}`)) || [];
+    const other = (await kvGet(env, `uf:friends:${fid}`)) || [];
     if (!other.includes(userId)) {
       other.push(userId);
-      await kvPut(env, `rr:friends:${fid}`, other);
+      await kvPut(env, `uf:friends:${fid}`, other);
     }
     return jsonResponse({ ok: true });
   } catch (e) {
@@ -7281,17 +7283,17 @@ async function rrFriendsAdd(request, env) {
   }
 }
 
-async function rrFriendsDelete(url, env) {
+async function ufFriendsDelete(url, env) {
   try {
     const id = url.searchParams.get('id');
     const handle = (url.searchParams.get('handle') || '').toLowerCase().replace(/[^a-z0-9_]/g, '');
     if (!id || !handle) return jsonResponse({ error: 'id and handle required' }, 400);
-    const fid = await kvGet(env, `rr:handle:${handle}`);
+    const fid = await kvGet(env, `uf:handle:${handle}`);
     if (!fid) return jsonResponse({ ok: true });
-    const list = (await kvGet(env, `rr:friends:${id}`)) || [];
-    await kvPut(env, `rr:friends:${id}`, list.filter(x => x !== fid));
-    const other = (await kvGet(env, `rr:friends:${fid}`)) || [];
-    await kvPut(env, `rr:friends:${fid}`, other.filter(x => x !== id));
+    const list = (await kvGet(env, `uf:friends:${id}`)) || [];
+    await kvPut(env, `uf:friends:${id}`, list.filter(x => x !== fid));
+    const other = (await kvGet(env, `uf:friends:${fid}`)) || [];
+    await kvPut(env, `uf:friends:${fid}`, other.filter(x => x !== id));
     return jsonResponse({ ok: true });
   } catch (e) {
     return jsonResponse({ error: e.message }, 500);

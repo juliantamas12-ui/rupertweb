@@ -799,9 +799,9 @@ const PROJECTS = [
     tags: ["Cloudflare Workers", "Steam API", "CheapShark", "Resend"]
   },
   {
-    name: "Ranked Reading",
-    url: "https://rupertweb.com/rankedreading.html",
-    desc: "Reading, but competitive. Track books, log pages, climb tiers from Bronze to Master. Friend leaderboards, streaks, XP. Powered by OpenLibrary.",
+    name: "Ukufunda",
+    url: "https://rupertweb.com/ukufunda",
+    desc: "Xhosa for \"reading.\" A social reading tracker \u2014 log pages, climb tiers Bronze to Master, beat your friends. Powered by OpenLibrary.",
     tags: ["Cloudflare Workers", "KV", "OpenLibrary", "Social"]
   },
   {

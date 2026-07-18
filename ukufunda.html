@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Ranked Reading</title>
+<title>Ukufunda</title>
 <meta name="description" content="Reading, ranked. Track books, climb tiers, beat your friends.">
-<link rel="canonical" href="https://rupertweb.com/rankedreading.html">
+<link rel="canonical" href="https://rupertweb.com/ukufunda">
 <meta name="theme-color" content="#0e1419">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="Ranked Reading">
-<meta property="og:title" content="Ranked Reading — Reading, but competitive.">
+<meta property="og:site_name" content="Ukufunda">
+<meta property="og:title" content="Ukufunda — Reading, but competitive.">
 <meta property="og:description" content="Track books, log pages, climb tiers, beat your friends. Bronze to Diamond.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -165,8 +165,8 @@ header.top .who button{color:var(--accent);font-size:12px;margin-left:8px}
 <div class="wrap">
   <!-- AUTH SCREEN -->
   <div id="auth-screen" class="auth hidden">
-    <h2>Ranked <span style="color:var(--accent)">Reading</span></h2>
-    <p>Reading, but competitive. Track books, log pages, climb tiers, beat your friends.</p>
+    <h2><span style="color:var(--accent)">Ukufunda</span></h2>
+    <p><em>Ukufunda</em> — Xhosa for "reading." Track books, log pages, climb tiers, beat your friends.</p>
     <div class="field">
       <label for="signin-name">Display name</label>
       <input id="signin-name" type="text" placeholder="e.g. Julian" maxlength="24" autocomplete="off">
@@ -182,7 +182,7 @@ header.top .who button{color:var(--accent);font-size:12px;margin-left:8px}
   <!-- APP -->
   <div id="app" class="hidden">
     <header class="top">
-      <h1>Ranked <span>Reading</span></h1>
+      <h1><span>Ukufunda</span></h1>
       <div class="who">
         <span id="who-name"></span>
         <span id="who-tier"></span>
@@ -299,8 +299,8 @@ header.top .who button{color:var(--accent);font-size:12px;margin-left:8px}
 <div id="toast" class="toast"></div>
 
 <script>
-const API = '/api/rr';
-const LS_KEY = 'rr:me';
+const API = '/api/uf';
+const LS_KEY = 'uf:me';
 
 let state = {
   me: null,      // {id, name, handle}
