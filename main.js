@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Six Weeks Between May and July 1997 in Bangkok When Chavalit Yongchaiyudh's Government Burned Through Thailand's Foreign Reserves to Defend the Baht and Triggered the Asian Financial Crisis by Losing a Currency War It Had Already Lost",
+    date: "2026-07-18",
+    category: "Economics",
+    excerpt: "On 2 July 1997, at 08:30 Bangkok time, the Bank of Thailand announced that it was abandoning the fixed exchange rate that had pegged the baht to a basket of currencies dominated by the US dollar since 1984, and would allow the currency to float. Within hours the baht had lost 15 per cent of its value. Within a fortnight it had lost 20 per cent. By the end of the year it had lost half. The announcement was the trigger for the most severe regional financial crisis of the twentieth century, which within six months had spread to Indonesia, Malaysia, the Philippines, South Korea and Hong Kong, cost approximately $850 billion in destroyed asset values, forced the resignations of Suharto and Kim Young-sam, and reshaped the East Asian development model. What is worth understanding is not that the devaluation happened but what the Thai government did in the six weeks before it happened: it spent $23 billion of $38 billion in reserves defending a peg it knew it could not hold, and entered $28 billion in forward contracts that converted a currency crisis into a solvency crisis. The reserves were not the peg's defence. They were the evidence of the peg's failure...",
+    url: "essays/2026-07-18-the-six-weeks-between-may-and-july-1997-in-bangkok-when-chavalit-yongchaiyudhs-government-burned-through-thailands-foreign-reserves-to-defend-the-baht-and-triggered-the-asian-financial-crisis-by-losing-a-currency-war-it-had-already-lost.html"
+  },
+  {
     title: "The Night of 28 February 1986 on Sveavägen When Olof Palme Was Shot Walking Home From the Cinema and Swedish Social Democracy Lost the Confidence in Permanent Power That It Would Never Recover",
     date: "2026-07-17",
     category: "History",
