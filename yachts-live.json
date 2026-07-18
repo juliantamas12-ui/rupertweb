@@ -1,50 +1,50 @@
 {
-  "lastUpdated": "2026-07-17T22:04:12.322Z",
+  "lastUpdated": "2026-07-18T02:04:09.423Z",
   "vessels": [
     {
       "name": "WHISPER",
-      "port": "Dubrovnik, Croatia, and expected to",
-      "updated": "2026-07-17T22:03:33.859Z"
+      "port": "Dubrovnik, Croatia, and expected to arrive",
+      "updated": "2026-07-18T02:03:39.803Z"
     },
     {
       "name": "PROJECT X",
       "port": "Monaco, Monaco on Jul",
-      "updated": "2026-07-17T22:04:07.968Z"
+      "updated": "2026-07-18T02:04:08.323Z"
     },
     {
       "name": "BARBARA",
       "port": "the West Mediterranean",
-      "updated": "2026-07-17T22:04:01.266Z"
+      "updated": "2026-07-18T02:04:04.546Z"
     },
     {
       "name": "LADY S",
       "port": "the Tyrrhenian Sea",
-      "updated": "2026-07-17T22:03:15.411Z"
+      "updated": "2026-07-18T02:03:25.397Z"
     },
     {
       "name": "KENSHO",
       "port": "the Balearic Sea",
-      "updated": "2026-07-17T18:04:02.112Z"
+      "updated": "2026-07-18T02:03:56.637Z"
     },
     {
       "name": "RENAISSANCE",
       "port": "Kerkira",
-      "updated": "2026-07-17T22:03:43.313Z"
+      "updated": "2026-07-18T02:03:46.403Z"
     },
     {
       "name": "DRAGONFLY",
       "port": "Lipari, Italy, and expected to",
-      "updated": "2026-07-17T22:03:35.900Z"
+      "updated": "2026-07-18T02:03:41.872Z"
     },
     {
       "name": "BREAKTHROUGH",
       "port": "the West Mediterranean",
-      "updated": "2026-07-17T22:03:13.489Z"
+      "updated": "2026-07-18T02:03:21.447Z"
     },
     {
       "name": "LEVIATHAN",
       "port": "Bergen, Norway on Jul",
-      "updated": "2026-07-17T22:03:59.746Z"
+      "updated": "2026-07-18T02:04:00.488Z"
     },
     {
       "name": "CC SUMMER",
@@ -58,6 +58,12 @@
     }
   ],
   "recentMoves": [
+    {
+      "vessel": "WHISPER",
+      "from": "Dubrovnik, Croatia, and expected to",
+      "to": "Dubrovnik, Croatia, and expected to arrive",
+      "time": "2026-07-18T02:04:09.423Z"
+    },
     {
       "vessel": "WHISPER",
       "from": "Dubrovnik, Croatia, and expected to arrive",
@@ -170,12 +176,6 @@
       "vessel": "LADY S",
       "from": "Castellammare di Stabia, Italy, Lady",
       "to": "Castellammare di Stabia, Italy, LADY",
-      "time": "2026-07-16T06:03:50.829Z"
-    },
-    {
-      "vessel": "PROJECT X",
-      "from": "the Ligurean Sea",
-      "to": "Monaco, Monaco on Jul",
       "time": "2026-07-16T06:03:50.829Z"
     }
   ]
