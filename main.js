@@ -800,7 +800,7 @@ const PROJECTS = [
   },
   {
     name: "Ukufunda",
-    url: "https://rupertweb.com/ukufunda",
+    url: "https://rupertweb.julian-tamas12.workers.dev/ukufunda",
     desc: "Xhosa for \"reading.\" A social reading tracker \u2014 log pages, climb tiers Bronze to Master, beat your friends. Powered by OpenLibrary.",
     tags: ["Cloudflare Workers", "KV", "OpenLibrary", "Social"]
   },
