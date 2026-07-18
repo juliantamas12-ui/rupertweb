@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ranked Reading</title>
+<meta name="description" content="Reading, ranked. Track books, climb tiers, beat your friends.">
+<link rel="canonical" href="https://rupertweb.com/rankedreading.html">
+<meta name="theme-color" content="#0e1419">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Ranked Reading">
+<meta property="og:title" content="Ranked Reading — Reading, but competitive.">
+<meta property="og:description" content="Track books, log pages, climb tiers, beat your friends. Bronze to Diamond.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0e1419;
+  --bg-deep:#080b0e;
+  --panel:#16202d;
+  --panel2:#1f2933;
+  --panel-hover:#2a3f5f;
+  --border:rgba(102,192,244,0.08);
+  --border-strong:rgba(102,192,244,0.20);
+  --accent:#66c0f4;
+  --accent-bright:#9ed7ff;
+  --accent2:#1b75bb;
+  --gold:#fcb41e;
+  --green:#5ba32b;
+  --red:#e74c3c;
+  --text:#c7d5e0;
+  --text-bright:#ffffff;
+  --dim:rgba(199,213,224,0.55);
+  --dim2:rgba(199,213,224,0.25);
+
+  /* Tier colours */
+  --tier-bronze:#cd7f32;
+  --tier-silver:#c0c0c0;
+  --tier-gold:#ffd700;
+  --tier-platinum:#e5e4e2;
+  --tier-diamond:#b9f2ff;
+  --tier-master:#ff6c00;
+}
+body{background:var(--bg);color:var(--text);font-family:'Inter','Helvetica Neue',Arial,sans-serif;line-height:1.5;min-height:100vh;font-size:14px}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+input,select{font:inherit;color:var(--text-bright);background:var(--panel2);border:1px solid var(--border);padding:10px 12px;outline:none;width:100%}
+input:focus,select:focus{border-color:var(--accent)}
+a{color:var(--accent);text-decoration:none}
+a:hover{color:var(--accent-bright)}
+
+.wrap{max-width:1100px;margin:0 auto;padding:24px 20px 80px}
+header.top{display:flex;align-items:center;justify-content:space-between;padding:16px 0 24px;border-bottom:1px solid var(--border);margin-bottom:24px}
+header.top h1{font-size:22px;font-weight:900;letter-spacing:-0.02em;color:var(--text-bright)}
+header.top h1 span{color:var(--accent)}
+header.top .who{font-size:13px;color:var(--dim)}
+header.top .who button{color:var(--accent);font-size:12px;margin-left:8px}
+
+/* Auth screen */
+.auth{max-width:420px;margin:80px auto;padding:32px;background:var(--panel);border:1px solid var(--border-strong)}
+.auth h2{font-size:28px;font-weight:800;color:var(--text-bright);margin-bottom:8px;letter-spacing:-0.02em}
+.auth p{color:var(--dim);margin-bottom:24px;font-size:14px}
+.auth label{display:block;font-size:12px;color:var(--dim);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;font-weight:600}
+.auth .field{margin-bottom:16px}
+.btn{background:var(--accent);color:#08131b;border:none;padding:12px 20px;font-weight:700;cursor:pointer;letter-spacing:0.02em;text-transform:uppercase;font-size:13px;display:inline-block;width:100%;transition:background 0.15s}
+.btn:hover{background:var(--accent-bright)}
+.btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent2);width:auto;padding:8px 14px}
+.btn.ghost:hover{background:var(--accent2);color:var(--text-bright)}
+.btn.small{padding:6px 12px;font-size:11px;width:auto}
+.btn.danger{background:var(--red);color:white}
+
+/* Tabs */
+.tabs{display:flex;gap:2px;background:var(--panel);padding:2px;border:1px solid var(--border);margin-bottom:24px}
+.tabs button{flex:1;padding:12px;color:var(--dim);font-weight:600;font-size:13px;letter-spacing:0.02em;text-transform:uppercase}
+.tabs button.active{background:var(--panel2);color:var(--text-bright)}
+.tabs button:hover:not(.active){color:var(--text)}
+
+/* Cards */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+@media(max-width:720px){.grid{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--border);padding:20px}
+.card h3{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:0.1em;font-weight:700;margin-bottom:12px}
+.stat{font-size:32px;font-weight:900;color:var(--text-bright);letter-spacing:-0.02em}
+.stat .unit{font-size:14px;color:var(--dim);font-weight:500;margin-left:6px}
+.sub{font-size:12px;color:var(--dim);margin-top:6px}
+
+/* Tier badge */
+.tier-badge{display:inline-flex;align-items:center;gap:8px;padding:4px 10px;background:var(--bg-deep);border:1px solid var(--border-strong);font-weight:700;font-size:12px;letter-spacing:0.06em;text-transform:uppercase}
+.tier-badge .dot{width:8px;height:8px;background:var(--tier-bronze)}
+.tier-badge.silver .dot{background:var(--tier-silver)}
+.tier-badge.gold .dot{background:var(--tier-gold)}
+.tier-badge.platinum .dot{background:var(--tier-platinum)}
+.tier-badge.diamond .dot{background:var(--tier-diamond)}
+.tier-badge.master .dot{background:var(--tier-master);box-shadow:0 0 8px var(--tier-master)}
+
+/* Book list */
+.books-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.books-header h2{font-size:16px;font-weight:800;color:var(--text-bright);text-transform:uppercase;letter-spacing:0.04em}
+.book{display:flex;gap:14px;padding:16px;background:var(--panel);border:1px solid var(--border);margin-bottom:12px}
+.book:hover{border-color:var(--border-strong)}
+.book .cover{width:60px;height:90px;background:var(--panel2);flex-shrink:0;object-fit:cover;display:block}
+.book .cover-placeholder{width:60px;height:90px;background:linear-gradient(135deg,var(--panel2),var(--panel));display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:10px;text-align:center;padding:4px;flex-shrink:0}
+.book .info{flex:1;min-width:0}
+.book .title{font-weight:700;color:var(--text-bright);font-size:15px;margin-bottom:2px}
+.book .author{font-size:12px;color:var(--dim);margin-bottom:8px}
+.book .progress-bar{height:6px;background:var(--bg-deep);position:relative;margin:8px 0 4px}
+.book .progress-bar .fill{position:absolute;top:0;left:0;height:100%;background:var(--accent);transition:width 0.3s}
+.book .progress-text{font-size:11px;color:var(--dim);display:flex;justify-content:space-between}
+.book .actions{display:flex;gap:8px;margin-top:10px}
+.book .status-done{color:var(--green);font-weight:700}
+.book .status-active{color:var(--accent);font-weight:700}
+.book .status-paused{color:var(--dim);font-weight:700}
+
+/* Search dropdown */
+.search-box{position:relative;margin-bottom:20px}
+.search-results{position:absolute;top:100%;left:0;right:0;background:var(--panel);border:1px solid var(--border-strong);border-top:none;max-height:400px;overflow-y:auto;z-index:10}
+.search-result{display:flex;gap:12px;padding:10px 12px;cursor:pointer;border-bottom:1px solid var(--border)}
+.search-result:hover{background:var(--panel-hover)}
+.search-result img{width:36px;height:54px;object-fit:cover;background:var(--panel2)}
+.search-result .info{flex:1;min-width:0}
+.search-result .title{font-weight:600;color:var(--text-bright);font-size:14px}
+.search-result .meta{font-size:11px;color:var(--dim)}
+
+/* Leaderboard */
+.lb{background:var(--panel);border:1px solid var(--border)}
+.lb-row{display:grid;grid-template-columns:40px 1fr 100px 80px 60px;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);font-size:14px}
+.lb-row.header{background:var(--bg-deep);color:var(--dim);font-size:11px;text-transform:uppercase;letter-spacing:0.08em;font-weight:700}
+.lb-row .rank{font-weight:900;color:var(--dim);text-align:center;font-family:'JetBrains Mono',monospace}
+.lb-row .rank.gold{color:var(--gold)}
+.lb-row .rank.silver{color:#c0c0c0}
+.lb-row .rank.bronze{color:#cd7f32}
+.lb-row .name{font-weight:700;color:var(--text-bright)}
+.lb-row .name.me{color:var(--accent)}
+.lb-row .xp{font-weight:700;color:var(--text-bright);text-align:right}
+.lb-row .streak{font-size:12px;color:var(--dim);text-align:right}
+@media(max-width:600px){.lb-row{grid-template-columns:36px 1fr 70px 50px}.lb-row .streak{display:none}}
+
+/* Friends */
+.friends-add{display:flex;gap:8px;margin-bottom:16px}
+.friends-add input{flex:1}
+.friend-row{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--panel);border:1px solid var(--border);margin-bottom:6px}
+.friend-row .fname{font-weight:600;color:var(--text-bright)}
+.friend-row .fmeta{font-size:12px;color:var(--dim);margin-left:8px}
+
+/* Log page modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+.modal-bg.open{display:flex}
+.modal{background:var(--panel);border:1px solid var(--border-strong);padding:24px;max-width:420px;width:100%}
+.modal h3{font-size:18px;font-weight:800;color:var(--text-bright);margin-bottom:16px;text-transform:uppercase;letter-spacing:0.04em}
+.modal .field{margin-bottom:14px}
+.modal label{display:block;font-size:12px;color:var(--dim);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;font-weight:600}
+.modal .actions{display:flex;gap:8px;margin-top:20px}
+
+.empty{padding:40px 20px;text-align:center;color:var(--dim);border:1px dashed var(--border-strong)}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--panel);border:1px solid var(--accent);padding:12px 20px;color:var(--text-bright);font-weight:600;z-index:100;display:none}
+.toast.show{display:block}
+
+.hidden{display:none !important}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <!-- AUTH SCREEN -->
+  <div id="auth-screen" class="auth hidden">
+    <h2>Ranked <span style="color:var(--accent)">Reading</span></h2>
+    <p>Reading, but competitive. Track books, log pages, climb tiers, beat your friends.</p>
+    <div class="field">
+      <label for="signin-name">Display name</label>
+      <input id="signin-name" type="text" placeholder="e.g. Julian" maxlength="24" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="signin-handle">Handle (for friend adds)</label>
+      <input id="signin-handle" type="text" placeholder="e.g. julian" maxlength="20" autocomplete="off">
+    </div>
+    <button class="btn" id="signin-btn">Start reading</button>
+    <p style="margin-top:16px;font-size:12px;color:var(--dim2)">v1: honor system. No password. Your handle is your identity — pick something you'll remember.</p>
+  </div>
+
+  <!-- APP -->
+  <div id="app" class="hidden">
+    <header class="top">
+      <h1>Ranked <span>Reading</span></h1>
+      <div class="who">
+        <span id="who-name"></span>
+        <span id="who-tier"></span>
+        <button id="signout-btn">Sign out</button>
+      </div>
+    </header>
+
+    <div class="tabs">
+      <button data-tab="home" class="active">Home</button>
+      <button data-tab="books">Books</button>
+      <button data-tab="leaderboard">Leaderboard</button>
+      <button data-tab="friends">Friends</button>
+    </div>
+
+    <!-- HOME TAB -->
+    <div id="tab-home" class="tab">
+      <div class="grid">
+        <div class="card">
+          <h3>This Week</h3>
+          <div class="stat"><span id="week-pages">0</span><span class="unit">pages</span></div>
+          <div class="sub" id="week-sub">— XP earned this week</div>
+        </div>
+        <div class="card">
+          <h3>Streak</h3>
+          <div class="stat"><span id="streak-days">0</span><span class="unit">days</span></div>
+          <div class="sub" id="streak-sub">Read every day to keep it alive</div>
+        </div>
+        <div class="card">
+          <h3>Total XP</h3>
+          <div class="stat" id="total-xp">0</div>
+          <div class="sub" id="total-sub">Season XP</div>
+        </div>
+        <div class="card">
+          <h3>Books Finished</h3>
+          <div class="stat" id="books-done">0</div>
+          <div class="sub">All-time</div>
+        </div>
+      </div>
+
+      <div class="books-header">
+        <h2>Currently Reading</h2>
+        <button class="btn ghost small" onclick="switchTab('books')">+ Add book</button>
+      </div>
+      <div id="home-books"></div>
+    </div>
+
+    <!-- BOOKS TAB -->
+    <div id="tab-books" class="tab hidden">
+      <div class="search-box">
+        <input id="book-search" type="text" placeholder="Search for a book by title or author..." autocomplete="off">
+        <div id="search-results" class="search-results hidden"></div>
+      </div>
+
+      <div class="books-header">
+        <h2>Your Library</h2>
+      </div>
+      <div id="books-list"></div>
+    </div>
+
+    <!-- LEADERBOARD TAB -->
+    <div id="tab-leaderboard" class="tab hidden">
+      <div class="tabs" style="margin-bottom:16px">
+        <button data-lb="friends" class="active">Friends</button>
+        <button data-lb="global">Global</button>
+      </div>
+      <div class="lb">
+        <div class="lb-row header">
+          <div class="rank">#</div>
+          <div class="name">Reader</div>
+          <div class="xp">XP</div>
+          <div class="streak">Streak</div>
+          <div class="streak">Tier</div>
+        </div>
+        <div id="lb-body"></div>
+      </div>
+    </div>
+
+    <!-- FRIENDS TAB -->
+    <div id="tab-friends" class="tab hidden">
+      <div class="card" style="margin-bottom:20px">
+        <h3>Your Handle</h3>
+        <div class="stat mono" id="my-handle" style="font-size:20px">-</div>
+        <div class="sub">Share this so friends can add you.</div>
+      </div>
+      <div class="friends-add">
+        <input id="friend-handle" type="text" placeholder="Friend's handle" autocomplete="off">
+        <button class="btn ghost" onclick="addFriend()">Add</button>
+      </div>
+      <div id="friends-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- LOG PROGRESS MODAL -->
+<div id="log-modal" class="modal-bg">
+  <div class="modal">
+    <h3>Log Progress</h3>
+    <div id="log-book-info" style="margin-bottom:16px;color:var(--dim);font-size:13px"></div>
+    <div class="field">
+      <label>Current page</label>
+      <input id="log-page" type="number" min="0" placeholder="e.g. 87">
+    </div>
+    <div class="field">
+      <label>Or pages read just now</label>
+      <input id="log-delta" type="number" min="0" placeholder="e.g. 20">
+    </div>
+    <div class="actions">
+      <button class="btn ghost" onclick="closeLogModal()">Cancel</button>
+      <button class="btn" onclick="submitLog()">Log it</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const API = '/api/rr';
+const LS_KEY = 'rr:me';
+
+let state = {
+  me: null,      // {id, name, handle}
+  books: [],
+  stats: null,
+  leaderboard: [],
+  friends: [],
+  lbMode: 'friends',
+  logBookId: null
+};
+
+// ============ AUTH ============
+function loadMe(){
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (raw) state.me = JSON.parse(raw);
+  } catch(e){}
+}
+function saveMe(){
+  localStorage.setItem(LS_KEY, JSON.stringify(state.me));
+}
+function clearMe(){
+  localStorage.removeItem(LS_KEY);
+  state.me = null;
+}
+
+async function signIn(){
+  const name = document.getElementById('signin-name').value.trim();
+  const handle = document.getElementById('signin-handle').value.trim().toLowerCase().replace(/[^a-z0-9_]/g,'');
+  if (!name || !handle) return toast('Name and handle required');
+  if (handle.length < 3) return toast('Handle too short (min 3)');
+  try {
+    const r = await fetch(`${API}/signup`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({name, handle})
+    });
+    const d = await r.json();
+    if (!r.ok) return toast(d.error || 'Signup failed');
+    state.me = { id: d.id, name: d.name, handle: d.handle };
+    saveMe();
+    renderApp();
+  } catch(e){ toast('Network error'); }
+}
+
+async function boot(){
+  loadMe();
+  if (state.me) {
+    renderApp();
+  } else {
+    document.getElementById('auth-screen').classList.remove('hidden');
+  }
+  document.getElementById('signin-btn').addEventListener('click', signIn);
+  document.getElementById('signout-btn').addEventListener('click', () => {
+    if (confirm('Sign out?')) { clearMe(); location.reload(); }
+  });
+  document.querySelectorAll('.tabs button[data-tab]').forEach(b => {
+    b.addEventListener('click', () => switchTab(b.dataset.tab));
+  });
+  document.querySelectorAll('.tabs button[data-lb]').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.tabs button[data-lb]').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      state.lbMode = b.dataset.lb;
+      loadLeaderboard();
+    });
+  });
+  document.getElementById('book-search').addEventListener('input', debounce(searchBooks, 350));
+  document.getElementById('log-modal').addEventListener('click', (e) => {
+    if (e.target.id === 'log-modal') closeLogModal();
+  });
+}
+
+function renderApp(){
+  document.getElementById('auth-screen').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  document.getElementById('who-name').textContent = state.me.name + ' @' + state.me.handle;
+  document.getElementById('my-handle').textContent = '@' + state.me.handle;
+  refresh();
+}
+
+async function refresh(){
+  await Promise.all([loadStats(), loadBooks()]);
+  renderHome();
+  renderBooks();
+}
+
+// ============ TABS ============
+function switchTab(name){
+  document.querySelectorAll('.tabs button[data-tab]').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === name);
+  });
+  document.querySelectorAll('.tab').forEach(t => t.classList.add('hidden'));
+  document.getElementById('tab-' + name).classList.remove('hidden');
+  if (name === 'leaderboard') loadLeaderboard();
+  if (name === 'friends') loadFriends();
+}
+
+// ============ STATS ============
+function tierFromXp(xp){
+  if (xp >= 5000) return { name:'MASTER', cls:'master' };
+  if (xp >= 3000) return { name:'DIAMOND', cls:'diamond' };
+  if (xp >= 1500) return { name:'PLATINUM', cls:'platinum' };
+  if (xp >= 700)  return { name:'GOLD', cls:'gold' };
+  if (xp >= 250)  return { name:'SILVER', cls:'silver' };
+  return { name:'BRONZE', cls:'bronze' };
+}
+
+async function loadStats(){
+  try {
+    const r = await fetch(`${API}/me?id=${state.me.id}`);
+    const d = await r.json();
+    if (r.ok) state.stats = d;
+  } catch(e){}
+}
+
+function renderHome(){
+  const s = state.stats || {};
+  document.getElementById('week-pages').textContent = s.weekPages || 0;
+  document.getElementById('week-sub').textContent = `+${s.weekXp || 0} XP this week`;
+  document.getElementById('streak-days').textContent = s.streak || 0;
+  document.getElementById('streak-sub').textContent = s.streak > 0 ? 'Keep it alive — log today' : 'Log any pages to start a streak';
+  document.getElementById('total-xp').textContent = (s.totalXp || 0).toLocaleString();
+  const t = tierFromXp(s.totalXp || 0);
+  document.getElementById('total-sub').textContent = `Tier: ${t.name}`;
+  document.getElementById('books-done').textContent = s.booksFinished || 0;
+
+  // Tier badge in header
+  document.getElementById('who-tier').innerHTML = `<span class="tier-badge ${t.cls}"><span class="dot"></span>${t.name}</span>`;
+
+  // Currently reading books
+  const active = state.books.filter(b => b.status === 'active');
+  const el = document.getElementById('home-books');
+  if (active.length === 0) {
+    el.innerHTML = '<div class="empty">No active books. Add one to get started.</div>';
+  } else {
+    el.innerHTML = active.map(bookCard).join('');
+  }
+}
+
+// ============ BOOKS ============
+async function loadBooks(){
+  try {
+    const r = await fetch(`${API}/books?id=${state.me.id}`);
+    const d = await r.json();
+    if (r.ok) state.books = d.books || [];
+  } catch(e){}
+}
+
+function bookCard(b){
+  const pct = b.pages > 0 ? Math.min(100, Math.round((b.current / b.pages) * 100)) : 0;
+  const statusEl = b.status === 'done'
+    ? '<span class="status-done">Finished</span>'
+    : b.status === 'paused'
+    ? '<span class="status-paused">Paused</span>'
+    : '<span class="status-active">Reading</span>';
+  const cover = b.cover
+    ? `<img src="${escHtml(b.cover)}" class="cover" alt="" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'cover-placeholder',textContent:'${escHtml(b.title.slice(0,20))}'}))">`
+    : `<div class="cover-placeholder">${escHtml(b.title.slice(0,20))}</div>`;
+  return `
+    <div class="book">
+      ${cover}
+      <div class="info">
+        <div class="title">${escHtml(b.title)}</div>
+        <div class="author">${escHtml(b.author || 'Unknown')} · ${b.pages} pages · ${statusEl}</div>
+        <div class="progress-bar"><div class="fill" style="width:${pct}%"></div></div>
+        <div class="progress-text"><span>${b.current} / ${b.pages}</span><span>${pct}%</span></div>
+        <div class="actions">
+          ${b.status !== 'done' ? `<button class="btn small ghost" onclick="openLogModal('${b.id}')">Log pages</button>` : ''}
+          ${b.status === 'active' ? `<button class="btn small ghost" onclick="setStatus('${b.id}','paused')">Pause</button>` : ''}
+          ${b.status === 'paused' ? `<button class="btn small ghost" onclick="setStatus('${b.id}','active')">Resume</button>` : ''}
+          <button class="btn small ghost" onclick="removeBook('${b.id}')">Remove</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderBooks(){
+  const el = document.getElementById('books-list');
+  if (state.books.length === 0) {
+    el.innerHTML = '<div class="empty">No books yet. Search above.</div>';
+  } else {
+    el.innerHTML = state.books.map(bookCard).join('');
+  }
+}
+
+async function searchBooks(){
+  const q = document.getElementById('book-search').value.trim();
+  const res = document.getElementById('search-results');
+  if (q.length < 2) { res.classList.add('hidden'); return; }
+  try {
+    const r = await fetch(`${API}/search?q=${encodeURIComponent(q)}`);
+    const d = await r.json();
+    const items = d.results || [];
+    if (items.length === 0) {
+      res.innerHTML = '<div class="search-result"><div class="info"><div class="meta">No results</div></div></div>';
+    } else {
+      res.innerHTML = items.map(b => `
+        <div class="search-result" onclick='addBook(${JSON.stringify(b).replace(/'/g,"&apos;")})'>
+          ${b.cover ? `<img src="${escHtml(b.cover)}" alt="">` : `<div style="width:36px;height:54px;background:var(--panel2)"></div>`}
+          <div class="info">
+            <div class="title">${escHtml(b.title)}</div>
+            <div class="meta">${escHtml(b.author || 'Unknown')} · ${b.pages || '?'} pages</div>
+          </div>
+        </div>`).join('');
+    }
+    res.classList.remove('hidden');
+  } catch(e){}
+}
+
+async function addBook(b){
+  if (!b.pages || b.pages < 10) {
+    const p = prompt(`No page count for "${b.title}". Enter it manually:`);
+    const n = parseInt(p, 10);
+    if (!n || n < 10) return toast('Cancelled — page count required');
+    b.pages = n;
+  }
+  try {
+    const r = await fetch(`${API}/books`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ userId: state.me.id, book: b })
+    });
+    const d = await r.json();
+    if (!r.ok) return toast(d.error || 'Failed to add');
+    toast(`Added "${b.title}"`);
+    document.getElementById('book-search').value = '';
+    document.getElementById('search-results').classList.add('hidden');
+    await refresh();
+  } catch(e){ toast('Network error'); }
+}
+
+async function removeBook(id){
+  if (!confirm('Remove this book?')) return;
+  try {
+    await fetch(`${API}/books?id=${state.me.id}&bookId=${id}`, { method:'DELETE' });
+    await refresh();
+  } catch(e){}
+}
+
+async function setStatus(id, status){
+  try {
+    await fetch(`${API}/books/status`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ userId: state.me.id, bookId: id, status })
+    });
+    await refresh();
+  } catch(e){}
+}
+
+// ============ LOG PAGES ============
+function openLogModal(bookId){
+  const book = state.books.find(b => b.id === bookId);
+  if (!book) return;
+  state.logBookId = bookId;
+  document.getElementById('log-book-info').textContent = `"${book.title}" — currently on page ${book.current} of ${book.pages}`;
+  document.getElementById('log-page').value = '';
+  document.getElementById('log-page').placeholder = `e.g. ${book.current + 20}`;
+  document.getElementById('log-delta').value = '';
+  document.getElementById('log-modal').classList.add('open');
+}
+function closeLogModal(){
+  document.getElementById('log-modal').classList.remove('open');
+}
+async function submitLog(){
+  const book = state.books.find(b => b.id === state.logBookId);
+  if (!book) return closeLogModal();
+  const pageStr = document.getElementById('log-page').value.trim();
+  const deltaStr = document.getElementById('log-delta').value.trim();
+  let newPage = null;
+  if (pageStr) {
+    newPage = parseInt(pageStr, 10);
+  } else if (deltaStr) {
+    newPage = book.current + parseInt(deltaStr, 10);
+  }
+  if (newPage == null || isNaN(newPage) || newPage < 0) return toast('Enter a page or delta');
+  if (newPage > book.pages) newPage = book.pages;
+  const pagesRead = newPage - book.current;
+  if (pagesRead <= 0) return toast('That\'s not progress');
+  try {
+    const r = await fetch(`${API}/log`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ userId: state.me.id, bookId: book.id, page: newPage })
+    });
+    const d = await r.json();
+    if (!r.ok) return toast(d.error || 'Log failed');
+    closeLogModal();
+    toast(`+${pagesRead} pages, +${d.xp} XP`);
+    await refresh();
+  } catch(e){ toast('Network error'); }
+}
+
+// ============ LEADERBOARD ============
+async function loadLeaderboard(){
+  try {
+    const r = await fetch(`${API}/leaderboard?id=${state.me.id}&mode=${state.lbMode}`);
+    const d = await r.json();
+    state.leaderboard = d.rows || [];
+    renderLeaderboard();
+  } catch(e){}
+}
+function renderLeaderboard(){
+  const el = document.getElementById('lb-body');
+  if (state.leaderboard.length === 0) {
+    el.innerHTML = '<div class="empty" style="border:none">' + (state.lbMode === 'friends' ? 'Add friends to see a leaderboard.' : 'No one on the board yet.') + '</div>';
+    return;
+  }
+  el.innerHTML = state.leaderboard.map((row, i) => {
+    const rank = i + 1;
+    const rankCls = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : '';
+    const t = tierFromXp(row.totalXp || 0);
+    const meCls = row.id === state.me.id ? 'me' : '';
+    return `<div class="lb-row">
+      <div class="rank ${rankCls}">#${rank}</div>
+      <div class="name ${meCls}">${escHtml(row.name)} <span style="color:var(--dim);font-weight:400">@${escHtml(row.handle)}</span></div>
+      <div class="xp">${(row.totalXp || 0).toLocaleString()}</div>
+      <div class="streak">${row.streak || 0}d</div>
+      <div class="streak"><span class="tier-badge ${t.cls}" style="padding:2px 6px;font-size:10px"><span class="dot"></span>${t.name.slice(0,3)}</span></div>
+    </div>`;
+  }).join('');
+}
+
+// ============ FRIENDS ============
+async function loadFriends(){
+  try {
+    const r = await fetch(`${API}/friends?id=${state.me.id}`);
+    const d = await r.json();
+    state.friends = d.friends || [];
+    renderFriends();
+  } catch(e){}
+}
+function renderFriends(){
+  const el = document.getElementById('friends-list');
+  if (state.friends.length === 0) {
+    el.innerHTML = '<div class="empty">No friends yet. Add someone by their handle.</div>';
+    return;
+  }
+  el.innerHTML = state.friends.map(f => {
+    const t = tierFromXp(f.totalXp || 0);
+    return `<div class="friend-row">
+      <div>
+        <span class="fname">${escHtml(f.name)}</span>
+        <span class="fmeta">@${escHtml(f.handle)} · ${(f.totalXp || 0).toLocaleString()} XP · ${f.streak || 0}d</span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="tier-badge ${t.cls}" style="padding:2px 6px;font-size:10px"><span class="dot"></span>${t.name.slice(0,3)}</span>
+        <button class="btn small ghost" onclick="removeFriend('${f.handle}')">Remove</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+async function addFriend(){
+  const handle = document.getElementById('friend-handle').value.trim().toLowerCase().replace(/[^a-z0-9_]/g,'');
+  if (!handle) return toast('Enter a handle');
+  if (handle === state.me.handle) return toast("That's you");
+  try {
+    const r = await fetch(`${API}/friends`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ userId: state.me.id, handle })
+    });
+    const d = await r.json();
+    if (!r.ok) return toast(d.error || 'Not found');
+    toast('Added ' + handle);
+    document.getElementById('friend-handle').value = '';
+    await loadFriends();
+  } catch(e){}
+}
+async function removeFriend(handle){
+  if (!confirm('Remove @' + handle + '?')) return;
+  try {
+    await fetch(`${API}/friends?id=${state.me.id}&handle=${handle}`, { method:'DELETE' });
+    await loadFriends();
+  } catch(e){}
+}
+
+// ============ UTILS ============
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+function debounce(fn, ms){
+  let h;
+  return (...a) => { clearTimeout(h); h = setTimeout(() => fn(...a), ms); };
+}
+function escHtml(s){
+  return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+boot();
+</script>
+
+</body>
+</html>

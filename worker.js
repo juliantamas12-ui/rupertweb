@@ -172,6 +172,20 @@ export default {
       if (p === '/api/spend/log' && request.method === 'POST')        return spendLog(request, env);
       if (p === '/api/cron/run-now')                                  return cronRunNow(url, env, request);
 
+      // ── Ranked Reading ──
+      if (p === '/api/rr/signup' && request.method === 'POST')        return rrSignup(request, env);
+      if (p === '/api/rr/me')                                         return rrMe(url, env);
+      if (p === '/api/rr/search')                                     return rrSearch(url);
+      if (p === '/api/rr/books' && request.method === 'GET')          return rrBooksGet(url, env);
+      if (p === '/api/rr/books' && request.method === 'POST')         return rrBooksAdd(request, env);
+      if (p === '/api/rr/books' && request.method === 'DELETE')       return rrBooksDelete(url, env);
+      if (p === '/api/rr/books/status' && request.method === 'POST')  return rrBooksStatus(request, env);
+      if (p === '/api/rr/log' && request.method === 'POST')           return rrLog(request, env);
+      if (p === '/api/rr/leaderboard')                                return rrLeaderboard(url, env);
+      if (p === '/api/rr/friends' && request.method === 'GET')        return rrFriendsGet(url, env);
+      if (p === '/api/rr/friends' && request.method === 'POST')       return rrFriendsAdd(request, env);
+      if (p === '/api/rr/friends' && request.method === 'DELETE')     return rrFriendsDelete(url, env);
+
     } catch (e) {
       return jsonResponse({ error: e.message }, 500);
     }
@@ -6885,6 +6899,400 @@ async function praefatioVote(request, env) {
     await kvPut(env, voterKey, { choice, ts: Date.now() }, 60 * 60 * 24 * 180);
 
     return jsonResponse({ ...cur, recorded: true });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// RANKED READING
+// ════════════════════════════════════════════════════════
+// A social/competitive reading tracker. Users have a handle, log pages read
+// per book, earn XP, streaks, and tier up (Bronze → Master).
+//
+// Storage (KV, share QUESTLOG_KV):
+//   rr:user:${id}      → { id, name, handle, createdAt, totalXp, streak, lastLogDay, booksFinished }
+//   rr:handle:${h}     → id           (lowercase handle → id lookup)
+//   rr:books:${uid}    → [ book ]     (book = {id,title,author,pages,cover,current,status,addedAt,finishedAt})
+//   rr:friends:${uid}  → [ friendId ]
+//   rr:logs:${uid}     → { YYYY-MM-DD: pages }  (last 60 days, rolling)
+//   rr:global          → [id, id, ...]  (small, capped at ~500 for v1)
+// v1 uses honor system, no password. Handle is identity.
+
+function _rrToday() { return new Date().toISOString().slice(0,10); }
+function _rrYesterday() {
+  const d = new Date(); d.setUTCDate(d.getUTCDate() - 1);
+  return d.toISOString().slice(0,10);
+}
+function _rrWeekStart() {
+  // ISO week: Monday-anchored, in UTC
+  const d = new Date();
+  const day = (d.getUTCDay() + 6) % 7; // Mon=0..Sun=6
+  d.setUTCDate(d.getUTCDate() - day);
+  return d.toISOString().slice(0,10);
+}
+function _rrDayList(days) {
+  const out = [];
+  const d = new Date();
+  for (let i = 0; i < days; i++) {
+    out.push(d.toISOString().slice(0,10));
+    d.setUTCDate(d.getUTCDate() - 1);
+  }
+  return out;
+}
+function _rrRandId() {
+  return 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+function _rrBookId() {
+  return 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+}
+
+function _rrTierFromXp(xp) {
+  if (xp >= 5000) return 'MASTER';
+  if (xp >= 3000) return 'DIAMOND';
+  if (xp >= 1500) return 'PLATINUM';
+  if (xp >= 700)  return 'GOLD';
+  if (xp >= 250)  return 'SILVER';
+  return 'BRONZE';
+}
+
+async function _rrGetUser(env, id) {
+  return await kvGet(env, `rr:user:${id}`);
+}
+async function _rrPutUser(env, u) {
+  await kvPut(env, `rr:user:${u.id}`, u);
+}
+async function _rrGetBooks(env, uid) {
+  return (await kvGet(env, `rr:books:${uid}`)) || [];
+}
+async function _rrPutBooks(env, uid, books) {
+  await kvPut(env, `rr:books:${uid}`, books);
+}
+async function _rrGetLogs(env, uid) {
+  return (await kvGet(env, `rr:logs:${uid}`)) || {};
+}
+async function _rrPutLogs(env, uid, logs) {
+  // Trim to last 60 days
+  const keep = new Set(_rrDayList(60));
+  const trimmed = {};
+  for (const k of Object.keys(logs)) if (keep.has(k)) trimmed[k] = logs[k];
+  await kvPut(env, `rr:logs:${uid}`, trimmed);
+}
+
+async function _rrAddToGlobal(env, id) {
+  const list = (await kvGet(env, 'rr:global')) || [];
+  if (!list.includes(id)) {
+    list.push(id);
+    if (list.length > 500) list.shift(); // cap
+    await kvPut(env, 'rr:global', list);
+  }
+}
+
+async function rrSignup(request, env) {
+  try {
+    const { name, handle } = await request.json();
+    const cleanName = String(name || '').trim().slice(0, 24);
+    const cleanHandle = String(handle || '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 20);
+    if (!cleanName || cleanHandle.length < 3) {
+      return jsonResponse({ error: 'Name required, handle min 3 chars (a-z, 0-9, _).' }, 400);
+    }
+    const existing = await kvGet(env, `rr:handle:${cleanHandle}`);
+    if (existing) {
+      // Handle already taken. If this is really the same person coming back,
+      // return their user so they don't lose progress.
+      const u = await _rrGetUser(env, existing);
+      if (u && u.name === cleanName) {
+        return jsonResponse({ id: u.id, name: u.name, handle: u.handle });
+      }
+      return jsonResponse({ error: 'Handle taken. Try another.' }, 409);
+    }
+    const id = _rrRandId();
+    const u = {
+      id, name: cleanName, handle: cleanHandle,
+      createdAt: Date.now(),
+      totalXp: 0, streak: 0, lastLogDay: null,
+      booksFinished: 0
+    };
+    await _rrPutUser(env, u);
+    await kvPut(env, `rr:handle:${cleanHandle}`, id);
+    await _rrAddToGlobal(env, id);
+    return jsonResponse({ id, name: u.name, handle: u.handle });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
+  }
+}
+
+async function rrMe(url, env) {
+  try {
+    const id = url.searchParams.get('id');
+    if (!id) return jsonResponse({ error: 'id required' }, 400);
+    const u = await _rrGetUser(env, id);
+    if (!u) return jsonResponse({ error: 'not found' }, 404);
+    const logs = await _rrGetLogs(env, id);
+    const weekStart = _rrWeekStart();
+    let weekPages = 0;
+    let weekXp = 0;
+    for (const [day, pages] of Object.entries(logs)) {
+      if (day >= weekStart) {
+        weekPages += pages;
+        weekXp += pages; // 1 XP per page baseline
+      }
+    }
+    return jsonResponse({
+      id: u.id, name: u.name, handle: u.handle,
+      totalXp: u.totalXp || 0,
+      streak: u.streak || 0,
+      booksFinished: u.booksFinished || 0,
+      tier: _rrTierFromXp(u.totalXp || 0),
+      weekPages, weekXp
+    });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
+  }
+}
+
+async function rrSearch(url) {
+  try {
+    const q = (url.searchParams.get('q') || '').trim();
+    if (q.length < 2) return jsonResponse({ results: [] });
+    // OpenLibrary search — no key needed
+    const r = await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=8&fields=key,title,author_name,cover_i,number_of_pages_median,first_publish_year`);
+    if (!r.ok) return jsonResponse({ results: [] });
+    const data = await r.json();
+    const results = (data.docs || []).map(d => ({
+      olid: d.key, // /works/OL...W
+      title: d.title,
+      author: (d.author_name || []).slice(0, 2).join(', '),
+      pages: d.number_of_pages_median || null,
+      year: d.first_publish_year || null,
+      cover: d.cover_i ? `https://covers.openlibrary.org/b/id/${d.cover_i}-M.jpg` : null
+    })).filter(x => x.title);
+    return jsonResponse({ results });
+  } catch (e) {
+    return jsonResponse({ results: [], error: e.message });
+  }
+}
+
+async function rrBooksGet(url, env) {
+  try {
+    const id = url.searchParams.get('id');
+    if (!id) return jsonResponse({ error: 'id required' }, 400);
+    const books = await _rrGetBooks(env, id);
+    return jsonResponse({ books });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
+  }
+}
+
+async function rrBooksAdd(request, env) {
+  try {
+    const { userId, book } = await request.json();
+    if (!userId || !book || !book.title) return jsonResponse({ error: 'invalid' }, 400);
+    const u = await _rrGetUser(env, userId);
+    if (!u) return jsonResponse({ error: 'user not found' }, 404);
+    const pages = Math.max(10, Math.min(9999, parseInt(book.pages, 10) || 0));
+    if (!pages) return jsonResponse({ error: 'invalid page count' }, 400);
+    const books = await _rrGetBooks(env, userId);
+    if (books.length >= 50) return jsonResponse({ error: 'library full (50 books max)' }, 400);
+    const newBook = {
+      id: _rrBookId(),
+      title: String(book.title).slice(0, 200),
+      author: String(book.author || 'Unknown').slice(0, 120),
+      pages,
+      cover: book.cover && /^https?:\/\//.test(book.cover) ? book.cover.slice(0, 300) : null,
+      current: 0,
+      status: 'active',
+      addedAt: Date.now(),
+      finishedAt: null
+    };
+    books.unshift(newBook);
+    await _rrPutBooks(env, userId, books);
+    return jsonResponse({ book: newBook });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
+  }
+}
+
+async function rrBooksDelete(url, env) {
+  try {
+    const id = url.searchParams.get('id');
+    const bookId = url.searchParams.get('bookId');
+    if (!id || !bookId) return jsonResponse({ error: 'id and bookId required' }, 400);
+    const books = await _rrGetBooks(env, id);
+    const filtered = books.filter(b => b.id !== bookId);
+    await _rrPutBooks(env, id, filtered);
+    return jsonResponse({ ok: true });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
+  }
+}
+
+async function rrBooksStatus(request, env) {
+  try {
+    const { userId, bookId, status } = await request.json();
+    if (!['active','paused','done'].includes(status)) return jsonResponse({ error: 'bad status' }, 400);
+    const books = await _rrGetBooks(env, userId);
+    const b = books.find(x => x.id === bookId);
+    if (!b) return jsonResponse({ error: 'not found' }, 404);
+    b.status = status;
+    if (status === 'done') b.finishedAt = Date.now();
+    await _rrPutBooks(env, userId, books);
+    return jsonResponse({ ok: true });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
+  }
+}
+
+async function rrLog(request, env) {
+  try {
+    const { userId, bookId, page } = await request.json();
+    if (!userId || !bookId) return jsonResponse({ error: 'invalid' }, 400);
+    const u = await _rrGetUser(env, userId);
+    if (!u) return jsonResponse({ error: 'user not found' }, 404);
+    const books = await _rrGetBooks(env, userId);
+    const b = books.find(x => x.id === bookId);
+    if (!b) return jsonResponse({ error: 'book not found' }, 404);
+    const newPage = Math.max(0, Math.min(b.pages, parseInt(page, 10) || 0));
+    const pagesRead = newPage - b.current;
+    if (pagesRead <= 0) return jsonResponse({ error: 'no progress' }, 400);
+
+    // Suspicious-pace flag: > 400 pages/day is unusual for v1 honor system
+    const today = _rrToday();
+    const logs = await _rrGetLogs(env, userId);
+    logs[today] = (logs[today] || 0) + pagesRead;
+    if (logs[today] > 800) return jsonResponse({ error: 'daily cap reached (800/day)' }, 400);
+
+    b.current = newPage;
+    let finishBonus = 0;
+    if (newPage >= b.pages && b.status !== 'done') {
+      b.status = 'done';
+      b.finishedAt = Date.now();
+      finishBonus = 100; // XP bonus
+      u.booksFinished = (u.booksFinished || 0) + 1;
+    }
+
+    // Streak: if lastLogDay was yesterday or today, keep/extend. Otherwise reset to 1.
+    const yesterday = _rrYesterday();
+    if (u.lastLogDay === today) {
+      // already logged today, streak unchanged
+    } else if (u.lastLogDay === yesterday) {
+      u.streak = (u.streak || 0) + 1;
+    } else {
+      u.streak = 1;
+    }
+    u.lastLogDay = today;
+
+    // XP: 1 per page + streak multiplier (small) + finish bonus
+    const streakMult = u.streak >= 30 ? 1.5 : u.streak >= 7 ? 1.25 : u.streak >= 3 ? 1.1 : 1.0;
+    const xp = Math.round(pagesRead * streakMult) + finishBonus;
+    u.totalXp = (u.totalXp || 0) + xp;
+
+    await _rrPutUser(env, u);
+    await _rrPutBooks(env, userId, books);
+    await _rrPutLogs(env, userId, logs);
+    await _rrAddToGlobal(env, userId);
+
+    return jsonResponse({
+      ok: true, xp, pagesRead,
+      totalXp: u.totalXp, streak: u.streak,
+      finished: finishBonus > 0,
+      tier: _rrTierFromXp(u.totalXp)
+    });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
+  }
+}
+
+async function _rrUserSummary(env, id) {
+  const u = await _rrGetUser(env, id);
+  if (!u) return null;
+  return {
+    id: u.id, name: u.name, handle: u.handle,
+    totalXp: u.totalXp || 0,
+    streak: u.streak || 0,
+    booksFinished: u.booksFinished || 0
+  };
+}
+
+async function rrLeaderboard(url, env) {
+  try {
+    const id = url.searchParams.get('id');
+    const mode = url.searchParams.get('mode') || 'friends';
+    if (!id) return jsonResponse({ error: 'id required' }, 400);
+    let ids = [];
+    if (mode === 'friends') {
+      const me = await _rrGetUser(env, id);
+      if (!me) return jsonResponse({ rows: [] });
+      const friends = (await kvGet(env, `rr:friends:${id}`)) || [];
+      ids = [id, ...friends];
+    } else {
+      ids = (await kvGet(env, 'rr:global')) || [];
+    }
+    const rows = [];
+    for (const uid of ids) {
+      const s = await _rrUserSummary(env, uid);
+      if (s) rows.push(s);
+    }
+    rows.sort((a, b) => (b.totalXp || 0) - (a.totalXp || 0));
+    return jsonResponse({ rows: rows.slice(0, 100) });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
+  }
+}
+
+async function rrFriendsGet(url, env) {
+  try {
+    const id = url.searchParams.get('id');
+    if (!id) return jsonResponse({ error: 'id required' }, 400);
+    const friendIds = (await kvGet(env, `rr:friends:${id}`)) || [];
+    const friends = [];
+    for (const fid of friendIds) {
+      const s = await _rrUserSummary(env, fid);
+      if (s) friends.push(s);
+    }
+    friends.sort((a, b) => (b.totalXp || 0) - (a.totalXp || 0));
+    return jsonResponse({ friends });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
+  }
+}
+
+async function rrFriendsAdd(request, env) {
+  try {
+    const { userId, handle } = await request.json();
+    if (!userId || !handle) return jsonResponse({ error: 'invalid' }, 400);
+    const cleanHandle = String(handle).toLowerCase().replace(/[^a-z0-9_]/g, '');
+    const fid = await kvGet(env, `rr:handle:${cleanHandle}`);
+    if (!fid) return jsonResponse({ error: 'no user with that handle' }, 404);
+    if (fid === userId) return jsonResponse({ error: "can't add yourself" }, 400);
+    const list = (await kvGet(env, `rr:friends:${userId}`)) || [];
+    if (list.includes(fid)) return jsonResponse({ ok: true, alreadyFriends: true });
+    list.push(fid);
+    await kvPut(env, `rr:friends:${userId}`, list);
+    // Symmetric: also add me to their friends list
+    const other = (await kvGet(env, `rr:friends:${fid}`)) || [];
+    if (!other.includes(userId)) {
+      other.push(userId);
+      await kvPut(env, `rr:friends:${fid}`, other);
+    }
+    return jsonResponse({ ok: true });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
+  }
+}
+
+async function rrFriendsDelete(url, env) {
+  try {
+    const id = url.searchParams.get('id');
+    const handle = (url.searchParams.get('handle') || '').toLowerCase().replace(/[^a-z0-9_]/g, '');
+    if (!id || !handle) return jsonResponse({ error: 'id and handle required' }, 400);
+    const fid = await kvGet(env, `rr:handle:${handle}`);
+    if (!fid) return jsonResponse({ ok: true });
+    const list = (await kvGet(env, `rr:friends:${id}`)) || [];
+    await kvPut(env, `rr:friends:${id}`, list.filter(x => x !== fid));
+    const other = (await kvGet(env, `rr:friends:${fid}`)) || [];
+    await kvPut(env, `rr:friends:${fid}`, other.filter(x => x !== id));
+    return jsonResponse({ ok: true });
   } catch (e) {
     return jsonResponse({ error: e.message }, 500);
   }

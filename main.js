@@ -799,6 +799,12 @@ const PROJECTS = [
     tags: ["Cloudflare Workers", "Steam API", "CheapShark", "Resend"]
   },
   {
+    name: "Ranked Reading",
+    url: "https://rupertweb.com/rankedreading.html",
+    desc: "Reading, but competitive. Track books, log pages, climb tiers from Bronze to Master. Friend leaderboards, streaks, XP. Powered by OpenLibrary.",
+    tags: ["Cloudflare Workers", "KV", "OpenLibrary", "Social"]
+  },
+  {
     name: "FleetWatch",
     url: "https://rupertweb.com/yachts-pro.html",
     desc: "Real-time tracker for 11 superyachts. AIS position polling, port arrival alerts, photo galleries, live fleet activity panel. Signup with tiered plans.",
