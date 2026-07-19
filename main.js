@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Seven Days in November 1975 in Canberra When Sir John Kerr Dismissed Gough Whitlam's Elected Government by Vice-Regal Prerogative and Left the Australian Constitution Unable to Explain What Had Happened",
+    date: "2026-07-19",
+    category: "History",
+    excerpt: "At 13:15 on Tuesday, 11 November 1975, in the study of Government House on the north shore of Lake Burley Griffin, the Governor-General of Australia, Sir John Kerr, handed the Prime Minister of Australia, Gough Whitlam, a two-page letter that dismissed him from office. Whitlam had walked into the room expecting to advise the Governor-General to call a half-Senate election. He walked out having ceased to be Prime Minister. Within ninety minutes, Malcolm Fraser — who had been waiting in an anteroom of Government House without Whitlam's knowledge — had been commissioned as caretaker Prime Minister. What is worth understanding about the Dismissal is not that it happened but that Kerr took seven days to decide to do it and told nobody who mattered during those seven days that he was thinking about it. The Palace knew. The Chief Justice knew. Whitlam did not. Fifty-one years later, Australia has never satisfactorily explained what happened, and the constitution has never been amended to prevent it from happening again...",
+    url: "essays/2026-07-19-the-seven-days-in-november-1975-in-canberra-when-sir-john-kerr-dismissed-gough-whitlams-elected-government-by-vice-regal-prerogative-and-left-the-australian-constitution-unable-to-explain-what-had-happened.html"
+  },
+  {
     title: "The Six Weeks Between May and July 1997 in Bangkok When Chavalit Yongchaiyudh's Government Burned Through Thailand's Foreign Reserves to Defend the Baht and Triggered the Asian Financial Crisis by Losing a Currency War It Had Already Lost",
     date: "2026-07-18",
     category: "Economics",
