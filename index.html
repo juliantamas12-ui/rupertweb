@@ -13,56 +13,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
-  <style>
-    /* Terminal boot intro - electric lime on black, matches Rupert Web identity */
-    .boot-overlay{position:fixed;inset:0;background:#0d0d0d;z-index:9999;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:1;transition:opacity 0.45s ease-out 1.6s,visibility 0s linear 2.1s;visibility:visible;font-family:'Space Mono',monospace;color:#c8f135}
-    .boot-overlay.gone{opacity:0;visibility:hidden}
-    .boot-overlay.skip{transition:none;opacity:0;visibility:hidden}
-    .boot-inner{width:min(560px,90vw);padding:0 24px}
-    .boot-line{font-size:14px;line-height:1.9;opacity:0;letter-spacing:0.02em;white-space:pre;overflow:hidden;text-shadow:0 0 12px rgba(200,241,53,0.35)}
-    .boot-line .dim{color:#666}
-    .boot-line.l1{animation:bootLine 0.4s ease-out 0.05s forwards}
-    .boot-line.l2{animation:bootLine 0.4s ease-out 0.35s forwards}
-    .boot-line.l3{animation:bootLine 0.4s ease-out 0.65s forwards}
-    .boot-line.l4{animation:bootLine 0.4s ease-out 0.95s forwards}
-    .boot-mark{margin-top:24px;font-family:'Space Mono',monospace;font-size:44px;font-weight:700;letter-spacing:0.08em;opacity:0;animation:bootLine 0.5s cubic-bezier(0.16,1,0.3,1) 1.15s forwards;text-shadow:0 0 20px rgba(200,241,53,0.55)}
-    .boot-mark .cursor{display:inline-block;width:0.55em;height:1em;background:#c8f135;vertical-align:text-bottom;margin-left:6px;animation:bootBlink 0.7s steps(1) infinite}
-    @keyframes bootLine{0%{opacity:0;transform:translateY(4px)}100%{opacity:1;transform:translateY(0)}}
-    @keyframes bootBlink{0%,49%{opacity:1}50%,100%{opacity:0}}
-    @media(prefers-reduced-motion:reduce){.boot-overlay{opacity:0;visibility:hidden}}
-    @media(max-width:600px){.boot-line{font-size:12px}.boot-mark{font-size:32px}}
-  </style>
 </head>
 <body>
 
-  <!-- Terminal boot intro (once per session) -->
-  <div class="boot-overlay" id="bootOverlay" aria-hidden="true">
-    <div class="boot-inner">
-      <div class="boot-line l1"><span class="dim">&gt;</span> initializing rupert.web</div>
-      <div class="boot-line l2"><span class="dim">&gt;</span> loading personal dashboard...</div>
-      <div class="boot-line l3"><span class="dim">&gt;</span> auth: julian.tamas12<span class="dim">@</span>authenticated</div>
-      <div class="boot-line l4"><span class="dim">&gt;</span> ready.</div>
-      <div class="boot-mark">RUPERT WEB<span class="cursor"></span></div>
-    </div>
-  </div>
-
-  <script>
-    (function(){
-      var overlay = document.getElementById('bootOverlay');
-      if (!overlay) return;
-      var seen = false;
-      try { seen = sessionStorage.getItem('rw_boot_seen') === '1'; } catch(e){}
-      if (seen) {
-        overlay.classList.add('skip');
-      } else {
-        setTimeout(function(){
-          overlay.classList.add('gone');
-          try { sessionStorage.setItem('rw_boot_seen', '1'); } catch(e){}
-        }, 2000);
-      }
-      overlay.addEventListener('click', function(){ overlay.classList.add('gone'); });
-    })();
-  </script>
+  <!-- Boot intro disabled 2026-07-20: caused white-screen on mobile -->
 
   <!-- HEADER -->
   <header class="site-header">
