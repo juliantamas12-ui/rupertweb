@@ -93,7 +93,7 @@ body {
 /* ── Nav ──────────────────────────────────────────────────── */
 .site-nav {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 4px;
   padding: 10px 24px;
   border-bottom: 1px solid var(--border);
@@ -102,7 +102,10 @@ body {
   top: 51px;
   z-index: 99;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
 }
+.site-nav::-webkit-scrollbar { display: none; }
 .nav-tab {
   font-family: var(--mono, 'Space Mono', monospace);
   font-size: 0.72rem;

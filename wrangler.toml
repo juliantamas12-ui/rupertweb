@@ -9,6 +9,9 @@ binding = "ASSETS"
 # Run the worker BEFORE serving any static asset.
 # This lets us do hostname-based routing (e.g. thepraefatio.com -> praefatio.html).
 run_worker_first = true
+# Disable Cloudflare's automatic .html <-> bare-path redirects so worker.js pretty-URL
+# rewrites (e.g. /ukufunda -> /ukufunda.html) don't loop with the asset router.
+html_handling = "none"
 
 # Cloudflare KV namespace for QuestLog persistence
 # (Pro state, push subscriptions, wishlist sync, custom URLs)

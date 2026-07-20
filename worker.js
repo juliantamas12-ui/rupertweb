@@ -219,8 +219,16 @@ export default {
     }
 
     // Pretty-URL routing for the main rupertweb domain (Glossa, Ukufunda, etc.)
-    if (p === '/glossa' || p === '/glossa/') {
-      const rewritten = new Request(new URL('/glossa.html', request.url).toString(), request);
+    // wrangler.toml sets html_handling = "none" so Assets serves .html directly
+    // without auto-redirect to bare paths.
+    const prettyRoutes = {
+      '/glossa':    '/glossa.html',
+      '/glossa/':   '/glossa.html',
+      '/ukufunda':  '/ukufunda.html',
+      '/ukufunda/': '/ukufunda.html',
+    };
+    if (p in prettyRoutes) {
+      const rewritten = new Request(new URL(prettyRoutes[p], request.url).toString(), request);
       return env.ASSETS.fetch(rewritten);
     }
 
