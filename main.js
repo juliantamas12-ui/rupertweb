@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Six Months in 1979 When Zbigniew Brzeziński Persuaded Jimmy Carter to Bait the Soviet Union Into Invading Afghanistan and Built the Global Jihadist Infrastructure That Would Kill Three Thousand Americans Twenty-Two Years Later",
+    date: "2026-07-20",
+    category: "Geopolitics",
+    excerpt: "On 3 July 1979, in the Oval Office, President Jimmy Carter signed a Presidential Finding that directed the CIA to provide non-lethal aid to the Islamist insurgents fighting the Marxist government of Nur Muhammad Taraki in Afghanistan. The Soviet Union had not invaded. There was, at the moment Carter signed the Finding, no Soviet-Afghan war and no evident Kremlin intention to fight one. The Finding was not a response to Soviet aggression — it was an instrument designed to produce Soviet aggression, on the theory that a Soviet invasion of Afghanistan would deliver the United States a strategic asset of incalculable value: the Soviet Union's own Vietnam. The man who wrote it was Zbigniew Brzeziński, and his 1998 interview with Le Nouvel Observateur confirmed the sequence with a candour that his defenders have spent a quarter of a century attempting to contextualise into meaninglessness. Every strategic goal Brzeziński set for the operation in 1979 was achieved by 1989. And it produced 9/11. The instruments of the attack were the accumulated capital of the operation that had produced the collapse of the Soviet Union...",
+    url: "essays/2026-07-20-the-six-months-in-1979-when-zbigniew-brzezinski-persuaded-jimmy-carter-to-bait-the-soviet-union-into-invading-afghanistan-and-built-the-global-jihadist-infrastructure-that-would-kill-three-thousand-americans-twenty-two-years-later.html"
+  },
+  {
     title: "The Seven Days in November 1975 in Canberra When Sir John Kerr Dismissed Gough Whitlam's Elected Government by Vice-Regal Prerogative and Left the Australian Constitution Unable to Explain What Had Happened",
     date: "2026-07-19",
     category: "History",
