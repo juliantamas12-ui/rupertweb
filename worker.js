@@ -222,6 +222,8 @@ export default {
     // wrangler.toml sets html_handling = "none" so Assets serves .html directly
     // without auto-redirect to bare paths.
     const prettyRoutes = {
+      '/':          '/index.html',
+      '':           '/index.html',
       '/glossa':    '/glossa.html',
       '/glossa/':   '/glossa.html',
       '/ukufunda':  '/ukufunda.html',
