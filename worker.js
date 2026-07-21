@@ -231,7 +231,12 @@ export default {
     };
     if (p in prettyRoutes) {
       const rewritten = new Request(new URL(prettyRoutes[p], request.url).toString(), request);
-      return env.ASSETS.fetch(rewritten);
+      const assetRes = await env.ASSETS.fetch(rewritten);
+      // Force fresh HTML for pretty routes so redesigns land immediately on
+      // mobile Safari / CF edge without waiting for a manual purge.
+      const fresh = new Response(assetRes.body, assetRes);
+      fresh.headers.set('Cache-Control', 'public, max-age=0, must-revalidate, no-cache');
+      return fresh;
     }
 
 

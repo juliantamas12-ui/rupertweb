@@ -6,157 +6,219 @@
 <title>Ukufunda</title>
 <meta name="description" content="Reading, ranked. Track books, climb tiers, beat your friends.">
 <link rel="canonical" href="https://rupertweb.com/ukufunda">
-<meta name="theme-color" content="#0e1419">
+<meta name="theme-color" content="#141210">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Ukufunda">
 <meta property="og:title" content="Ukufunda — Reading, but competitive.">
-<meta property="og:description" content="Track books, log pages, climb tiers, beat your friends. Bronze to Diamond.">
+<meta property="og:description" content="Track books, log pages, climb tiers, beat your friends.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700;9..144,900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#0e1419;
-  --bg-deep:#080b0e;
-  --panel:#16202d;
-  --panel2:#1f2933;
-  --panel-hover:#2a3f5f;
-  --border:rgba(102,192,244,0.08);
-  --border-strong:rgba(102,192,244,0.20);
-  --accent:#66c0f4;
-  --accent-bright:#9ed7ff;
-  --accent2:#1b75bb;
-  --gold:#fcb41e;
-  --green:#5ba32b;
-  --red:#e74c3c;
-  --text:#c7d5e0;
-  --text-bright:#ffffff;
-  --dim:rgba(199,213,224,0.55);
-  --dim2:rgba(199,213,224,0.25);
+  /* Paper/library palette — warm off-black, cream, muted terracotta accent */
+  --ink:#faf6ee;              /* cream text */
+  --ink-bright:#ffffff;
+  --ink-dim:rgba(250,246,238,0.60);
+  --ink-fade:rgba(250,246,238,0.35);
+  --ink-ghost:rgba(250,246,238,0.12);
 
-  /* Tier colours */
-  --tier-bronze:#cd7f32;
-  --tier-silver:#c0c0c0;
-  --tier-gold:#ffd700;
-  --tier-platinum:#e5e4e2;
-  --tier-diamond:#b9f2ff;
-  --tier-master:#ff6c00;
+  --paper:#141210;            /* warm near-black */
+  --paper-deep:#0c0a09;
+  --paper-raise:#1c1917;      /* card */
+  --paper-raise2:#252220;     /* inputs, hover */
+  --paper-line:rgba(250,246,238,0.08);
+  --paper-line-strong:rgba(250,246,238,0.18);
+
+  --accent:#e0c097;           /* warm cream/parchment gold */
+  --accent-bright:#f2d4a8;
+  --accent-deep:#a67c52;
+  --accent-shadow:rgba(224,192,151,0.15);
+
+  --marker:#c8553d;           /* terracotta accent for ranks/streaks */
+  --marker-soft:rgba(200,85,61,0.15);
+  --good:#7a9b6e;             /* sage green */
+  --warn:#d4a850;
+
+  /* Tier metals — muted so they don't scream */
+  --t-bronze:#a67c52;
+  --t-silver:#b8b8b8;
+  --t-gold:#d4a850;
+  --t-platinum:#dcd8d0;
+  --t-diamond:#a8c8d8;
+  --t-master:#c8553d;
+
+  --radius:10px;
+  --radius-lg:14px;
 }
-body{background:var(--bg);color:var(--text);font-family:'Inter','Helvetica Neue',Arial,sans-serif;line-height:1.5;min-height:100vh;font-size:14px}
-.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
+html,body{background:var(--paper);color:var(--ink);font-family:'Inter',ui-sans-serif,system-ui,-apple-system,sans-serif;line-height:1.5;min-height:100vh;font-size:15px;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+body{
+  background:
+    radial-gradient(1200px 600px at 90% -10%, rgba(224,192,151,0.06), transparent 60%),
+    radial-gradient(900px 500px at -10% 40%, rgba(200,85,61,0.05), transparent 60%),
+    var(--paper);
+  background-attachment:fixed;
+}
+.serif{font-family:'Fraunces',ui-serif,Georgia,serif;font-optical-sizing:auto}
 button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
-input,select{font:inherit;color:var(--text-bright);background:var(--panel2);border:1px solid var(--border);padding:10px 12px;outline:none;width:100%}
-input:focus,select:focus{border-color:var(--accent)}
+input,select{font:inherit;color:var(--ink-bright);background:var(--paper-raise2);border:1px solid var(--paper-line);border-radius:var(--radius);padding:12px 14px;outline:none;width:100%;transition:border-color .15s, background .15s}
+input::placeholder{color:var(--ink-fade)}
+input:focus,select:focus{border-color:var(--accent);background:var(--paper-raise)}
 a{color:var(--accent);text-decoration:none}
 a:hover{color:var(--accent-bright)}
 
-.wrap{max-width:1100px;margin:0 auto;padding:24px 20px 80px}
-header.top{display:flex;align-items:center;justify-content:space-between;padding:16px 0 24px;border-bottom:1px solid var(--border);margin-bottom:24px}
-header.top h1{font-size:22px;font-weight:900;letter-spacing:-0.02em;color:var(--text-bright)}
-header.top h1 span{color:var(--accent)}
-header.top .who{font-size:13px;color:var(--dim)}
-header.top .who button{color:var(--accent);font-size:12px;margin-left:8px}
+.wrap{max-width:960px;margin:0 auto;padding:32px 24px 96px}
+@media(max-width:600px){.wrap{padding:20px 18px 96px}}
 
-/* Auth screen */
-.auth{max-width:420px;margin:80px auto;padding:32px;background:var(--panel);border:1px solid var(--border-strong)}
-.auth h2{font-size:28px;font-weight:800;color:var(--text-bright);margin-bottom:8px;letter-spacing:-0.02em}
-.auth p{color:var(--dim);margin-bottom:24px;font-size:14px}
-.auth label{display:block;font-size:12px;color:var(--dim);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;font-weight:600}
+/* ── Header ─────────────────────────────── */
+header.top{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding:12px 0 32px;margin-bottom:32px;border-bottom:1px solid var(--paper-line)}
+header.top .brand{display:flex;flex-direction:column;gap:4px}
+header.top h1{font-family:'Fraunces',serif;font-weight:400;font-variation-settings:"opsz" 144;font-size:44px;line-height:1;letter-spacing:-0.03em;color:var(--ink-bright)}
+header.top h1 em{font-style:italic;font-weight:300;color:var(--accent)}
+header.top .tagline{font-size:12px;color:var(--ink-fade);letter-spacing:0.02em}
+header.top .who{display:flex;flex-direction:column;align-items:flex-end;gap:6px;font-size:13px;color:var(--ink-dim);text-align:right}
+header.top .who #who-name{font-weight:500;color:var(--ink)}
+header.top .who button{color:var(--accent);font-size:12px;opacity:0.75;transition:opacity .15s}
+header.top .who button:hover{opacity:1}
+@media(max-width:600px){
+  header.top h1{font-size:32px}
+  header.top{padding-bottom:24px;margin-bottom:24px}
+}
+
+/* ── Auth ─────────────────────────────── */
+.auth{max-width:440px;margin:80px auto;padding:40px 32px;background:var(--paper-raise);border:1px solid var(--paper-line);border-radius:var(--radius-lg);box-shadow:0 20px 60px -20px rgba(0,0,0,0.4)}
+.auth h2{font-family:'Fraunces',serif;font-weight:400;font-variation-settings:"opsz" 144;font-size:40px;line-height:1;letter-spacing:-0.03em;margin-bottom:10px;color:var(--ink-bright)}
+.auth h2 em{font-style:italic;color:var(--accent);font-weight:300}
+.auth .lead{color:var(--ink-dim);margin-bottom:28px;font-size:14px;line-height:1.55}
+.auth .lead em{font-style:italic;color:var(--ink)}
+.auth label{display:block;font-size:12px;color:var(--ink-dim);margin-bottom:6px;font-weight:500}
 .auth .field{margin-bottom:16px}
-.btn{background:var(--accent);color:#08131b;border:none;padding:12px 20px;font-weight:700;cursor:pointer;letter-spacing:0.02em;text-transform:uppercase;font-size:13px;display:inline-block;width:100%;transition:background 0.15s}
+.auth .fine{margin-top:20px;font-size:12px;color:var(--ink-fade);line-height:1.5}
+
+/* ── Buttons ─────────────────────────────── */
+.btn{background:var(--accent);color:var(--paper-deep);border:none;border-radius:var(--radius);padding:12px 20px;font-weight:600;cursor:pointer;font-size:14px;display:inline-block;width:100%;transition:background .15s, transform .05s}
 .btn:hover{background:var(--accent-bright)}
-.btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent2);width:auto;padding:8px 14px}
-.btn.ghost:hover{background:var(--accent2);color:var(--text-bright)}
-.btn.small{padding:6px 12px;font-size:11px;width:auto}
-.btn.danger{background:var(--red);color:white}
+.btn:active{transform:translateY(1px)}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--paper-line-strong);width:auto;padding:9px 16px;font-weight:500}
+.btn.ghost:hover{background:var(--paper-raise2);border-color:var(--accent);color:var(--ink-bright)}
+.btn.small{padding:6px 12px;font-size:12px;width:auto;font-weight:500}
+.btn.subtle{background:transparent;color:var(--ink-dim);border:1px solid var(--paper-line);padding:6px 10px;font-size:12px;width:auto;font-weight:500}
+.btn.subtle:hover{color:var(--ink);border-color:var(--paper-line-strong)}
+.btn.danger{background:var(--marker);color:var(--ink-bright)}
 
-/* Tabs */
-.tabs{display:flex;gap:2px;background:var(--panel);padding:2px;border:1px solid var(--border);margin-bottom:24px}
-.tabs button{flex:1;padding:12px;color:var(--dim);font-weight:600;font-size:13px;letter-spacing:0.02em;text-transform:uppercase}
-.tabs button.active{background:var(--panel2);color:var(--text-bright)}
-.tabs button:hover:not(.active){color:var(--text)}
+/* ── Tabs ─────────────────────────────── */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--paper-line);margin-bottom:28px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{padding:12px 4px;margin-right:24px;color:var(--ink-dim);font-weight:500;font-size:14px;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;transition:color .15s, border-color .15s}
+.tabs button.active{color:var(--ink-bright);border-bottom-color:var(--accent)}
+.tabs button:hover:not(.active){color:var(--ink)}
 
-/* Cards */
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
-@media(max-width:720px){.grid{grid-template-columns:1fr}}
-.card{background:var(--panel);border:1px solid var(--border);padding:20px}
-.card h3{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:0.1em;font-weight:700;margin-bottom:12px}
-.stat{font-size:32px;font-weight:900;color:var(--text-bright);letter-spacing:-0.02em}
-.stat .unit{font-size:14px;color:var(--dim);font-weight:500;margin-left:6px}
-.sub{font-size:12px;color:var(--dim);margin-top:6px}
+/* sub-tabs (leaderboard) — pill style */
+.subtabs{display:inline-flex;gap:2px;background:var(--paper-raise);border:1px solid var(--paper-line);border-radius:999px;padding:3px;margin-bottom:20px}
+.subtabs button{padding:6px 14px;font-size:13px;color:var(--ink-dim);border-radius:999px;font-weight:500}
+.subtabs button.active{background:var(--paper-raise2);color:var(--ink-bright)}
 
-/* Tier badge */
-.tier-badge{display:inline-flex;align-items:center;gap:8px;padding:4px 10px;background:var(--bg-deep);border:1px solid var(--border-strong);font-weight:700;font-size:12px;letter-spacing:0.06em;text-transform:uppercase}
-.tier-badge .dot{width:8px;height:8px;background:var(--tier-bronze)}
-.tier-badge.silver .dot{background:var(--tier-silver)}
-.tier-badge.gold .dot{background:var(--tier-gold)}
-.tier-badge.platinum .dot{background:var(--tier-platinum)}
-.tier-badge.diamond .dot{background:var(--tier-diamond)}
-.tier-badge.master .dot{background:var(--tier-master);box-shadow:0 0 8px var(--tier-master)}
+/* ── Stat cards ─────────────────────────────── */
+.grid{display:grid;grid-template-columns:repeat(4, 1fr);gap:12px;margin-bottom:32px}
+@media(max-width:820px){.grid{grid-template-columns:1fr 1fr}}
+.card{background:var(--paper-raise);border:1px solid var(--paper-line);border-radius:var(--radius-lg);padding:22px 20px;transition:border-color .15s}
+.card:hover{border-color:var(--paper-line-strong)}
+.card h3{font-size:12px;color:var(--ink-dim);font-weight:500;margin-bottom:14px;letter-spacing:0.01em}
+.stat{font-family:'Fraunces',serif;font-variation-settings:"opsz" 144;font-weight:400;font-size:44px;line-height:1;color:var(--ink-bright);letter-spacing:-0.03em;display:flex;align-items:baseline;gap:8px}
+.stat .unit{font-family:'Inter',sans-serif;font-size:13px;color:var(--ink-dim);font-weight:500;letter-spacing:0}
+.sub{font-size:12px;color:var(--ink-dim);margin-top:10px;line-height:1.4}
 
-/* Book list */
-.books-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
-.books-header h2{font-size:16px;font-weight:800;color:var(--text-bright);text-transform:uppercase;letter-spacing:0.04em}
-.book{display:flex;gap:14px;padding:16px;background:var(--panel);border:1px solid var(--border);margin-bottom:12px}
-.book:hover{border-color:var(--border-strong)}
-.book .cover{width:60px;height:90px;background:var(--panel2);flex-shrink:0;object-fit:cover;display:block}
-.book .cover-placeholder{width:60px;height:90px;background:linear-gradient(135deg,var(--panel2),var(--panel));display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:10px;text-align:center;padding:4px;flex-shrink:0}
-.book .info{flex:1;min-width:0}
-.book .title{font-weight:700;color:var(--text-bright);font-size:15px;margin-bottom:2px}
-.book .author{font-size:12px;color:var(--dim);margin-bottom:8px}
-.book .progress-bar{height:6px;background:var(--bg-deep);position:relative;margin:8px 0 4px}
-.book .progress-bar .fill{position:absolute;top:0;left:0;height:100%;background:var(--accent);transition:width 0.3s}
-.book .progress-text{font-size:11px;color:var(--dim);display:flex;justify-content:space-between}
-.book .actions{display:flex;gap:8px;margin-top:10px}
-.book .status-done{color:var(--green);font-weight:700}
-.book .status-active{color:var(--accent);font-weight:700}
-.book .status-paused{color:var(--dim);font-weight:700}
+/* ── Tier badge ─────────────────────────────── */
+.tier-badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;background:var(--paper-raise);border:1px solid var(--paper-line-strong);border-radius:999px;font-weight:500;font-size:11px;letter-spacing:0.04em;color:var(--ink)}
+.tier-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--t-bronze)}
+.tier-badge.silver .dot{background:var(--t-silver)}
+.tier-badge.gold .dot{background:var(--t-gold)}
+.tier-badge.platinum .dot{background:var(--t-platinum)}
+.tier-badge.diamond .dot{background:var(--t-diamond)}
+.tier-badge.master .dot{background:var(--t-master);box-shadow:0 0 8px var(--t-master)}
 
-/* Search dropdown */
-.search-box{position:relative;margin-bottom:20px}
-.search-results{position:absolute;top:100%;left:0;right:0;background:var(--panel);border:1px solid var(--border-strong);border-top:none;max-height:400px;overflow-y:auto;z-index:10}
-.search-result{display:flex;gap:12px;padding:10px 12px;cursor:pointer;border-bottom:1px solid var(--border)}
-.search-result:hover{background:var(--panel-hover)}
-.search-result img{width:36px;height:54px;object-fit:cover;background:var(--panel2)}
+/* ── Section headers ─────────────────────────────── */
+.section-head{display:flex;justify-content:space-between;align-items:baseline;margin:8px 0 18px}
+.section-head h2{font-family:'Fraunces',serif;font-variation-settings:"opsz" 144;font-weight:400;font-size:26px;line-height:1;letter-spacing:-0.02em;color:var(--ink-bright)}
+.section-head .hint{font-size:12px;color:var(--ink-fade)}
+
+/* ── Book cards ─────────────────────────────── */
+.book{display:flex;gap:18px;padding:18px;background:var(--paper-raise);border:1px solid var(--paper-line);border-radius:var(--radius-lg);margin-bottom:12px;transition:border-color .15s, transform .05s}
+.book:hover{border-color:var(--paper-line-strong)}
+.book .cover{width:70px;height:104px;background:var(--paper-raise2);flex-shrink:0;object-fit:cover;display:block;border-radius:4px;box-shadow:0 4px 12px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(255,255,255,0.03)}
+.book .cover-placeholder{width:70px;height:104px;background:linear-gradient(135deg,var(--paper-raise2),var(--paper-deep));display:flex;align-items:center;justify-content:center;color:var(--ink-fade);font-size:10px;text-align:center;padding:6px;flex-shrink:0;border-radius:4px;font-family:'Fraunces',serif;font-style:italic;line-height:1.2;box-shadow:0 4px 12px rgba(0,0,0,0.3)}
+.book .info{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:space-between}
+.book .title{font-family:'Fraunces',serif;font-variation-settings:"opsz" 144;font-weight:500;color:var(--ink-bright);font-size:18px;line-height:1.25;letter-spacing:-0.01em;margin-bottom:3px}
+.book .author{font-size:13px;color:var(--ink-dim);font-style:italic}
+.book .meta-row{font-size:12px;color:var(--ink-fade);margin-top:4px}
+.book .progress-bar{height:4px;background:var(--paper-deep);position:relative;margin:12px 0 6px;border-radius:2px;overflow:hidden}
+.book .progress-bar .fill{position:absolute;top:0;left:0;height:100%;background:linear-gradient(90deg,var(--accent-deep),var(--accent));transition:width .4s ease}
+.book .progress-text{font-size:11px;color:var(--ink-dim);display:flex;justify-content:space-between;font-variant-numeric:tabular-nums}
+.book .actions{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.book .status-done{color:var(--good);font-weight:500}
+.book .status-active{color:var(--accent);font-weight:500}
+.book .status-paused{color:var(--ink-fade);font-weight:500}
+@media(max-width:480px){
+  .book{padding:14px;gap:14px}
+  .book .cover, .book .cover-placeholder{width:56px;height:84px}
+  .book .title{font-size:16px}
+}
+
+/* ── Search dropdown ─────────────────────────────── */
+.search-box{position:relative;margin-bottom:24px}
+.search-box input{padding-left:44px;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%23faf6ee' stroke-opacity='0.4' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='8'/><line x1='21' y1='21' x2='16.65' y2='16.65'/></svg>");background-repeat:no-repeat;background-position:14px center}
+.search-results{position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--paper-raise);border:1px solid var(--paper-line-strong);border-radius:var(--radius);max-height:420px;overflow-y:auto;z-index:10;box-shadow:0 20px 40px -10px rgba(0,0,0,0.5)}
+.search-result{display:flex;gap:12px;padding:12px 14px;cursor:pointer;border-bottom:1px solid var(--paper-line);transition:background .1s}
+.search-result:last-child{border-bottom:none}
+.search-result:hover{background:var(--paper-raise2)}
+.search-result img{width:38px;height:57px;object-fit:cover;background:var(--paper-raise2);border-radius:3px;flex-shrink:0}
 .search-result .info{flex:1;min-width:0}
-.search-result .title{font-weight:600;color:var(--text-bright);font-size:14px}
-.search-result .meta{font-size:11px;color:var(--dim)}
+.search-result .title{font-weight:500;color:var(--ink-bright);font-size:14px;font-family:'Fraunces',serif;line-height:1.25}
+.search-result .meta{font-size:12px;color:var(--ink-dim);font-style:italic;margin-top:2px}
 
-/* Leaderboard */
-.lb{background:var(--panel);border:1px solid var(--border)}
-.lb-row{display:grid;grid-template-columns:40px 1fr 100px 80px 60px;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);font-size:14px}
-.lb-row.header{background:var(--bg-deep);color:var(--dim);font-size:11px;text-transform:uppercase;letter-spacing:0.08em;font-weight:700}
-.lb-row .rank{font-weight:900;color:var(--dim);text-align:center;font-family:'JetBrains Mono',monospace}
-.lb-row .rank.gold{color:var(--gold)}
-.lb-row .rank.silver{color:#c0c0c0}
-.lb-row .rank.bronze{color:#cd7f32}
-.lb-row .name{font-weight:700;color:var(--text-bright)}
+/* ── Leaderboard ─────────────────────────────── */
+.lb{background:var(--paper-raise);border:1px solid var(--paper-line);border-radius:var(--radius-lg);overflow:hidden}
+.lb-row{display:grid;grid-template-columns:44px 1fr 110px 70px 70px;gap:12px;align-items:center;padding:14px 18px;border-bottom:1px solid var(--paper-line);font-size:14px}
+.lb-row:last-child{border-bottom:none}
+.lb-row.header{background:var(--paper-deep);color:var(--ink-fade);font-size:11px;letter-spacing:0.02em;font-weight:500;padding:10px 18px}
+.lb-row .rank{font-weight:600;color:var(--ink-fade);text-align:center;font-variant-numeric:tabular-nums;font-size:15px}
+.lb-row .rank.gold{color:var(--t-gold)}
+.lb-row .rank.silver{color:var(--t-silver)}
+.lb-row .rank.bronze{color:var(--t-bronze)}
+.lb-row .name{font-weight:500;color:var(--ink)}
 .lb-row .name.me{color:var(--accent)}
-.lb-row .xp{font-weight:700;color:var(--text-bright);text-align:right}
-.lb-row .streak{font-size:12px;color:var(--dim);text-align:right}
-@media(max-width:600px){.lb-row{grid-template-columns:36px 1fr 70px 50px}.lb-row .streak{display:none}}
+.lb-row .name .h{color:var(--ink-fade);font-weight:400;font-style:italic}
+.lb-row .xp{font-weight:600;color:var(--ink-bright);text-align:right;font-variant-numeric:tabular-nums;font-family:'Fraunces',serif}
+.lb-row .streak{font-size:13px;color:var(--ink-dim);text-align:right;font-variant-numeric:tabular-nums}
+@media(max-width:600px){
+  .lb-row{grid-template-columns:36px 1fr 80px 56px;padding:12px 14px}
+  .lb-row .streak:last-child{display:none}
+}
 
-/* Friends */
-.friends-add{display:flex;gap:8px;margin-bottom:16px}
+/* ── Friends ─────────────────────────────── */
+.friends-add{display:flex;gap:10px;margin-bottom:20px}
 .friends-add input{flex:1}
-.friend-row{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--panel);border:1px solid var(--border);margin-bottom:6px}
-.friend-row .fname{font-weight:600;color:var(--text-bright)}
-.friend-row .fmeta{font-size:12px;color:var(--dim);margin-left:8px}
+.friend-row{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;background:var(--paper-raise);border:1px solid var(--paper-line);border-radius:var(--radius);margin-bottom:8px}
+.friend-row .fname{font-weight:500;color:var(--ink-bright)}
+.friend-row .fmeta{font-size:12px;color:var(--ink-dim);margin-top:2px}
+.friend-row .fmeta .h{font-style:italic}
 
-/* Log page modal */
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+/* ── Modal ─────────────────────────────── */
+.modal-bg{position:fixed;inset:0;background:rgba(12,10,9,0.75);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
 .modal-bg.open{display:flex}
-.modal{background:var(--panel);border:1px solid var(--border-strong);padding:24px;max-width:420px;width:100%}
-.modal h3{font-size:18px;font-weight:800;color:var(--text-bright);margin-bottom:16px;text-transform:uppercase;letter-spacing:0.04em}
+.modal{background:var(--paper-raise);border:1px solid var(--paper-line-strong);border-radius:var(--radius-lg);padding:28px;max-width:440px;width:100%;box-shadow:0 30px 80px -20px rgba(0,0,0,0.6)}
+.modal h3{font-family:'Fraunces',serif;font-variation-settings:"opsz" 144;font-weight:400;font-size:26px;color:var(--ink-bright);margin-bottom:6px;letter-spacing:-0.02em}
 .modal .field{margin-bottom:14px}
-.modal label{display:block;font-size:12px;color:var(--dim);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;font-weight:600}
-.modal .actions{display:flex;gap:8px;margin-top:20px}
+.modal label{display:block;font-size:12px;color:var(--ink-dim);margin-bottom:6px;font-weight:500}
+.modal .actions{display:flex;gap:10px;margin-top:24px}
+.modal .actions .btn{flex:1}
 
-.empty{padding:40px 20px;text-align:center;color:var(--dim);border:1px dashed var(--border-strong)}
-.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--panel);border:1px solid var(--accent);padding:12px 20px;color:var(--text-bright);font-weight:600;z-index:100;display:none}
-.toast.show{display:block}
-
+/* ── Misc ─────────────────────────────── */
+.empty{padding:48px 20px;text-align:center;color:var(--ink-dim);border:1px dashed var(--paper-line-strong);border-radius:var(--radius-lg);font-style:italic;font-family:'Fraunces',serif;font-size:16px}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--paper-raise);border:1px solid var(--accent);border-radius:999px;padding:12px 22px;color:var(--ink-bright);font-weight:500;font-size:14px;z-index:100;display:none;box-shadow:0 10px 30px -5px rgba(0,0,0,0.5)}
+.toast.show{display:block;animation:toastIn .2s ease}
+@keyframes toastIn{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}
 .hidden{display:none !important}
 </style>
 </head>
@@ -165,34 +227,37 @@ header.top .who button{color:var(--accent);font-size:12px;margin-left:8px}
 <div class="wrap">
   <!-- AUTH SCREEN -->
   <div id="auth-screen" class="auth hidden">
-    <h2><span style="color:var(--accent)">Ukufunda</span></h2>
-    <p><em>Ukufunda</em> — Xhosa for "reading." Track books, log pages, climb tiers, beat your friends.</p>
+    <h2>Uku<em>funda</em></h2>
+    <p class="lead"><em>Ukufunda</em> — Xhosa for reading. Track books, log pages, climb tiers, beat your friends.</p>
     <div class="field">
-      <label for="signin-name">Display name</label>
+      <label for="signin-name">Your name</label>
       <input id="signin-name" type="text" placeholder="e.g. Julian" maxlength="24" autocomplete="off">
     </div>
     <div class="field">
-      <label for="signin-handle">Handle (for friend adds)</label>
+      <label for="signin-handle">Handle (friends will add you by this)</label>
       <input id="signin-handle" type="text" placeholder="e.g. julian" maxlength="20" autocomplete="off">
     </div>
     <button class="btn" id="signin-btn">Start reading</button>
-    <p style="margin-top:16px;font-size:12px;color:var(--dim2)">v1: honor system. No password. Your handle is your identity — pick something you'll remember.</p>
+    <p class="fine">No password. Your handle is your identity — pick something you'll remember.</p>
   </div>
 
   <!-- APP -->
   <div id="app" class="hidden">
     <header class="top">
-      <h1><span>Ukufunda</span></h1>
+      <div class="brand">
+        <h1>Uku<em>funda</em></h1>
+        <div class="tagline">reading, ranked.</div>
+      </div>
       <div class="who">
         <span id="who-name"></span>
         <span id="who-tier"></span>
-        <button id="signout-btn">Sign out</button>
+        <button id="signout-btn">sign out</button>
       </div>
     </header>
 
     <div class="tabs">
       <button data-tab="home" class="active">Home</button>
-      <button data-tab="books">Books</button>
+      <button data-tab="books">Library</button>
       <button data-tab="leaderboard">Leaderboard</button>
       <button data-tab="friends">Friends</button>
     </div>
@@ -201,7 +266,7 @@ header.top .who button{color:var(--accent);font-size:12px;margin-left:8px}
     <div id="tab-home" class="tab">
       <div class="grid">
         <div class="card">
-          <h3>This Week</h3>
+          <h3>This week</h3>
           <div class="stat"><span id="week-pages">0</span><span class="unit">pages</span></div>
           <div class="sub" id="week-sub">— XP earned this week</div>
         </div>
@@ -211,20 +276,20 @@ header.top .who button{color:var(--accent);font-size:12px;margin-left:8px}
           <div class="sub" id="streak-sub">Read every day to keep it alive</div>
         </div>
         <div class="card">
-          <h3>Total XP</h3>
+          <h3>Season XP</h3>
           <div class="stat" id="total-xp">0</div>
-          <div class="sub" id="total-sub">Season XP</div>
+          <div class="sub" id="total-sub">Tier: Bronze</div>
         </div>
         <div class="card">
-          <h3>Books Finished</h3>
+          <h3>Finished</h3>
           <div class="stat" id="books-done">0</div>
-          <div class="sub">All-time</div>
+          <div class="sub">All-time books</div>
         </div>
       </div>
 
-      <div class="books-header">
-        <h2>Currently Reading</h2>
-        <button class="btn ghost small" onclick="switchTab('books')">+ Add book</button>
+      <div class="section-head">
+        <h2>Currently reading</h2>
+        <button class="btn subtle" onclick="switchTab('books')">+ add a book</button>
       </div>
       <div id="home-books"></div>
     </div>
@@ -232,19 +297,19 @@ header.top .who button{color:var(--accent);font-size:12px;margin-left:8px}
     <!-- BOOKS TAB -->
     <div id="tab-books" class="tab hidden">
       <div class="search-box">
-        <input id="book-search" type="text" placeholder="Search for a book by title or author..." autocomplete="off">
+        <input id="book-search" type="text" placeholder="Search a book by title or author…" autocomplete="off">
         <div id="search-results" class="search-results hidden"></div>
       </div>
 
-      <div class="books-header">
-        <h2>Your Library</h2>
+      <div class="section-head">
+        <h2>Your library</h2>
       </div>
       <div id="books-list"></div>
     </div>
 
     <!-- LEADERBOARD TAB -->
     <div id="tab-leaderboard" class="tab hidden">
-      <div class="tabs" style="margin-bottom:16px">
+      <div class="subtabs">
         <button data-lb="friends" class="active">Friends</button>
         <button data-lb="global">Global</button>
       </div>
@@ -262,13 +327,13 @@ header.top .who button{color:var(--accent);font-size:12px;margin-left:8px}
 
     <!-- FRIENDS TAB -->
     <div id="tab-friends" class="tab hidden">
-      <div class="card" style="margin-bottom:20px">
-        <h3>Your Handle</h3>
-        <div class="stat mono" id="my-handle" style="font-size:20px">-</div>
+      <div class="card" style="margin-bottom:24px">
+        <h3>Your handle</h3>
+        <div class="stat" id="my-handle" style="font-size:32px">—</div>
         <div class="sub">Share this so friends can add you.</div>
       </div>
       <div class="friends-add">
-        <input id="friend-handle" type="text" placeholder="Friend's handle" autocomplete="off">
+        <input id="friend-handle" type="text" placeholder="friend's handle" autocomplete="off">
         <button class="btn ghost" onclick="addFriend()">Add</button>
       </div>
       <div id="friends-list"></div>
@@ -279,8 +344,8 @@ header.top .who button{color:var(--accent);font-size:12px;margin-left:8px}
 <!-- LOG PROGRESS MODAL -->
 <div id="log-modal" class="modal-bg">
   <div class="modal">
-    <h3>Log Progress</h3>
-    <div id="log-book-info" style="margin-bottom:16px;color:var(--dim);font-size:13px"></div>
+    <h3>Log progress</h3>
+    <div id="log-book-info" style="margin-bottom:18px;color:var(--ink-dim);font-size:13px;font-style:italic"></div>
     <div class="field">
       <label>Current page</label>
       <input id="log-page" type="number" min="0" placeholder="e.g. 87">
@@ -290,7 +355,7 @@ header.top .who button{color:var(--accent);font-size:12px;margin-left:8px}
       <input id="log-delta" type="number" min="0" placeholder="e.g. 20">
     </div>
     <div class="actions">
-      <button class="btn ghost" onclick="closeLogModal()">Cancel</button>
+      <button class="btn ghost" onclick="closeLogModal()" style="flex:0 0 auto">Cancel</button>
       <button class="btn" onclick="submitLog()">Log it</button>
     </div>
   </div>
@@ -359,9 +424,9 @@ async function boot(){
   document.querySelectorAll('.tabs button[data-tab]').forEach(b => {
     b.addEventListener('click', () => switchTab(b.dataset.tab));
   });
-  document.querySelectorAll('.tabs button[data-lb]').forEach(b => {
+  document.querySelectorAll('.subtabs button[data-lb]').forEach(b => {
     b.addEventListener('click', () => {
-      document.querySelectorAll('.tabs button[data-lb]').forEach(x => x.classList.remove('active'));
+      document.querySelectorAll('.subtabs button[data-lb]').forEach(x => x.classList.remove('active'));
       b.classList.add('active');
       state.lbMode = b.dataset.lb;
       loadLeaderboard();
@@ -376,7 +441,7 @@ async function boot(){
 function renderApp(){
   document.getElementById('auth-screen').classList.add('hidden');
   document.getElementById('app').classList.remove('hidden');
-  document.getElementById('who-name').textContent = state.me.name + ' @' + state.me.handle;
+  document.getElementById('who-name').textContent = state.me.name + ' · @' + state.me.handle;
   document.getElementById('my-handle').textContent = '@' + state.me.handle;
   refresh();
 }
@@ -400,12 +465,12 @@ function switchTab(name){
 
 // ============ STATS ============
 function tierFromXp(xp){
-  if (xp >= 5000) return { name:'MASTER', cls:'master' };
-  if (xp >= 3000) return { name:'DIAMOND', cls:'diamond' };
-  if (xp >= 1500) return { name:'PLATINUM', cls:'platinum' };
-  if (xp >= 700)  return { name:'GOLD', cls:'gold' };
-  if (xp >= 250)  return { name:'SILVER', cls:'silver' };
-  return { name:'BRONZE', cls:'bronze' };
+  if (xp >= 5000) return { name:'Master', cls:'master' };
+  if (xp >= 3000) return { name:'Diamond', cls:'diamond' };
+  if (xp >= 1500) return { name:'Platinum', cls:'platinum' };
+  if (xp >= 700)  return { name:'Gold', cls:'gold' };
+  if (xp >= 250)  return { name:'Silver', cls:'silver' };
+  return { name:'Bronze', cls:'bronze' };
 }
 
 async function loadStats(){
@@ -434,7 +499,7 @@ function renderHome(){
   const active = state.books.filter(b => b.status === 'active');
   const el = document.getElementById('home-books');
   if (active.length === 0) {
-    el.innerHTML = '<div class="empty">No active books. Add one to get started.</div>';
+    el.innerHTML = '<div class="empty">No active books yet. Add one to get started.</div>';
   } else {
     el.innerHTML = active.map(bookCard).join('');
   }
@@ -452,10 +517,10 @@ async function loadBooks(){
 function bookCard(b){
   const pct = b.pages > 0 ? Math.min(100, Math.round((b.current / b.pages) * 100)) : 0;
   const statusEl = b.status === 'done'
-    ? '<span class="status-done">Finished</span>'
+    ? '<span class="status-done">finished</span>'
     : b.status === 'paused'
-    ? '<span class="status-paused">Paused</span>'
-    : '<span class="status-active">Reading</span>';
+    ? '<span class="status-paused">paused</span>'
+    : '<span class="status-active">reading</span>';
   const cover = b.cover
     ? `<img src="${escHtml(b.cover)}" class="cover" alt="" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'cover-placeholder',textContent:'${escHtml(b.title.slice(0,20))}'}))">`
     : `<div class="cover-placeholder">${escHtml(b.title.slice(0,20))}</div>`;
@@ -463,15 +528,20 @@ function bookCard(b){
     <div class="book">
       ${cover}
       <div class="info">
-        <div class="title">${escHtml(b.title)}</div>
-        <div class="author">${escHtml(b.author || 'Unknown')} · ${b.pages} pages · ${statusEl}</div>
-        <div class="progress-bar"><div class="fill" style="width:${pct}%"></div></div>
-        <div class="progress-text"><span>${b.current} / ${b.pages}</span><span>${pct}%</span></div>
-        <div class="actions">
-          ${b.status !== 'done' ? `<button class="btn small ghost" onclick="openLogModal('${b.id}')">Log pages</button>` : ''}
-          ${b.status === 'active' ? `<button class="btn small ghost" onclick="setStatus('${b.id}','paused')">Pause</button>` : ''}
-          ${b.status === 'paused' ? `<button class="btn small ghost" onclick="setStatus('${b.id}','active')">Resume</button>` : ''}
-          <button class="btn small ghost" onclick="removeBook('${b.id}')">Remove</button>
+        <div>
+          <div class="title">${escHtml(b.title)}</div>
+          <div class="author">${escHtml(b.author || 'Unknown')}</div>
+          <div class="meta-row">${b.pages} pages · ${statusEl}</div>
+        </div>
+        <div>
+          <div class="progress-bar"><div class="fill" style="width:${pct}%"></div></div>
+          <div class="progress-text"><span>${b.current} / ${b.pages}</span><span>${pct}%</span></div>
+          <div class="actions">
+            ${b.status !== 'done' ? `<button class="btn small ghost" onclick="openLogModal('${b.id}')">Log pages</button>` : ''}
+            ${b.status === 'active' ? `<button class="btn small subtle" onclick="setStatus('${b.id}','paused')">Pause</button>` : ''}
+            ${b.status === 'paused' ? `<button class="btn small subtle" onclick="setStatus('${b.id}','active')">Resume</button>` : ''}
+            <button class="btn small subtle" onclick="removeBook('${b.id}')">Remove</button>
+          </div>
         </div>
       </div>
     </div>`;
@@ -480,7 +550,7 @@ function bookCard(b){
 function renderBooks(){
   const el = document.getElementById('books-list');
   if (state.books.length === 0) {
-    el.innerHTML = '<div class="empty">No books yet. Search above.</div>';
+    el.innerHTML = '<div class="empty">No books yet. Search above to find one.</div>';
   } else {
     el.innerHTML = state.books.map(bookCard).join('');
   }
@@ -499,7 +569,7 @@ async function searchBooks(){
     } else {
       res.innerHTML = items.map(b => `
         <div class="search-result" onclick='addBook(${JSON.stringify(b).replace(/'/g,"&apos;")})'>
-          ${b.cover ? `<img src="${escHtml(b.cover)}" alt="">` : `<div style="width:36px;height:54px;background:var(--panel2)"></div>`}
+          ${b.cover ? `<img src="${escHtml(b.cover)}" alt="">` : `<div style="width:38px;height:57px;background:var(--paper-raise2);border-radius:3px"></div>`}
           <div class="info">
             <div class="title">${escHtml(b.title)}</div>
             <div class="meta">${escHtml(b.author || 'Unknown')} · ${b.pages || '?'} pages</div>
@@ -603,7 +673,7 @@ async function loadLeaderboard(){
 function renderLeaderboard(){
   const el = document.getElementById('lb-body');
   if (state.leaderboard.length === 0) {
-    el.innerHTML = '<div class="empty" style="border:none">' + (state.lbMode === 'friends' ? 'Add friends to see a leaderboard.' : 'No one on the board yet.') + '</div>';
+    el.innerHTML = '<div style="padding:32px;text-align:center;color:var(--ink-dim);font-style:italic;font-family:\'Fraunces\',serif">' + (state.lbMode === 'friends' ? 'Add friends to see a leaderboard.' : 'No one on the board yet.') + '</div>';
     return;
   }
   el.innerHTML = state.leaderboard.map((row, i) => {
@@ -612,11 +682,11 @@ function renderLeaderboard(){
     const t = tierFromXp(row.totalXp || 0);
     const meCls = row.id === state.me.id ? 'me' : '';
     return `<div class="lb-row">
-      <div class="rank ${rankCls}">#${rank}</div>
-      <div class="name ${meCls}">${escHtml(row.name)} <span style="color:var(--dim);font-weight:400">@${escHtml(row.handle)}</span></div>
+      <div class="rank ${rankCls}">${rank}</div>
+      <div class="name ${meCls}">${escHtml(row.name)} <span class="h">@${escHtml(row.handle)}</span></div>
       <div class="xp">${(row.totalXp || 0).toLocaleString()}</div>
       <div class="streak">${row.streak || 0}d</div>
-      <div class="streak"><span class="tier-badge ${t.cls}" style="padding:2px 6px;font-size:10px"><span class="dot"></span>${t.name.slice(0,3)}</span></div>
+      <div class="streak"><span class="tier-badge ${t.cls}" style="padding:2px 8px;font-size:10px"><span class="dot"></span>${t.name.slice(0,3)}</span></div>
     </div>`;
   }).join('');
 }
@@ -640,12 +710,12 @@ function renderFriends(){
     const t = tierFromXp(f.totalXp || 0);
     return `<div class="friend-row">
       <div>
-        <span class="fname">${escHtml(f.name)}</span>
-        <span class="fmeta">@${escHtml(f.handle)} · ${(f.totalXp || 0).toLocaleString()} XP · ${f.streak || 0}d</span>
+        <div class="fname">${escHtml(f.name)}</div>
+        <div class="fmeta"><span class="h">@${escHtml(f.handle)}</span> · ${(f.totalXp || 0).toLocaleString()} XP · ${f.streak || 0}d streak</div>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
-        <span class="tier-badge ${t.cls}" style="padding:2px 6px;font-size:10px"><span class="dot"></span>${t.name.slice(0,3)}</span>
-        <button class="btn small ghost" onclick="removeFriend('${f.handle}')">Remove</button>
+        <span class="tier-badge ${t.cls}" style="padding:2px 8px;font-size:10px"><span class="dot"></span>${t.name.slice(0,3)}</span>
+        <button class="btn small subtle" onclick="removeFriend('${f.handle}')">Remove</button>
       </div>
     </div>`;
   }).join('');
