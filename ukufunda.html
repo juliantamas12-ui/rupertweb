@@ -161,10 +161,13 @@ header.top{display:none !important}
   flex-direction:column;
   align-items:center;
   justify-content:space-between;
-  padding:56px 28px 24px;
+  padding:56px 20px 40px;
   position:relative;
   overflow:hidden;
   box-shadow:inset 0 0 180px rgba(0,0,0,0.55), inset 0 0 40px rgba(0,0,0,0.3);
+}
+@media(max-width:400px){
+  .book-cover{padding:40px 16px 36px}
 }
 /* Fine leather grain — fractal noise. Rendered inline as a data-URI SVG. */
 .book-cover::before{
@@ -182,17 +185,8 @@ header.top{display:none !important}
   mix-blend-mode:overlay;
   opacity:0.55;
 }
-.book-cover .frame{
-  position:absolute;inset:22px;
-  border:1px solid rgba(245,238,221,0.25);
-  pointer-events:none;
-}
-.book-cover .frame::before,
-.book-cover .frame::after{
-  content:'';position:absolute;left:8px;right:8px;height:1px;background:rgba(245,238,221,0.35);
-}
-.book-cover .frame::before{top:8px}
-.book-cover .frame::after{bottom:8px}
+/* No cover frame — side borders removed so title never has to compete with them. */
+.book-cover .frame{display:none}
 .book-cover .cover-top,
 .book-cover .cover-mid,
 .book-cover .cover-bot{position:relative;z-index:1;text-align:center;width:100%}
@@ -205,10 +199,13 @@ header.top{display:none !important}
   color:rgba(245,238,221,0.55);margin-top:6px;
 }
 /* Cover title — upright EB Garamond bold, foil-stamped on leather */
+/* Cover title — upright EB Garamond bold, foil-stamped on leather.
+   Sized to fit within safe padding without overflow on narrow phones. */
 .book-cover .title{
   font-family:'EB Garamond',serif;font-weight:700;font-style:normal;
-  font-size:clamp(64px,15vw,116px);line-height:0.95;letter-spacing:0.01em;
+  font-size:clamp(44px,11vw,96px);line-height:0.95;letter-spacing:0.01em;
   color:var(--paper);margin:0 0 18px;text-transform:uppercase;
+  max-width:100%;word-break:normal;
   text-shadow:0 1px 0 rgba(0,0,0,0.45), 0 -1px 0 rgba(255,255,255,0.10), 0 0 32px rgba(0,0,0,0.4);
 }
 .book-cover .subtitle{
@@ -228,15 +225,8 @@ header.top{display:none !important}
   font-family:'Geist',sans-serif;font-size:10px;letter-spacing:0.28em;text-transform:uppercase;
   color:rgba(245,238,221,0.55);font-weight:500;
 }
-.book-cover .open-btn{
-  margin-top:34px;
-  display:inline-flex;align-items:center;gap:10px;
-  background:var(--paper);color:var(--red-deep);
-  border:none;padding:14px 28px;font-family:'EB Garamond',serif;font-style:normal;font-size:14px;
-  font-weight:600;letter-spacing:0.22em;text-transform:uppercase;cursor:pointer;
-  transition:transform .15s, background .15s;
-  box-shadow:0 4px 0 rgba(0,0,0,0.25);
-}
+/* Open-the-book button removed — the cover itself is tappable. */
+.book-cover .open-btn{display:none}
 
 /* Cover — splash variant (for signed-in returning user).
    Adds a Table of Contents in the middle: tap a chapter to enter. */
@@ -248,11 +238,32 @@ header.top{display:none !important}
 @keyframes coverIn{from{opacity:0;transform:scale(1.02)}to{opacity:1;transform:none}}
 @keyframes coverOut{to{opacity:0;transform:scale(0.98)}}
 
-.cover-toc{
-  display:flex;flex-direction:column;gap:0;margin-top:28px;
-  max-width:340px;margin-left:auto;margin-right:auto;
-  border-top:1px solid rgba(245,238,221,0.28);
-  border-bottom:1px solid rgba(245,238,221,0.28);
+/* Legacy cover-toc kept but no longer used (Contents lives on its own page). */
+.cover-toc{display:none}
+
+/* Contents page — proper book table-of-contents. Chapter number on the left,
+   title big, description italic, folio on the right with dot leaders between. */
+.contents-list{display:flex;flex-direction:column;gap:0;max-width:520px;margin:0 auto;
+  border-top:1px solid var(--paper-line-strong);border-bottom:1px solid var(--paper-line-strong)}
+.contents-item{
+  display:grid;grid-template-columns:44px 1fr auto;grid-template-areas:'n t pf' 'n desc pf';
+  column-gap:16px;row-gap:2px;align-items:baseline;
+  padding:20px 4px;background:transparent;border:none;text-align:left;cursor:pointer;
+  border-bottom:1px dotted var(--paper-line-strong);
+  font-family:'EB Garamond',serif;color:var(--ink);
+  transition:background .12s, color .12s;width:100%;
+}
+.contents-item:last-child{border-bottom:none}
+.contents-item:hover{background:var(--tan-soft)}
+.contents-item:hover .t{color:var(--red)}
+.contents-item .n{grid-area:n;font-family:'EB Garamond',serif;font-style:italic;font-size:22px;color:var(--red);font-weight:500;line-height:1;font-variant-numeric:oldstyle-nums}
+.contents-item .t{grid-area:t;font-family:'EB Garamond',serif;font-weight:600;font-size:22px;color:var(--ink-bright);letter-spacing:-0.005em;transition:color .12s}
+.contents-item .desc{grid-area:desc;font-style:italic;font-size:14px;color:var(--ink-dim);line-height:1.35}
+.contents-item .pf{grid-area:pf;font-family:'Geist',sans-serif;font-size:11px;color:var(--ink-fade);letter-spacing:0.06em;align-self:center}
+@media(max-width:600px){
+  .contents-item{grid-template-columns:32px 1fr auto;column-gap:12px;padding:16px 4px}
+  .contents-item .t{font-size:20px}
+  .contents-item .desc{font-size:13px}
 }
 .cover-toc-item{
   display:flex;align-items:baseline;gap:14px;
@@ -278,9 +289,17 @@ header.top{display:none !important}
   transition:transform .12s, color .12s;
 }
 .cover-toc-item:hover::after{color:var(--paper);transform:translateX(4px)}
-.book-cover .open-btn:hover{background:var(--ink);color:var(--paper);transform:translateY(-1px)}
-.book-cover .open-btn:active{transform:translateY(1px);box-shadow:0 2px 0 rgba(0,0,0,0.25)}
-.book-cover .open-btn::after{content:'→';font-family:serif;font-size:14px;letter-spacing:0}
+/* whole cover is a tap target — subtle hint on hover */
+.book-cover.tappable{cursor:pointer;user-select:none}
+.book-cover.tappable:active{transform:scale(0.998)}
+.book-cover .tap-hint{
+  position:absolute;bottom:16px;left:50%;transform:translateX(-50%);
+  font-family:'EB Garamond',serif;font-size:11px;letter-spacing:0.28em;
+  color:rgba(245,238,221,0.4);font-variant:small-caps;
+  animation:tapPulse 2.2s ease-in-out infinite;
+  z-index:2;
+}
+@keyframes tapPulse{0%,100%{opacity:0.4}50%{opacity:0.75}}
 .book-cover .spine{
   position:absolute;left:0;top:0;bottom:0;width:8px;
   background:linear-gradient(to right, rgba(0,0,0,0.45), transparent);
@@ -540,6 +559,13 @@ header.top{display:none !important}
 .guild-detail-head .motto{font-family:'EB Garamond',serif;font-style:italic;color:var(--ink-dim);font-size:18px;margin-top:8px}
 .guild-detail-head .desc{color:var(--ink-dim);font-size:15px;margin-top:6px;line-height:1.5}
 
+/* Page-flip transitions — when you swipe, the new page slides in from the
+   corresponding side and fades up. Subtle, not a full paper-page turn. */
+@keyframes pageInLeft{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:none}}
+@keyframes pageInRight{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
+.tab.page-in-left{animation:pageInLeft .36s cubic-bezier(0.2,0.7,0.2,1)}
+.tab.page-in-right{animation:pageInRight .36s cubic-bezier(0.2,0.7,0.2,1)}
+
 /* Pulse when a stat updates — the stat number briefly flushes with accent-red
    ink, then fades back to full-ink. Feels like a stamp landing on paper. */
 @keyframes uf-pulse{
@@ -615,10 +641,9 @@ header.top{display:none !important}
   <!-- AUTH: BOOK COVER + ENDPAPER -->
   <div id="auth-screen" class="auth hidden">
 
-    <!-- STAGE 1: THE COVER — first thing anyone sees -->
-    <div id="book-cover" class="book-cover">
+    <!-- STAGE 1: THE COVER — tap anywhere to open -->
+    <div id="book-cover" class="book-cover tappable" onclick="openCover()">
       <div class="spine"></div>
-      <div class="frame"></div>
 
       <div class="cover-top">
         <div class="publisher">Rupertweb Editions</div>
@@ -630,13 +655,12 @@ header.top{display:none !important}
         <h1 class="title">Ukufunda</h1>
         <p class="subtitle">A reading league — track books, log pages, climb tiers, beat your friends.</p>
         <div class="rule-set"><span class="rule"></span><span class="mark">❧</span><span class="rule"></span></div>
-        <button class="open-btn" onclick="openCover()">Open the book</button>
       </div>
 
       <div class="cover-bot">
         <div class="colophon">❦</div>
-        <div class="attr">isiXhosa for reading</div>
       </div>
+      <div class="tap-hint">tap to open</div>
     </div>
 
     <!-- STAGE 2: THE ENDPAPER — shown after "Open the book" -->
@@ -666,9 +690,10 @@ header.top{display:none !important}
   <!-- APP -->
   <!-- Cover splash for signed-in returning users. Shown once per session
        (sessionStorage flag). Contains the ToC so you can tap a chapter to enter. -->
-  <div id="book-cover-splash" class="book-cover cover-splash hidden">
+  <!-- Splash cover for signed-in returning users. Tap anywhere to open into
+       the Contents page (fol. i). Same look as first-run cover. -->
+  <div id="book-cover-splash" class="book-cover cover-splash tappable hidden" onclick="hideCoverSplash('contents')">
     <div class="spine"></div>
-    <div class="frame"></div>
 
     <div class="cover-top">
       <div class="publisher">Rupertweb Editions</div>
@@ -680,21 +705,12 @@ header.top{display:none !important}
       <h1 class="title">Ukufunda</h1>
       <p class="subtitle">A reading league.</p>
       <div class="rule-set"><span class="rule"></span><span class="mark">❧</span><span class="rule"></span></div>
-
-      <!-- Table of Contents — chapters live on the cover itself -->
-      <nav class="cover-toc">
-        <button data-tab="home"        class="cover-toc-item"><span class="n">i</span><span class="t">Home</span></button>
-        <button data-tab="books"       class="cover-toc-item"><span class="n">ii</span><span class="t">The Library</span></button>
-        <button data-tab="leaderboard" class="cover-toc-item"><span class="n">iii</span><span class="t">The League</span></button>
-        <button data-tab="friends"     class="cover-toc-item"><span class="n">iv</span><span class="t">Companions</span></button>
-        <button data-tab="guilds"      class="cover-toc-item"><span class="n">v</span><span class="t">Guilds</span></button>
-      </nav>
     </div>
 
     <div class="cover-bot">
       <div class="colophon">❦</div>
-      <div class="attr" id="cover-attr">isiXhosa for reading</div>
     </div>
+    <div class="tap-hint">tap to open</div>
   </div>
 
   <div id="app" class="hidden">
@@ -712,16 +728,35 @@ header.top{display:none !important}
     </header>
 
     <div class="tabs">
-      <button data-tab="home" class="active">Home</button>
+      <button data-tab="contents" class="active">Contents</button>
+      <button data-tab="home">Home</button>
       <button data-tab="books">Library</button>
       <button data-tab="leaderboard">Leaderboard</button>
       <button data-tab="friends">Friends</button>
       <button data-tab="guilds">Guilds</button>
     </div>
 
+    <!-- CONTENTS TAB — the first inside page after the cover -->
+    <div id="tab-contents" class="tab">
+      <div class="running-head"><span class="chapter">Contents</span><span class="right"><span class="folio">fol. i</span><button class="close-book" onclick="showCoverSplash()">close book</button></span></div>
+
+      <h2 style="font-family:'EB Garamond',serif;font-weight:700;font-size:44px;text-transform:uppercase;letter-spacing:0.02em;text-align:center;margin:24px 0 8px;color:var(--ink-bright)">Contents</h2>
+      <p style="text-align:center;font-family:'EB Garamond',serif;font-style:italic;color:var(--ink-dim);margin-bottom:36px;font-size:16px">Turn to any chapter.</p>
+
+      <nav class="contents-list">
+        <button data-tab="home"        class="contents-item"><span class="n">I</span><span class="t">Home</span><span class="desc">your ledger — pages read this week, streak, XP, tier</span><span class="pf">fol. ii</span></button>
+        <button data-tab="books"       class="contents-item"><span class="n">II</span><span class="t">The Library</span><span class="desc">your shelf — add books, log pages, mark finished</span><span class="pf">fol. iii</span></button>
+        <button data-tab="leaderboard" class="contents-item"><span class="n">III</span><span class="t">The League</span><span class="desc">everyone ranked by season XP — friends or global</span><span class="pf">fol. iv</span></button>
+        <button data-tab="friends"     class="contents-item"><span class="n">IV</span><span class="t">Companions</span><span class="desc">add friends by handle, keep them close</span><span class="pf">fol. v</span></button>
+        <button data-tab="guilds"      class="contents-item"><span class="n">V</span><span class="t">Guilds</span><span class="desc">reading clubs with shared, live-ranked goals</span><span class="pf">fol. vi</span></button>
+      </nav>
+
+      <div class="page-footer"><span class="fleur"></span><span class="num">— i —</span></div>
+    </div>
+
     <!-- HOME TAB -->
     <div id="tab-home" class="tab">
-      <div class="running-head"><span class="chapter">Chapter I · Home</span><span class="right"><span class="folio">fol. i</span><button class="close-book" onclick="showCoverSplash()">close book</button></span></div>
+      <div class="running-head"><span class="chapter">Chapter I · Home</span><span class="right"><span class="folio">fol. ii</span><button class="close-book" onclick="showCoverSplash()">close book</button></span></div>
 
       <p class="book-prose drop-cap" style="margin-bottom:22px">
         A ledger of your week's reading, kept honestly. <em>Log the pages you actually read;</em>
@@ -757,12 +792,12 @@ header.top{display:none !important}
         <button class="btn subtle" onclick="switchTab('books')">+ add a book</button>
       </div>
       <div id="home-books"></div>
-      <div class="page-footer"><span class="fleur"></span><span class="num">— i —</span></div>
+      <div class="page-footer"><span class="fleur"></span><span class="num">— ii —</span></div>
     </div>
 
     <!-- BOOKS TAB -->
     <div id="tab-books" class="tab hidden">
-      <div class="running-head"><span class="chapter">Chapter II · The Library</span><span class="right"><span class="folio">fol. ii</span><button class="close-book" onclick="showCoverSplash()">close book</button></span></div>
+      <div class="running-head"><span class="chapter">Chapter II · The Library</span><span class="right"><span class="folio">fol. iii</span><button class="close-book" onclick="showCoverSplash()">close book</button></span></div>
 
       <p class="book-prose" style="margin-bottom:22px;font-style:italic;color:var(--ink-dim)">
         Search for any book by title or author — covers and page counts are drawn from the
@@ -779,12 +814,12 @@ header.top{display:none !important}
         <h2>Your library</h2>
       </div>
       <div id="books-list"></div>
-      <div class="page-footer"><span class="fleur"></span><span class="num">— ii —</span></div>
+      <div class="page-footer"><span class="fleur"></span><span class="num">— iii —</span></div>
     </div>
 
     <!-- LEADERBOARD TAB -->
     <div id="tab-leaderboard" class="tab hidden">
-      <div class="running-head"><span class="chapter">Chapter III · The League</span><span class="right"><span class="folio">fol. iii</span><button class="close-book" onclick="showCoverSplash()">close book</button></span></div>
+      <div class="running-head"><span class="chapter">Chapter III · The League</span><span class="right"><span class="folio">fol. iv</span><button class="close-book" onclick="showCoverSplash()">close book</button></span></div>
 
       <p class="book-prose" style="margin-bottom:22px;font-style:italic;color:var(--ink-dim)">
         Readers ranked by season XP — one point for every page read, with a small bonus for
@@ -806,12 +841,12 @@ header.top{display:none !important}
         </div>
         <div id="lb-body"></div>
       </div>
-      <div class="page-footer"><span class="fleur"></span><span class="num">— iii —</span></div>
+      <div class="page-footer"><span class="fleur"></span><span class="num">— iv —</span></div>
     </div>
 
     <!-- FRIENDS TAB -->
     <div id="tab-friends" class="tab hidden">
-      <div class="running-head"><span class="chapter">Chapter IV · Companions</span><span class="right"><span class="folio">fol. iv</span><button class="close-book" onclick="showCoverSplash()">close book</button></span></div>
+      <div class="running-head"><span class="chapter">Chapter IV · Companions</span><span class="right"><span class="folio">fol. v</span><button class="close-book" onclick="showCoverSplash()">close book</button></span></div>
 
       <p class="book-prose" style="margin-bottom:22px;font-style:italic;color:var(--ink-dim)">
         Add a friend by their handle to see their reading beside your own. Your handle,
@@ -828,12 +863,12 @@ header.top{display:none !important}
         <button class="btn ghost" onclick="addFriend()">Add</button>
       </div>
       <div id="friends-list"></div>
-      <div class="page-footer"><span class="fleur"></span><span class="num">— iv —</span></div>
+      <div class="page-footer"><span class="fleur"></span><span class="num">— v —</span></div>
     </div>
 
     <!-- GUILDS TAB -->
     <div id="tab-guilds" class="tab hidden">
-      <div class="running-head"><span class="chapter">Chapter V · Guilds</span><span class="right"><span class="folio">fol. v</span><button class="close-book" onclick="showCoverSplash()">close book</button></span></div>
+      <div class="running-head"><span class="chapter">Chapter V · Guilds</span><span class="right"><span class="folio">fol. vi</span><button class="close-book" onclick="showCoverSplash()">close book</button></span></div>
 
       <p class="book-prose" style="margin-bottom:22px;font-style:italic;color:var(--ink-dim)">
         A guild is a reading club with shared goals. Anyone in the guild may set a goal —
@@ -894,7 +929,7 @@ header.top{display:none !important}
         <button class="btn subtle" onclick="backToGuildList()" style="margin-bottom:16px">← back to guilds</button>
         <div id="guild-detail-body"></div>
       </div>
-      <div class="page-footer"><span class="fleur"></span><span class="num">— v —</span></div>
+      <div class="page-footer"><span class="fleur"></span><span class="num">— vi —</span></div>
     </div>
   </div>
 </div>
@@ -1061,9 +1096,15 @@ async function boot(){
     document.getElementById('auth-screen').classList.remove('hidden');
   }
   // Cover ToC — tap a chapter to enter that tab
+  // Legacy cover-toc-item (no longer used on the cover, kept safe)
   document.querySelectorAll('.cover-toc-item').forEach(b => {
     b.addEventListener('click', () => hideCoverSplash(b.dataset.tab));
   });
+  // Contents-page items — tap to switch to that chapter
+  document.querySelectorAll('.contents-item').forEach(b => {
+    b.addEventListener('click', () => switchTab(b.dataset.tab, { direction: 'left' }));
+  });
+  wireSwipe();
   document.getElementById('signin-btn').addEventListener('click', signIn);
   document.getElementById('signout-btn').addEventListener('click', () => {
     if (confirm('Sign out?')) { clearMe(); location.reload(); }
@@ -1091,6 +1132,8 @@ function renderApp(){
   document.getElementById('app').classList.remove('hidden');
   document.getElementById('who-name').innerHTML = `<span style="font-family:'EB Garamond',serif;font-style:italic;color:var(--ink-fade);margin-right:6px">ex libris</span>${escHtml(state.me.name)} <span style="color:var(--accent)">@${escHtml(state.me.handle)}</span>`;
   document.getElementById('my-handle').textContent = '@' + state.me.handle;
+  // Open on Contents by default so the first inside page reads as a Table of Contents
+  switchTab('contents');
   refresh();
 }
 
@@ -1101,15 +1144,59 @@ async function refresh(){
 }
 
 // ============ TABS ============
-function switchTab(name){
+// Page order (used for swipe navigation). Contents is fol. i — the first inside page.
+const PAGE_ORDER = ['contents','home','books','leaderboard','friends','guilds'];
+let currentTab = 'contents';
+
+function switchTab(name, opts = {}){
+  if (!document.getElementById('tab-' + name)) return;
+  const dir = opts.direction || null; // 'left' | 'right' | null
+  const prevTab = document.querySelector('.tab:not(.hidden)');
+  const nextTab = document.getElementById('tab-' + name);
   document.querySelectorAll('.tabs button[data-tab]').forEach(b => {
     b.classList.toggle('active', b.dataset.tab === name);
   });
   document.querySelectorAll('.tab').forEach(t => t.classList.add('hidden'));
-  document.getElementById('tab-' + name).classList.remove('hidden');
+  nextTab.classList.remove('hidden');
+  currentTab = name;
+  if (dir) {
+    nextTab.classList.remove('page-in-left','page-in-right');
+    void nextTab.offsetWidth; // reflow
+    nextTab.classList.add(dir === 'left' ? 'page-in-right' : 'page-in-left');
+    setTimeout(() => nextTab.classList.remove('page-in-left','page-in-right'), 360);
+  }
+  window.scrollTo({ top: 0, behavior: 'instant' });
   if (name === 'leaderboard') loadLeaderboard();
   if (name === 'friends') loadFriends();
   if (name === 'guilds') loadGuilds();
+}
+
+function flipPage(dir){
+  const idx = PAGE_ORDER.indexOf(currentTab);
+  if (idx === -1) return;
+  const nextIdx = dir === 'next' ? idx + 1 : idx - 1;
+  if (nextIdx < 0 || nextIdx >= PAGE_ORDER.length) return;
+  switchTab(PAGE_ORDER[nextIdx], { direction: dir === 'next' ? 'left' : 'right' });
+}
+
+// Touch swipe: horizontal drag > 60px, less vertical than horizontal, no active modal
+function wireSwipe(){
+  let x0 = null, y0 = null;
+  const target = document.getElementById('app');
+  if (!target) return;
+  target.addEventListener('touchstart', (e) => {
+    if (e.target.closest('input, textarea, select, .modal-bg.open, .book-cover, .cover-splash')) return;
+    const t = e.touches[0];
+    x0 = t.clientX; y0 = t.clientY;
+  }, { passive:true });
+  target.addEventListener('touchend', (e) => {
+    if (x0 == null) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - x0, dy = t.clientY - y0;
+    x0 = y0 = null;
+    if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx)) return;
+    flipPage(dx < 0 ? 'next' : 'prev');
+  }, { passive:true });
 }
 
 // ============ STATS ============
