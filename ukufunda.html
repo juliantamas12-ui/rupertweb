@@ -118,7 +118,135 @@ header.top .who button:hover{opacity:1;text-decoration-color:var(--accent)}
 }
 
 /* ── Auth ─────────────────────────────── */
-.auth{max-width:440px;margin:80px auto;padding:0 20px}
+/* ─── BOOK COVER (AUTH SCREEN) ───
+   The very first thing a new user sees. Rendered like an actual hardback
+   book cover: solid accent-red field, cream stamped title, small caps
+   subtitle, an edition line, a printer's colophon. On tap/scroll the
+   "endpaper" reveals the sign-in form beneath. */
+.auth{max-width:none;margin:0;padding:0;position:relative}
+
+.book-cover{
+  min-height:100vh;
+  min-height:100dvh;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255,255,255,0.06), transparent 55%),
+    radial-gradient(circle at 80% 80%, rgba(0,0,0,0.18), transparent 60%),
+    var(--accent-deep);
+  color:var(--paper);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:space-between;
+  padding:56px 28px 24px;
+  position:relative;
+  overflow:hidden;
+  /* Cloth-weave texture using overlapping dotted patterns */
+  box-shadow:inset 0 0 120px rgba(0,0,0,0.35);
+}
+.book-cover::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background-image:
+    radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+    radial-gradient(rgba(0,0,0,0.10) 1px, transparent 1px);
+  background-size:4px 4px, 9px 9px;
+  background-position:0 0, 2px 3px;
+  mix-blend-mode:overlay;
+  opacity:0.6;
+}
+.book-cover .frame{
+  position:absolute;inset:22px;
+  border:1px solid rgba(245,238,221,0.25);
+  pointer-events:none;
+}
+.book-cover .frame::before,
+.book-cover .frame::after{
+  content:'';position:absolute;left:8px;right:8px;height:1px;background:rgba(245,238,221,0.35);
+}
+.book-cover .frame::before{top:8px}
+.book-cover .frame::after{bottom:8px}
+.book-cover .cover-top,
+.book-cover .cover-mid,
+.book-cover .cover-bot{position:relative;z-index:1;text-align:center;width:100%}
+.book-cover .publisher{
+  font-family:'Geist',sans-serif;font-size:10px;letter-spacing:0.32em;text-transform:uppercase;
+  color:rgba(245,238,221,0.65);font-weight:600;
+}
+.book-cover .edition{
+  font-family:'Cormorant Garamond',serif;font-style:italic;font-size:14px;
+  color:rgba(245,238,221,0.55);margin-top:6px;
+}
+.book-cover .title{
+  font-family:'Cormorant Garamond','EB Garamond',serif;font-style:italic;font-weight:400;
+  font-size:clamp(72px,17vw,132px);line-height:0.9;letter-spacing:-0.02em;
+  color:var(--paper);margin:0 0 18px;
+  /* Foil-stamp effect: subtle inner shadow + highlight */
+  text-shadow:0 1px 0 rgba(0,0,0,0.35), 0 -1px 0 rgba(255,255,255,0.08);
+}
+.book-cover .subtitle{
+  font-family:'Cormorant Garamond',serif;font-style:italic;font-size:19px;line-height:1.4;
+  color:rgba(245,238,221,0.85);max-width:340px;margin:0 auto;
+}
+.book-cover .rule-set{display:flex;justify-content:center;align-items:center;gap:14px;margin:22px auto}
+.book-cover .rule-set .rule{width:60px;height:1px;background:rgba(245,238,221,0.5)}
+.book-cover .rule-set .mark{font-family:'Cormorant Garamond',serif;color:rgba(245,238,221,0.7);font-size:16px}
+.book-cover .colophon{
+  font-family:'Cormorant Garamond',serif;font-size:28px;line-height:1;
+  color:rgba(245,238,221,0.75);margin:0 auto 10px;
+}
+.book-cover .attr{
+  font-family:'Geist',sans-serif;font-size:10px;letter-spacing:0.28em;text-transform:uppercase;
+  color:rgba(245,238,221,0.55);font-weight:500;
+}
+.book-cover .open-btn{
+  margin-top:34px;
+  display:inline-flex;align-items:center;gap:10px;
+  background:var(--paper);color:var(--accent-deep);
+  border:none;padding:14px 26px;font-family:'Geist',sans-serif;font-size:12px;
+  font-weight:600;letter-spacing:0.2em;text-transform:uppercase;cursor:pointer;
+  transition:transform .15s, background .15s;
+  box-shadow:0 4px 0 rgba(0,0,0,0.25);
+}
+.book-cover .open-btn:hover{background:var(--ink);color:var(--paper);transform:translateY(-1px)}
+.book-cover .open-btn:active{transform:translateY(1px);box-shadow:0 2px 0 rgba(0,0,0,0.25)}
+.book-cover .open-btn::after{content:'→';font-family:serif;font-size:14px;letter-spacing:0}
+.book-cover .spine{
+  position:absolute;left:0;top:0;bottom:0;width:8px;
+  background:linear-gradient(to right, rgba(0,0,0,0.45), transparent);
+  pointer-events:none;
+}
+
+/* Endpaper — the sign-in card that reveals after "open" is clicked */
+.endpaper{
+  min-height:100vh;
+  min-height:100dvh;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:60px 28px;
+  max-width:480px;margin:0 auto;
+  animation:endpaperIn .6s cubic-bezier(0.2,0.7,0.2,1);
+}
+@keyframes endpaperIn{
+  from{opacity:0;transform:translateY(20px)}
+  to{opacity:1;transform:none}
+}
+.endpaper .plate{width:100%;text-align:center;margin-bottom:36px}
+.endpaper .plate .title{
+  font-family:'Cormorant Garamond',serif;font-style:italic;font-size:48px;line-height:1;
+  color:var(--ink-bright);letter-spacing:-0.01em;margin-bottom:8px;
+}
+.endpaper .plate .lead{
+  font-family:'Cormorant Garamond',serif;font-style:italic;font-size:17px;
+  color:var(--ink-dim);line-height:1.5;max-width:340px;margin:0 auto;
+}
+.endpaper .fields{width:100%;max-width:360px}
+.endpaper label{display:block;font-family:'Geist',sans-serif;font-size:10px;color:var(--ink-fade);
+  margin-bottom:6px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase}
+.endpaper .field{margin-bottom:18px}
+.endpaper .fine{margin-top:24px;font-size:13px;color:var(--ink-fade);
+  line-height:1.5;text-align:center;font-family:'Cormorant Garamond',serif;font-style:italic}
+.endpaper .back-link{margin-top:20px;font-family:'Geist',sans-serif;font-size:11px;
+  color:var(--ink-fade);letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;
+  background:none;border:none;text-decoration:underline;text-underline-offset:3px}
+.endpaper .back-link:hover{color:var(--accent)}
 .auth h2{font-family:'Cormorant Garamond','EB Garamond',serif;font-weight:400;font-style:italic;font-size:52px;line-height:0.95;letter-spacing:-0.01em;margin-bottom:12px;color:var(--ink-bright)}
 .auth .lead{color:var(--ink-dim);margin-bottom:28px;font-size:16px;line-height:1.55}
 .auth .lead em{font-style:italic;font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--ink)}
@@ -343,33 +471,102 @@ header.top .who button:hover{opacity:1;text-decoration-color:var(--accent)}
 }
 .card.pulse .stat{animation:uf-pulse 0.9s ease-out}
 
+/* Running head — the small book-page header line above each tab.
+   Left: chapter/tab name in italic small caps. Right: folio (page number). */
+.running-head{
+  display:flex;justify-content:space-between;align-items:baseline;
+  padding:0 0 8px;margin-bottom:22px;
+  border-bottom:1px solid var(--paper-line);
+  font-family:'Cormorant Garamond',serif;font-style:italic;font-size:12px;
+  color:var(--ink-fade);letter-spacing:0.14em;text-transform:lowercase;
+}
+.running-head .chapter{font-variant:small-caps;letter-spacing:0.24em}
+.running-head .folio{font-variant-numeric:oldstyle-nums;font-style:normal;color:var(--ink-dim)}
+
+/* Marginalia — an italic serif note in the margin (or below on mobile).
+   Use next to a paragraph or stat with a small caret to pull attention. */
+.marginalia{
+  font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--ink-dim);
+  font-size:14px;line-height:1.4;padding-left:14px;border-left:2px solid var(--accent);
+  margin:10px 0;max-width:280px;
+}
+
+/* Small-caps section head, sometimes used as a chapter-opener above section titles */
+.chapter-mark{
+  font-family:'Geist',sans-serif;font-size:10px;letter-spacing:0.28em;text-transform:uppercase;
+  color:var(--ink-fade);font-weight:600;margin-bottom:8px;
+}
+
+/* Drop cap for the very first paragraph on a page — like a book chapter opener */
+.drop-cap::first-letter{
+  font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;
+  font-size:60px;line-height:0.85;float:left;padding:6px 8px 0 0;color:var(--accent);
+}
+
+/* Body-paragraph utility — an actual paragraph rendered in Garamond at
+   proper reading size and measure, for editors’ notes and prefaces. */
+.book-prose{
+  font-family:'EB Garamond',Garamond,serif;font-size:16px;line-height:1.65;
+  color:var(--ink);max-width:60ch;
+}
+.book-prose p+p{margin-top:14px;text-indent:1.5em}
+.book-prose em{font-style:italic}
+
 .hidden{display:none !important}
 </style>
 </head>
 <body>
 
 <div class="wrap">
-  <!-- AUTH SCREEN -->
+  <!-- AUTH: BOOK COVER + ENDPAPER -->
   <div id="auth-screen" class="auth hidden">
-    <div style="text-align:center;margin-bottom:24px">
-      <div style="font-family:'Geist',sans-serif;font-size:10px;letter-spacing:0.32em;text-transform:uppercase;color:var(--ink-fade);margin-bottom:14px;position:relative;display:inline-block;padding:0 8px">
-        <span style="position:absolute;top:50%;right:100%;width:32px;height:1px;background:var(--paper-line-strong);margin-right:10px"></span>
-        A reading league
-        <span style="position:absolute;top:50%;left:100%;width:32px;height:1px;background:var(--paper-line-strong);margin-left:10px"></span>
+
+    <!-- STAGE 1: THE COVER — first thing anyone sees -->
+    <div id="book-cover" class="book-cover">
+      <div class="spine"></div>
+      <div class="frame"></div>
+
+      <div class="cover-top">
+        <div class="publisher">Rupertweb Editions</div>
+        <div class="edition">The Rupertweb Library · First Edition</div>
       </div>
-      <h2 style="margin-bottom:0">Ukufunda</h2>
+
+      <div class="cover-mid">
+        <div class="rule-set"><span class="rule"></span><span class="mark">❦</span><span class="rule"></span></div>
+        <h1 class="title">Ukufunda</h1>
+        <p class="subtitle">A reading league — track books, log pages, climb tiers, beat your friends.</p>
+        <div class="rule-set"><span class="rule"></span><span class="mark">❧</span><span class="rule"></span></div>
+        <button class="open-btn" onclick="openCover()">Open the book</button>
+      </div>
+
+      <div class="cover-bot">
+        <div class="colophon">❦</div>
+        <div class="attr">isiXhosa for reading</div>
+      </div>
     </div>
-    <p class="lead" style="text-align:center"><em>Ukufunda</em> — Xhosa for reading. Track books, log pages, climb tiers, beat your friends.</p>
-    <div class="field">
-      <label for="signin-name">Your name</label>
-      <input id="signin-name" type="text" placeholder="e.g. Julian" maxlength="24" autocomplete="off">
+
+    <!-- STAGE 2: THE ENDPAPER — shown after "Open the book" -->
+    <div id="endpaper" class="endpaper hidden">
+      <div class="plate">
+        <div class="chapter-mark">Ex libris</div>
+        <div class="title">Your name<em>,</em> please</div>
+        <div class="lead">Ukufunda is honour-system. Your handle is your identity — no password, no email, nothing to lose but your streak.</div>
+      </div>
+
+      <div class="fields">
+        <div class="field">
+          <label for="signin-name">Your name</label>
+          <input id="signin-name" type="text" placeholder="e.g. Julian" maxlength="24" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="signin-handle">Handle (friends will add you by this)</label>
+          <input id="signin-handle" type="text" placeholder="e.g. julian" maxlength="20" autocomplete="off">
+        </div>
+        <button class="btn" id="signin-btn">Start reading</button>
+        <p class="fine">Pick a handle you’ll remember. Once claimed, it’s yours.</p>
+        <button class="back-link" onclick="closeCover()">← back to cover</button>
+      </div>
     </div>
-    <div class="field">
-      <label for="signin-handle">Handle (friends will add you by this)</label>
-      <input id="signin-handle" type="text" placeholder="e.g. julian" maxlength="20" autocomplete="off">
-    </div>
-    <button class="btn" id="signin-btn">Start reading</button>
-    <p class="fine">No password. Your handle is your identity — pick something you'll remember.</p>
   </div>
 
   <!-- APP -->
@@ -396,6 +593,14 @@ header.top .who button:hover{opacity:1;text-decoration-color:var(--accent)}
 
     <!-- HOME TAB -->
     <div id="tab-home" class="tab">
+      <div class="running-head"><span class="chapter">Chapter I · Home</span><span class="folio">fol. i</span></div>
+
+      <p class="book-prose drop-cap" style="margin-bottom:22px">
+        A ledger of your week's reading, kept honestly. <em>Log the pages you actually read;</em>
+        the numbers below will tell the truth of it — your streak, your season's XP, and the tier
+        you have earned by them.
+      </p>
+
       <div class="grid">
         <div class="card">
           <h3>This week</h3>
@@ -428,6 +633,14 @@ header.top .who button:hover{opacity:1;text-decoration-color:var(--accent)}
 
     <!-- BOOKS TAB -->
     <div id="tab-books" class="tab hidden">
+      <div class="running-head"><span class="chapter">Chapter II · The Library</span><span class="folio">fol. ii</span></div>
+
+      <p class="book-prose" style="margin-bottom:22px;font-style:italic;color:var(--ink-dim)">
+        Search for any book by title or author — covers and page counts are drawn from the
+        Open Library. Add it to your shelf, mark it <em>reading</em>, and log your progress
+        as you go. Books you finish stay in the register, in perpetuity.
+      </p>
+
       <div class="search-box">
         <input id="book-search" type="text" placeholder="Search a book by title or author…" autocomplete="off">
         <div id="search-results" class="search-results hidden"></div>
@@ -441,6 +654,14 @@ header.top .who button:hover{opacity:1;text-decoration-color:var(--accent)}
 
     <!-- LEADERBOARD TAB -->
     <div id="tab-leaderboard" class="tab hidden">
+      <div class="running-head"><span class="chapter">Chapter III · The League</span><span class="folio">fol. iii</span></div>
+
+      <p class="book-prose" style="margin-bottom:22px;font-style:italic;color:var(--ink-dim)">
+        Readers ranked by season XP — one point for every page read, with a small bonus for
+        long streaks and finished books. <em>Friends</em> shows only those you have added by
+        handle. <em>Global</em> shows everyone.
+      </p>
+
       <div class="subtabs">
         <button data-lb="friends" class="active">Friends</button>
         <button data-lb="global">Global</button>
@@ -459,6 +680,13 @@ header.top .who button:hover{opacity:1;text-decoration-color:var(--accent)}
 
     <!-- FRIENDS TAB -->
     <div id="tab-friends" class="tab hidden">
+      <div class="running-head"><span class="chapter">Chapter IV · Companions</span><span class="folio">fol. iv</span></div>
+
+      <p class="book-prose" style="margin-bottom:22px;font-style:italic;color:var(--ink-dim)">
+        Add a friend by their handle to see their reading beside your own. Your handle,
+        shown below, is what others use to add you.
+      </p>
+
       <div class="card" style="margin-bottom:24px">
         <h3>Your handle</h3>
         <div class="stat" id="my-handle" style="font-size:32px">—</div>
@@ -473,6 +701,14 @@ header.top .who button:hover{opacity:1;text-decoration-color:var(--accent)}
 
     <!-- GUILDS TAB -->
     <div id="tab-guilds" class="tab hidden">
+      <div class="running-head"><span class="chapter">Chapter V · Guilds</span><span class="folio">fol. v</span></div>
+
+      <p class="book-prose" style="margin-bottom:22px;font-style:italic;color:var(--ink-dim)">
+        A guild is a reading club with shared goals. Anyone in the guild may set a goal —
+        <em>ten thousand pages by the equinox, twelve books by year's end</em>, whatever
+        they please — and every member's contribution is ranked live, fantasy-football style.
+      </p>
+
       <!-- View: guild list (my guilds + directory + create form) -->
       <div id="guilds-list-view">
         <div class="section-head">
@@ -630,6 +866,29 @@ async function signIn(){
   } catch(e){ toast('Network error'); }
 }
 
+// Cover / endpaper transitions — shown before sign-in.
+function openCover(){
+  const cover = document.getElementById('book-cover');
+  const endpaper = document.getElementById('endpaper');
+  cover.style.transition = 'opacity .35s ease, transform .35s ease';
+  cover.style.opacity = '0';
+  cover.style.transform = 'scale(0.98)';
+  setTimeout(() => {
+    cover.classList.add('hidden');
+    endpaper.classList.remove('hidden');
+    const nameEl = document.getElementById('signin-name');
+    if (nameEl) nameEl.focus();
+  }, 350);
+}
+function closeCover(){
+  const cover = document.getElementById('book-cover');
+  const endpaper = document.getElementById('endpaper');
+  endpaper.classList.add('hidden');
+  cover.classList.remove('hidden');
+  cover.style.opacity = '1';
+  cover.style.transform = 'none';
+}
+
 async function boot(){
   loadMe();
   if (state.me) {
@@ -661,7 +920,7 @@ async function boot(){
 function renderApp(){
   document.getElementById('auth-screen').classList.add('hidden');
   document.getElementById('app').classList.remove('hidden');
-  document.getElementById('who-name').textContent = state.me.name + ' · @' + state.me.handle;
+  document.getElementById('who-name').innerHTML = `<span style="font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--ink-fade);margin-right:6px">ex libris</span>${escHtml(state.me.name)} <span style="color:var(--accent)">@${escHtml(state.me.handle)}</span>`;
   document.getElementById('my-handle').textContent = '@' + state.me.handle;
   refresh();
 }
