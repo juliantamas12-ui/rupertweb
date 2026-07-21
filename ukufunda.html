@@ -241,29 +241,47 @@ header.top{display:none !important}
 /* Legacy cover-toc kept but no longer used (Contents lives on its own page). */
 .cover-toc{display:none}
 
-/* Contents page — proper book table-of-contents. Chapter number on the left,
-   title big, description italic, folio on the right with dot leaders between. */
-.contents-list{display:flex;flex-direction:column;gap:0;max-width:520px;margin:0 auto;
-  border-top:1px solid var(--paper-line-strong);border-bottom:1px solid var(--paper-line-strong)}
+/* Real book Table of Contents: chapter number in roman on the left, title
+   in small caps, classic dot leaders stretching to a page number on the right.
+   No box, no hover fill, no description. Generous whitespace. */
+.contents-list{display:flex;flex-direction:column;gap:0;max-width:520px;margin:0 auto}
 .contents-item{
-  display:grid;grid-template-columns:44px 1fr auto;grid-template-areas:'n t pf' 'n desc pf';
-  column-gap:16px;row-gap:2px;align-items:baseline;
-  padding:20px 4px;background:transparent;border:none;text-align:left;cursor:pointer;
-  border-bottom:1px dotted var(--paper-line-strong);
+  display:flex;align-items:baseline;gap:14px;
+  padding:18px 0;background:transparent;border:none;text-align:left;cursor:pointer;
   font-family:'EB Garamond',serif;color:var(--ink);
-  transition:background .12s, color .12s;width:100%;
+  transition:color .15s;width:100%;
 }
-.contents-item:last-child{border-bottom:none}
-.contents-item:hover{background:var(--tan-soft)}
-.contents-item:hover .t{color:var(--red)}
-.contents-item .n{grid-area:n;font-family:'EB Garamond',serif;font-style:italic;font-size:22px;color:var(--red);font-weight:500;line-height:1;font-variant-numeric:oldstyle-nums}
-.contents-item .t{grid-area:t;font-family:'EB Garamond',serif;font-weight:600;font-size:22px;color:var(--ink-bright);letter-spacing:-0.005em;transition:color .12s}
-.contents-item .desc{grid-area:desc;font-style:italic;font-size:14px;color:var(--ink-dim);line-height:1.35}
-.contents-item .pf{grid-area:pf;font-family:'Geist',sans-serif;font-size:11px;color:var(--ink-fade);letter-spacing:0.06em;align-self:center}
+.contents-item:hover .t,
+.contents-item:hover .n,
+.contents-item:hover .pf{color:var(--red)}
+.contents-item .n{
+  font-family:'EB Garamond',serif;font-style:italic;
+  font-size:16px;color:var(--ink-dim);font-weight:400;line-height:1;
+  min-width:32px;text-align:right;letter-spacing:0.02em;
+  transition:color .15s;
+}
+.contents-item .t{
+  font-family:'EB Garamond',serif;font-weight:400;
+  font-size:20px;color:var(--ink-bright);letter-spacing:0.06em;
+  font-variant:small-caps;line-height:1;
+  white-space:nowrap;transition:color .15s;
+}
+/* Dot-leaders: a stretched dotted rule between title and folio */
+.contents-item .leaders{
+  flex:1;height:0;border-bottom:1px dotted var(--ink-fade);
+  align-self:flex-end;margin-bottom:6px;
+  opacity:0.7;
+}
+.contents-item .pf{
+  font-family:'EB Garamond',serif;font-style:italic;
+  font-size:16px;color:var(--ink-dim);letter-spacing:0;
+  font-variant-numeric:oldstyle-nums;min-width:44px;text-align:right;
+  transition:color .15s;
+}
 @media(max-width:600px){
-  .contents-item{grid-template-columns:32px 1fr auto;column-gap:12px;padding:16px 4px}
-  .contents-item .t{font-size:20px}
-  .contents-item .desc{font-size:13px}
+  .contents-item{padding:16px 0;gap:10px}
+  .contents-item .t{font-size:18px;letter-spacing:0.05em}
+  .contents-item .n,.contents-item .pf{font-size:15px}
 }
 .cover-toc-item{
   display:flex;align-items:baseline;gap:14px;
@@ -740,16 +758,24 @@ header.top{display:none !important}
     <div id="tab-contents" class="tab">
       <div class="running-head"><span class="chapter">Contents</span><span class="right"><span class="folio">fol. i</span><button class="close-book" onclick="showCoverSplash()">close book</button></span></div>
 
-      <h2 style="font-family:'EB Garamond',serif;font-weight:700;font-size:44px;text-transform:uppercase;letter-spacing:0.02em;text-align:center;margin:24px 0 8px;color:var(--ink-bright)">Contents</h2>
-      <p style="text-align:center;font-family:'EB Garamond',serif;font-style:italic;color:var(--ink-dim);margin-bottom:36px;font-size:16px">Turn to any chapter.</p>
+      <div style="text-align:center;margin:56px auto 48px;max-width:520px">
+        <div style="font-family:'EB Garamond',serif;font-style:italic;color:var(--ink-fade);font-size:12px;letter-spacing:0.32em;text-transform:uppercase;margin-bottom:20px">&#10086;&nbsp;&nbsp;&#10087;&nbsp;&nbsp;&#10086;</div>
+        <h2 style="font-family:'EB Garamond',serif;font-weight:400;font-size:38px;letter-spacing:0.32em;text-align:center;margin:0;color:var(--ink-bright);font-variant:small-caps;padding-right:0">Contents</h2>
+        <div style="width:60px;height:1px;background:var(--ink);margin:22px auto 0;opacity:0.35"></div>
+      </div>
 
       <nav class="contents-list">
-        <button data-tab="home"        class="contents-item"><span class="n">I</span><span class="t">Home</span><span class="desc">your ledger — pages read this week, streak, XP, tier</span><span class="pf">fol. ii</span></button>
-        <button data-tab="books"       class="contents-item"><span class="n">II</span><span class="t">The Library</span><span class="desc">your shelf — add books, log pages, mark finished</span><span class="pf">fol. iii</span></button>
-        <button data-tab="leaderboard" class="contents-item"><span class="n">III</span><span class="t">The League</span><span class="desc">everyone ranked by season XP — friends or global</span><span class="pf">fol. iv</span></button>
-        <button data-tab="friends"     class="contents-item"><span class="n">IV</span><span class="t">Companions</span><span class="desc">add friends by handle, keep them close</span><span class="pf">fol. v</span></button>
-        <button data-tab="guilds"      class="contents-item"><span class="n">V</span><span class="t">Guilds</span><span class="desc">reading clubs with shared, live-ranked goals</span><span class="pf">fol. vi</span></button>
+        <button data-tab="home"        class="contents-item"><span class="n">I.</span><span class="t">Home</span><span class="leaders"></span><span class="pf">ii</span></button>
+        <button data-tab="books"       class="contents-item"><span class="n">II.</span><span class="t">The Library</span><span class="leaders"></span><span class="pf">iii</span></button>
+        <button data-tab="leaderboard" class="contents-item"><span class="n">III.</span><span class="t">The League</span><span class="leaders"></span><span class="pf">iv</span></button>
+        <button data-tab="friends"     class="contents-item"><span class="n">IV.</span><span class="t">Companions</span><span class="leaders"></span><span class="pf">v</span></button>
+        <button data-tab="guilds"      class="contents-item"><span class="n">V.</span><span class="t">Guilds</span><span class="leaders"></span><span class="pf">vi</span></button>
       </nav>
+
+      <div style="text-align:center;margin:48px auto 0;max-width:520px">
+        <div style="width:60px;height:1px;background:var(--ink);margin:0 auto 20px;opacity:0.35"></div>
+        <div style="font-family:'EB Garamond',serif;font-style:italic;color:var(--ink-fade);font-size:14px;line-height:1.5;max-width:340px;margin:0 auto">Swipe left to turn the page, or tap a chapter to jump to it.</div>
+      </div>
 
       <div class="page-footer"><span class="fleur"></span><span class="num">— i —</span></div>
     </div>
