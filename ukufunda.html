@@ -216,6 +216,26 @@ header.top .who button:hover{opacity:1}
 
 /* ── Misc ─────────────────────────────── */
 .empty{padding:48px 20px;text-align:center;color:var(--ink-dim);border:1px dashed var(--paper-line-strong);border-radius:var(--radius-lg);font-style:italic;font-family:'Fraunces',serif;font-size:16px}
+
+/* Empty-state "how it works" panels */
+.explainer{background:var(--paper-raise);border:1px solid var(--paper-line);border-radius:var(--radius-lg);padding:28px 24px;margin-bottom:20px}
+.explainer h4{font-family:'Fraunces',serif;font-variation-settings:"opsz" 144;font-weight:400;font-size:22px;color:var(--ink-bright);margin-bottom:6px;letter-spacing:-0.02em}
+.explainer .lead{color:var(--ink-dim);font-size:14px;margin-bottom:20px;font-style:italic;font-family:'Fraunces',serif}
+.explainer .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px}
+@media(max-width:640px){.explainer .steps{grid-template-columns:1fr}}
+.explainer .step{padding:14px;background:var(--paper-deep);border:1px solid var(--paper-line);border-radius:var(--radius)}
+.explainer .step .n{font-family:'Fraunces',serif;font-variation-settings:"opsz" 144;font-size:28px;color:var(--accent);line-height:1;margin-bottom:6px;font-weight:300}
+.explainer .step h5{font-size:13px;color:var(--ink-bright);font-weight:600;margin-bottom:4px}
+.explainer .step p{font-size:12px;color:var(--ink-dim);line-height:1.5}
+.explainer .cta{display:flex;gap:10px;flex-wrap:wrap}
+
+/* Tier ladder */
+.ladder{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+@media(max-width:640px){.ladder{grid-template-columns:repeat(2,1fr)}}
+.rung{padding:12px;background:var(--paper-deep);border:1px solid var(--paper-line);border-radius:var(--radius);display:flex;align-items:center;gap:10px}
+.rung .swatch{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.rung .rname{font-size:13px;color:var(--ink);font-weight:500}
+.rung .rxp{font-size:11px;color:var(--ink-fade);font-variant-numeric:tabular-nums;margin-left:auto}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--paper-raise);border:1px solid var(--accent);border-radius:999px;padding:12px 22px;color:var(--ink-bright);font-weight:500;font-size:14px;z-index:100;display:none;box-shadow:0 10px 30px -5px rgba(0,0,0,0.5)}
 .toast.show{display:block;animation:toastIn .2s ease}
 @keyframes toastIn{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}
@@ -499,7 +519,33 @@ function renderHome(){
   const active = state.books.filter(b => b.status === 'active');
   const el = document.getElementById('home-books');
   if (active.length === 0) {
-    el.innerHTML = '<div class="empty">No active books yet. Add one to get started.</div>';
+    // First-run explainer instead of a dead "no books" box
+    el.innerHTML = `
+      <div class="explainer">
+        <h4>Welcome, ${escHtml(state.me.name)}.</h4>
+        <div class="lead">Here's how Ukufunda works.</div>
+        <div class="steps">
+          <div class="step">
+            <div class="n">1</div>
+            <h5>Add a book</h5>
+            <p>Search any title in the Library tab. Covers and page counts come from OpenLibrary.</p>
+          </div>
+          <div class="step">
+            <div class="n">2</div>
+            <h5>Log pages</h5>
+            <p>Every page you read is 1 XP. Log honestly — this is the honour system.</p>
+          </div>
+          <div class="step">
+            <div class="n">3</div>
+            <h5>Climb the ladder</h5>
+            <p>Bronze → Silver → Gold → Platinum → Diamond → Master. Beat your friends.</p>
+          </div>
+        </div>
+        <div class="cta">
+          <button class="btn" style="width:auto" onclick="switchTab('books')">Add your first book</button>
+          <button class="btn ghost" onclick="switchTab('friends')">Add friends</button>
+        </div>
+      </div>`;
   } else {
     el.innerHTML = active.map(bookCard).join('');
   }
@@ -673,7 +719,29 @@ async function loadLeaderboard(){
 function renderLeaderboard(){
   const el = document.getElementById('lb-body');
   if (state.leaderboard.length === 0) {
-    el.innerHTML = '<div style="padding:32px;text-align:center;color:var(--ink-dim);font-style:italic;font-family:\'Fraunces\',serif">' + (state.lbMode === 'friends' ? 'Add friends to see a leaderboard.' : 'No one on the board yet.') + '</div>';
+    if (state.lbMode === 'friends') {
+      el.innerHTML = `
+        <div style="padding:36px 24px;text-align:center">
+          <div style="font-family:'Fraunces',serif;font-style:italic;color:var(--ink);font-size:18px;margin-bottom:10px">Solo for now.</div>
+          <div style="color:var(--ink-dim);font-size:13px;margin-bottom:16px">Add friends by their handle and their reading will show up here — ranked by XP.</div>
+          <button class="btn subtle" onclick="switchTab('friends')">Add a friend</button>
+        </div>`;
+    } else {
+      // Show the tier ladder instead so the page has meaning even when empty
+      el.innerHTML = `
+        <div style="padding:28px 24px">
+          <div style="font-family:'Fraunces',serif;font-style:italic;color:var(--ink);font-size:18px;margin-bottom:6px;text-align:center">You're the first one here.</div>
+          <div style="color:var(--ink-dim);font-size:13px;text-align:center;margin-bottom:20px">Global leaderboard fills in as people join. Meanwhile — the ladder:</div>
+          <div class="ladder">
+            <div class="rung"><span class="swatch" style="background:var(--t-bronze)"></span><span class="rname">Bronze</span><span class="rxp">0 XP</span></div>
+            <div class="rung"><span class="swatch" style="background:var(--t-silver)"></span><span class="rname">Silver</span><span class="rxp">250</span></div>
+            <div class="rung"><span class="swatch" style="background:var(--t-gold)"></span><span class="rname">Gold</span><span class="rxp">700</span></div>
+            <div class="rung"><span class="swatch" style="background:var(--t-platinum)"></span><span class="rname">Platinum</span><span class="rxp">1,500</span></div>
+            <div class="rung"><span class="swatch" style="background:var(--t-diamond)"></span><span class="rname">Diamond</span><span class="rxp">3,000</span></div>
+            <div class="rung"><span class="swatch" style="background:var(--t-master);box-shadow:0 0 8px var(--t-master)"></span><span class="rname">Master</span><span class="rxp">5,000</span></div>
+          </div>
+        </div>`;
+    }
     return;
   }
   el.innerHTML = state.leaderboard.map((row, i) => {
@@ -703,7 +771,11 @@ async function loadFriends(){
 function renderFriends(){
   const el = document.getElementById('friends-list');
   if (state.friends.length === 0) {
-    el.innerHTML = '<div class="empty">No friends yet. Add someone by their handle.</div>';
+    el.innerHTML = `
+      <div class="empty">
+        No friends yet.<br>
+        <span style="font-size:13px;font-style:normal;color:var(--ink-fade);font-family:'Inter',sans-serif;display:block;margin-top:8px">Share your handle — <b style="color:var(--accent);font-weight:600">@${escHtml(state.me.handle)}</b> — so people can add you.</span>
+      </div>`;
     return;
   }
   el.innerHTML = state.friends.map(f => {
