@@ -242,6 +242,46 @@ header.top .who button:hover{opacity:1}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--paper-raise);border:1px solid var(--accent);border-radius:999px;padding:12px 22px;color:var(--ink-bright);font-weight:500;font-size:14px;z-index:100;display:none;box-shadow:0 10px 30px -5px rgba(0,0,0,0.5)}
 .toast.show{display:block;animation:toastIn .2s ease}
 @keyframes toastIn{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}
+/* ── Guilds ────────────────────────────── */
+.guild-card{display:block;padding:18px;background:var(--paper-raise);border:1px solid var(--paper-line);border-radius:var(--radius-lg);margin-bottom:10px;cursor:pointer;transition:border-color .15s, transform .05s;text-decoration:none;color:inherit;font-family:inherit}
+.guild-card:hover{border-color:var(--paper-line-strong)}
+.guild-card .g-name{font-family:'Cormorant Garamond','EB Garamond',serif;font-weight:500;color:var(--ink-bright);font-size:22px;line-height:1.15;margin-bottom:2px}
+.guild-card .g-motto{color:var(--ink-dim);font-style:italic;font-family:'EB Garamond',serif;font-size:15px;margin-bottom:8px}
+.guild-card .g-meta{font-family:'Geist',sans-serif;font-size:12px;color:var(--ink-fade);display:flex;gap:16px;flex-wrap:wrap}
+.guild-card .g-meta .h{color:var(--accent);font-weight:500}
+
+.goal{padding:18px;background:var(--paper-raise);border:1px solid var(--paper-line);border-radius:var(--radius-lg);margin-bottom:12px}
+.goal.completed{border-color:var(--good)}
+.goal.failed{opacity:0.7}
+.goal .g-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:10px}
+.goal .g-title{font-family:'Cormorant Garamond','EB Garamond',serif;font-weight:500;color:var(--ink-bright);font-size:22px;line-height:1.2;letter-spacing:-0.005em}
+.goal .g-status{font-family:'Geist',sans-serif;font-size:11px;letter-spacing:0.04em;color:var(--ink-fade);text-transform:uppercase;flex-shrink:0}
+.goal .g-status.active{color:var(--accent)}
+.goal .g-status.completed{color:var(--good)}
+.goal .g-status.failed{color:var(--marker)}
+.goal .g-progress{display:flex;justify-content:space-between;align-items:baseline;margin:4px 0 6px;font-family:'Geist',sans-serif;font-size:13px;color:var(--ink-dim)}
+.goal .g-progress .n{font-family:'Cormorant Garamond','EB Garamond',serif;font-size:24px;color:var(--ink-bright);font-weight:500}
+.goal .g-progress .n .of{color:var(--ink-fade);font-size:16px}
+.goal .g-bar{height:6px;background:var(--paper-deep);border-radius:3px;overflow:hidden;margin-bottom:10px}
+.goal .g-bar .fill{height:100%;background:linear-gradient(90deg,var(--accent-deep),var(--accent));transition:width .4s ease}
+.goal.completed .g-bar .fill{background:linear-gradient(90deg,var(--good),#a3c199)}
+.goal .g-when{font-family:'Geist',sans-serif;font-size:12px;color:var(--ink-fade);margin-bottom:10px}
+.goal .g-ranking{border-top:1px solid var(--paper-line);padding-top:10px;margin-top:10px}
+.goal .g-ranking .rk{display:flex;align-items:center;gap:10px;padding:6px 0;font-family:'Geist',sans-serif;font-size:13px}
+.goal .g-ranking .rk .n{color:var(--ink-fade);width:20px;text-align:center;font-variant-numeric:tabular-nums}
+.goal .g-ranking .rk .n.gold{color:var(--t-gold)}
+.goal .g-ranking .rk .n.silver{color:var(--t-silver)}
+.goal .g-ranking .rk .n.bronze{color:var(--t-bronze)}
+.goal .g-ranking .rk .name{flex:1;color:var(--ink)}
+.goal .g-ranking .rk .me{color:var(--accent)}
+.goal .g-ranking .rk .val{font-variant-numeric:tabular-nums;color:var(--ink-bright);font-weight:500}
+
+.guild-detail-head{margin-bottom:20px}
+.guild-detail-head h2{font-family:'Cormorant Garamond','EB Garamond',serif;font-weight:500;font-size:36px;line-height:1;color:var(--ink-bright);letter-spacing:-0.01em;margin-bottom:4px}
+.guild-detail-head .h{font-family:'Geist',sans-serif;color:var(--accent);font-size:13px}
+.guild-detail-head .motto{font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--ink-dim);font-size:18px;margin-top:8px}
+.guild-detail-head .desc{color:var(--ink-dim);font-size:15px;margin-top:6px;line-height:1.5}
+
 .hidden{display:none !important}
 </style>
 </head>
@@ -283,6 +323,7 @@ header.top .who button:hover{opacity:1}
       <button data-tab="books">Library</button>
       <button data-tab="leaderboard">Leaderboard</button>
       <button data-tab="friends">Friends</button>
+      <button data-tab="guilds">Guilds</button>
     </div>
 
     <!-- HOME TAB -->
@@ -360,6 +401,94 @@ header.top .who button:hover{opacity:1}
         <button class="btn ghost" onclick="addFriend()">Add</button>
       </div>
       <div id="friends-list"></div>
+    </div>
+
+    <!-- GUILDS TAB -->
+    <div id="tab-guilds" class="tab hidden">
+      <!-- View: guild list (my guilds + directory + create form) -->
+      <div id="guilds-list-view">
+        <div class="section-head">
+          <h2>Your guilds</h2>
+          <button class="btn subtle" onclick="toggleGuildCreate()">+ new guild</button>
+        </div>
+
+        <div id="guild-create-form" class="card" style="margin-bottom:20px;display:none">
+          <h3 style="margin-bottom:14px">Start a guild</h3>
+          <div class="field" style="margin-bottom:12px">
+            <label style="display:block;font-size:12px;color:var(--ink-dim);margin-bottom:6px">Name</label>
+            <input id="guild-new-name" type="text" maxlength="40" placeholder="e.g. The Reading Circle">
+          </div>
+          <div class="field" style="margin-bottom:12px">
+            <label style="display:block;font-size:12px;color:var(--ink-dim);margin-bottom:6px">Handle (people join by this)</label>
+            <input id="guild-new-handle" type="text" maxlength="24" placeholder="e.g. reading_circle">
+          </div>
+          <div class="field" style="margin-bottom:12px">
+            <label style="display:block;font-size:12px;color:var(--ink-dim);margin-bottom:6px">Motto (optional, one line)</label>
+            <input id="guild-new-motto" type="text" maxlength="80" placeholder="e.g. Read hard books, together.">
+          </div>
+          <div class="field" style="margin-bottom:14px">
+            <label style="display:block;font-size:12px;color:var(--ink-dim);margin-bottom:6px">Description (optional)</label>
+            <input id="guild-new-desc" type="text" maxlength="240" placeholder="What is this guild for?">
+          </div>
+          <div style="display:flex;gap:10px">
+            <button class="btn ghost" onclick="toggleGuildCreate()">Cancel</button>
+            <button class="btn" style="width:auto" onclick="createGuild()">Create</button>
+          </div>
+        </div>
+
+        <div id="my-guilds"></div>
+
+        <div class="section-head" style="margin-top:32px">
+          <h2>Join a guild</h2>
+        </div>
+        <div class="friends-add" style="margin-bottom:20px">
+          <input id="guild-join-handle" type="text" placeholder="guild handle" autocomplete="off">
+          <button class="btn ghost" onclick="joinGuild()">Join</button>
+        </div>
+
+        <div class="section-head">
+          <h2>Directory</h2>
+          <span class="hint">recently created</span>
+        </div>
+        <div id="guild-directory"></div>
+      </div>
+
+      <!-- View: single guild (leaderboard + goals) -->
+      <div id="guild-detail-view" style="display:none">
+        <button class="btn subtle" onclick="backToGuildList()" style="margin-bottom:16px">← back to guilds</button>
+        <div id="guild-detail-body"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- GUILD GOAL MODAL -->
+<div id="goal-modal" class="modal-bg">
+  <div class="modal">
+    <h3>New goal</h3>
+    <div style="margin-bottom:16px;color:var(--ink-dim);font-size:13px;font-style:italic">Rolling goal for the whole guild. Everyone contributes, live ranking.</div>
+    <div class="field">
+      <label>Title</label>
+      <input id="goal-title" type="text" maxlength="120" placeholder="e.g. Read 10,000 pages this month">
+    </div>
+    <div class="field">
+      <label>Metric</label>
+      <select id="goal-metric">
+        <option value="pages">Pages read</option>
+        <option value="books">Books finished</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Target (number)</label>
+      <input id="goal-target" type="number" min="1" placeholder="e.g. 10000">
+    </div>
+    <div class="field">
+      <label>Deadline</label>
+      <input id="goal-deadline" type="date">
+    </div>
+    <div class="actions">
+      <button class="btn ghost" onclick="closeGoalModal()" style="flex:0 0 auto">Cancel</button>
+      <button class="btn" onclick="submitGoal()">Create goal</button>
     </div>
   </div>
 </div>
@@ -484,6 +613,7 @@ function switchTab(name){
   document.getElementById('tab-' + name).classList.remove('hidden');
   if (name === 'leaderboard') loadLeaderboard();
   if (name === 'friends') loadFriends();
+  if (name === 'guilds') loadGuilds();
 }
 
 // ============ STATS ============
@@ -833,6 +963,274 @@ function debounce(fn, ms){
 function escHtml(s){
   return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
+
+// ============ GUILDS ============
+let currentGuildId = null;
+let goalGuildId    = null;
+
+async function loadGuilds(){
+  try {
+    const r = await fetch(`${API}/guilds?id=${state.me.id}`);
+    const d = await r.json();
+    renderGuildList(d.mine || [], d.directory || []);
+  } catch(e){ /* silent */ }
+}
+
+function renderGuildList(mine, directory){
+  const myEl = document.getElementById('my-guilds');
+  if (!mine.length) {
+    myEl.innerHTML = `<div class="empty">You aren't in any guilds yet.<br><span style="font-size:13px;font-style:normal;color:var(--ink-fade);font-family:'Geist',sans-serif;display:block;margin-top:8px">Create one, or join by handle.</span></div>`;
+  } else {
+    myEl.innerHTML = mine.map(guildCardHtml).join('');
+    myEl.querySelectorAll('.guild-card').forEach(el => {
+      el.addEventListener('click', () => openGuild(el.dataset.gid));
+    });
+  }
+  const dirEl = document.getElementById('guild-directory');
+  if (!directory.length) {
+    dirEl.innerHTML = `<div class="empty" style="padding:24px">No other public guilds yet.</div>`;
+  } else {
+    dirEl.innerHTML = directory.map(guildCardHtml).join('');
+    dirEl.querySelectorAll('.guild-card').forEach(el => {
+      el.addEventListener('click', () => openGuild(el.dataset.gid));
+    });
+  }
+}
+
+function guildCardHtml(g){
+  return `<div class="guild-card" data-gid="${escHtml(g.id)}">
+    <div class="g-name">${escHtml(g.name)}</div>
+    ${g.motto ? `<div class="g-motto">${escHtml(g.motto)}</div>` : ''}
+    <div class="g-meta">
+      <span class="h">@${escHtml(g.handle)}</span>
+      <span>${g.memberCount} member${g.memberCount === 1 ? '' : 's'}</span>
+      <span>${g.activeGoals} active goal${g.activeGoals === 1 ? '' : 's'}</span>
+    </div>
+  </div>`;
+}
+
+function toggleGuildCreate(){
+  const f = document.getElementById('guild-create-form');
+  f.style.display = f.style.display === 'none' ? '' : 'none';
+}
+
+async function createGuild(){
+  const name = document.getElementById('guild-new-name').value.trim();
+  const handle = document.getElementById('guild-new-handle').value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+  const motto = document.getElementById('guild-new-motto').value.trim();
+  const description = document.getElementById('guild-new-desc').value.trim();
+  if (!name || handle.length < 3) return toast('Name + handle (min 3) required');
+  try {
+    const r = await fetch(`${API}/guilds`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ userId: state.me.id, name, handle, motto, description })
+    });
+    const d = await r.json();
+    if (!r.ok) return toast(d.error || 'Failed');
+    toast('Guild created');
+    document.getElementById('guild-new-name').value = '';
+    document.getElementById('guild-new-handle').value = '';
+    document.getElementById('guild-new-motto').value = '';
+    document.getElementById('guild-new-desc').value = '';
+    toggleGuildCreate();
+    await loadGuilds();
+    openGuild(d.guild.id);
+  } catch(e){ toast('Network error'); }
+}
+
+async function joinGuild(){
+  const handle = document.getElementById('guild-join-handle').value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+  if (!handle) return toast('Enter a guild handle');
+  try {
+    const r = await fetch(`${API}/guilds/join`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ userId: state.me.id, handle })
+    });
+    const d = await r.json();
+    if (!r.ok) return toast(d.error || 'Not found');
+    toast(d.alreadyMember ? 'Already a member' : 'Joined');
+    document.getElementById('guild-join-handle').value = '';
+    await loadGuilds();
+    openGuild(d.guild.id);
+  } catch(e){ toast('Network error'); }
+}
+
+async function openGuild(gid){
+  currentGuildId = gid;
+  document.getElementById('guilds-list-view').style.display = 'none';
+  document.getElementById('guild-detail-view').style.display = '';
+  const body = document.getElementById('guild-detail-body');
+  body.innerHTML = `<div class="empty" style="padding:24px">Loading…</div>`;
+  try {
+    const [guildRes, goalsRes] = await Promise.all([
+      fetch(`${API}/guild?gid=${encodeURIComponent(gid)}&uid=${encodeURIComponent(state.me.id)}`).then(r => r.json()),
+      fetch(`${API}/guild/goals?gid=${encodeURIComponent(gid)}`).then(r => r.json())
+    ]);
+    renderGuildDetail(guildRes, goalsRes.goals || []);
+  } catch(e){
+    body.innerHTML = `<div class="empty">Failed to load guild.</div>`;
+  }
+}
+
+function backToGuildList(){
+  currentGuildId = null;
+  document.getElementById('guild-detail-view').style.display = 'none';
+  document.getElementById('guilds-list-view').style.display = '';
+}
+
+function renderGuildDetail(g, goals){
+  const guild = g.guild;
+  const isMember = g.isMember, isOwner = g.isOwner;
+  const lb = g.leaderboard || [];
+  const body = document.getElementById('guild-detail-body');
+
+  const active = goals.filter(x => x.status === 'active');
+  const past   = goals.filter(x => x.status !== 'active');
+
+  const lbHtml = lb.length ? `<div class="lb">
+    <div class="lb-row header">
+      <div class="rank">#</div>
+      <div class="name">Member</div>
+      <div class="xp">XP</div>
+      <div class="streak">Streak</div>
+      <div class="streak">Tier</div>
+    </div>
+    ${lb.map((row, i) => {
+      const rank = i + 1;
+      const rankCls = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : '';
+      const t = tierFromXp(row.totalXp || 0);
+      const meCls = row.id === state.me.id ? 'me' : '';
+      return `<div class="lb-row">
+        <div class="rank ${rankCls}">${rank}</div>
+        <div class="name ${meCls}">${escHtml(row.name)} <span class="h">@${escHtml(row.handle)}</span></div>
+        <div class="xp">${(row.totalXp||0).toLocaleString()}</div>
+        <div class="streak">${row.streak||0}d</div>
+        <div class="streak"><span class="tier-badge ${t.cls}" style="padding:2px 8px;font-size:10px"><span class="dot"></span>${t.name.slice(0,3)}</span></div>
+      </div>`;
+    }).join('')}
+  </div>` : `<div class="empty" style="padding:24px">No members yet.</div>`;
+
+  body.innerHTML = `
+    <div class="guild-detail-head">
+      <h2>${escHtml(guild.name)}</h2>
+      <div class="h">@${escHtml(guild.handle)} · ${guild.memberIds.length} member${guild.memberIds.length===1?'':'s'}</div>
+      ${guild.motto ? `<div class="motto">“${escHtml(guild.motto)}”</div>` : ''}
+      ${guild.description ? `<div class="desc">${escHtml(guild.description)}</div>` : ''}
+      <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+        ${isMember ? `<button class="btn subtle" onclick="leaveGuild('${guild.id}')">Leave guild</button>` : `<button class="btn ghost" onclick="joinGuildById('${escHtml(guild.handle)}')">Join</button>`}
+      </div>
+    </div>
+
+    <div class="section-head"><h2>Active goals</h2>${isMember ? `<button class="btn subtle" onclick="openGoalModal('${guild.id}')">+ new goal</button>` : ''}</div>
+    <div>${active.length ? active.map(goalCard).join('') : `<div class="empty" style="padding:24px">No active goals. ${isMember ? 'Start one — pages read, books finished, anything.' : ''}</div>`}</div>
+
+    ${past.length ? `<div class="section-head" style="margin-top:32px"><h2>Past goals</h2></div><div>${past.map(goalCard).join('')}</div>` : ''}
+
+    <div class="section-head" style="margin-top:32px"><h2>Guild leaderboard</h2></div>
+    ${lbHtml}
+  `;
+}
+
+function goalCard(goal){
+  const cls = goal.status === 'completed' ? 'completed' : goal.status === 'failed' ? 'failed' : 'active';
+  const unit = goal.metric === 'books' ? 'books' : 'pages';
+  const when = goal.deadline ? fmtDeadline(goal.deadline, goal.timeLeftMs, goal.status) : 'No deadline';
+  const top3 = (goal.ranking || []).slice(0, 5);
+  const rankingHtml = top3.length ? `<div class="g-ranking">${top3.map((r, i) => {
+    const rankCls = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+    const meCls = r.uid === state.me.id ? 'me' : '';
+    return `<div class="rk">
+      <span class="n ${rankCls}">${i+1}</span>
+      <span class="name ${meCls}">${escHtml(r.name)}</span>
+      <span class="val">${r.value.toLocaleString()} ${unit}</span>
+    </div>`;
+  }).join('')}</div>` : '';
+  return `<div class="goal ${cls}">
+    <div class="g-head">
+      <div class="g-title">${escHtml(goal.title)}</div>
+      <div class="g-status ${cls}">${cls}</div>
+    </div>
+    <div class="g-progress">
+      <div class="n">${goal.total.toLocaleString()} <span class="of">/ ${goal.target.toLocaleString()} ${unit}</span></div>
+      <div>${goal.percent}%</div>
+    </div>
+    <div class="g-bar"><div class="fill" style="width:${goal.percent}%"></div></div>
+    <div class="g-when">${when}</div>
+    ${rankingHtml}
+  </div>`;
+}
+
+function fmtDeadline(deadlineMs, timeLeftMs, status){
+  if (status !== 'active') {
+    return 'Ended ' + new Date(deadlineMs).toLocaleDateString(undefined, { day:'numeric', month:'short', year:'numeric' });
+  }
+  if (timeLeftMs == null) return 'No deadline';
+  const days = Math.floor(timeLeftMs / 86400000);
+  const hours = Math.floor((timeLeftMs % 86400000) / 3600000);
+  const on = new Date(deadlineMs).toLocaleDateString(undefined, { day:'numeric', month:'short' });
+  if (days > 0) return `${days} day${days===1?'':'s'} left — ends ${on}`;
+  if (hours > 0) return `${hours} hour${hours===1?'':'s'} left`;
+  return 'Ends soon';
+}
+
+function openGoalModal(gid){
+  goalGuildId = gid;
+  document.getElementById('goal-title').value = '';
+  document.getElementById('goal-target').value = '';
+  const dl = new Date(); dl.setDate(dl.getDate() + 30);
+  document.getElementById('goal-deadline').value = dl.toISOString().slice(0,10);
+  document.getElementById('goal-modal').classList.add('open');
+}
+function closeGoalModal(){
+  document.getElementById('goal-modal').classList.remove('open');
+}
+async function submitGoal(){
+  const title = document.getElementById('goal-title').value.trim();
+  const metric = document.getElementById('goal-metric').value;
+  const target = parseInt(document.getElementById('goal-target').value, 10);
+  const dl = document.getElementById('goal-deadline').value;
+  if (!title) return toast('Give the goal a title');
+  if (!target || target < 1) return toast('Enter a target > 0');
+  if (!dl) return toast('Pick a deadline');
+  const deadline = new Date(dl + 'T23:59:59').getTime();
+  try {
+    const r = await fetch(`${API}/guild/goals`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ userId: state.me.id, gid: goalGuildId, title, metric, target, deadline })
+    });
+    const d = await r.json();
+    if (!r.ok) return toast(d.error || 'Failed');
+    toast('Goal created');
+    closeGoalModal();
+    if (currentGuildId === goalGuildId) openGuild(currentGuildId);
+  } catch(e){ toast('Network error'); }
+}
+
+async function leaveGuild(gid){
+  if (!confirm('Leave this guild?')) return;
+  try {
+    const r = await fetch(`${API}/guilds/leave`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ userId: state.me.id, gid })
+    });
+    const d = await r.json();
+    if (!r.ok) return toast(d.error || 'Failed');
+    toast('Left guild');
+    backToGuildList();
+    await loadGuilds();
+  } catch(e){ toast('Network error'); }
+}
+
+async function joinGuildById(handle){
+  document.getElementById('guild-join-handle').value = handle;
+  await joinGuild();
+}
+
+// Modal outside-click to close
+document.addEventListener('DOMContentLoaded', () => {
+  const gm = document.getElementById('goal-modal');
+  if (gm) gm.addEventListener('click', (e) => { if (e.target.id === 'goal-modal') closeGoalModal(); });
+});
 
 boot();
 </script>

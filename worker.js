@@ -186,6 +186,15 @@ export default {
       if (p === '/api/uf/friends' && request.method === 'POST')       return ufFriendsAdd(request, env);
       if (p === '/api/uf/friends' && request.method === 'DELETE')     return ufFriendsDelete(url, env);
 
+      // ── Guilds (rolling goals, fantasy-football style) ─────────────
+      if (p === '/api/uf/guilds' && request.method === 'GET')         return ufGuildsList(url, env);
+      if (p === '/api/uf/guilds' && request.method === 'POST')        return ufGuildCreate(request, env);
+      if (p === '/api/uf/guilds/join' && request.method === 'POST')   return ufGuildJoin(request, env);
+      if (p === '/api/uf/guilds/leave' && request.method === 'POST')  return ufGuildLeave(request, env);
+      if (p === '/api/uf/guild' && request.method === 'GET')          return ufGuildGet(url, env);
+      if (p === '/api/uf/guild/goals' && request.method === 'GET')    return ufGuildGoalsGet(url, env);
+      if (p === '/api/uf/guild/goals' && request.method === 'POST')   return ufGuildGoalCreate(request, env);
+
     } catch (e) {
       return jsonResponse({ error: e.message }, 500);
     }
@@ -7392,6 +7401,335 @@ async function ufFriendsDelete(url, env) {
     const other = (await kvGet(env, `uf:friends:${fid}`)) || [];
     await kvPut(env, `uf:friends:${fid}`, other.filter(x => x !== id));
     return jsonResponse({ ok: true });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// UKUFUNDA ─ GUILDS + ROLLING GOALS
+// ══════════════════════════════════════════════════════════
+// KV keys:
+//   uf:guild:${gid}         → { id, name, handle, description, motto, ownerId, memberIds[], createdAt }
+//   uf:ghandle:${handle}    → gid   (lowercase guild handle → gid lookup)
+//   uf:guilds               → [gid, ...]  (all guilds, capped ~200)
+//   uf:goals:${gid}         → [goal]      (active + closed, most-recent first, cap 30)
+//   uf:membergoals:${uid}   → [gid, ...]  (guilds I belong to)
+//
+// Goal shape:
+//   { id, gid, title, metric ('pages'|'books'), target, deadline (ms),
+//     createdAt, createdBy (uid), status ('active'|'completed'|'failed'),
+//     baselines: { uid: {pages, books} },  // snapshot when goal created
+//     resolvedAt }
+// Rolling model: any member can create a goal. Multiple concurrent goals
+// are allowed. Progress is computed live from user logs & books, so no
+// mid-goal writes are needed except close-out.
+
+function _ufGuildId()  { return 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+function _ufGoalId()   { return 'gl' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+async function _ufGetGuild(env, gid) {
+  return await kvGet(env, `uf:guild:${gid}`);
+}
+async function _ufPutGuild(env, guild) {
+  await kvPut(env, `uf:guild:${guild.id}`, guild);
+}
+async function _ufAddToGuildIndex(env, gid) {
+  const list = (await kvGet(env, 'uf:guilds')) || [];
+  if (!list.includes(gid)) {
+    list.push(gid);
+    if (list.length > 200) list.shift();
+    await kvPut(env, 'uf:guilds', list);
+  }
+}
+async function _ufGetGoals(env, gid) {
+  return (await kvGet(env, `uf:goals:${gid}`)) || [];
+}
+async function _ufPutGoals(env, gid, goals) {
+  await kvPut(env, `uf:goals:${gid}`, goals.slice(0, 30));
+}
+async function _ufGetMemberGuilds(env, uid) {
+  return (await kvGet(env, `uf:membergoals:${uid}`)) || [];
+}
+async function _ufPutMemberGuilds(env, uid, list) {
+  await kvPut(env, `uf:membergoals:${uid}`, list);
+}
+
+// Snapshot a member's totals at the moment a goal starts so goal-progress
+// counts only what happens after that.
+async function _ufBaselineFor(env, uid) {
+  const u = await _ufGetUser(env, uid);
+  const logs = await _ufGetLogs(env, uid);
+  const totalPages = Object.values(logs).reduce((s, n) => s + (n || 0), 0);
+  return { pages: totalPages, books: (u?.booksFinished || 0) };
+}
+
+// Live progress: how many pages/books this user has added since goal start.
+async function _ufProgressSince(env, uid, baseline) {
+  const u = await _ufGetUser(env, uid);
+  const logs = await _ufGetLogs(env, uid);
+  const totalPages = Object.values(logs).reduce((s, n) => s + (n || 0), 0);
+  return {
+    pages: Math.max(0, totalPages - (baseline?.pages || 0)),
+    books: Math.max(0, (u?.booksFinished || 0) - (baseline?.books || 0))
+  };
+}
+
+// GET /api/uf/guilds?id=<uid>   → guilds I'm in + a small directory of others to join
+async function ufGuildsList(url, env) {
+  try {
+    const uid = url.searchParams.get('id');
+    const mine = uid ? await _ufGetMemberGuilds(env, uid) : [];
+    const all  = (await kvGet(env, 'uf:guilds')) || [];
+    const summarise = async (gid) => {
+      const g = await _ufGetGuild(env, gid);
+      if (!g) return null;
+      return {
+        id: g.id, name: g.name, handle: g.handle,
+        motto: g.motto || '', description: g.description || '',
+        memberCount: (g.memberIds || []).length,
+        activeGoals: ((await _ufGetGoals(env, gid)) || []).filter(x => x.status === 'active').length
+      };
+    };
+    const mineSummaries = (await Promise.all(mine.map(summarise))).filter(Boolean);
+    // "Directory" = up to 20 guilds you aren't in, newest first
+    const others = all.filter(gid => !mine.includes(gid)).slice(-20).reverse();
+    const otherSummaries = (await Promise.all(others.map(summarise))).filter(Boolean);
+    return jsonResponse({ mine: mineSummaries, directory: otherSummaries });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
+  }
+}
+
+// POST /api/uf/guilds  { userId, name, handle, description?, motto? }
+async function ufGuildCreate(request, env) {
+  try {
+    const { userId, name, handle, description, motto } = await request.json();
+    if (!userId) return jsonResponse({ error: 'userId required' }, 400);
+    const u = await _ufGetUser(env, userId);
+    if (!u) return jsonResponse({ error: 'user not found' }, 404);
+    const cleanName   = String(name || '').trim().slice(0, 40);
+    const cleanHandle = String(handle || '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 24);
+    if (!cleanName || cleanHandle.length < 3) {
+      return jsonResponse({ error: 'Guild name and handle (min 3 chars) required.' }, 400);
+    }
+    if (await kvGet(env, `uf:ghandle:${cleanHandle}`)) {
+      return jsonResponse({ error: 'Guild handle taken.' }, 409);
+    }
+    // Cap guilds per user so nobody creates 50
+    const mine = await _ufGetMemberGuilds(env, userId);
+    if (mine.length >= 8) return jsonResponse({ error: 'You are already in 8 guilds (max).' }, 400);
+
+    const gid = _ufGuildId();
+    const guild = {
+      id: gid,
+      name: cleanName,
+      handle: cleanHandle,
+      description: String(description || '').slice(0, 240),
+      motto: String(motto || '').slice(0, 80),
+      ownerId: userId,
+      memberIds: [userId],
+      createdAt: Date.now()
+    };
+    await _ufPutGuild(env, guild);
+    await kvPut(env, `uf:ghandle:${cleanHandle}`, gid);
+    await _ufAddToGuildIndex(env, gid);
+    mine.push(gid);
+    await _ufPutMemberGuilds(env, userId, mine);
+    return jsonResponse({ ok: true, guild });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
+  }
+}
+
+// POST /api/uf/guilds/join  { userId, handle }
+async function ufGuildJoin(request, env) {
+  try {
+    const { userId, handle } = await request.json();
+    if (!userId || !handle) return jsonResponse({ error: 'userId + handle required' }, 400);
+    const cleanHandle = String(handle).toLowerCase().replace(/[^a-z0-9_]/g, '');
+    const gid = await kvGet(env, `uf:ghandle:${cleanHandle}`);
+    if (!gid) return jsonResponse({ error: 'No guild with that handle.' }, 404);
+    const guild = await _ufGetGuild(env, gid);
+    if (!guild) return jsonResponse({ error: 'Guild missing.' }, 404);
+    if (guild.memberIds.includes(userId)) return jsonResponse({ ok: true, guild, alreadyMember: true });
+    if (guild.memberIds.length >= 20) return jsonResponse({ error: 'Guild full (20 members).' }, 400);
+    guild.memberIds.push(userId);
+    await _ufPutGuild(env, guild);
+
+    const mine = await _ufGetMemberGuilds(env, userId);
+    if (!mine.includes(gid)) { mine.push(gid); await _ufPutMemberGuilds(env, userId, mine); }
+
+    // New members join active goals at the current baseline (fair — they only
+    // count what they contribute from now)
+    const goals = await _ufGetGoals(env, gid);
+    let changed = false;
+    for (const goal of goals) {
+      if (goal.status !== 'active') continue;
+      if (!goal.baselines[userId]) {
+        goal.baselines[userId] = await _ufBaselineFor(env, userId);
+        changed = true;
+      }
+    }
+    if (changed) await _ufPutGoals(env, gid, goals);
+
+    return jsonResponse({ ok: true, guild });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
+  }
+}
+
+// POST /api/uf/guilds/leave  { userId, gid }
+async function ufGuildLeave(request, env) {
+  try {
+    const { userId, gid } = await request.json();
+    if (!userId || !gid) return jsonResponse({ error: 'userId + gid required' }, 400);
+    const guild = await _ufGetGuild(env, gid);
+    if (!guild) return jsonResponse({ ok: true });
+    if (guild.ownerId === userId && guild.memberIds.length > 1) {
+      return jsonResponse({ error: 'Owner can\'t leave a guild with other members. Transfer or disband later.' }, 400);
+    }
+    guild.memberIds = guild.memberIds.filter(x => x !== userId);
+    if (guild.memberIds.length === 0) {
+      // Disband. Remove index entries; keep the guild doc as tombstone-lite.
+      guild.disbandedAt = Date.now();
+      await _ufPutGuild(env, guild);
+      await kvPut(env, `uf:ghandle:${guild.handle}`, null); // free the handle
+    } else {
+      await _ufPutGuild(env, guild);
+    }
+    const mine = await _ufGetMemberGuilds(env, userId);
+    await _ufPutMemberGuilds(env, userId, mine.filter(x => x !== gid));
+    return jsonResponse({ ok: true });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
+  }
+}
+
+// GET /api/uf/guild?gid=<gid>&uid=<uid>
+async function ufGuildGet(url, env) {
+  try {
+    const gid = url.searchParams.get('gid');
+    const uid = url.searchParams.get('uid');
+    if (!gid) return jsonResponse({ error: 'gid required' }, 400);
+    const guild = await _ufGetGuild(env, gid);
+    if (!guild) return jsonResponse({ error: 'not found' }, 404);
+
+    // Guild-scoped leaderboard: members sorted by totalXp
+    const rows = [];
+    for (const mid of guild.memberIds) {
+      const s = await _ufUserSummary(env, mid);
+      if (s) rows.push(s);
+    }
+    rows.sort((a, b) => (b.totalXp || 0) - (a.totalXp || 0));
+
+    return jsonResponse({
+      guild,
+      leaderboard: rows,
+      isMember: uid ? guild.memberIds.includes(uid) : false,
+      isOwner: uid ? guild.ownerId === uid : false
+    });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
+  }
+}
+
+// GET /api/uf/guild/goals?gid=<gid>
+// Returns all goals for guild with LIVE progress for each member.
+async function ufGuildGoalsGet(url, env) {
+  try {
+    const gid = url.searchParams.get('gid');
+    if (!gid) return jsonResponse({ error: 'gid required' }, 400);
+    const guild = await _ufGetGuild(env, gid);
+    if (!guild) return jsonResponse({ error: 'not found' }, 404);
+    const goals = await _ufGetGoals(env, gid);
+    const now = Date.now();
+    const memberNames = {};
+    for (const mid of guild.memberIds) {
+      const u = await _ufGetUser(env, mid);
+      if (u) memberNames[mid] = { name: u.name, handle: u.handle };
+    }
+
+    const enriched = [];
+    for (const goal of goals) {
+      // Compute live contributions from baselines
+      const contributions = {};
+      let total = 0;
+      for (const [uid, baseline] of Object.entries(goal.baselines || {})) {
+        if (!memberNames[uid]) continue;                 // left the guild
+        const prog = await _ufProgressSince(env, uid, baseline);
+        const value = goal.metric === 'books' ? prog.books : prog.pages;
+        contributions[uid] = value;
+        total += value;
+      }
+      // Auto-close if deadline passed and goal still 'active'
+      let status = goal.status;
+      if (status === 'active' && goal.deadline && now >= goal.deadline) {
+        status = total >= goal.target ? 'completed' : 'failed';
+      }
+      // Ranking within goal (fantasy-football style)
+      const ranking = Object.entries(contributions)
+        .map(([uid, v]) => ({ uid, name: memberNames[uid].name, handle: memberNames[uid].handle, value: v }))
+        .sort((a, b) => b.value - a.value);
+      enriched.push({
+        ...goal,
+        status,
+        total,
+        percent: goal.target > 0 ? Math.min(100, Math.round((total / goal.target) * 100)) : 0,
+        ranking,
+        timeLeftMs: goal.deadline ? Math.max(0, goal.deadline - now) : null
+      });
+    }
+    return jsonResponse({ goals: enriched });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
+  }
+}
+
+// POST /api/uf/guild/goals
+// Body: { userId, gid, title, metric ('pages'|'books'), target, deadline (ms|iso) }
+async function ufGuildGoalCreate(request, env) {
+  try {
+    const { userId, gid, title, metric, target, deadline } = await request.json();
+    if (!userId || !gid || !title) return jsonResponse({ error: 'userId, gid, title required' }, 400);
+    const guild = await _ufGetGuild(env, gid);
+    if (!guild) return jsonResponse({ error: 'guild not found' }, 404);
+    if (!guild.memberIds.includes(userId)) return jsonResponse({ error: 'Not a member of this guild.' }, 403);
+    const cleanMetric = ['pages','books'].includes(metric) ? metric : 'pages';
+    const cleanTarget = Math.max(1, Math.min(1000000, parseInt(target, 10) || 0));
+    if (!cleanTarget) return jsonResponse({ error: 'target must be > 0' }, 400);
+    let dl = null;
+    if (deadline) {
+      dl = typeof deadline === 'number' ? deadline : new Date(deadline).getTime();
+      if (!Number.isFinite(dl) || dl < Date.now() + 60000) {
+        return jsonResponse({ error: 'deadline must be at least 1 minute in the future' }, 400);
+      }
+      // Cap deadline at 1 year out
+      if (dl > Date.now() + 365 * 86400e3) return jsonResponse({ error: 'deadline too far (max 1 year)' }, 400);
+    }
+
+    const baselines = {};
+    for (const mid of guild.memberIds) {
+      baselines[mid] = await _ufBaselineFor(env, mid);
+    }
+
+    const goal = {
+      id: _ufGoalId(),
+      gid,
+      title: String(title).slice(0, 120),
+      metric: cleanMetric,
+      target: cleanTarget,
+      deadline: dl,
+      createdAt: Date.now(),
+      createdBy: userId,
+      status: 'active',
+      baselines,
+      resolvedAt: null
+    };
+    const goals = await _ufGetGoals(env, gid);
+    goals.unshift(goal);
+    await _ufPutGoals(env, gid, goals);
+    return jsonResponse({ ok: true, goal });
   } catch (e) {
     return jsonResponse({ error: e.message }, 500);
   }
