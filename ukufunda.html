@@ -650,6 +650,60 @@ header.top{display:none !important}
 .book-prose p+p{margin-top:14px;text-indent:1.5em}
 .book-prose em{font-style:italic}
 
+/* Reading Session view — fullscreen focus mode.
+   Cream paper, deep Garamond, huge timer. Warns if you leave the tab. */
+.session-view{
+  position:fixed;inset:0;z-index:300;
+  background:
+    radial-gradient(1200px 700px at 50% 20%, rgba(122,46,30,0.06), transparent 60%),
+    var(--paper);
+  display:flex;align-items:center;justify-content:center;
+  padding:40px 24px;
+  animation:sessionIn .35s cubic-bezier(0.2,0.7,0.2,1);
+}
+@keyframes sessionIn{from{opacity:0;transform:scale(1.01)}to{opacity:1;transform:none}}
+.session-inner{
+  text-align:center;max-width:520px;width:100%;
+  display:flex;flex-direction:column;align-items:center;gap:0;
+}
+.session-head{margin-bottom:32px}
+.session-chapter{
+  font-family:'EB Garamond',serif;font-style:italic;font-size:14px;
+  color:var(--ink-fade);letter-spacing:0.18em;font-variant:small-caps;margin-bottom:14px;
+}
+.session-book{
+  font-family:'EB Garamond',serif;font-weight:500;font-size:26px;
+  color:var(--ink-bright);line-height:1.2;letter-spacing:-0.005em;
+}
+.session-timer{
+  font-family:'EB Garamond',serif;font-weight:400;
+  font-size:clamp(96px,26vw,180px);line-height:0.95;letter-spacing:-0.04em;
+  color:var(--ink-bright);
+  font-variant-numeric:tabular-nums;
+  margin:12px 0 20px;
+}
+.session-view.deep .session-timer{color:var(--red)}
+.session-view.interrupted .session-timer{color:var(--ink-fade)}
+.session-meta{
+  font-family:'EB Garamond',serif;font-style:italic;font-size:15px;
+  color:var(--ink-dim);max-width:360px;line-height:1.5;margin-bottom:36px;
+}
+.session-warn{
+  font-family:'EB Garamond',serif;font-style:italic;font-size:15px;
+  color:var(--red);max-width:360px;line-height:1.5;margin-bottom:24px;
+  padding:12px 18px;border-top:1px solid var(--red);border-bottom:1px solid var(--red);
+}
+.session-actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.session-actions .btn{width:auto;padding:14px 28px}
+.session-actions .session-cancel{color:var(--ink-fade)}
+
+/* Session-log modal — shown after End session to capture pages read */
+.session-review-info{
+  font-family:'EB Garamond',serif;font-style:italic;font-size:15px;
+  color:var(--ink-dim);margin-bottom:16px;text-align:center;line-height:1.5;
+}
+.session-review-info b{font-style:normal;color:var(--ink)}
+
 .hidden{display:none !important}
 </style>
 </head>
@@ -992,6 +1046,24 @@ header.top{display:none !important}
 </div>
 
 <!-- LOG PROGRESS MODAL -->
+<!-- READING SESSION — fullscreen focus mode. Timer, interruption counter,
+     Wake Lock so the phone doesn't sleep, visibilitychange penalises tab-switches. -->
+<div id="session-view" class="session-view hidden">
+  <div class="session-inner">
+    <div class="session-head">
+      <div class="session-chapter">Reading Session</div>
+      <div class="session-book" id="session-book"></div>
+    </div>
+    <div class="session-timer" id="session-timer">00:00</div>
+    <div class="session-meta" id="session-meta">Started — stay on this page. Leave the tab and your focus bonus is lost.</div>
+    <div class="session-warn hidden" id="session-warn"></div>
+    <div class="session-actions">
+      <button class="btn ghost session-cancel" onclick="cancelSession()">Abandon</button>
+      <button class="btn" onclick="endSession()">End session</button>
+    </div>
+  </div>
+</div>
+
 <div id="log-modal" class="modal-bg">
   <div class="modal">
     <h3>Log progress</h3>
@@ -1211,7 +1283,8 @@ function wireSwipe(){
   const target = document.getElementById('app');
   if (!target) return;
   target.addEventListener('touchstart', (e) => {
-    if (e.target.closest('input, textarea, select, .modal-bg.open, .book-cover, .cover-splash')) return;
+    if (e.target.closest('input, textarea, select, .modal-bg.open, .book-cover, .cover-splash, .session-view')) return;
+    if (sessionState && !sessionState.ended) return;
     const t = e.touches[0];
     x0 = t.clientX; y0 = t.clientY;
   }, { passive:true });
@@ -1325,6 +1398,7 @@ function bookCard(b){
           <div class="progress-bar"><div class="fill" style="width:${pct}%"></div></div>
           <div class="progress-text"><span>${b.current} / ${b.pages}</span><span>${pct}%</span></div>
           <div class="actions">
+            ${b.status === 'active' ? `<button class="btn small" onclick="startSession('${b.id}')">Start reading</button>` : ''}
             ${b.status !== 'done' ? `<button class="btn small ghost" onclick="openLogModal('${b.id}')">Log pages</button>` : ''}
             ${b.status === 'active' ? `<button class="btn small subtle" onclick="setStatus('${b.id}','paused')">Pause</button>` : ''}
             ${b.status === 'paused' ? `<button class="btn small subtle" onclick="setStatus('${b.id}','active')">Resume</button>` : ''}
@@ -1437,14 +1511,18 @@ async function submitLog(){
   const pagesRead = newPage - book.current;
   if (pagesRead <= 0) return toast('That\'s not progress');
   try {
+    const payload = { userId: state.me.id, bookId: book.id, page: newPage };
+    if (state.pendingSession) payload.session = state.pendingSession;
     const r = await fetch(`${API}/log`, {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ userId: state.me.id, bookId: book.id, page: newPage })
+      body: JSON.stringify(payload)
     });
     const d = await r.json();
     if (!r.ok) return toast(d.error || 'Log failed');
     closeLogModal();
-    toast(`+${pagesRead} pages, +${d.xp} XP`);
+    const mult = d.focusMult && d.focusMult !== 1 ? ` (${d.focusMult}×)` : '';
+    toast(`+${pagesRead} pages, +${d.xp} XP${mult}`);
+    state.pendingSession = null;
     await refresh();
   } catch(e){ toast('Network error'); }
 }
@@ -1874,6 +1952,152 @@ document.addEventListener('DOMContentLoaded', () => {
   const gm = document.getElementById('goal-modal');
   if (gm) gm.addEventListener('click', (e) => { if (e.target.id === 'goal-modal') closeGoalModal(); });
 });
+
+// ============ READING SESSION (focus mode) ============
+// A reading session is a client-side focused timer that penalises tab-switches.
+// When the user taps "Start reading" we go fullscreen-ish (session-view overlay),
+// request a Wake Lock so the phone doesn't sleep, and start a timer. On tab
+// blur we increment an interruption counter and switch the timer to a faded
+// state. On "End session" we open the log-progress flow with the session
+// metadata attached so the worker can apply the focus multiplier.
+let sessionState = null;
+
+async function startSession(bookId){
+  const b = state.books.find(x => x.id === bookId);
+  if (!b) return toast('Book not found');
+  if (b.status !== 'active') return toast('Only active books can be started');
+
+  sessionState = {
+    bookId, book: b,
+    startedAt: Date.now(),
+    lastVisibleAt: Date.now(),
+    durationMs: 0,
+    interrupted: false,
+    interruptionCount: 0,
+    wakeLock: null,
+    tickHandle: null,
+    onVis: null,
+    ended: false,
+  };
+
+  // Wake Lock — keep the screen on while reading. Not supported everywhere;
+  // silent fallback if unavailable.
+  try {
+    if ('wakeLock' in navigator) {
+      sessionState.wakeLock = await navigator.wakeLock.request('screen');
+    }
+  } catch(e) { /* silent */ }
+
+  // Show the view
+  const view = document.getElementById('session-view');
+  document.getElementById('session-book').textContent = b.title;
+  document.getElementById('session-timer').textContent = '00:00';
+  document.getElementById('session-meta').textContent = 'Started — stay on this page. Leave the tab and your focus bonus is lost.';
+  document.getElementById('session-warn').classList.add('hidden');
+  view.classList.remove('hidden','deep','interrupted');
+  document.body.style.overflow = 'hidden';
+
+  // Tick the timer every 500ms
+  sessionState.tickHandle = setInterval(tickSession, 500);
+
+  // Visibility handler — penalise tab-switches
+  sessionState.onVis = () => {
+    if (!sessionState || sessionState.ended) return;
+    if (document.hidden) {
+      sessionState.interrupted = true;
+      sessionState.interruptionCount++;
+      const view = document.getElementById('session-view');
+      view.classList.add('interrupted');
+      view.classList.remove('deep');
+      const w = document.getElementById('session-warn');
+      w.classList.remove('hidden');
+      w.textContent = `Interrupted × ${sessionState.interruptionCount}. Focus bonus lost — this session now counts at 0.75×.`;
+    } else {
+      // returning; try to reacquire wake lock
+      if ('wakeLock' in navigator && !sessionState.wakeLock) {
+        navigator.wakeLock.request('screen').then(w => { if (sessionState) sessionState.wakeLock = w; }).catch(()=>{});
+      }
+    }
+  };
+  document.addEventListener('visibilitychange', sessionState.onVis);
+}
+
+function tickSession(){
+  if (!sessionState || sessionState.ended) return;
+  sessionState.durationMs = Date.now() - sessionState.startedAt;
+  const totalSec = Math.floor(sessionState.durationMs / 1000);
+  const min = Math.floor(totalSec / 60);
+  const sec = totalSec % 60;
+  document.getElementById('session-timer').textContent =
+    (min < 10 ? '0' : '') + min + ':' + (sec < 10 ? '0' : '') + sec;
+
+  // Cross the 20-minute mark and stayed clean → upgrade to deep-focus state
+  const view = document.getElementById('session-view');
+  if (!sessionState.interrupted && sessionState.durationMs >= 20 * 60_000 && !view.classList.contains('deep')) {
+    view.classList.add('deep');
+    document.getElementById('session-meta').textContent = 'Deep-focus reached — 1.25× XP unlocked. Keep going.';
+  }
+}
+
+async function releaseSession(){
+  if (!sessionState) return;
+  sessionState.ended = true;
+  clearInterval(sessionState.tickHandle);
+  if (sessionState.onVis) document.removeEventListener('visibilitychange', sessionState.onVis);
+  try { if (sessionState.wakeLock) await sessionState.wakeLock.release(); } catch(e){}
+  document.body.style.overflow = '';
+  document.getElementById('session-view').classList.add('hidden');
+}
+
+function cancelSession(){
+  if (!sessionState) return;
+  if (sessionState.durationMs > 60_000) {
+    if (!confirm('Abandon this session? Nothing will be logged.')) return;
+  }
+  releaseSession();
+  sessionState = null;
+  toast('Session abandoned');
+}
+
+async function endSession(){
+  if (!sessionState) return;
+  const s = sessionState;
+  s.durationMs = Date.now() - s.startedAt;
+
+  if (s.durationMs < 60_000) {
+    if (!confirm('Session under a minute. End without logging?')) return;
+    await releaseSession();
+    sessionState = null;
+    toast('Session too short to log');
+    return;
+  }
+
+  // Open the log-progress modal with the session metadata attached
+  await releaseSession();
+  state.logBookId = s.bookId;
+  state.pendingSession = {
+    durationMs: s.durationMs,
+    interrupted: s.interrupted,
+    interruptionCount: s.interruptionCount,
+  };
+  const book = state.books.find(b => b.id === s.bookId);
+  const mins = Math.round(s.durationMs / 60000);
+  const focusHint = s.interrupted
+    ? `Interrupted × ${s.interruptionCount} — XP will be 0.75× (distraction penalty).`
+    : mins >= 20
+    ? `${mins} minutes uninterrupted — 1.25× deep-focus XP.`
+    : `${mins} minutes uninterrupted — normal XP.`;
+  document.getElementById('log-book-info').innerHTML =
+    `<div class="session-review-info"><b>${escHtml(book.title)}</b> — ${focusHint}</div>`
+    + `Currently on page ${book.current} of ${book.pages}`;
+  document.getElementById('log-page').value = '';
+  document.getElementById('log-page').placeholder = `e.g. ${book.current + 20}`;
+  document.getElementById('log-delta').value = '';
+  document.getElementById('log-modal').classList.add('open');
+  sessionState = null;
+}
+
+// Also: on any "log pages" from the plain modal, no session is attached. Fine.
 
 boot();
 </script>

@@ -7152,6 +7152,8 @@ async function ufMe(url, env) {
       streak: u.streak || 0,
       booksFinished: u.booksFinished || 0,
       tier: _ufTierFromXp(u.totalXp || 0),
+      focusMinutes: u.focusMinutes || 0,
+      deepSessions: u.deepSessions || 0,
       weekPages, weekXp
     });
   } catch (e) {
@@ -7253,7 +7255,7 @@ async function ufBooksStatus(request, env) {
 
 async function ufLog(request, env) {
   try {
-    const { userId, bookId, page } = await request.json();
+    const { userId, bookId, page, session } = await request.json();
     if (!userId || !bookId) return jsonResponse({ error: 'invalid' }, 400);
     const u = await _ufGetUser(env, userId);
     if (!u) return jsonResponse({ error: 'user not found' }, 404);
@@ -7290,9 +7292,32 @@ async function ufLog(request, env) {
     }
     u.lastLogDay = today;
 
-    // XP: 1 per page + streak multiplier (small) + finish bonus
+    // Focus multiplier from a Reading Session (if the client attached one):
+    //   ≥ 20 min uninterrupted → 1.25× (deep-focus bonus)
+    //   any duration uninterrupted → 1.0× (normal)
+    //   any interruption → 0.75× (distraction penalty)
+    // No session attached = 1.0× baseline. Sessions must be at least 60s to count.
+    let focusMult = 1.0;
+    let sessionMeta = null;
+    if (session && typeof session === 'object') {
+      const durMs = Math.max(0, Math.min(6 * 3600e3, parseInt(session.durationMs, 10) || 0));
+      const interruptions = Math.max(0, Math.min(50, parseInt(session.interruptionCount, 10) || 0));
+      const interrupted = !!session.interrupted || interruptions > 0;
+      if (durMs >= 60_000) {
+        if (interrupted)                    focusMult = 0.75;
+        else if (durMs >= 20 * 60_000)      focusMult = 1.25;
+        else                                 focusMult = 1.0;
+        sessionMeta = { durationMs: durMs, interrupted, interruptionCount: interruptions, focusMult };
+        u.focusMinutes = (u.focusMinutes || 0) + Math.round(durMs / 60000);
+        if (!interrupted && durMs >= 20 * 60_000) {
+          u.deepSessions = (u.deepSessions || 0) + 1;
+        }
+      }
+    }
+
+    // XP: (pages × streak multiplier × focus multiplier) + finish bonus
     const streakMult = u.streak >= 30 ? 1.5 : u.streak >= 7 ? 1.25 : u.streak >= 3 ? 1.1 : 1.0;
-    const xp = Math.round(pagesRead * streakMult) + finishBonus;
+    const xp = Math.round(pagesRead * streakMult * focusMult) + finishBonus;
     u.totalXp = (u.totalXp || 0) + xp;
 
     await _ufPutUser(env, u);
@@ -7304,7 +7329,8 @@ async function ufLog(request, env) {
       ok: true, xp, pagesRead,
       totalXp: u.totalXp, streak: u.streak,
       finished: finishBonus > 0,
-      tier: _ufTierFromXp(u.totalXp)
+      tier: _ufTierFromXp(u.totalXp),
+      focusMult, session: sessionMeta
     });
   } catch (e) {
     return jsonResponse({ error: e.message }, 500);
