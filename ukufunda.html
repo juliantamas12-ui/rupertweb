@@ -13,7 +13,7 @@
 <meta property="og:description" content="Track books, log pages, climb tiers, beat your friends.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600&family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -108,7 +108,7 @@ body::before{
   mix-blend-mode:multiply;
 }
 .wrap{position:relative;z-index:1}
-.serif{font-family:'Cormorant Garamond',ui-serif,Georgia,serif}
+.serif{font-family:'EB Garamond',ui-serif,Georgia,serif}
 button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 input,select{font:inherit;color:var(--ink-bright);background:var(--paper-raise2);border:1px solid var(--paper-line);border-radius:var(--radius);padding:11px 14px;outline:none;width:100%;transition:border-color .15s, background .15s}
 input::placeholder{color:var(--ink-fade);font-style:italic}
@@ -120,21 +120,16 @@ a:hover{color:var(--accent-bright)}
 @media(max-width:600px){.wrap{padding:24px 20px 96px}}
 
 /* Ornamental fleuron divider used between big sections */
-.fleuron{text-align:center;font-family:'Cormorant Garamond',serif;color:var(--accent);font-size:22px;line-height:1;margin:28px 0;letter-spacing:0.4em;user-select:none}
+.fleuron{text-align:center;font-family:'EB Garamond',serif;color:var(--accent);font-size:22px;line-height:1;margin:28px 0;letter-spacing:0.4em;user-select:none}
 .fleuron::before{content:'❦ ❧ ❦'}
 
 /* ── Header ─────────────────────────────── */
 /* Persistent bookplate strip — ONE small line at the very top of the page.
    Left: "ex libris <name> @handle · TIER". Right: sign out. No wordmark,
    no tagline, no big centred title. The cover already did that job. */
-header.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0 12px;margin-bottom:0;border-bottom:1px solid var(--paper-line);position:relative;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:14px;color:var(--ink-dim);flex-wrap:wrap}
-header.top .brand{display:none}
-header.top h1{display:none}
-header.top .tagline{display:none}
-header.top .who{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-header.top .who #who-name{color:var(--ink);font-style:normal}
-header.top .who button{color:var(--ink-fade);font-size:13px;font-family:'Cormorant Garamond',serif;font-style:italic;opacity:0.85;transition:color .15s;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--paper-line-strong)}
-header.top .who button:hover{color:var(--red);text-decoration-color:var(--red)}
+/* Persistent top strip is hidden. Identity + sign-out live on the cover.
+   Each inside page uses .running-head at the top and .page-footer at the bottom. */
+header.top{display:none !important}
 @media(max-width:600px){
   header.top h1{font-size:52px}
   header.top{padding-bottom:24px;margin-bottom:24px;gap:10px}
@@ -149,13 +144,18 @@ header.top .who button:hover{color:var(--red);text-decoration-color:var(--red)}
    "endpaper" reveals the sign-in form beneath. */
 .auth{max-width:none;margin:0;padding:0;position:relative}
 
+/* Cover — tanned leather look.
+   Base: deep hardback red flooded with warm brown depth.
+   Layer 1 (::before): fine, high-frequency SVG turbulence for the leather grain.
+   Layer 2 (::after): larger, low-frequency turbulence for mottled hide patches.
+   Plus an inner vignette shadow so the corners look tooled/worn. */
 .book-cover{
   min-height:100vh;
   min-height:100dvh;
   background:
-    radial-gradient(circle at 30% 20%, rgba(255,255,255,0.06), transparent 55%),
-    radial-gradient(circle at 80% 80%, rgba(0,0,0,0.18), transparent 60%),
-    var(--accent-deep);
+    radial-gradient(circle at 30% 20%, rgba(255,220,180,0.08), transparent 55%),
+    radial-gradient(circle at 80% 85%, rgba(0,0,0,0.35), transparent 60%),
+    radial-gradient(circle at 50% 50%, #8a3620 0%, #6b2515 60%, #4a1a0e 100%);
   color:var(--paper);
   display:flex;
   flex-direction:column;
@@ -164,18 +164,23 @@ header.top .who button:hover{color:var(--red);text-decoration-color:var(--red)}
   padding:56px 28px 24px;
   position:relative;
   overflow:hidden;
-  /* Cloth-weave texture using overlapping dotted patterns */
-  box-shadow:inset 0 0 120px rgba(0,0,0,0.35);
+  box-shadow:inset 0 0 180px rgba(0,0,0,0.55), inset 0 0 40px rgba(0,0,0,0.3);
 }
+/* Fine leather grain — fractal noise. Rendered inline as a data-URI SVG. */
 .book-cover::before{
   content:'';position:absolute;inset:0;pointer-events:none;
-  background-image:
-    radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
-    radial-gradient(rgba(0,0,0,0.10) 1px, transparent 1px);
-  background-size:4px 4px, 9px 9px;
-  background-position:0 0, 2px 3px;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' seed='7'/><feColorMatrix values='0 0 0 0 0.05  0 0 0 0 0.02  0 0 0 0 0  0 0 0 1 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/></svg>");
+  background-size:260px 260px;
+  mix-blend-mode:multiply;
+  opacity:0.9;
+}
+/* Coarse mottling — larger patches, warmer highlights */
+.book-cover::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='500' height='500'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.014' numOctaves='2' seed='3'/><feColorMatrix values='0 0 0 0 0.9  0 0 0 0 0.55  0 0 0 0 0.35  0 0 0 0.25 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  background-size:500px 500px;
   mix-blend-mode:overlay;
-  opacity:0.6;
+  opacity:0.55;
 }
 .book-cover .frame{
   position:absolute;inset:22px;
@@ -196,25 +201,27 @@ header.top .who button:hover{color:var(--red);text-decoration-color:var(--red)}
   color:rgba(245,238,221,0.65);font-weight:600;
 }
 .book-cover .edition{
-  font-family:'Cormorant Garamond',serif;font-style:italic;font-size:14px;
+  font-family:'EB Garamond',serif;font-style:italic;font-size:14px;
   color:rgba(245,238,221,0.55);margin-top:6px;
 }
+/* Cover title — upright EB Garamond bold, foil-stamped on leather */
 .book-cover .title{
-  font-family:'Cormorant Garamond','EB Garamond',serif;font-style:italic;font-weight:400;
-  font-size:clamp(72px,17vw,132px);line-height:0.9;letter-spacing:-0.02em;
-  color:var(--paper);margin:0 0 18px;
-  /* Foil-stamp effect: subtle inner shadow + highlight */
-  text-shadow:0 1px 0 rgba(0,0,0,0.35), 0 -1px 0 rgba(255,255,255,0.08);
+  font-family:'EB Garamond',serif;font-weight:700;font-style:normal;
+  font-size:clamp(64px,15vw,116px);line-height:0.95;letter-spacing:0.01em;
+  color:var(--paper);margin:0 0 18px;text-transform:uppercase;
+  text-shadow:0 1px 0 rgba(0,0,0,0.45), 0 -1px 0 rgba(255,255,255,0.10), 0 0 32px rgba(0,0,0,0.4);
 }
 .book-cover .subtitle{
-  font-family:'Cormorant Garamond',serif;font-style:italic;font-size:19px;line-height:1.4;
-  color:rgba(245,238,221,0.85);max-width:340px;margin:0 auto;
+  font-family:'EB Garamond',serif;font-style:normal;font-weight:400;
+  font-size:16px;line-height:1.5;letter-spacing:0.02em;
+  color:rgba(245,238,221,0.85);max-width:360px;margin:0 auto;
+  font-variant:small-caps;
 }
 .book-cover .rule-set{display:flex;justify-content:center;align-items:center;gap:14px;margin:22px auto}
 .book-cover .rule-set .rule{width:60px;height:1px;background:rgba(245,238,221,0.5)}
-.book-cover .rule-set .mark{font-family:'Cormorant Garamond',serif;color:rgba(245,238,221,0.7);font-size:16px}
+.book-cover .rule-set .mark{font-family:'EB Garamond',serif;color:rgba(245,238,221,0.7);font-size:16px}
 .book-cover .colophon{
-  font-family:'Cormorant Garamond',serif;font-size:28px;line-height:1;
+  font-family:'EB Garamond',serif;font-size:28px;line-height:1;
   color:rgba(245,238,221,0.75);margin:0 auto 10px;
 }
 .book-cover .attr{
@@ -225,8 +232,8 @@ header.top .who button:hover{color:var(--red);text-decoration-color:var(--red)}
   margin-top:34px;
   display:inline-flex;align-items:center;gap:10px;
   background:var(--paper);color:var(--red-deep);
-  border:none;padding:14px 26px;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:18px;
-  font-weight:500;letter-spacing:0;text-transform:none;cursor:pointer;
+  border:none;padding:14px 28px;font-family:'EB Garamond',serif;font-style:normal;font-size:14px;
+  font-weight:600;letter-spacing:0.22em;text-transform:uppercase;cursor:pointer;
   transition:transform .15s, background .15s;
   box-shadow:0 4px 0 rgba(0,0,0,0.25);
 }
@@ -252,7 +259,7 @@ header.top .who button:hover{color:var(--red);text-decoration-color:var(--red)}
   padding:14px 8px;
   background:transparent;border:none;
   color:rgba(245,238,221,0.9);
-  font-family:'Cormorant Garamond','EB Garamond',serif;font-style:italic;
+  font-family:'EB Garamond',serif;font-style:italic;
   font-size:22px;text-align:left;cursor:pointer;
   border-bottom:1px dotted rgba(245,238,221,0.22);
   transition:color .15s, transform .12s, letter-spacing .12s;
@@ -262,7 +269,7 @@ header.top .who button:hover{color:var(--red);text-decoration-color:var(--red)}
 .cover-toc-item:hover{color:var(--paper);letter-spacing:0.01em}
 .cover-toc-item:active{transform:translateX(2px)}
 .cover-toc-item .n{
-  font-family:'Cormorant Garamond',serif;font-style:italic;font-size:14px;
+  font-family:'EB Garamond',serif;font-style:italic;font-size:14px;
   color:rgba(245,238,221,0.55);min-width:24px;letter-spacing:0.06em;
 }
 .cover-toc-item .t{flex:1}
@@ -295,26 +302,26 @@ header.top .who button:hover{color:var(--red);text-decoration-color:var(--red)}
 }
 .endpaper .plate{width:100%;text-align:center;margin-bottom:36px}
 .endpaper .plate .title{
-  font-family:'Cormorant Garamond',serif;font-style:italic;font-size:48px;line-height:1;
-  color:var(--ink-bright);letter-spacing:-0.01em;margin-bottom:8px;
+  font-family:'EB Garamond',serif;font-weight:600;font-style:normal;font-size:42px;line-height:1.05;
+  color:var(--ink-bright);letter-spacing:-0.005em;margin-bottom:10px;
 }
 .endpaper .plate .lead{
-  font-family:'Cormorant Garamond',serif;font-style:italic;font-size:17px;
-  color:var(--ink-dim);line-height:1.5;max-width:340px;margin:0 auto;
+  font-family:'EB Garamond',serif;font-style:normal;font-size:16px;
+  color:var(--ink-dim);line-height:1.55;max-width:360px;margin:0 auto;
 }
 .endpaper .fields{width:100%;max-width:360px}
 .endpaper label{display:block;font-family:'Geist',sans-serif;font-size:10px;color:var(--ink-fade);
   margin-bottom:6px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase}
 .endpaper .field{margin-bottom:18px}
 .endpaper .fine{margin-top:24px;font-size:13px;color:var(--ink-fade);
-  line-height:1.5;text-align:center;font-family:'Cormorant Garamond',serif;font-style:italic}
+  line-height:1.5;text-align:center;font-family:'EB Garamond',serif;font-style:italic}
 .endpaper .back-link{margin-top:20px;font-family:'Geist',sans-serif;font-size:11px;
   color:var(--ink-fade);letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;
   background:none;border:none;text-decoration:underline;text-underline-offset:3px}
 .endpaper .back-link:hover{color:var(--accent)}
-.auth h2{font-family:'Cormorant Garamond','EB Garamond',serif;font-weight:400;font-style:italic;font-size:52px;line-height:0.95;letter-spacing:-0.01em;margin-bottom:12px;color:var(--ink-bright)}
+.auth h2{font-family:'EB Garamond',serif;font-weight:700;font-style:normal;font-size:48px;line-height:1;letter-spacing:0;margin-bottom:12px;color:var(--ink-bright);text-transform:uppercase}
 .auth .lead{color:var(--ink-dim);margin-bottom:28px;font-size:16px;line-height:1.55}
-.auth .lead em{font-style:italic;font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--ink)}
+.auth .lead em{font-style:italic;font-family:'EB Garamond',serif;font-size:18px;color:var(--ink)}
 .auth label{display:block;font-size:12px;color:var(--ink-dim);margin-bottom:6px;font-weight:500}
 .auth .field{margin-bottom:16px}
 .auth .fine{margin-top:20px;font-size:12px;color:var(--ink-fade);line-height:1.5}
@@ -334,7 +341,8 @@ header.top .who button:hover{color:var(--red);text-decoration-color:var(--red)}
 /* Tabs as a table-of-contents strip — Garamond italic, not sans caps. */
 .tabs{display:flex;gap:0;justify-content:center;border-bottom:1px solid var(--paper-line);margin-bottom:32px;margin-top:20px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px}
 .tabs::-webkit-scrollbar{display:none}
-.tabs button{padding:12px 4px;margin:0 20px;color:var(--ink-dim);font-weight:400;font-size:20px;border-bottom:1.5px solid transparent;margin-bottom:-1px;white-space:nowrap;transition:color .15s, border-color .15s;letter-spacing:-0.005em;font-family:'Cormorant Garamond','EB Garamond',serif;font-style:italic;line-height:1}
+/* Tabs: upright EB Garamond, small caps, table-of-contents style */
+.tabs button{padding:12px 4px;margin:0 20px;color:var(--ink-dim);font-weight:500;font-size:16px;border-bottom:1.5px solid transparent;margin-bottom:-1px;white-space:nowrap;transition:color .15s, border-color .15s;letter-spacing:0.06em;font-family:'EB Garamond',serif;font-variant:small-caps;line-height:1}
 .tabs button.active{color:var(--red);border-bottom-color:var(--red)}
 .tabs button:hover:not(.active){color:var(--ink)}
 @media(max-width:600px){
@@ -360,7 +368,7 @@ header.top .who button:hover{color:var(--red);text-decoration-color:var(--red)}
    Rules only appear as vertical hairlines between grid cells. */
 .card{background:transparent;border:none;border-radius:0;padding:14px 8px}
 .card h3{font-family:'Geist',sans-serif;font-size:10px;color:var(--ink-fade);font-weight:600;margin-bottom:8px;letter-spacing:0.18em;text-transform:uppercase}
-.stat{font-family:'Cormorant Garamond','EB Garamond',serif;font-weight:500;font-size:56px;line-height:0.95;color:var(--ink-bright);letter-spacing:-0.02em;display:flex;align-items:baseline;gap:8px;font-variant-numeric:oldstyle-nums}
+.stat{font-family:'EB Garamond',serif;font-weight:500;font-size:56px;line-height:0.95;color:var(--ink-bright);letter-spacing:-0.02em;display:flex;align-items:baseline;gap:8px;font-variant-numeric:oldstyle-nums}
 .stat .unit{font-family:'Geist',sans-serif;font-size:12px;color:var(--ink-dim);font-weight:500;letter-spacing:0.02em;text-transform:uppercase}
 .sub{font-size:12px;color:var(--ink-dim);margin-top:10px;line-height:1.4}
 
@@ -376,7 +384,7 @@ header.top .who button:hover{color:var(--red);text-decoration-color:var(--red)}
 
 /* ── Section headers ─────────────────────────────── */
 .section-head{display:flex;justify-content:space-between;align-items:baseline;margin:8px 0 18px}
-.section-head h2{font-family:'Cormorant Garamond','EB Garamond',serif;font-weight:500;font-size:32px;line-height:1;letter-spacing:-0.01em;color:var(--ink-bright)}
+.section-head h2{font-family:'EB Garamond',serif;font-weight:500;font-size:32px;line-height:1;letter-spacing:-0.01em;color:var(--ink-bright)}
 .section-head .hint{font-size:12px;color:var(--ink-fade)}
 
 /* ── Book cards ─────────────────────────────── */
@@ -385,9 +393,9 @@ header.top .who button:hover{color:var(--red);text-decoration-color:var(--red)}
 .book:last-child{border-bottom:none}
 .book:hover .title{color:var(--accent)}
 .book .cover{width:70px;height:104px;background:var(--paper-raise2);flex-shrink:0;object-fit:cover;display:block;border-radius:2px;box-shadow:0 4px 10px rgba(60,40,20,0.20), 0 1px 2px rgba(60,40,20,0.15), inset 0 0 0 1px rgba(26,23,18,0.06)}
-.book .cover-placeholder{width:70px;height:104px;background:linear-gradient(135deg,var(--accent),var(--accent-deep));display:flex;align-items:center;justify-content:center;color:var(--paper);font-size:13px;text-align:center;padding:8px;flex-shrink:0;border-radius:2px;font-family:'Cormorant Garamond',serif;font-style:italic;line-height:1.2;box-shadow:0 4px 10px rgba(60,40,20,0.20), 0 1px 2px rgba(60,40,20,0.15)}
+.book .cover-placeholder{width:70px;height:104px;background:linear-gradient(135deg,var(--accent),var(--accent-deep));display:flex;align-items:center;justify-content:center;color:var(--paper);font-size:13px;text-align:center;padding:8px;flex-shrink:0;border-radius:2px;font-family:'EB Garamond',serif;font-style:italic;line-height:1.2;box-shadow:0 4px 10px rgba(60,40,20,0.20), 0 1px 2px rgba(60,40,20,0.15)}
 .book .info{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:space-between}
-.book .title{font-family:'Cormorant Garamond','EB Garamond',serif;font-weight:500;color:var(--ink-bright);font-size:24px;line-height:1.15;letter-spacing:-0.005em;margin-bottom:3px}
+.book .title{font-family:'EB Garamond',serif;font-weight:500;color:var(--ink-bright);font-size:24px;line-height:1.15;letter-spacing:-0.005em;margin-bottom:3px}
 .book .author{font-family:'EB Garamond',serif;font-style:italic;font-size:15px;color:var(--ink-dim)}
 .book .meta-row{font-size:12px;color:var(--ink-fade);margin-top:4px}
 /* Twin-rule progress bar — two hairlines with the fill drawn as a solid ink bar between them.
@@ -435,7 +443,7 @@ header.top .who button:hover{color:var(--red);text-decoration-color:var(--red)}
 .lb-row .name{font-weight:500;color:var(--ink)}
 .lb-row .name.me{color:var(--accent)}
 .lb-row .name .h{color:var(--ink-fade);font-weight:400}
-.lb-row .xp{font-weight:500;color:var(--ink-bright);text-align:right;font-variant-numeric:tabular-nums;font-family:'Cormorant Garamond','EB Garamond',serif;font-size:20px}
+.lb-row .xp{font-weight:500;color:var(--ink-bright);text-align:right;font-variant-numeric:tabular-nums;font-family:'EB Garamond',serif;font-size:20px}
 .lb-row .streak{font-size:13px;color:var(--ink-dim);text-align:right;font-variant-numeric:tabular-nums}
 @media(max-width:600px){
   .lb-row{grid-template-columns:36px 1fr 80px 56px;padding:12px 14px}
@@ -447,7 +455,7 @@ header.top .who button:hover{color:var(--red);text-decoration-color:var(--red)}
 .friends-add input{flex:1}
 .friend-row{display:flex;justify-content:space-between;align-items:center;padding:16px 0;background:transparent;border:none;border-radius:0;border-bottom:1px solid var(--paper-line);margin-bottom:0}
 .friend-row:last-child{border-bottom:none}
-.friend-row .fname{font-family:'Cormorant Garamond','EB Garamond',serif;font-weight:500;color:var(--ink-bright);font-size:19px}
+.friend-row .fname{font-family:'EB Garamond',serif;font-weight:500;color:var(--ink-bright);font-size:19px}
 .friend-row .fmeta{font-size:12px;color:var(--ink-dim);margin-top:2px;letter-spacing:0.02em}
 .friend-row .fmeta .h{color:var(--blue);font-weight:500}
 
@@ -455,26 +463,26 @@ header.top .who button:hover{color:var(--red);text-decoration-color:var(--red)}
 .modal-bg{position:fixed;inset:0;background:rgba(200,180,140,0.60);backdrop-filter:blur(8px) saturate(0.9);-webkit-backdrop-filter:blur(8px) saturate(0.9);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
 .modal-bg.open{display:flex}
 .modal{background:var(--paper);border:none;border-top:3px double var(--ink);border-bottom:3px double var(--ink);border-radius:0;padding:32px 28px;max-width:440px;width:100%;box-shadow:0 30px 60px -15px rgba(60,40,20,0.30)}
-.modal h3{font-family:'Cormorant Garamond','EB Garamond',serif;font-weight:500;font-size:32px;color:var(--ink-bright);margin-bottom:6px;letter-spacing:-0.01em}
+.modal h3{font-family:'EB Garamond',serif;font-weight:500;font-size:32px;color:var(--ink-bright);margin-bottom:6px;letter-spacing:-0.01em}
 .modal .field{margin-bottom:14px}
 .modal label{display:block;font-size:12px;color:var(--ink-dim);margin-bottom:6px;font-weight:500}
 .modal .actions{display:flex;gap:10px;margin-top:24px}
 .modal .actions .btn{flex:1}
 
 /* ── Misc ─────────────────────────────── */
-.empty{padding:56px 20px;text-align:center;color:var(--ink-dim);border:none;border-radius:0;font-style:italic;font-family:'Cormorant Garamond',serif;font-size:22px;line-height:1.4}
+.empty{padding:56px 20px;text-align:center;color:var(--ink-dim);border:none;border-radius:0;font-style:italic;font-family:'EB Garamond',serif;font-size:22px;line-height:1.4}
 
 /* Empty-state "how it works" panels */
 /* Onboarding "how it works" — no box, no fill. Reads like a book preface. */
 .explainer{background:transparent;border:none;border-radius:0;padding:20px 0 32px;margin-bottom:20px;border-bottom:1px solid var(--paper-line)}
-.explainer h4{font-family:'Cormorant Garamond','EB Garamond',serif;font-weight:500;font-size:34px;color:var(--ink-bright);margin-bottom:4px;letter-spacing:-0.01em}
-.explainer .lead{color:var(--ink-dim);font-size:19px;margin-bottom:28px;font-style:italic;font-family:'Cormorant Garamond',serif}
+.explainer h4{font-family:'EB Garamond',serif;font-weight:500;font-size:34px;color:var(--ink-bright);margin-bottom:4px;letter-spacing:-0.01em}
+.explainer .lead{color:var(--ink-dim);font-size:19px;margin-bottom:28px;font-style:italic;font-family:'EB Garamond',serif}
 .explainer .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-bottom:24px;border-top:1px solid var(--paper-line);border-bottom:1px solid var(--paper-line)}
 @media(max-width:640px){.explainer .steps{grid-template-columns:1fr}}
 .explainer .step{padding:18px 16px;background:transparent;border:none;border-right:1px solid var(--paper-line);border-radius:0}
 .explainer .step:last-child{border-right:none}
 @media(max-width:640px){.explainer .step{border-right:none;border-bottom:1px solid var(--paper-line)}.explainer .step:last-child{border-bottom:none}}
-.explainer .step .n{font-family:'Cormorant Garamond','EB Garamond',serif;font-size:42px;color:var(--accent);line-height:1;margin-bottom:10px;font-weight:400;font-style:italic;display:block}
+.explainer .step .n{font-family:'EB Garamond',serif;font-size:42px;color:var(--accent);line-height:1;margin-bottom:10px;font-weight:400;font-style:italic;display:block}
 .explainer .step h5{font-size:12px;color:var(--ink-bright);font-weight:600;margin-bottom:4px;letter-spacing:0.06em;text-transform:uppercase;font-family:'Geist',sans-serif}
 .explainer .step p{font-size:14px;color:var(--ink-dim);line-height:1.5;font-family:'EB Garamond',serif}
 .explainer .cta{display:flex;gap:10px;flex-wrap:wrap}
@@ -484,7 +492,7 @@ header.top .who button:hover{color:var(--red);text-decoration-color:var(--red)}
 .rung{padding:10px 4px;background:transparent;border:none;border-radius:0;border-bottom:1px dotted var(--paper-line-strong);display:flex;align-items:center;gap:12px}
 .rung:last-child{border-bottom:none}
 .rung .swatch{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.rung .rname{font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--ink);font-weight:500;font-style:italic}
+.rung .rname{font-family:'EB Garamond',serif;font-size:18px;color:var(--ink);font-weight:500;font-style:italic}
 .rung .rxp{font-family:'EB Garamond',serif;font-style:italic;font-size:14px;color:var(--ink-fade);font-variant-numeric:tabular-nums;margin-left:auto;letter-spacing:0}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink-bright);border:none;border-radius:0;padding:12px 22px;color:var(--paper);font-weight:500;font-size:13px;z-index:100;display:none;box-shadow:0 10px 30px -5px rgba(60,40,20,0.30);letter-spacing:0.02em}
 .toast.show{display:block;animation:toastIn .2s ease}
@@ -493,9 +501,9 @@ header.top .who button:hover{color:var(--red);text-decoration-color:var(--red)}
 .guild-card{display:block;padding:22px 0;background:transparent;border:none;border-radius:0;border-bottom:1px solid var(--paper-line);margin-bottom:0;cursor:pointer;transition:transform .05s;text-decoration:none;color:inherit;font-family:inherit}
 .guild-card:last-of-type{border-bottom:none}
 .guild-card:hover .g-name{color:var(--blue)}
-.guild-card .g-name{font-family:'Cormorant Garamond','EB Garamond',serif;font-weight:500;color:var(--ink-bright);font-size:26px;line-height:1.15;margin-bottom:2px;letter-spacing:-0.005em;transition:color .15s}
-.guild-card .g-motto{color:var(--ink-dim);font-style:italic;font-family:'Cormorant Garamond',serif;font-size:17px;margin-bottom:10px;line-height:1.35}
-.guild-card .g-meta{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:14px;color:var(--ink-fade);display:flex;gap:20px;flex-wrap:wrap;letter-spacing:0}
+.guild-card .g-name{font-family:'EB Garamond',serif;font-weight:500;color:var(--ink-bright);font-size:26px;line-height:1.15;margin-bottom:2px;letter-spacing:-0.005em;transition:color .15s}
+.guild-card .g-motto{color:var(--ink-dim);font-style:italic;font-family:'EB Garamond',serif;font-size:17px;margin-bottom:10px;line-height:1.35}
+.guild-card .g-meta{font-family:'EB Garamond',serif;font-style:italic;font-size:14px;color:var(--ink-fade);display:flex;gap:20px;flex-wrap:wrap;letter-spacing:0}
 .guild-card .g-meta .h{color:var(--blue);font-weight:500;text-transform:none;letter-spacing:0}
 
 .goal{padding:22px 0;background:transparent;border:none;border-radius:0;border-bottom:1px solid var(--paper-line);margin-bottom:0}
@@ -503,19 +511,19 @@ header.top .who button:hover{color:var(--red);text-decoration-color:var(--red)}
 .goal.completed .g-title::after{content:' ✓';color:var(--good)}
 .goal.failed{opacity:0.55}
 .goal .g-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:10px}
-.goal .g-title{font-family:'Cormorant Garamond','EB Garamond',serif;font-weight:500;color:var(--ink-bright);font-size:22px;line-height:1.2;letter-spacing:-0.005em}
-.goal .g-status{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:14px;letter-spacing:0;color:var(--ink-fade);text-transform:lowercase;flex-shrink:0}
+.goal .g-title{font-family:'EB Garamond',serif;font-weight:500;color:var(--ink-bright);font-size:22px;line-height:1.2;letter-spacing:-0.005em}
+.goal .g-status{font-family:'EB Garamond',serif;font-style:italic;font-size:14px;letter-spacing:0;color:var(--ink-fade);text-transform:lowercase;flex-shrink:0}
 .goal .g-status.active{color:var(--accent)}
 .goal .g-status.completed{color:var(--good)}
 .goal .g-status.failed{color:var(--marker)}
 .goal .g-progress{display:flex;justify-content:space-between;align-items:baseline;margin:4px 0 6px;font-family:'EB Garamond',serif;font-size:15px;color:var(--ink-dim)}
-.goal .g-progress .n{font-family:'Cormorant Garamond','EB Garamond',serif;font-size:24px;color:var(--ink-bright);font-weight:500}
+.goal .g-progress .n{font-family:'EB Garamond',serif;font-size:24px;color:var(--ink-bright);font-weight:500}
 .goal .g-progress .n .of{color:var(--ink-fade);font-size:16px}
 /* Guild-goal progress: tan while in progress, blue when complete (social win) */
 .goal .g-bar{height:8px;background:transparent;border-radius:0;overflow:visible;margin-bottom:12px;border-top:1px solid var(--paper-line-strong);border-bottom:1px solid var(--paper-line-strong);position:relative}
 .goal .g-bar .fill{position:absolute;top:2px;left:0;height:calc(100% - 4px);background:var(--tan);transition:width .4s ease}
 .goal.completed .g-bar .fill{background:var(--blue)}
-.goal .g-when{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:14px;color:var(--ink-fade);margin-bottom:10px}
+.goal .g-when{font-family:'EB Garamond',serif;font-style:italic;font-size:14px;color:var(--ink-fade);margin-bottom:10px}
 .goal .g-ranking{border-top:1px dashed var(--paper-line);padding-top:10px;margin-top:12px}
 .goal .g-ranking .rk{display:flex;align-items:center;gap:10px;padding:6px 0;font-family:'EB Garamond',serif;font-size:15px}
 .goal .g-ranking .rk .n{color:var(--ink-fade);width:20px;text-align:center;font-variant-numeric:tabular-nums}
@@ -527,9 +535,9 @@ header.top .who button:hover{color:var(--red);text-decoration-color:var(--red)}
 .goal .g-ranking .rk .val{font-variant-numeric:tabular-nums;color:var(--ink-bright);font-weight:500}
 
 .guild-detail-head{margin-bottom:20px}
-.guild-detail-head h2{font-family:'Cormorant Garamond','EB Garamond',serif;font-weight:500;font-size:36px;line-height:1;color:var(--ink-bright);letter-spacing:-0.01em;margin-bottom:4px}
-.guild-detail-head .h{font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--blue);font-size:16px}
-.guild-detail-head .motto{font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--ink-dim);font-size:18px;margin-top:8px}
+.guild-detail-head h2{font-family:'EB Garamond',serif;font-weight:500;font-size:36px;line-height:1;color:var(--ink-bright);letter-spacing:-0.01em;margin-bottom:4px}
+.guild-detail-head .h{font-family:'EB Garamond',serif;font-style:italic;color:var(--blue);font-size:16px}
+.guild-detail-head .motto{font-family:'EB Garamond',serif;font-style:italic;color:var(--ink-dim);font-size:18px;margin-top:8px}
 .guild-detail-head .desc{color:var(--ink-dim);font-size:15px;margin-top:6px;line-height:1.5}
 
 /* Pulse when a stat updates — the stat number briefly flushes with accent-red
@@ -540,23 +548,39 @@ header.top .who button:hover{color:var(--red);text-decoration-color:var(--red)}
 }
 .card.pulse .stat{animation:uf-pulse 0.9s ease-out}
 
-/* Running head — the small book-page header line above each tab.
-   Left: chapter/tab name in italic small caps. Right: folio (page number).
-   Blue tint on the folio, since it's social/navigation. */
+/* Running head — top-of-page book header. Small caps chapter title on the left,
+   folio + close-book link on the right. One hairline rule below. */
 .running-head{
   display:flex;justify-content:space-between;align-items:baseline;
-  padding:0 0 8px;margin-bottom:22px;
-  border-bottom:1px solid var(--blue-soft);
-  font-family:'Cormorant Garamond',serif;font-style:italic;font-size:12px;
-  color:var(--ink-fade);letter-spacing:0.14em;text-transform:lowercase;
+  padding:16px 0 10px;margin-bottom:26px;
+  border-bottom:1px solid var(--paper-line);
+  font-family:'EB Garamond',serif;font-size:12px;
+  color:var(--ink-fade);letter-spacing:0.10em;
+  gap:16px;flex-wrap:wrap;
 }
-.running-head .chapter{font-variant:small-caps;letter-spacing:0.24em}
-.running-head .folio{font-variant-numeric:oldstyle-nums;font-style:normal;color:var(--ink-dim)}
+.running-head .chapter{font-variant:small-caps;letter-spacing:0.22em;font-weight:500;color:var(--ink-dim)}
+.running-head .right{display:flex;align-items:baseline;gap:14px}
+.running-head .folio{font-family:'Geist',sans-serif;font-size:11px;color:var(--ink-fade);letter-spacing:0.08em;font-variant-numeric:tabular-nums}
+.running-head .close-book{background:none;border:none;font:inherit;color:var(--ink-fade);
+  cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--paper-line-strong);
+  font-variant:small-caps;letter-spacing:0.14em;font-size:11px;padding:0}
+.running-head .close-book:hover{color:var(--red);text-decoration-color:var(--red)}
+
+/* Page footer — folio (page number) centred at the bottom, with fleuron above. */
+.page-footer{
+  margin-top:56px;padding:28px 0 12px;
+  text-align:center;
+  font-family:'EB Garamond',serif;color:var(--ink-fade);
+  font-size:14px;
+}
+.page-footer .fleur{display:block;color:var(--red);font-size:16px;margin-bottom:10px;letter-spacing:0.6em;padding-left:0.6em;opacity:0.7}
+.page-footer .fleur::before{content:'❦ · ❧'}
+.page-footer .num{font-variant-numeric:oldstyle-nums;letter-spacing:0.02em;font-style:italic;font-size:15px}
 
 /* Marginalia — an italic serif note. Blue rule since it's editorial/info,
    not an action. */
 .marginalia{
-  font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--ink-dim);
+  font-family:'EB Garamond',serif;font-style:italic;color:var(--ink-dim);
   font-size:14px;line-height:1.4;padding-left:14px;border-left:2px solid var(--blue);
   margin:10px 0;max-width:280px;
 }
@@ -569,7 +593,7 @@ header.top .who button:hover{color:var(--red);text-decoration-color:var(--red)}
 
 /* Drop cap for the very first paragraph on a page — like a book chapter opener */
 .drop-cap::first-letter{
-  font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;
+  font-family:'EB Garamond',serif;font-style:italic;font-weight:500;
   font-size:60px;line-height:0.85;float:left;padding:6px 8px 0 0;color:var(--accent);
 }
 
@@ -619,7 +643,7 @@ header.top .who button:hover{color:var(--red);text-decoration-color:var(--red)}
     <div id="endpaper" class="endpaper hidden">
       <div class="plate">
         <div class="chapter-mark">Ex libris</div>
-        <div class="title">Your name<em>,</em> please</div>
+        <div class="title">Your name, please</div>
         <div class="lead">Ukufunda is honour-system. Your handle is your identity — no password, no email, nothing to lose but your streak.</div>
       </div>
 
@@ -682,7 +706,7 @@ header.top .who button:hover{color:var(--red);text-decoration-color:var(--red)}
       <div class="who">
         <span id="who-name"></span>
         <span id="who-tier"></span>
-        <button id="close-book-btn" title="Return to cover" style="font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--ink-fade);font-size:13px;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--paper-line-strong)">close book</button>
+        <button id="close-book-btn" title="Return to cover" style="font-family:'EB Garamond',serif;font-style:italic;color:var(--ink-fade);font-size:13px;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--paper-line-strong)">close book</button>
         <button id="signout-btn">sign out</button>
       </div>
     </header>
@@ -697,7 +721,7 @@ header.top .who button:hover{color:var(--red);text-decoration-color:var(--red)}
 
     <!-- HOME TAB -->
     <div id="tab-home" class="tab">
-      <div class="running-head"><span class="chapter">Chapter I · Home</span><span class="folio">fol. i</span></div>
+      <div class="running-head"><span class="chapter">Chapter I · Home</span><span class="right"><span class="folio">fol. i</span><button class="close-book" onclick="showCoverSplash()">close book</button></span></div>
 
       <p class="book-prose drop-cap" style="margin-bottom:22px">
         A ledger of your week's reading, kept honestly. <em>Log the pages you actually read;</em>
@@ -733,11 +757,12 @@ header.top .who button:hover{color:var(--red);text-decoration-color:var(--red)}
         <button class="btn subtle" onclick="switchTab('books')">+ add a book</button>
       </div>
       <div id="home-books"></div>
+      <div class="page-footer"><span class="fleur"></span><span class="num">— i —</span></div>
     </div>
 
     <!-- BOOKS TAB -->
     <div id="tab-books" class="tab hidden">
-      <div class="running-head"><span class="chapter">Chapter II · The Library</span><span class="folio">fol. ii</span></div>
+      <div class="running-head"><span class="chapter">Chapter II · The Library</span><span class="right"><span class="folio">fol. ii</span><button class="close-book" onclick="showCoverSplash()">close book</button></span></div>
 
       <p class="book-prose" style="margin-bottom:22px;font-style:italic;color:var(--ink-dim)">
         Search for any book by title or author — covers and page counts are drawn from the
@@ -754,11 +779,12 @@ header.top .who button:hover{color:var(--red);text-decoration-color:var(--red)}
         <h2>Your library</h2>
       </div>
       <div id="books-list"></div>
+      <div class="page-footer"><span class="fleur"></span><span class="num">— ii —</span></div>
     </div>
 
     <!-- LEADERBOARD TAB -->
     <div id="tab-leaderboard" class="tab hidden">
-      <div class="running-head"><span class="chapter">Chapter III · The League</span><span class="folio">fol. iii</span></div>
+      <div class="running-head"><span class="chapter">Chapter III · The League</span><span class="right"><span class="folio">fol. iii</span><button class="close-book" onclick="showCoverSplash()">close book</button></span></div>
 
       <p class="book-prose" style="margin-bottom:22px;font-style:italic;color:var(--ink-dim)">
         Readers ranked by season XP — one point for every page read, with a small bonus for
@@ -780,11 +806,12 @@ header.top .who button:hover{color:var(--red);text-decoration-color:var(--red)}
         </div>
         <div id="lb-body"></div>
       </div>
+      <div class="page-footer"><span class="fleur"></span><span class="num">— iii —</span></div>
     </div>
 
     <!-- FRIENDS TAB -->
     <div id="tab-friends" class="tab hidden">
-      <div class="running-head"><span class="chapter">Chapter IV · Companions</span><span class="folio">fol. iv</span></div>
+      <div class="running-head"><span class="chapter">Chapter IV · Companions</span><span class="right"><span class="folio">fol. iv</span><button class="close-book" onclick="showCoverSplash()">close book</button></span></div>
 
       <p class="book-prose" style="margin-bottom:22px;font-style:italic;color:var(--ink-dim)">
         Add a friend by their handle to see their reading beside your own. Your handle,
@@ -801,11 +828,12 @@ header.top .who button:hover{color:var(--red);text-decoration-color:var(--red)}
         <button class="btn ghost" onclick="addFriend()">Add</button>
       </div>
       <div id="friends-list"></div>
+      <div class="page-footer"><span class="fleur"></span><span class="num">— iv —</span></div>
     </div>
 
     <!-- GUILDS TAB -->
     <div id="tab-guilds" class="tab hidden">
-      <div class="running-head"><span class="chapter">Chapter V · Guilds</span><span class="folio">fol. v</span></div>
+      <div class="running-head"><span class="chapter">Chapter V · Guilds</span><span class="right"><span class="folio">fol. v</span><button class="close-book" onclick="showCoverSplash()">close book</button></span></div>
 
       <p class="book-prose" style="margin-bottom:22px;font-style:italic;color:var(--ink-dim)">
         A guild is a reading club with shared goals. Anyone in the guild may set a goal —
@@ -866,6 +894,7 @@ header.top .who button:hover{color:var(--red);text-decoration-color:var(--red)}
         <button class="btn subtle" onclick="backToGuildList()" style="margin-bottom:16px">← back to guilds</button>
         <div id="guild-detail-body"></div>
       </div>
+      <div class="page-footer"><span class="fleur"></span><span class="num">— v —</span></div>
     </div>
   </div>
 </div>
@@ -1060,7 +1089,7 @@ async function boot(){
 function renderApp(){
   document.getElementById('auth-screen').classList.add('hidden');
   document.getElementById('app').classList.remove('hidden');
-  document.getElementById('who-name').innerHTML = `<span style="font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--ink-fade);margin-right:6px">ex libris</span>${escHtml(state.me.name)} <span style="color:var(--accent)">@${escHtml(state.me.handle)}</span>`;
+  document.getElementById('who-name').innerHTML = `<span style="font-family:'EB Garamond',serif;font-style:italic;color:var(--ink-fade);margin-right:6px">ex libris</span>${escHtml(state.me.name)} <span style="color:var(--accent)">@${escHtml(state.me.handle)}</span>`;
   document.getElementById('my-handle').textContent = '@' + state.me.handle;
   refresh();
 }
@@ -1322,7 +1351,7 @@ function renderLeaderboard(){
     if (state.lbMode === 'friends') {
       el.innerHTML = `
         <div style="padding:36px 24px;text-align:center">
-          <div style="font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--ink);font-size:26px;margin-bottom:10px">Solo for now.</div>
+          <div style="font-family:'EB Garamond',serif;font-style:italic;color:var(--ink);font-size:26px;margin-bottom:10px">Solo for now.</div>
           <div style="color:var(--ink-dim);font-size:13px;margin-bottom:16px">Add friends by their handle and their reading will show up here — ranked by XP.</div>
           <button class="btn subtle" onclick="switchTab('friends')">Add a friend</button>
         </div>`;
@@ -1330,7 +1359,7 @@ function renderLeaderboard(){
       // Show the tier ladder instead so the page has meaning even when empty
       el.innerHTML = `
         <div style="padding:28px 24px">
-          <div style="font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--ink);font-size:26px;margin-bottom:6px;text-align:center">You're the first one here.</div>
+          <div style="font-family:'EB Garamond',serif;font-style:italic;color:var(--ink);font-size:26px;margin-bottom:6px;text-align:center">You're the first one here.</div>
           <div style="color:var(--ink-dim);font-size:13px;text-align:center;margin-bottom:20px">Global leaderboard fills in as people join. Meanwhile — the ladder:</div>
           <div class="ladder">
             <div class="rung"><span class="swatch" style="background:var(--t-bronze)"></span><span class="rname">Bronze</span><span class="rxp">0 XP</span></div>
@@ -1374,7 +1403,7 @@ function renderFriends(){
     el.innerHTML = `
       <div class="empty">
         No friends yet.<br>
-        <span style="font-size:15px;font-style:italic;color:var(--ink-fade);font-family:'Cormorant Garamond',serif;display:block;margin-top:8px">Share your handle — <b style="color:var(--blue);font-weight:500;font-style:normal;font-family:'EB Garamond',serif">@${escHtml(state.me.handle)}</b> — so people can add you.</span>
+        <span style="font-size:15px;font-style:italic;color:var(--ink-fade);font-family:'EB Garamond',serif;display:block;margin-top:8px">Share your handle — <b style="color:var(--blue);font-weight:500;font-style:normal;font-family:'EB Garamond',serif">@${escHtml(state.me.handle)}</b> — so people can add you.</span>
       </div>`;
     return;
   }
@@ -1480,7 +1509,7 @@ async function loadGuilds(){
 function renderGuildList(mine, directory){
   const myEl = document.getElementById('my-guilds');
   if (!mine.length) {
-    myEl.innerHTML = `<div class="empty">You aren't in any guilds yet.<br><span style="font-size:15px;font-style:italic;color:var(--ink-fade);font-family:'Cormorant Garamond',serif;display:block;margin-top:8px">Create one, or join by handle.</span></div>`;
+    myEl.innerHTML = `<div class="empty">You aren't in any guilds yet.<br><span style="font-size:15px;font-style:italic;color:var(--ink-fade);font-family:'EB Garamond',serif;display:block;margin-top:8px">Create one, or join by handle.</span></div>`;
   } else {
     myEl.innerHTML = mine.map(guildCardHtml).join('');
     myEl.querySelectorAll('.guild-card').forEach(el => {
