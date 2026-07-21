@@ -106,13 +106,17 @@ body {
   scrollbar-width: none;
 }
 .site-nav::-webkit-scrollbar { display: none; }
-.nav-tab {
+.nav-tab,
+.nav-tab:link,
+.nav-tab:visited,
+.nav-tab:active {
   font-family: var(--mono, 'Space Mono', monospace);
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   color: var(--text-mid, #888);
   text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
   padding: 6px 12px;
   border: 1px solid transparent;
   border-radius: 2px;
