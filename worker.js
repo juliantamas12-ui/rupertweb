@@ -7305,11 +7305,11 @@ async function ufLog(request, env) {
       const interrupted = !!session.interrupted || interruptions > 0;
       if (durMs >= 60_000) {
         if (interrupted)                    focusMult = 0.75;
-        else if (durMs >= 20 * 60_000)      focusMult = 1.25;
+        else if (durMs >= 30 * 60_000)      focusMult = 1.25;
         else                                 focusMult = 1.0;
         sessionMeta = { durationMs: durMs, interrupted, interruptionCount: interruptions, focusMult };
         u.focusMinutes = (u.focusMinutes || 0) + Math.round(durMs / 60000);
-        if (!interrupted && durMs >= 20 * 60_000) {
+        if (!interrupted && durMs >= 30 * 60_000) {
           u.deepSessions = (u.deepSessions || 0) + 1;
         }
       }

@@ -2084,8 +2084,8 @@ async function endSession(){
   const mins = Math.round(s.durationMs / 60000);
   const focusHint = s.interrupted
     ? `Interrupted × ${s.interruptionCount} — XP will be 0.75× (distraction penalty).`
-    : mins >= 20
-    ? `${mins} minutes uninterrupted — 1.25× deep-focus XP.`
+    : mins >= 30
+    ? `${mins} minutes uninterrupted — 1.25× deep-focus XP (photos will lift it to 1.5× once enabled).`
     : `${mins} minutes uninterrupted — normal XP.`;
   document.getElementById('log-book-info').innerHTML =
     `<div class="session-review-info"><b>${escHtml(book.title)}</b> — ${focusHint}</div>`
