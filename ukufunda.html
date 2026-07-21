@@ -79,10 +79,11 @@
   --radius-lg:10px;
 }
 html,body{background:var(--paper);color:var(--ink);font-family:'EB Garamond',Garamond,ui-serif,Georgia,'Times New Roman',serif;line-height:1.55;min-height:100vh;font-size:17px;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
-/* Small UI labels stay in Geist — Garamond falls apart under ~14px on screens.
-   Body text, book titles, section heads, big stats all stay in Garamond. */
+/* Garamond everywhere. Geist only for tiny numeric things (folios, streak counter).
+   Body, buttons, tabs, tier stamp, statuses, metadata all in Garamond. */
 button, input, select, textarea{font-family:inherit}
-.btn, .btn.ghost, .btn.small, .btn.subtle, .tabs button, .subtabs button, .tier-badge, .card h3, .book .meta-row, .book .progress-text, .book .status-done, .book .status-active, .book .status-paused, header.top .who, header.top .tagline, .lb-row.header, .lb-row .streak, .lb-row .rank, .lb-row .name .h, .friend-row .fmeta, .friend-row .fname, .search-result .meta, .att .att-name, .att .att-size, .att .att-icon{font-family:'Geist',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif}
+.btn, .btn.ghost, .btn.small, .btn.subtle{font-family:'EB Garamond',Garamond,serif}
+.folio, .lb-row .streak, .running-head .folio{font-family:'Geist',sans-serif;font-variant-numeric:tabular-nums}
 .ui{font-family:'Geist',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif}
 body{
   /* Subtle paper texture: two very soft coloured washes + a barely-there fibre noise.
@@ -123,20 +124,17 @@ a:hover{color:var(--accent-bright)}
 .fleuron::before{content:'❦ ❧ ❦'}
 
 /* ── Header ─────────────────────────────── */
-/* Book title-page style header — centred wordmark, decorative rules above/below,
-   sign-out lives above the wordmark as a small quiet line */
-header.top{display:flex;flex-direction:column;align-items:center;gap:14px;padding:8px 0 32px;margin-bottom:36px;border-bottom:1px solid var(--paper-line);position:relative}
-header.top .brand{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;order:2}
-header.top h1{font-family:'Cormorant Garamond','EB Garamond',serif;font-weight:400;font-style:italic;font-size:72px;line-height:0.9;letter-spacing:-0.01em;color:var(--ink-bright)}
-header.top .tagline{font-family:'Geist',sans-serif;font-size:10px;color:var(--ink-fade);letter-spacing:0.28em;text-transform:uppercase;font-weight:500;padding:0 6px;position:relative;display:inline-block}
-header.top .tagline::before,
-header.top .tagline::after{content:'';position:absolute;top:50%;width:32px;height:1px;background:var(--paper-line-strong)}
-header.top .tagline::before{right:100%;margin-right:10px}
-header.top .tagline::after{left:100%;margin-left:10px}
-header.top .who{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink-dim);order:1;flex-wrap:wrap;justify-content:center}
-header.top .who #who-name{font-weight:500;color:var(--ink)}
-header.top .who button{color:var(--accent);font-size:12px;opacity:0.75;transition:opacity .15s;text-decoration:underline;text-underline-offset:2px;text-decoration-color:var(--paper-line-strong)}
-header.top .who button:hover{opacity:1;text-decoration-color:var(--accent)}
+/* Persistent bookplate strip — ONE small line at the very top of the page.
+   Left: "ex libris <name> @handle · TIER". Right: sign out. No wordmark,
+   no tagline, no big centred title. The cover already did that job. */
+header.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0 12px;margin-bottom:0;border-bottom:1px solid var(--paper-line);position:relative;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:14px;color:var(--ink-dim);flex-wrap:wrap}
+header.top .brand{display:none}
+header.top h1{display:none}
+header.top .tagline{display:none}
+header.top .who{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+header.top .who #who-name{color:var(--ink);font-style:normal}
+header.top .who button{color:var(--ink-fade);font-size:13px;font-family:'Cormorant Garamond',serif;font-style:italic;opacity:0.85;transition:color .15s;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--paper-line-strong)}
+header.top .who button:hover{color:var(--red);text-decoration-color:var(--red)}
 @media(max-width:600px){
   header.top h1{font-size:52px}
   header.top{padding-bottom:24px;margin-bottom:24px;gap:10px}
@@ -226,12 +224,53 @@ header.top .who button:hover{opacity:1;text-decoration-color:var(--accent)}
 .book-cover .open-btn{
   margin-top:34px;
   display:inline-flex;align-items:center;gap:10px;
-  background:var(--paper);color:var(--accent-deep);
-  border:none;padding:14px 26px;font-family:'Geist',sans-serif;font-size:12px;
-  font-weight:600;letter-spacing:0.2em;text-transform:uppercase;cursor:pointer;
+  background:var(--paper);color:var(--red-deep);
+  border:none;padding:14px 26px;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:18px;
+  font-weight:500;letter-spacing:0;text-transform:none;cursor:pointer;
   transition:transform .15s, background .15s;
   box-shadow:0 4px 0 rgba(0,0,0,0.25);
 }
+
+/* Cover — splash variant (for signed-in returning user).
+   Adds a Table of Contents in the middle: tap a chapter to enter. */
+.cover-splash{
+  position:fixed;inset:0;z-index:200;
+  animation:coverIn .5s cubic-bezier(0.2,0.7,0.2,1);
+}
+.cover-splash.closing{animation:coverOut .35s ease-in forwards}
+@keyframes coverIn{from{opacity:0;transform:scale(1.02)}to{opacity:1;transform:none}}
+@keyframes coverOut{to{opacity:0;transform:scale(0.98)}}
+
+.cover-toc{
+  display:flex;flex-direction:column;gap:0;margin-top:28px;
+  max-width:340px;margin-left:auto;margin-right:auto;
+  border-top:1px solid rgba(245,238,221,0.28);
+  border-bottom:1px solid rgba(245,238,221,0.28);
+}
+.cover-toc-item{
+  display:flex;align-items:baseline;gap:14px;
+  padding:14px 8px;
+  background:transparent;border:none;
+  color:rgba(245,238,221,0.9);
+  font-family:'Cormorant Garamond','EB Garamond',serif;font-style:italic;
+  font-size:22px;text-align:left;cursor:pointer;
+  border-bottom:1px dotted rgba(245,238,221,0.22);
+  transition:color .15s, transform .12s, letter-spacing .12s;
+  width:100%;
+}
+.cover-toc-item:last-child{border-bottom:none}
+.cover-toc-item:hover{color:var(--paper);letter-spacing:0.01em}
+.cover-toc-item:active{transform:translateX(2px)}
+.cover-toc-item .n{
+  font-family:'Cormorant Garamond',serif;font-style:italic;font-size:14px;
+  color:rgba(245,238,221,0.55);min-width:24px;letter-spacing:0.06em;
+}
+.cover-toc-item .t{flex:1}
+.cover-toc-item::after{
+  content:'→';font-family:serif;color:rgba(245,238,221,0.45);font-size:16px;
+  transition:transform .12s, color .12s;
+}
+.cover-toc-item:hover::after{color:var(--paper);transform:translateX(4px)}
 .book-cover .open-btn:hover{background:var(--ink);color:var(--paper);transform:translateY(-1px)}
 .book-cover .open-btn:active{transform:translateY(1px);box-shadow:0 2px 0 rgba(0,0,0,0.25)}
 .book-cover .open-btn::after{content:'→';font-family:serif;font-size:14px;letter-spacing:0}
@@ -292,14 +331,15 @@ header.top .who button:hover{opacity:1;text-decoration-color:var(--accent)}
 .btn.danger{background:var(--marker);color:var(--paper)}
 
 /* ── Tabs ─────────────────────────────── */
-.tabs{display:flex;gap:0;justify-content:center;border-bottom:1px solid var(--paper-line);margin-bottom:32px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px}
+/* Tabs as a table-of-contents strip — Garamond italic, not sans caps. */
+.tabs{display:flex;gap:0;justify-content:center;border-bottom:1px solid var(--paper-line);margin-bottom:32px;margin-top:20px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px}
 .tabs::-webkit-scrollbar{display:none}
-.tabs button{padding:10px 4px;margin:0 18px;color:var(--ink-dim);font-weight:500;font-size:13px;border-bottom:1.5px solid transparent;margin-bottom:-1px;white-space:nowrap;transition:color .15s, border-color .15s;letter-spacing:0.02em;text-transform:uppercase;font-family:'Geist',sans-serif}
-.tabs button.active{color:var(--ink-bright);border-bottom-color:var(--accent)}
+.tabs button{padding:12px 4px;margin:0 20px;color:var(--ink-dim);font-weight:400;font-size:20px;border-bottom:1.5px solid transparent;margin-bottom:-1px;white-space:nowrap;transition:color .15s, border-color .15s;letter-spacing:-0.005em;font-family:'Cormorant Garamond','EB Garamond',serif;font-style:italic;line-height:1}
+.tabs button.active{color:var(--red);border-bottom-color:var(--red)}
 .tabs button:hover:not(.active){color:var(--ink)}
 @media(max-width:600px){
   .tabs{justify-content:flex-start;padding-left:4px}
-  .tabs button{margin:0 12px 0 0}
+  .tabs button{margin:0 14px 0 0;font-size:18px}
 }
 
 /* sub-tabs (leaderboard) — pill style */
@@ -445,7 +485,7 @@ header.top .who button:hover{opacity:1;text-decoration-color:var(--accent)}
 .rung:last-child{border-bottom:none}
 .rung .swatch{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .rung .rname{font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--ink);font-weight:500;font-style:italic}
-.rung .rxp{font-family:'Geist',sans-serif;font-size:11px;color:var(--ink-fade);font-variant-numeric:tabular-nums;margin-left:auto;letter-spacing:0.06em}
+.rung .rxp{font-family:'EB Garamond',serif;font-style:italic;font-size:14px;color:var(--ink-fade);font-variant-numeric:tabular-nums;margin-left:auto;letter-spacing:0}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink-bright);border:none;border-radius:0;padding:12px 22px;color:var(--paper);font-weight:500;font-size:13px;z-index:100;display:none;box-shadow:0 10px 30px -5px rgba(60,40,20,0.30);letter-spacing:0.02em}
 .toast.show{display:block;animation:toastIn .2s ease}
 @keyframes toastIn{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}
@@ -455,7 +495,7 @@ header.top .who button:hover{opacity:1;text-decoration-color:var(--accent)}
 .guild-card:hover .g-name{color:var(--blue)}
 .guild-card .g-name{font-family:'Cormorant Garamond','EB Garamond',serif;font-weight:500;color:var(--ink-bright);font-size:26px;line-height:1.15;margin-bottom:2px;letter-spacing:-0.005em;transition:color .15s}
 .guild-card .g-motto{color:var(--ink-dim);font-style:italic;font-family:'Cormorant Garamond',serif;font-size:17px;margin-bottom:10px;line-height:1.35}
-.guild-card .g-meta{font-family:'Geist',sans-serif;font-size:11px;color:var(--ink-fade);display:flex;gap:20px;flex-wrap:wrap;letter-spacing:0.06em;text-transform:uppercase}
+.guild-card .g-meta{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:14px;color:var(--ink-fade);display:flex;gap:20px;flex-wrap:wrap;letter-spacing:0}
 .guild-card .g-meta .h{color:var(--blue);font-weight:500;text-transform:none;letter-spacing:0}
 
 .goal{padding:22px 0;background:transparent;border:none;border-radius:0;border-bottom:1px solid var(--paper-line);margin-bottom:0}
@@ -464,20 +504,20 @@ header.top .who button:hover{opacity:1;text-decoration-color:var(--accent)}
 .goal.failed{opacity:0.55}
 .goal .g-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:10px}
 .goal .g-title{font-family:'Cormorant Garamond','EB Garamond',serif;font-weight:500;color:var(--ink-bright);font-size:22px;line-height:1.2;letter-spacing:-0.005em}
-.goal .g-status{font-family:'Geist',sans-serif;font-size:11px;letter-spacing:0.04em;color:var(--ink-fade);text-transform:uppercase;flex-shrink:0}
+.goal .g-status{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:14px;letter-spacing:0;color:var(--ink-fade);text-transform:lowercase;flex-shrink:0}
 .goal .g-status.active{color:var(--accent)}
 .goal .g-status.completed{color:var(--good)}
 .goal .g-status.failed{color:var(--marker)}
-.goal .g-progress{display:flex;justify-content:space-between;align-items:baseline;margin:4px 0 6px;font-family:'Geist',sans-serif;font-size:13px;color:var(--ink-dim)}
+.goal .g-progress{display:flex;justify-content:space-between;align-items:baseline;margin:4px 0 6px;font-family:'EB Garamond',serif;font-size:15px;color:var(--ink-dim)}
 .goal .g-progress .n{font-family:'Cormorant Garamond','EB Garamond',serif;font-size:24px;color:var(--ink-bright);font-weight:500}
 .goal .g-progress .n .of{color:var(--ink-fade);font-size:16px}
 /* Guild-goal progress: tan while in progress, blue when complete (social win) */
 .goal .g-bar{height:8px;background:transparent;border-radius:0;overflow:visible;margin-bottom:12px;border-top:1px solid var(--paper-line-strong);border-bottom:1px solid var(--paper-line-strong);position:relative}
 .goal .g-bar .fill{position:absolute;top:2px;left:0;height:calc(100% - 4px);background:var(--tan);transition:width .4s ease}
 .goal.completed .g-bar .fill{background:var(--blue)}
-.goal .g-when{font-family:'Geist',sans-serif;font-size:12px;color:var(--ink-fade);margin-bottom:10px}
+.goal .g-when{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:14px;color:var(--ink-fade);margin-bottom:10px}
 .goal .g-ranking{border-top:1px dashed var(--paper-line);padding-top:10px;margin-top:12px}
-.goal .g-ranking .rk{display:flex;align-items:center;gap:10px;padding:6px 0;font-family:'Geist',sans-serif;font-size:13px}
+.goal .g-ranking .rk{display:flex;align-items:center;gap:10px;padding:6px 0;font-family:'EB Garamond',serif;font-size:15px}
 .goal .g-ranking .rk .n{color:var(--ink-fade);width:20px;text-align:center;font-variant-numeric:tabular-nums}
 .goal .g-ranking .rk .n.gold{color:var(--t-gold)}
 .goal .g-ranking .rk .n.silver{color:var(--t-silver)}
@@ -488,7 +528,7 @@ header.top .who button:hover{opacity:1;text-decoration-color:var(--accent)}
 
 .guild-detail-head{margin-bottom:20px}
 .guild-detail-head h2{font-family:'Cormorant Garamond','EB Garamond',serif;font-weight:500;font-size:36px;line-height:1;color:var(--ink-bright);letter-spacing:-0.01em;margin-bottom:4px}
-.guild-detail-head .h{font-family:'Geist',sans-serif;color:var(--accent);font-size:13px}
+.guild-detail-head .h{font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--blue);font-size:16px}
 .guild-detail-head .motto{font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--ink-dim);font-size:18px;margin-top:8px}
 .guild-detail-head .desc{color:var(--ink-dim);font-size:15px;margin-top:6px;line-height:1.5}
 
@@ -600,6 +640,39 @@ header.top .who button:hover{opacity:1;text-decoration-color:var(--accent)}
   </div>
 
   <!-- APP -->
+  <!-- Cover splash for signed-in returning users. Shown once per session
+       (sessionStorage flag). Contains the ToC so you can tap a chapter to enter. -->
+  <div id="book-cover-splash" class="book-cover cover-splash hidden">
+    <div class="spine"></div>
+    <div class="frame"></div>
+
+    <div class="cover-top">
+      <div class="publisher">Rupertweb Editions</div>
+      <div class="edition" id="cover-edition">Your edition</div>
+    </div>
+
+    <div class="cover-mid">
+      <div class="rule-set"><span class="rule"></span><span class="mark">❦</span><span class="rule"></span></div>
+      <h1 class="title">Ukufunda</h1>
+      <p class="subtitle">A reading league.</p>
+      <div class="rule-set"><span class="rule"></span><span class="mark">❧</span><span class="rule"></span></div>
+
+      <!-- Table of Contents — chapters live on the cover itself -->
+      <nav class="cover-toc">
+        <button data-tab="home"        class="cover-toc-item"><span class="n">i</span><span class="t">Home</span></button>
+        <button data-tab="books"       class="cover-toc-item"><span class="n">ii</span><span class="t">The Library</span></button>
+        <button data-tab="leaderboard" class="cover-toc-item"><span class="n">iii</span><span class="t">The League</span></button>
+        <button data-tab="friends"     class="cover-toc-item"><span class="n">iv</span><span class="t">Companions</span></button>
+        <button data-tab="guilds"      class="cover-toc-item"><span class="n">v</span><span class="t">Guilds</span></button>
+      </nav>
+    </div>
+
+    <div class="cover-bot">
+      <div class="colophon">❦</div>
+      <div class="attr" id="cover-attr">isiXhosa for reading</div>
+    </div>
+  </div>
+
   <div id="app" class="hidden">
     <header class="top">
       <div class="brand">
@@ -609,6 +682,7 @@ header.top .who button:hover{opacity:1;text-decoration-color:var(--accent)}
       <div class="who">
         <span id="who-name"></span>
         <span id="who-tier"></span>
+        <button id="close-book-btn" title="Return to cover" style="font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--ink-fade);font-size:13px;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--paper-line-strong)">close book</button>
         <button id="signout-btn">sign out</button>
       </div>
     </header>
@@ -919,17 +993,53 @@ function closeCover(){
   cover.style.transform = 'none';
 }
 
+// Cover splash — shown once per session for signed-in users. Tapping a ToC
+// item closes the cover and opens that chapter. Also invocable via "open book".
+function showCoverSplash(){
+  const el = document.getElementById('book-cover-splash');
+  if (!el) return;
+  // Fill in the edition line with the user’s name if we have them
+  if (state.me) {
+    document.getElementById('cover-edition').textContent = `The private edition of ${state.me.name}`;
+  }
+  el.classList.remove('hidden','closing');
+  document.body.style.overflow = 'hidden';
+}
+function hideCoverSplash(destinationTab){
+  const el = document.getElementById('book-cover-splash');
+  if (!el) return;
+  el.classList.add('closing');
+  setTimeout(() => {
+    el.classList.add('hidden');
+    el.classList.remove('closing');
+    document.body.style.overflow = '';
+    if (destinationTab) switchTab(destinationTab);
+  }, 320);
+}
+
 async function boot(){
   loadMe();
   if (state.me) {
     renderApp();
+    // Show the cover splash once per browser session for returning users
+    try {
+      if (!sessionStorage.getItem('uf_cover_seen')) {
+        showCoverSplash();
+        sessionStorage.setItem('uf_cover_seen', '1');
+      }
+    } catch(e) { /* private-mode etc — skip splash */ }
   } else {
     document.getElementById('auth-screen').classList.remove('hidden');
   }
+  // Cover ToC — tap a chapter to enter that tab
+  document.querySelectorAll('.cover-toc-item').forEach(b => {
+    b.addEventListener('click', () => hideCoverSplash(b.dataset.tab));
+  });
   document.getElementById('signin-btn').addEventListener('click', signIn);
   document.getElementById('signout-btn').addEventListener('click', () => {
     if (confirm('Sign out?')) { clearMe(); location.reload(); }
   });
+  document.getElementById('close-book-btn').addEventListener('click', () => showCoverSplash());
   document.querySelectorAll('.tabs button[data-tab]').forEach(b => {
     b.addEventListener('click', () => switchTab(b.dataset.tab));
   });
@@ -1264,7 +1374,7 @@ function renderFriends(){
     el.innerHTML = `
       <div class="empty">
         No friends yet.<br>
-        <span style="font-size:13px;font-style:normal;color:var(--ink-fade);font-family:'Geist',sans-serif;display:block;margin-top:8px">Share your handle — <b style="color:var(--accent);font-weight:600">@${escHtml(state.me.handle)}</b> — so people can add you.</span>
+        <span style="font-size:15px;font-style:italic;color:var(--ink-fade);font-family:'Cormorant Garamond',serif;display:block;margin-top:8px">Share your handle — <b style="color:var(--blue);font-weight:500;font-style:normal;font-family:'EB Garamond',serif">@${escHtml(state.me.handle)}</b> — so people can add you.</span>
       </div>`;
     return;
   }
@@ -1370,7 +1480,7 @@ async function loadGuilds(){
 function renderGuildList(mine, directory){
   const myEl = document.getElementById('my-guilds');
   if (!mine.length) {
-    myEl.innerHTML = `<div class="empty">You aren't in any guilds yet.<br><span style="font-size:13px;font-style:normal;color:var(--ink-fade);font-family:'Geist',sans-serif;display:block;margin-top:8px">Create one, or join by handle.</span></div>`;
+    myEl.innerHTML = `<div class="empty">You aren't in any guilds yet.<br><span style="font-size:15px;font-style:italic;color:var(--ink-fade);font-family:'Cormorant Garamond',serif;display:block;margin-top:8px">Create one, or join by handle.</span></div>`;
   } else {
     myEl.innerHTML = mine.map(guildCardHtml).join('');
     myEl.querySelectorAll('.guild-card').forEach(el => {
