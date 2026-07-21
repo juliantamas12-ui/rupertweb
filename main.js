@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Afternoon of 13 March 1848 in Vienna When Klemens von Metternich Discovered That the Habsburg Police State He Had Built to Contain the French Revolution Had Been Ruling on a Bluff for Thirty-Three Years",
+    date: "2026-07-21",
+    category: "History",
+    excerpt: "On the morning of 13 March 1848, Klemens von Metternich, Chancellor of the Austrian Empire, architect of the Congress of Vienna, and the principal engineer of the European counter-revolutionary order that had held since 1815, was seventy-four years old and confident. His Polizeihofstelle — the political police organisation he had built after 1815 and which had come to be regarded as the most sophisticated instrument of state surveillance in continental Europe — reported that the crowds outside the Landhaus were composed largely of students and would disperse when the weather turned. The weather did not turn. The crowds did not disperse. By four o'clock that afternoon, Metternich had resigned. By eleven o'clock that night, he was in a laundry cart, in the clothing of a female servant, being smuggled out of the Hofburg. In eight hours the Habsburg counter-revolution collapsed. What is remarkable is not that it collapsed. What is remarkable is that no one — Metternich least of all — had understood that it had been a bluff since 1815. The lesson: police states rule by consent, the consent of the ruled to be afraid of the state's capacity to observe them, and when the consent is withdrawn the state discovers that its capacity is a fraction of what its subjects had believed...",
+    url: "essays/2026-07-21-the-afternoon-of-13-march-1848-in-vienna-when-klemens-von-metternich-discovered-that-the-habsburg-police-state-he-had-built-to-contain-the-french-revolution-had-been-ruling-on-a-bluff-for-thirty-three-years.html"
+  },
+  {
     title: "The Six Months in 1979 When Zbigniew Brzeziński Persuaded Jimmy Carter to Bait the Soviet Union Into Invading Afghanistan and Built the Global Jihadist Infrastructure That Would Kill Three Thousand Americans Twenty-Two Years Later",
     date: "2026-07-20",
     category: "Geopolitics",
