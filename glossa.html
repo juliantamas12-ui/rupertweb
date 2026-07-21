@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Glossa — Read historical sources</title>
-<meta name="description" content="Paste an old or foreign text. Glossa normalises, translates, summarises, and tells you what to read next.">
+<meta name="description" content="Paste text or upload a PDF/photo. Glossa normalises, translates, summarises, decodes handwriting.">
 <meta name="theme-color" content="#2A1F26">
 <link rel="icon" type="image/svg+xml" href="/icons/favicon-praefatio.svg">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -20,6 +20,7 @@
   --accent:#D4A156;
   --accent-soft:rgba(212,161,86,0.14);
   --paper:#3A2C33;
+  --err:#E47A6A;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;font-size:16px;line-height:1.6;min-height:100vh}
@@ -33,17 +34,32 @@ header.masthead{text-align:center;margin-bottom:48px}
 .brand-line{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:18px}
 .brand-line a{color:inherit}
 h1.title{font-family:'Fraunces',serif;font-style:italic;font-weight:500;font-size:clamp(48px,8vw,96px);line-height:1;letter-spacing:-2px;color:var(--ink);margin-bottom:14px}
-.strap{font-family:'Inter',sans-serif;color:var(--ink-soft);max-width:620px;margin:0 auto;font-size:clamp(15px,1.4vw,17px);line-height:1.55}
+.strap{font-family:'Inter',sans-serif;color:var(--ink-soft);max-width:640px;margin:0 auto;font-size:clamp(15px,1.4vw,17px);line-height:1.55}
 
 .lab{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:var(--ink-mute);margin-bottom:10px;font-weight:600}
 
 .input-card{background:var(--paper);border:1px solid var(--rule);border-radius:6px;padding:22px;margin-bottom:24px}
-textarea{width:100%;background:transparent;border:none;color:var(--ink);font-family:'Fraunces',Georgia,serif;font-size:17px;line-height:1.6;resize:vertical;min-height:200px;outline:none}
+textarea{width:100%;background:transparent;border:none;color:var(--ink);font-family:'Fraunces',Georgia,serif;font-size:17px;line-height:1.6;resize:vertical;min-height:180px;outline:none}
 textarea::placeholder{color:var(--ink-mute);font-style:italic}
+
+/* Dropzone */
+.dropzone{margin-top:16px;border:1px dashed var(--rule-strong);border-radius:6px;padding:18px;text-align:center;transition:border-color .15s, background .15s;cursor:pointer}
+.dropzone:hover, .dropzone.drag{border-color:var(--accent);background:var(--accent-soft)}
+.dropzone .dz-title{font-family:'Inter',sans-serif;font-size:14px;color:var(--ink-soft);font-weight:500}
+.dropzone .dz-hint{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-mute);margin-top:6px}
+.dropzone input[type=file]{display:none}
+
+.attachments{margin-top:12px;display:flex;flex-direction:column;gap:6px}
+.att{display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(0,0,0,0.22);border:1px solid var(--rule);border-radius:4px;font-size:13px}
+.att .att-icon{width:22px;height:22px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--accent);background:var(--accent-soft);border-radius:3px;font-weight:700;letter-spacing:0.5px}
+.att .att-name{flex:1;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'JetBrains Mono',monospace;font-size:12px}
+.att .att-size{color:var(--ink-mute);font-family:'JetBrains Mono',monospace;font-size:11px;flex-shrink:0}
+.att .att-remove{background:none;border:none;color:var(--ink-mute);cursor:pointer;font-size:16px;line-height:1;padding:0 4px;flex-shrink:0}
+.att .att-remove:hover{color:var(--err)}
 
 .row{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-top:18px;padding-top:18px;border-top:1px solid var(--rule-soft)}
 .row label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--ink-mute);font-weight:600;margin-right:6px}
-.row select,.row input[type=text]{background:rgba(0,0,0,0.2);border:1px solid var(--rule);color:var(--ink);padding:8px 12px;border-radius:4px;font-family:'Inter',sans-serif;font-size:13px;outline:none}
+.row select,.row input[type=text]{background:rgba(0,0,0,0.2);border:1px solid var(--rule);color:var(--ink);padding:8px 12px;border-radius:4px;font-family:'Inter',sans-serif;font-size:13px;outline:none;max-width:220px}
 .row select:focus,.row input:focus{border-color:var(--accent-soft)}
 .spacer{flex:1}
 button.go{background:var(--accent);color:#1A1208;border:none;padding:12px 22px;font-family:'Inter',sans-serif;font-weight:600;font-size:13px;letter-spacing:0.5px;border-radius:6px;cursor:pointer;transition:transform 0.15s,background 0.15s}
@@ -51,7 +67,7 @@ button.go:hover{background:#E4B266;transform:translateY(-1px)}
 button.go:disabled{background:var(--rule);color:var(--ink-mute);cursor:not-allowed;transform:none}
 
 .status{min-height:24px;margin:16px 0;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-mute);letter-spacing:0.5px}
-.status.error{color:#E47A6A}
+.status.error{color:var(--err)}
 
 .results{display:none;margin-top:32px;animation:fadeIn 0.5s ease-out}
 .results.show{display:block}
@@ -84,6 +100,9 @@ footer{text-align:center;margin-top:80px;font-family:'JetBrains Mono',monospace;
 .samples{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
 .samples button{background:transparent;border:1px solid var(--rule);color:var(--ink-mute);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:6px 10px;border-radius:4px;cursor:pointer;transition:border-color 0.2s,color 0.2s}
 .samples button:hover{border-color:var(--accent-soft);color:var(--accent)}
+
+optgroup{color:var(--ink-mute);font-style:italic}
+option{color:var(--ink);background:var(--paper)}
 </style>
 </head>
 <body>
@@ -91,41 +110,248 @@ footer{text-align:center;margin-top:80px;font-family:'JetBrains Mono',monospace;
   <header class="masthead">
     <div class="brand-line"><a href="/">Rupertweb</a> &nbsp;·&nbsp; Glossa</div>
     <h1 class="title">Glossa.</h1>
-    <p class="strap">Paste a historical text in any language or era. Glossa normalises the orthography, translates it, explains what it actually says, and tells you where to read next.</p>
+    <p class="strap">Paste text, or upload a PDF, scan, or photo of handwriting. Glossa normalises it, translates it into any of 60+ languages, explains what it actually says, and tells you where to read next.</p>
   </header>
 
   <div class="input-card">
-    <div class="lab">Source text</div>
-    <textarea id="source" placeholder="Paste Latin, Old Norse, Middle English, Koine Greek, Early Modern French, scribal abbreviations, OCR output, anything historical or hard to read..."></textarea>
+    <div class="lab">Source</div>
+    <textarea id="source" placeholder="Paste Latin, Old Norse, Middle English, Koine Greek, modern Japanese, Xhosa, anything historical or hard to read — or leave blank and upload a file below."></textarea>
+
+    <div class="dropzone" id="dropzone">
+      <div class="dz-title">Drop a PDF, scan, or photo — or click to choose</div>
+      <div class="dz-hint">PDF · JPG · PNG · WEBP · handwriting welcome · up to 6 files · 6MB each</div>
+      <input type="file" id="fileInput" multiple accept="application/pdf,image/jpeg,image/png,image/gif,image/webp,.pdf,.jpg,.jpeg,.png,.gif,.webp">
+    </div>
+    <div class="attachments" id="attachments"></div>
+
     <div class="row">
       <label for="srcLang">From</label>
       <select id="srcLang">
         <option value="auto">Detect automatically</option>
-        <option>Classical Latin</option>
-        <option>Medieval Latin</option>
-        <option>Ancient Greek</option>
-        <option>Koine Greek</option>
-        <option>Biblical Hebrew</option>
-        <option>Old English</option>
-        <option>Middle English</option>
-        <option>Early Modern English</option>
-        <option>Old Norse</option>
-        <option>Old French</option>
-        <option>Old High German</option>
-        <option>Old Church Slavonic</option>
-        <option>Classical Arabic</option>
-        <option>Ottoman Turkish</option>
-        <option>Classical Chinese</option>
-        <option>Sanskrit</option>
+
+        <optgroup label="— Ancient & Classical —">
+          <option>Classical Latin</option>
+          <option>Medieval Latin</option>
+          <option>Ecclesiastical Latin</option>
+          <option>Ancient Greek</option>
+          <option>Koine Greek</option>
+          <option>Byzantine Greek</option>
+          <option>Biblical Hebrew</option>
+          <option>Aramaic</option>
+          <option>Syriac</option>
+          <option>Coptic</option>
+          <option>Sanskrit</option>
+          <option>Pali</option>
+          <option>Vedic Sanskrit</option>
+          <option>Classical Chinese</option>
+          <option>Old Persian</option>
+          <option>Avestan</option>
+          <option>Sumerian</option>
+          <option>Akkadian</option>
+          <option>Egyptian hieroglyphs</option>
+          <option>Ge'ez</option>
+          <option>Ugaritic</option>
+        </optgroup>
+
+        <optgroup label="— Medieval European —">
+          <option>Old English</option>
+          <option>Middle English</option>
+          <option>Early Modern English</option>
+          <option>Old Norse</option>
+          <option>Old Icelandic</option>
+          <option>Old High German</option>
+          <option>Middle High German</option>
+          <option>Old French</option>
+          <option>Old Occitan</option>
+          <option>Old Provençal</option>
+          <option>Anglo-Norman</option>
+          <option>Old Church Slavonic</option>
+          <option>Old East Slavic</option>
+          <option>Old Irish</option>
+          <option>Middle Welsh</option>
+          <option>Old Frisian</option>
+          <option>Middle Dutch</option>
+        </optgroup>
+
+        <optgroup label="— Modern European —">
+          <option>English</option>
+          <option>French</option>
+          <option>Spanish</option>
+          <option>Portuguese</option>
+          <option>Italian</option>
+          <option>German</option>
+          <option>Dutch</option>
+          <option>Danish</option>
+          <option>Norwegian</option>
+          <option>Swedish</option>
+          <option>Icelandic</option>
+          <option>Finnish</option>
+          <option>Polish</option>
+          <option>Czech</option>
+          <option>Slovak</option>
+          <option>Hungarian</option>
+          <option>Romanian</option>
+          <option>Greek</option>
+          <option>Russian</option>
+          <option>Ukrainian</option>
+          <option>Bulgarian</option>
+          <option>Serbian</option>
+          <option>Croatian</option>
+          <option>Slovenian</option>
+          <option>Lithuanian</option>
+          <option>Latvian</option>
+          <option>Estonian</option>
+          <option>Albanian</option>
+          <option>Basque</option>
+          <option>Catalan</option>
+          <option>Galician</option>
+          <option>Irish</option>
+          <option>Welsh</option>
+          <option>Scottish Gaelic</option>
+          <option>Maltese</option>
+        </optgroup>
+
+        <optgroup label="— Middle Eastern & North African —">
+          <option>Modern Standard Arabic</option>
+          <option>Classical Arabic</option>
+          <option>Egyptian Arabic</option>
+          <option>Levantine Arabic</option>
+          <option>Ottoman Turkish</option>
+          <option>Turkish</option>
+          <option>Persian (Farsi)</option>
+          <option>Dari</option>
+          <option>Pashto</option>
+          <option>Kurdish</option>
+          <option>Hebrew</option>
+          <option>Yiddish</option>
+          <option>Amharic</option>
+          <option>Berber (Tamazight)</option>
+        </optgroup>
+
+        <optgroup label="— South & Central Asian —">
+          <option>Hindi</option>
+          <option>Urdu</option>
+          <option>Bengali</option>
+          <option>Tamil</option>
+          <option>Telugu</option>
+          <option>Marathi</option>
+          <option>Gujarati</option>
+          <option>Punjabi</option>
+          <option>Nepali</option>
+          <option>Sinhala</option>
+          <option>Kannada</option>
+          <option>Malayalam</option>
+          <option>Uzbek</option>
+          <option>Kazakh</option>
+          <option>Mongolian</option>
+        </optgroup>
+
+        <optgroup label="— East & Southeast Asian —">
+          <option>Chinese (Simplified)</option>
+          <option>Chinese (Traditional)</option>
+          <option>Cantonese</option>
+          <option>Japanese</option>
+          <option>Korean</option>
+          <option>Vietnamese</option>
+          <option>Thai</option>
+          <option>Lao</option>
+          <option>Khmer</option>
+          <option>Burmese</option>
+          <option>Indonesian</option>
+          <option>Malay</option>
+          <option>Filipino (Tagalog)</option>
+        </optgroup>
+
+        <optgroup label="— African —">
+          <option>Swahili</option>
+          <option>Zulu</option>
+          <option>Xhosa</option>
+          <option>Afrikaans</option>
+          <option>Yoruba</option>
+          <option>Igbo</option>
+          <option>Hausa</option>
+          <option>Somali</option>
+          <option>Wolof</option>
+        </optgroup>
       </select>
+
       <label for="tgtLang">Into</label>
       <select id="tgtLang">
-        <option>English</option>
-        <option>Italian</option>
-        <option>French</option>
-        <option>German</option>
-        <option>Spanish</option>
-        <option>Latin</option>
+        <optgroup label="— Common —">
+          <option>English</option>
+          <option>Italian</option>
+          <option>French</option>
+          <option>German</option>
+          <option>Spanish</option>
+          <option>Portuguese</option>
+        </optgroup>
+        <optgroup label="— European —">
+          <option>Dutch</option>
+          <option>Danish</option>
+          <option>Norwegian</option>
+          <option>Swedish</option>
+          <option>Icelandic</option>
+          <option>Finnish</option>
+          <option>Polish</option>
+          <option>Czech</option>
+          <option>Slovak</option>
+          <option>Hungarian</option>
+          <option>Romanian</option>
+          <option>Greek</option>
+          <option>Russian</option>
+          <option>Ukrainian</option>
+          <option>Bulgarian</option>
+          <option>Serbian</option>
+          <option>Croatian</option>
+          <option>Slovenian</option>
+          <option>Lithuanian</option>
+          <option>Latvian</option>
+          <option>Estonian</option>
+          <option>Albanian</option>
+          <option>Catalan</option>
+          <option>Basque</option>
+          <option>Welsh</option>
+          <option>Irish</option>
+        </optgroup>
+        <optgroup label="— Middle Eastern —">
+          <option>Modern Standard Arabic</option>
+          <option>Hebrew</option>
+          <option>Turkish</option>
+          <option>Persian (Farsi)</option>
+          <option>Kurdish</option>
+        </optgroup>
+        <optgroup label="— South & Central Asian —">
+          <option>Hindi</option>
+          <option>Urdu</option>
+          <option>Bengali</option>
+          <option>Tamil</option>
+          <option>Telugu</option>
+          <option>Marathi</option>
+          <option>Gujarati</option>
+          <option>Punjabi</option>
+          <option>Nepali</option>
+        </optgroup>
+        <optgroup label="— East & Southeast Asian —">
+          <option>Chinese (Simplified)</option>
+          <option>Chinese (Traditional)</option>
+          <option>Japanese</option>
+          <option>Korean</option>
+          <option>Vietnamese</option>
+          <option>Thai</option>
+          <option>Indonesian</option>
+          <option>Filipino (Tagalog)</option>
+        </optgroup>
+        <optgroup label="— African —">
+          <option>Swahili</option>
+          <option>Zulu</option>
+          <option>Xhosa</option>
+          <option>Afrikaans</option>
+          <option>Yoruba</option>
+        </optgroup>
+        <optgroup label="— Classical —">
+          <option>Latin</option>
+          <option>Ancient Greek</option>
+        </optgroup>
       </select>
       <div class="spacer"></div>
       <button class="go" id="goBtn">Analyse</button>
@@ -185,8 +411,15 @@ const SAMPLES = {
   medlat: "Anno autem regni Edwini regis quintodecimo, qui est annus dominicae incarnationis sexcentesimus tricesimus tertius, contigit ut idem Edwinus, postquam fidem Christi suscepit, etiam ipse cum tota gente sua Christianus efficeretur."
 };
 
+const MAX_FILES = 6;
+const MAX_BYTES_PER = 6 * 1024 * 1024;
+const MAX_BYTES_TOTAL = 20 * 1024 * 1024;
+
 const $ = id => document.getElementById(id);
 const src = $('source'), srcLang = $('srcLang'), tgtLang = $('tgtLang'), goBtn = $('goBtn'), statusEl = $('status'), resultsEl = $('results');
+const dropzone = $('dropzone'), fileInput = $('fileInput'), attList = $('attachments');
+
+let selectedFiles = [];
 
 document.querySelectorAll('.samples button').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -195,6 +428,70 @@ document.querySelectorAll('.samples button').forEach(btn => {
   });
 });
 
+// ── Dropzone / file picker ─────────────────────────
+dropzone.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', () => {
+  addFiles(Array.from(fileInput.files || []));
+  fileInput.value = '';
+});
+['dragenter','dragover'].forEach(evt => dropzone.addEventListener(evt, e => {
+  e.preventDefault(); e.stopPropagation();
+  dropzone.classList.add('drag');
+}));
+['dragleave','drop'].forEach(evt => dropzone.addEventListener(evt, e => {
+  e.preventDefault(); e.stopPropagation();
+  dropzone.classList.remove('drag');
+}));
+dropzone.addEventListener('drop', e => {
+  const files = Array.from(e.dataTransfer?.files || []);
+  addFiles(files);
+});
+
+function addFiles(files) {
+  for (const f of files) {
+    if (selectedFiles.length >= MAX_FILES) {
+      setStatus(`Max ${MAX_FILES} files.`, true);
+      break;
+    }
+    if (f.size > MAX_BYTES_PER) {
+      setStatus(`${f.name} is bigger than 6MB.`, true);
+      continue;
+    }
+    if (selectedFiles.reduce((s,x)=>s+x.size,0) + f.size > MAX_BYTES_TOTAL) {
+      setStatus('Combined uploads over 20MB.', true);
+      break;
+    }
+    const ok = /\.(pdf|jpe?g|png|gif|webp)$/i.test(f.name)
+      || f.type === 'application/pdf'
+      || /^image\//.test(f.type);
+    if (!ok) {
+      setStatus(`Unsupported: ${f.name}`, true);
+      continue;
+    }
+    selectedFiles.push(f);
+  }
+  renderAttachments();
+}
+
+function renderAttachments() {
+  attList.innerHTML = selectedFiles.map((f, i) => {
+    const ext = f.type === 'application/pdf' || /\.pdf$/i.test(f.name) ? 'PDF' : 'IMG';
+    return `<div class="att">
+      <div class="att-icon">${ext}</div>
+      <div class="att-name">${escapeHtml(f.name)}</div>
+      <div class="att-size">${(f.size/1024).toFixed(0)} kB</div>
+      <button type="button" class="att-remove" data-idx="${i}" title="Remove">×</button>
+    </div>`;
+  }).join('');
+  attList.querySelectorAll('.att-remove').forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectedFiles.splice(+btn.dataset.idx, 1);
+      renderAttachments();
+    });
+  });
+}
+
+// ── Status / analyse ─────────────────────────
 function setStatus(msg, isError) {
   statusEl.className = 'status' + (isError ? ' error' : '');
   statusEl.innerHTML = msg;
@@ -202,19 +499,33 @@ function setStatus(msg, isError) {
 
 async function analyse() {
   const text = src.value.trim();
-  if (!text) { setStatus('Paste some text first.', true); return; }
+  if (!text && selectedFiles.length === 0) {
+    setStatus('Paste text or attach a file first.', true);
+    return;
+  }
   if (text.length > 12000) { setStatus('Text too long. Max 12,000 characters.', true); return; }
 
   goBtn.disabled = true;
-  setStatus('<span class="spinner"></span>Reading the source. This usually takes 5–15 seconds.');
+  const eta = selectedFiles.length > 0 ? '10–25 seconds' : '5–15 seconds';
+  setStatus(`<span class="spinner"></span>Reading the source. This usually takes ${eta}.`);
   resultsEl.classList.remove('show');
 
   try {
-    const r = await fetch('/api/glossa/analyse', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text, sourceLang: srcLang.value, targetLang: tgtLang.value })
-    });
+    let r;
+    if (selectedFiles.length > 0) {
+      const fd = new FormData();
+      fd.append('text', text);
+      fd.append('sourceLang', srcLang.value);
+      fd.append('targetLang', tgtLang.value);
+      for (const f of selectedFiles) fd.append('file', f, f.name);
+      r = await fetch('/api/glossa/analyse', { method: 'POST', body: fd });
+    } else {
+      r = await fetch('/api/glossa/analyse', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, sourceLang: srcLang.value, targetLang: tgtLang.value })
+      });
+    }
     const data = await r.json();
     if (!r.ok || data.error) {
       setStatus('Error: ' + (data.error || ('HTTP ' + r.status)), true);

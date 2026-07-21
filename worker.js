@@ -6319,19 +6319,93 @@ ${JSON.stringify(signals, null, 2)}`;
 // GLOSSA — historical-source analysis tool
 // POST { text, sourceLang?, targetLang? } → { detected, normalised, translated, summary, period, genre, notes }
 // ════════════════════════════════════════════════════════
+// Encode a Uint8Array to base64 without blowing the stack on multi-MB inputs.
+// Workers runtime has btoa() but no Buffer, so we chunk through String.fromCharCode.
+function _bytesToB64(u8) {
+  let s = '';
+  const chunk = 0x8000;
+  for (let i = 0; i < u8.length; i += chunk) {
+    s += String.fromCharCode.apply(null, u8.subarray(i, i + chunk));
+  }
+  return btoa(s);
+}
+
 async function glossaAnalyse(request, env) {
-  let body;
-  try { body = await request.json(); } catch { return jsonResponse({ error: 'Invalid JSON' }, 400); }
-  const text = (body?.text || '').trim();
-  if (!text) return jsonResponse({ error: 'Missing text' }, 400);
+  // Two intake modes:
+  //  - JSON body {text, sourceLang, targetLang}  — legacy text-only path
+  //  - multipart/form-data with text + up to 6 file attachments (PDF + images)
+  //    Fields: text (optional), sourceLang, targetLang, file (repeated).
+  //    Files go to Claude as native `image` / `document` content blocks so
+  //    we get OCR + handwriting decoding + layout awareness in one call.
+  let text = '';
+  let sourceLang = 'auto';
+  let targetLang = 'English';
+  /** @type {{kind:'image'|'document', media_type:string, data:string, name:string}[]} */
+  const attachments = [];
+
+  const ct = (request.headers.get('content-type') || '').toLowerCase();
+  try {
+    if (ct.startsWith('multipart/form-data')) {
+      const form = await request.formData();
+      text = String(form.get('text') || '').trim();
+      sourceLang = String(form.get('sourceLang') || 'auto').trim();
+      targetLang = String(form.get('targetLang') || 'English').trim();
+      const files = form.getAll('file').filter(v => v && typeof v === 'object');
+      if (files.length > 6) return jsonResponse({ error: 'Too many files (max 6)' }, 400);
+      let totalBytes = 0;
+      const MAX_PER_FILE = 6 * 1024 * 1024;   // 6 MB per file
+      const MAX_TOTAL    = 20 * 1024 * 1024;  // 20 MB combined
+      for (const f of files) {
+        const name = (f.name || 'file').slice(0, 120);
+        const mt = (f.type || '').toLowerCase();
+        const buf = new Uint8Array(await f.arrayBuffer());
+        if (buf.length === 0) continue;
+        if (buf.length > MAX_PER_FILE) return jsonResponse({ error: `File too large: ${name} (max 6MB each)` }, 400);
+        totalBytes += buf.length;
+        if (totalBytes > MAX_TOTAL) return jsonResponse({ error: 'Total upload too large (max 20MB combined)' }, 400);
+        let kind, media_type;
+        if (mt === 'application/pdf' || /\.pdf$/i.test(name)) {
+          kind = 'document'; media_type = 'application/pdf';
+        } else if (mt.startsWith('image/')) {
+          // Normalise a couple of common variants
+          if (mt === 'image/jpg') media_type = 'image/jpeg';
+          else media_type = mt;
+          if (!['image/jpeg','image/png','image/gif','image/webp'].includes(media_type)) {
+            return jsonResponse({ error: `Unsupported image type: ${mt}` }, 400);
+          }
+          kind = 'image';
+        } else if (/\.(jpe?g|png|gif|webp)$/i.test(name)) {
+          kind = 'image';
+          media_type = 'image/' + name.split('.').pop().toLowerCase().replace('jpg','jpeg');
+        } else {
+          return jsonResponse({ error: `Unsupported file type: ${name} (${mt || 'unknown'})` }, 400);
+        }
+        attachments.push({ kind, media_type, data: _bytesToB64(buf), name });
+      }
+    } else {
+      const body = await request.json();
+      text = (body?.text || '').trim();
+      sourceLang = (body?.sourceLang || 'auto').trim();
+      targetLang = (body?.targetLang || 'English').trim();
+    }
+  } catch (e) {
+    return jsonResponse({ error: 'Invalid request: ' + e.message }, 400);
+  }
+
+  if (!text && attachments.length === 0) {
+    return jsonResponse({ error: 'Provide some text, or attach a PDF/image.' }, 400);
+  }
   if (text.length > 12000) return jsonResponse({ error: 'Text too long (max 12,000 characters)' }, 400);
-  const sourceLang = (body?.sourceLang || 'auto').trim();
-  const targetLang = (body?.targetLang || 'English').trim();
 
   const key = env?.ANTHROPIC_KEY || ANTHROPIC_KEY_FALLBACK;
   if (!key) return jsonResponse({ error: 'Anthropic key not configured' }, 503);
 
-  const prompt = `You are Glossa, a tool that helps readers approach historical primary sources. The user has pasted a piece of historical text. Analyse it and return JSON with this exact shape:
+  const hasAttachments = attachments.length > 0;
+  const attachmentBrief = hasAttachments
+    ? `\n\nThe user has attached ${attachments.length} file(s): ${attachments.map(a => `${a.name} (${a.kind === 'document' ? 'PDF' : 'image'})`).join(', ')}. Read the attachments carefully. If they contain handwritten, blurry, scanned, or otherwise hard-to-read text, do your best OCR/transcription and treat that transcription as the source. If the user also pasted text, treat text + attachments as one combined source unless they obviously differ.`
+    : '';
+
+  const prompt = `You are Glossa, a tool that helps readers approach primary sources. The user has provided a piece of text (which may be pasted, attached as a PDF, or attached as one or more images — possibly of handwriting, scans, or hard-to-read pages).${attachmentBrief} Analyse the source and return JSON with this exact shape:
 
 {
   "detected": {
@@ -6355,10 +6429,18 @@ Rules:
 - If the source language is the same as the target language (e.g. modern English), still normalise and provide a useful summary/context — leave 'translated' as a lightly modernised version.
 - Preserve diacritics and special characters (þ, ð, æ, œ, ñ, etc.) exactly.
 
-${sourceLang !== 'auto' ? `The user has indicated the source language is: ${sourceLang}. Take this as a hint but correct it if obviously wrong.\n\n` : ''}SOURCE TEXT:
-"""
-${text}
-"""`;
+${sourceLang !== 'auto' ? `The user has indicated the source language is: ${sourceLang}. Take this as a hint but correct it if obviously wrong.\n\n` : ''}${text ? `SOURCE TEXT:\n"""\n${text}\n"""` : 'No pasted text — read the attached file(s) as the source.'}`;
+
+  // Build Anthropic content blocks. Attachments go first so the model can
+  // scan them before hitting the instructions/prompt.
+  const content = [];
+  for (const a of attachments) {
+    content.push({
+      type: a.kind,
+      source: { type: 'base64', media_type: a.media_type, data: a.data },
+    });
+  }
+  content.push({ type: 'text', text: prompt });
 
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
@@ -6370,8 +6452,8 @@ ${text}
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-5',
-        max_tokens: 3000,
-        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 4000,
+        messages: [{ role: 'user', content }],
       }),
     });
     if (!r.ok) {
@@ -6385,7 +6467,7 @@ ${text}
         inputTokens: data.usage?.input_tokens || 0,
         outputTokens: data.usage?.output_tokens || 0,
         model: data.model,
-        purpose: 'glossa',
+        purpose: hasAttachments ? 'glossa-file' : 'glossa',
       });
     }
     const jsonStart = raw.indexOf('{');
