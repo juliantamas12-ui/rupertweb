@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Three Weeks at Bretton Woods in July 1944 When Harry Dexter White Out-Negotiated John Maynard Keynes to Subordinate the British Empire to the American Dollar While Simultaneously Working as a Soviet Intelligence Asset",
+    date: "2026-07-22",
+    category: "History",
+    excerpt: "On 1 July 1944, seven hundred and thirty delegates from forty-four Allied and associated nations arrived at the Mount Washington Hotel in Bretton Woods, New Hampshire, to negotiate the post-war international monetary order. The two men who would decide the shape of the twentieth-century economy were John Maynard Keynes, sixty-one years old, mortally ill, and leading the British Treasury delegation as the most famous economist alive; and Harry Dexter White, fifty-one years old, Assistant Secretary of the United States Treasury, principal author of the American negotiating position, and — as the NSA's Venona decrypts would establish in classified form by 1950 and in public form by 1995 — a paid asset of Soviet military intelligence operating under the codename JURIST. The Bretton Woods conference was, at one level, a technical negotiation about exchange rates. At another, it was the moment at which the British Empire ceased to be a first-rank power and the American dollar became the global reserve currency. At a third level, which nobody in the room understood, it was a Soviet intelligence operation whose principal agent was drafting the American position. Keynes was in the room and lost. White was in the room and won, and won on behalf of at least two principals whose interests he had reconciled in a document that both sides mistook for a victory. The British Empire, which had entered the room as a great power, left as a client...",
+    url: "essays/2026-07-22-the-three-weeks-at-bretton-woods-in-july-1944-when-harry-dexter-white-out-negotiated-john-maynard-keynes-to-subordinate-the-british-empire-to-the-american-dollar-while-simultaneously-working-as-a-soviet-intelligence-asset.html"
+  },
+  {
     title: "The Afternoon of 13 March 1848 in Vienna When Klemens von Metternich Discovered That the Habsburg Police State He Had Built to Contain the French Revolution Had Been Ruling on a Bluff for Thirty-Three Years",
     date: "2026-07-21",
     category: "History",
