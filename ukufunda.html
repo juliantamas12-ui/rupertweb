@@ -823,6 +823,64 @@ header.top{display:none !important}
   cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--paper-line-strong);
   font-variant:small-caps;letter-spacing:0.14em;font-size:11px;padding:0}
 .running-head .close-book:hover{color:var(--red);text-decoration-color:var(--red)}
+.running-head .back-contents{background:none;border:none;font:inherit;color:var(--ink-fade);
+  cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--paper-line);
+  font-variant:small-caps;letter-spacing:0.14em;font-size:11px;padding:0}
+.running-head .back-contents:hover{color:var(--blue);text-decoration-color:var(--blue)}
+
+/* ── Contents page ───────────────────────────────── */
+#tab-contents{
+  padding-top:0;
+}
+.contents-title{
+  font-family:'EB Garamond',serif;font-weight:700;font-size:28px;
+  text-align:center;letter-spacing:0.12em;text-transform:uppercase;
+  color:var(--ink-dim);margin:28px 0 6px;
+  font-variant:small-caps;
+}
+.contents-rule{
+  width:100%;border:none;border-top:1px solid var(--paper-line-strong);margin:16px 0 0;
+}
+.contents-list{
+  list-style:none;margin:0;padding:0;
+}
+.contents-row{
+  display:flex;align-items:baseline;gap:0;
+  border-bottom:1px solid var(--paper-line);
+  cursor:pointer;
+  transition:background .1s;
+  padding:18px 0;
+}
+.contents-row:last-child{border-bottom:none}
+.contents-row:hover .contents-chapter-name{color:var(--accent)}
+.contents-row .contents-num{
+  font-family:'EB Garamond',serif;font-style:italic;font-size:18px;
+  color:var(--ink-fade);width:28px;flex-shrink:0;
+  font-variant-numeric:oldstyle-nums;
+}
+.contents-row .contents-chapter-name{
+  font-family:'EB Garamond',serif;font-weight:500;font-size:26px;
+  color:var(--ink-bright);flex:1;transition:color .15s;letter-spacing:-0.005em;
+}
+.contents-row .contents-dots{
+  flex:1;border-bottom:1px dotted var(--paper-line-strong);
+  margin:0 10px 5px;
+  min-width:20px;
+}
+.contents-row .contents-folio{
+  font-family:'Geist',sans-serif;font-size:11px;color:var(--ink-fade);
+  font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+
+/* ── Debug chip ───────────────────────────────────── */
+.debug-chip{
+  display:inline-block;margin-left:10px;
+  font-family:'Geist',sans-serif;font-size:10px;
+  font-style:italic;letter-spacing:0.10em;
+  color:var(--ink-dim);border:1px dashed var(--ink-fade);
+  padding:2px 7px;vertical-align:middle;
+  opacity:0.75;
+}
 
 /* ── Page footer ─────────────────────────────────── */
 .page-footer{
@@ -1254,7 +1312,7 @@ body[data-monogram="anchor"] #book-cover-splash .colophon::before{content:'A'}
   </div>
 
   <!-- COVER SPLASH for signed-in returning users -->
-  <div id="book-cover-splash" class="book-cover cover-splash tappable hidden" onclick="hideCoverSplash('books')">
+  <div id="book-cover-splash" class="book-cover cover-splash tappable hidden" onclick="hideCoverSplash('contents')">
     <div class="spine"></div>
     <div class="cover-top">
       <div class="publisher">Rupertweb Editions</div>
@@ -1284,13 +1342,52 @@ body[data-monogram="anchor"] #book-cover-splash .colophon::before{content:'A'}
       </div>
     </header>
 
-    <!-- TAB BAR: Library · Guilds · Leaderboard · Shop · Friends -->
-    <div class="tabs">
-      <button data-tab="books" class="active">Library</button>
-      <button data-tab="guilds">Guilds</button>
-      <button data-tab="leaderboard">Leaderboard</button>
-      <button data-tab="shop">Shop</button>
-      <button data-tab="friends">Friends</button>
+    <!-- TAB BAR removed: navigation is now swipe left/right or Contents -->
+
+    <!-- CONTENTS PAGE -->
+    <div id="tab-contents" class="tab hidden">
+      <div class="running-head">
+        <span class="chapter"><img src="/images/ukufunda/mark.svg" alt="" class="brand-mark">Ukufunda</span>
+        <span class="right">
+          <span class="folio">contents</span>
+          <button class="close-book" onclick="showCoverSplash()">close book</button>
+        </span>
+      </div>
+      <div class="contents-title">Table of Contents</div>
+      <hr class="contents-rule">
+      <ul class="contents-list">
+        <li class="contents-row" onclick="switchTab('books',{direction:'left'})">
+          <span class="contents-num">I</span>
+          <span class="contents-chapter-name">The Library</span>
+          <span class="contents-dots"></span>
+          <span class="contents-folio">fol. i</span>
+        </li>
+        <li class="contents-row" onclick="switchTab('guilds',{direction:'left'})">
+          <span class="contents-num">II</span>
+          <span class="contents-chapter-name">Guilds</span>
+          <span class="contents-dots"></span>
+          <span class="contents-folio">fol. ii</span>
+        </li>
+        <li class="contents-row" onclick="switchTab('leaderboard',{direction:'left'})">
+          <span class="contents-num">III</span>
+          <span class="contents-chapter-name">The League</span>
+          <span class="contents-dots"></span>
+          <span class="contents-folio">fol. iii</span>
+        </li>
+        <li class="contents-row" onclick="switchTab('shop',{direction:'left'})">
+          <span class="contents-num">IV</span>
+          <span class="contents-chapter-name">The Market</span>
+          <span class="contents-dots"></span>
+          <span class="contents-folio">fol. iv</span>
+        </li>
+        <li class="contents-row" onclick="switchTab('friends',{direction:'left'})">
+          <span class="contents-num">V</span>
+          <span class="contents-chapter-name">Companions</span>
+          <span class="contents-dots"></span>
+          <span class="contents-folio">fol. v</span>
+        </li>
+      </ul>
+      <div class="page-footer"><span class="fleur"></span><span class="num">* * *</span></div>
     </div>
 
     <!-- LIBRARY + HOME TAB (merged) -->
@@ -1298,6 +1395,7 @@ body[data-monogram="anchor"] #book-cover-splash .colophon::before{content:'A'}
       <div class="running-head">
         <span class="chapter"><img src="/images/ukufunda/mark.svg" alt="" class="brand-mark">The Library</span>
         <span class="right">
+          <button class="back-contents" onclick="showContents()">contents</button>
           <span class="folio">fol. i</span>
           <button class="close-book" onclick="showCoverSplash()">close book</button>
         </span>
@@ -1382,6 +1480,7 @@ body[data-monogram="anchor"] #book-cover-splash .colophon::before{content:'A'}
       <div class="running-head">
         <span class="chapter">Guilds</span>
         <span class="right">
+          <button class="back-contents" onclick="showContents()">contents</button>
           <span class="folio">fol. ii</span>
           <button class="close-book" onclick="showCoverSplash()">close book</button>
         </span>
@@ -1446,6 +1545,7 @@ body[data-monogram="anchor"] #book-cover-splash .colophon::before{content:'A'}
       <div class="running-head">
         <span class="chapter">The League</span>
         <span class="right">
+          <button class="back-contents" onclick="showContents()">contents</button>
           <span class="folio">fol. iii</span>
           <button class="close-book" onclick="showCoverSplash()">close book</button>
         </span>
@@ -1479,6 +1579,7 @@ body[data-monogram="anchor"] #book-cover-splash .colophon::before{content:'A'}
       <div class="running-head">
         <span class="chapter">The Market</span>
         <span class="right">
+          <button class="back-contents" onclick="showContents()">contents</button>
           <span class="folio">fol. iv</span>
           <button class="close-book" onclick="showCoverSplash()">close book</button>
         </span>
@@ -1505,6 +1606,7 @@ body[data-monogram="anchor"] #book-cover-splash .colophon::before{content:'A'}
       <div class="running-head">
         <span class="chapter">Companions</span>
         <span class="right">
+          <button class="back-contents" onclick="showContents()">contents</button>
           <span class="folio">fol. v</span>
           <button class="close-book" onclick="showCoverSplash()">close book</button>
         </span>
@@ -1613,6 +1715,7 @@ body[data-monogram="anchor"] #book-cover-splash .colophon::before{content:'A'}
 const API = '/api/uf';
 const LS_KEY = 'uf:me';
 const LS_SHOP = 'ukufunda_shop_v1';
+const LS_DEBUG_XP = 'ukufunda_debug_infinite_xp';
 
 let state = {
   me: null,
@@ -1697,11 +1800,32 @@ function hideCoverSplash(destinationTab){
     el.classList.add('hidden');
     el.classList.remove('closing');
     document.body.style.overflow = '';
-    if (destinationTab) switchTab(destinationTab);
+    if (destinationTab === 'contents') {
+      _switchToContents();
+    } else if (destinationTab) {
+      switchTab(destinationTab);
+    }
   }, 320);
 }
 
 async function boot(){
+  // Handle debug query params
+  const urlParams = new URLSearchParams(location.search);
+  if (urlParams.get('debug') === 'infxp') {
+    try { localStorage.setItem(LS_DEBUG_XP, '1'); } catch(e){}
+    history.replaceState(null, '', location.pathname);
+  } else if (urlParams.get('debug') === 'off') {
+    try { localStorage.removeItem(LS_DEBUG_XP); } catch(e){}
+    history.replaceState(null, '', location.pathname);
+  } else {
+    // Set debug XP on by default for this deploy — remove this block before real launch
+    try {
+      if (localStorage.getItem(LS_DEBUG_XP) === null) {
+        localStorage.setItem(LS_DEBUG_XP, '1');
+      }
+    } catch(e){}
+  }
+
   loadMe();
   applyEquippedTheme();
   if (state.me) {
@@ -1721,9 +1845,7 @@ async function boot(){
     if (confirm('Sign out?')) { clearMe(); location.reload(); }
   });
   document.getElementById('close-book-btn').addEventListener('click', () => showCoverSplash());
-  document.querySelectorAll('.tabs button[data-tab]').forEach(b => {
-    b.addEventListener('click', () => switchTab(b.dataset.tab));
-  });
+  // No tab-bar buttons to wire — navigation is swipe or Contents
   document.querySelectorAll('.subtabs button[data-lb]').forEach(b => {
     b.addEventListener('click', () => {
       document.querySelectorAll('.subtabs button[data-lb]').forEach(x => x.classList.remove('active'));
@@ -1746,6 +1868,10 @@ async function boot(){
   if (gm) gm.addEventListener('click', (e) => { if (e.target.id === 'goal-modal') closeGoalModal(); });
 }
 
+function isDebugInfiniteXp(){
+  try { return localStorage.getItem(LS_DEBUG_XP) === '1'; } catch(e){ return false; }
+}
+
 function renderApp(){
   document.getElementById('auth-screen').classList.add('hidden');
   document.getElementById('app').classList.remove('hidden');
@@ -1760,6 +1886,50 @@ function renderApp(){
 
   switchTab('books');
   refresh();
+}
+
+function showContents(){
+  // Hide the cover splash if visible
+  const splash = document.getElementById('book-cover-splash');
+  if (splash && !splash.classList.contains('hidden')) {
+    splash.classList.add('closing');
+    setTimeout(() => {
+      splash.classList.add('hidden');
+      splash.classList.remove('closing');
+      document.body.style.overflow = '';
+      _switchToContents();
+    }, 320);
+  } else {
+    _switchToContents();
+  }
+}
+
+function _switchToContents(){
+  const dir = PAGE_ORDER.indexOf(currentTab) > PAGE_ORDER.indexOf('books') ? 'right' : 'left';
+  // Contents is "before" Library so animate right (going back)
+  const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const prevTabEl = document.getElementById('tab-' + currentTab);
+  const nextTabEl = document.getElementById('tab-contents');
+  if (!nextTabEl) return;
+  const wasContents = currentTab === 'contents';
+  currentTab = 'contents';
+  if (!prefersReduced && !wasContents && prevTabEl && prevTabEl !== nextTabEl) {
+    prevTabEl.classList.remove('page-out-left','page-out-right');
+    void prevTabEl.offsetWidth;
+    prevTabEl.classList.add('page-out-right');
+    nextTabEl.classList.remove('hidden','page-in-left','page-in-right');
+    void nextTabEl.offsetWidth;
+    nextTabEl.classList.add('page-in-left');
+    setTimeout(() => {
+      prevTabEl.classList.add('hidden');
+      prevTabEl.classList.remove('page-out-right');
+      nextTabEl.classList.remove('page-in-left');
+    }, 400);
+  } else {
+    document.querySelectorAll('.tab').forEach(t => t.classList.add('hidden'));
+    nextTabEl.classList.remove('hidden');
+  }
+  window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
 async function refresh(){
@@ -1813,29 +1983,46 @@ function switchTab(name, opts){
 }
 
 function flipPage(dir){
+  // If on contents, swipe left (next) goes to first chapter
+  if (currentTab === 'contents') {
+    if (dir === 'next') switchTab('books', { direction: 'left' });
+    // swipe right on contents: nothing (already at the beginning)
+    return;
+  }
   const idx = PAGE_ORDER.indexOf(currentTab);
   if (idx === -1) return;
+  if (dir === 'prev' && idx === 0) {
+    // At first chapter, swipe right goes to contents
+    showContents();
+    return;
+  }
   const nextIdx = dir === 'next' ? idx + 1 : idx - 1;
   if (nextIdx < 0 || nextIdx >= PAGE_ORDER.length) return;
   switchTab(PAGE_ORDER[nextIdx], { direction: dir === 'next' ? 'left' : 'right' });
 }
 
 function wireSwipe(){
-  let x0 = null, y0 = null;
+  let x0 = null, y0 = null, t0 = null;
   const target = document.getElementById('app');
   if (!target) return;
   target.addEventListener('touchstart', (e) => {
-    if (e.target.closest('input, textarea, select, .modal-bg.open, .book-cover, .cover-splash, .session-view')) return;
+    if (e.target.closest('input, textarea, select')) return;
+    if (document.querySelector('.modal-bg.open')) return;
     if (sessionState && !sessionState.ended) return;
     const t = e.touches[0];
-    x0 = t.clientX; y0 = t.clientY;
+    x0 = t.clientX; y0 = t.clientY; t0 = Date.now();
   }, { passive:true });
   target.addEventListener('touchend', (e) => {
     if (x0 == null) return;
     const t = e.changedTouches[0];
-    const dx = t.clientX - x0, dy = t.clientY - y0;
-    x0 = y0 = null;
-    if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx)) return;
+    const dx = t.clientX - x0;
+    const dy = t.clientY - y0;
+    const dt = Date.now() - t0;
+    x0 = y0 = t0 = null;
+    // Only horizontal swipes: |dx| >= 60, |dx| >= 2*|dy|, and completed within 500ms
+    if (Math.abs(dx) < 60) return;
+    if (Math.abs(dx) < 2 * Math.abs(dy)) return;
+    if (dt > 500) return;
     flipPage(dx < 0 ? 'next' : 'prev');
   }, { passive:true });
 }
@@ -2697,13 +2884,38 @@ function syncShopXp(totalXp){
     saveShopData(data);
   }
   const el = document.getElementById('shop-xp-display');
-  if (el) el.textContent = newSpendable.toLocaleString();
+  if (el) {
+    if (isDebugInfiniteXp()) {
+      el.textContent = '999,999';
+    } else {
+      el.textContent = newSpendable.toLocaleString();
+    }
+  }
 }
 
 function loadShop(){
   const data = loadShopData();
   const el = document.getElementById('shop-xp-display');
-  if (el) el.textContent = (data.spendableXp || 0).toLocaleString();
+  const purseEl = el && el.closest('.shop-xp-purse');
+  if (el) {
+    if (isDebugInfiniteXp()) {
+      el.textContent = '999,999';
+      // Add debug chip if not already present
+      if (purseEl && !purseEl.querySelector('.debug-chip')) {
+        const chip = document.createElement('span');
+        chip.className = 'debug-chip';
+        chip.textContent = 'DEBUG · infinite XP';
+        purseEl.appendChild(chip);
+      }
+    } else {
+      el.textContent = (data.spendableXp || 0).toLocaleString();
+      // Remove debug chip if present
+      if (purseEl) {
+        const chip = purseEl.querySelector('.debug-chip');
+        if (chip) chip.remove();
+      }
+    }
+  }
   renderShop(data);
 }
 
@@ -2761,13 +2973,18 @@ function shopItemClick(catKey, itemId){
   if (!isOwned) {
     // Try to buy
     const cost = item.price;
-    if ((data.spendableXp || 0) < cost) {
+    const debugOn = isDebugInfiniteXp();
+    if (!debugOn && (data.spendableXp || 0) < cost) {
       toast('Not enough XP — need ' + cost.toLocaleString() + ' XP');
       return;
     }
     if (!confirm('Spend ' + cost.toLocaleString() + ' XP on ' + item.name + '?')) return;
-    data.spendableXp = (data.spendableXp || 0) - cost;
-    data.spent = (data.spent || 0) + cost;
+    if (!debugOn) {
+      // Real purchase: deduct XP
+      data.spendableXp = (data.spendableXp || 0) - cost;
+      data.spent = (data.spent || 0) + cost;
+    }
+    // Debug mode: skip XP deduction, spent accumulator untouched so real XP is preserved
     if (!data.owned) data.owned = {};
     if (!data.owned[catKey]) data.owned[catKey] = [SHOP_DEFAULTS[catKey]];
     data.owned[catKey].push(itemId);
@@ -2781,9 +2998,7 @@ function shopItemClick(catKey, itemId){
   saveShopData(data);
   applyEquippedTheme();
   loadShop();
-  // Update spendable XP display
-  const el = document.getElementById('shop-xp-display');
-  if (el) el.textContent = (data.spendableXp || 0).toLocaleString();
+  // loadShop() already handles XP display including debug mode
 }
 
 function applyEquippedTheme(){
