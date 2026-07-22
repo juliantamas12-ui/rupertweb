@@ -252,6 +252,11 @@ export default {
       const rewritten = new Request(new URL('/ukufunda.html', request.url).toString(), request);
       const assetRes = await env.ASSETS.fetch(rewritten);
       const fresh = new Response(assetRes.body, assetRes);
+      // Explicit text/html + charset + inline disposition so iOS Safari
+      // doesn't treat the extension-less URL as a downloadable file.
+      fresh.headers.set('Content-Type', 'text/html; charset=UTF-8');
+      fresh.headers.set('Content-Disposition', 'inline');
+      fresh.headers.set('X-Content-Type-Options', 'nosniff');
       fresh.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0, private');
       fresh.headers.set('CDN-Cache-Control', 'no-store');
       fresh.headers.set('Cloudflare-CDN-Cache-Control', 'no-store');
