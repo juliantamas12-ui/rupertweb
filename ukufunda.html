@@ -594,7 +594,87 @@ header.top{display:none !important}
   30%{opacity:1}
   100%{opacity:0}
 }
+/* ── Half-page leaf peel (JS-driven, injected elements) ────────────────────
 
+   APPROACH: half-page leaf peel.
+   JS injects a .uf-leaf div covering only the turning half of the screen
+   (right half for forward swipes, left half for backward swipes).
+   The leaf has two child faces — .uf-leaf-front (paper) and .uf-leaf-back
+   (sepia) — both with backface-visibility:hidden so the correct face shows
+   at each rotation angle. The leaf rotates 180° around its spine edge
+   (the centre of the screen), exactly like a physical book page.
+   A separate .uf-crease div darkens the incoming half during the turn.
+   Incoming page is already visible underneath from frame 0.
+   Outgoing page is hidden the instant the leaf starts peeling.
+   Reduced-motion: JS skips leaf creation entirely, instant swap.         */
+
+/* Leaf container */
+.uf-leaf{
+  position:fixed;top:0;bottom:0;width:50vw;
+  z-index:700;pointer-events:none;
+  transform-style:preserve-3d;
+  perspective:2200px;
+}
+.uf-leaf.lf-fwd{
+  right:0;left:auto;
+  transform-origin:left center;
+  animation:ufLeafFwd 490ms cubic-bezier(0.55,0,0.35,1) forwards;
+}
+.uf-leaf.lf-bwd{
+  left:0;right:auto;
+  transform-origin:right center;
+  animation:ufLeafBwd 490ms cubic-bezier(0.55,0,0.35,1) forwards;
+}
+@keyframes ufLeafFwd{from{transform:rotateY(0deg)}to{transform:rotateY(-180deg)}}
+@keyframes ufLeafBwd{from{transform:rotateY(0deg)}to{transform:rotateY(180deg)}}
+
+/* Front face — paper colour matching the page, hidden once past 90° */
+.uf-leaf-front{
+  position:absolute;inset:0;
+  background:var(--paper,#f5eedd);
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
+  overflow:hidden;
+}
+/* Crease shadow on the front face deepens toward the spine */
+.uf-leaf-front::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(to left,transparent 40%,rgba(12,8,4,0.28) 100%);
+  animation:ufCreaseFront 490ms cubic-bezier(0.55,0,0.35,1) forwards;
+}
+.lf-bwd .uf-leaf-front::after{
+  background:linear-gradient(to right,transparent 40%,rgba(12,8,4,0.28) 100%);
+}
+@keyframes ufCreaseFront{
+  0%{opacity:0.15}40%{opacity:1}100%{opacity:0}
+}
+
+/* Back face — sepia paper, visible during second half of flip */
+.uf-leaf-back{
+  position:absolute;inset:0;
+  background:linear-gradient(155deg,#eddfbe 0%,#e1d1a3 50%,#d6c490 100%);
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
+  transform:rotateY(180deg);
+  box-shadow:inset 0 0 60px rgba(60,40,20,0.12);
+}
+.lf-bwd .uf-leaf-back{transform:rotateY(-180deg)}
+
+/* Crease shadow on the incoming page (behind the leaf) */
+.uf-crease{
+  position:fixed;top:0;bottom:0;width:50vw;
+  z-index:699;pointer-events:none;
+  animation:ufCreaseShadow 490ms cubic-bezier(0.55,0,0.35,1) forwards;
+}
+.uf-crease.cs-fwd{
+  right:0;left:auto;
+  background:linear-gradient(to right,rgba(8,5,2,0.32) 0%,transparent 85%);
+}
+.uf-crease.cs-bwd{
+  left:0;right:auto;
+  background:linear-gradient(to left,rgba(8,5,2,0.32) 0%,transparent 85%);
+}
+@keyframes ufCreaseShadow{0%{opacity:1}55%{opacity:0.8}100%{opacity:0}}
 @keyframes uf-pulse{
   0%{color:var(--accent);text-shadow:0 0 12px var(--accent-shadow)}
   100%{color:var(--ink-bright);text-shadow:none}
@@ -859,6 +939,7 @@ header.top{display:none !important}
   .tab.page-in-left,.tab.page-in-right,.tab.page-out-left,.tab.page-out-right{
     animation:none !important;opacity:1 !important;transform:none !important;
   }
+  .uf-leaf,.uf-crease{display:none !important}
   .xp-seal{animation:none}
   .btn.primary-cta{animation:none}
 }
@@ -1962,7 +2043,6 @@ function showContents(){
 
 function _switchToContents(){
   const dir = PAGE_ORDER.indexOf(currentTab) > PAGE_ORDER.indexOf('books') ? 'right' : 'left';
-  // Contents is "before" Library so animate right (going back)
   const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const prevTabEl = document.getElementById('tab-' + currentTab);
   const nextTabEl = document.getElementById('tab-contents');
@@ -1970,17 +2050,8 @@ function _switchToContents(){
   const wasContents = currentTab === 'contents';
   currentTab = 'contents';
   if (!prefersReduced && !wasContents && prevTabEl && prevTabEl !== nextTabEl) {
-    prevTabEl.classList.remove('page-out-left','page-out-right');
-    void prevTabEl.offsetWidth;
-    prevTabEl.classList.add('page-out-right');
-    nextTabEl.classList.remove('hidden','page-in-left','page-in-right');
-    void nextTabEl.offsetWidth;
-    nextTabEl.classList.add('page-in-left');
-    setTimeout(() => {
-      prevTabEl.classList.add('hidden');
-      prevTabEl.classList.remove('page-out-right');
-      nextTabEl.classList.remove('page-in-left');
-    }, 560);
+    // Contents is "before" Library so always peel right (going back)
+    pageTurnLeaf('right', prevTabEl, nextTabEl);
   } else {
     document.querySelectorAll('.tab').forEach(t => t.classList.add('hidden'));
     nextTabEl.classList.remove('hidden');
@@ -2012,19 +2083,8 @@ function switchTab(name, opts){
   currentTab = name;
 
   if (!prefersReduced && dir && prevTab && prevTab !== nextTab) {
-    // Animate out the old tab
-    prevTab.classList.remove('page-out-left','page-out-right');
-    void prevTab.offsetWidth;
-    prevTab.classList.add(dir === 'left' ? 'page-out-left' : 'page-out-right');
-    // Show new tab and animate in, overlaid during flip
-    nextTab.classList.remove('hidden','page-in-left','page-in-right');
-    void nextTab.offsetWidth;
-    nextTab.classList.add(dir === 'left' ? 'page-in-right' : 'page-in-left');
-    setTimeout(() => {
-      prevTab.classList.add('hidden');
-      prevTab.classList.remove('page-out-left','page-out-right');
-      nextTab.classList.remove('page-in-left','page-in-right');
-    }, 560);
+    // Half-page leaf peel
+    pageTurnLeaf(dir, prevTab, nextTab);
   } else {
     // Instant swap (reduced motion or no direction)
     document.querySelectorAll('.tab').forEach(t => t.classList.add('hidden'));
@@ -2036,6 +2096,60 @@ function switchTab(name, opts){
   if (name === 'friends') loadFriends();
   if (name === 'guilds') loadGuilds();
   if (name === 'shop') loadShop();
+}
+
+// ── Half-page leaf peel ───────────────────────────────────────────────────
+// Injects a .uf-leaf element covering the turning half of the screen.
+// Front face = paper (matches page background), back face = sepia.
+// The incoming page is revealed immediately underneath; the outgoing page
+// is hidden once the leaf starts rotating so it doesn't show through.
+// A .uf-crease shadow element darkens the incoming half during the turn.
+//
+// dir='left'  → forward (swipe left): right half of screen peels forward
+// dir='right' → backward (swipe right): left half peels backward
+
+function pageTurnLeaf(dir, outEl, inEl) {
+  const DURATION = 490; // ms — matches CSS animation
+  const isFwd = dir === 'left';
+
+  // 1. Show the incoming page behind everything immediately
+  inEl.classList.remove('hidden');
+  window.scrollTo({ top: 0, behavior: 'instant' });
+
+  // 2. Hide outgoing page immediately — the leaf covers its half anyway
+  //    (the other half was already showing the incoming page)
+  outEl.classList.add('hidden');
+
+  // 3. Build the leaf
+  const leaf = document.createElement('div');
+  leaf.className = 'uf-leaf ' + (isFwd ? 'lf-fwd' : 'lf-bwd');
+
+  const front = document.createElement('div');
+  front.className = 'uf-leaf-front';
+
+  const back = document.createElement('div');
+  back.className = 'uf-leaf-back';
+
+  leaf.appendChild(front);
+  leaf.appendChild(back);
+  document.body.appendChild(leaf);
+
+  // 4. Build the crease shadow on the incoming side
+  const crease = document.createElement('div');
+  crease.className = 'uf-crease ' + (isFwd ? 'cs-fwd' : 'cs-bwd');
+  document.body.appendChild(crease);
+
+  // 5. Clean up when animation finishes
+  //    Use both animationend and a safety timeout
+  let cleaned = false;
+  function cleanup() {
+    if (cleaned) return;
+    cleaned = true;
+    leaf.remove();
+    crease.remove();
+  }
+  leaf.addEventListener('animationend', cleanup, { once: true });
+  setTimeout(cleanup, DURATION + 80);
 }
 
 function flipPage(dir){
