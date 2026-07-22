@@ -248,6 +248,17 @@ export default {
       return fresh;
     }
 
+    // Also force fresh for the direct .html forms of the pretty routes above.
+    // The zone has an aggressive HTML cache rule; explicit no-cache header
+    // overrides it so redesigns land immediately without a manual dashboard purge.
+    const prettyHtmlPaths = new Set(Object.values(prettyRoutes));
+    if (prettyHtmlPaths.has(p)) {
+      const assetRes = await env.ASSETS.fetch(request);
+      const fresh = new Response(assetRes.body, assetRes);
+      fresh.headers.set('Cache-Control', 'public, max-age=0, must-revalidate, no-cache');
+      return fresh;
+    }
+
 
 
 
