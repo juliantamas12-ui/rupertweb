@@ -17,77 +17,62 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  /* Book-page palette — creamy paper, dark ink, hardback-cover accent */
-  --ink:#1a1712;              /* dark ink text on paper */
-  --ink-bright:#0d0b08;       /* headlines, deepest */
+  --ink:#1a1712;
+  --ink-bright:#0d0b08;
   --ink-dim:rgba(26,23,18,0.62);
   --ink-fade:rgba(26,23,18,0.38);
   --ink-ghost:rgba(26,23,18,0.10);
 
-  --paper:#f5eedd;            /* aged book paper */
-  --paper-deep:#ece2c8;       /* darker paper for progress bars, hovers */
-  --paper-raise:#faf3e2;      /* card / raised page */
-  --paper-raise2:#efe6cf;     /* inputs, subtle recess */
+  --paper:#f5eedd;
+  --paper-deep:#ece2c8;
+  --paper-raise:#faf3e2;
+  --paper-raise2:#efe6cf;
   --paper-line:rgba(26,23,18,0.10);
   --paper-line-strong:rgba(26,23,18,0.22);
 
-  /* ─── The Three Colours ───
-     One palette for the whole edition. Every accent, tint, and state uses
-     these three plus their darker/lighter siblings. No other colours.
-     Role code (used throughout):
-       red  = action  → buttons, wordmark accent, active tab, danger, destruction
-       blue = social  → guild features, friend rows, links, info, running head
-       tan  = progress → progress-bar fill, hover, streak, "in progress" states */
-
-  --red:#7A2E1E;              /* action — the hardback red */
+  --red:#7A2E1E;
   --red-bright:#933a26;
   --red-deep:#5c2314;
   --red-shadow:rgba(122,46,30,0.18);
   --red-soft:rgba(122,46,30,0.10);
 
-  --blue:#2C4B6E;             /* social — the pléiade navy */
+  --blue:#2C4B6E;
   --blue-bright:#3e6089;
   --blue-deep:#1c3350;
   --blue-shadow:rgba(44,75,110,0.20);
   --blue-soft:rgba(44,75,110,0.10);
 
-  --tan:#F2DCB1;              /* progress — champagne parchment */
+  --tan:#F2DCB1;
   --tan-bright:#F8E9C7;
   --tan-deep:#D9BE87;
   --tan-shadow:rgba(217,190,135,0.30);
   --tan-soft:rgba(242,220,177,0.20);
 
-  /* Legacy aliases so existing rules keep working while everything gets migrated */
   --accent:var(--red);
   --accent-bright:var(--red-bright);
   --accent-deep:var(--red-deep);
   --accent-shadow:var(--red-shadow);
   --marker:var(--red);
   --marker-soft:var(--red-soft);
-  --good:var(--blue);          /* "finished" & "completed" now use blue (social/info) */
-  --warn:var(--tan-deep);      /* warnings use the deeper tan */
+  --good:var(--blue);
+  --warn:var(--tan-deep);
 
-  /* Tier metals — still six tiers, but re-anchored to the three-colour palette */
-  --t-bronze:#7a4a1e;          /* warm brown (family of red) */
-  --t-silver:#767370;          /* cool grey */
-  --t-gold:var(--tan-deep);    /* the deep tan reads as gold */
+  --t-bronze:#7a4a1e;
+  --t-silver:#767370;
+  --t-gold:var(--tan-deep);
   --t-platinum:#b0aca4;
-  --t-diamond:var(--blue);     /* diamond = social blue */
-  --t-master:var(--red);       /* master = the hardback red */
+  --t-diamond:var(--blue);
+  --t-master:var(--red);
 
   --radius:6px;
   --radius-lg:10px;
 }
 html,body{background:var(--paper);color:var(--ink);font-family:'EB Garamond',Garamond,ui-serif,Georgia,'Times New Roman',serif;line-height:1.55;min-height:100vh;font-size:17px;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
-/* Garamond everywhere. Geist only for tiny numeric things (folios, streak counter).
-   Body, buttons, tabs, tier stamp, statuses, metadata all in Garamond. */
 button, input, select, textarea{font-family:inherit}
 .btn, .btn.ghost, .btn.small, .btn.subtle{font-family:'EB Garamond',Garamond,serif}
 .folio, .lb-row .streak, .running-head .folio{font-family:'Geist',sans-serif;font-variant-numeric:tabular-nums}
 .ui{font-family:'Geist',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif}
 body{
-  /* Subtle paper texture: two very soft coloured washes + a barely-there fibre noise.
-     No SVGs, no images — just gradients so it stays cheap and print-like. */
   background:
     radial-gradient(1400px 800px at 90% -10%, rgba(122,46,30,0.03), transparent 60%),
     radial-gradient(1100px 700px at -10% 50%, rgba(163,116,22,0.04), transparent 60%),
@@ -96,7 +81,6 @@ body{
   position:relative;
 }
 body::before{
-  /* Faint speckle / paper-grain overlay */
   content:'';
   position:fixed;inset:0;pointer-events:none;z-index:0;
   background-image:
@@ -119,36 +103,15 @@ a:hover{color:var(--accent-bright)}
 .wrap{max-width:820px;margin:0 auto;padding:44px 32px 96px}
 @media(max-width:600px){.wrap{padding:24px 20px 96px}}
 
-/* Ornamental fleuron divider used between big sections */
 .fleuron{text-align:center;font-family:'EB Garamond',serif;color:var(--accent);font-size:22px;line-height:1;margin:28px 0;letter-spacing:0.4em;user-select:none}
-.fleuron::before{content:'❦ ❧ ❦'}
+.fleuron::before{content:'* * *'}
 
-/* ── Header ─────────────────────────────── */
-/* Persistent bookplate strip — ONE small line at the very top of the page.
-   Left: "ex libris <name> @handle · TIER". Right: sign out. No wordmark,
-   no tagline, no big centred title. The cover already did that job. */
-/* Persistent top strip is hidden. Identity + sign-out live on the cover.
-   Each inside page uses .running-head at the top and .page-footer at the bottom. */
+/* ── Header ────────────────────────────────────── */
 header.top{display:none !important}
-@media(max-width:600px){
-  header.top h1{font-size:52px}
-  header.top{padding-bottom:24px;margin-bottom:24px;gap:10px}
-  .wrap{padding-top:20px}
-}
 
-/* ── Auth ─────────────────────────────── */
-/* ─── BOOK COVER (AUTH SCREEN) ───
-   The very first thing a new user sees. Rendered like an actual hardback
-   book cover: solid accent-red field, cream stamped title, small caps
-   subtitle, an edition line, a printer's colophon. On tap/scroll the
-   "endpaper" reveals the sign-in form beneath. */
+/* ── Auth / Cover ──────────────────────────────── */
 .auth{max-width:none;margin:0;padding:0;position:relative}
 
-/* Cover — tanned leather look.
-   Base: deep hardback red flooded with warm brown depth.
-   Layer 1 (::before): fine, high-frequency SVG turbulence for the leather grain.
-   Layer 2 (::after): larger, low-frequency turbulence for mottled hide patches.
-   Plus an inner vignette shadow so the corners look tooled/worn. */
 .book-cover{
   min-height:100vh;
   min-height:100dvh;
@@ -169,7 +132,6 @@ header.top{display:none !important}
 @media(max-width:400px){
   .book-cover{padding:40px 16px 36px}
 }
-/* Fine leather grain — fractal noise. Rendered inline as a data-URI SVG. */
 .book-cover::before{
   content:'';position:absolute;inset:0;pointer-events:none;
   background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' seed='7'/><feColorMatrix values='0 0 0 0 0.05  0 0 0 0 0.02  0 0 0 0 0  0 0 0 1 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/></svg>");
@@ -177,7 +139,6 @@ header.top{display:none !important}
   mix-blend-mode:multiply;
   opacity:0.9;
 }
-/* Coarse mottling — larger patches, warmer highlights */
 .book-cover::after{
   content:'';position:absolute;inset:0;pointer-events:none;
   background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='500' height='500'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.014' numOctaves='2' seed='3'/><feColorMatrix values='0 0 0 0 0.9  0 0 0 0 0.55  0 0 0 0 0.35  0 0 0 0.25 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
@@ -185,7 +146,6 @@ header.top{display:none !important}
   mix-blend-mode:overlay;
   opacity:0.55;
 }
-/* No cover frame — side borders removed so title never has to compete with them. */
 .book-cover .frame{display:none}
 .book-cover .cover-top,
 .book-cover .cover-mid,
@@ -198,9 +158,6 @@ header.top{display:none !important}
   font-family:'EB Garamond',serif;font-style:italic;font-size:14px;
   color:rgba(245,238,221,0.55);margin-top:6px;
 }
-/* Cover title — upright EB Garamond bold, foil-stamped on leather */
-/* Cover title — upright EB Garamond bold, foil-stamped on leather.
-   Sized to fit within safe padding without overflow on narrow phones. */
 .book-cover .title{
   font-family:'EB Garamond',serif;font-weight:700;font-style:normal;
   font-size:clamp(44px,11vw,96px);line-height:0.95;letter-spacing:0.01em;
@@ -225,11 +182,7 @@ header.top{display:none !important}
   font-family:'Geist',sans-serif;font-size:10px;letter-spacing:0.28em;text-transform:uppercase;
   color:rgba(245,238,221,0.55);font-weight:500;
 }
-/* Open-the-book button removed — the cover itself is tappable. */
 .book-cover .open-btn{display:none}
-
-/* Cover — splash variant (for signed-in returning user).
-   Adds a Table of Contents in the middle: tap a chapter to enter. */
 .cover-splash{
   position:fixed;inset:0;z-index:200;
   animation:coverIn .5s cubic-bezier(0.2,0.7,0.2,1);
@@ -237,77 +190,6 @@ header.top{display:none !important}
 .cover-splash.closing{animation:coverOut .35s ease-in forwards}
 @keyframes coverIn{from{opacity:0;transform:scale(1.02)}to{opacity:1;transform:none}}
 @keyframes coverOut{to{opacity:0;transform:scale(0.98)}}
-
-/* Legacy cover-toc kept but no longer used (Contents lives on its own page). */
-.cover-toc{display:none}
-
-/* Real book Table of Contents: chapter number in roman on the left, title
-   in small caps, classic dot leaders stretching to a page number on the right.
-   No box, no hover fill, no description. Generous whitespace. */
-.contents-list{display:flex;flex-direction:column;gap:0;max-width:520px;margin:0 auto}
-.contents-item{
-  display:flex;align-items:baseline;gap:14px;
-  padding:18px 0;background:transparent;border:none;text-align:left;cursor:pointer;
-  font-family:'EB Garamond',serif;color:var(--ink);
-  transition:color .15s;width:100%;
-}
-.contents-item:hover .t,
-.contents-item:hover .n,
-.contents-item:hover .pf{color:var(--red)}
-.contents-item .n{
-  font-family:'EB Garamond',serif;font-style:italic;
-  font-size:16px;color:var(--ink-dim);font-weight:400;line-height:1;
-  min-width:32px;text-align:right;letter-spacing:0.02em;
-  transition:color .15s;
-}
-.contents-item .t{
-  font-family:'EB Garamond',serif;font-weight:400;
-  font-size:20px;color:var(--ink-bright);letter-spacing:0.06em;
-  font-variant:small-caps;line-height:1;
-  white-space:nowrap;transition:color .15s;
-}
-/* Dot-leaders: a stretched dotted rule between title and folio */
-.contents-item .leaders{
-  flex:1;height:0;border-bottom:1px dotted var(--ink-fade);
-  align-self:flex-end;margin-bottom:6px;
-  opacity:0.7;
-}
-.contents-item .pf{
-  font-family:'EB Garamond',serif;font-style:italic;
-  font-size:16px;color:var(--ink-dim);letter-spacing:0;
-  font-variant-numeric:oldstyle-nums;min-width:44px;text-align:right;
-  transition:color .15s;
-}
-@media(max-width:600px){
-  .contents-item{padding:16px 0;gap:10px}
-  .contents-item .t{font-size:18px;letter-spacing:0.05em}
-  .contents-item .n,.contents-item .pf{font-size:15px}
-}
-.cover-toc-item{
-  display:flex;align-items:baseline;gap:14px;
-  padding:14px 8px;
-  background:transparent;border:none;
-  color:rgba(245,238,221,0.9);
-  font-family:'EB Garamond',serif;font-style:italic;
-  font-size:22px;text-align:left;cursor:pointer;
-  border-bottom:1px dotted rgba(245,238,221,0.22);
-  transition:color .15s, transform .12s, letter-spacing .12s;
-  width:100%;
-}
-.cover-toc-item:last-child{border-bottom:none}
-.cover-toc-item:hover{color:var(--paper);letter-spacing:0.01em}
-.cover-toc-item:active{transform:translateX(2px)}
-.cover-toc-item .n{
-  font-family:'EB Garamond',serif;font-style:italic;font-size:14px;
-  color:rgba(245,238,221,0.55);min-width:24px;letter-spacing:0.06em;
-}
-.cover-toc-item .t{flex:1}
-.cover-toc-item::after{
-  content:'→';font-family:serif;color:rgba(245,238,221,0.45);font-size:16px;
-  transition:transform .12s, color .12s;
-}
-.cover-toc-item:hover::after{color:var(--paper);transform:translateX(4px)}
-/* whole cover is a tap target — subtle hint on hover */
 .book-cover.tappable{cursor:pointer;user-select:none}
 .book-cover.tappable:active{transform:scale(0.998)}
 .book-cover .tap-hint{
@@ -324,10 +206,9 @@ header.top{display:none !important}
   pointer-events:none;
 }
 
-/* Endpaper — the sign-in card that reveals after "open" is clicked */
+/* Endpaper */
 .endpaper{
-  min-height:100vh;
-  min-height:100dvh;
+  min-height:100vh;min-height:100dvh;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   padding:60px 28px;
   max-width:480px;margin:0 auto;
@@ -363,7 +244,7 @@ header.top{display:none !important}
 .auth .field{margin-bottom:16px}
 .auth .fine{margin-top:20px;font-size:12px;color:var(--ink-fade);line-height:1.5}
 
-/* ── Buttons ─────────────────────────────── */
+/* ── Buttons ────────────────────────────────────── */
 .btn{background:var(--accent);color:var(--paper);border:none;border-radius:var(--radius);padding:12px 20px;font-weight:600;cursor:pointer;font-size:14px;display:inline-block;width:100%;transition:background .15s, transform .05s;letter-spacing:0.01em}
 .btn:hover{background:var(--accent-bright)}
 .btn:active{transform:translateY(1px)}
@@ -373,12 +254,18 @@ header.top{display:none !important}
 .btn.subtle{background:transparent;color:var(--ink-dim);border:1px solid var(--paper-line);padding:6px 10px;font-size:12px;width:auto;font-weight:500}
 .btn.subtle:hover{color:var(--accent);border-color:var(--paper-line-strong)}
 .btn.danger{background:var(--marker);color:var(--paper)}
+/* Primary CTA — bigger, more prominent */
+.btn.primary-cta{
+  font-size:17px;padding:16px 32px;letter-spacing:0.02em;
+  background:var(--red);color:var(--paper);
+  box-shadow:0 4px 16px var(--red-shadow);
+  width:auto;display:inline-block;
+}
+.btn.primary-cta:hover{background:var(--red-bright);box-shadow:0 6px 20px var(--red-shadow)}
 
-/* ── Tabs ─────────────────────────────── */
-/* Tabs as a table-of-contents strip — Garamond italic, not sans caps. */
+/* ── Tabs ────────────────────────────────────── */
 .tabs{display:flex;gap:0;justify-content:center;border-bottom:1px solid var(--paper-line);margin-bottom:32px;margin-top:20px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px}
 .tabs::-webkit-scrollbar{display:none}
-/* Tabs: upright EB Garamond, small caps, table-of-contents style */
 .tabs button{padding:12px 4px;margin:0 20px;color:var(--ink-dim);font-weight:500;font-size:16px;border-bottom:1.5px solid transparent;margin-bottom:-1px;white-space:nowrap;transition:color .15s, border-color .15s;letter-spacing:0.06em;font-family:'EB Garamond',serif;font-variant:small-caps;line-height:1}
 .tabs button.active{color:var(--red);border-bottom-color:var(--red)}
 .tabs button:hover:not(.active){color:var(--ink)}
@@ -387,12 +274,12 @@ header.top{display:none !important}
   .tabs button{margin:0 14px 0 0;font-size:18px}
 }
 
-/* sub-tabs (leaderboard) — pill style */
+/* sub-tabs (leaderboard) */
 .subtabs{display:inline-flex;gap:2px;background:var(--paper-raise);border:1px solid var(--paper-line);border-radius:999px;padding:3px;margin-bottom:20px}
 .subtabs button{padding:6px 14px;font-size:12px;color:var(--ink-dim);border-radius:999px;font-weight:500;letter-spacing:0.02em}
 .subtabs button.active{background:var(--paper-raise2);color:var(--ink-bright);box-shadow:inset 0 0 0 1px var(--paper-line-strong)}
 
-/* ── Stat cards ─────────────────────────────── */
+/* ── Stat cards ────────────────────────────────── */
 .grid{display:grid;grid-template-columns:repeat(4, 1fr);gap:0;margin:8px 0 40px;border-top:1px solid var(--paper-line);border-bottom:1px solid var(--paper-line)}
 .grid .card{border-right:1px solid var(--paper-line);padding:20px 16px}
 .grid .card:last-child{border-right:none}
@@ -401,16 +288,13 @@ header.top{display:none !important}
   .grid .card:nth-child(2){border-right:none}
   .grid .card:nth-child(1),.grid .card:nth-child(2){border-bottom:1px solid var(--paper-line)}
 }
-/* Big-number "card" — no border, no fill, just a small-caps label + a huge serif number.
-   Rules only appear as vertical hairlines between grid cells. */
 .card{background:transparent;border:none;border-radius:0;padding:14px 8px}
 .card h3{font-family:'Geist',sans-serif;font-size:10px;color:var(--ink-fade);font-weight:600;margin-bottom:8px;letter-spacing:0.18em;text-transform:uppercase}
 .stat{font-family:'EB Garamond',serif;font-weight:500;font-size:56px;line-height:0.95;color:var(--ink-bright);letter-spacing:-0.02em;display:flex;align-items:baseline;gap:8px;font-variant-numeric:oldstyle-nums}
 .stat .unit{font-family:'Geist',sans-serif;font-size:12px;color:var(--ink-dim);font-weight:500;letter-spacing:0.02em;text-transform:uppercase}
 .sub{font-size:12px;color:var(--ink-dim);margin-top:10px;line-height:1.4}
 
-/* ── Tier badge ─────────────────────────────── */
-/* Library-stamp style tier mark: solid ink block, small caps, faux-embossed */
+/* ── Tier badge ────────────────────────────────── */
 .tier-badge{display:inline-flex;align-items:center;gap:6px;padding:3px 9px 2px;background:transparent;border:1.5px solid var(--ink);border-radius:0;font-weight:700;font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:var(--ink);font-family:'Geist',sans-serif;transform:rotate(-1.5deg);transform-origin:left center}
 .tier-badge .dot{width:5px;height:5px;border-radius:50%;background:var(--t-bronze)}
 .tier-badge.silver .dot{background:var(--t-silver)}
@@ -419,31 +303,52 @@ header.top{display:none !important}
 .tier-badge.diamond .dot{background:var(--t-diamond)}
 .tier-badge.master .dot{background:var(--t-master);box-shadow:0 0 8px var(--t-master)}
 
-/* ── Section headers ─────────────────────────────── */
+/* Tier progress bar (shown on library page) */
+.tier-progress-strip{
+  display:flex;align-items:center;gap:14px;padding:12px 0 4px;
+  margin-bottom:28px;border-top:1px solid var(--paper-line);
+  font-family:'Geist',sans-serif;font-size:11px;color:var(--ink-fade);
+}
+.tier-progress-strip .tbar{
+  flex:1;height:5px;background:var(--paper-raise2);
+  border-top:1px solid var(--paper-line-strong);border-bottom:1px solid var(--paper-line-strong);
+  position:relative;overflow:hidden;
+}
+.tier-progress-strip .tbar .fill{
+  position:absolute;top:1px;left:0;height:3px;
+  background:var(--tan-deep);transition:width .5s ease;
+}
+.tier-progress-strip .label{white-space:nowrap;letter-spacing:0.06em}
+
+/* ── Section headers ──────────────────────────── */
 .section-head{display:flex;justify-content:space-between;align-items:baseline;margin:8px 0 18px}
 .section-head h2{font-family:'EB Garamond',serif;font-weight:500;font-size:32px;line-height:1;letter-spacing:-0.01em;color:var(--ink-bright)}
 .section-head .hint{font-size:12px;color:var(--ink-fade)}
 
-/* ── Book cards ─────────────────────────────── */
-/* Book rows: no border, no fill. Just hairline rule between rows. */
+/* ── Book cards ──────────────────────────────── */
 .book{display:flex;gap:22px;padding:22px 0;background:transparent;border:none;border-radius:0;border-bottom:1px solid var(--paper-line);margin-bottom:0;transition:transform .05s}
 .book:last-child{border-bottom:none}
 .book:hover .title{color:var(--accent)}
 .book .cover{width:70px;height:104px;background:var(--paper-raise2);flex-shrink:0;object-fit:cover;display:block;border-radius:2px;box-shadow:0 4px 10px rgba(60,40,20,0.20), 0 1px 2px rgba(60,40,20,0.15), inset 0 0 0 1px rgba(26,23,18,0.06)}
 .book .cover-placeholder{width:70px;height:104px;background:linear-gradient(135deg,var(--accent),var(--accent-deep));display:flex;align-items:center;justify-content:center;color:var(--paper);font-size:13px;text-align:center;padding:8px;flex-shrink:0;border-radius:2px;font-family:'EB Garamond',serif;font-style:italic;line-height:1.2;box-shadow:0 4px 10px rgba(60,40,20,0.20), 0 1px 2px rgba(60,40,20,0.15)}
+/* Bookplate frame variants (shop cosmetic) */
+.book-frame-ornate .book .cover,.book-frame-ornate .book .cover-placeholder{
+  box-shadow:0 4px 10px rgba(60,40,20,0.20), 0 0 0 3px var(--tan-deep), 0 0 0 5px var(--ink);
+}
+.book-frame-botanical .book .cover,.book-frame-botanical .book .cover-placeholder{
+  box-shadow:0 4px 10px rgba(60,40,20,0.20), 0 0 0 3px #2d5a27, 0 0 0 5px var(--tan-deep);
+}
+.book-frame-gothic .book .cover,.book-frame-gothic .book .cover-placeholder{
+  box-shadow:0 4px 10px rgba(60,40,20,0.20), 0 0 0 2px var(--ink), 0 0 0 6px var(--red-deep), 0 0 0 8px var(--ink);
+}
 .book .info{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:space-between}
 .book .title{font-family:'EB Garamond',serif;font-weight:500;color:var(--ink-bright);font-size:24px;line-height:1.15;letter-spacing:-0.005em;margin-bottom:3px}
 .book .author{font-family:'EB Garamond',serif;font-style:italic;font-size:15px;color:var(--ink-dim)}
 .book .meta-row{font-size:12px;color:var(--ink-fade);margin-top:4px}
-/* Twin-rule progress bar — two hairlines with the fill drawn as a solid ink bar between them.
-   Reads like the pen-and-ruler measurement bars in an old textbook. */
-/* Book progress: tan fill (progress role), twin ink rules */
 .book .progress-bar{height:8px;background:transparent;position:relative;margin:14px 0 6px;border-top:1px solid var(--paper-line-strong);border-bottom:1px solid var(--paper-line-strong);border-radius:0;overflow:visible}
 .book .progress-bar .fill{position:absolute;top:2px;left:0;height:calc(100% - 4px);background:var(--tan);transition:width .4s ease}
 .book .progress-text{font-size:11px;color:var(--ink-dim);display:flex;justify-content:space-between;font-variant-numeric:tabular-nums}
 .book .actions{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
-/* Book status — role code: reading = tan (progress), finished = blue (social/done),
-   paused = ink-fade (neutral) */
 .book .status-done{color:var(--blue);font-weight:500}
 .book .status-active{color:var(--tan-deep);font-weight:500}
 .book .status-paused{color:var(--ink-fade);font-weight:500}
@@ -453,10 +358,9 @@ header.top{display:none !important}
   .book .title{font-size:16px}
 }
 
-/* ── Search dropdown ─────────────────────────────── */
+/* ── Search dropdown ──────────────────────────── */
 .search-box{position:relative;margin-bottom:24px}
 .search-box input{padding-left:44px;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%231a1712' stroke-opacity='0.55' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='8'/><line x1='21' y1='21' x2='16.65' y2='16.65'/></svg>");background-repeat:no-repeat;background-position:14px center}
-/* Search dropdown — a floating page slice, no rounded box, just top+bottom ink rules */
 .search-results{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--paper);border:none;border-top:2px solid var(--ink);border-bottom:2px solid var(--ink);border-radius:0;max-height:420px;overflow-y:auto;z-index:10;box-shadow:0 20px 40px -10px rgba(60,40,20,0.25)}
 .search-result{display:flex;gap:14px;padding:14px 12px;cursor:pointer;border-bottom:1px solid var(--paper-line);transition:transform .05s;background:transparent;border-left:none;border-right:none;border-top:none;width:100%;text-align:left;font-family:inherit;color:inherit;font:inherit}
 .search-result:last-child{border-bottom:none}
@@ -466,8 +370,7 @@ header.top{display:none !important}
 .search-result .title{font-weight:500;color:var(--ink-bright);font-size:17px;font-family:'EB Garamond',serif;line-height:1.2;transition:color .15s}
 .search-result .meta{font-size:13px;color:var(--ink-dim);margin-top:2px;font-style:italic}
 
-/* ── Leaderboard ─────────────────────────────── */
-/* Leaderboard — no bounding box; the rows themselves are the structure. */
+/* ── Leaderboard ──────────────────────────────── */
 .lb{background:transparent;border:none;border-radius:0;overflow:visible;border-top:1px solid var(--paper-line-strong)}
 .lb-row{display:grid;grid-template-columns:44px 1fr 110px 70px 70px;gap:12px;align-items:center;padding:14px 18px;border-bottom:1px solid var(--paper-line);font-size:14px}
 .lb-row:last-child{border-bottom:none}
@@ -487,7 +390,7 @@ header.top{display:none !important}
   .lb-row .streak:last-child{display:none}
 }
 
-/* ── Friends ─────────────────────────────── */
+/* ── Friends ──────────────────────────────────── */
 .friends-add{display:flex;gap:10px;margin-bottom:24px}
 .friends-add input{flex:1}
 .friend-row{display:flex;justify-content:space-between;align-items:center;padding:16px 0;background:transparent;border:none;border-radius:0;border-bottom:1px solid var(--paper-line);margin-bottom:0}
@@ -496,7 +399,7 @@ header.top{display:none !important}
 .friend-row .fmeta{font-size:12px;color:var(--ink-dim);margin-top:2px;letter-spacing:0.02em}
 .friend-row .fmeta .h{color:var(--blue);font-weight:500}
 
-/* ── Modal ─────────────────────────────── */
+/* ── Modal ────────────────────────────────────── */
 .modal-bg{position:fixed;inset:0;background:rgba(200,180,140,0.60);backdrop-filter:blur(8px) saturate(0.9);-webkit-backdrop-filter:blur(8px) saturate(0.9);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
 .modal-bg.open{display:flex}
 .modal{background:var(--paper);border:none;border-top:3px double var(--ink);border-bottom:3px double var(--ink);border-radius:0;padding:32px 28px;max-width:440px;width:100%;box-shadow:0 30px 60px -15px rgba(60,40,20,0.30)}
@@ -506,11 +409,8 @@ header.top{display:none !important}
 .modal .actions{display:flex;gap:10px;margin-top:24px}
 .modal .actions .btn{flex:1}
 
-/* ── Misc ─────────────────────────────── */
+/* ── Misc ──────────────────────────────────────── */
 .empty{padding:56px 20px;text-align:center;color:var(--ink-dim);border:none;border-radius:0;font-style:italic;font-family:'EB Garamond',serif;font-size:22px;line-height:1.4}
-
-/* Empty-state "how it works" panels */
-/* Onboarding "how it works" — no box, no fill. Reads like a book preface. */
 .explainer{background:transparent;border:none;border-radius:0;padding:20px 0 32px;margin-bottom:20px;border-bottom:1px solid var(--paper-line)}
 .explainer h4{font-family:'EB Garamond',serif;font-weight:500;font-size:34px;color:var(--ink-bright);margin-bottom:4px;letter-spacing:-0.01em}
 .explainer .lead{color:var(--ink-dim);font-size:19px;margin-bottom:28px;font-style:italic;font-family:'EB Garamond',serif}
@@ -523,8 +423,6 @@ header.top{display:none !important}
 .explainer .step h5{font-size:12px;color:var(--ink-bright);font-weight:600;margin-bottom:4px;letter-spacing:0.06em;text-transform:uppercase;font-family:'Geist',sans-serif}
 .explainer .step p{font-size:14px;color:var(--ink-dim);line-height:1.5;font-family:'EB Garamond',serif}
 .explainer .cta{display:flex;gap:10px;flex-wrap:wrap}
-
-/* Tier ladder — like a title-page contents list */
 .ladder{display:flex;flex-direction:column;gap:0;margin-top:14px;max-width:340px;margin-left:auto;margin-right:auto}
 .rung{padding:10px 4px;background:transparent;border:none;border-radius:0;border-bottom:1px dotted var(--paper-line-strong);display:flex;align-items:center;gap:12px}
 .rung:last-child{border-bottom:none}
@@ -534,7 +432,8 @@ header.top{display:none !important}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink-bright);border:none;border-radius:0;padding:12px 22px;color:var(--paper);font-weight:500;font-size:13px;z-index:100;display:none;box-shadow:0 10px 30px -5px rgba(60,40,20,0.30);letter-spacing:0.02em}
 .toast.show{display:block;animation:toastIn .2s ease}
 @keyframes toastIn{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}
-/* ── Guilds ────────────────────────────── */
+
+/* ── Guilds ────────────────────────────────────── */
 .guild-card{display:block;padding:22px 0;background:transparent;border:none;border-radius:0;border-bottom:1px solid var(--paper-line);margin-bottom:0;cursor:pointer;transition:transform .05s;text-decoration:none;color:inherit;font-family:inherit}
 .guild-card:last-of-type{border-bottom:none}
 .guild-card:hover .g-name{color:var(--blue)}
@@ -545,7 +444,7 @@ header.top{display:none !important}
 
 .goal{padding:22px 0;background:transparent;border:none;border-radius:0;border-bottom:1px solid var(--paper-line);margin-bottom:0}
 .goal:last-child{border-bottom:none}
-.goal.completed .g-title::after{content:' ✓';color:var(--good)}
+.goal.completed .g-title::after{content:' [done]';color:var(--good);font-style:italic}
 .goal.failed{opacity:0.55}
 .goal .g-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:10px}
 .goal .g-title{font-family:'EB Garamond',serif;font-weight:500;color:var(--ink-bright);font-size:22px;line-height:1.2;letter-spacing:-0.005em}
@@ -556,7 +455,6 @@ header.top{display:none !important}
 .goal .g-progress{display:flex;justify-content:space-between;align-items:baseline;margin:4px 0 6px;font-family:'EB Garamond',serif;font-size:15px;color:var(--ink-dim)}
 .goal .g-progress .n{font-family:'EB Garamond',serif;font-size:24px;color:var(--ink-bright);font-weight:500}
 .goal .g-progress .n .of{color:var(--ink-fade);font-size:16px}
-/* Guild-goal progress: tan while in progress, blue when complete (social win) */
 .goal .g-bar{height:8px;background:transparent;border-radius:0;overflow:visible;margin-bottom:12px;border-top:1px solid var(--paper-line-strong);border-bottom:1px solid var(--paper-line-strong);position:relative}
 .goal .g-bar .fill{position:absolute;top:2px;left:0;height:calc(100% - 4px);background:var(--tan);transition:width .4s ease}
 .goal.completed .g-bar .fill{background:var(--blue)}
@@ -577,23 +475,19 @@ header.top{display:none !important}
 .guild-detail-head .motto{font-family:'EB Garamond',serif;font-style:italic;color:var(--ink-dim);font-size:18px;margin-top:8px}
 .guild-detail-head .desc{color:var(--ink-dim);font-size:15px;margin-top:6px;line-height:1.5}
 
-/* Page-flip transitions — when you swipe, the new page slides in from the
-   corresponding side and fades up. Subtle, not a full paper-page turn. */
+/* ── Page-flip transitions ──────────────────────── */
 @keyframes pageInLeft{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:none}}
 @keyframes pageInRight{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
 .tab.page-in-left{animation:pageInLeft .36s cubic-bezier(0.2,0.7,0.2,1)}
 .tab.page-in-right{animation:pageInRight .36s cubic-bezier(0.2,0.7,0.2,1)}
 
-/* Pulse when a stat updates — the stat number briefly flushes with accent-red
-   ink, then fades back to full-ink. Feels like a stamp landing on paper. */
 @keyframes uf-pulse{
   0%{color:var(--accent);text-shadow:0 0 12px var(--accent-shadow)}
   100%{color:var(--ink-bright);text-shadow:none}
 }
 .card.pulse .stat{animation:uf-pulse 0.9s ease-out}
 
-/* Running head — top-of-page book header. Small caps chapter title on the left,
-   folio + close-book link on the right. One hairline rule below. */
+/* ── Running head ────────────────────────────────── */
 .running-head{
   display:flex;justify-content:space-between;align-items:baseline;
   padding:16px 0 10px;margin-bottom:26px;
@@ -610,7 +504,7 @@ header.top{display:none !important}
   font-variant:small-caps;letter-spacing:0.14em;font-size:11px;padding:0}
 .running-head .close-book:hover{color:var(--red);text-decoration-color:var(--red)}
 
-/* Page footer — folio (page number) centred at the bottom, with fleuron above. */
+/* ── Page footer ─────────────────────────────────── */
 .page-footer{
   margin-top:56px;padding:28px 0 12px;
   text-align:center;
@@ -618,31 +512,23 @@ header.top{display:none !important}
   font-size:14px;
 }
 .page-footer .fleur{display:block;color:var(--red);font-size:16px;margin-bottom:10px;letter-spacing:0.6em;padding-left:0.6em;opacity:0.7}
-.page-footer .fleur::before{content:'❦ · ❧'}
+.page-footer .fleur::before{content:'* * *'}
 .page-footer .num{font-variant-numeric:oldstyle-nums;letter-spacing:0.02em;font-style:italic;font-size:15px}
 
-/* Marginalia — an italic serif note. Blue rule since it's editorial/info,
-   not an action. */
+/* ── Marginalia ──────────────────────────────────── */
 .marginalia{
   font-family:'EB Garamond',serif;font-style:italic;color:var(--ink-dim);
   font-size:14px;line-height:1.4;padding-left:14px;border-left:2px solid var(--blue);
   margin:10px 0;max-width:280px;
 }
-
-/* Small-caps section head, sometimes used as a chapter-opener above section titles */
 .chapter-mark{
   font-family:'Geist',sans-serif;font-size:10px;letter-spacing:0.28em;text-transform:uppercase;
   color:var(--ink-fade);font-weight:600;margin-bottom:8px;
 }
-
-/* Drop cap for the very first paragraph on a page — like a book chapter opener */
 .drop-cap::first-letter{
   font-family:'EB Garamond',serif;font-style:italic;font-weight:500;
   font-size:60px;line-height:0.85;float:left;padding:6px 8px 0 0;color:var(--accent);
 }
-
-/* Body-paragraph utility — an actual paragraph rendered in Garamond at
-   proper reading size and measure, for editors’ notes and prefaces. */
 .book-prose{
   font-family:'EB Garamond',Garamond,serif;font-size:16px;line-height:1.65;
   color:var(--ink);max-width:60ch;
@@ -650,8 +536,7 @@ header.top{display:none !important}
 .book-prose p+p{margin-top:14px;text-indent:1.5em}
 .book-prose em{font-style:italic}
 
-/* Reading Session view — fullscreen focus mode.
-   Cream paper, deep Garamond, huge timer. Warns if you leave the tab. */
+/* ── Reading Session ─────────────────────────────── */
 .session-view{
   position:fixed;inset:0;z-index:300;
   background:
@@ -696,14 +581,303 @@ header.top{display:none !important}
 .session-actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
 .session-actions .btn{width:auto;padding:14px 28px}
 .session-actions .session-cancel{color:var(--ink-fade)}
-
-/* Session-log modal — shown after End session to capture pages read */
 .session-review-info{
   font-family:'EB Garamond',serif;font-style:italic;font-size:15px;
   color:var(--ink-dim);margin-bottom:16px;text-align:center;line-height:1.5;
 }
 .session-review-info b{font-style:normal;color:var(--ink)}
 
+/* ══ PER-TAB VISUAL THEMES ══════════════════════════
+   Each tab gets a distinctive character via a theme class on the tab div.
+   Shared chrome (running-head, tabs, modals) is untouched.
+   ═══════════════════════════════════════════════════ */
+
+/* --- Library + Home (tab-theme-library) --- already the default Garamond/cream look */
+.tab-theme-library .section-head h2{
+  border-bottom:none;
+}
+
+/* --- Guilds (tab-theme-heraldic) ---
+   Wine-red accents, bold serif headings, wax-seal/banner feel.
+*/
+.tab-theme-heraldic{
+  --local-accent:#6b1f2f;
+  --local-accent-dim:rgba(107,31,47,0.12);
+}
+.tab-theme-heraldic .running-head{
+  border-bottom:2px solid var(--local-accent);
+}
+.tab-theme-heraldic .section-head h2{
+  font-size:36px;font-weight:700;letter-spacing:0.04em;
+  text-transform:uppercase;font-variant:normal;
+  border-bottom:3px solid var(--local-accent);padding-bottom:6px;
+  color:var(--local-accent);
+}
+.tab-theme-heraldic .guild-card{
+  border-bottom:1px solid rgba(107,31,47,0.18);
+  padding:20px 0 20px 14px;
+  border-left:4px solid transparent;
+  transition:border-left-color .15s;
+}
+.tab-theme-heraldic .guild-card:hover{
+  border-left-color:var(--local-accent);
+}
+.tab-theme-heraldic .guild-card .g-name{
+  color:var(--local-accent);font-size:24px;font-weight:700;
+}
+.tab-theme-heraldic .guild-card .g-meta .h{
+  color:var(--local-accent);
+}
+/* Heraldic sigil placeholder — decorative wax-seal ring in empty state */
+.heraldic-sigil{
+  display:block;width:64px;height:64px;margin:0 auto 16px;
+  border-radius:50%;border:3px double var(--local-accent);
+  background:rgba(107,31,47,0.06);
+  position:relative;
+}
+.heraldic-sigil::after{
+  content:'G';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-family:'EB Garamond',serif;font-size:28px;font-style:italic;color:var(--local-accent);
+  display:flex;
+}
+.heraldic-empty{
+  text-align:center;padding:40px 20px;color:rgba(107,31,47,0.7);
+  font-family:'EB Garamond',serif;font-style:italic;font-size:18px;
+}
+
+/* --- Leaderboard (tab-theme-scoreboard) ---
+   Monospace numerals, gold/silver/bronze column headers, structured table feel.
+*/
+.tab-theme-scoreboard{
+  --local-gold:#b8862a;
+  --local-silver:#8a8580;
+  --local-bronze:#7a4a1e;
+}
+.tab-theme-scoreboard .running-head{
+  font-family:'Geist',sans-serif;letter-spacing:0.10em;
+}
+.tab-theme-scoreboard .running-head .chapter{
+  font-variant:normal;text-transform:uppercase;font-size:11px;letter-spacing:0.22em;
+  font-family:'Geist',sans-serif;
+}
+.tab-theme-scoreboard .section-head h2{
+  font-family:'Geist',sans-serif;font-weight:700;font-size:22px;
+  letter-spacing:0.12em;text-transform:uppercase;font-variant:normal;
+}
+.tab-theme-scoreboard .lb{
+  border-top:2px solid var(--local-gold);
+}
+.tab-theme-scoreboard .lb-row.header{
+  font-family:'Geist',sans-serif;background:rgba(184,134,42,0.06);
+  border-bottom:2px solid var(--local-gold);
+}
+.tab-theme-scoreboard .lb-row{
+  font-family:'Geist',sans-serif;font-size:13px;
+}
+.tab-theme-scoreboard .lb-row .xp{
+  font-family:'Geist',sans-serif;font-weight:700;font-size:15px;
+}
+.tab-theme-scoreboard .lb-row:nth-child(2){
+  background:rgba(184,134,42,0.05);
+}
+.tab-theme-scoreboard .lb-row:nth-child(3){
+  background:rgba(138,133,128,0.04);
+}
+.tab-theme-scoreboard .lb-row:nth-child(4){
+  background:rgba(122,74,30,0.04);
+}
+.tab-theme-scoreboard .lb-row .rank.gold{color:var(--local-gold);font-weight:800}
+.tab-theme-scoreboard .lb-row .rank.silver{color:var(--local-silver);font-weight:700}
+.tab-theme-scoreboard .lb-row .rank.bronze{color:var(--local-bronze);font-weight:700}
+.tab-theme-scoreboard .subtabs{
+  border-radius:2px;
+}
+
+/* --- Shop (tab-theme-market) ---
+   Market-stall grid, earthy warm tones, item cards with price tags.
+*/
+.tab-theme-market{
+  --local-market:#4a3018;
+  --local-market-bg:rgba(74,48,24,0.05);
+}
+.tab-theme-market .running-head{
+  border-bottom:2px dashed rgba(74,48,24,0.25);
+}
+.tab-theme-market .section-head h2{
+  font-family:'EB Garamond',serif;font-weight:600;font-size:28px;
+  border-left:4px solid var(--tan-deep);padding-left:12px;
+}
+.shop-xp-purse{
+  display:inline-flex;align-items:center;gap:10px;
+  padding:10px 18px;
+  border:1px solid var(--tan-deep);border-radius:2px;
+  background:rgba(242,220,177,0.18);
+  margin-bottom:28px;
+}
+.shop-xp-purse .label{
+  font-family:'Geist',sans-serif;font-size:10px;letter-spacing:0.22em;text-transform:uppercase;
+  color:var(--ink-dim);font-weight:600;
+}
+.shop-xp-purse .amount{
+  font-family:'EB Garamond',serif;font-size:28px;font-weight:600;color:var(--ink-bright);
+  font-variant-numeric:tabular-nums;
+}
+.shop-xp-purse .unit{font-family:'Geist',sans-serif;font-size:11px;color:var(--ink-dim);margin-left:2px}
+.shop-category{margin-bottom:36px}
+.shop-category-head{
+  font-family:'EB Garamond',serif;font-weight:500;font-size:22px;
+  color:var(--local-market);margin-bottom:14px;padding-bottom:8px;
+  border-bottom:1px solid var(--tan-deep);letter-spacing:0.01em;
+}
+.shop-strip{
+  display:flex;gap:10px;overflow-x:auto;padding-bottom:8px;
+  -webkit-overflow-scrolling:touch;
+}
+.shop-strip::-webkit-scrollbar{height:4px}
+.shop-strip::-webkit-scrollbar-track{background:var(--paper-raise2)}
+.shop-strip::-webkit-scrollbar-thumb{background:var(--tan-deep);border-radius:2px}
+.shop-item{
+  flex:0 0 120px;
+  border:1px solid var(--paper-line-strong);
+  background:var(--paper-raise);
+  padding:14px 12px;
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  cursor:pointer;transition:border-color .15s, box-shadow .15s;
+  position:relative;
+}
+.shop-item:hover{border-color:var(--tan-deep);box-shadow:0 4px 12px var(--tan-shadow)}
+.shop-item.owned{border-color:var(--blue);background:var(--blue-soft)}
+.shop-item.equipped{border-color:var(--red);background:var(--red-soft)}
+.shop-item .item-swatch{
+  width:40px;height:40px;border-radius:50%;border:2px solid var(--paper-line-strong);
+  margin-bottom:2px;flex-shrink:0;
+}
+.shop-item .item-swatch.swatch-ink{border-radius:0;width:36px;height:36px}
+.shop-item .item-name{
+  font-family:'EB Garamond',serif;font-size:14px;color:var(--ink-bright);
+  text-align:center;line-height:1.2;font-weight:500;
+}
+.shop-item .item-price{
+  font-family:'Geist',sans-serif;font-size:11px;letter-spacing:0.06em;
+  color:var(--ink-dim);margin-top:2px;
+}
+.shop-item .item-price.free{color:var(--blue)}
+.shop-item .item-action{
+  font-family:'Geist',sans-serif;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;
+  font-weight:600;padding:4px 8px;border:1px solid currentColor;margin-top:2px;
+}
+.shop-item.equipped .item-action{color:var(--red)}
+.shop-item.owned:not(.equipped) .item-action{color:var(--blue)}
+.shop-item:not(.owned):not(.equipped) .item-action{color:var(--ink-fade)}
+/* Locked overlay */
+.shop-item.locked .item-action{color:var(--ink-fade)}
+.shop-item .item-equipped-badge{
+  position:absolute;top:4px;right:4px;
+  font-family:'Geist',sans-serif;font-size:8px;letter-spacing:0.1em;text-transform:uppercase;
+  color:var(--paper);background:var(--red);padding:2px 5px;font-weight:700;
+}
+
+/* --- Friends (tab-theme-social) ---
+   Portrait circles, soft card feel, blue accents.
+*/
+.tab-theme-social{
+  --local-social:#2C4B6E;
+}
+.tab-theme-social .running-head .chapter{color:var(--local-social)}
+.tab-theme-social .section-head h2{
+  font-size:30px;border-bottom:2px solid rgba(44,75,110,0.18);padding-bottom:6px;
+}
+.tab-theme-social .friend-row{
+  padding:18px 0 18px 8px;
+  transition:background .12s;border-radius:2px;
+}
+.tab-theme-social .friend-row:hover{background:var(--blue-soft)}
+/* Portrait avatar circle */
+.friend-avatar{
+  width:44px;height:44px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg, var(--blue), var(--blue-deep));
+  display:flex;align-items:center;justify-content:center;
+  font-family:'EB Garamond',serif;font-size:22px;font-weight:600;
+  color:var(--paper);font-style:italic;
+  border:2px solid rgba(44,75,110,0.18);
+}
+.friend-row-inner{display:flex;align-items:center;gap:14px;flex:1}
+.tab-theme-social .friend-row{display:flex;align-items:center;gap:0;border-bottom:1px solid var(--paper-line)}
+/* Handle badge */
+.tab-theme-social .friend-row .fmeta .h{
+  color:var(--local-social);font-weight:600;font-size:13px;
+}
+.tab-theme-social .friends-add input:focus{
+  border-color:var(--local-social);box-shadow:0 0 0 3px var(--blue-shadow);
+}
+/* Your handle card */
+.my-handle-card{
+  padding:18px 20px;border:1px solid rgba(44,75,110,0.18);
+  background:var(--blue-soft);border-radius:var(--radius);margin-bottom:24px;
+  display:flex;align-items:center;gap:16px;
+}
+.my-handle-card .avatar-large{
+  width:56px;height:56px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg, var(--blue), var(--blue-deep));
+  display:flex;align-items:center;justify-content:center;
+  font-family:'EB Garamond',serif;font-size:28px;font-weight:600;
+  color:var(--paper);font-style:italic;
+}
+.my-handle-card .handle-val{
+  font-family:'EB Garamond',serif;font-size:24px;font-weight:500;color:var(--blue);
+}
+.my-handle-card .handle-hint{font-size:12px;color:var(--ink-dim);margin-top:3px;font-style:italic}
+
+/* ══ SHOP THEME OVERRIDES applied to <body> via data-* attributes ══ */
+/* Ink colour themes */
+body[data-ink="sepia"] .book-prose, body[data-ink="sepia"] .book .title,
+body[data-ink="sepia"] .book .author{color:#5c3d1e}
+body[data-ink="sepia"] .running-head .chapter{color:rgba(92,61,30,0.7)}
+body[data-ink="sepia"] .page-footer .fleur{color:#7a5228}
+body[data-ink="sepia"] .drop-cap::first-letter{color:#7a5228}
+body[data-ink="sepia"] .section-head h2{color:#3d2510}
+
+body[data-ink="vermilion"] .section-head h2{color:#8b2020}
+body[data-ink="vermilion"] .drop-cap::first-letter{color:#8b2020}
+body[data-ink="vermilion"] .tabs button.active{color:#8b2020;border-bottom-color:#8b2020}
+body[data-ink="vermilion"] .page-footer .fleur{color:#8b2020}
+
+body[data-ink="aquamarine"] .section-head h2{color:#1a6b6b}
+body[data-ink="aquamarine"] .drop-cap::first-letter{color:#1a6b6b}
+body[data-ink="aquamarine"] .tabs button.active{color:#1a6b6b;border-bottom-color:#1a6b6b}
+body[data-ink="aquamarine"] .page-footer .fleur{color:#1a6b6b}
+
+body[data-ink="peacock"] .section-head h2{color:#1a4e6e}
+body[data-ink="peacock"] .drop-cap::first-letter{color:#1a4e6e}
+body[data-ink="peacock"] .tabs button.active{color:#1a4e6e;border-bottom-color:#1a4e6e}
+body[data-ink="peacock"] .page-footer .fleur{color:#1a4e6e}
+
+/* Paper themes */
+body[data-paper="parchment"]{background:#e8d8a8 !important}
+body[data-paper="parchment"]{--paper:#e8d8a8;--paper-raise:#f0e4b8;--paper-raise2:#ddd0a0}
+body[data-paper="parchment"] .book-cover{background:radial-gradient(circle at 50% 50%, #7a2e1e 0%,#5c2314 60%,#3d180a 100%) !important}
+
+body[data-paper="vellum"]{--paper:#f0e9d8;--paper-raise:#f8f2e4;--paper-raise2:#e8e0cc}
+body[data-paper="vellum"] html,body[data-paper="vellum"] body{background:var(--paper)}
+
+/* Midnight dark mode */
+body[data-paper="midnight"]{
+  --paper:#141210;--paper-raise:#1e1b17;--paper-raise2:#242019;
+  --paper-line:rgba(245,238,221,0.10);--paper-line-strong:rgba(245,238,221,0.20);
+  --ink:#e8ddc8;--ink-bright:#f5eedd;--ink-dim:rgba(232,221,200,0.62);--ink-fade:rgba(232,221,200,0.38);
+  --ink-ghost:rgba(232,221,200,0.06);
+  background:#141210;color:#e8ddc8;
+}
+body[data-paper="midnight"] .book-prose{color:#e8ddc8}
+body[data-paper="midnight"]::before{opacity:0.3}
+
+/* Monogram cosmetics on the cover splash */
+body[data-monogram="fleur"] #book-cover-splash .colophon::before{content:''}
+body[data-monogram="star"] #book-cover-splash .colophon::before{content:'*'}
+body[data-monogram="compass"] #book-cover-splash .colophon::before{content:'N'}
+body[data-monogram="anchor"] #book-cover-splash .colophon::before{content:'A'}
+
+/* ── Utility ─────────────────────────────────────── */
 .hidden{display:none !important}
 </style>
 </head>
@@ -713,36 +887,30 @@ header.top{display:none !important}
   <!-- AUTH: BOOK COVER + ENDPAPER -->
   <div id="auth-screen" class="auth hidden">
 
-    <!-- STAGE 1: THE COVER — tap anywhere to open -->
     <div id="book-cover" class="book-cover tappable" onclick="openCover()">
       <div class="spine"></div>
-
       <div class="cover-top">
         <div class="publisher">Rupertweb Editions</div>
         <div class="edition">The Rupertweb Library · First Edition</div>
       </div>
-
       <div class="cover-mid">
-        <div class="rule-set"><span class="rule"></span><span class="mark">❦</span><span class="rule"></span></div>
+        <div class="rule-set"><span class="rule"></span><span class="mark">*</span><span class="rule"></span></div>
         <h1 class="title">Ukufunda</h1>
         <p class="subtitle">A reading league — track books, log pages, climb tiers, beat your friends.</p>
-        <div class="rule-set"><span class="rule"></span><span class="mark">❧</span><span class="rule"></span></div>
+        <div class="rule-set"><span class="rule"></span><span class="mark">*</span><span class="rule"></span></div>
       </div>
-
       <div class="cover-bot">
-        <div class="colophon">❦</div>
+        <div class="colophon">*</div>
       </div>
       <div class="tap-hint">tap to open</div>
     </div>
 
-    <!-- STAGE 2: THE ENDPAPER — shown after "Open the book" -->
     <div id="endpaper" class="endpaper hidden">
       <div class="plate">
         <div class="chapter-mark">Ex libris</div>
         <div class="title">Your name, please</div>
         <div class="lead">Ukufunda is honour-system. Your handle is your identity — no password, no email, nothing to lose but your streak.</div>
       </div>
-
       <div class="fields">
         <div class="field">
           <label for="signin-name">Your name</label>
@@ -753,102 +921,82 @@ header.top{display:none !important}
           <input id="signin-handle" type="text" placeholder="e.g. julian" maxlength="20" autocomplete="off">
         </div>
         <button class="btn" id="signin-btn">Start reading</button>
-        <p class="fine">Pick a handle you’ll remember. Once claimed, it’s yours.</p>
-        <button class="back-link" onclick="closeCover()">← back to cover</button>
+        <p class="fine">Pick a handle you'll remember. Once claimed, it's yours.</p>
+        <button class="back-link" onclick="closeCover()">back to cover</button>
       </div>
     </div>
   </div>
 
-  <!-- APP -->
-  <!-- Cover splash for signed-in returning users. Shown once per session
-       (sessionStorage flag). Contains the ToC so you can tap a chapter to enter. -->
-  <!-- Splash cover for signed-in returning users. Tap anywhere to open into
-       the Contents page (fol. i). Same look as first-run cover. -->
-  <div id="book-cover-splash" class="book-cover cover-splash tappable hidden" onclick="hideCoverSplash('contents')">
+  <!-- COVER SPLASH for signed-in returning users -->
+  <div id="book-cover-splash" class="book-cover cover-splash tappable hidden" onclick="hideCoverSplash('books')">
     <div class="spine"></div>
-
     <div class="cover-top">
       <div class="publisher">Rupertweb Editions</div>
       <div class="edition" id="cover-edition">Your edition</div>
     </div>
-
     <div class="cover-mid">
-      <div class="rule-set"><span class="rule"></span><span class="mark">❦</span><span class="rule"></span></div>
+      <div class="rule-set"><span class="rule"></span><span class="mark">*</span><span class="rule"></span></div>
       <h1 class="title">Ukufunda</h1>
       <p class="subtitle">A reading league.</p>
-      <div class="rule-set"><span class="rule"></span><span class="mark">❧</span><span class="rule"></span></div>
+      <div class="rule-set"><span class="rule"></span><span class="mark">*</span><span class="rule"></span></div>
     </div>
-
     <div class="cover-bot">
-      <div class="colophon">❦</div>
+      <div class="colophon">*</div>
     </div>
     <div class="tap-hint">tap to open</div>
   </div>
 
   <div id="app" class="hidden">
     <header class="top">
-      <div class="brand">
-        <h1>Ukufunda</h1>
-        <div class="tagline">reading, ranked.</div>
-      </div>
+      <div class="brand"><h1>Ukufunda</h1></div>
       <div class="who">
         <span id="who-name"></span>
         <span id="who-tier"></span>
-        <button id="close-book-btn" title="Return to cover" style="font-family:'EB Garamond',serif;font-style:italic;color:var(--ink-fade);font-size:13px;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--paper-line-strong)">close book</button>
+        <button id="close-book-btn">close book</button>
         <button id="signout-btn">sign out</button>
       </div>
     </header>
 
+    <!-- TAB BAR: Library · Guilds · Leaderboard · Shop · Friends -->
     <div class="tabs">
-      <button data-tab="contents" class="active">Contents</button>
-      <button data-tab="home">Home</button>
-      <button data-tab="books">Library</button>
-      <button data-tab="leaderboard">Leaderboard</button>
-      <button data-tab="friends">Friends</button>
+      <button data-tab="books" class="active">Library</button>
       <button data-tab="guilds">Guilds</button>
+      <button data-tab="leaderboard">Leaderboard</button>
+      <button data-tab="shop">Shop</button>
+      <button data-tab="friends">Friends</button>
     </div>
 
-    <!-- CONTENTS TAB — the first inside page after the cover -->
-    <div id="tab-contents" class="tab">
-      <div class="running-head"><span class="chapter">Contents</span><span class="right"><span class="folio">fol. i</span><button class="close-book" onclick="showCoverSplash()">close book</button></span></div>
-
-      <div style="text-align:center;margin:56px auto 48px;max-width:520px">
-        <div style="font-family:'EB Garamond',serif;font-style:italic;color:var(--ink-fade);font-size:12px;letter-spacing:0.32em;text-transform:uppercase;margin-bottom:20px">&#10086;&nbsp;&nbsp;&#10087;&nbsp;&nbsp;&#10086;</div>
-        <h2 style="font-family:'EB Garamond',serif;font-weight:400;font-size:38px;letter-spacing:0.32em;text-align:center;margin:0;color:var(--ink-bright);font-variant:small-caps;padding-right:0">Contents</h2>
-        <div style="width:60px;height:1px;background:var(--ink);margin:22px auto 0;opacity:0.35"></div>
+    <!-- LIBRARY + HOME TAB (merged) -->
+    <div id="tab-books" class="tab tab-theme-library">
+      <div class="running-head">
+        <span class="chapter">The Library</span>
+        <span class="right">
+          <span class="folio">fol. i</span>
+          <button class="close-book" onclick="showCoverSplash()">close book</button>
+        </span>
       </div>
 
-      <nav class="contents-list">
-        <button data-tab="home"        class="contents-item"><span class="n">I.</span><span class="t">Home</span><span class="leaders"></span><span class="pf">ii</span></button>
-        <button data-tab="books"       class="contents-item"><span class="n">II.</span><span class="t">The Library</span><span class="leaders"></span><span class="pf">iii</span></button>
-        <button data-tab="leaderboard" class="contents-item"><span class="n">III.</span><span class="t">The League</span><span class="leaders"></span><span class="pf">iv</span></button>
-        <button data-tab="friends"     class="contents-item"><span class="n">IV.</span><span class="t">Companions</span><span class="leaders"></span><span class="pf">v</span></button>
-        <button data-tab="guilds"      class="contents-item"><span class="n">V.</span><span class="t">Guilds</span><span class="leaders"></span><span class="pf">vi</span></button>
-      </nav>
-
-      <div style="text-align:center;margin:48px auto 0;max-width:520px">
-        <div style="width:60px;height:1px;background:var(--ink);margin:0 auto 20px;opacity:0.35"></div>
-        <div style="font-family:'EB Garamond',serif;font-style:italic;color:var(--ink-fade);font-size:14px;line-height:1.5;max-width:340px;margin:0 auto">Swipe left to turn the page, or tap a chapter to jump to it.</div>
+      <!-- Search -->
+      <div class="search-box">
+        <input id="book-search" type="text" placeholder="Search a book by title or author…" autocomplete="off">
+        <div id="search-results" class="search-results hidden"></div>
       </div>
 
-      <div class="page-footer"><span class="fleur"></span><span class="num">— i —</span></div>
-    </div>
+      <!-- Your library grid -->
+      <div class="section-head">
+        <h2>Your library</h2>
+        <span class="hint" id="lib-hint"></span>
+      </div>
+      <div id="books-list"></div>
 
-    <!-- HOME TAB -->
-    <div id="tab-home" class="tab">
-      <div class="running-head"><span class="chapter">Chapter I · Home</span><span class="right"><span class="folio">fol. ii</span><button class="close-book" onclick="showCoverSplash()">close book</button></span></div>
+      <div class="fleuron"></div>
 
-      <p class="book-prose drop-cap" style="margin-bottom:22px">
-        A ledger of your week's reading, kept honestly. <em>Log the pages you actually read;</em>
-        the numbers below will tell the truth of it — your streak, your season's XP, and the tier
-        you have earned by them.
-      </p>
-
-      <div class="grid">
+      <!-- Stats strip -->
+      <div class="grid" id="stats-grid">
         <div class="card">
           <h3>This week</h3>
           <div class="stat"><span id="week-pages">0</span><span class="unit">pages</span></div>
-          <div class="sub" id="week-sub">— XP earned this week</div>
+          <div class="sub" id="week-sub">— XP this week</div>
         </div>
         <div class="card">
           <h3>Streak</h3>
@@ -867,96 +1015,45 @@ header.top{display:none !important}
         </div>
       </div>
 
-      <div class="section-head">
+      <!-- Tier progress bar -->
+      <div class="tier-progress-strip" id="tier-progress-strip">
+        <span class="label" id="tier-label">Bronze</span>
+        <div class="tbar"><div class="fill" id="tier-bar-fill" style="width:0%"></div></div>
+        <span class="label" id="tier-next-label"></span>
+      </div>
+
+      <!-- Currently reading + start session CTA -->
+      <div class="section-head" style="margin-top:8px">
         <h2>Currently reading</h2>
-        <button class="btn subtle" onclick="switchTab('books')">+ add a book</button>
+        <button class="btn subtle" onclick="switchTab('books',{reload:false})">+ add a book</button>
       </div>
       <div id="home-books"></div>
-      <div class="page-footer"><span class="fleur"></span><span class="num">— ii —</span></div>
-    </div>
 
-    <!-- BOOKS TAB -->
-    <div id="tab-books" class="tab hidden">
-      <div class="running-head"><span class="chapter">Chapter II · The Library</span><span class="right"><span class="folio">fol. iii</span><button class="close-book" onclick="showCoverSplash()">close book</button></span></div>
-
-      <p class="book-prose" style="margin-bottom:22px;font-style:italic;color:var(--ink-dim)">
-        Search for any book by title or author — covers and page counts are drawn from the
-        Open Library. Add it to your shelf, mark it <em>reading</em>, and log your progress
-        as you go. Books you finish stay in the register, in perpetuity.
-      </p>
-
-      <div class="search-box">
-        <input id="book-search" type="text" placeholder="Search a book by title or author…" autocomplete="off">
-        <div id="search-results" class="search-results hidden"></div>
-      </div>
-
-      <div class="section-head">
-        <h2>Your library</h2>
-      </div>
-      <div id="books-list"></div>
-      <div class="page-footer"><span class="fleur"></span><span class="num">— iii —</span></div>
-    </div>
-
-    <!-- LEADERBOARD TAB -->
-    <div id="tab-leaderboard" class="tab hidden">
-      <div class="running-head"><span class="chapter">Chapter III · The League</span><span class="right"><span class="folio">fol. iv</span><button class="close-book" onclick="showCoverSplash()">close book</button></span></div>
-
-      <p class="book-prose" style="margin-bottom:22px;font-style:italic;color:var(--ink-dim)">
-        Readers ranked by season XP — one point for every page read, with a small bonus for
-        long streaks and finished books. <em>Friends</em> shows only those you have added by
-        handle. <em>Global</em> shows everyone.
-      </p>
-
-      <div class="subtabs">
-        <button data-lb="friends" class="active">Friends</button>
-        <button data-lb="global">Global</button>
-      </div>
-      <div class="lb">
-        <div class="lb-row header">
-          <div class="rank">#</div>
-          <div class="name">Reader</div>
-          <div class="xp">XP</div>
-          <div class="streak">Streak</div>
-          <div class="streak">Tier</div>
+      <!-- Prominent "Start reading session" CTA -->
+      <div id="start-session-cta" class="hidden" style="margin-top:28px;padding:24px 0 8px;border-top:1px solid var(--paper-line);text-align:center">
+        <div style="font-family:'EB Garamond',serif;font-style:italic;color:var(--ink-dim);font-size:15px;margin-bottom:14px">
+          Pick up where you left off — start a focused reading session.
         </div>
-        <div id="lb-body"></div>
+        <button class="btn primary-cta" onclick="startSessionPrompt()">Start reading session</button>
+        <div style="margin-top:10px;font-size:12px;color:var(--ink-fade);font-style:italic;font-family:'EB Garamond',serif">
+          30 min uninterrupted earns a 1.25x XP bonus.
+          <!-- TODO: photo evidence (1.5x) blocked pending R2 bucket activation -->
+        </div>
       </div>
-      <div class="page-footer"><span class="fleur"></span><span class="num">— iv —</span></div>
-    </div>
 
-    <!-- FRIENDS TAB -->
-    <div id="tab-friends" class="tab hidden">
-      <div class="running-head"><span class="chapter">Chapter IV · Companions</span><span class="right"><span class="folio">fol. v</span><button class="close-book" onclick="showCoverSplash()">close book</button></span></div>
-
-      <p class="book-prose" style="margin-bottom:22px;font-style:italic;color:var(--ink-dim)">
-        Add a friend by their handle to see their reading beside your own. Your handle,
-        shown below, is what others use to add you.
-      </p>
-
-      <div class="card" style="margin-bottom:24px">
-        <h3>Your handle</h3>
-        <div class="stat" id="my-handle" style="font-size:32px">—</div>
-        <div class="sub">Share this so friends can add you.</div>
-      </div>
-      <div class="friends-add">
-        <input id="friend-handle" type="text" placeholder="friend's handle" autocomplete="off">
-        <button class="btn ghost" onclick="addFriend()">Add</button>
-      </div>
-      <div id="friends-list"></div>
-      <div class="page-footer"><span class="fleur"></span><span class="num">— v —</span></div>
+      <div class="page-footer"><span class="fleur"></span><span class="num">— i —</span></div>
     </div>
 
     <!-- GUILDS TAB -->
-    <div id="tab-guilds" class="tab hidden">
-      <div class="running-head"><span class="chapter">Chapter V · Guilds</span><span class="right"><span class="folio">fol. vi</span><button class="close-book" onclick="showCoverSplash()">close book</button></span></div>
+    <div id="tab-guilds" class="tab tab-theme-heraldic hidden">
+      <div class="running-head">
+        <span class="chapter">Guilds</span>
+        <span class="right">
+          <span class="folio">fol. ii</span>
+          <button class="close-book" onclick="showCoverSplash()">close book</button>
+        </span>
+      </div>
 
-      <p class="book-prose" style="margin-bottom:22px;font-style:italic;color:var(--ink-dim)">
-        A guild is a reading club with shared goals. Anyone in the guild may set a goal —
-        <em>ten thousand pages by the equinox, twelve books by year's end</em>, whatever
-        they please — and every member's contribution is ranked live, fantasy-football style.
-      </p>
-
-      <!-- View: guild list (my guilds + directory + create form) -->
       <div id="guilds-list-view">
         <div class="section-head">
           <h2>Your guilds</h2>
@@ -964,7 +1061,7 @@ header.top{display:none !important}
         </div>
 
         <div id="guild-create-form" class="card" style="margin-bottom:20px;display:none">
-          <h3 style="margin-bottom:14px">Start a guild</h3>
+          <h3 style="margin-bottom:14px;font-size:22px">Start a guild</h3>
           <div class="field" style="margin-bottom:12px">
             <label style="display:block;font-size:12px;color:var(--ink-dim);margin-bottom:6px">Name</label>
             <input id="guild-new-name" type="text" maxlength="40" placeholder="e.g. The Reading Circle">
@@ -974,7 +1071,7 @@ header.top{display:none !important}
             <input id="guild-new-handle" type="text" maxlength="24" placeholder="e.g. reading_circle">
           </div>
           <div class="field" style="margin-bottom:12px">
-            <label style="display:block;font-size:12px;color:var(--ink-dim);margin-bottom:6px">Motto (optional, one line)</label>
+            <label style="display:block;font-size:12px;color:var(--ink-dim);margin-bottom:6px">Motto (optional)</label>
             <input id="guild-new-motto" type="text" maxlength="80" placeholder="e.g. Read hard books, together.">
           </div>
           <div class="field" style="margin-bottom:14px">
@@ -1004,15 +1101,100 @@ header.top{display:none !important}
         <div id="guild-directory"></div>
       </div>
 
-      <!-- View: single guild (leaderboard + goals) -->
       <div id="guild-detail-view" style="display:none">
-        <button class="btn subtle" onclick="backToGuildList()" style="margin-bottom:16px">← back to guilds</button>
+        <button class="btn subtle" onclick="backToGuildList()" style="margin-bottom:16px">back to guilds</button>
         <div id="guild-detail-body"></div>
       </div>
-      <div class="page-footer"><span class="fleur"></span><span class="num">— vi —</span></div>
+      <div class="page-footer"><span class="fleur"></span><span class="num">— ii —</span></div>
     </div>
-  </div>
-</div>
+
+    <!-- LEADERBOARD TAB -->
+    <div id="tab-leaderboard" class="tab tab-theme-scoreboard hidden">
+      <div class="running-head">
+        <span class="chapter">The League</span>
+        <span class="right">
+          <span class="folio">fol. iii</span>
+          <button class="close-book" onclick="showCoverSplash()">close book</button>
+        </span>
+      </div>
+
+      <p style="margin-bottom:20px;color:var(--ink-dim);font-size:13px;font-family:'Geist',sans-serif;letter-spacing:0.02em;line-height:1.5">
+        Readers ranked by season XP. One point per page, with bonuses for long streaks and finished books.
+        Friends shows only those you have added. Global shows everyone.
+      </p>
+
+      <div class="subtabs">
+        <button data-lb="friends" class="active">Friends</button>
+        <button data-lb="global">Global</button>
+      </div>
+      <div class="lb">
+        <div class="lb-row header">
+          <div class="rank">#</div>
+          <div class="name">Reader</div>
+          <div class="xp">XP</div>
+          <div class="streak">Streak</div>
+          <div class="streak">Tier</div>
+        </div>
+        <div id="lb-body"></div>
+      </div>
+      <div id="lb-error" class="hidden" style="padding:16px;color:var(--red);font-size:13px;font-family:'Geist',sans-serif;border-top:1px solid rgba(122,46,30,0.2);margin-top:8px"></div>
+      <div class="page-footer"><span class="fleur"></span><span class="num">— iii —</span></div>
+    </div>
+
+    <!-- SHOP TAB -->
+    <div id="tab-shop" class="tab tab-theme-market hidden">
+      <div class="running-head">
+        <span class="chapter">The Market</span>
+        <span class="right">
+          <span class="folio">fol. iv</span>
+          <button class="close-book" onclick="showCoverSplash()">close book</button>
+        </span>
+      </div>
+
+      <p style="font-family:'EB Garamond',serif;font-style:italic;color:var(--ink-dim);font-size:17px;margin-bottom:20px;line-height:1.55">
+        Spend your reading XP to customise the look of Ukufunda. All cosmetic — your leaderboard XP is never deducted.
+        Owned items persist in your browser.
+      </p>
+
+      <div class="shop-xp-purse">
+        <span class="label">Spendable XP</span>
+        <span class="amount" id="shop-xp-display">0</span>
+        <span class="unit">xp</span>
+      </div>
+
+      <div id="shop-body"></div>
+
+      <div class="page-footer"><span class="fleur"></span><span class="num">— iv —</span></div>
+    </div>
+
+    <!-- FRIENDS TAB -->
+    <div id="tab-friends" class="tab tab-theme-social hidden">
+      <div class="running-head">
+        <span class="chapter">Companions</span>
+        <span class="right">
+          <span class="folio">fol. v</span>
+          <button class="close-book" onclick="showCoverSplash()">close book</button>
+        </span>
+      </div>
+
+      <div class="my-handle-card">
+        <div class="avatar-large" id="friends-avatar-large">?</div>
+        <div>
+          <div class="handle-val" id="my-handle">—</div>
+          <div class="handle-hint">Share this handle so others can add you.</div>
+        </div>
+      </div>
+
+      <div class="friends-add">
+        <input id="friend-handle" type="text" placeholder="friend's handle" autocomplete="off">
+        <button class="btn ghost" onclick="addFriend()">Add</button>
+      </div>
+      <div id="friends-list"></div>
+      <div class="page-footer"><span class="fleur"></span><span class="num">— v —</span></div>
+    </div>
+
+  </div><!-- #app -->
+</div><!-- .wrap -->
 
 <!-- GUILD GOAL MODAL -->
 <div id="goal-modal" class="modal-bg">
@@ -1045,9 +1227,7 @@ header.top{display:none !important}
   </div>
 </div>
 
-<!-- LOG PROGRESS MODAL -->
-<!-- READING SESSION — fullscreen focus mode. Timer, interruption counter,
-     Wake Lock so the phone doesn't sleep, visibilitychange penalises tab-switches. -->
+<!-- READING SESSION -->
 <div id="session-view" class="session-view hidden">
   <div class="session-inner">
     <div class="session-head">
@@ -1064,6 +1244,7 @@ header.top{display:none !important}
   </div>
 </div>
 
+<!-- LOG PROGRESS MODAL -->
 <div id="log-modal" class="modal-bg">
   <div class="modal">
     <h3>Log progress</h3>
@@ -1088,15 +1269,17 @@ header.top{display:none !important}
 <script>
 const API = '/api/uf';
 const LS_KEY = 'uf:me';
+const LS_SHOP = 'ukufunda_shop_v1';
 
 let state = {
-  me: null,      // {id, name, handle}
+  me: null,
   books: [],
   stats: null,
   leaderboard: [],
   friends: [],
   lbMode: 'friends',
-  logBookId: null
+  logBookId: null,
+  pendingSession: null,
 };
 
 // ============ AUTH ============
@@ -1132,7 +1315,6 @@ async function signIn(){
   } catch(e){ toast('Network error'); }
 }
 
-// Cover / endpaper transitions — shown before sign-in.
 function openCover(){
   const cover = document.getElementById('book-cover');
   const endpaper = document.getElementById('endpaper');
@@ -1155,14 +1337,11 @@ function closeCover(){
   cover.style.transform = 'none';
 }
 
-// Cover splash — shown once per session for signed-in users. Tapping a ToC
-// item closes the cover and opens that chapter. Also invocable via "open book".
 function showCoverSplash(){
   const el = document.getElementById('book-cover-splash');
   if (!el) return;
-  // Fill in the edition line with the user’s name if we have them
   if (state.me) {
-    document.getElementById('cover-edition').textContent = `The private edition of ${state.me.name}`;
+    document.getElementById('cover-edition').textContent = 'The private edition of ' + state.me.name;
   }
   el.classList.remove('hidden','closing');
   document.body.style.overflow = 'hidden';
@@ -1181,27 +1360,18 @@ function hideCoverSplash(destinationTab){
 
 async function boot(){
   loadMe();
+  applyEquippedTheme();
   if (state.me) {
     renderApp();
-    // Show the cover splash once per browser session for returning users
     try {
       if (!sessionStorage.getItem('uf_cover_seen')) {
         showCoverSplash();
         sessionStorage.setItem('uf_cover_seen', '1');
       }
-    } catch(e) { /* private-mode etc — skip splash */ }
+    } catch(e) {}
   } else {
     document.getElementById('auth-screen').classList.remove('hidden');
   }
-  // Cover ToC — tap a chapter to enter that tab
-  // Legacy cover-toc-item (no longer used on the cover, kept safe)
-  document.querySelectorAll('.cover-toc-item').forEach(b => {
-    b.addEventListener('click', () => hideCoverSplash(b.dataset.tab));
-  });
-  // Contents-page items — tap to switch to that chapter
-  document.querySelectorAll('.contents-item').forEach(b => {
-    b.addEventListener('click', () => switchTab(b.dataset.tab, { direction: 'left' }));
-  });
   wireSwipe();
   document.getElementById('signin-btn').addEventListener('click', signIn);
   document.getElementById('signout-btn').addEventListener('click', () => {
@@ -1220,46 +1390,58 @@ async function boot(){
     });
   });
   document.getElementById('book-search').addEventListener('input', debounce(searchBooks, 350));
+  // Close search on outside click
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.search-box')) {
+      document.getElementById('search-results').classList.add('hidden');
+    }
+  });
   document.getElementById('log-modal').addEventListener('click', (e) => {
     if (e.target.id === 'log-modal') closeLogModal();
   });
+  const gm = document.getElementById('goal-modal');
+  if (gm) gm.addEventListener('click', (e) => { if (e.target.id === 'goal-modal') closeGoalModal(); });
 }
 
 function renderApp(){
   document.getElementById('auth-screen').classList.add('hidden');
   document.getElementById('app').classList.remove('hidden');
-  document.getElementById('who-name').innerHTML = `<span style="font-family:'EB Garamond',serif;font-style:italic;color:var(--ink-fade);margin-right:6px">ex libris</span>${escHtml(state.me.name)} <span style="color:var(--accent)">@${escHtml(state.me.handle)}</span>`;
+  document.getElementById('who-name').innerHTML =
+    '<span style="font-family:\'EB Garamond\',serif;font-style:italic;color:var(--ink-fade);margin-right:6px">ex libris</span>'
+    + escHtml(state.me.name)
+    + ' <span style="color:var(--accent)">@' + escHtml(state.me.handle) + '</span>';
   document.getElementById('my-handle').textContent = '@' + state.me.handle;
-  // Open on Contents by default so the first inside page reads as a Table of Contents
-  switchTab('contents');
+  // Avatar initials for friends tab
+  const av = document.getElementById('friends-avatar-large');
+  if (av) av.textContent = state.me.name.charAt(0).toUpperCase();
+
+  switchTab('books');
   refresh();
 }
 
 async function refresh(){
   await Promise.all([loadStats(), loadBooks()]);
-  renderHome();
-  renderBooks();
+  renderLibraryHome();
 }
 
 // ============ TABS ============
-// Page order (used for swipe navigation). Contents is fol. i — the first inside page.
-const PAGE_ORDER = ['contents','home','books','leaderboard','friends','guilds'];
-let currentTab = 'contents';
+// PAGE_ORDER: Library · Guilds · Leaderboard · Shop · Friends
+const PAGE_ORDER = ['books','guilds','leaderboard','shop','friends'];
+let currentTab = 'books';
 
-function switchTab(name, opts = {}){
+function switchTab(name, opts){
   if (!document.getElementById('tab-' + name)) return;
-  const dir = opts.direction || null; // 'left' | 'right' | null
-  const prevTab = document.querySelector('.tab:not(.hidden)');
-  const nextTab = document.getElementById('tab-' + name);
+  const dir = (opts && opts.direction) || null;
   document.querySelectorAll('.tabs button[data-tab]').forEach(b => {
     b.classList.toggle('active', b.dataset.tab === name);
   });
   document.querySelectorAll('.tab').forEach(t => t.classList.add('hidden'));
+  const nextTab = document.getElementById('tab-' + name);
   nextTab.classList.remove('hidden');
   currentTab = name;
   if (dir) {
     nextTab.classList.remove('page-in-left','page-in-right');
-    void nextTab.offsetWidth; // reflow
+    void nextTab.offsetWidth;
     nextTab.classList.add(dir === 'left' ? 'page-in-right' : 'page-in-left');
     setTimeout(() => nextTab.classList.remove('page-in-left','page-in-right'), 360);
   }
@@ -1267,6 +1449,7 @@ function switchTab(name, opts = {}){
   if (name === 'leaderboard') loadLeaderboard();
   if (name === 'friends') loadFriends();
   if (name === 'guilds') loadGuilds();
+  if (name === 'shop') loadShop();
 }
 
 function flipPage(dir){
@@ -1277,7 +1460,6 @@ function flipPage(dir){
   switchTab(PAGE_ORDER[nextIdx], { direction: dir === 'next' ? 'left' : 'right' });
 }
 
-// Touch swipe: horizontal drag > 60px, less vertical than horizontal, no active modal
 function wireSwipe(){
   let x0 = null, y0 = null;
   const target = document.getElementById('app');
@@ -1300,50 +1482,86 @@ function wireSwipe(){
 
 // ============ STATS ============
 function tierFromXp(xp){
-  if (xp >= 5000) return { name:'Master', cls:'master' };
-  if (xp >= 3000) return { name:'Diamond', cls:'diamond' };
-  if (xp >= 1500) return { name:'Platinum', cls:'platinum' };
-  if (xp >= 700)  return { name:'Gold', cls:'gold' };
-  if (xp >= 250)  return { name:'Silver', cls:'silver' };
-  return { name:'Bronze', cls:'bronze' };
+  if (xp >= 5000) return { name:'Master', cls:'master', next:null, nextXp:0, prevXp:5000 };
+  if (xp >= 3000) return { name:'Diamond', cls:'diamond', next:'Master', nextXp:5000, prevXp:3000 };
+  if (xp >= 1500) return { name:'Platinum', cls:'platinum', next:'Diamond', nextXp:3000, prevXp:1500 };
+  if (xp >= 700)  return { name:'Gold', cls:'gold', next:'Platinum', nextXp:1500, prevXp:700 };
+  if (xp >= 250)  return { name:'Silver', cls:'silver', next:'Gold', nextXp:700, prevXp:250 };
+  return { name:'Bronze', cls:'bronze', next:'Silver', nextXp:250, prevXp:0 };
 }
 
 async function loadStats(){
   try {
     const r = await fetch(`${API}/me?id=${state.me.id}`);
+    if (!r.ok) {
+      console.warn('loadStats: HTTP ' + r.status);
+      return;
+    }
     const d = await r.json();
-    if (r.ok) state.stats = d;
-  } catch(e){}
+    state.stats = d;
+  } catch(e){ console.error('loadStats failed:', e); }
 }
 
-function renderHome(){
+function renderLibraryHome(){
   const s = state.stats || {};
-  animateNum('week-pages',    s.weekPages || 0);
-  document.getElementById('week-sub').textContent = `+${s.weekXp || 0} XP this week`;
-  animateNum('streak-days',   s.streak || 0);
+  const xp = s.totalXp || 0;
+
+  // Stats strip
+  animateNum('week-pages', s.weekPages || 0);
+  document.getElementById('week-sub').textContent = '+' + (s.weekXp || 0) + ' XP this week';
+  animateNum('streak-days', s.streak || 0);
   document.getElementById('streak-sub').textContent = s.streak > 0 ? 'Keep it alive — log today' : 'Log any pages to start a streak';
-  animateNum('total-xp',      s.totalXp || 0, { format: n => n.toLocaleString() });
-  const t = tierFromXp(s.totalXp || 0);
-  document.getElementById('total-sub').textContent = `Tier: ${t.name}`;
-  animateNum('books-done',    s.booksFinished || 0);
+  animateNum('total-xp', xp, { format: n => n.toLocaleString() });
+  const t = tierFromXp(xp);
+  document.getElementById('total-sub').textContent = 'Tier: ' + t.name;
+  animateNum('books-done', s.booksFinished || 0);
 
   // Tier badge in header
-  document.getElementById('who-tier').innerHTML = `<span class="tier-badge ${t.cls}"><span class="dot"></span>${t.name}</span>`;
+  document.getElementById('who-tier').innerHTML = '<span class="tier-badge ' + t.cls + '"><span class="dot"></span>' + t.name + '</span>';
 
-  // Currently reading books
+  // Tier progress bar
+  const strip = document.getElementById('tier-progress-strip');
+  const fillEl = document.getElementById('tier-bar-fill');
+  const labelEl = document.getElementById('tier-label');
+  const nextLabelEl = document.getElementById('tier-next-label');
+  if (t.next) {
+    const range = t.nextXp - t.prevXp;
+    const progress = xp - t.prevXp;
+    const pct = Math.min(100, Math.round((progress / range) * 100));
+    fillEl.style.width = pct + '%';
+    labelEl.textContent = t.name;
+    nextLabelEl.textContent = (t.nextXp - xp).toLocaleString() + ' XP to ' + t.next;
+    strip.style.display = '';
+  } else {
+    labelEl.textContent = 'Master';
+    nextLabelEl.textContent = 'Maximum tier reached';
+    fillEl.style.width = '100%';
+  }
+
+  // Library hint
+  const hint = document.getElementById('lib-hint');
+  if (hint) {
+    hint.textContent = state.books.length + ' book' + (state.books.length !== 1 ? 's' : '');
+  }
+
+  // Books list (all books, separated by status)
+  renderBooks();
+
+  // Currently reading
   const active = state.books.filter(b => b.status === 'active');
   const el = document.getElementById('home-books');
+  const ctaEl = document.getElementById('start-session-cta');
+
   if (active.length === 0) {
-    // First-run explainer instead of a dead "no books" box
     el.innerHTML = `
       <div class="explainer">
         <h4>Welcome, ${escHtml(state.me.name)}.</h4>
-        <div class="lead">Here's how Ukufunda works.</div>
+        <div class="lead">Here is how Ukufunda works.</div>
         <div class="steps">
           <div class="step">
             <div class="n">1</div>
             <h5>Add a book</h5>
-            <p>Search any title in the Library tab. Covers and page counts come from OpenLibrary.</p>
+            <p>Search any title above. Covers and page counts come from OpenLibrary.</p>
           </div>
           <div class="step">
             <div class="n">2</div>
@@ -1353,26 +1571,35 @@ function renderHome(){
           <div class="step">
             <div class="n">3</div>
             <h5>Climb the ladder</h5>
-            <p>Bronze → Silver → Gold → Platinum → Diamond → Master. Beat your friends.</p>
+            <p>Bronze to Silver to Gold to Platinum to Diamond to Master. Beat your friends.</p>
           </div>
         </div>
         <div class="cta">
-          <button class="btn" style="width:auto" onclick="switchTab('books')">Add your first book</button>
+          <button class="btn" style="width:auto" onclick="document.getElementById('book-search').focus()">Add your first book</button>
           <button class="btn ghost" onclick="switchTab('friends')">Add friends</button>
         </div>
       </div>`;
+    if (ctaEl) ctaEl.classList.add('hidden');
   } else {
     el.innerHTML = active.map(bookCard).join('');
+    if (ctaEl) ctaEl.classList.remove('hidden');
   }
+
+  // Sync shop spendable XP from total XP
+  syncShopXp(xp);
 }
 
 // ============ BOOKS ============
 async function loadBooks(){
   try {
     const r = await fetch(`${API}/books?id=${state.me.id}`);
+    if (!r.ok) {
+      console.warn('loadBooks: HTTP ' + r.status);
+      return;
+    }
     const d = await r.json();
-    if (r.ok) state.books = d.books || [];
-  } catch(e){}
+    state.books = d.books || [];
+  } catch(e){ console.error('loadBooks failed:', e); }
 }
 
 function bookCard(b){
@@ -1382,9 +1609,10 @@ function bookCard(b){
     : b.status === 'paused'
     ? '<span class="status-paused">paused</span>'
     : '<span class="status-active">reading</span>';
+  const titleEsc = escHtml(b.title.slice(0,20));
   const cover = b.cover
-    ? `<img src="${escHtml(b.cover)}" class="cover" alt="" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'cover-placeholder',textContent:'${escHtml(b.title.slice(0,20))}'}))">`
-    : `<div class="cover-placeholder">${escHtml(b.title.slice(0,20))}</div>`;
+    ? `<img src="${escHtml(b.cover)}" class="cover" alt="" onerror="this.outerHTML='<div class=cover-placeholder>${titleEsc}</div>'">`
+    : `<div class="cover-placeholder">${titleEsc}</div>`;
   return `
     <div class="book">
       ${cover}
@@ -1392,17 +1620,17 @@ function bookCard(b){
         <div>
           <div class="title">${escHtml(b.title)}</div>
           <div class="author">${escHtml(b.author || 'Unknown')}</div>
-          <div class="meta-row">${b.pages} pages · ${statusEl}</div>
+          <div class="meta-row">${b.pages} pages &middot; ${statusEl}</div>
         </div>
         <div>
           <div class="progress-bar"><div class="fill" style="width:${pct}%"></div></div>
           <div class="progress-text"><span>${b.current} / ${b.pages}</span><span>${pct}%</span></div>
           <div class="actions">
-            ${b.status === 'active' ? `<button class="btn small" onclick="startSession('${b.id}')">Start reading</button>` : ''}
-            ${b.status !== 'done' ? `<button class="btn small ghost" onclick="openLogModal('${b.id}')">Log pages</button>` : ''}
-            ${b.status === 'active' ? `<button class="btn small subtle" onclick="setStatus('${b.id}','paused')">Pause</button>` : ''}
-            ${b.status === 'paused' ? `<button class="btn small subtle" onclick="setStatus('${b.id}','active')">Resume</button>` : ''}
-            <button class="btn small subtle" onclick="removeBook('${b.id}')">Remove</button>
+            ${b.status === 'active' ? `<button class="btn small" onclick="startSession('${escHtml(b.id)}')">Start reading</button>` : ''}
+            ${b.status !== 'done' ? `<button class="btn small ghost" onclick="openLogModal('${escHtml(b.id)}')">Log pages</button>` : ''}
+            ${b.status === 'active' ? `<button class="btn small subtle" onclick="setStatus('${escHtml(b.id)}','paused')">Pause</button>` : ''}
+            ${b.status === 'paused' ? `<button class="btn small subtle" onclick="setStatus('${escHtml(b.id)}','active')">Resume</button>` : ''}
+            <button class="btn small subtle" onclick="removeBook('${escHtml(b.id)}')">Remove</button>
           </div>
         </div>
       </div>
@@ -1411,10 +1639,14 @@ function bookCard(b){
 
 function renderBooks(){
   const el = document.getElementById('books-list');
+  if (!el) return;
   if (state.books.length === 0) {
     el.innerHTML = '<div class="empty">No books yet. Search above to find one.</div>';
   } else {
-    el.innerHTML = state.books.map(bookCard).join('');
+    // Order: active first, then paused, then done
+    const order = {active:0, paused:1, done:2};
+    const sorted = [...state.books].sort((a,b) => (order[a.status]||0) - (order[b.status]||0));
+    el.innerHTML = sorted.map(bookCard).join('');
   }
 }
 
@@ -1424,37 +1656,48 @@ async function searchBooks(){
   if (q.length < 2) { res.classList.add('hidden'); return; }
   try {
     const r = await fetch(`${API}/search?q=${encodeURIComponent(q)}`);
+    if (!r.ok) {
+      res.innerHTML = '<div class="search-result"><div class="info"><div class="meta">Search unavailable (error ' + r.status + ')</div></div></div>';
+      res.classList.remove('hidden');
+      return;
+    }
     const d = await r.json();
     const items = d.results || [];
     if (items.length === 0) {
-      res.innerHTML = '<div class="search-result"><div class="info"><div class="meta">No results</div></div></div>';
+      res.innerHTML = '<div class="search-result"><div class="info"><div class="meta">No results found</div></div></div>';
     } else {
-      // Store each candidate on window.__ufSearchHits so onclick can look it up
-      // by index — avoids jamming full JSON into an HTML attribute (which was
-      // failing on titles with apostrophes / special chars).
       window.__ufSearchHits = items;
       res.innerHTML = items.map((b, i) => `
         <button type="button" class="search-result" onclick="addBookByIdx(${i})">
-          ${b.cover ? `<img src="${escHtml(b.cover)}" alt="">` : `<div style="width:38px;height:57px;background:var(--paper-raise2);border-radius:3px"></div>`}
+          ${b.cover
+            ? `<img src="${escHtml(b.cover)}" alt="" style="width:40px;height:60px;object-fit:cover;flex-shrink:0;box-shadow:0 3px 8px rgba(60,40,20,0.20)">`
+            : `<div style="width:40px;height:60px;background:var(--paper-raise2);flex-shrink:0;border-radius:2px"></div>`}
           <div class="info">
             <div class="title">${escHtml(b.title)}</div>
-            <div class="meta">${escHtml(b.author || 'Unknown')} · ${b.pages || '?'} pages</div>
+            <div class="meta">${escHtml(b.author || 'Unknown')} &middot; ${b.pages || '?'} pages</div>
           </div>
         </button>`).join('');
     }
     res.classList.remove('hidden');
-  } catch(e){}
+  } catch(e){
+    const res2 = document.getElementById('search-results');
+    res2.innerHTML = '<div class="search-result"><div class="info"><div class="meta">Search failed — network error</div></div></div>';
+    res2.classList.remove('hidden');
+  }
 }
 
 function addBookByIdx(i){
   const hits = window.__ufSearchHits || [];
   const b = hits[i];
-  if (!b) return toast('Result missing');
+  if (!b) return toast('Result not found');
+  // Close dropdown immediately for better UX
+  document.getElementById('search-results').classList.add('hidden');
   addBook(b);
 }
+
 async function addBook(b){
   if (!b.pages || b.pages < 10) {
-    const p = prompt(`No page count for "${b.title}". Enter it manually:`);
+    const p = prompt('No page count for "' + b.title + '". Enter it manually:');
     const n = parseInt(p, 10);
     if (!n || n < 10) return toast('Cancelled — page count required');
     b.pages = n;
@@ -1466,7 +1709,7 @@ async function addBook(b){
     });
     const d = await r.json();
     if (!r.ok) return toast(d.error || 'Failed to add');
-    toast(`Added "${b.title}"`);
+    toast('Added "' + b.title + '"');
     document.getElementById('book-search').value = '';
     document.getElementById('search-results').classList.add('hidden');
     await refresh();
@@ -1478,17 +1721,30 @@ async function removeBook(id){
   try {
     await fetch(`${API}/books?id=${state.me.id}&bookId=${id}`, { method:'DELETE' });
     await refresh();
-  } catch(e){}
+  } catch(e){ toast('Error removing book'); }
 }
 
 async function setStatus(id, status){
   try {
-    await fetch(`${API}/books/status`, {
+    const r = await fetch(`${API}/books/status`, {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ userId: state.me.id, bookId: id, status })
     });
+    if (!r.ok) {
+      const d = await r.json().catch(()=>({}));
+      return toast(d.error || 'Status update failed');
+    }
     await refresh();
-  } catch(e){}
+  } catch(e){ toast('Network error'); }
+}
+
+// ============ START SESSION PROMPT (from CTA button) ============
+function startSessionPrompt(){
+  const active = state.books.filter(b => b.status === 'active');
+  if (active.length === 0) return toast('Mark a book as reading first');
+  if (active.length === 1) return startSession(active[0].id);
+  // Multiple active books — pick the most recently updated (first in list)
+  startSession(active[0].id);
 }
 
 // ============ LOG PAGES ============
@@ -1496,9 +1752,10 @@ function openLogModal(bookId){
   const book = state.books.find(b => b.id === bookId);
   if (!book) return;
   state.logBookId = bookId;
-  document.getElementById('log-book-info').textContent = `"${book.title}" — currently on page ${book.current} of ${book.pages}`;
+  document.getElementById('log-book-info').textContent =
+    '"' + book.title + '" — currently on page ' + book.current + ' of ' + book.pages;
   document.getElementById('log-page').value = '';
-  document.getElementById('log-page').placeholder = `e.g. ${book.current + 20}`;
+  document.getElementById('log-page').placeholder = 'e.g. ' + (book.current + 20);
   document.getElementById('log-delta').value = '';
   document.getElementById('log-modal').classList.add('open');
 }
@@ -1519,7 +1776,7 @@ async function submitLog(){
   if (newPage == null || isNaN(newPage) || newPage < 0) return toast('Enter a page or delta');
   if (newPage > book.pages) newPage = book.pages;
   const pagesRead = newPage - book.current;
-  if (pagesRead <= 0) return toast('That\'s not progress');
+  if (pagesRead <= 0) return toast('That is not progress');
   try {
     const payload = { userId: state.me.id, bookId: book.id, page: newPage };
     if (state.pendingSession) payload.session = state.pendingSession;
@@ -1530,8 +1787,8 @@ async function submitLog(){
     const d = await r.json();
     if (!r.ok) return toast(d.error || 'Log failed');
     closeLogModal();
-    const mult = d.focusMult && d.focusMult !== 1 ? ` (${d.focusMult}×)` : '';
-    toast(`+${pagesRead} pages, +${d.xp} XP${mult}`);
+    const mult = d.focusMult && d.focusMult !== 1 ? ' (' + d.focusMult + 'x)' : '';
+    toast('+' + pagesRead + ' pages, +' + d.xp + ' XP' + mult);
     state.pendingSession = null;
     await refresh();
   } catch(e){ toast('Network error'); }
@@ -1539,13 +1796,23 @@ async function submitLog(){
 
 // ============ LEADERBOARD ============
 async function loadLeaderboard(){
+  const errEl = document.getElementById('lb-error');
+  if (errEl) errEl.classList.add('hidden');
   try {
     const r = await fetch(`${API}/leaderboard?id=${state.me.id}&mode=${state.lbMode}`);
+    if (!r.ok) {
+      const d = await r.json().catch(()=>({}));
+      if (errEl) { errEl.textContent = 'Could not load leaderboard: ' + (d.error || 'HTTP ' + r.status); errEl.classList.remove('hidden'); }
+      return;
+    }
     const d = await r.json();
     state.leaderboard = d.rows || [];
     renderLeaderboard();
-  } catch(e){}
+  } catch(e){
+    if (errEl) { errEl.textContent = 'Network error loading leaderboard.'; errEl.classList.remove('hidden'); }
+  }
 }
+
 function renderLeaderboard(){
   const el = document.getElementById('lb-body');
   if (state.leaderboard.length === 0) {
@@ -1557,11 +1824,10 @@ function renderLeaderboard(){
           <button class="btn subtle" onclick="switchTab('friends')">Add a friend</button>
         </div>`;
     } else {
-      // Show the tier ladder instead so the page has meaning even when empty
       el.innerHTML = `
         <div style="padding:28px 24px">
-          <div style="font-family:'EB Garamond',serif;font-style:italic;color:var(--ink);font-size:26px;margin-bottom:6px;text-align:center">You're the first one here.</div>
-          <div style="color:var(--ink-dim);font-size:13px;text-align:center;margin-bottom:20px">Global leaderboard fills in as people join. Meanwhile — the ladder:</div>
+          <div style="font-family:'EB Garamond',serif;font-style:italic;color:var(--ink);font-size:26px;margin-bottom:6px;text-align:center">You are the first one here.</div>
+          <div style="color:var(--ink-dim);font-size:13px;text-align:center;margin-bottom:20px">Global leaderboard fills in as people join. The tier ladder:</div>
           <div class="ladder">
             <div class="rung"><span class="swatch" style="background:var(--t-bronze)"></span><span class="rname">Bronze</span><span class="rxp">0 XP</span></div>
             <div class="rung"><span class="swatch" style="background:var(--t-silver)"></span><span class="rname">Silver</span><span class="rxp">250</span></div>
@@ -1593,10 +1859,11 @@ function renderLeaderboard(){
 async function loadFriends(){
   try {
     const r = await fetch(`${API}/friends?id=${state.me.id}`);
+    if (!r.ok) { console.warn('loadFriends HTTP ' + r.status); return; }
     const d = await r.json();
     state.friends = d.friends || [];
     renderFriends();
-  } catch(e){}
+  } catch(e){ console.error('loadFriends failed:', e); }
 }
 function renderFriends(){
   const el = document.getElementById('friends-list');
@@ -1610,14 +1877,18 @@ function renderFriends(){
   }
   el.innerHTML = state.friends.map(f => {
     const t = tierFromXp(f.totalXp || 0);
+    const initials = f.name ? f.name.charAt(0).toUpperCase() : '?';
     return `<div class="friend-row">
-      <div>
-        <div class="fname">${escHtml(f.name)}</div>
-        <div class="fmeta"><span class="h">@${escHtml(f.handle)}</span> · ${(f.totalXp || 0).toLocaleString()} XP · ${f.streak || 0}d streak</div>
+      <div class="friend-row-inner">
+        <div class="friend-avatar">${escHtml(initials)}</div>
+        <div>
+          <div class="fname">${escHtml(f.name)}</div>
+          <div class="fmeta"><span class="h">@${escHtml(f.handle)}</span> &middot; ${(f.totalXp || 0).toLocaleString()} XP &middot; ${f.streak || 0}d streak</div>
+        </div>
       </div>
-      <div style="display:flex;gap:8px;align-items:center">
+      <div style="display:flex;gap:8px;align-items:center;flex-shrink:0">
         <span class="tier-badge ${t.cls}" style="padding:2px 8px;font-size:10px"><span class="dot"></span>${t.name.slice(0,3)}</span>
-        <button class="btn small subtle" onclick="removeFriend('${f.handle}')">Remove</button>
+        <button class="btn small subtle" onclick="removeFriend('${escHtml(f.handle)}');">Remove</button>
       </div>
     </div>`;
   }).join('');
@@ -1625,7 +1896,7 @@ function renderFriends(){
 async function addFriend(){
   const handle = document.getElementById('friend-handle').value.trim().toLowerCase().replace(/[^a-z0-9_]/g,'');
   if (!handle) return toast('Enter a handle');
-  if (handle === state.me.handle) return toast("That's you");
+  if (handle === state.me.handle) return toast('That is you');
   try {
     const r = await fetch(`${API}/friends`, {
       method:'POST', headers:{'Content-Type':'application/json'},
@@ -1636,14 +1907,14 @@ async function addFriend(){
     toast('Added ' + handle);
     document.getElementById('friend-handle').value = '';
     await loadFriends();
-  } catch(e){}
+  } catch(e){ toast('Network error'); }
 }
 async function removeFriend(handle){
   if (!confirm('Remove @' + handle + '?')) return;
   try {
     await fetch(`${API}/friends?id=${state.me.id}&handle=${handle}`, { method:'DELETE' });
     await loadFriends();
-  } catch(e){}
+  } catch(e){ toast('Error'); }
 }
 
 // ============ UTILS ============
@@ -1653,32 +1924,28 @@ function toast(msg){
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2500);
 }
-// Count-up animation for stat numbers. Also briefly "pulses" the parent so
-// the reader gets a small feedback tick when they log pages.
-function animateNum(id, target, opts = {}){
+function animateNum(id, target, opts){
+  opts = opts || {};
   const el = document.getElementById(id);
   if (!el) return;
   const fmt = opts.format || (n => String(n));
   const cur = parseInt(String(el.textContent).replace(/[^\d-]/g,'')) || 0;
   target = Number(target) || 0;
   if (cur === target) return;
-  // For huge jumps (first load), don't tween — just set. For small jumps, animate.
   if (Math.abs(target - cur) > 500 && cur === 0) { el.textContent = fmt(target); return; }
   const dur = Math.min(900, 300 + Math.abs(target - cur) * 8);
   const t0 = performance.now();
   const step = (now) => {
     const p = Math.min(1, (now - t0) / dur);
-    // easeOutCubic
     const eased = 1 - Math.pow(1 - p, 3);
     const v = Math.round(cur + (target - cur) * eased);
     el.textContent = fmt(v);
     if (p < 1) requestAnimationFrame(step);
     else {
-      // Pulse the parent .card to signal update
       const card = el.closest('.card');
       if (card) {
         card.classList.remove('pulse');
-        void card.offsetWidth; // reflow to restart animation
+        void card.offsetWidth;
         card.classList.add('pulse');
         setTimeout(() => card.classList.remove('pulse'), 900);
       }
@@ -1686,7 +1953,6 @@ function animateNum(id, target, opts = {}){
   };
   requestAnimationFrame(step);
 }
-
 function debounce(fn, ms){
   let h;
   return (...a) => { clearTimeout(h); h = setTimeout(() => fn(...a), ms); };
@@ -1702,15 +1968,21 @@ let goalGuildId    = null;
 async function loadGuilds(){
   try {
     const r = await fetch(`${API}/guilds?id=${state.me.id}`);
+    if (!r.ok) {
+      document.getElementById('my-guilds').innerHTML = '<div class="empty">Could not load guilds (HTTP ' + r.status + ')</div>';
+      return;
+    }
     const d = await r.json();
     renderGuildList(d.mine || [], d.directory || []);
-  } catch(e){ /* silent */ }
+  } catch(e){
+    document.getElementById('my-guilds').innerHTML = '<div class="empty">Network error loading guilds.</div>';
+  }
 }
 
 function renderGuildList(mine, directory){
   const myEl = document.getElementById('my-guilds');
   if (!mine.length) {
-    myEl.innerHTML = `<div class="empty">You aren't in any guilds yet.<br><span style="font-size:15px;font-style:italic;color:var(--ink-fade);font-family:'EB Garamond',serif;display:block;margin-top:8px">Create one, or join by handle.</span></div>`;
+    myEl.innerHTML = `<div class="heraldic-empty"><span class="heraldic-sigil"></span>You are not in any guilds yet.<br><span style="font-size:14px;display:block;margin-top:8px">Create one above, or join by handle.</span></div>`;
   } else {
     myEl.innerHTML = mine.map(guildCardHtml).join('');
     myEl.querySelectorAll('.guild-card').forEach(el => {
@@ -1719,7 +1991,7 @@ function renderGuildList(mine, directory){
   }
   const dirEl = document.getElementById('guild-directory');
   if (!directory.length) {
-    dirEl.innerHTML = `<div class="empty" style="padding:24px">No other public guilds yet.</div>`;
+    dirEl.innerHTML = '<div class="heraldic-empty" style="padding:24px">No other public guilds yet.</div>';
   } else {
     dirEl.innerHTML = directory.map(guildCardHtml).join('');
     dirEl.querySelectorAll('.guild-card').forEach(el => {
@@ -1791,15 +2063,21 @@ async function openGuild(gid){
   document.getElementById('guilds-list-view').style.display = 'none';
   document.getElementById('guild-detail-view').style.display = '';
   const body = document.getElementById('guild-detail-body');
-  body.innerHTML = `<div class="empty" style="padding:24px">Loading…</div>`;
+  body.innerHTML = '<div class="empty" style="padding:24px">Loading guild...</div>';
   try {
     const [guildRes, goalsRes] = await Promise.all([
-      fetch(`${API}/guild?gid=${encodeURIComponent(gid)}&uid=${encodeURIComponent(state.me.id)}`).then(r => r.json()),
-      fetch(`${API}/guild/goals?gid=${encodeURIComponent(gid)}`).then(r => r.json())
+      fetch(`${API}/guild?gid=${encodeURIComponent(gid)}&uid=${encodeURIComponent(state.me.id)}`).then(r => {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      }),
+      fetch(`${API}/guild/goals?gid=${encodeURIComponent(gid)}`).then(r => {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
     ]);
     renderGuildDetail(guildRes, goalsRes.goals || []);
   } catch(e){
-    body.innerHTML = `<div class="empty">Failed to load guild.</div>`;
+    body.innerHTML = '<div class="empty">Failed to load guild: ' + escHtml(e.message) + '</div>';
   }
 }
 
@@ -1839,21 +2117,21 @@ function renderGuildDetail(g, goals){
         <div class="streak"><span class="tier-badge ${t.cls}" style="padding:2px 8px;font-size:10px"><span class="dot"></span>${t.name.slice(0,3)}</span></div>
       </div>`;
     }).join('')}
-  </div>` : `<div class="empty" style="padding:24px">No members yet.</div>`;
+  </div>` : '<div class="empty" style="padding:24px">No members yet.</div>';
 
   body.innerHTML = `
     <div class="guild-detail-head">
       <h2>${escHtml(guild.name)}</h2>
-      <div class="h">@${escHtml(guild.handle)} · ${guild.memberIds.length} member${guild.memberIds.length===1?'':'s'}</div>
-      ${guild.motto ? `<div class="motto">“${escHtml(guild.motto)}”</div>` : ''}
+      <div class="h">@${escHtml(guild.handle)} &middot; ${guild.memberIds.length} member${guild.memberIds.length===1?'':'s'}</div>
+      ${guild.motto ? `<div class="motto">&ldquo;${escHtml(guild.motto)}&rdquo;</div>` : ''}
       ${guild.description ? `<div class="desc">${escHtml(guild.description)}</div>` : ''}
       <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
-        ${isMember ? `<button class="btn subtle" onclick="leaveGuild('${guild.id}')">Leave guild</button>` : `<button class="btn ghost" onclick="joinGuildById('${escHtml(guild.handle)}')">Join</button>`}
+        ${isMember ? `<button class="btn subtle" onclick="leaveGuild('${escHtml(guild.id)}')">Leave guild</button>` : `<button class="btn ghost" onclick="joinGuildById('${escHtml(guild.handle)}')">Join</button>`}
       </div>
     </div>
 
-    <div class="section-head"><h2>Active goals</h2>${isMember ? `<button class="btn subtle" onclick="openGoalModal('${guild.id}')">+ new goal</button>` : ''}</div>
-    <div>${active.length ? active.map(goalCard).join('') : `<div class="empty" style="padding:24px">No active goals. ${isMember ? 'Start one — pages read, books finished, anything.' : ''}</div>`}</div>
+    <div class="section-head"><h2>Active goals</h2>${isMember ? `<button class="btn subtle" onclick="openGoalModal('${escHtml(guild.id)}')">+ new goal</button>` : ''}</div>
+    <div>${active.length ? active.map(goalCard).join('') : `<div class="empty" style="padding:24px">No active goals. ${isMember ? 'Start one above.' : ''}</div>`}</div>
 
     ${past.length ? `<div class="section-head" style="margin-top:32px"><h2>Past goals</h2></div><div>${past.map(goalCard).join('')}</div>` : ''}
 
@@ -1899,8 +2177,8 @@ function fmtDeadline(deadlineMs, timeLeftMs, status){
   const days = Math.floor(timeLeftMs / 86400000);
   const hours = Math.floor((timeLeftMs % 86400000) / 3600000);
   const on = new Date(deadlineMs).toLocaleDateString(undefined, { day:'numeric', month:'short' });
-  if (days > 0) return `${days} day${days===1?'':'s'} left — ends ${on}`;
-  if (hours > 0) return `${hours} hour${hours===1?'':'s'} left`;
+  if (days > 0) return days + ' day' + (days===1?'':'s') + ' left — ends ' + on;
+  if (hours > 0) return hours + ' hour' + (hours===1?'':'s') + ' left';
   return 'Ends soon';
 }
 
@@ -1957,19 +2235,185 @@ async function joinGuildById(handle){
   await joinGuild();
 }
 
-// Modal outside-click to close
-document.addEventListener('DOMContentLoaded', () => {
-  const gm = document.getElementById('goal-modal');
-  if (gm) gm.addEventListener('click', (e) => { if (e.target.id === 'goal-modal') closeGoalModal(); });
-});
+// ============ SHOP ============
+// v1 — fully client-side. XP is display-only spent from localStorage.
+// localStorage key: ukufunda_shop_v1
+// Structure: { spendableXp: <number>, owned: { category: [itemId,...] }, equipped: { category: itemId } }
 
-// ============ READING SESSION (focus mode) ============
-// A reading session is a client-side focused timer that penalises tab-switches.
-// When the user taps "Start reading" we go fullscreen-ish (session-view overlay),
-// request a Wake Lock so the phone doesn't sleep, and start a timer. On tab
-// blur we increment an interruption counter and switch the timer to a faded
-// state. On "End session" we open the log-progress flow with the session
-// metadata attached so the worker can apply the focus multiplier.
+const SHOP_CATALOG = {
+  ink: {
+    label: 'Ink Colour',
+    items: [
+      { id:'iron_gall',  name:'Iron Gall',   price:0,   free:true,  swatch:'#1a1712' },
+      { id:'sepia',      name:'Sepia',        price:200, free:false, swatch:'#5c3d1e' },
+      { id:'vermilion',  name:'Vermilion',    price:400, free:false, swatch:'#8b2020' },
+      { id:'aquamarine', name:'Aquamarine',   price:600, free:false, swatch:'#1a6b6b' },
+      { id:'peacock',    name:'Peacock Blue', price:800, free:false, swatch:'#1a4e6e' },
+    ]
+  },
+  paper: {
+    label: 'Paper',
+    items: [
+      { id:'cream',     name:'Cream',      price:0,    free:true,  swatch:'#f5eedd' },
+      { id:'parchment', name:'Parchment',  price:300,  free:false, swatch:'#e8d8a8' },
+      { id:'vellum',    name:'Vellum',     price:500,  free:false, swatch:'#f0e9d8' },
+      { id:'midnight',  name:'Midnight',   price:1000, free:false, swatch:'#141210', dark:true },
+    ]
+  },
+  monogram: {
+    label: 'Cover Monogram',
+    items: [
+      { id:'ampersand', name:'Ampersand', price:0,   free:true,  swatch:null, glyph:'&' },
+      { id:'fleur',     name:'Fleur',     price:150, free:false, swatch:null, glyph:'F' },
+      { id:'star',      name:'Star',      price:150, free:false, swatch:null, glyph:'*' },
+      { id:'compass',   name:'Compass',   price:150, free:false, swatch:null, glyph:'N' },
+      { id:'anchor',    name:'Anchor',    price:150, free:false, swatch:null, glyph:'A' },
+    ]
+  },
+  frame: {
+    label: 'Bookplate Frame',
+    items: [
+      { id:'plain',     name:'Plain',     price:0,   free:true,  swatch:'#1a1712' },
+      { id:'ornate',    name:'Ornate',    price:400, free:false, swatch:'#D9BE87' },
+      { id:'botanical', name:'Botanical', price:600, free:false, swatch:'#2d5a27' },
+      { id:'gothic',    name:'Gothic',    price:900, free:false, swatch:'#5c2314' },
+    ]
+  }
+};
+
+const SHOP_DEFAULTS = { ink:'iron_gall', paper:'cream', monogram:'ampersand', frame:'plain' };
+
+function loadShopData(){
+  try {
+    const raw = localStorage.getItem(LS_SHOP);
+    if (raw) return JSON.parse(raw);
+  } catch(e){}
+  return { spendableXp: 0, owned: {}, equipped: {} };
+}
+function saveShopData(data){
+  try { localStorage.setItem(LS_SHOP, JSON.stringify(data)); } catch(e){}
+}
+
+function syncShopXp(totalXp){
+  // On first load or if totalXp grew, update spendableXp to reflect new earnings
+  // spendableXp = totalXp - amountSpent (stored as a running total)
+  const data = loadShopData();
+  const spent = data.spent || 0;
+  const newSpendable = Math.max(0, totalXp - spent);
+  if (newSpendable !== data.spendableXp) {
+    data.spendableXp = newSpendable;
+    saveShopData(data);
+  }
+  const el = document.getElementById('shop-xp-display');
+  if (el) el.textContent = newSpendable.toLocaleString();
+}
+
+function loadShop(){
+  const data = loadShopData();
+  const el = document.getElementById('shop-xp-display');
+  if (el) el.textContent = (data.spendableXp || 0).toLocaleString();
+  renderShop(data);
+}
+
+function renderShop(data){
+  const body = document.getElementById('shop-body');
+  if (!body) return;
+  const owned = data.owned || {};
+  const equipped = data.equipped || {};
+
+  body.innerHTML = Object.keys(SHOP_CATALOG).map(catKey => {
+    const cat = SHOP_CATALOG[catKey];
+    const ownedList = owned[catKey] || [SHOP_DEFAULTS[catKey]];
+    const equippedId = equipped[catKey] || SHOP_DEFAULTS[catKey];
+
+    const itemsHtml = cat.items.map(item => {
+      const isOwned = item.free || ownedList.includes(item.id);
+      const isEquipped = equippedId === item.id;
+      let stateClass = '';
+      if (isEquipped) stateClass = 'equipped';
+      else if (isOwned) stateClass = 'owned';
+      else stateClass = 'locked';
+
+      const swatchHtml = item.swatch
+        ? `<div class="item-swatch" style="background:${escHtml(item.swatch)}${item.dark ? ';border:1px solid #444' : ''}"></div>`
+        : `<div class="item-swatch swatch-ink" style="display:flex;align-items:center;justify-content:center;background:var(--paper-raise2);font-family:'EB Garamond',serif;font-size:20px;font-style:italic;color:var(--ink-dim)">${escHtml(item.glyph || '?')}</div>`;
+
+      const actionText = isEquipped ? 'Equipped' : isOwned ? 'Equip' : item.free ? 'Select' : item.price.toLocaleString() + ' XP';
+      const priceText = item.free ? 'Free' : item.price.toLocaleString() + ' XP';
+
+      return `<div class="shop-item ${stateClass}" onclick="shopItemClick('${escHtml(catKey)}','${escHtml(item.id)}')">
+        ${isEquipped ? '<span class="item-equipped-badge">On</span>' : ''}
+        ${swatchHtml}
+        <div class="item-name">${escHtml(item.name)}</div>
+        <div class="item-price${item.free ? ' free' : ''}">${escHtml(priceText)}</div>
+        <div class="item-action">${escHtml(actionText)}</div>
+      </div>`;
+    }).join('');
+
+    return `<div class="shop-category">
+      <div class="shop-category-head">${escHtml(cat.label)}</div>
+      <div class="shop-strip">${itemsHtml}</div>
+    </div>`;
+  }).join('');
+}
+
+function shopItemClick(catKey, itemId){
+  const cat = SHOP_CATALOG[catKey];
+  const item = cat && cat.items.find(x => x.id === itemId);
+  if (!item) return;
+  const data = loadShopData();
+  const owned = data.owned || {};
+  const ownedList = owned[catKey] || [SHOP_DEFAULTS[catKey]];
+  const isOwned = item.free || ownedList.includes(itemId);
+
+  if (!isOwned) {
+    // Try to buy
+    const cost = item.price;
+    if ((data.spendableXp || 0) < cost) {
+      toast('Not enough XP — need ' + cost.toLocaleString() + ' XP');
+      return;
+    }
+    if (!confirm('Spend ' + cost.toLocaleString() + ' XP on ' + item.name + '?')) return;
+    data.spendableXp = (data.spendableXp || 0) - cost;
+    data.spent = (data.spent || 0) + cost;
+    if (!data.owned) data.owned = {};
+    if (!data.owned[catKey]) data.owned[catKey] = [SHOP_DEFAULTS[catKey]];
+    data.owned[catKey].push(itemId);
+    saveShopData(data);
+    toast('Purchased ' + item.name + '!');
+  }
+
+  // Equip
+  if (!data.equipped) data.equipped = {};
+  data.equipped[catKey] = itemId;
+  saveShopData(data);
+  applyEquippedTheme();
+  loadShop();
+  // Update spendable XP display
+  const el = document.getElementById('shop-xp-display');
+  if (el) el.textContent = (data.spendableXp || 0).toLocaleString();
+}
+
+function applyEquippedTheme(){
+  const data = loadShopData();
+  const equipped = data.equipped || {};
+  const ink = equipped.ink || SHOP_DEFAULTS.ink;
+  const paper = equipped.paper || SHOP_DEFAULTS.paper;
+  const monogram = equipped.monogram || SHOP_DEFAULTS.monogram;
+  const frame = equipped.frame || SHOP_DEFAULTS.frame;
+
+  // Apply as data attributes on body
+  document.body.dataset.ink = ink === 'iron_gall' ? '' : ink;
+  document.body.dataset.paper = paper === 'cream' ? '' : paper;
+  document.body.dataset.monogram = monogram === 'ampersand' ? '' : monogram;
+  document.body.dataset.frame = frame === 'plain' ? '' : frame;
+
+  // Remove previous frame classes
+  document.body.classList.remove('book-frame-ornate','book-frame-botanical','book-frame-gothic');
+  if (frame !== 'plain') document.body.classList.add('book-frame-' + frame);
+}
+
+// ============ READING SESSION ============
 let sessionState = null;
 
 async function startSession(bookId){
@@ -1990,15 +2434,12 @@ async function startSession(bookId){
     ended: false,
   };
 
-  // Wake Lock — keep the screen on while reading. Not supported everywhere;
-  // silent fallback if unavailable.
   try {
     if ('wakeLock' in navigator) {
       sessionState.wakeLock = await navigator.wakeLock.request('screen');
     }
-  } catch(e) { /* silent */ }
+  } catch(e) {}
 
-  // Show the view
   const view = document.getElementById('session-view');
   document.getElementById('session-book').textContent = b.title;
   document.getElementById('session-timer').textContent = '00:00';
@@ -2007,23 +2448,20 @@ async function startSession(bookId){
   view.classList.remove('hidden','deep','interrupted');
   document.body.style.overflow = 'hidden';
 
-  // Tick the timer every 500ms
   sessionState.tickHandle = setInterval(tickSession, 500);
 
-  // Visibility handler — penalise tab-switches
   sessionState.onVis = () => {
     if (!sessionState || sessionState.ended) return;
     if (document.hidden) {
       sessionState.interrupted = true;
       sessionState.interruptionCount++;
-      const view = document.getElementById('session-view');
-      view.classList.add('interrupted');
-      view.classList.remove('deep');
+      const v = document.getElementById('session-view');
+      v.classList.add('interrupted');
+      v.classList.remove('deep');
       const w = document.getElementById('session-warn');
       w.classList.remove('hidden');
-      w.textContent = `Interrupted × ${sessionState.interruptionCount}. Focus bonus lost — this session now counts at 0.75×.`;
+      w.textContent = 'Interrupted x ' + sessionState.interruptionCount + '. Focus bonus lost — this session now counts at 0.75x.';
     } else {
-      // returning; try to reacquire wake lock
       if ('wakeLock' in navigator && !sessionState.wakeLock) {
         navigator.wakeLock.request('screen').then(w => { if (sessionState) sessionState.wakeLock = w; }).catch(()=>{});
       }
@@ -2041,11 +2479,10 @@ function tickSession(){
   document.getElementById('session-timer').textContent =
     (min < 10 ? '0' : '') + min + ':' + (sec < 10 ? '0' : '') + sec;
 
-  // Cross the 20-minute mark and stayed clean → upgrade to deep-focus state
   const view = document.getElementById('session-view');
-  if (!sessionState.interrupted && sessionState.durationMs >= 20 * 60_000 && !view.classList.contains('deep')) {
+  if (!sessionState.interrupted && sessionState.durationMs >= 20 * 60000 && !view.classList.contains('deep')) {
     view.classList.add('deep');
-    document.getElementById('session-meta').textContent = 'Deep-focus reached — 1.25× XP unlocked. Keep going.';
+    document.getElementById('session-meta').textContent = 'Deep-focus reached — 1.25x XP unlocked. Keep going.';
   }
 }
 
@@ -2061,7 +2498,7 @@ async function releaseSession(){
 
 function cancelSession(){
   if (!sessionState) return;
-  if (sessionState.durationMs > 60_000) {
+  if (sessionState.durationMs > 60000) {
     if (!confirm('Abandon this session? Nothing will be logged.')) return;
   }
   releaseSession();
@@ -2074,7 +2511,7 @@ async function endSession(){
   const s = sessionState;
   s.durationMs = Date.now() - s.startedAt;
 
-  if (s.durationMs < 60_000) {
+  if (s.durationMs < 60000) {
     if (!confirm('Session under a minute. End without logging?')) return;
     await releaseSession();
     sessionState = null;
@@ -2082,7 +2519,6 @@ async function endSession(){
     return;
   }
 
-  // Open the log-progress modal with the session metadata attached
   await releaseSession();
   state.logBookId = s.bookId;
   state.pendingSession = {
@@ -2093,21 +2529,19 @@ async function endSession(){
   const book = state.books.find(b => b.id === s.bookId);
   const mins = Math.round(s.durationMs / 60000);
   const focusHint = s.interrupted
-    ? `Interrupted × ${s.interruptionCount} — XP will be 0.75× (distraction penalty).`
+    ? 'Interrupted x ' + s.interruptionCount + ' — XP will be 0.75x (distraction penalty).'
     : mins >= 30
-    ? `${mins} minutes uninterrupted — 1.25× deep-focus XP (photos will lift it to 1.5× once enabled).`
-    : `${mins} minutes uninterrupted — normal XP.`;
+    ? mins + ' minutes uninterrupted — 1.25x deep-focus XP. (Photo evidence at 1.5x is TODO pending R2 activation.)'
+    : mins + ' minutes uninterrupted — normal XP.';
   document.getElementById('log-book-info').innerHTML =
-    `<div class="session-review-info"><b>${escHtml(book.title)}</b> — ${focusHint}</div>`
-    + `Currently on page ${book.current} of ${book.pages}`;
+    '<div class="session-review-info"><b>' + escHtml(book.title) + '</b> — ' + focusHint + '</div>'
+    + 'Currently on page ' + book.current + ' of ' + book.pages;
   document.getElementById('log-page').value = '';
-  document.getElementById('log-page').placeholder = `e.g. ${book.current + 20}`;
+  document.getElementById('log-page').placeholder = 'e.g. ' + (book.current + 20);
   document.getElementById('log-delta').value = '';
   document.getElementById('log-modal').classList.add('open');
   sessionState = null;
 }
-
-// Also: on any "log pages" from the plain modal, no session is attached. Fine.
 
 boot();
 </script>
