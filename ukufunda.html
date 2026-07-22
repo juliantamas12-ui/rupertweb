@@ -455,10 +455,10 @@ header.top{display:none !important}
 
 /* ── Search dropdown ─────────────────────────────── */
 .search-box{position:relative;margin-bottom:24px}
-.search-box input{padding-left:44px;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%23faf6ee' stroke-opacity='0.4' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='8'/><line x1='21' y1='21' x2='16.65' y2='16.65'/></svg>");background-repeat:no-repeat;background-position:14px center}
+.search-box input{padding-left:44px;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%231a1712' stroke-opacity='0.55' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='8'/><line x1='21' y1='21' x2='16.65' y2='16.65'/></svg>");background-repeat:no-repeat;background-position:14px center}
 /* Search dropdown — a floating page slice, no rounded box, just top+bottom ink rules */
 .search-results{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--paper);border:none;border-top:2px solid var(--ink);border-bottom:2px solid var(--ink);border-radius:0;max-height:420px;overflow-y:auto;z-index:10;box-shadow:0 20px 40px -10px rgba(60,40,20,0.25)}
-.search-result{display:flex;gap:14px;padding:14px 4px;cursor:pointer;border-bottom:1px solid var(--paper-line);transition:transform .05s}
+.search-result{display:flex;gap:14px;padding:14px 12px;cursor:pointer;border-bottom:1px solid var(--paper-line);transition:transform .05s;background:transparent;border-left:none;border-right:none;border-top:none;width:100%;text-align:left;font-family:inherit;color:inherit;font:inherit}
 .search-result:last-child{border-bottom:none}
 .search-result:hover .title{color:var(--accent)}
 .search-result img{width:40px;height:60px;object-fit:cover;background:transparent;border-radius:0;flex-shrink:0;box-shadow:0 3px 8px rgba(60,40,20,0.20)}
@@ -1429,19 +1429,29 @@ async function searchBooks(){
     if (items.length === 0) {
       res.innerHTML = '<div class="search-result"><div class="info"><div class="meta">No results</div></div></div>';
     } else {
-      res.innerHTML = items.map(b => `
-        <div class="search-result" onclick='addBook(${JSON.stringify(b).replace(/'/g,"&apos;")})'>
+      // Store each candidate on window.__ufSearchHits so onclick can look it up
+      // by index — avoids jamming full JSON into an HTML attribute (which was
+      // failing on titles with apostrophes / special chars).
+      window.__ufSearchHits = items;
+      res.innerHTML = items.map((b, i) => `
+        <button type="button" class="search-result" onclick="addBookByIdx(${i})">
           ${b.cover ? `<img src="${escHtml(b.cover)}" alt="">` : `<div style="width:38px;height:57px;background:var(--paper-raise2);border-radius:3px"></div>`}
           <div class="info">
             <div class="title">${escHtml(b.title)}</div>
             <div class="meta">${escHtml(b.author || 'Unknown')} · ${b.pages || '?'} pages</div>
           </div>
-        </div>`).join('');
+        </button>`).join('');
     }
     res.classList.remove('hidden');
   } catch(e){}
 }
 
+function addBookByIdx(i){
+  const hits = window.__ufSearchHits || [];
+  const b = hits[i];
+  if (!b) return toast('Result missing');
+  addBook(b);
+}
 async function addBook(b){
   if (!b.pages || b.pages < 10) {
     const p = prompt(`No page count for "${b.title}". Enter it manually:`);
