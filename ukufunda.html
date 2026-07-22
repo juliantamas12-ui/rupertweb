@@ -498,46 +498,102 @@ header.top{display:none !important}
 .guild-detail-head .motto{font-family:'EB Garamond',serif;font-style:italic;color:var(--ink-dim);font-size:18px;margin-top:8px}
 .guild-detail-head .desc{color:var(--ink-dim);font-size:15px;margin-top:6px;line-height:1.5}
 
-/* ── Page-turn 3D transitions ───────────────────── */
+/* ── Page-turn 3D transitions ─────────────────────
+   Physical book-leaf feel. Outgoing page hinges from its outer edge and
+   rotates up-and-over, revealing the incoming page underneath. A shadow
+   crease darkens the outgoing leaf as it lifts, giving weight to the turn.
+   Direction convention:
+     dir='left'  (swipe left, next chapter) → outgoing leaf hinges from
+                  its LEFT edge and rotates rightward (rotateY -180deg)
+     dir='right' (swipe right, prev chapter) → outgoing leaf hinges from
+                  its RIGHT edge and rotates leftward (rotateY +180deg)
+   The incoming page sits under the outgoing one and simply fades up
+   during the second half of the turn. Reduced-motion users get instant
+   swaps (see .no-motion overrides in the reduced-motion @media block). */
 .tabs-viewport{
-  perspective:1600px;
+  perspective:2400px;
   perspective-origin:center center;
+  transform-style:preserve-3d;
 }
-@keyframes pageInLeft{
-  from{opacity:0;transform:perspective(1600px) rotateY(90deg)}
-  to{opacity:1;transform:perspective(1600px) rotateY(0deg)}
+.tab{transform-style:preserve-3d;backface-visibility:hidden;will-change:transform,opacity,filter}
+/* Give the flipping leaf a paper backing so the turn is actually visible.
+   Only applied during the animation so it doesn't affect resting layout. */
+.tab.page-out-left,.tab.page-out-right{
+  background:var(--paper,#f4e9d0);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,0.02),0 0 40px rgba(0,0,0,0.02);
 }
-@keyframes pageInRight{
-  from{opacity:0;transform:perspective(1600px) rotateY(-90deg)}
-  to{opacity:1;transform:perspective(1600px) rotateY(0deg)}
+
+/* Forward turn (swipe left, next chapter):
+   outgoing leaf hinges from its RIGHT edge and rotates leftward
+   revealing the incoming page beneath. */
+@keyframes leafOutForward{
+  0%  {transform:perspective(2400px) rotateY(0deg);filter:brightness(1);opacity:1}
+  35% {filter:brightness(0.93)}
+  55% {filter:brightness(0.80)}
+  100%{transform:perspective(2400px) rotateY(-172deg);filter:brightness(0.72);opacity:1}
 }
-@keyframes pageOutLeft{
-  from{opacity:1;transform:perspective(1600px) rotateY(0deg)}
-  to{opacity:0;transform:perspective(1600px) rotateY(-90deg)}
+/* Back turn (swipe right, prev chapter):
+   outgoing leaf hinges from its LEFT edge and rotates rightward. */
+@keyframes leafOutBack{
+  0%  {transform:perspective(2400px) rotateY(0deg);filter:brightness(1);opacity:1}
+  35% {filter:brightness(0.93)}
+  55% {filter:brightness(0.80)}
+  100%{transform:perspective(2400px) rotateY(172deg);filter:brightness(0.72);opacity:1}
 }
-@keyframes pageOutRight{
-  from{opacity:1;transform:perspective(1600px) rotateY(0deg)}
-  to{opacity:0;transform:perspective(1600px) rotateY(90deg)}
+/* Incoming pages: sit still underneath the flipping leaf and fade up during
+   the second half of the turn so it feels like the leaf uncovers them. */
+@keyframes leafInForward{
+  0%  {opacity:0}
+  45% {opacity:0}
+  100%{opacity:1}
 }
-.tab{transform-origin:left center;transform-style:preserve-3d;will-change:transform,opacity}
-.tab.page-in-left{animation:pageInLeft .38s cubic-bezier(0.7,0,0.3,1)}
-.tab.page-in-right{animation:pageInRight .38s cubic-bezier(0.7,0,0.3,1)}
-.tab.page-out-left{animation:pageOutLeft .38s cubic-bezier(0.7,0,0.3,1) forwards}
-.tab.page-out-right{animation:pageOutRight .38s cubic-bezier(0.7,0,0.3,1) forwards}
-/* Paper-shadow overlay during flip */
-.tab.page-in-left::after,.tab.page-out-left::after{
+@keyframes leafInBack{
+  0%  {opacity:0}
+  45% {opacity:0}
+  100%{opacity:1}
+}
+
+/* page-out-left = forward turn (used when dir='left', i.e. swipe left) */
+.tab.page-out-left {
+  transform-origin:right center;
+  animation:leafOutForward .55s cubic-bezier(0.55,0,0.35,1) forwards;
+  z-index:2;
+}
+/* page-out-right = back turn (used when dir='right', i.e. swipe right) */
+.tab.page-out-right{
+  transform-origin:left center;
+  animation:leafOutBack .55s cubic-bezier(0.55,0,0.35,1) forwards;
+  z-index:2;
+}
+/* Incoming page for forward turn is revealed on the left half of the view */
+.tab.page-in-right{
+  animation:leafInForward .55s cubic-bezier(0.4,0,0.2,1) both;
+  z-index:1;
+}
+.tab.page-in-left{
+  animation:leafInBack .55s cubic-bezier(0.4,0,0.2,1) both;
+  z-index:1;
+}
+
+/* Spine-crease shadow behind the turning leaf. Sits at the hinge side and
+   deepens then fades as the leaf swings up-and-over. */
+.tab.page-out-left::after{
   content:'';
-  position:fixed;inset:0;pointer-events:none;z-index:999;
-  background:linear-gradient(to right,rgba(0,0,0,0.15),transparent);
-  animation:shadowFade .38s cubic-bezier(0.7,0,0.3,1) forwards;
+  position:fixed;top:0;bottom:0;left:0;right:0;pointer-events:none;z-index:998;
+  background:linear-gradient(to left,rgba(20,15,10,0.24) 0%,rgba(20,15,10,0.10) 14%,transparent 36%);
+  animation:creaseFade .55s cubic-bezier(0.55,0,0.35,1) forwards;
 }
-.tab.page-in-right::after,.tab.page-out-right::after{
+.tab.page-out-right::after{
   content:'';
-  position:fixed;inset:0;pointer-events:none;z-index:999;
-  background:linear-gradient(to left,rgba(0,0,0,0.15),transparent);
-  animation:shadowFade .38s cubic-bezier(0.7,0,0.3,1) forwards;
+  position:fixed;top:0;bottom:0;left:0;right:0;pointer-events:none;z-index:998;
+  background:linear-gradient(to right,rgba(20,15,10,0.24) 0%,rgba(20,15,10,0.10) 14%,transparent 36%);
+  animation:creaseFade .55s cubic-bezier(0.55,0,0.35,1) forwards;
 }
-@keyframes shadowFade{from{opacity:1}to{opacity:0}}
+@keyframes creaseFade{
+  0%{opacity:0}
+  30%{opacity:1}
+  100%{opacity:0}
+}
 
 @keyframes uf-pulse{
   0%{color:var(--accent);text-shadow:0 0 12px var(--accent-shadow)}
@@ -1924,7 +1980,7 @@ function _switchToContents(){
       prevTabEl.classList.add('hidden');
       prevTabEl.classList.remove('page-out-right');
       nextTabEl.classList.remove('page-in-left');
-    }, 400);
+    }, 560);
   } else {
     document.querySelectorAll('.tab').forEach(t => t.classList.add('hidden'));
     nextTabEl.classList.remove('hidden');
@@ -1968,7 +2024,7 @@ function switchTab(name, opts){
       prevTab.classList.add('hidden');
       prevTab.classList.remove('page-out-left','page-out-right');
       nextTab.classList.remove('page-in-left','page-in-right');
-    }, 400);
+    }, 560);
   } else {
     // Instant swap (reduced motion or no direction)
     document.querySelectorAll('.tab').forEach(t => t.classList.add('hidden'));
