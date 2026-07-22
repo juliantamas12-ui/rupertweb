@@ -7,7 +7,8 @@
 <meta name="description" content="Reading, ranked. Track books, climb tiers, beat your friends.">
 <link rel="canonical" href="https://rupertweb.com/ukufunda">
 <meta name="theme-color" content="#6b2515">
-<link rel="apple-touch-icon" href="/images/ukufunda/mark-256.png">
+<link rel="apple-touch-icon" href="/images/ukufunda/mark.svg">
+<link rel="icon" type="image/svg+xml" href="/images/ukufunda/mark.svg">
 <link rel="icon" type="image/png" sizes="256x256" href="/images/ukufunda/mark-256.png">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Ukufunda">
@@ -302,7 +303,7 @@ header.top{display:none !important}
 .subtabs button.active{background:var(--paper-raise2);color:var(--ink-bright);box-shadow:inset 0 0 0 1px var(--paper-line-strong)}
 
 /* ── Stat cards ────────────────────────────────── */
-.grid{display:grid;grid-template-columns:repeat(4, 1fr);gap:0;margin:8px 0 40px;border-top:1px solid var(--paper-line);border-bottom:1px solid var(--paper-line)}
+.grid{display:grid;grid-template-columns:repeat(3, 1fr);gap:0;margin:8px 0 40px;border-top:1px solid var(--paper-line);border-bottom:1px solid var(--paper-line)}
 .grid .card{border-right:1px solid var(--paper-line);padding:20px 16px}
 .grid .card:last-child{border-right:none}
 @media(max-width:820px){
@@ -497,17 +498,314 @@ header.top{display:none !important}
 .guild-detail-head .motto{font-family:'EB Garamond',serif;font-style:italic;color:var(--ink-dim);font-size:18px;margin-top:8px}
 .guild-detail-head .desc{color:var(--ink-dim);font-size:15px;margin-top:6px;line-height:1.5}
 
-/* ── Page-flip transitions ──────────────────────── */
-@keyframes pageInLeft{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:none}}
-@keyframes pageInRight{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
-.tab.page-in-left{animation:pageInLeft .36s cubic-bezier(0.2,0.7,0.2,1)}
-.tab.page-in-right{animation:pageInRight .36s cubic-bezier(0.2,0.7,0.2,1)}
+/* ── Page-turn 3D transitions ───────────────────── */
+.tabs-viewport{
+  perspective:1600px;
+  perspective-origin:center center;
+}
+@keyframes pageInLeft{
+  from{opacity:0;transform:perspective(1600px) rotateY(90deg)}
+  to{opacity:1;transform:perspective(1600px) rotateY(0deg)}
+}
+@keyframes pageInRight{
+  from{opacity:0;transform:perspective(1600px) rotateY(-90deg)}
+  to{opacity:1;transform:perspective(1600px) rotateY(0deg)}
+}
+@keyframes pageOutLeft{
+  from{opacity:1;transform:perspective(1600px) rotateY(0deg)}
+  to{opacity:0;transform:perspective(1600px) rotateY(-90deg)}
+}
+@keyframes pageOutRight{
+  from{opacity:1;transform:perspective(1600px) rotateY(0deg)}
+  to{opacity:0;transform:perspective(1600px) rotateY(90deg)}
+}
+.tab{transform-origin:left center;transform-style:preserve-3d;will-change:transform,opacity}
+.tab.page-in-left{animation:pageInLeft .38s cubic-bezier(0.7,0,0.3,1)}
+.tab.page-in-right{animation:pageInRight .38s cubic-bezier(0.7,0,0.3,1)}
+.tab.page-out-left{animation:pageOutLeft .38s cubic-bezier(0.7,0,0.3,1) forwards}
+.tab.page-out-right{animation:pageOutRight .38s cubic-bezier(0.7,0,0.3,1) forwards}
+/* Paper-shadow overlay during flip */
+.tab.page-in-left::after,.tab.page-out-left::after{
+  content:'';
+  position:fixed;inset:0;pointer-events:none;z-index:999;
+  background:linear-gradient(to right,rgba(0,0,0,0.15),transparent);
+  animation:shadowFade .38s cubic-bezier(0.7,0,0.3,1) forwards;
+}
+.tab.page-in-right::after,.tab.page-out-right::after{
+  content:'';
+  position:fixed;inset:0;pointer-events:none;z-index:999;
+  background:linear-gradient(to left,rgba(0,0,0,0.15),transparent);
+  animation:shadowFade .38s cubic-bezier(0.7,0,0.3,1) forwards;
+}
+@keyframes shadowFade{from{opacity:1}to{opacity:0}}
 
 @keyframes uf-pulse{
   0%{color:var(--accent);text-shadow:0 0 12px var(--accent-shadow)}
   100%{color:var(--ink-bright);text-shadow:none}
 }
 .card.pulse .stat{animation:uf-pulse 0.9s ease-out}
+
+/* ── Hero XP wax-seal element ────────────────────── */
+.xp-hero{
+  grid-column:1/-1;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:28px 16px 20px;
+  border-right:none !important;
+  position:relative;
+}
+.xp-seal{
+  width:96px;height:96px;
+  border-radius:50%;
+  border:3px double var(--ink);
+  background:radial-gradient(circle at 38% 32%, rgba(255,240,200,0.18), transparent 55%),
+             radial-gradient(circle at 62% 68%, rgba(0,0,0,0.12), transparent 55%),
+             var(--paper-raise2);
+  display:flex;align-items:center;justify-content:center;
+  position:relative;
+  margin-bottom:10px;
+  transition:box-shadow .5s ease;
+  cursor:default;
+}
+/* Outer ring */
+.xp-seal::before{
+  content:'';
+  position:absolute;inset:-6px;
+  border-radius:50%;
+  border:1px solid var(--paper-line-strong);
+  pointer-events:none;
+}
+/* Wax texture grooves */
+.xp-seal::after{
+  content:'';
+  position:absolute;inset:8px;
+  border-radius:50%;
+  border:1.5px dotted var(--paper-line-strong);
+  pointer-events:none;
+}
+.xp-seal .seal-inner{
+  font-family:'EB Garamond',serif;
+  font-style:italic;
+  font-size:38px;
+  font-weight:600;
+  color:var(--ink);
+  line-height:1;
+  user-select:none;
+  position:relative;z-index:1;
+}
+.xp-hero .xp-amount{
+  font-family:'EB Garamond',serif;
+  font-weight:500;
+  font-size:44px;
+  line-height:1;
+  color:var(--ink-bright);
+  font-variant-numeric:oldstyle-nums;
+  letter-spacing:-0.02em;
+  margin-bottom:4px;
+}
+.xp-hero .xp-label{
+  font-family:'Geist',sans-serif;
+  font-size:10px;color:var(--ink-fade);
+  font-weight:600;letter-spacing:0.18em;text-transform:uppercase;
+  margin-bottom:4px;
+}
+.xp-hero .xp-tier{
+  font-family:'EB Garamond',serif;
+  font-style:italic;
+  font-size:14px;color:var(--ink-dim);
+}
+/* Breathing animation on seal */
+@keyframes sealBreathe{
+  from{transform:scale(1.0);filter:drop-shadow(0 0 4px rgba(26,23,18,0.12))}
+  to{transform:scale(1.04);filter:drop-shadow(0 0 14px rgba(26,23,18,0.28))}
+}
+.xp-seal{animation:sealBreathe 3.5s ease-in-out infinite alternate}
+/* One-shot bloom on log success */
+@keyframes sealBloom{
+  0%{transform:scale(1.0)}
+  35%{transform:scale(1.18);filter:drop-shadow(0 0 22px var(--seal-glow,rgba(26,23,18,0.45)))}
+  100%{transform:scale(1.04);filter:drop-shadow(0 0 14px var(--seal-glow,rgba(26,23,18,0.28)))}
+}
+.xp-seal.bloom{animation:sealBloom .7s cubic-bezier(0.3,0,0.2,1) forwards,sealBreathe 3.5s ease-in-out infinite alternate .7s}
+/* Tier glow colors */
+.xp-seal.tier-bronze{--seal-glow:rgba(122,74,30,0.40);box-shadow:0 0 0 0 rgba(122,74,30,0)}
+.xp-seal.tier-silver{--seal-glow:rgba(118,115,112,0.45);box-shadow:0 0 0 0 rgba(118,115,112,0)}
+.xp-seal.tier-gold{--seal-glow:rgba(217,190,135,0.55);box-shadow:0 0 16px rgba(217,190,135,0.30)}
+.xp-seal.tier-platinum{--seal-glow:rgba(176,172,164,0.50);box-shadow:0 0 14px rgba(176,172,164,0.25)}
+.xp-seal.tier-diamond{--seal-glow:rgba(44,75,110,0.50);box-shadow:0 0 18px rgba(44,75,110,0.22)}
+.xp-seal.tier-master{--seal-glow:rgba(122,46,30,0.55);box-shadow:0 0 20px rgba(122,46,30,0.28)}
+/* Ink-dot particle burst */
+.ink-particle{
+  position:fixed;
+  width:6px;height:6px;
+  border-radius:50%;
+  background:var(--ink);
+  pointer-events:none;
+  z-index:500;
+  opacity:1;
+}
+@keyframes inkBurst{
+  0%{transform:translate(0,0) scale(1);opacity:0.9}
+  100%{transform:translate(var(--tx),var(--ty)) scale(0.2);opacity:0}
+}
+
+/* ── Book card micro-motion ──────────────────────── */
+.book{transition:transform .18s ease,box-shadow .18s ease}
+.book:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(60,40,20,0.12)}
+
+/* ── Streak pulse ───────────────────────────── */
+@keyframes streakFlicker{
+  0%,100%{opacity:1;color:var(--ink-bright)}
+  50%{opacity:0.72;color:var(--accent)}
+}
+.streak-active .stat{animation:streakFlicker 2.8s ease-in-out infinite}
+.streak-inactive .stat{opacity:0.5}
+
+/* ── Tier progress bar animated fill ──────────────── */
+.tier-progress-strip .tbar .fill{
+  transition:width .6s cubic-bezier(0.2,0.7,0.2,1);
+}
+
+/* ── Primary CTA glow pulse ────────────────────── */
+@keyframes ctaGlowPulse{
+  0%,100%{box-shadow:0 4px 16px var(--red-shadow)}
+  50%{box-shadow:0 4px 28px rgba(122,46,30,0.38),0 0 0 4px rgba(122,46,30,0.08)}
+}
+.btn.primary-cta{animation:ctaGlowPulse 2.5s ease-in-out infinite}
+.btn.primary-cta:hover{animation:none}
+
+/* ── Guild card hover glow ─────────────────────── */
+.guild-card{transition:box-shadow .18s ease,border-left-color .15s}
+.guild-card:hover{box-shadow:0 2px 18px rgba(107,31,47,0.12)}
+
+/* ── Leaderboard rank glint ───────────────────── */
+@keyframes rankGlint{
+  0%,80%,100%{background-position:200% center}
+  40%{background-position:-200% center}
+}
+.lb-row .rank.gold,.lb-row .rank.silver,.lb-row .rank.bronze{
+  background-clip:text;-webkit-background-clip:text;
+  animation:rankGlint 4s cubic-bezier(0.4,0,0.6,1) infinite;
+}
+.lb-row .rank.gold{
+  background-image:linear-gradient(90deg,var(--t-gold),#f5e090,var(--t-gold));
+  background-size:200% auto;
+  color:transparent;-webkit-text-fill-color:transparent;
+}
+.lb-row .rank.silver{
+  background-image:linear-gradient(90deg,var(--t-silver),#d0ccc6,var(--t-silver));
+  background-size:200% auto;
+  color:transparent;-webkit-text-fill-color:transparent;
+}
+.lb-row .rank.bronze{
+  background-image:linear-gradient(90deg,var(--t-bronze),#c07040,var(--t-bronze));
+  background-size:200% auto;
+  color:transparent;-webkit-text-fill-color:transparent;
+}
+
+/* ── Shop item card tilt ──────────────────────── */
+.shop-item{transition:transform .15s ease,box-shadow .15s ease,border-color .15s}
+.shop-item:hover{transform:rotate(0.5deg) translateY(-2px);box-shadow:0 6px 18px rgba(60,40,20,0.14)}
+
+/* ── Friends avatar hover ──────────────────────── */
+.friend-avatar{transition:background .3s ease,box-shadow .2s ease}
+.friend-row:hover .friend-avatar{background:linear-gradient(135deg,var(--blue-bright),var(--blue));box-shadow:0 0 0 3px var(--blue-shadow)}
+
+/* ── Session ring timer ──────────────────────── */
+.session-ring-wrap{
+  position:relative;
+  width:220px;height:220px;
+  margin:0 auto 20px;
+}
+.session-ring-wrap svg{position:absolute;inset:0;transform:rotate(-90deg)}
+.session-ring-wrap .ring-track{fill:none;stroke:var(--paper-raise2);stroke-width:6}
+.session-ring-wrap .ring-fill{fill:none;stroke-width:6;stroke-linecap:round;transition:stroke-dashoffset .8s linear,stroke .5s ease}
+.session-ring-timer{
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'EB Garamond',serif;
+  font-size:52px;font-weight:400;
+  color:var(--ink-bright);
+  font-variant-numeric:tabular-nums;
+  letter-spacing:-0.03em;
+}
+.session-view.deep .session-ring-timer{color:var(--red)}
+.session-view.interrupted .session-ring-timer{color:var(--ink-fade)}
+/* Hide old plain timer when ring is showing */
+.session-timer.hidden-by-ring{display:none}
+
+/* ── Cover splash animated entry ────────────────── */
+.cover-mark-wrap{
+  display:flex;flex-direction:column;align-items:center;
+  margin-bottom:14px;
+  animation:coverMarkIn .6s cubic-bezier(0.2,0.7,0.2,1);
+}
+@keyframes coverMarkIn{
+  from{opacity:0;transform:translateY(18px)}
+  to{opacity:1;transform:none}
+}
+.cover-wordmark{
+  font-family:'EB Garamond',serif;
+  font-weight:700;
+  font-size:clamp(44px,11vw,96px);
+  line-height:0.95;
+  letter-spacing:0.18em;
+  color:var(--paper);
+  text-transform:uppercase;
+  font-variant:small-caps;
+  text-shadow:0 1px 0 rgba(0,0,0,0.45),0 -1px 0 rgba(255,255,255,0.10),0 0 32px rgba(0,0,0,0.4);
+  margin:12px 0 6px;
+}
+.cover-tagline{
+  font-family:'EB Garamond',serif;
+  font-style:italic;
+  font-size:16px;
+  color:rgba(245,238,221,0.75);
+  letter-spacing:0.04em;
+  overflow:hidden;
+  animation:taglineReveal 1.2s .5s ease forwards;
+  background:linear-gradient(to right,rgba(245,238,221,0.75) 50%,transparent 50%);
+  background-size:200% 100%;
+  background-position:100% 0;
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+}
+@keyframes taglineReveal{
+  from{background-position:100% 0}
+  to{background-position:0 0}
+}
+
+/* ── Dust motes ambient ───────────────────────── */
+.dust-mote{
+  position:fixed;
+  width:3px;height:3px;
+  border-radius:50%;
+  background:rgba(26,23,18,0.10);
+  pointer-events:none;z-index:0;
+  will-change:transform;
+}
+@keyframes moteDrift1{0%{transform:translate(0,0)}50%{transform:translate(18px,-32px)}100%{transform:translate(-8px,0)}}
+@keyframes moteDrift2{0%{transform:translate(0,0)}50%{transform:translate(-24px,20px)}100%{transform:translate(10px,0)}}
+@keyframes moteDrift3{0%{transform:translate(0,0)}50%{transform:translate(14px,28px)}100%{transform:translate(-4px,0)}}
+@keyframes moteDrift4{0%{transform:translate(0,0)}50%{transform:translate(-12px,-18px)}100%{transform:translate(6px,0)}}
+.dust-mote.m1{animation:moteDrift1 38s ease-in-out infinite;top:18%;left:12%}
+.dust-mote.m2{animation:moteDrift2 44s ease-in-out infinite;top:55%;left:78%}
+.dust-mote.m3{animation:moteDrift3 41s ease-in-out 6s infinite;top:72%;left:35%}
+.dust-mote.m4{animation:moteDrift4 47s ease-in-out 13s infinite;top:32%;left:62%}
+
+/* ── Reduced-motion: kill all animations ────────── */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{
+    animation-duration:.001ms !important;
+    transition-duration:.001ms !important;
+  }
+  .dust-mote{display:none}
+  .tab.page-in-left,.tab.page-in-right,.tab.page-out-left,.tab.page-out-right{
+    animation:none !important;opacity:1 !important;transform:none !important;
+  }
+  .xp-seal{animation:none}
+  .btn.primary-cta{animation:none}
+}
 
 /* ── Running head ────────────────────────────────── */
 .running-head{
@@ -904,6 +1202,11 @@ body[data-monogram="anchor"] #book-cover-splash .colophon::before{content:'A'}
 </style>
 </head>
 <body>
+<!-- Ambient dust motes -->
+<div class="dust-mote m1" aria-hidden="true"></div>
+<div class="dust-mote m2" aria-hidden="true"></div>
+<div class="dust-mote m3" aria-hidden="true"></div>
+<div class="dust-mote m4" aria-hidden="true"></div>
 
 <div class="wrap">
   <!-- AUTH: BOOK COVER + ENDPAPER -->
@@ -916,7 +1219,11 @@ body[data-monogram="anchor"] #book-cover-splash .colophon::before{content:'A'}
         <div class="edition">The Rupertweb Library · First Edition</div>
       </div>
       <div class="cover-mid">
-        <img src="/images/ukufunda/logo.png" alt="Ukufunda" class="cover-logo">
+        <div class="cover-mark-wrap">
+          <img src="/images/ukufunda/mark.svg" alt="Ukufunda" style="width:min(160px,40vw);height:auto;filter:brightness(0) invert(1) opacity(0.90) drop-shadow(0 2px 12px rgba(0,0,0,0.45));display:block;margin:0 auto">
+          <div class="cover-wordmark">Ukufunda</div>
+          <div class="cover-tagline">reading, ranked</div>
+        </div>
       </div>
       <div class="cover-bot">
         <div class="colophon">*</div>
@@ -954,7 +1261,11 @@ body[data-monogram="anchor"] #book-cover-splash .colophon::before{content:'A'}
       <div class="edition" id="cover-edition">Your edition</div>
     </div>
     <div class="cover-mid">
-      <img src="/images/ukufunda/logo.png" alt="Ukufunda" class="cover-logo">
+      <div class="cover-mark-wrap">
+        <img src="/images/ukufunda/mark.svg" alt="Ukufunda" style="width:min(160px,40vw);height:auto;filter:brightness(0) invert(1) opacity(0.90) drop-shadow(0 2px 12px rgba(0,0,0,0.45));display:block;margin:0 auto">
+        <div class="cover-wordmark">Ukufunda</div>
+        <div class="cover-tagline">reading, ranked</div>
+      </div>
     </div>
     <div class="cover-bot">
       <div class="colophon">*</div>
@@ -985,7 +1296,7 @@ body[data-monogram="anchor"] #book-cover-splash .colophon::before{content:'A'}
     <!-- LIBRARY + HOME TAB (merged) -->
     <div id="tab-books" class="tab tab-theme-library">
       <div class="running-head">
-        <span class="chapter"><img src="/images/ukufunda/mark-256.png" alt="" class="brand-mark">The Library</span>
+        <span class="chapter"><img src="/images/ukufunda/mark.svg" alt="" class="brand-mark">The Library</span>
         <span class="right">
           <span class="folio">fol. i</span>
           <button class="close-book" onclick="showCoverSplash()">close book</button>
@@ -1007,22 +1318,28 @@ body[data-monogram="anchor"] #book-cover-splash .colophon::before{content:'A'}
 
       <div class="fleuron"></div>
 
+      <!-- Hero XP wax seal -->
+      <div style="text-align:center;padding:28px 0 0;border-top:1px solid var(--paper-line)">
+        <div class="xp-hero">
+          <div class="xp-seal tier-bronze" id="xp-seal">
+            <span class="seal-inner" id="seal-letter">B</span>
+          </div>
+          <div class="xp-amount" id="total-xp">0</div>
+          <div class="xp-label">Season XP</div>
+          <div class="xp-tier" id="total-sub">Tier: Bronze</div>
+        </div>
+      </div>
       <!-- Stats strip -->
-      <div class="grid" id="stats-grid">
-        <div class="card">
+      <div class="grid" id="stats-grid" style="margin-top:0">
+        <div class="card" id="card-week">
           <h3>This week</h3>
           <div class="stat"><span id="week-pages">0</span><span class="unit">pages</span></div>
           <div class="sub" id="week-sub">— XP this week</div>
         </div>
-        <div class="card">
+        <div class="card" id="card-streak">
           <h3>Streak</h3>
           <div class="stat"><span id="streak-days">0</span><span class="unit">days</span></div>
           <div class="sub" id="streak-sub">Read every day to keep it alive</div>
-        </div>
-        <div class="card">
-          <h3>Season XP</h3>
-          <div class="stat" id="total-xp">0</div>
-          <div class="sub" id="total-sub">Tier: Bronze</div>
         </div>
         <div class="card">
           <h3>Finished</h3>
@@ -1250,7 +1567,17 @@ body[data-monogram="anchor"] #book-cover-splash .colophon::before{content:'A'}
       <div class="session-chapter">Reading Session</div>
       <div class="session-book" id="session-book"></div>
     </div>
-    <div class="session-timer" id="session-timer">00:00</div>
+    <!-- SVG ring timer -->
+    <div class="session-ring-wrap">
+      <svg viewBox="0 0 220 220" width="220" height="220" aria-hidden="true">
+        <circle class="ring-track" cx="110" cy="110" r="100"/>
+        <circle class="ring-fill" id="session-ring-fill" cx="110" cy="110" r="100"
+          stroke="var(--ink-fade)"
+          stroke-dasharray="628.3"
+          stroke-dashoffset="628.3"/>
+      </svg>
+      <div class="session-ring-timer" id="session-timer">00:00</div>
+    </div>
     <div class="session-meta" id="session-meta">Started — stay on this page. Leave the tab and your focus bonus is lost.</div>
     <div class="session-warn hidden" id="session-warn"></div>
     <div class="session-actions">
@@ -1447,20 +1774,37 @@ let currentTab = 'books';
 
 function switchTab(name, opts){
   if (!document.getElementById('tab-' + name)) return;
+  // Check reduced-motion preference
+  const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const dir = (opts && opts.direction) || null;
   document.querySelectorAll('.tabs button[data-tab]').forEach(b => {
     b.classList.toggle('active', b.dataset.tab === name);
   });
-  document.querySelectorAll('.tab').forEach(t => t.classList.add('hidden'));
+
+  const prevTab = document.getElementById('tab-' + currentTab);
   const nextTab = document.getElementById('tab-' + name);
-  nextTab.classList.remove('hidden');
   currentTab = name;
-  if (dir) {
-    nextTab.classList.remove('page-in-left','page-in-right');
+
+  if (!prefersReduced && dir && prevTab && prevTab !== nextTab) {
+    // Animate out the old tab
+    prevTab.classList.remove('page-out-left','page-out-right');
+    void prevTab.offsetWidth;
+    prevTab.classList.add(dir === 'left' ? 'page-out-left' : 'page-out-right');
+    // Show new tab and animate in, overlaid during flip
+    nextTab.classList.remove('hidden','page-in-left','page-in-right');
     void nextTab.offsetWidth;
     nextTab.classList.add(dir === 'left' ? 'page-in-right' : 'page-in-left');
-    setTimeout(() => nextTab.classList.remove('page-in-left','page-in-right'), 360);
+    setTimeout(() => {
+      prevTab.classList.add('hidden');
+      prevTab.classList.remove('page-out-left','page-out-right');
+      nextTab.classList.remove('page-in-left','page-in-right');
+    }, 400);
+  } else {
+    // Instant swap (reduced motion or no direction)
+    document.querySelectorAll('.tab').forEach(t => t.classList.add('hidden'));
+    nextTab.classList.remove('hidden');
   }
+
   window.scrollTo({ top: 0, behavior: 'instant' });
   if (name === 'leaderboard') loadLeaderboard();
   if (name === 'friends') loadFriends();
@@ -1525,33 +1869,61 @@ function renderLibraryHome(){
   // Stats strip
   animateNum('week-pages', s.weekPages || 0);
   document.getElementById('week-sub').textContent = '+' + (s.weekXp || 0) + ' XP this week';
-  animateNum('streak-days', s.streak || 0);
-  document.getElementById('streak-sub').textContent = s.streak > 0 ? 'Keep it alive — log today' : 'Log any pages to start a streak';
-  animateNum('total-xp', xp, { format: n => n.toLocaleString() });
+  const streak = s.streak || 0;
+  animateNum('streak-days', streak);
+  document.getElementById('streak-sub').textContent = streak > 0 ? 'Keep it alive — log today' : 'Log any pages to start a streak';
+  // Update streak card class for pulse
+  const streakCard = document.getElementById('card-streak');
+  if (streakCard) {
+    streakCard.classList.toggle('streak-active', streak > 0);
+    streakCard.classList.toggle('streak-inactive', streak === 0);
+  }
+  // Hero XP seal
   const t = tierFromXp(xp);
+  animateNum('total-xp', xp, { format: n => n.toLocaleString() });
   document.getElementById('total-sub').textContent = 'Tier: ' + t.name;
+  const sealEl = document.getElementById('xp-seal');
+  const sealLetter = document.getElementById('seal-letter');
+  if (sealEl) {
+    sealEl.className = 'xp-seal tier-' + t.cls;
+  }
+  if (sealLetter) {
+    sealLetter.textContent = t.name.charAt(0);
+  }
   animateNum('books-done', s.booksFinished || 0);
+
+  // Tier bar starts at 0 then animates to real value
+  const tier_pct_el = document.getElementById('tier-bar-fill');
+  if (tier_pct_el) {
+    tier_pct_el.style.width = '0%';
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        if (t.next) {
+          const range = t.nextXp - t.prevXp;
+          const progress = xp - t.prevXp;
+          const pct = Math.min(100, Math.round((progress / range) * 100));
+          tier_pct_el.style.width = pct + '%';
+        } else {
+          tier_pct_el.style.width = '100%';
+        }
+      }, 100);
+    });
+  }
 
   // Tier badge in header
   document.getElementById('who-tier').innerHTML = '<span class="tier-badge ' + t.cls + '"><span class="dot"></span>' + t.name + '</span>';
 
-  // Tier progress bar
+  // Tier progress bar labels
   const strip = document.getElementById('tier-progress-strip');
-  const fillEl = document.getElementById('tier-bar-fill');
   const labelEl = document.getElementById('tier-label');
   const nextLabelEl = document.getElementById('tier-next-label');
   if (t.next) {
-    const range = t.nextXp - t.prevXp;
-    const progress = xp - t.prevXp;
-    const pct = Math.min(100, Math.round((progress / range) * 100));
-    fillEl.style.width = pct + '%';
     labelEl.textContent = t.name;
     nextLabelEl.textContent = (t.nextXp - xp).toLocaleString() + ' XP to ' + t.next;
-    strip.style.display = '';
+    if (strip) strip.style.display = '';
   } else {
     labelEl.textContent = 'Master';
     nextLabelEl.textContent = 'Maximum tier reached';
-    fillEl.style.width = '100%';
   }
 
   // Library hint
@@ -1806,6 +2178,10 @@ async function submitLog(){
     const mult = d.focusMult && d.focusMult !== 1 ? ' (' + d.focusMult + 'x)' : '';
     toast('+' + pagesRead + ' pages, +' + d.xp + ' XP' + mult);
     state.pendingSession = null;
+    // Trigger seal bloom + ink burst
+    setTimeout(() => {
+      triggerSealBloom();
+    }, 80);
     await refresh();
   } catch(e){ toast('Network error'); }
 }
@@ -2495,6 +2871,21 @@ function tickSession(){
   document.getElementById('session-timer').textContent =
     (min < 10 ? '0' : '') + min + ':' + (sec < 10 ? '0' : '') + sec;
 
+  // Drive ring arc — full circle at 30 min (1800s), circumference = 2*pi*100 = 628.3
+  const ringEl = document.getElementById('session-ring-fill');
+  if (ringEl) {
+    const C = 628.3;
+    const progress = Math.min(1, sessionState.durationMs / (30 * 60000));
+    const offset = C - (C * progress);
+    ringEl.style.strokeDashoffset = offset;
+    // Transition ink-fade → gold as it approaches 30 min
+    const r1 = [26,23,18], r2 = [217,190,135];
+    const cr = Math.round(r1[0] + (r2[0]-r1[0]) * progress);
+    const cg = Math.round(r1[1] + (r2[1]-r1[1]) * progress);
+    const cb = Math.round(r1[2] + (r2[2]-r1[2]) * progress);
+    ringEl.style.stroke = 'rgb(' + cr + ',' + cg + ',' + cb + ')';
+  }
+
   const view = document.getElementById('session-view');
   if (!sessionState.interrupted && sessionState.durationMs >= 20 * 60000 && !view.classList.contains('deep')) {
     view.classList.add('deep');
@@ -2557,6 +2948,47 @@ async function endSession(){
   document.getElementById('log-delta').value = '';
   document.getElementById('log-modal').classList.add('open');
   sessionState = null;
+}
+
+// ============ ANIMATIONS ============
+function triggerSealBloom(){
+  const seal = document.getElementById('xp-seal');
+  if (!seal) return;
+  seal.classList.remove('bloom');
+  void seal.offsetWidth;
+  seal.classList.add('bloom');
+  // Ink particle burst from seal position
+  const rect = seal.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+  for (let i = 0; i < 10; i++) {
+    const p = document.createElement('div');
+    p.className = 'ink-particle';
+    const angle = (i / 10) * Math.PI * 2;
+    const dist = 48 + Math.random() * 38;
+    const tx = Math.round(Math.cos(angle) * dist) + 'px';
+    const ty = Math.round(Math.sin(angle) * dist) + 'px';
+    p.style.setProperty('--tx', tx);
+    p.style.setProperty('--ty', ty);
+    p.style.left = (cx - 3) + 'px';
+    p.style.top = (cy - 3) + 'px';
+    p.style.animation = 'inkBurst ' + (0.5 + Math.random() * 0.3) + 's ease-out forwards';
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 900);
+  }
+}
+
+// Count-up helper (alias animateNum for spec compliance)
+function animateCount(el, from, to, duration){
+  if (!el) return;
+  const t0 = performance.now();
+  const step = (now) => {
+    const p = Math.min(1, (now - t0) / duration);
+    const eased = 1 - Math.pow(1 - p, 3);
+    el.textContent = Math.round(from + (to - from) * eased);
+    if (p < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
 }
 
 boot();
