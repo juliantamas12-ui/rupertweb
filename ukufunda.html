@@ -6,11 +6,14 @@
 <title>Ukufunda</title>
 <meta name="description" content="Reading, ranked. Track books, climb tiers, beat your friends.">
 <link rel="canonical" href="https://rupertweb.com/ukufunda">
-<meta name="theme-color" content="#141210">
+<meta name="theme-color" content="#6b2515">
+<link rel="apple-touch-icon" href="/images/ukufunda/mark-256.png">
+<link rel="icon" type="image/png" sizes="256x256" href="/images/ukufunda/mark-256.png">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Ukufunda">
 <meta property="og:title" content="Ukufunda — Reading, but competitive.">
 <meta property="og:description" content="Track books, log pages, climb tiers, beat your friends.">
+<meta property="og:image" content="https://rupertweb.com/images/ukufunda/logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600&family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -177,6 +180,25 @@ header.top{display:none !important}
 .book-cover .colophon{
   font-family:'EB Garamond',serif;font-size:28px;line-height:1;
   color:rgba(245,238,221,0.75);margin:0 auto 10px;
+}
+/* Logo image on covers — constrained by CSS, never resized in markup */
+.book-cover .cover-logo{
+  display:block;
+  width:min(360px,80vw);
+  height:auto;
+  margin:0 auto;
+  filter:brightness(1.08) drop-shadow(0 2px 12px rgba(0,0,0,0.45));
+}
+/* Small mark in running head */
+.running-head .brand-mark{
+  width:18px;
+  height:18px;
+  object-fit:contain;
+  vertical-align:middle;
+  margin-right:6px;
+  opacity:0.55;
+  filter:saturate(0);
+  flex-shrink:0;
 }
 .book-cover .attr{
   font-family:'Geist',sans-serif;font-size:10px;letter-spacing:0.28em;text-transform:uppercase;
@@ -894,10 +916,7 @@ body[data-monogram="anchor"] #book-cover-splash .colophon::before{content:'A'}
         <div class="edition">The Rupertweb Library · First Edition</div>
       </div>
       <div class="cover-mid">
-        <div class="rule-set"><span class="rule"></span><span class="mark">*</span><span class="rule"></span></div>
-        <h1 class="title">Ukufunda</h1>
-        <p class="subtitle">A reading league — track books, log pages, climb tiers, beat your friends.</p>
-        <div class="rule-set"><span class="rule"></span><span class="mark">*</span><span class="rule"></span></div>
+        <img src="/images/ukufunda/logo.png" alt="Ukufunda" class="cover-logo">
       </div>
       <div class="cover-bot">
         <div class="colophon">*</div>
@@ -935,10 +954,7 @@ body[data-monogram="anchor"] #book-cover-splash .colophon::before{content:'A'}
       <div class="edition" id="cover-edition">Your edition</div>
     </div>
     <div class="cover-mid">
-      <div class="rule-set"><span class="rule"></span><span class="mark">*</span><span class="rule"></span></div>
-      <h1 class="title">Ukufunda</h1>
-      <p class="subtitle">A reading league.</p>
-      <div class="rule-set"><span class="rule"></span><span class="mark">*</span><span class="rule"></span></div>
+      <img src="/images/ukufunda/logo.png" alt="Ukufunda" class="cover-logo">
     </div>
     <div class="cover-bot">
       <div class="colophon">*</div>
@@ -969,7 +985,7 @@ body[data-monogram="anchor"] #book-cover-splash .colophon::before{content:'A'}
     <!-- LIBRARY + HOME TAB (merged) -->
     <div id="tab-books" class="tab tab-theme-library">
       <div class="running-head">
-        <span class="chapter">The Library</span>
+        <span class="chapter"><img src="/images/ukufunda/mark-256.png" alt="" class="brand-mark">The Library</span>
         <span class="right">
           <span class="folio">fol. i</span>
           <button class="close-book" onclick="showCoverSplash()">close book</button>
