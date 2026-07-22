@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Mark B: pure open-book icon, two symmetric pages meeting at a spine. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Ukufunda">
+  <g fill="none" stroke="#1a1613" stroke-width="6" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Spine -->
+    <line x1="100" y1="60" x2="100" y2="150"/>
+    <!-- Left page (top edge curves down to right at spine, bottom edge curves up to right at spine) -->
+    <path d="M 30 70 Q 65 60 100 60 L 100 150 Q 65 140 30 150 Z"/>
+    <!-- Right page -->
+    <path d="M 170 70 Q 135 60 100 60 L 100 150 Q 135 140 170 150 Z"/>
+  </g>
+</svg>

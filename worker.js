@@ -238,24 +238,41 @@ export default {
       '/ukufunda':  '/ukufunda.html',
       '/ukufunda/': '/ukufunda.html',
     };
-    if (p in prettyRoutes) {
-      const rewritten = new Request(new URL(prettyRoutes[p], request.url).toString(), request);
+    // Build stamp bumped every deploy so cache keys change and the CF edge
+    // must re-fetch even when the zone has an aggressive HTML cache rule.
+    const BUILD_STAMP = 'b20260722190500';
+
+    // /ukufunda + /ukufunda.html + /read are all currently pinned by a CF
+    // zone Cache Rule our token can't purge. Ukufunda is now served on a
+    // brand-new path (/uf) that CF has never cached, plus /uf/<BUILD_STAMP>
+    // for hard-cache-busted deep links. /ukufunda is treated as an alias
+    // that just serves the app (worker override header still helps future
+    // requests as the cache entry expires).
+    if (p === '/uf' || p === '/uf/' || (p.startsWith('/uf/') && p.length > 4)) {
+      const rewritten = new Request(new URL('/ukufunda.html', request.url).toString(), request);
       const assetRes = await env.ASSETS.fetch(rewritten);
-      // Force fresh HTML for pretty routes so redesigns land immediately on
-      // mobile Safari / CF edge without waiting for a manual purge.
       const fresh = new Response(assetRes.body, assetRes);
-      fresh.headers.set('Cache-Control', 'public, max-age=0, must-revalidate, no-cache');
+      fresh.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0, private');
+      fresh.headers.set('CDN-Cache-Control', 'no-store');
+      fresh.headers.set('Cloudflare-CDN-Cache-Control', 'no-store');
+      fresh.headers.set('Vary', '*');
+      fresh.headers.set('Pragma', 'no-cache');
+      fresh.headers.set('Expires', '0');
+      fresh.headers.set('X-Build', BUILD_STAMP);
       return fresh;
     }
 
-    // Also force fresh for the direct .html forms of the pretty routes above.
-    // The zone has an aggressive HTML cache rule; explicit no-cache header
-    // overrides it so redesigns land immediately without a manual dashboard purge.
-    const prettyHtmlPaths = new Set(Object.values(prettyRoutes));
-    if (prettyHtmlPaths.has(p)) {
-      const assetRes = await env.ASSETS.fetch(request);
+    if (p in prettyRoutes) {
+      const rewritten = new Request(new URL(prettyRoutes[p], request.url).toString(), request);
+      const assetRes = await env.ASSETS.fetch(rewritten);
       const fresh = new Response(assetRes.body, assetRes);
-      fresh.headers.set('Cache-Control', 'public, max-age=0, must-revalidate, no-cache');
+      fresh.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0, private');
+      fresh.headers.set('CDN-Cache-Control', 'no-store');
+      fresh.headers.set('Cloudflare-CDN-Cache-Control', 'no-store');
+      fresh.headers.set('Vary', '*');
+      fresh.headers.set('Pragma', 'no-cache');
+      fresh.headers.set('Expires', '0');
+      fresh.headers.set('X-Build', BUILD_STAMP);
       return fresh;
     }
 

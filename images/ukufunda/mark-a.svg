@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Mark A: pure serif U, no dot. Cleanest possible. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Ukufunda">
+  <g fill="#1a1613">
+    <path d="
+      M 40 40
+      L 40 42
+      L 46 42
+      L 50 46
+      L 50 120
+      C 50 148 68 168 100 168
+      C 132 168 150 148 150 120
+      L 150 46
+      L 154 42
+      L 160 42
+      L 160 40
+      L 118 40
+      L 118 42
+      L 124 42
+      L 128 46
+      L 128 120
+      C 128 138 118 150 100 150
+      C 82 150 72 138 72 120
+      L 72 46
+      L 76 42
+      L 82 42
+      L 82 40
+      Z"/>
+  </g>
+</svg>

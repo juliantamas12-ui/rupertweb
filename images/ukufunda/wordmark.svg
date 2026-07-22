@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Wordmark only: UKUFUNDA in wide-tracked serif small caps, minimal. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" role="img" aria-label="Ukufunda">
+  <style>
+    .word { font-family: "EB Garamond", "Garamond", "Adobe Garamond", Georgia, serif;
+            font-size: 88px; letter-spacing: 22px; fill: #1a1613; font-weight: 400; }
+    .tag  { font-family: "EB Garamond", "Garamond", "Adobe Garamond", Georgia, serif;
+            font-size: 22px; font-style: italic; letter-spacing: 4px; fill: #6b5d4d; font-weight: 400; }
+    .rule { stroke: #1a1613; stroke-width: 1; }
+  </style>
+  <text x="400" y="105" text-anchor="middle" class="word">UKUFUNDA</text>
+  <line x1="330" y1="128" x2="470" y2="128" class="rule"/>
+  <text x="400" y="158" text-anchor="middle" class="tag">reading, ranked</text>
+</svg>

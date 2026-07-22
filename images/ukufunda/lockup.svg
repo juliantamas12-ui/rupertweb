@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Full lockup: mark-a (pure serif U) above wordmark. Minimalist, editorial. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 520" role="img" aria-label="Ukufunda — reading, ranked">
+  <style>
+    .word { font-family: "EB Garamond", "Garamond", "Adobe Garamond", Georgia, serif;
+            font-size: 76px; letter-spacing: 20px; fill: #1a1613; font-weight: 400; }
+    .tag  { font-family: "EB Garamond", "Garamond", "Adobe Garamond", Georgia, serif;
+            font-size: 20px; font-style: italic; letter-spacing: 3px; fill: #6b5d4d; font-weight: 400; }
+    .rule { stroke: #1a1613; stroke-width: 1; }
+  </style>
+  <!-- Mark: serif U, scaled -->
+  <g transform="translate(325,60) scale(0.75)" fill="#1a1613">
+    <path d="
+      M 40 40
+      L 40 42
+      L 46 42
+      L 50 46
+      L 50 120
+      C 50 148 68 168 100 168
+      C 132 168 150 148 150 120
+      L 150 46
+      L 154 42
+      L 160 42
+      L 160 40
+      L 118 40
+      L 118 42
+      L 124 42
+      L 128 46
+      L 128 120
+      C 128 138 118 150 100 150
+      C 82 150 72 138 72 120
+      L 72 46
+      L 76 42
+      L 82 42
+      L 82 40
+      Z"/>
+  </g>
+  <!-- Divider rule -->
+  <line x1="350" y1="270" x2="450" y2="270" class="rule"/>
+  <!-- Wordmark -->
+  <text x="400" y="355" text-anchor="middle" class="word">UKUFUNDA</text>
+  <!-- Tagline -->
+  <text x="400" y="405" text-anchor="middle" class="tag">reading, ranked</text>
+</svg>
