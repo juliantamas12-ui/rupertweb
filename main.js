@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Three Days in August 1991 When the KGB Chairman Vladimir Kryuchkov Ordered the Alpha Group to Arrest Boris Yeltsin at His Dacha and the Alpha Group Refused, Which Was the Moment the Soviet Union Ended",
+    date: "2026-07-23",
+    category: "History",
+    excerpt: "At 04:32 on the morning of Monday, 19 August 1991, a column of thirty officers of the KGB's Alpha Group took up positions in a wooded stretch of the Uspenskoye Highway approximately four hundred metres from the driveway of the dacha at Arkhangelskoye-2 where Boris Nikolayevich Yeltsin, President of the Russian Soviet Federative Socialist Republic, was sleeping. The Alpha Group's orders were to enter the dacha at 05:00, detain Yeltsin, and transport him to a military airfield at Chkalovsky. The State Committee on the State of Emergency had determined that Yeltsin was the single individual whose immediate detention was strategically indispensable to the coup's success. The Alpha Group was in position at 04:35. It did not move. The coup had been defeated not by Yeltsin's speech from the tank, and not by the seventy thousand civilians around the White House, but by the refusal of three career officers of the Soviet security services to execute an order that would have required them to shoot Russians on behalf of a committee whose legal authority they could not verify. The Soviet Union ended when its own security services began to behave as if the rule of law applied to them...",
+    url: "essays/2026-07-23-the-three-days-in-august-1991-when-the-kgb-chairman-vladimir-kryuchkov-ordered-the-alpha-group-to-arrest-boris-yeltsin-at-his-dacha-and-the-alpha-group-refused-which-was-the-moment-the-soviet-union-ended.html"
+  },
+  {
     title: "The Three Weeks at Bretton Woods in July 1944 When Harry Dexter White Out-Negotiated John Maynard Keynes to Subordinate the British Empire to the American Dollar While Simultaneously Working as a Soviet Intelligence Asset",
     date: "2026-07-22",
     category: "History",
