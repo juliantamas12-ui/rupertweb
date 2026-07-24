@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Six Days in November 1956 When Dwight Eisenhower Crashed the Pound Sterling to Force Anthony Eden's Withdrawal from Suez, and the British Empire Discovered That Its Reserve Currency Was an American Instrument",
+    date: "2026-07-24",
+    category: "History",
+    excerpt: "At 09:15 on the morning of Tuesday, 6 November 1956, Harold Macmillan walked into the Cabinet Room at 10 Downing Street with a single piece of paper. It contained the previous week's outflows from the Exchange Equalisation Account. Between 29 October and 5 November, the United Kingdom had lost $279 million of its gold and dollar reserves — approximately fifteen per cent of the entire reserve. At the rate of loss recorded on 5 November alone, sterling would breach the lower limit of its Bretton Woods band, requiring formal devaluation, within eight working days. The operation was terminated because Eisenhower had instructed the Federal Reserve Bank of New York to refuse to intervene in support of sterling and had further instructed the American executive director of the IMF to block the United Kingdom's application for a stand-by drawing of $561 million. These were the two levers by which sterling was defended against speculative attack. Eisenhower removed both. The pound fell. Eden folded. Britain did not lose a war it was winning. It discovered that it had been fighting inside a framework whose terms of settlement were being written elsewhere, and that the elsewhere had decided the war would end...",
+    url: "essays/2026-07-24-the-six-days-in-november-1956-when-dwight-eisenhower-crashed-the-pound-sterling-to-force-anthony-edens-withdrawal-from-suez-and-the-british-empire-discovered-that-its-reserve-currency-was-an-american-instrument.html"
+  },
+  {
     title: "The Three Days in August 1991 When the KGB Chairman Vladimir Kryuchkov Ordered the Alpha Group to Arrest Boris Yeltsin at His Dacha and the Alpha Group Refused, Which Was the Moment the Soviet Union Ended",
     date: "2026-07-23",
     category: "History",
