@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Afternoon of 4 August 1922 Near the Village of Ab-i-Derya in the Baldzhuan Valley, When a Red Army Machine-Gun Section Killed Enver Pasha at the Head of a Cavalry Charge and Terminated the Pan-Turkist Project That Had Governed Ottoman Strategy for Fifteen Years",
+    date: "2026-07-25",
+    category: "History",
+    excerpt: "At approximately 15:40 on the afternoon of Friday, 4 August 1922, in a shallow depression in the Baldzhuan valley of eastern Bukhara, a section of the 8th Cavalry Brigade of the Red Army, commanded by a twenty-nine-year-old Georgian former Tsarist NCO named Yakov Melkumov, opened fire with two Maxim guns at a range of three hundred metres on a mounted formation of roughly two hundred Basmachi horsemen. The horsemen were led personally by a small, slender man of forty-one wearing a green tunic of pre-war Ottoman general officer's cut and a white astrakhan cap. The man was Ismail Enver, formerly Minister of War of the Ottoman Empire, and — in his own estimation, not entirely delusional — the successor to Tamerlane as the unifier of the Turkic peoples of Central Asia into a single Islamic state stretching from the Bosphorus to the Chinese frontier. The Maxim guns fired for perhaps forty seconds. Enver rose, drew his sabre, and ran forward on foot into the fire. He was struck five times. The pan-Turkist project, which had been the animating idea of Ottoman grand strategy since 1908 and had killed perhaps three million people in the process of its pursuit, ended at 15:41...",
+    url: "essays/2026-07-25-the-afternoon-of-4-august-1922-when-a-red-army-machine-gun-killed-enver-pasha-and-terminated-the-pan-turkist-project.html"
+  },
+  {
     title: "The Six Days in November 1956 When Dwight Eisenhower Crashed the Pound Sterling to Force Anthony Eden's Withdrawal from Suez, and the British Empire Discovered That Its Reserve Currency Was an American Instrument",
     date: "2026-07-24",
     category: "History",
