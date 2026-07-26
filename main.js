@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Seventy-Two Hours in Late October 1962 When Fidel Castro Sent Nikita Khrushchev a Cable from the Havana Embassy Urging a Pre-Emptive Nuclear Strike on the United States, and Khrushchev Discovered That His Cuban Ally Had Passed Beyond His Operational Control",
+    date: "2026-07-26",
+    category: "History",
+    excerpt: "At 02:00 on the morning of Saturday, 27 October 1962, in the basement of the Soviet Embassy at 5th Avenue and 66th Street in the Miramar district of Havana, a small, bearded man of thirty-six in olive fatigues dictated a cable in Spanish to a KGB stenographer, who translated it into Russian in real time and passed each page to Ambassador Aleksandr Alekseev for cypher transmission to Moscow. It was signed by Fidel Castro. It stated, in the operative paragraph, that in the event of an American invasion of Cuba, the Soviet Union should not merely respond with tactical nuclear weapons against the invading force, but should pre-emptively strike the continental United States with strategic weapons, accepting the consequent destruction of Cuba as the unavoidable price of a general victory over imperialism. Khrushchev read it twice, put it down, and said aloud: 'This is madness. He wants to drag us into the grave with him.' By 13:00 the same afternoon he had drafted the cable accepting withdrawal. The crisis ended not because Kennedy had won a game of nerve, but because Khrushchev had discovered that his Cuban ally had passed beyond his operational control...",
+    url: "essays/2026-07-26-the-seventy-two-hours-in-late-october-1962-when-fidel-castro-sent-nikita-khrushchev-a-cable-urging-a-pre-emptive-nuclear-strike-on-the-united-states-and-khrushchev-discovered-that-his-cuban-ally-had-passed-beyond-his-operational-control.html"
+  },
+  {
     title: "The Afternoon of 4 August 1922 Near the Village of Ab-i-Derya in the Baldzhuan Valley, When a Red Army Machine-Gun Section Killed Enver Pasha at the Head of a Cavalry Charge and Terminated the Pan-Turkist Project That Had Governed Ottoman Strategy for Fifteen Years",
     date: "2026-07-25",
     category: "History",
