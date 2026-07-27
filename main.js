@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Eleven Days at the End of May and Beginning of June 1967 in Tel Aviv When Levi Eshkol Lost Control of the Israeli Cabinet to Moshe Dayan and the IDF General Staff, and Discovered That the Prime Minister of Israel No Longer Decided When Israel Went to War",
+    date: "2026-07-27",
+    category: "History",
+    excerpt: "At 09:15 on the morning of Thursday, 1 June 1967, in the office of the Prime Minister on Kaplan Street in Tel Aviv, Levi Eshkol signed a document appointing Moshe Dayan as Minister of Defence. By signing it he formally surrendered the ministerial authority over the IDF that he had inherited from Ben-Gurion. Substantively, he was ratifying a transfer of decision-making authority that had already taken place. Between 22 May, when Nasser closed the Strait of Tiran, and 1 June, when Dayan entered the Ministry, the constitutional principle that the Israeli cabinet decided when Israel went to war had been broken. It was broken by the General Staff of the IDF, in coordination with a faction of the cabinet led by Menachem Begin, through the sustained public and private repudiation of the Prime Minister's authority over a period of eleven days. War began on the morning of 5 June. The Israeli constitutional pattern in which the military and intelligence establishments operate as autonomous political actors capable of shaping national security decisions was fixed in those eleven days. It has not been undone...",
+    url: "essays/2026-07-27-the-eleven-days-at-the-end-of-may-1967-when-levi-eshkol-lost-control-of-the-israeli-cabinet-to-moshe-dayan-and-the-idf-general-staff-and-discovered-that-the-prime-minister-no-longer-decided-when-israel-went-to-war.html"
+  },
+  {
     title: "The Seventy-Two Hours in Late October 1962 When Fidel Castro Sent Nikita Khrushchev a Cable from the Havana Embassy Urging a Pre-Emptive Nuclear Strike on the United States, and Khrushchev Discovered That His Cuban Ally Had Passed Beyond His Operational Control",
     date: "2026-07-26",
     category: "History",
