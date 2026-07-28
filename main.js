@@ -28,6 +28,13 @@ setInterval(updateClock, 1000);
    ══════════════════════════════════════════════════════════════ */
 const ESSAYS = [
   {
+    title: "The Ninety Minutes on the Balcony of the Central Committee Building in Bucharest on 21 December 1989 When Nicolae Ceaușescu Discovered That the Crowd He Had Assembled to Cheer Him Had Been Instructed to Cheer Him by a Regime That No Longer Existed",
+    date: "2026-07-28",
+    category: "History",
+    excerpt: "At 12:31 on the afternoon of Thursday, 21 December 1989, on the balcony of the Central Committee building of the Romanian Communist Party on Palace Square in Bucharest, Nicolae Ceaușescu began to speak into a microphone attached to a public address system that broadcast his voice across a square containing approximately one hundred thousand people. What happened instead, in a period of approximately ninety minutes between 12:31 and 14:00, was the operational collapse of the Ceaușescu regime, broadcast live on Romanian state television. The techniques failed not because the crowd had been infiltrated by opposition activists — there was, in December 1989, no organised Romanian opposition of any consequence — but because the internal mechanism by which the regime produced its own public support had, at some point in the preceding seventy-two hours, ceased to function. The regime existed insofar as it could stage its own existence. When the staging apparatus withdrew its cooperation, it ceased to exist, in ninety minutes, on live television, with Ceaușescu still standing on the balcony trying to complete a speech that no longer had an audience...",
+    url: "essays/2026-07-28-the-ninety-minutes-on-the-balcony-of-the-central-committee-building-in-bucharest-on-21-december-1989-when-nicolae-ceausescu-discovered-that-his-regime-had-ceased-to-exist.html"
+  },
+  {
     title: "The Eleven Days at the End of May and Beginning of June 1967 in Tel Aviv When Levi Eshkol Lost Control of the Israeli Cabinet to Moshe Dayan and the IDF General Staff, and Discovered That the Prime Minister of Israel No Longer Decided When Israel Went to War",
     date: "2026-07-27",
     category: "History",
