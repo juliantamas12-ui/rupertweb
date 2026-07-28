@@ -1,4 +1,10 @@
-name = "rupertweb"
+# CRITICAL: This project has two workers on the account:
+#   - "rupertweb" (deprecated, no routes, no custom domains)
+#   - "holy-hall-8d46" (LIVE) — custom domain rupertweb.com → this worker
+# Deploy target is holy-hall-8d46. Do NOT rename to "rupertweb" or the live
+# site will keep serving stale HTML while the wrong worker updates.
+# See ~/yuc/memory/reference/rupertweb.md for the full story.
+name = "holy-hall-8d46"
 main = "worker.js"
 compatibility_date = "2024-01-01"
 account_id = "83e723be30278199fc80a3075ab9264d"
