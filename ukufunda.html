@@ -18,6 +18,19 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600&family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>
+(function(){
+  try {
+    var stored = localStorage.getItem('ukufunda-theme');
+    var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var dark = stored ? stored === 'dark' : prefersDark;
+    if (dark) document.documentElement.setAttribute('data-preload-dark', '1');
+  } catch(_) {}
+})();
+</script>
+<style>
+html[data-preload-dark] body{background:#0f0d0a}
+</style>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -71,6 +84,65 @@
   --radius:6px;
   --radius-lg:10px;
 }
+/* ── Dark mode ──
+   Full re-theme: paper → dark leather, ink → warm off-white,
+   accents stay as-is (they still read well on dark). */
+body.dark{
+  --ink:#e8dfc9;
+  --ink-bright:#f6efd8;
+  --ink-dim:rgba(232,223,201,0.65);
+  --ink-fade:rgba(232,223,201,0.38);
+  --ink-ghost:rgba(232,223,201,0.10);
+
+  --paper:#0f0d0a;
+  --paper-deep:#080706;
+  --paper-raise:#181510;
+  --paper-raise2:#201c15;
+  --paper-line:rgba(232,223,201,0.12);
+  --paper-line-strong:rgba(232,223,201,0.26);
+
+  --red:#c66a4f;
+  --red-bright:#dc7e63;
+  --red-deep:#a35438;
+  --red-shadow:rgba(198,106,79,0.28);
+  --red-soft:rgba(198,106,79,0.14);
+
+  --blue:#7ba0c8;
+  --blue-bright:#96b6d8;
+  --blue-deep:#5b83ac;
+  --blue-shadow:rgba(123,160,200,0.28);
+  --blue-soft:rgba(123,160,200,0.14);
+
+  --tan:#c9ae7d;
+  --tan-bright:#dcc394;
+  --tan-deep:#b0925e;
+
+  color-scheme:dark;
+}
+body.dark .book .cover-placeholder,
+body.dark .book .cover{
+  box-shadow:0 4px 12px rgba(0,0,0,0.55), 0 1px 2px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(232,223,201,0.08);
+}
+body.dark .book .cover{filter:brightness(0.85) contrast(1.05)}
+body.dark .modal-bg{background:rgba(0,0,0,0.72)}
+body.dark input,body.dark select{color-scheme:dark}
+
+/* Dark-mode toggle ── fixed top-right, small and unobtrusive */
+.dark-toggle{
+  position:fixed;top:14px;right:14px;z-index:900;
+  width:36px;height:36px;border-radius:50%;
+  background:var(--paper-raise);
+  border:1px solid var(--paper-line-strong);
+  color:var(--ink-dim);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:16px;line-height:1;
+  transition:background .15s,color .15s,transform .1s;
+  -webkit-tap-highlight-color:transparent;
+}
+.dark-toggle:hover{background:var(--paper-raise2);color:var(--ink-bright)}
+.dark-toggle:active{transform:scale(0.94)}
+.dark-toggle svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
 html,body{background:var(--paper);color:var(--ink);font-family:'EB Garamond',Garamond,ui-serif,Georgia,'Times New Roman',serif;line-height:1.55;min-height:100vh;font-size:17px;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 button, input, select, textarea{font-family:inherit}
 .btn, .btn.ghost, .btn.small, .btn.subtle{font-family:'EB Garamond',Garamond,serif}
@@ -87,13 +159,7 @@ body{
 body::before{
   content:'';
   position:fixed;inset:0;pointer-events:none;z-index:0;
-  background-image:
-    radial-gradient(rgba(26,23,18,0.035) 1px, transparent 1px),
-    radial-gradient(rgba(26,23,18,0.025) 1px, transparent 1px);
-  background-size: 3px 3px, 7px 7px;
-  background-position: 0 0, 1px 2px;
-  opacity:0.7;
-  mix-blend-mode:multiply;
+  /* clean paper — no dot pattern */
 }
 .wrap{position:relative;z-index:1}
 .serif{font-family:'EB Garamond',ui-serif,Georgia,serif}
@@ -1397,6 +1463,11 @@ body[data-monogram="anchor"] #book-cover-splash .colophon::before{content:'A'}
 </style>
 </head>
 <body>
+<script>if(document.documentElement.getAttribute('data-preload-dark'))document.body.classList.add('dark');</script>
+<!-- Dark mode toggle -->
+<button id="dark-toggle" class="dark-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path class="icon-sun" d="M12 3v2M12 19v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M3 12h2M19 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/><circle class="icon-sun" cx="12" cy="12" r="4"/><path class="icon-moon" style="display:none" d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
+</button>
 <!-- Ambient dust motes -->
 <div class="dust-mote m1" aria-hidden="true"></div>
 <div class="dust-mote m2" aria-hidden="true"></div>
@@ -1977,6 +2048,7 @@ async function boot(){
     document.getElementById('auth-screen').classList.remove('hidden');
   }
   wireSwipe();
+  initDarkMode();
   document.getElementById('signin-btn').addEventListener('click', signIn);
   document.getElementById('signout-btn').addEventListener('click', () => {
     if (confirm('Sign out?')) { clearMe(); location.reload(); }
@@ -2109,47 +2181,103 @@ function switchTab(name, opts){
 // dir='right' → backward (swipe right): left half peels backward
 
 function pageTurnLeaf(dir, outEl, inEl) {
-  const DURATION = 490; // ms — matches CSS animation
+  // Polished Kindle-style page turn.
+  // Outgoing page eases out slightly with a soft edge shadow; incoming
+  // slides in from the opposite side with a small overshoot dampening.
+  // No 3D fold, no leaf artifacts.
+  const DURATION = 380;
   const isFwd = dir === 'left';
+  const outX = isFwd ? '-14%' : '14%';
+  const inFromX = isFwd ? '18%' : '-18%';
 
-  // 1. Show the incoming page behind everything immediately
-  inEl.classList.remove('hidden');
   window.scrollTo({ top: 0, behavior: 'instant' });
 
-  // 2. Hide outgoing page immediately — the leaf covers its half anyway
-  //    (the other half was already showing the incoming page)
-  outEl.classList.add('hidden');
+  // Kill any previous inline styles on both
+  for (const el of [outEl, inEl]) {
+    el.style.animation = 'none';
+  }
 
-  // 3. Build the leaf
-  const leaf = document.createElement('div');
-  leaf.className = 'uf-leaf ' + (isFwd ? 'lf-fwd' : 'lf-bwd');
+  // Wrap parent so both children stack cleanly during animation.
+  // Set min-height to the larger of the two so absolute positioning
+  // doesn't collapse the layout mid-flight.
+  const parent = outEl.parentElement;
+  const parentPos = parent.style.position;
+  const parentMinH = parent.style.minHeight;
+  const parentOverflow = parent.style.overflow;
+  const outH = outEl.getBoundingClientRect().height;
+  // Measure inEl's future height by temporarily un-hiding it in a hidden clone
+  inEl.classList.remove('hidden');
+  const inH = inEl.getBoundingClientRect().height;
+  const stackH = Math.max(outH, inH, window.innerHeight * 0.6);
+  parent.style.minHeight = stackH + 'px';
+  parent.style.position = parent.style.position || 'relative';
+  parent.style.overflow = 'hidden';
 
-  const front = document.createElement('div');
-  front.className = 'uf-leaf-front';
+  // Both absolutely positioned so they stack without pushing layout
+  const applyStack = (el) => {
+    el.style.position = 'absolute';
+    el.style.top = '0';
+    el.style.left = '0';
+    el.style.right = '0';
+    el.style.width = '100%';
+    el.style.willChange = 'transform, opacity';
+  };
+  applyStack(outEl);
+  applyStack(inEl);
 
-  const back = document.createElement('div');
-  back.className = 'uf-leaf-back';
+  outEl.style.zIndex = '2';
+  outEl.style.transform = 'translate3d(0,0,0)';
+  outEl.style.opacity = '1';
+  outEl.style.transition = 'none';
+  outEl.style.boxShadow = 'none';
 
-  leaf.appendChild(front);
-  leaf.appendChild(back);
-  document.body.appendChild(leaf);
+  inEl.style.zIndex = '1';
+  inEl.style.transform = `translate3d(${inFromX}, 0, 0)`;
+  inEl.style.opacity = '0';
+  inEl.style.transition = 'none';
 
-  // 4. Build the crease shadow on the incoming side
-  const crease = document.createElement('div');
-  crease.className = 'uf-crease ' + (isFwd ? 'cs-fwd' : 'cs-bwd');
-  document.body.appendChild(crease);
+  // Force reflow
+  // eslint-disable-next-line no-unused-expressions
+  outEl.offsetHeight;
 
-  // 5. Clean up when animation finishes
-  //    Use both animationend and a safety timeout
+  const ease = 'cubic-bezier(0.32, 0.72, 0.28, 1)';
+
+  requestAnimationFrame(() => {
+    outEl.style.transition = `transform ${DURATION}ms ${ease}, opacity ${DURATION}ms ${ease}, box-shadow ${DURATION}ms ${ease}`;
+    inEl.style.transition = `transform ${DURATION}ms ${ease}, opacity ${DURATION}ms ${ease}`;
+    // Give the outgoing page a soft trailing shadow so it looks like a leaf
+    const shadowSide = isFwd ? '8px 0 24px -8px' : '-8px 0 24px -8px';
+    outEl.style.transform = `translate3d(${outX}, 0, 0)`;
+    outEl.style.opacity = '0';
+    outEl.style.boxShadow = `${shadowSide} rgba(0,0,0,0.28)`;
+    inEl.style.transform = 'translate3d(0, 0, 0)';
+    inEl.style.opacity = '1';
+  });
+
   let cleaned = false;
-  function cleanup() {
+  function cleanup(){
     if (cleaned) return;
     cleaned = true;
-    leaf.remove();
-    crease.remove();
+    outEl.classList.add('hidden');
+    for (const el of [outEl, inEl]) {
+      el.style.position = '';
+      el.style.top = '';
+      el.style.left = '';
+      el.style.right = '';
+      el.style.width = '';
+      el.style.opacity = '';
+      el.style.transform = '';
+      el.style.transition = '';
+      el.style.zIndex = '';
+      el.style.boxShadow = '';
+      el.style.willChange = '';
+      el.style.animation = '';
+    }
+    parent.style.overflow = parentOverflow;
+    parent.style.position = parentPos;
+    parent.style.minHeight = parentMinH;
   }
-  leaf.addEventListener('animationend', cleanup, { once: true });
-  setTimeout(cleanup, DURATION + 80);
+  setTimeout(cleanup, DURATION + 40);
 }
 
 function flipPage(dir){
@@ -2171,29 +2299,87 @@ function flipPage(dir){
   switchTab(PAGE_ORDER[nextIdx], { direction: dir === 'next' ? 'left' : 'right' });
 }
 
+// ============ DARK MODE ============
+function initDarkMode(){
+  const btn = document.getElementById('dark-toggle');
+  if (!btn) return;
+  const stored = localStorage.getItem('ukufunda-theme');
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const startDark = stored ? stored === 'dark' : prefersDark;
+  applyTheme(startDark);
+  btn.addEventListener('click', () => {
+    const nowDark = !document.body.classList.contains('dark');
+    applyTheme(nowDark);
+    localStorage.setItem('ukufunda-theme', nowDark ? 'dark' : 'light');
+  });
+}
+function applyTheme(dark){
+  document.body.classList.toggle('dark', dark);
+  const btn = document.getElementById('dark-toggle');
+  if (!btn) return;
+  const sun = btn.querySelectorAll('.icon-sun');
+  const moon = btn.querySelector('.icon-moon');
+  sun.forEach(el => el.style.display = dark ? 'none' : '');
+  if (moon) moon.style.display = dark ? '' : 'none';
+}
+
 function wireSwipe(){
-  let x0 = null, y0 = null, t0 = null;
+  // Strict horizontal-only swipe. Rules:
+  //  - Direction is locked at the first ~8px of movement
+  //  - If vertical wins the lock, the gesture is dead for its lifetime
+  //  - If the user's finger ever moves >12px vertically (cumulative peak),
+  //    the gesture is killed even if it looked horizontal at first
+  //  - touch-action: pan-y on the target lets the browser scroll normally
+  //    while we watch for horizontal intent
+  let x0=null, y0=null, t0=null, isHorizontal=null, peakDy=0, killed=false;
   const target = document.getElementById('app');
   if (!target) return;
+  target.style.touchAction = 'pan-y';
+
   target.addEventListener('touchstart', (e) => {
-    if (e.target.closest('input, textarea, select')) return;
-    if (document.querySelector('.modal-bg.open')) return;
-    if (sessionState && !sessionState.ended) return;
+    if (e.target.closest('input, textarea, select, button, a, .book, .search-result, .modal, .subtabs, .tabs')) { x0=null; return; }
+    if (document.querySelector('.modal-bg.open')) { x0=null; return; }
+    if (sessionState && !sessionState.ended) { x0=null; return; }
+    if (e.touches.length !== 1) { x0=null; return; }
     const t = e.touches[0];
     x0 = t.clientX; y0 = t.clientY; t0 = Date.now();
+    isHorizontal = null; peakDy = 0; killed = false;
   }, { passive:true });
+
+  target.addEventListener('touchmove', (e) => {
+    if (x0 == null || killed) return;
+    const t = e.touches[0];
+    const dx = t.clientX - x0;
+    const dy = t.clientY - y0;
+    peakDy = Math.max(peakDy, Math.abs(dy));
+    // Lock direction after 8px total travel
+    if (isHorizontal === null && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
+      // Only horizontal if dx dominates dy by 2× at lock time
+      isHorizontal = Math.abs(dx) > Math.abs(dy) * 2;
+      if (!isHorizontal) { killed = true; return; }
+    }
+    // If we later drift vertically ≥ 20px, kill the swipe
+    if (isHorizontal === true && peakDy > 20) { killed = true; }
+  }, { passive:true });
+
   target.addEventListener('touchend', (e) => {
-    if (x0 == null) return;
+    if (x0 == null) { return; }
+    const wasHorizontal = isHorizontal === true && !killed;
     const t = e.changedTouches[0];
     const dx = t.clientX - x0;
     const dy = t.clientY - y0;
     const dt = Date.now() - t0;
-    x0 = y0 = t0 = null;
-    // Only horizontal swipes: |dx| >= 60, |dx| >= 2*|dy|, and completed within 500ms
-    if (Math.abs(dx) < 60) return;
-    if (Math.abs(dx) < 2 * Math.abs(dy)) return;
+    x0 = y0 = t0 = null; isHorizontal = null; killed = false;
+    if (!wasHorizontal) return;
+    if (Math.abs(dx) < 80) return;
+    if (Math.abs(dx) < 3 * Math.abs(dy)) return;
+    if (peakDy > 20) return;
     if (dt > 500) return;
     flipPage(dx < 0 ? 'next' : 'prev');
+  }, { passive:true });
+
+  target.addEventListener('touchcancel', () => {
+    x0 = y0 = t0 = null; isHorizontal = null; killed = false;
   }, { passive:true });
 }
 
