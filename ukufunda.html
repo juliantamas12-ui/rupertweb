@@ -418,8 +418,42 @@ header.top{display:none !important}
 .book{display:flex;gap:22px;padding:22px 0;background:transparent;border:none;border-radius:0;border-bottom:1px solid var(--paper-line);margin-bottom:0;transition:transform .05s}
 .book:last-child{border-bottom:none}
 .book:hover .title{color:var(--accent)}
-.book .cover{width:70px;height:104px;background:var(--paper-raise2);flex-shrink:0;object-fit:cover;display:block;border-radius:2px;box-shadow:0 4px 10px rgba(60,40,20,0.20), 0 1px 2px rgba(60,40,20,0.15), inset 0 0 0 1px rgba(26,23,18,0.06)}
-.book .cover-placeholder{width:70px;height:104px;background:linear-gradient(135deg,var(--accent),var(--accent-deep));display:flex;align-items:center;justify-content:center;color:var(--paper);font-size:13px;text-align:center;padding:8px;flex-shrink:0;border-radius:2px;font-family:'EB Garamond',serif;font-style:italic;line-height:1.2;box-shadow:0 4px 10px rgba(60,40,20,0.20), 0 1px 2px rgba(60,40,20,0.15)}
+/* ── 3D book covers ────────────────────────────── */
+.book .cover3d{width:70px;height:104px;flex-shrink:0;perspective:640px;perspective-origin:50% 40%}
+.book .cover3d .slab{
+  position:relative;width:100%;height:100%;transform-style:preserve-3d;
+  transform:rotateY(-22deg) rotateX(3deg);
+  transition:transform .12s ease-out;
+  animation:bookFloat 6s ease-in-out infinite;
+}
+.book .cover3d.tilting .slab{animation:none;transition:transform .05s linear}
+@keyframes bookFloat{0%,100%{transform:rotateY(-22deg) rotateX(3deg) translateY(0)}50%{transform:rotateY(-15deg) rotateX(2deg) translateY(-4px)}}
+@media(prefers-reduced-motion:reduce){.book .cover3d .slab{animation:none}}
+.book .cover, .book .cover-placeholder{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;
+  border-radius:2px;transform:translateZ(9px);backface-visibility:hidden;
+  box-shadow:0 4px 10px rgba(60,40,20,0.20), 0 1px 2px rgba(60,40,20,0.15), inset 0 0 0 1px rgba(26,23,18,0.06);
+}
+.book .cover-placeholder{background:linear-gradient(135deg,var(--accent),var(--accent-deep));display:flex;align-items:center;justify-content:center;color:var(--paper);font-size:13px;text-align:center;padding:8px;font-family:'EB Garamond',serif;font-style:italic;line-height:1.2}
+/* spine (left side) */
+.book .cover3d .spine3d{
+  position:absolute;top:0;left:0;width:18px;height:100%;
+  transform-origin:left center;transform:translateZ(9px) rotateY(-90deg);
+  background:linear-gradient(90deg,rgba(0,0,0,0.35),var(--accent-deep) 60%,var(--accent-deep));
+  border-radius:2px 0 0 2px;
+}
+/* page block (right + bottom edges) */
+.book .cover3d .pages3d{
+  position:absolute;top:2px;right:0;width:18px;height:calc(100% - 4px);
+  transform-origin:right center;transform:translateZ(9px) rotateY(90deg);
+  background:repeating-linear-gradient(90deg,#efe7d2,#efe7d2 1px,#d8cdad 2px,#efe7d2 3px);
+  border-radius:0 1px 1px 0;
+}
+.book .cover3d::after{
+  content:'';position:absolute;left:8%;right:8%;bottom:-10px;height:14px;
+  background:radial-gradient(ellipse at center,rgba(60,40,20,0.30),transparent 72%);
+  filter:blur(2px);transform:rotateX(80deg);pointer-events:none;
+}
 /* Bookplate frame variants (shop cosmetic) */
 .book-frame-ornate .book .cover,.book-frame-ornate .book .cover-placeholder{
   box-shadow:0 4px 10px rgba(60,40,20,0.20), 0 0 0 3px var(--tan-deep), 0 0 0 5px var(--ink);
@@ -564,183 +598,32 @@ header.top{display:none !important}
 .guild-detail-head .motto{font-family:'EB Garamond',serif;font-style:italic;color:var(--ink-dim);font-size:18px;margin-top:8px}
 .guild-detail-head .desc{color:var(--ink-dim);font-size:15px;margin-top:6px;line-height:1.5}
 
-/* ── Page-turn 3D transitions ─────────────────────
-   Physical book-leaf feel. Outgoing page hinges from its outer edge and
-   rotates up-and-over, revealing the incoming page underneath. A shadow
-   crease darkens the outgoing leaf as it lifts, giving weight to the turn.
-   Direction convention:
-     dir='left'  (swipe left, next chapter) → outgoing leaf hinges from
-                  its LEFT edge and rotates rightward (rotateY -180deg)
-     dir='right' (swipe right, prev chapter) → outgoing leaf hinges from
-                  its RIGHT edge and rotates leftward (rotateY +180deg)
-   The incoming page sits under the outgoing one and simply fades up
-   during the second half of the turn. Reduced-motion users get instant
-   swaps (see .no-motion overrides in the reduced-motion @media block). */
-.tabs-viewport{
-  perspective:2400px;
-  perspective-origin:center center;
-  transform-style:preserve-3d;
-}
-.tab{transform-style:preserve-3d;backface-visibility:hidden;will-change:transform,opacity,filter}
-/* Give the flipping leaf a paper backing so the turn is actually visible.
-   Only applied during the animation so it doesn't affect resting layout. */
-.tab.page-out-left,.tab.page-out-right{
-  background:var(--paper,#f4e9d0);
-  box-shadow:inset 0 0 0 1px rgba(0,0,0,0.02),0 0 40px rgba(0,0,0,0.02);
-}
+/* ── Page-turn transition ─────────────────────────
+   Kindle-app style: the INCOMING page slides in from the side, fully
+   opaque, ON TOP of the current page — which sits still underneath. No
+   curl, no rotation, no transparency, no ghosting. Exactly like tapping
+   forward in the Kindle app. Driven by JS inline styles in pageTurnLeaf().
+   Reduced-motion users get an instant swap (JS checks the media query).
 
-/* Forward turn (swipe left, next chapter):
-   outgoing leaf hinges from its RIGHT edge and rotates leftward
-   revealing the incoming page beneath. */
-@keyframes leafOutForward{
-  0%  {transform:perspective(2400px) rotateY(0deg);filter:brightness(1);opacity:1}
-  35% {filter:brightness(0.93)}
-  55% {filter:brightness(0.80)}
-  100%{transform:perspective(2400px) rotateY(-172deg);filter:brightness(0.72);opacity:1}
+   --leaf-shadow : colour of the soft drop-shadow on the sliding page's
+                   leading edge, so it reads as a sheet moving over another.
+   Adapts to light/dark so the turn never looks wrong.                    */
+:root{
+  --leaf-shadow:rgba(20,15,10,0.28);
 }
-/* Back turn (swipe right, prev chapter):
-   outgoing leaf hinges from its LEFT edge and rotates rightward. */
-@keyframes leafOutBack{
-  0%  {transform:perspective(2400px) rotateY(0deg);filter:brightness(1);opacity:1}
-  35% {filter:brightness(0.93)}
-  55% {filter:brightness(0.80)}
-  100%{transform:perspective(2400px) rotateY(172deg);filter:brightness(0.72);opacity:1}
+body.dark{
+  --leaf-shadow:rgba(0,0,0,0.55);
 }
-/* Incoming pages: sit still underneath the flipping leaf and fade up during
-   the second half of the turn so it feels like the leaf uncovers them. */
-@keyframes leafInForward{
-  0%  {opacity:0}
-  45% {opacity:0}
-  100%{opacity:1}
+.tab{will-change:auto}
+/* The incoming page must be fully opaque during the slide so nothing shows
+   through it. Its own background is painted by the theme; we guarantee an
+   opaque base here too as a safety net. */
+.tab.uf-sliding{
+  background:var(--paper);
 }
-@keyframes leafInBack{
-  0%  {opacity:0}
-  45% {opacity:0}
-  100%{opacity:1}
+body.dark .tab.uf-sliding{
+  background:var(--paper);
 }
-
-/* page-out-left = forward turn (used when dir='left', i.e. swipe left) */
-.tab.page-out-left {
-  transform-origin:right center;
-  animation:leafOutForward .55s cubic-bezier(0.55,0,0.35,1) forwards;
-  z-index:2;
-}
-/* page-out-right = back turn (used when dir='right', i.e. swipe right) */
-.tab.page-out-right{
-  transform-origin:left center;
-  animation:leafOutBack .55s cubic-bezier(0.55,0,0.35,1) forwards;
-  z-index:2;
-}
-/* Incoming page for forward turn is revealed on the left half of the view */
-.tab.page-in-right{
-  animation:leafInForward .55s cubic-bezier(0.4,0,0.2,1) both;
-  z-index:1;
-}
-.tab.page-in-left{
-  animation:leafInBack .55s cubic-bezier(0.4,0,0.2,1) both;
-  z-index:1;
-}
-
-/* Spine-crease shadow behind the turning leaf. Sits at the hinge side and
-   deepens then fades as the leaf swings up-and-over. */
-.tab.page-out-left::after{
-  content:'';
-  position:fixed;top:0;bottom:0;left:0;right:0;pointer-events:none;z-index:998;
-  background:linear-gradient(to left,rgba(20,15,10,0.24) 0%,rgba(20,15,10,0.10) 14%,transparent 36%);
-  animation:creaseFade .55s cubic-bezier(0.55,0,0.35,1) forwards;
-}
-.tab.page-out-right::after{
-  content:'';
-  position:fixed;top:0;bottom:0;left:0;right:0;pointer-events:none;z-index:998;
-  background:linear-gradient(to right,rgba(20,15,10,0.24) 0%,rgba(20,15,10,0.10) 14%,transparent 36%);
-  animation:creaseFade .55s cubic-bezier(0.55,0,0.35,1) forwards;
-}
-@keyframes creaseFade{
-  0%{opacity:0}
-  30%{opacity:1}
-  100%{opacity:0}
-}
-/* ── Half-page leaf peel (JS-driven, injected elements) ────────────────────
-
-   APPROACH: half-page leaf peel.
-   JS injects a .uf-leaf div covering only the turning half of the screen
-   (right half for forward swipes, left half for backward swipes).
-   The leaf has two child faces — .uf-leaf-front (paper) and .uf-leaf-back
-   (sepia) — both with backface-visibility:hidden so the correct face shows
-   at each rotation angle. The leaf rotates 180° around its spine edge
-   (the centre of the screen), exactly like a physical book page.
-   A separate .uf-crease div darkens the incoming half during the turn.
-   Incoming page is already visible underneath from frame 0.
-   Outgoing page is hidden the instant the leaf starts peeling.
-   Reduced-motion: JS skips leaf creation entirely, instant swap.         */
-
-/* Leaf container */
-.uf-leaf{
-  position:fixed;top:0;bottom:0;width:50vw;
-  z-index:700;pointer-events:none;
-  transform-style:preserve-3d;
-  perspective:2200px;
-}
-.uf-leaf.lf-fwd{
-  right:0;left:auto;
-  transform-origin:left center;
-  animation:ufLeafFwd 490ms cubic-bezier(0.55,0,0.35,1) forwards;
-}
-.uf-leaf.lf-bwd{
-  left:0;right:auto;
-  transform-origin:right center;
-  animation:ufLeafBwd 490ms cubic-bezier(0.55,0,0.35,1) forwards;
-}
-@keyframes ufLeafFwd{from{transform:rotateY(0deg)}to{transform:rotateY(-180deg)}}
-@keyframes ufLeafBwd{from{transform:rotateY(0deg)}to{transform:rotateY(180deg)}}
-
-/* Front face — paper colour matching the page, hidden once past 90° */
-.uf-leaf-front{
-  position:absolute;inset:0;
-  background:var(--paper,#f5eedd);
-  backface-visibility:hidden;
-  -webkit-backface-visibility:hidden;
-  overflow:hidden;
-}
-/* Crease shadow on the front face deepens toward the spine */
-.uf-leaf-front::after{
-  content:'';position:absolute;inset:0;pointer-events:none;
-  background:linear-gradient(to left,transparent 40%,rgba(12,8,4,0.28) 100%);
-  animation:ufCreaseFront 490ms cubic-bezier(0.55,0,0.35,1) forwards;
-}
-.lf-bwd .uf-leaf-front::after{
-  background:linear-gradient(to right,transparent 40%,rgba(12,8,4,0.28) 100%);
-}
-@keyframes ufCreaseFront{
-  0%{opacity:0.15}40%{opacity:1}100%{opacity:0}
-}
-
-/* Back face — sepia paper, visible during second half of flip */
-.uf-leaf-back{
-  position:absolute;inset:0;
-  background:linear-gradient(155deg,#eddfbe 0%,#e1d1a3 50%,#d6c490 100%);
-  backface-visibility:hidden;
-  -webkit-backface-visibility:hidden;
-  transform:rotateY(180deg);
-  box-shadow:inset 0 0 60px rgba(60,40,20,0.12);
-}
-.lf-bwd .uf-leaf-back{transform:rotateY(-180deg)}
-
-/* Crease shadow on the incoming page (behind the leaf) */
-.uf-crease{
-  position:fixed;top:0;bottom:0;width:50vw;
-  z-index:699;pointer-events:none;
-  animation:ufCreaseShadow 490ms cubic-bezier(0.55,0,0.35,1) forwards;
-}
-.uf-crease.cs-fwd{
-  right:0;left:auto;
-  background:linear-gradient(to right,rgba(8,5,2,0.32) 0%,transparent 85%);
-}
-.uf-crease.cs-bwd{
-  left:0;right:auto;
-  background:linear-gradient(to left,rgba(8,5,2,0.32) 0%,transparent 85%);
-}
-@keyframes ufCreaseShadow{0%{opacity:1}55%{opacity:0.8}100%{opacity:0}}
 @keyframes uf-pulse{
   0%{color:var(--accent);text-shadow:0 0 12px var(--accent-shadow)}
   100%{color:var(--ink-bright);text-shadow:none}
@@ -1002,10 +885,8 @@ header.top{display:none !important}
     transition-duration:.001ms !important;
   }
   .dust-mote{display:none}
-  .tab.page-in-left,.tab.page-in-right,.tab.page-out-left,.tab.page-out-right{
-    animation:none !important;opacity:1 !important;transform:none !important;
-  }
-  .uf-leaf,.uf-crease{display:none !important}
+  .tab{animation:none !important;opacity:1 !important;transform:none !important}
+  .uf-turn-shade{display:none !important}
   .xp-seal{animation:none}
   .btn.primary-cta{animation:none}
 }
@@ -1409,6 +1290,42 @@ header.top{display:none !important}
 }
 .my-handle-card .handle-hint{font-size:12px;color:var(--ink-dim);margin-top:3px;font-style:italic}
 
+/* ══ DARK-MODE PER-TAB THEME OVERRIDES ═════════════════════════════════════
+   Each per-tab theme hardcodes a solid accent colour that is near-black on
+   the dark leather paper. Lift each to a warm, legible variant that keeps
+   the tab's character (wine guilds, gold league, earthy market, blue
+   companions) while reading clearly on dark. */
+body.dark .tab-theme-heraldic{
+  --local-accent:#d07a68;
+  --local-accent-dim:rgba(208,122,104,0.16);
+}
+body.dark .tab-theme-heraldic .guild-card{border-bottom-color:rgba(208,122,104,0.22)}
+body.dark .tab-theme-heraldic .heraldic-sigil{background:rgba(208,122,104,0.10)}
+body.dark .tab-theme-heraldic .heraldic-empty{color:rgba(208,122,104,0.85)}
+
+body.dark .tab-theme-scoreboard{
+  --local-gold:#d6b25e;
+  --local-silver:#b8b3ab;
+  --local-bronze:#c07a45;
+}
+body.dark .tab-theme-scoreboard .lb-row.header{background:rgba(214,178,94,0.10)}
+body.dark .tab-theme-scoreboard .lb-row:nth-child(2){background:rgba(214,178,94,0.08)}
+body.dark .tab-theme-scoreboard .lb-row:nth-child(3){background:rgba(184,179,171,0.07)}
+body.dark .tab-theme-scoreboard .lb-row:nth-child(4){background:rgba(192,122,69,0.07)}
+
+body.dark .tab-theme-market{
+  --local-market:#c9ae7d;
+  --local-market-bg:rgba(201,174,125,0.08);
+}
+body.dark .tab-theme-market .running-head{border-bottom-color:rgba(201,174,125,0.30)}
+
+body.dark .tab-theme-social{
+  --local-social:#8fb3d8;
+}
+body.dark .tab-theme-social .section-head h2{border-bottom-color:rgba(143,179,216,0.28)}
+body.dark .tab-theme-social .friend-avatar{border-color:rgba(143,179,216,0.28)}
+body.dark .my-handle-card{border-color:rgba(143,179,216,0.28)}
+
 /* ══ SHOP THEME OVERRIDES applied to <body> via data-* attributes ══ */
 /* Ink colour themes */
 body[data-ink="sepia"] .book-prose, body[data-ink="sepia"] .book .title,
@@ -1451,6 +1368,41 @@ body[data-paper="midnight"]{
 }
 body[data-paper="midnight"] .book-prose{color:#e8ddc8}
 body[data-paper="midnight"]::before{opacity:0.3}
+
+/* Dark mode wins over equipped light "paper" cosmetics: keep the leather
+   night-reading background and re-tint the ink cosmetics so they stay legible
+   against it rather than sitting near-black on near-black. */
+body.dark[data-paper="parchment"],
+body.dark[data-paper="vellum"]{
+  --paper:#0f0d0a;--paper-raise:#181510;--paper-raise2:#201c15;
+  --paper-line:rgba(232,223,201,0.12);--paper-line-strong:rgba(232,223,201,0.26);
+  background:var(--paper) !important;
+}
+body.dark[data-paper="parchment"] html,body.dark[data-paper="parchment"] body,
+body.dark[data-paper="vellum"] html,body.dark[data-paper="vellum"] body{background:var(--paper)}
+
+body.dark[data-ink="sepia"] .book-prose,
+body.dark[data-ink="sepia"] .book .title,
+body.dark[data-ink="sepia"] .book .author{color:#d8b98a}
+body.dark[data-ink="sepia"] .running-head .chapter{color:rgba(216,185,138,0.75)}
+body.dark[data-ink="sepia"] .page-footer .fleur,
+body.dark[data-ink="sepia"] .drop-cap::first-letter{color:#e0c495}
+body.dark[data-ink="sepia"] .section-head h2{color:#e6cfa2}
+
+body.dark[data-ink="vermilion"] .section-head h2,
+body.dark[data-ink="vermilion"] .drop-cap::first-letter,
+body.dark[data-ink="vermilion"] .page-footer .fleur{color:#e08065}
+body.dark[data-ink="vermilion"] .tabs button.active{color:#e08065;border-bottom-color:#e08065}
+
+body.dark[data-ink="aquamarine"] .section-head h2,
+body.dark[data-ink="aquamarine"] .drop-cap::first-letter,
+body.dark[data-ink="aquamarine"] .page-footer .fleur{color:#5fb8b8}
+body.dark[data-ink="aquamarine"] .tabs button.active{color:#5fb8b8;border-bottom-color:#5fb8b8}
+
+body.dark[data-ink="peacock"] .section-head h2,
+body.dark[data-ink="peacock"] .drop-cap::first-letter,
+body.dark[data-ink="peacock"] .page-footer .fleur{color:#6fa3ca}
+body.dark[data-ink="peacock"] .tabs button.active{color:#6fa3ca;border-bottom-color:#6fa3ca}
 
 /* Monogram cosmetics on the cover splash */
 body[data-monogram="fleur"] #book-cover-splash .colophon::before{content:''}
@@ -2048,6 +2000,7 @@ async function boot(){
     document.getElementById('auth-screen').classList.remove('hidden');
   }
   wireSwipe();
+  wireKeyboard();
   initDarkMode();
   document.getElementById('signin-btn').addEventListener('click', signIn);
   document.getElementById('signout-btn').addEventListener('click', () => {
@@ -2114,7 +2067,6 @@ function showContents(){
 }
 
 function _switchToContents(){
-  const dir = PAGE_ORDER.indexOf(currentTab) > PAGE_ORDER.indexOf('books') ? 'right' : 'left';
   const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const prevTabEl = document.getElementById('tab-' + currentTab);
   const nextTabEl = document.getElementById('tab-contents');
@@ -2146,9 +2098,6 @@ function switchTab(name, opts){
   // Check reduced-motion preference
   const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const dir = (opts && opts.direction) || null;
-  document.querySelectorAll('.tabs button[data-tab]').forEach(b => {
-    b.classList.toggle('active', b.dataset.tab === name);
-  });
 
   const prevTab = document.getElementById('tab-' + currentTab);
   const nextTab = document.getElementById('tab-' + name);
@@ -2170,95 +2119,102 @@ function switchTab(name, opts){
   if (name === 'shop') loadShop();
 }
 
-// ── Half-page leaf peel ───────────────────────────────────────────────────
-// Injects a .uf-leaf element covering the turning half of the screen.
-// Front face = paper (matches page background), back face = sepia.
-// The incoming page is revealed immediately underneath; the outgoing page
-// is hidden once the leaf starts rotating so it doesn't show through.
-// A .uf-crease shadow element darkens the incoming half during the turn.
+// ── Kindle-app page turn ──────────────────────────────────────────────────
+// The INCOMING page slides in from the side, fully opaque, ON TOP of the
+// current page. The current page sits perfectly still underneath. No curl,
+// no rotation, no transparency, no ghosting — exactly like tapping forward
+// in the Kindle app. A soft drop-shadow rides the sliding page's leading
+// edge so it reads as a real sheet moving over another.
 //
-// dir='left'  → forward (swipe left): right half of screen peels forward
-// dir='right' → backward (swipe right): left half peels backward
+// dir='left'  → forward (swipe left / next chapter): new page slides in
+//               from the RIGHT, covering the old one.
+// dir='right' → backward (swipe right / prev chapter): new page slides in
+//               from the LEFT.
+//
+// Guarded against double-triggering: an in-flight turn is finalised cleanly
+// before a new one starts, so rapid swipes never strand pages or dirty the
+// parent layout.
+
+let _turnAnim = null; // { finish } for the in-flight page turn
 
 function pageTurnLeaf(dir, outEl, inEl) {
-  // Polished Kindle-style page turn.
-  // Outgoing page eases out slightly with a soft edge shadow; incoming
-  // slides in from the opposite side with a small overshoot dampening.
-  // No 3D fold, no leaf artifacts.
+  // Finalise any previous turn first so no orphaned styles/elements remain.
+  if (_turnAnim) { _turnAnim.finish(); }
+
   const DURATION = 380;
   const isFwd = dir === 'left';
-  const outX = isFwd ? '-14%' : '14%';
-  const inFromX = isFwd ? '18%' : '-18%';
+  // The incoming page starts fully off to one side and slides to centre.
+  const startX = isFwd ? '100%' : '-100%';
+  // Shadow sits on the leading edge of the sliding page.
+  const shadeSide = isFwd ? 'left' : 'right';
 
   window.scrollTo({ top: 0, behavior: 'instant' });
 
-  // Kill any previous inline styles on both
-  for (const el of [outEl, inEl]) {
-    el.style.animation = 'none';
-  }
-
-  // Wrap parent so both children stack cleanly during animation.
-  // Set min-height to the larger of the two so absolute positioning
-  // doesn't collapse the layout mid-flight.
   const parent = outEl.parentElement;
-  const parentPos = parent.style.position;
-  const parentMinH = parent.style.minHeight;
-  const parentOverflow = parent.style.overflow;
-  const outH = outEl.getBoundingClientRect().height;
-  // Measure inEl's future height by temporarily un-hiding it in a hidden clone
+  const saved = {
+    parentPos: parent.style.position,
+    parentMinH: parent.style.minHeight,
+    parentOverflow: parent.style.overflow,
+  };
+
+  // Reveal incoming page and measure the stack height so the
+  // absolutely-positioned pages don't collapse the layout mid-turn.
   inEl.classList.remove('hidden');
+  const outH = outEl.getBoundingClientRect().height;
   const inH = inEl.getBoundingClientRect().height;
   const stackH = Math.max(outH, inH, window.innerHeight * 0.6);
   parent.style.minHeight = stackH + 'px';
   parent.style.position = parent.style.position || 'relative';
   parent.style.overflow = 'hidden';
 
-  // Both absolutely positioned so they stack without pushing layout
   const applyStack = (el) => {
     el.style.position = 'absolute';
     el.style.top = '0';
     el.style.left = '0';
     el.style.right = '0';
     el.style.width = '100%';
-    el.style.willChange = 'transform, opacity';
   };
   applyStack(outEl);
   applyStack(inEl);
 
-  outEl.style.zIndex = '2';
-  outEl.style.transform = 'translate3d(0,0,0)';
+  // Old page: sits still underneath, fully opaque, no movement.
+  outEl.style.zIndex = '1';
+  outEl.style.transform = 'none';
   outEl.style.opacity = '1';
   outEl.style.transition = 'none';
-  outEl.style.boxShadow = 'none';
+  outEl.style.animation = 'none';
 
-  inEl.style.zIndex = '1';
-  inEl.style.transform = `translate3d(${inFromX}, 0, 0)`;
-  inEl.style.opacity = '0';
+  // New page: fully opaque sheet, parked off-screen, will slide over the top.
+  // uf-sliding guarantees an opaque background so nothing shows through it.
+  inEl.classList.add('uf-sliding');
+  inEl.style.zIndex = '3';
+  inEl.style.transform = `translate3d(${startX},0,0)`;
+  inEl.style.opacity = '1';
   inEl.style.transition = 'none';
+  inEl.style.animation = 'none';
+  inEl.style.willChange = 'transform';
+  // Soft drop-shadow on the leading edge so it reads as a sheet in motion.
+  inEl.style.boxShadow =
+    `${shadeSide === 'left' ? '-' : ''}14px 0 28px -6px var(--leaf-shadow)`;
 
-  // Force reflow
-  // eslint-disable-next-line no-unused-expressions
-  outEl.offsetHeight;
+  // Force reflow so the off-screen start position is committed.
+  void inEl.offsetHeight;
 
-  const ease = 'cubic-bezier(0.32, 0.72, 0.28, 1)';
+  const ease = 'cubic-bezier(0.22, 0.61, 0.36, 1)'; // smooth Kindle glide
 
   requestAnimationFrame(() => {
-    outEl.style.transition = `transform ${DURATION}ms ${ease}, opacity ${DURATION}ms ${ease}, box-shadow ${DURATION}ms ${ease}`;
-    inEl.style.transition = `transform ${DURATION}ms ${ease}, opacity ${DURATION}ms ${ease}`;
-    // Give the outgoing page a soft trailing shadow so it looks like a leaf
-    const shadowSide = isFwd ? '8px 0 24px -8px' : '-8px 0 24px -8px';
-    outEl.style.transform = `translate3d(${outX}, 0, 0)`;
-    outEl.style.opacity = '0';
-    outEl.style.boxShadow = `${shadowSide} rgba(0,0,0,0.28)`;
-    inEl.style.transform = 'translate3d(0, 0, 0)';
-    inEl.style.opacity = '1';
+    inEl.style.transition = `transform ${DURATION}ms ${ease}`;
+    inEl.style.transform = 'translate3d(0,0,0)';
   });
 
   let cleaned = false;
-  function cleanup(){
+  const cleanup = () => {
     if (cleaned) return;
     cleaned = true;
+    if (_turnAnim && _turnAnim._id === cleanup) _turnAnim = null;
+    clearTimeout(timer);
     outEl.classList.add('hidden');
+    inEl.classList.remove('uf-sliding');
     for (const el of [outEl, inEl]) {
       el.style.position = '';
       el.style.top = '';
@@ -2269,18 +2225,25 @@ function pageTurnLeaf(dir, outEl, inEl) {
       el.style.transform = '';
       el.style.transition = '';
       el.style.zIndex = '';
-      el.style.boxShadow = '';
       el.style.willChange = '';
       el.style.animation = '';
+      el.style.boxShadow = '';
     }
-    parent.style.overflow = parentOverflow;
-    parent.style.position = parentPos;
-    parent.style.minHeight = parentMinH;
-  }
-  setTimeout(cleanup, DURATION + 40);
+    parent.style.overflow = saved.parentOverflow;
+    parent.style.position = saved.parentPos;
+    parent.style.minHeight = saved.parentMinH;
+  };
+  cleanup._id = cleanup;
+
+  const timer = setTimeout(cleanup, DURATION + 60);
+  _turnAnim = { finish: cleanup, _id: cleanup };
 }
 
 function flipPage(dir){
+  // Ignore new navigation while a page turn is mid-flight. pageTurnLeaf also
+  // guards internally, but bailing here keeps rapid swipes from queueing a
+  // half-dozen turns that would otherwise thrash the layout.
+  if (_turnAnim) return;
   // If on contents, swipe left (next) goes to first chapter
   if (currentTab === 'contents') {
     if (dir === 'next') switchTab('books', { direction: 'left' });
@@ -2381,6 +2344,26 @@ function wireSwipe(){
   target.addEventListener('touchcancel', () => {
     x0 = y0 = t0 = null; isHorizontal = null; killed = false;
   }, { passive:true });
+}
+
+// Keyboard navigation: Left/Right arrows turn pages, mirroring the swipe
+// gesture. Ignored while typing in a field, a modal is open, or a reading
+// session is running — same guards as the swipe handler.
+function wireKeyboard(){
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const app = document.getElementById('app');
+    if (!app || app.classList.contains('hidden')) return;
+    const ae = document.activeElement;
+    if (ae && ae.closest('input, textarea, select')) return;
+    if (document.querySelector('.modal-bg.open')) return;
+    if (sessionState && !sessionState.ended) return;
+    const splash = document.getElementById('book-cover-splash');
+    if (splash && !splash.classList.contains('hidden')) return;
+    e.preventDefault();
+    flipPage(e.key === 'ArrowLeft' ? 'prev' : 'next');
+  });
 }
 
 // ============ STATS ============
@@ -2541,9 +2524,10 @@ function bookCard(b){
     ? '<span class="status-paused">paused</span>'
     : '<span class="status-active">reading</span>';
   const titleEsc = escHtml(b.title.slice(0,20));
-  const cover = b.cover
+  const coverInner = b.cover
     ? `<img src="${escHtml(b.cover)}" class="cover" alt="" onerror="this.outerHTML='<div class=cover-placeholder>${titleEsc}</div>'">`
     : `<div class="cover-placeholder">${titleEsc}</div>`;
+  const cover = `<div class="cover3d"><div class="slab"><span class="spine3d"></span><span class="pages3d"></span>${coverInner}</div></div>`;
   return `
     <div class="book">
       ${cover}
@@ -3449,8 +3433,11 @@ function tickSession(){
     const progress = Math.min(1, sessionState.durationMs / (30 * 60000));
     const offset = C - (C * progress);
     ringEl.style.strokeDashoffset = offset;
-    // Transition ink-fade → gold as it approaches 30 min
-    const r1 = [26,23,18], r2 = [217,190,135];
+    // Transition base-ink → gold as it approaches 30 min. Start colour adapts
+    // to the theme so the ring is visible in dark mode (near-black start
+    // would vanish against dark paper).
+    const isDark = document.body.classList.contains('dark');
+    const r1 = isDark ? [232,223,201] : [26,23,18], r2 = [217,190,135];
     const cr = Math.round(r1[0] + (r2[0]-r1[0]) * progress);
     const cg = Math.round(r1[1] + (r2[1]-r1[1]) * progress);
     const cb = Math.round(r1[2] + (r2[2]-r1[2]) * progress);
@@ -3563,6 +3550,33 @@ function animateCount(el, from, to, duration){
 }
 
 boot();
+
+/* ── 3D cover pointer-tilt (event-delegated, survives re-renders) ── */
+(function(){
+  const MAXX = 12, MAXY = 26; // deg
+  function tilt(e){
+    const wrap = e.target.closest('.cover3d');
+    if(!wrap) return;
+    const slab = wrap.querySelector('.slab');
+    if(!slab) return;
+    const r = wrap.getBoundingClientRect();
+    const px = (e.clientX - r.left) / r.width - 0.5;
+    const py = (e.clientY - r.top) / r.height - 0.5;
+    wrap.classList.add('tilting');
+    slab.style.transform = `rotateY(${(-22) + px*MAXY*-1}deg) rotateX(${3 + py*MAXX}deg)`;
+  }
+  function reset(e){
+    const wrap = e.target.closest('.cover3d');
+    if(!wrap) return;
+    const slab = wrap.querySelector('.slab');
+    if(slab) slab.style.transform = '';
+    wrap.classList.remove('tilting');
+  }
+  document.addEventListener('pointermove', tilt, {passive:true});
+  document.addEventListener('pointerleave', reset, true);
+  document.addEventListener('pointerdown', tilt, {passive:true});
+  document.addEventListener('pointerup', reset, true);
+})();
 </script>
 
 </body>
