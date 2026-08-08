@@ -982,8 +982,8 @@ const RUPERT_STATS = {
   sessions: 66,
   msgsFromJulian: 2726,
   msgsFromRupert: 11881,
-  essaysWritten: 59,
-  memoryLines: 1171,
+  essaysWritten: 112,
+  memoryLines: 3241,
 };
 function renderStats() {
   const grid = document.getElementById('stats-grid');
