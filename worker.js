@@ -173,27 +173,42 @@ export default {
       if (p === '/api/cron/run-now')                                  return cronRunNow(url, env, request);
 
       // ── Ukufunda (reading tracker) ──
-      if (p === '/api/uf/signup' && request.method === 'POST')        return ufSignup(request, env);
-      if (p === '/api/uf/me')                                         return ufMe(url, env);
-      if (p === '/api/uf/search')                                     return ufSearch(url);
-      if (p === '/api/uf/books' && request.method === 'GET')          return ufBooksGet(url, env);
-      if (p === '/api/uf/books' && request.method === 'POST')         return ufBooksAdd(request, env);
-      if (p === '/api/uf/books' && request.method === 'DELETE')       return ufBooksDelete(url, env);
-      if (p === '/api/uf/books/status' && request.method === 'POST')  return ufBooksStatus(request, env);
-      if (p === '/api/uf/log' && request.method === 'POST')           return ufLog(request, env);
-      if (p === '/api/uf/leaderboard')                                return ufLeaderboard(url, env);
-      if (p === '/api/uf/friends' && request.method === 'GET')        return ufFriendsGet(url, env);
-      if (p === '/api/uf/friends' && request.method === 'POST')       return ufFriendsAdd(request, env);
-      if (p === '/api/uf/friends' && request.method === 'DELETE')     return ufFriendsDelete(url, env);
-
-      // ── Guilds (rolling goals, fantasy-football style) ─────────────
-      if (p === '/api/uf/guilds' && request.method === 'GET')         return ufGuildsList(url, env);
-      if (p === '/api/uf/guilds' && request.method === 'POST')        return ufGuildCreate(request, env);
-      if (p === '/api/uf/guilds/join' && request.method === 'POST')   return ufGuildJoin(request, env);
-      if (p === '/api/uf/guilds/leave' && request.method === 'POST')  return ufGuildLeave(request, env);
-      if (p === '/api/uf/guild' && request.method === 'GET')          return ufGuildGet(url, env);
-      if (p === '/api/uf/guild/goals' && request.method === 'GET')    return ufGuildGoalsGet(url, env);
-      if (p === '/api/uf/guild/goals' && request.method === 'POST')   return ufGuildGoalCreate(request, env);
+      //    All /api/uf/* responses are per-user + mutable. Never edge-cache
+      //    them: a 300s cache made new/deleted/paused books take ~5min to
+      //    surface. We resolve the handler then strip cache headers.
+      if (p.startsWith('/api/uf/')) {
+        let ufRes = null;
+        if (p === '/api/uf/signup' && request.method === 'POST')        ufRes = await ufSignup(request, env);
+        else if (p === '/api/uf/me')                                    ufRes = await ufMe(url, env);
+        else if (p === '/api/uf/search')                               ufRes = await ufSearch(url);
+        else if (p === '/api/uf/account' && request.method === 'POST')  ufRes = await ufAccountUpdate(request, env);
+        else if (p === '/api/uf/books' && request.method === 'GET')     ufRes = await ufBooksGet(url, env);
+        else if (p === '/api/uf/books' && request.method === 'POST')    ufRes = await ufBooksAdd(request, env);
+        else if (p === '/api/uf/books' && request.method === 'DELETE')  ufRes = await ufBooksDelete(url, env);
+        else if (p === '/api/uf/books/status' && request.method === 'POST') ufRes = await ufBooksStatus(request, env);
+        else if (p === '/api/uf/log' && request.method === 'POST')      ufRes = await ufLog(request, env);
+        else if (p === '/api/uf/leaderboard')                          ufRes = await ufLeaderboard(url, env);
+        else if (p === '/api/uf/friends' && request.method === 'GET')   ufRes = await ufFriendsGet(url, env);
+        else if (p === '/api/uf/friends' && request.method === 'POST')  ufRes = await ufFriendsAdd(request, env);
+        else if (p === '/api/uf/friends' && request.method === 'DELETE') ufRes = await ufFriendsDelete(url, env);
+        else if (p === '/api/uf/friends/requests' && request.method === 'GET')  ufRes = await ufFriendsRequests(url, env);
+        else if (p === '/api/uf/friends/accept' && request.method === 'POST')   ufRes = await ufFriendsAccept(request, env);
+        else if (p === '/api/uf/friends/request' && request.method === 'DELETE') ufRes = await ufFriendsRequestDelete(url, env);
+        else if (p === '/api/uf/guilds' && request.method === 'GET')    ufRes = await ufGuildsList(url, env);
+        else if (p === '/api/uf/guilds' && request.method === 'POST')   ufRes = await ufGuildCreate(request, env);
+        else if (p === '/api/uf/guilds/join' && request.method === 'POST') ufRes = await ufGuildJoin(request, env);
+        else if (p === '/api/uf/guilds/leave' && request.method === 'POST') ufRes = await ufGuildLeave(request, env);
+        else if (p === '/api/uf/guild' && request.method === 'GET')     ufRes = await ufGuildGet(url, env);
+        else if (p === '/api/uf/guild/goals' && request.method === 'GET') ufRes = await ufGuildGoalsGet(url, env);
+        else if (p === '/api/uf/guild/goals' && request.method === 'POST') ufRes = await ufGuildGoalCreate(request, env);
+        if (ufRes) {
+          const fresh = new Response(ufRes.body, ufRes);
+          fresh.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+          fresh.headers.set('CDN-Cache-Control', 'no-store');
+          fresh.headers.set('Cloudflare-CDN-Cache-Control', 'no-store');
+          return fresh;
+        }
+      }
 
     } catch (e) {
       return jsonResponse({ error: e.message }, 500);
@@ -7194,6 +7209,43 @@ async function ufMe(url, env) {
   }
 }
 
+// Update display name and/or handle for an existing user. Handle changes
+// re-point the uf:handle:<h> lookup (old handle freed, new one claimed).
+async function ufAccountUpdate(request, env) {
+  try {
+    const { id, name, handle } = await request.json();
+    if (!id) return jsonResponse({ error: 'id required' }, 400);
+    const u = await _ufGetUser(env, id);
+    if (!u) return jsonResponse({ error: 'not found' }, 404);
+
+    if (name != null) {
+      const cleanName = String(name).trim().slice(0, 24);
+      if (!cleanName) return jsonResponse({ error: 'Name cannot be empty.' }, 400);
+      u.name = cleanName;
+    }
+
+    if (handle != null) {
+      const cleanHandle = String(handle).trim().toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 20);
+      if (cleanHandle.length < 3) return jsonResponse({ error: 'Handle min 3 chars (a-z, 0-9, _).' }, 400);
+      if (cleanHandle !== u.handle) {
+        const taken = await kvGet(env, `uf:handle:${cleanHandle}`);
+        if (taken && taken !== id) return jsonResponse({ error: 'Handle taken. Try another.' }, 409);
+        const oldHandle = u.handle;
+        u.handle = cleanHandle;
+        await kvPut(env, `uf:handle:${cleanHandle}`, id);
+        if (oldHandle && oldHandle !== cleanHandle) {
+          await kvPut(env, `uf:handle:${oldHandle}`, null); // free the old handle
+        }
+      }
+    }
+
+    await _ufPutUser(env, u);
+    return jsonResponse({ id: u.id, name: u.name, handle: u.handle });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
+  }
+}
+
 async function ufSearch(url) {
   try {
     const q = (url.searchParams.get('q') || '').trim();
@@ -7381,6 +7433,16 @@ async function _ufUserSummary(env, id) {
   };
 }
 
+// Test/bot accounts to hide from the GLOBAL leaderboard once testing is done.
+// Real accounts (e.g. "Thomas Edison" — Julian's) are explicitly kept.
+const UF_LEADERBOARD_KEEP = /\b(thomas\s*edison|edison)\b/i;
+function _ufIsTestUser(u) {
+  if (!u) return false;
+  const s = ((u.name || '') + ' ' + (u.handle || '')).toLowerCase();
+  if (UF_LEADERBOARD_KEEP.test(s)) return false; // never hide kept accounts
+  return /\b(test|testing|testbot|bot\d*|demo|sample|placeholder|dummy|qa|temp)\b/.test(s);
+}
+
 async function ufLeaderboard(url, env) {
   try {
     const id = url.searchParams.get('id');
@@ -7424,6 +7486,11 @@ async function ufFriendsGet(url, env) {
   }
 }
 
+// Send a friend REQUEST (no longer an instant add). The request lands in the
+// target's incoming list and my outgoing list; it only becomes a friendship
+// once the target accepts. KV:
+//   uf:freqIn:${uid}  → [ senderId ]   (requests awaiting my acceptance)
+//   uf:freqOut:${uid} → [ targetId ]   (my pending sent requests)
 async function ufFriendsAdd(request, env) {
   try {
     const { userId, handle } = await request.json();
@@ -7432,16 +7499,100 @@ async function ufFriendsAdd(request, env) {
     const fid = await kvGet(env, `uf:handle:${cleanHandle}`);
     if (!fid) return jsonResponse({ error: 'no user with that handle' }, 404);
     if (fid === userId) return jsonResponse({ error: "can't add yourself" }, 400);
-    const list = (await kvGet(env, `uf:friends:${userId}`)) || [];
-    if (list.includes(fid)) return jsonResponse({ ok: true, alreadyFriends: true });
-    list.push(fid);
-    await kvPut(env, `uf:friends:${userId}`, list);
-    // Symmetric: also add me to their friends list
-    const other = (await kvGet(env, `uf:friends:${fid}`)) || [];
-    if (!other.includes(userId)) {
-      other.push(userId);
-      await kvPut(env, `uf:friends:${fid}`, other);
+
+    const friends = (await kvGet(env, `uf:friends:${userId}`)) || [];
+    if (friends.includes(fid)) return jsonResponse({ ok: true, alreadyFriends: true });
+
+    // If THEY already sent ME a request, accept it directly instead of
+    // creating a redundant reverse request.
+    const myIncoming = (await kvGet(env, `uf:freqIn:${userId}`)) || [];
+    if (myIncoming.includes(fid)) {
+      await _ufAcceptRequest(env, userId, fid);
+      return jsonResponse({ ok: true, accepted: true });
     }
+
+    const myOutgoing = (await kvGet(env, `uf:freqOut:${userId}`)) || [];
+    if (myOutgoing.includes(fid)) return jsonResponse({ ok: true, alreadyRequested: true });
+
+    // Record the pending request both ways.
+    myOutgoing.push(fid);
+    await kvPut(env, `uf:freqOut:${userId}`, myOutgoing);
+    const theirIncoming = (await kvGet(env, `uf:freqIn:${fid}`)) || [];
+    if (!theirIncoming.includes(userId)) {
+      theirIncoming.push(userId);
+      await kvPut(env, `uf:freqIn:${fid}`, theirIncoming);
+    }
+    return jsonResponse({ ok: true, requested: true });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
+  }
+}
+
+// Internal: make `a` and `b` mutual friends and clear any pending requests
+// between them (in either direction).
+async function _ufAcceptRequest(env, a, b) {
+  const fa = (await kvGet(env, `uf:friends:${a}`)) || [];
+  if (!fa.includes(b)) { fa.push(b); await kvPut(env, `uf:friends:${a}`, fa); }
+  const fb = (await kvGet(env, `uf:friends:${b}`)) || [];
+  if (!fb.includes(a)) { fb.push(a); await kvPut(env, `uf:friends:${b}`, fb); }
+  // Clear pending in both directions.
+  await _ufClearRequest(env, a, b);
+  await _ufClearRequest(env, b, a);
+}
+
+// Internal: remove any pending request where `from` asked `to`.
+async function _ufClearRequest(env, from, to) {
+  const out = (await kvGet(env, `uf:freqOut:${from}`)) || [];
+  if (out.includes(to)) await kvPut(env, `uf:freqOut:${from}`, out.filter(x => x !== to));
+  const inc = (await kvGet(env, `uf:freqIn:${to}`)) || [];
+  if (inc.includes(from)) await kvPut(env, `uf:freqIn:${to}`, inc.filter(x => x !== from));
+}
+
+// GET incoming + outgoing pending friend requests with user summaries.
+async function ufFriendsRequests(url, env) {
+  try {
+    const id = url.searchParams.get('id');
+    if (!id) return jsonResponse({ error: 'id required' }, 400);
+    const inIds = (await kvGet(env, `uf:freqIn:${id}`)) || [];
+    const outIds = (await kvGet(env, `uf:freqOut:${id}`)) || [];
+    const incoming = [];
+    for (const sid of inIds) { const s = await _ufUserSummary(env, sid); if (s) incoming.push(s); }
+    const outgoing = [];
+    for (const tid of outIds) { const s = await _ufUserSummary(env, tid); if (s) outgoing.push(s); }
+    return jsonResponse({ incoming, outgoing });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
+  }
+}
+
+// Accept an incoming request (by the sender's handle).
+async function ufFriendsAccept(request, env) {
+  try {
+    const { userId, handle } = await request.json();
+    if (!userId || !handle) return jsonResponse({ error: 'invalid' }, 400);
+    const cleanHandle = String(handle).toLowerCase().replace(/[^a-z0-9_]/g, '');
+    const fid = await kvGet(env, `uf:handle:${cleanHandle}`);
+    if (!fid) return jsonResponse({ error: 'no user with that handle' }, 404);
+    const incoming = (await kvGet(env, `uf:freqIn:${userId}`)) || [];
+    if (!incoming.includes(fid)) return jsonResponse({ error: 'no pending request from that user' }, 404);
+    await _ufAcceptRequest(env, userId, fid);
+    return jsonResponse({ ok: true });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
+  }
+}
+
+// Decline an incoming request, or cancel one I sent. `dir` = 'in' | 'out'.
+async function ufFriendsRequestDelete(url, env) {
+  try {
+    const id = url.searchParams.get('id');
+    const handle = (url.searchParams.get('handle') || '').toLowerCase().replace(/[^a-z0-9_]/g, '');
+    const dir = url.searchParams.get('dir') || 'in';
+    if (!id || !handle) return jsonResponse({ error: 'id and handle required' }, 400);
+    const fid = await kvGet(env, `uf:handle:${handle}`);
+    if (!fid) return jsonResponse({ ok: true });
+    if (dir === 'out') await _ufClearRequest(env, id, fid);   // cancel my sent request
+    else               await _ufClearRequest(env, fid, id);   // decline their request to me
     return jsonResponse({ ok: true });
   } catch (e) {
     return jsonResponse({ error: e.message }, 500);
@@ -7487,6 +7638,13 @@ async function ufFriendsDelete(url, env) {
 function _ufGuildId()  { return 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 function _ufGoalId()   { return 'gl' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 
+// Heuristic: a guild is a leftover test guild if its name/handle looks like
+// test scaffolding. Used to keep the browse list clean post-testing.
+function _ufIsTestGuild(g) {
+  const s = ((g.name || '') + ' ' + (g.handle || '')).toLowerCase();
+  return /\b(test|testing|demo|sample|placeholder|delete\s*me|temp)\b/.test(s);
+}
+
 async function _ufGetGuild(env, gid) {
   return await kvGet(env, `uf:guild:${gid}`);
 }
@@ -7520,17 +7678,18 @@ async function _ufBaselineFor(env, uid) {
   const u = await _ufGetUser(env, uid);
   const logs = await _ufGetLogs(env, uid);
   const totalPages = Object.values(logs).reduce((s, n) => s + (n || 0), 0);
-  return { pages: totalPages, books: (u?.booksFinished || 0) };
+  return { pages: totalPages, books: (u?.booksFinished || 0), minutes: (u?.focusMinutes || 0) };
 }
 
-// Live progress: how many pages/books this user has added since goal start.
+// Live progress: how many pages/books/minutes this user has added since goal start.
 async function _ufProgressSince(env, uid, baseline) {
   const u = await _ufGetUser(env, uid);
   const logs = await _ufGetLogs(env, uid);
   const totalPages = Object.values(logs).reduce((s, n) => s + (n || 0), 0);
   return {
     pages: Math.max(0, totalPages - (baseline?.pages || 0)),
-    books: Math.max(0, (u?.booksFinished || 0) - (baseline?.books || 0))
+    books: Math.max(0, (u?.booksFinished || 0) - (baseline?.books || 0)),
+    minutes: Math.max(0, (u?.focusMinutes || 0) - (baseline?.minutes || 0))
   };
 }
 
@@ -7551,19 +7710,27 @@ async function ufGuildsList(url, env) {
       };
     };
     const mineSummaries = (await Promise.all(mine.map(summarise))).filter(Boolean);
-    // "Directory" = up to 20 guilds you aren't in, newest first
-    const others = all.filter(gid => !mine.includes(gid)).slice(-20).reverse();
-    const otherSummaries = (await Promise.all(others.map(summarise))).filter(Boolean);
-    return jsonResponse({ mine: mineSummaries, directory: otherSummaries });
+    // Browse list = PUBLIC guilds you aren't in, newest first, excluding
+    // disbanded/test guilds. Private guilds are joinable only via handle.
+    const candidates = all.filter(gid => !mine.includes(gid)).slice(-60).reverse();
+    const resolved = (await Promise.all(candidates.map(async (gid) => {
+      const g = await _ufGetGuild(env, gid);
+      if (!g) return null;
+      if (g.disbandedAt) return null;
+      if (!g.isPublic) return null;
+      if (_ufIsTestGuild(g)) return null;
+      return await summarise(gid);
+    }))).filter(Boolean).slice(0, 20);
+    return jsonResponse({ mine: mineSummaries, directory: resolved });
   } catch (e) {
     return jsonResponse({ error: e.message }, 500);
   }
 }
 
-// POST /api/uf/guilds  { userId, name, handle, description?, motto? }
+// POST /api/uf/guilds  { userId, name, handle, description?, motto?, isPublic? }
 async function ufGuildCreate(request, env) {
   try {
-    const { userId, name, handle, description, motto } = await request.json();
+    const { userId, name, handle, description, motto, isPublic } = await request.json();
     if (!userId) return jsonResponse({ error: 'userId required' }, 400);
     const u = await _ufGetUser(env, userId);
     if (!u) return jsonResponse({ error: 'user not found' }, 404);
@@ -7586,6 +7753,7 @@ async function ufGuildCreate(request, env) {
       handle: cleanHandle,
       description: String(description || '').slice(0, 240),
       motto: String(motto || '').slice(0, 80),
+      isPublic: !!isPublic,
       ownerId: userId,
       memberIds: [userId],
       createdAt: Date.now()
@@ -7717,7 +7885,9 @@ async function ufGuildGoalsGet(url, env) {
       for (const [uid, baseline] of Object.entries(goal.baselines || {})) {
         if (!memberNames[uid]) continue;                 // left the guild
         const prog = await _ufProgressSince(env, uid, baseline);
-        const value = goal.metric === 'books' ? prog.books : prog.pages;
+        const value = goal.metric === 'books' ? prog.books
+                    : goal.metric === 'minutes' ? prog.minutes
+                    : prog.pages;
         contributions[uid] = value;
         total += value;
       }
@@ -7754,7 +7924,7 @@ async function ufGuildGoalCreate(request, env) {
     const guild = await _ufGetGuild(env, gid);
     if (!guild) return jsonResponse({ error: 'guild not found' }, 404);
     if (!guild.memberIds.includes(userId)) return jsonResponse({ error: 'Not a member of this guild.' }, 403);
-    const cleanMetric = ['pages','books'].includes(metric) ? metric : 'pages';
+    const cleanMetric = ['pages','books','minutes'].includes(metric) ? metric : 'pages';
     const cleanTarget = Math.max(1, Math.min(1000000, parseInt(target, 10) || 0));
     if (!cleanTarget) return jsonResponse({ error: 'target must be > 0' }, 400);
     let dl = null;

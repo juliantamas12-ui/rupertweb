@@ -649,6 +649,8 @@ header.top{display:none !important}
 }
 
 /* ── Friends ──────────────────────────────────── */
+.req-head{font-family:'Geist',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-dim);margin:6px 0 4px;padding-top:8px}
+.req-pending{font-family:'Geist',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--flourish);border:1px solid var(--paper-line-strong);border-radius:var(--radius);padding:3px 8px}
 .friends-add{display:flex;gap:10px;margin-bottom:24px}
 .friends-add input{flex:1}
 .friend-row{display:flex;justify-content:space-between;align-items:center;padding:16px 0;background:transparent;border:none;border-radius:0;border-bottom:1px solid var(--paper-line);margin-bottom:0}
@@ -1991,8 +1993,9 @@ body[data-monogram="cross"]{--monogram-glyph:'\2720\FE0E'}
 
       <div class="friends-add">
         <input id="friend-handle" type="text" placeholder="friend's handle" autocomplete="off">
-        <button class="btn ghost" onclick="addFriend()">Add</button>
+        <button class="btn ghost" onclick="addFriend()">Request</button>
       </div>
+      <div id="friend-requests"></div>
       <div id="friends-list"></div>
       <div class="page-footer"><span class="fleur"></span><span class="num">— v —</span></div>
     </div>
@@ -3213,12 +3216,88 @@ function renderLeaderboard(){
 // ============ FRIENDS ============
 async function loadFriends(){
   try {
-    const r = await fetch(`${API}/friends?id=${state.me.id}`);
-    if (!r.ok) { console.warn('loadFriends HTTP ' + r.status); return; }
-    const d = await r.json();
-    state.friends = d.friends || [];
+    const [rf, rr] = await Promise.all([
+      fetch(`${API}/friends?id=${state.me.id}`),
+      fetch(`${API}/friends/requests?id=${state.me.id}`),
+    ]);
+    if (rf.ok) { const d = await rf.json(); state.friends = d.friends || []; }
+    else console.warn('loadFriends HTTP ' + rf.status);
+    if (rr.ok) { const d = await rr.json(); state.reqIn = d.incoming || []; state.reqOut = d.outgoing || []; }
+    else { state.reqIn = state.reqIn || []; state.reqOut = state.reqOut || []; }
+    renderRequests();
     renderFriends();
   } catch(e){ console.error('loadFriends failed:', e); }
+}
+function renderRequests(){
+  const el = document.getElementById('friend-requests');
+  if (!el) return;
+  const incoming = state.reqIn || [];
+  const outgoing = state.reqOut || [];
+  if (incoming.length === 0 && outgoing.length === 0) { el.innerHTML = ''; return; }
+  let html = '';
+  if (incoming.length){
+    html += `<div class="req-head">Friend requests</div>`;
+    html += incoming.map(f => {
+      const initials = f.name ? f.name.charAt(0).toUpperCase() : '?';
+      return `<div class="friend-row">
+        <div class="friend-row-inner">
+          <div class="friend-avatar">${escHtml(initials)}</div>
+          <div>
+            <div class="fname">${escHtml(f.name)}</div>
+            <div class="fmeta"><span class="h">@${escHtml(f.handle)}</span> &middot; wants to be friends</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-shrink:0">
+          <button class="btn small" onclick="acceptRequest('${escHtml(f.handle)}');">Accept</button>
+          <button class="btn small subtle" onclick="declineRequest('${escHtml(f.handle)}');">Decline</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  if (outgoing.length){
+    html += `<div class="req-head">Pending sent</div>`;
+    html += outgoing.map(f => {
+      const initials = f.name ? f.name.charAt(0).toUpperCase() : '?';
+      return `<div class="friend-row">
+        <div class="friend-row-inner">
+          <div class="friend-avatar" style="opacity:0.6">${escHtml(initials)}</div>
+          <div>
+            <div class="fname">${escHtml(f.name)}</div>
+            <div class="fmeta"><span class="h">@${escHtml(f.handle)}</span> &middot; awaiting reply</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-shrink:0">
+          <span class="req-pending">Pending</span>
+          <button class="btn small subtle" onclick="cancelRequest('${escHtml(f.handle)}');">Cancel</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  el.innerHTML = html;
+}
+async function acceptRequest(handle){
+  try {
+    const r = await fetch(`${API}/friends/accept`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ userId: state.me.id, handle })
+    });
+    const d = await r.json();
+    if (!r.ok) return toast(d.error || 'Could not accept');
+    toast('You are now friends with @' + handle);
+    await loadFriends();
+  } catch(e){ toast('Network error'); }
+}
+async function declineRequest(handle){
+  try {
+    await fetch(`${API}/friends/request?id=${state.me.id}&handle=${handle}&dir=in`, { method:'DELETE' });
+    await loadFriends();
+  } catch(e){ toast('Error'); }
+}
+async function cancelRequest(handle){
+  try {
+    await fetch(`${API}/friends/request?id=${state.me.id}&handle=${handle}&dir=out`, { method:'DELETE' });
+    await loadFriends();
+  } catch(e){ toast('Error'); }
 }
 function renderFriends(){
   const el = document.getElementById('friends-list');
@@ -3259,7 +3338,10 @@ async function addFriend(){
     });
     const d = await r.json();
     if (!r.ok) return toast(d.error || 'Not found');
-    toast('Added ' + handle);
+    if (d.alreadyFriends)       toast('Already friends with @' + handle);
+    else if (d.accepted)        toast('You are now friends with @' + handle);
+    else if (d.alreadyRequested) toast('Request already pending');
+    else                        toast('Request sent to @' + handle);
     document.getElementById('friend-handle').value = '';
     await loadFriends();
   } catch(e){ toast('Network error'); }
