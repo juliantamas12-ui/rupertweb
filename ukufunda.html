@@ -509,33 +509,56 @@ header.top{display:none !important}
 .book .cover3d.tilting .slab{animation:none;transition:transform .28s cubic-bezier(.22,.61,.36,1)}
 @keyframes bookFloat{0%,100%{transform:rotateY(-22deg) rotateX(3deg) translateY(0)}50%{transform:rotateY(-15deg) rotateX(2deg) translateY(-4px)}}
 @media(prefers-reduced-motion:reduce){.book .cover3d .slab{animation:none}}
-.book .cover, .book .cover-placeholder{
+/* A simplified, slightly-exaggerated mini-book with real thickness (~14px).
+   Three synced surfaces: FRONT cover (+Z), BACK cover (-Z), and the PAGE BLOCK
+   (right fore-edge) + a thin SPINE (left). Front and back are separate faces so
+   each can carry its own art/colour. The page block + back tint follow the
+   per-book --dom (dominant cover colour) set by JS, so the whole object reads
+   as one cohesive book that instantly restyles when the cover changes. */
+.book .cover3d{ --dom:#c9b98f; --dom-soft:#e7dcc0; }
+.book .cover3d .face3d{
+  position:absolute;inset:0;width:100%;height:100%;
+  border-radius:2px;backface-visibility:hidden;overflow:hidden;
+}
+.book .cover3d .front3d{ transform:translateZ(7px); }
+/* Back face is flipped so its art faces outward at the rear. */
+.book .cover3d .back3d{ transform:translateZ(-7px) rotateY(180deg); }
+.book .cover, .book .cover-back, .book .cover-placeholder{
   position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;
-  border-radius:2px;transform:translateZ(9px);backface-visibility:hidden;
+  border-radius:2px;
+}
+.book .cover3d .front3d{
   box-shadow:0 4px 10px rgba(60,40,20,0.20), 0 1px 2px rgba(60,40,20,0.15), inset 0 0 0 1px rgba(26,23,18,0.06);
 }
+/* Back cover: same art, gently dimmed so depth reads without stealing focus. */
+.book .cover3d .back3d .cover-back{ filter:brightness(0.82) saturate(0.92); }
 .book .cover-placeholder{background:linear-gradient(135deg,var(--accent),var(--accent-deep));display:flex;align-items:center;justify-content:center;color:var(--paper);font-size:13px;text-align:center;padding:8px;font-family:'EB Garamond',serif;font-style:italic;line-height:1.2}
-/* The book is a slab of THICKNESS ~18px. The cover face sits at the FRONT
-   (translateZ +9), and there is a back face at the REAR (translateZ -9). The
-   spine (left) and page-block (right) are the SIDE walls that connect front to
-   back, hinged at the edges and rotated 90deg so they recede into depth rather
-   than floating in front of the cover. Because they're anchored at translateZ 0
-   (mid-slab) and rotate about the edge, they never overlap the cover face. */
-
-/* NEW APPROACH: the fore-edge (page block) is a flat strip sitting BEHIND the
-   cover face and pushed to the right, so as the book tilts left it peeks out as
-   the book's right edge and can NEVER overlap the cover art. The rotated-wall
-   approach kept clipping the front, so we drop it entirely. */
-.book .cover3d .back3d{ display:none; }
-.book .cover3d .spine3d{ display:none; }
-/* page block: flat pages strip, one layer behind the cover, offset right. */
-.book .cover3d .pages3d{
-  position:absolute;top:2px;bottom:2px;right:-7px;width:12px;
-  transform:translateZ(2px);
-  background:repeating-linear-gradient(0deg,#efe7d2,#efe7d2 1px,#cabf9e 2px,#efe7d2 3px);
-  border-radius:0 2px 2px 0;
-  box-shadow:2px 0 4px rgba(60,40,20,0.25);
+.book .cover3d .back3d .cover-back-ph{background:linear-gradient(135deg,var(--dom),var(--accent-deep))}
+/* Thin clean SPINE on the left edge, tinted to the cover's dominant colour. */
+.book .cover3d .spine3d{
+  position:absolute;top:0;bottom:0;left:0;width:14px;
+  transform:translateX(-7px) rotateY(-90deg);
+  background:linear-gradient(90deg,
+    color-mix(in srgb, var(--dom) 78%, #000 22%),
+    color-mix(in srgb, var(--dom) 92%, #fff 8%));
+  border-radius:1px;
+  box-shadow:inset -1px 0 2px rgba(0,0,0,0.25), inset 1px 0 1px rgba(255,255,255,0.12);
 }
+/* PAGE BLOCK: the right fore-edge. A clean, softly-textured paper stack that
+   harmonises with the cover (tinted toward --dom-soft). */
+.book .cover3d .pages3d{
+  position:absolute;top:0;bottom:0;right:0;width:14px;
+  transform:translateX(7px) rotateY(90deg);
+  background:
+    repeating-linear-gradient(0deg,
+      color-mix(in srgb, var(--dom-soft) 88%, #fff 12%) 0px,
+      color-mix(in srgb, var(--dom-soft) 88%, #fff 12%) 1px,
+      color-mix(in srgb, var(--dom-soft) 70%, #6b5a34 30%) 2px,
+      color-mix(in srgb, var(--dom-soft) 88%, #fff 12%) 3px);
+  border-radius:1px;
+  box-shadow:inset -1px 0 2px rgba(60,40,20,0.22), inset 1px 0 1px rgba(255,255,255,0.30);
+}
+/* Soft contact shadow under the floating book. */
 .book .cover3d::after{
   content:'';position:absolute;left:8%;right:0;bottom:-8px;height:12px;
   background:radial-gradient(ellipse at center,rgba(60,40,20,0.28),transparent 72%);
@@ -2963,10 +2986,19 @@ function bookCard(b){
     ? '<span class="status-paused">paused</span>'
     : '<span class="status-active">reading</span>';
   const titleEsc = escHtml(b.title.slice(0,20));
-  const coverInner = b.cover
-    ? `<img src="${escHtml(b.cover)}" class="cover" alt="" onerror="this.outerHTML='<div class=cover-placeholder>${titleEsc}</div>'">`
+  // Front + back covers are SEPARATE surfaces so art/colour applies to both.
+  const frontInner = b.cover
+    ? `<img src="${escHtml(b.cover)}" class="cover" alt="" data-dom="1" onerror="this.outerHTML='<div class=cover-placeholder>${titleEsc}</div>'">`
     : `<div class="cover-placeholder">${titleEsc}</div>`;
-  const cover = `<div class="cover3d"><div class="slab"><span class="back3d"></span><span class="spine3d"></span><span class="pages3d"></span>${coverInner}</div></div>`;
+  const backInner = b.cover
+    ? `<img src="${escHtml(b.cover)}" class="cover-back" alt="" onerror="this.style.display='none'">`
+    : `<div class="cover-placeholder cover-back-ph">${titleEsc}</div>`;
+  const cover = `<div class="cover3d"><div class="slab">`
+    + `<span class="face3d back3d">${backInner}</span>`
+    + `<span class="spine3d"></span>`
+    + `<span class="pages3d"></span>`
+    + `<span class="face3d front3d">${frontInner}</span>`
+    + `</div></div>`;
   return `
     <div class="book">
       ${cover}
@@ -3001,7 +3033,65 @@ function renderBooks(){
     const order = {active:0, paused:1, done:2};
     const sorted = [...state.books].sort((a,b) => (order[a.status]||0) - (order[b.status]||0));
     el.innerHTML = sorted.map(bookCard).join('');
+    applyBookDominantColours(el);
   }
+}
+
+// Extract each cover's dominant colour and push it onto that book's 3D asset as
+// --dom / --dom-soft, so the page block, spine, and back-cover placeholder all
+// harmonise with the front cover. Runs after every render, so selecting/adding
+// a different book instantly restyles the whole object. Cached per URL.
+const _domCache = {};
+function applyBookDominantColours(root){
+  const imgs = root.querySelectorAll('.cover3d img.cover[data-dom]');
+  imgs.forEach(img => {
+    const cover3d = img.closest('.cover3d');
+    if (!cover3d) return;
+    const url = img.getAttribute('src');
+    if (!url) return;
+    if (_domCache[url]) { setBookDom(cover3d, _domCache[url]); return; }
+    const probe = new Image();
+    probe.crossOrigin = 'anonymous';
+    probe.referrerPolicy = 'no-referrer';
+    probe.onload = () => {
+      try {
+        const dom = dominantColourOf(probe);
+        if (dom) { _domCache[url] = dom; setBookDom(cover3d, dom); }
+      } catch(_){ /* tainted canvas or decode error: keep default tint */ }
+    };
+    probe.onerror = () => {};
+    probe.src = url;
+  });
+}
+function setBookDom(cover3d, rgb){
+  const [r,g,b] = rgb;
+  cover3d.style.setProperty('--dom', `rgb(${r},${g},${b})`);
+  // Soft paper-edge tint: lighten the dominant colour heavily toward paper.
+  const sr = Math.round(r*0.28 + 231*0.72);
+  const sg = Math.round(g*0.28 + 220*0.72);
+  const sb = Math.round(b*0.28 + 192*0.72);
+  cover3d.style.setProperty('--dom-soft', `rgb(${sr},${sg},${sb})`);
+}
+function dominantColourOf(imgEl){
+  const S = 24; // tiny sample grid — cheap and averages out noise
+  const c = document.createElement('canvas');
+  c.width = S; c.height = S;
+  const ctx = c.getContext('2d', { willReadFrequently: true });
+  ctx.drawImage(imgEl, 0, 0, S, S);
+  const data = ctx.getImageData(0, 0, S, S).data;
+  let r=0,g=0,b=0,n=0;
+  for (let i=0;i<data.length;i+=4){
+    const a = data[i+3];
+    if (a < 200) continue;
+    const rr=data[i], gg=data[i+1], bb=data[i+2];
+    // Skip near-white and near-black so the tint reflects the real cover hue.
+    const mx=Math.max(rr,gg,bb), mn=Math.min(rr,gg,bb);
+    if (mx > 244 && mn > 238) continue;
+    if (mx < 18) continue;
+    r+=rr; g+=gg; b+=bb; n++;
+  }
+  if (!n) return null;
+  return [Math.round(r/n), Math.round(g/n), Math.round(b/n)];
 }
 
 async function searchBooks(){
