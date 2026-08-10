@@ -7370,7 +7370,7 @@ async function ufBooksStatus(request, env) {
 
 async function ufLog(request, env) {
   try {
-    const { userId, bookId, page, session } = await request.json();
+    const { userId, bookId, page, session, offline } = await request.json();
     if (!userId || !bookId) return jsonResponse({ error: 'invalid' }, 400);
     const u = await _ufGetUser(env, userId);
     if (!u) return jsonResponse({ error: 'user not found' }, 404);
@@ -7381,7 +7381,16 @@ async function ufLog(request, env) {
     const pagesRead = newPage - b.current;
     if (pagesRead <= 0) return jsonResponse({ error: 'no progress' }, 400);
 
-    // ── Realistic-pace anti-cheat ──────────────────────────────────────────
+    // ── Offline / catch-up log ────────────────────────────────────────
+    // "I read this away from the app." There is no timed session to police, so
+    // we can't verify focus — and crucially, we award ZERO XP. This removes any
+    // incentive to fake numbers or back-fill a lifetime of past reading, while
+    // still letting honest offline reading update progress and keep the streak.
+    // The pace anti-cheat is skipped entirely (no elapsed-time claim to lie
+    // about), and offline logs are never flagged.
+    const isOffline = !!offline;
+
+    // ── Realistic-pace anti-cheat (timed sessions only) ─────────────────────
     // XP is only earned by logging pages AFTER a timed reading session, so a
     // session (with elapsed time) is required. If the claimed pace over the
     // TOTAL elapsed time exceeds MAX_PPM pages/minute it's implausible for real
@@ -7393,16 +7402,17 @@ async function ufLog(request, env) {
       ? Math.max(0, Math.min(6 * 3600e3, parseInt(session.durationMs, 10) || 0))
       : 0;
     const elapsedMin = durMsRaw / 60000;
-    if (elapsedMin < 0.5) {
+    if (!isOffline && elapsedMin < 0.5) {
       // Under 30s of elapsed time can't credibly cover multiple pages; require a
-      // real timed session before pages count for XP.
+      // real timed session before pages count for XP. (Offline logs bypass this
+      // — they earn 0 XP so there's nothing to game.)
       return jsonResponse({
         error: 'no_session',
-        message: 'Log pages after a timed reading session so we can credit XP fairly.'
+        message: 'Log pages after a timed reading session to earn XP, or mark it as read offline (no XP).'
       }, 400);
     }
-    const pace = pagesRead / elapsedMin; // pages per minute over total elapsed
-    if (pace > MAX_PPM) {
+    const pace = elapsedMin > 0 ? pagesRead / elapsedMin : 0; // pages/min over total elapsed
+    if (!isOffline && pace > MAX_PPM) {
       const flag = {
         userId, bookId,
         bookTitle: b.title,
@@ -7430,10 +7440,12 @@ async function ufLog(request, env) {
 
     b.current = newPage;
     let finishBonus = 0;
+    let justFinished = false;
     if (newPage >= b.pages && b.status !== 'done') {
       b.status = 'done';
       b.finishedAt = Date.now();
       finishBonus = 100; // XP bonus
+      justFinished = true;
       u.booksFinished = (u.booksFinished || 0) + 1;
     }
 
@@ -7455,7 +7467,7 @@ async function ufLog(request, env) {
     // No session attached = 1.0× baseline. Sessions must be at least 60s to count.
     let focusMult = 1.0;
     let sessionMeta = null;
-    if (session && typeof session === 'object') {
+    if (!isOffline && session && typeof session === 'object') {
       const durMs = Math.max(0, Math.min(6 * 3600e3, parseInt(session.durationMs, 10) || 0));
       const interruptions = Math.max(0, Math.min(50, parseInt(session.interruptionCount, 10) || 0));
       const interrupted = !!session.interrupted || interruptions > 0;
@@ -7471,9 +7483,16 @@ async function ufLog(request, env) {
       }
     }
 
-    // XP: (pages × streak multiplier × focus multiplier) + finish bonus
-    const streakMult = u.streak >= 30 ? 1.5 : u.streak >= 7 ? 1.25 : u.streak >= 3 ? 1.1 : 1.0;
-    const xp = Math.round(pagesRead * streakMult * focusMult) + finishBonus;
+    // XP: offline logs earn ZERO XP (no finish bonus either) — progress and
+    // streak only. Timed-session logs earn pages × streak × focus + finish bonus.
+    let xp;
+    if (isOffline) {
+      xp = 0;
+      finishBonus = 0; // no XP bonus for finishing via an offline log
+    } else {
+      const streakMult = u.streak >= 30 ? 1.5 : u.streak >= 7 ? 1.25 : u.streak >= 3 ? 1.1 : 1.0;
+      xp = Math.round(pagesRead * streakMult * focusMult) + finishBonus;
+    }
     u.totalXp = (u.totalXp || 0) + xp;
 
     await _ufPutUser(env, u);
@@ -7482,9 +7501,9 @@ async function ufLog(request, env) {
     await _ufAddToGlobal(env, userId);
 
     return jsonResponse({
-      ok: true, xp, pagesRead,
+      ok: true, xp, pagesRead, offline: isOffline,
       totalXp: u.totalXp, streak: u.streak,
-      finished: finishBonus > 0,
+      finished: justFinished,
       tier: _ufTierFromXp(u.totalXp),
       focusMult, session: sessionMeta
     });

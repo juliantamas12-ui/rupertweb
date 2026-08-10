@@ -690,6 +690,8 @@ header.top{display:none !important}
 .pace-ticker.over .pace-fill{background:var(--red)}
 .pace-ticker.over .pace-value{color:var(--red)}
 .pace-ticker.over .pace-note{color:var(--red);font-style:normal;font-weight:500}
+.offline-toggle{display:flex;align-items:center;gap:9px;margin:0 0 18px;cursor:pointer;font-size:13px;color:var(--ink-dim);line-height:1.35}
+.offline-toggle input{width:16px;height:16px;flex:0 0 auto;accent-color:var(--accent);cursor:pointer}
 .req-head{font-family:'Geist',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-dim);margin:6px 0 4px;padding-top:8px}
 .req-pending{font-family:'Geist',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--flourish);border:1px solid var(--paper-line-strong);border-radius:var(--radius);padding:3px 8px}
 .friends-add{display:flex;gap:10px;margin-bottom:24px}
@@ -2124,6 +2126,10 @@ body[data-monogram="cross"]{--monogram-glyph:'\2720\FE0E'}
       <div class="pace-bar"><div class="pace-fill" id="pace-fill"></div></div>
       <div class="pace-note" id="pace-note">Limit 4 pages/min over your session time.</div>
     </div>
+    <label class="offline-toggle">
+      <input type="checkbox" id="log-offline" onchange="onOfflineToggle()">
+      <span>I read this offline (no XP — progress &amp; streak only)</span>
+    </label>
     <div class="actions">
       <button class="btn ghost" onclick="closeLogModal()" style="flex:0 0 auto">Cancel</button>
       <button class="btn" id="log-submit-btn" onclick="submitLog()">Log it</button>
@@ -3232,7 +3238,10 @@ function openLogModal(bookId){
   document.getElementById('log-page').value = '';
   document.getElementById('log-page').placeholder = 'e.g. ' + (book.current + 20);
   document.getElementById('log-delta').value = '';
-  updatePaceTicker();
+  const off = document.getElementById('log-offline');
+  // No pending session (opened manually) → this is an offline catch-up log.
+  if (off) off.checked = !state.pendingSession;
+  onOfflineToggle();
   document.getElementById('log-modal').classList.add('open');
 }
 function closeLogModal(){
@@ -3248,12 +3257,23 @@ function _pendingElapsedMin(){
   if (!s || !s.durationMs) return 0;
   return s.durationMs / 60000;
 }
+function isOfflineLog(){
+  const el = document.getElementById('log-offline');
+  return !!(el && el.checked);
+}
+function onOfflineToggle(){
+  // Offline logs earn no XP and skip the pace check, so hide the ticker.
+  updatePaceTicker();
+  const btn = document.getElementById('log-submit-btn');
+  if (btn) btn.textContent = isOfflineLog() ? 'Log offline (0 XP)' : 'Log it';
+}
 function updatePaceTicker(){
   const ticker = document.getElementById('pace-ticker');
   if (!ticker) return;
   const book = state.books.find(b => b.id === state.logBookId);
   const elapsedMin = _pendingElapsedMin();
-  if (!book || elapsedMin < 0.5) { ticker.classList.add('hidden'); return; }
+  // Offline mode or no timed session: no pace to police.
+  if (!book || isOfflineLog() || elapsedMin < 0.5) { ticker.classList.add('hidden'); return; }
   ticker.classList.remove('hidden');
 
   const pageStr = document.getElementById('log-page').value.trim();
@@ -3299,9 +3319,10 @@ async function submitLog(){
   if (newPage > book.pages) newPage = book.pages;
   const pagesRead = newPage - book.current;
   if (pagesRead <= 0) return toast('That is not progress');
+  const offline = isOfflineLog();
   try {
-    const payload = { userId: state.me.id, bookId: book.id, page: newPage };
-    if (state.pendingSession) payload.session = state.pendingSession;
+    const payload = { userId: state.me.id, bookId: book.id, page: newPage, offline };
+    if (!offline && state.pendingSession) payload.session = state.pendingSession;
     const r = await fetch(`${API}/log`, {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify(payload)
@@ -3322,8 +3343,12 @@ async function submitLog(){
       return toast(d.message || d.error || 'Log failed');
     }
     closeLogModal();
-    const mult = d.focusMult && d.focusMult !== 1 ? ' (' + d.focusMult + 'x)' : '';
-    toast('+' + pagesRead + ' pages, +' + d.xp + ' XP' + mult);
+    if (d.offline) {
+      toast('+' + pagesRead + ' pages logged offline (0 XP)' + (d.finished ? ' · book finished' : ''));
+    } else {
+      const mult = d.focusMult && d.focusMult !== 1 ? ' (' + d.focusMult + 'x)' : '';
+      toast('+' + pagesRead + ' pages, +' + d.xp + ' XP' + mult);
+    }
     state.pendingSession = null;
     // Trigger seal bloom + ink burst
     setTimeout(() => {
@@ -4777,7 +4802,9 @@ async function endSession(){
   document.getElementById('log-page').value = '';
   document.getElementById('log-page').placeholder = 'e.g. ' + (book.current + 20);
   document.getElementById('log-delta').value = '';
-  updatePaceTicker();
+  const off = document.getElementById('log-offline');
+  if (off) off.checked = false; // came from a timed session → earn XP by default
+  onOfflineToggle();
   document.getElementById('log-modal').classList.add('open');
   sessionState = null;
 }
