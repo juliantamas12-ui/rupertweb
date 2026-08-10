@@ -19,18 +19,34 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600&family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script>
+// Unified theme model: the equipped BACKGROUND is the theme. No separate
+// dark/light switch. On first visit we pick the free light (cream) or free
+// dark (midnight) background from the OS colour-scheme preference. The choice
+// is stored inside the shop data (equipped.paper), read here early to paint
+// the root before first paint and avoid a flash.
 (function(){
   try {
-    var stored = localStorage.getItem('ukufunda-theme');
-    var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    var dark = stored ? stored === 'dark' : prefersDark;
-    if (dark) document.documentElement.setAttribute('data-preload-dark', '1');
+    var paper = null;
+    var raw = localStorage.getItem('ukufunda_shop_v1');
+    if (raw) {
+      var d = JSON.parse(raw);
+      var eq = d && d.equipped;
+      // A 'special' background (Abyssal/Aurora/Starfall) overrides the paper.
+      var SPECIALS = ['abyssal','aurora','starfall'];
+      paper = (eq && eq.special && SPECIALS.indexOf(eq.special) >= 0) ? eq.special : (eq && eq.paper);
+    }
+    if (!paper) {
+      var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      paper = prefersDark ? 'midnight' : 'cream';
+    }
+    document.documentElement.setAttribute('data-preload-paper', paper);
+    var BG = { cream:'#f5eedd', parchment:'#e8d8a8', midnight:'#141210',
+               navy:'#0f1a2b', maroon:'#2a1416', forest:'#12241a', sage:'#e4ead9',
+               abyssal:'#04101f', aurora:'#0a0518', starfall:'#050512' };
+    if (BG[paper]) document.documentElement.style.background = BG[paper];
   } catch(_) {}
 })();
 </script>
-<style>
-html[data-preload-dark] body{background:#0f0d0a}
-</style>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -84,66 +100,117 @@ html[data-preload-dark] body{background:#0f0d0a}
   --radius:6px;
   --radius-lg:10px;
 }
-/* ── Dark mode ──
-   Full re-theme: paper → dark leather, ink → warm off-white,
-   accents stay as-is (they still read well on dark). */
-body.dark{
-  --ink:#e8dfc9;
-  --ink-bright:#f6efd8;
-  --ink-dim:rgba(232,223,201,0.65);
-  --ink-fade:rgba(232,223,201,0.38);
-  --ink-ghost:rgba(232,223,201,0.10);
+/* ── UNIFIED THEME MODEL ─────────────────────────────────────────────
+   The equipped BACKGROUND is the theme. Each background carries its own
+   full palette: the --paper family (surfaces) AND the --ink family (text
+   brightness) AND re-tinted accents so contrast is governed by the chosen
+   background, not a separate dark/light switch. Selectors match either the
+   preload attribute on <html> (before JS) or the data-paper on <body>.
+   `cream` is the :root default (light). Dark themes add color-scheme:dark.
 
-  --paper:#0f0d0a;
-  --paper-deep:#080706;
-  --paper-raise:#181510;
-  --paper-raise2:#201c15;
-  --paper-line:rgba(232,223,201,0.12);
-  --paper-line-strong:rgba(232,223,201,0.26);
+   Shared mixin classes via attribute selectors below. */
 
-  --red:#c66a4f;
-  --red-bright:#dc7e63;
-  --red-deep:#a35438;
-  --red-shadow:rgba(198,106,79,0.28);
-  --red-soft:rgba(198,106,79,0.14);
-
-  --blue:#7ba0c8;
-  --blue-bright:#96b6d8;
-  --blue-deep:#5b83ac;
-  --blue-shadow:rgba(123,160,200,0.28);
-  --blue-soft:rgba(123,160,200,0.14);
-
-  --tan:#c9ae7d;
-  --tan-bright:#dcc394;
-  --tan-deep:#b0925e;
-
-  color-scheme:dark;
-}
-body.dark .book .cover-placeholder,
-body.dark .book .cover{
+/* Generic "this is a dark background" treatment for book covers + modals. */
+[data-preload-paper="midnight"] .book .cover,
+[data-preload-paper="navy"] .book .cover,
+[data-preload-paper="maroon"] .book .cover,
+[data-preload-paper="forest"] .book .cover,
+body.paper-dark .book .cover-placeholder,
+body.paper-dark .book .cover{
   box-shadow:0 4px 12px rgba(0,0,0,0.55), 0 1px 2px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(232,223,201,0.08);
 }
-body.dark .book .cover{filter:brightness(0.85) contrast(1.05)}
-body.dark .modal-bg{background:rgba(0,0,0,0.72)}
-body.dark input,body.dark select{color-scheme:dark}
+body.paper-dark .book .cover{filter:brightness(0.88) contrast(1.04)}
+body.paper-dark .modal-bg{background:rgba(0,0,0,0.72)}
+body.paper-dark input,body.paper-dark select{color-scheme:dark}
+body.paper-dark{color-scheme:dark}
 
-/* Dark-mode toggle ── fixed top-right, small and unobtrusive */
-.dark-toggle{
-  position:fixed;top:14px;right:14px;z-index:900;
-  width:36px;height:36px;border-radius:50%;
-  background:var(--paper-raise);
-  border:1px solid var(--paper-line-strong);
-  color:var(--ink-dim);
-  display:flex;align-items:center;justify-content:center;
-  cursor:pointer;font-size:16px;line-height:1;
-  transition:background .15s,color .15s,transform .1s;
-  -webkit-tap-highlight-color:transparent;
+/* ── BACKGROUND THEMES ─────────────────────────────────────────────────
+   Each background = a full theme. `data-paper` on <body> is set by JS; the
+   preload attribute on <html> paints the raw background pre-JS. We define each
+   palette once via a custom-property block applied to body[data-paper="X"],
+   and paint html background so the root repaints too. LIGHT backgrounds keep
+   dark ink; DARK backgrounds flip ink to warm off-white and re-tint accents. */
+
+/* Light: Parchment (priced) */
+html[data-preload-paper="parchment"], body[data-paper="parchment"]{background:#e8d8a8}
+body[data-paper="parchment"]{--paper:#e8d8a8;--paper-deep:#dccb95;--paper-raise:#f0e4b8;--paper-raise2:#ddd0a0;--paper-line:rgba(60,44,20,0.12);--paper-line-strong:rgba(60,44,20,0.26)}
+
+/* Light: Sage (light green, priced) */
+html[data-preload-paper="sage"], body[data-paper="sage"]{background:#e4ead9}
+body[data-paper="sage"]{--paper:#e4ead9;--paper-deep:#d3dcc3;--paper-raise:#eef2e6;--paper-raise2:#dbe3cd;--paper-line:rgba(30,45,25,0.12);--paper-line-strong:rgba(30,45,25,0.26)}
+
+/* Dark: Midnight (FREE dark default) */
+html[data-preload-paper="midnight"], body[data-paper="midnight"]{background:#141210}
+body[data-paper="midnight"]{
+  --paper:#141210;--paper-deep:#0c0a08;--paper-raise:#1e1b17;--paper-raise2:#242019;
+  --paper-line:rgba(245,238,221,0.10);--paper-line-strong:rgba(245,238,221,0.22);
 }
-.dark-toggle:hover{background:var(--paper-raise2);color:var(--ink-bright)}
-.dark-toggle:active{transform:scale(0.94)}
-.dark-toggle svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 
-html,body{background:var(--paper);color:var(--ink);font-family:'EB Garamond',Garamond,ui-serif,Georgia,'Times New Roman',serif;line-height:1.55;min-height:100vh;font-size:17px;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+/* Dark: Navy (priced, exotic) */
+html[data-preload-paper="navy"], body[data-paper="navy"]{background:#0f1a2b}
+body[data-paper="navy"]{
+  --paper:#0f1a2b;--paper-deep:#0a1220;--paper-raise:#16253a;--paper-raise2:#1d2f47;
+  --paper-line:rgba(200,220,245,0.12);--paper-line-strong:rgba(200,220,245,0.24);
+}
+
+/* Dark: Maroon (priced, exotic) */
+html[data-preload-paper="maroon"], body[data-paper="maroon"]{background:#2a1416}
+body[data-paper="maroon"]{
+  --paper:#2a1416;--paper-deep:#1f0e10;--paper-raise:#361a1d;--paper-raise2:#432225;
+  --paper-line:rgba(245,215,215,0.12);--paper-line-strong:rgba(245,215,215,0.24);
+}
+
+/* Dark: Forest (dark green, priced, exotic) */
+html[data-preload-paper="forest"], body[data-paper="forest"]{background:#12241a}
+body[data-paper="forest"]{
+  --paper:#12241a;--paper-deep:#0c1a12;--paper-raise:#1a3225;--paper-raise2:#213f2e;
+  --paper-line:rgba(215,240,220,0.12);--paper-line-strong:rgba(215,240,220,0.24);
+}
+
+/* Signature: Abyssal (flagship, 5000 XP) — very dark navy with a live cursor
+   wave-trail rendered on a canvas behind the content (see JS). */
+html[data-preload-paper="abyssal"], body[data-paper="abyssal"]{background:#04101f}
+body[data-paper="abyssal"]{
+  --paper:#04101f;--paper-deep:#020a14;--paper-raise:#0a1a2e;--paper-raise2:#0f2540;
+  --paper-line:rgba(150,190,240,0.12);--paper-line-strong:rgba(150,190,240,0.24);
+}
+/* Signature: Aurora (flagship, 10000 XP) — deep teal-black with drifting
+   northern-lights curtains that react to the cursor. */
+html[data-preload-paper="aurora"], body[data-paper="aurora"]{background:#0a0518}
+body[data-paper="aurora"]{
+  --paper:#06121a;--paper-deep:#030b10;--paper-raise:#0c2029;--paper-raise2:#123039;
+  --paper-line:rgba(150,240,210,0.12);--paper-line-strong:rgba(150,240,210,0.24);
+}
+/* Signature: Starfall (flagship, 15000 XP) — near-black indigo starfield with
+   a live constellation that connects to the cursor. */
+html[data-preload-paper="starfall"], body[data-paper="starfall"]{background:#050512}
+body[data-paper="starfall"]{
+  --paper:#050512;--paper-deep:#02020a;--paper-raise:#0c0c22;--paper-raise2:#14142e;
+  --paper-line:rgba(200,200,255,0.12);--paper-line-strong:rgba(200,200,255,0.24);
+}
+/* Signature canvas layer: fixed, full-screen, behind content, click-through. */
+#abyssal-canvas{
+  position:fixed;inset:0;width:100%;height:100%;
+  z-index:0;pointer-events:none;display:block;
+}
+body[data-paper="abyssal"] .wrap,
+body[data-paper="aurora"] .wrap,
+body[data-paper="starfall"] .wrap{position:relative;z-index:1}
+
+/* Shared DARK-background ink + accents. Applied via body.paper-dark (JS adds
+   it for any dark background) so text brightness follows the background. */
+body.paper-dark{
+  --ink:#e8dfc9;--ink-bright:#f6efd8;
+  --ink-dim:rgba(232,223,201,0.66);--ink-fade:rgba(232,223,201,0.40);--ink-ghost:rgba(232,223,201,0.10);
+  --red:#c66a4f;--red-bright:#dc7e63;--red-deep:#a35438;--red-shadow:rgba(198,106,79,0.28);--red-soft:rgba(198,106,79,0.14);
+  --blue:#7ba0c8;--blue-bright:#96b6d8;--blue-deep:#5b83ac;--blue-shadow:rgba(123,160,200,0.28);--blue-soft:rgba(123,160,200,0.14);
+  --tan:#c9ae7d;--tan-bright:#dcc394;--tan-deep:#b0925e;
+}
+/* Navy/forest read better with cooler accents than the warm default red. */
+body.paper-dark[data-paper="navy"]{--red:#e0b060;--red-bright:#eec277;--red-deep:#c89442;--tan-deep:#e0b060}
+body.paper-dark[data-paper="forest"]{--red:#e0b060;--red-bright:#eec277;--red-deep:#c89442;--tan-deep:#d9c98a}
+
+html,body{background:var(--paper);color:var(--ink);font-family:'EB Garamond',Garamond,ui-serif,Georgia,'Times New Roman',serif;line-height:1.55;min-height:100vh;font-size:17px;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;overflow-x:hidden}
 button, input, select, textarea{font-family:inherit}
 .btn, .btn.ghost, .btn.small, .btn.subtle{font-family:'EB Garamond',Garamond,serif}
 .folio, .lb-row .streak, .running-head .folio{font-family:'Geist',sans-serif;font-variant-numeric:tabular-nums}
@@ -180,7 +247,16 @@ a:hover{color:var(--accent-bright)}
 header.top{display:none !important}
 
 /* ── Auth / Cover ──────────────────────────────── */
-.auth{max-width:none;margin:0;padding:0;position:relative}
+/* The cover lives inside .wrap (max-width:820px). Break it out to full
+   viewport width so it fills the screen on wide displays instead of showing
+   black side-bars. The 100vw + negative margins escape the wrapper and cancel
+   .wrap's horizontal padding. */
+.auth{
+  max-width:none;margin:0;padding:0;position:relative;
+  width:100vw;
+  margin-left:calc(50% - 50vw);
+  margin-right:calc(50% - 50vw);
+}
 
 .book-cover{
   min-height:100vh;
@@ -339,7 +415,11 @@ header.top{display:none !important}
 .btn:active{transform:translateY(1px)}
 .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--paper-line-strong);width:auto;padding:9px 16px;font-weight:500}
 .btn.ghost:hover{background:var(--paper-raise2);border-color:var(--accent);color:var(--accent)}
-.btn.small{padding:6px 12px;font-size:12px;width:auto;font-weight:500}
+.btn.small{padding:6px 12px;font-size:12px;width:auto;font-weight:600}
+/* "Start reading" on a book card must read as clearly clickable. Without
+   this the text sat at low contrast and looked disabled/greyed out. */
+.btn.small:not(.subtle):not(.ghost){background:var(--accent);color:#fff}
+.btn.small:not(.subtle):not(.ghost):hover{background:var(--accent-bright);color:#fff}
 .btn.subtle{background:transparent;color:var(--ink-dim);border:1px solid var(--paper-line);padding:6px 10px;font-size:12px;width:auto;font-weight:500}
 .btn.subtle:hover{color:var(--accent);border-color:var(--paper-line-strong)}
 .btn.danger{background:var(--marker);color:var(--paper)}
@@ -426,7 +506,7 @@ header.top{display:none !important}
   transition:transform .12s ease-out;
   animation:bookFloat 6s ease-in-out infinite;
 }
-.book .cover3d.tilting .slab{animation:none;transition:transform .05s linear}
+.book .cover3d.tilting .slab{animation:none;transition:transform .28s cubic-bezier(.22,.61,.36,1)}
 @keyframes bookFloat{0%,100%{transform:rotateY(-22deg) rotateX(3deg) translateY(0)}50%{transform:rotateY(-15deg) rotateX(2deg) translateY(-4px)}}
 @media(prefers-reduced-motion:reduce){.book .cover3d .slab{animation:none}}
 .book .cover, .book .cover-placeholder{
@@ -435,24 +515,31 @@ header.top{display:none !important}
   box-shadow:0 4px 10px rgba(60,40,20,0.20), 0 1px 2px rgba(60,40,20,0.15), inset 0 0 0 1px rgba(26,23,18,0.06);
 }
 .book .cover-placeholder{background:linear-gradient(135deg,var(--accent),var(--accent-deep));display:flex;align-items:center;justify-content:center;color:var(--paper);font-size:13px;text-align:center;padding:8px;font-family:'EB Garamond',serif;font-style:italic;line-height:1.2}
-/* spine (left side) */
-.book .cover3d .spine3d{
-  position:absolute;top:0;left:0;width:18px;height:100%;
-  transform-origin:left center;transform:translateZ(9px) rotateY(-90deg);
-  background:linear-gradient(90deg,rgba(0,0,0,0.35),var(--accent-deep) 60%,var(--accent-deep));
-  border-radius:2px 0 0 2px;
-}
-/* page block (right + bottom edges) */
+/* The book is a slab of THICKNESS ~18px. The cover face sits at the FRONT
+   (translateZ +9), and there is a back face at the REAR (translateZ -9). The
+   spine (left) and page-block (right) are the SIDE walls that connect front to
+   back, hinged at the edges and rotated 90deg so they recede into depth rather
+   than floating in front of the cover. Because they're anchored at translateZ 0
+   (mid-slab) and rotate about the edge, they never overlap the cover face. */
+
+/* NEW APPROACH: the fore-edge (page block) is a flat strip sitting BEHIND the
+   cover face and pushed to the right, so as the book tilts left it peeks out as
+   the book's right edge and can NEVER overlap the cover art. The rotated-wall
+   approach kept clipping the front, so we drop it entirely. */
+.book .cover3d .back3d{ display:none; }
+.book .cover3d .spine3d{ display:none; }
+/* page block: flat pages strip, one layer behind the cover, offset right. */
 .book .cover3d .pages3d{
-  position:absolute;top:2px;right:0;width:18px;height:calc(100% - 4px);
-  transform-origin:right center;transform:translateZ(9px) rotateY(90deg);
-  background:repeating-linear-gradient(90deg,#efe7d2,#efe7d2 1px,#d8cdad 2px,#efe7d2 3px);
-  border-radius:0 1px 1px 0;
+  position:absolute;top:2px;bottom:2px;right:-7px;width:12px;
+  transform:translateZ(2px);
+  background:repeating-linear-gradient(0deg,#efe7d2,#efe7d2 1px,#cabf9e 2px,#efe7d2 3px);
+  border-radius:0 2px 2px 0;
+  box-shadow:2px 0 4px rgba(60,40,20,0.25);
 }
 .book .cover3d::after{
-  content:'';position:absolute;left:8%;right:8%;bottom:-10px;height:14px;
-  background:radial-gradient(ellipse at center,rgba(60,40,20,0.30),transparent 72%);
-  filter:blur(2px);transform:rotateX(80deg);pointer-events:none;
+  content:'';position:absolute;left:8%;right:0;bottom:-8px;height:12px;
+  background:radial-gradient(ellipse at center,rgba(60,40,20,0.28),transparent 72%);
+  filter:blur(3px);transform:rotateX(80deg);pointer-events:none;
 }
 /* Bookplate frame variants (shop cosmetic) */
 .book-frame-ornate .book .cover,.book-frame-ornate .book .cover-placeholder{
@@ -464,12 +551,15 @@ header.top{display:none !important}
 .book-frame-gothic .book .cover,.book-frame-gothic .book .cover-placeholder{
   box-shadow:0 4px 10px rgba(60,40,20,0.20), 0 0 0 2px var(--ink), 0 0 0 6px var(--red-deep), 0 0 0 8px var(--ink);
 }
+.book-frame-peacock .book .cover,.book-frame-peacock .book .cover-placeholder{
+  box-shadow:0 4px 10px rgba(60,40,20,0.20), 0 0 0 3px #1a4e6e, 0 0 0 5px var(--tan-deep);
+}
 .book .info{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:space-between}
 .book .title{font-family:'EB Garamond',serif;font-weight:500;color:var(--ink-bright);font-size:24px;line-height:1.15;letter-spacing:-0.005em;margin-bottom:3px}
 .book .author{font-family:'EB Garamond',serif;font-style:italic;font-size:15px;color:var(--ink-dim)}
 .book .meta-row{font-size:12px;color:var(--ink-fade);margin-top:4px}
-.book .progress-bar{height:8px;background:transparent;position:relative;margin:14px 0 6px;border-top:1px solid var(--paper-line-strong);border-bottom:1px solid var(--paper-line-strong);border-radius:0;overflow:visible}
-.book .progress-bar .fill{position:absolute;top:2px;left:0;height:calc(100% - 4px);background:var(--tan);transition:width .4s ease}
+.book .progress-bar{height:10px;background:var(--paper-raise2);position:relative;margin:14px 0 6px;border:1px solid var(--paper-line-strong);border-radius:999px;overflow:hidden}
+.book .progress-bar .fill{position:absolute;top:0;left:0;height:100%;min-width:2px;background:linear-gradient(90deg,var(--tan-deep),var(--flourish));border-radius:999px;transition:width .4s ease}
 .book .progress-text{font-size:11px;color:var(--ink-dim);display:flex;justify-content:space-between;font-variant-numeric:tabular-nums}
 .book .actions{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
 .book .status-done{color:var(--blue);font-weight:500}
@@ -479,6 +569,51 @@ header.top{display:none !important}
   .book{padding:14px;gap:14px}
   .book .cover, .book .cover-placeholder{width:56px;height:84px}
   .book .title{font-size:16px}
+}
+
+/* ============================================================
+   MOBILE COMPATIBILITY (<=600px). Scoped so desktop is untouched.
+   ============================================================ */
+@media(max-width:600px){
+  /* Running head: let it wrap cleanly and never crowd the right edge. */
+  .running-head{gap:8px 12px;padding:14px 0 8px;margin-bottom:20px;font-size:11px}
+  .running-head .chapter{flex:1 1 100%;letter-spacing:0.18em}
+  .running-head .right{gap:12px;flex-wrap:wrap;justify-content:flex-start}
+  .running-head .folio{font-size:10px}
+
+  /* Book card: stack cover above the info so nothing is cramped, and give the
+     3D cover breathing room so the fore-edge strip can't run off the card. */
+  .book{gap:16px;padding:18px 2px}
+  .book .cover3d{width:64px;height:96px}
+  .book .title{font-size:20px;line-height:1.15}
+  .book .author{font-size:14px}
+
+  /* Action buttons: even grid so they never orphan a single button on a row. */
+  .book .actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+  .book .actions .btn.small{width:100%;padding:9px 10px;font-size:12px;text-align:center}
+
+  /* Section headers scale down so titles don't overflow. */
+  .section-head{flex-wrap:wrap;gap:4px}
+  .section-head h2{font-size:26px}
+
+  /* Contents rows: keep chapter name + folio on one tidy line. */
+  .contents-row{padding:15px 0}
+  .contents-row .contents-chapter-name{font-size:21px}
+  .contents-row .contents-num{font-size:16px;width:22px}
+
+  /* Stats grid + shop strips fit narrow screens. */
+  .grid{grid-template-columns:1fr 1fr}
+  .shop-strip{grid-template-columns:repeat(auto-fill, minmax(86px, 1fr));gap:8px}
+  .shop-category-signature{padding:18px 12px 16px}
+
+  /* Reading-desk hero + CTA never overflow. */
+  .primary-cta{width:100%;max-width:320px}
+}
+
+/* Very small phones: single-column action buttons. */
+@media(max-width:360px){
+  .book .actions{grid-template-columns:1fr}
+  .grid{grid-template-columns:1fr}
 }
 
 /* ── Search dropdown ──────────────────────────── */
@@ -531,6 +666,28 @@ header.top{display:none !important}
 .modal label{display:block;font-size:12px;color:var(--ink-dim);margin-bottom:6px;font-weight:500}
 .modal .actions{display:flex;gap:10px;margin-top:24px}
 .modal .actions .btn{flex:1}
+
+/* ── Profile modal ───────────────────────── */
+.profile-modal{max-width:460px;max-height:88vh;overflow-y:auto}
+.profile-head{display:flex;align-items:center;gap:16px;margin-bottom:22px}
+.profile-avatar{width:58px;height:58px;flex:0 0 auto;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'EB Garamond',serif;font-size:28px;font-weight:600;color:var(--paper);background:linear-gradient(135deg,var(--accent),var(--ink));border:1px solid var(--ink)}
+.profile-id .profile-name{font-family:'EB Garamond',serif;font-size:26px;font-weight:500;color:var(--ink-bright);line-height:1.1}
+.profile-id .profile-handle{font-size:14px;color:var(--accent);font-weight:500;margin:2px 0 6px}
+.profile-section-label{font-family:'Geist',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-dim);margin:20px 0 10px}
+.profile-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.profile-stat{border:1px solid var(--paper-line);border-radius:var(--radius);padding:12px 14px;background:var(--paper-raise)}
+.profile-stat .v{font-family:'Geist',sans-serif;font-size:22px;font-weight:600;color:var(--ink-bright);font-variant-numeric:tabular-nums;line-height:1}
+.profile-stat .k{font-size:11px;color:var(--ink-dim);letter-spacing:0.04em;text-transform:uppercase;margin-top:5px}
+.friend-code-row{display:flex;gap:10px;align-items:center}
+.friend-code{flex:1;font-family:'Geist',sans-serif;font-size:18px;font-weight:600;color:var(--accent);background:var(--paper-raise);border:1px dashed var(--paper-line-strong);border-radius:var(--radius);padding:11px 14px;letter-spacing:0.02em}
+.profile-hint{font-size:12px;color:var(--ink-fade);font-style:italic;margin-top:6px}
+.profile-account{font-size:13px;color:var(--ink-dim)}
+.profile-account .row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--paper-line)}
+.profile-account .row:last-child{border-bottom:none}
+.profile-account .row .lbl{color:var(--ink-dim)}
+.profile-account .row .val{color:var(--ink-bright);font-weight:500}
+#who-name{cursor:pointer}
+#who-name:hover{opacity:0.82}
 
 /* ── Misc ──────────────────────────────────────── */
 .empty{padding:56px 20px;text-align:center;color:var(--ink-dim);border:none;border-radius:0;font-style:italic;font-family:'EB Garamond',serif;font-size:22px;line-height:1.4}
@@ -611,7 +768,7 @@ header.top{display:none !important}
 :root{
   --leaf-shadow:rgba(20,15,10,0.28);
 }
-body.dark{
+body.paper-dark{
   --leaf-shadow:rgba(0,0,0,0.55);
 }
 .tab{will-change:auto}
@@ -621,7 +778,7 @@ body.dark{
 .tab.uf-sliding{
   background:var(--paper);
 }
-body.dark .tab.uf-sliding{
+body.paper-dark .tab.uf-sliding{
   background:var(--paper);
 }
 @keyframes uf-pulse{
@@ -760,7 +917,7 @@ body.dark .tab.uf-sliding{
 
 /* ── Guild card hover glow ─────────────────────── */
 .guild-card{transition:box-shadow .18s ease,border-left-color .15s}
-.guild-card:hover{box-shadow:0 2px 18px rgba(107,31,47,0.12)}
+.guild-card:hover{box-shadow:0 2px 18px rgba(60,40,20,0.12)}
 
 /* ── Leaderboard rank glint ───────────────────── */
 @keyframes rankGlint{
@@ -788,8 +945,10 @@ body.dark .tab.uf-sliding{
 }
 
 /* ── Shop item card tilt ──────────────────────── */
-.shop-item{transition:transform .15s ease,box-shadow .15s ease,border-color .15s}
-.shop-item:hover{transform:rotate(0.5deg) translateY(-2px);box-shadow:0 6px 18px rgba(60,40,20,0.14)}
+.shop-item{transition:transform .18s ease, box-shadow .18s ease, border-color .15s}
+.shop-item::before{content:'';position:absolute;left:0;right:0;top:0;bottom:-10px;z-index:0}
+.shop-item > *{position:relative;z-index:1}
+.shop-item:hover{transform:translateY(-6px);box-shadow:0 10px 22px rgba(60,40,20,0.16)}
 
 /* ── Friends avatar hover ──────────────────────── */
 .friend-avatar{transition:background .3s ease,box-shadow .2s ease}
@@ -903,14 +1062,17 @@ body.dark .tab.uf-sliding{
 .running-head .chapter{font-variant:small-caps;letter-spacing:0.22em;font-weight:500;color:var(--ink-dim)}
 .running-head .right{display:flex;align-items:baseline;gap:14px}
 .running-head .folio{font-family:'Geist',sans-serif;font-size:11px;color:var(--ink-fade);letter-spacing:0.08em;font-variant-numeric:tabular-nums}
+/* 'contents' label in the contents running-head matches the chapter labels
+   (EB Garamond small-caps) instead of the Geist/Arial folio numerals. */
+.running-head .folio-label{font-family:'EB Garamond',serif;font-variant:small-caps;text-transform:none;letter-spacing:0.18em;font-size:12px}
 .running-head .close-book{background:none;border:none;font:inherit;color:var(--ink-fade);
   cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--paper-line-strong);
   font-variant:small-caps;letter-spacing:0.14em;font-size:11px;padding:0}
-.running-head .close-book:hover{color:var(--red);text-decoration-color:var(--red)}
+.running-head .close-book:hover{color:var(--flourish);text-decoration-color:var(--flourish)}
 .running-head .back-contents{background:none;border:none;font:inherit;color:var(--ink-fade);
   cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--paper-line);
   font-variant:small-caps;letter-spacing:0.14em;font-size:11px;padding:0}
-.running-head .back-contents:hover{color:var(--blue);text-decoration-color:var(--blue)}
+.running-head .back-contents:hover{color:var(--flourish);text-decoration-color:var(--flourish)}
 
 /* ── Contents page ───────────────────────────────── */
 #tab-contents{
@@ -936,7 +1098,7 @@ body.dark .tab.uf-sliding{
   padding:18px 0;
 }
 .contents-row:last-child{border-bottom:none}
-.contents-row:hover .contents-chapter-name{color:var(--accent)}
+.contents-row:hover .contents-chapter-name{color:var(--flourish)}
 .contents-row .contents-num{
   font-family:'EB Garamond',serif;font-style:italic;font-size:18px;
   color:var(--ink-fade);width:28px;flex-shrink:0;
@@ -952,8 +1114,8 @@ body.dark .tab.uf-sliding{
   min-width:20px;
 }
 .contents-row .contents-folio{
-  font-family:'Geist',sans-serif;font-size:11px;color:var(--ink-fade);
-  font-variant-numeric:tabular-nums;white-space:nowrap;
+  font-family:'EB Garamond',serif;font-style:italic;font-size:15px;color:var(--ink-fade);
+  font-variant-numeric:oldstyle-nums;white-space:nowrap;letter-spacing:0.02em;
 }
 
 /* ── Debug chip ───────────────────────────────────── */
@@ -1060,11 +1222,12 @@ body.dark .tab.uf-sliding{
 }
 
 /* --- Guilds (tab-theme-heraldic) ---
-   Wine-red accents, bold serif headings, wax-seal/banner feel.
-*/
+   Bold serif headings, wax-seal/banner feel. The accent lines now follow the
+   equipped INK colour (--flourish) instead of a hardcoded wine/coral, so they
+   match everything else and adapt to any background. */
 .tab-theme-heraldic{
-  --local-accent:#6b1f2f;
-  --local-accent-dim:rgba(107,31,47,0.12);
+  --local-accent:var(--flourish);
+  --local-accent-dim:color-mix(in srgb, var(--flourish) 14%, transparent);
 }
 .tab-theme-heraldic .running-head{
   border-bottom:2px solid var(--local-accent);
@@ -1073,10 +1236,13 @@ body.dark .tab.uf-sliding{
   font-size:36px;font-weight:700;letter-spacing:0.04em;
   text-transform:uppercase;font-variant:normal;
   border-bottom:3px solid var(--local-accent);padding-bottom:6px;
-  color:var(--local-accent);
+  /* Use the theme's ink colour (like every other tab) so headings stay legible
+     on any background, instead of a hardcoded wine/coral that looked wrong on
+     dark papers. The wine accent is kept only for the decorative underline. */
+  color:var(--ink-bright);
 }
 .tab-theme-heraldic .guild-card{
-  border-bottom:1px solid rgba(107,31,47,0.18);
+  border-bottom:1px solid var(--paper-line);
   padding:20px 0 20px 14px;
   border-left:4px solid transparent;
   transition:border-left-color .15s;
@@ -1085,7 +1251,7 @@ body.dark .tab.uf-sliding{
   border-left-color:var(--local-accent);
 }
 .tab-theme-heraldic .guild-card .g-name{
-  color:var(--local-accent);font-size:24px;font-weight:700;
+  color:var(--ink-bright);font-size:24px;font-weight:700;
 }
 .tab-theme-heraldic .guild-card .g-meta .h{
   color:var(--local-accent);
@@ -1094,7 +1260,7 @@ body.dark .tab.uf-sliding{
 .heraldic-sigil{
   display:block;width:64px;height:64px;margin:0 auto 16px;
   border-radius:50%;border:3px double var(--local-accent);
-  background:rgba(107,31,47,0.06);
+  background:var(--local-accent-dim);
   position:relative;
 }
 .heraldic-sigil::after{
@@ -1103,7 +1269,7 @@ body.dark .tab.uf-sliding{
   display:flex;
 }
 .heraldic-empty{
-  text-align:center;padding:40px 20px;color:rgba(107,31,47,0.7);
+  text-align:center;padding:40px 20px;color:var(--ink-dim);
   font-family:'EB Garamond',serif;font-style:italic;font-size:18px;
 }
 
@@ -1115,12 +1281,12 @@ body.dark .tab.uf-sliding{
   --local-silver:#8a8580;
   --local-bronze:#7a4a1e;
 }
-.tab-theme-scoreboard .running-head{
-  font-family:'Geist',sans-serif;letter-spacing:0.10em;
-}
+/* League running-head matches every other tab: EB Garamond small-caps, not
+   the Geist/sans (Arial-looking) treatment. Only the leaderboard BODY keeps
+   the monospace/sans scoreboard feel. */
 .tab-theme-scoreboard .running-head .chapter{
-  font-variant:normal;text-transform:uppercase;font-size:11px;letter-spacing:0.22em;
-  font-family:'Geist',sans-serif;
+  font-family:'EB Garamond',serif;font-variant:small-caps;text-transform:none;
+  font-size:inherit;letter-spacing:0.22em;font-weight:500;
 }
 .tab-theme-scoreboard .section-head h2{
   font-family:'Geist',sans-serif;font-weight:700;font-size:22px;
@@ -1191,15 +1357,26 @@ body.dark .tab.uf-sliding{
   color:var(--local-market);margin-bottom:14px;padding-bottom:8px;
   border-bottom:1px solid var(--tan-deep);letter-spacing:0.01em;
 }
-.shop-strip{
-  display:flex;gap:10px;overflow-x:auto;padding-bottom:8px;
-  -webkit-overflow-scrolling:touch;
+/* Signature (flagship) section: set apart at the bottom of the Market. */
+.shop-category-signature{
+  margin-top:12px;padding:22px 18px 20px;
+  border:1px solid var(--paper-line-strong);border-radius:var(--radius-lg);
+  background:linear-gradient(160deg, rgba(44,75,110,0.10), transparent 70%);
 }
-.shop-strip::-webkit-scrollbar{height:4px}
-.shop-strip::-webkit-scrollbar-track{background:var(--paper-raise2)}
-.shop-strip::-webkit-scrollbar-thumb{background:var(--tan-deep);border-radius:2px}
+.shop-category-signature .shop-category-head{
+  border-bottom-color:var(--paper-line-strong);
+}
+.shop-signature-sub{
+  font-family:'EB Garamond',serif;font-style:italic;color:var(--ink-dim);
+  font-size:14px;margin:-6px 0 14px;
+}
+.shop-strip{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(96px, 1fr));
+  gap:10px;padding-bottom:8px;
+}
 .shop-item{
-  flex:0 0 120px;
+  min-width:0;
   border:1px solid var(--paper-line-strong);
   background:var(--paper-raise);
   padding:14px 12px;
@@ -1227,6 +1404,12 @@ body.dark .tab.uf-sliding{
 .shop-item .item-action{
   font-family:'Geist',sans-serif;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;
   font-weight:600;padding:4px 8px;border:1px solid currentColor;margin-top:2px;
+}
+/* 'Default' note sits BELOW the action button so it never pushes the Equip
+   row out of alignment with the other cards. */
+.shop-item .item-note{
+  font-family:'Geist',sans-serif;font-size:9px;letter-spacing:0.10em;text-transform:uppercase;
+  color:var(--ink-fade);margin-top:4px;
 }
 .shop-item.equipped .item-action{color:var(--red)}
 .shop-item.owned:not(.equipped) .item-action{color:var(--blue)}
@@ -1295,131 +1478,116 @@ body.dark .tab.uf-sliding{
    the dark leather paper. Lift each to a warm, legible variant that keeps
    the tab's character (wine guilds, gold league, earthy market, blue
    companions) while reading clearly on dark. */
-body.dark .tab-theme-heraldic{
-  --local-accent:#d07a68;
-  --local-accent-dim:rgba(208,122,104,0.16);
-}
-body.dark .tab-theme-heraldic .guild-card{border-bottom-color:rgba(208,122,104,0.22)}
-body.dark .tab-theme-heraldic .heraldic-sigil{background:rgba(208,122,104,0.10)}
-body.dark .tab-theme-heraldic .heraldic-empty{color:rgba(208,122,104,0.85)}
+/* Guild accents follow --flourish on dark backgrounds too (no coral override).
+   --flourish already has a brighter dark-background shade, so it stays legible. */
+body.paper-dark .tab-theme-heraldic .guild-card{border-bottom-color:var(--paper-line)}
 
-body.dark .tab-theme-scoreboard{
+body.paper-dark .tab-theme-scoreboard{
   --local-gold:#d6b25e;
   --local-silver:#b8b3ab;
   --local-bronze:#c07a45;
 }
-body.dark .tab-theme-scoreboard .lb-row.header{background:rgba(214,178,94,0.10)}
-body.dark .tab-theme-scoreboard .lb-row:nth-child(2){background:rgba(214,178,94,0.08)}
-body.dark .tab-theme-scoreboard .lb-row:nth-child(3){background:rgba(184,179,171,0.07)}
-body.dark .tab-theme-scoreboard .lb-row:nth-child(4){background:rgba(192,122,69,0.07)}
+body.paper-dark .tab-theme-scoreboard .lb-row.header{background:rgba(214,178,94,0.10)}
+body.paper-dark .tab-theme-scoreboard .lb-row:nth-child(2){background:rgba(214,178,94,0.08)}
+body.paper-dark .tab-theme-scoreboard .lb-row:nth-child(3){background:rgba(184,179,171,0.07)}
+body.paper-dark .tab-theme-scoreboard .lb-row:nth-child(4){background:rgba(192,122,69,0.07)}
 
-body.dark .tab-theme-market{
+body.paper-dark .tab-theme-market{
   --local-market:#c9ae7d;
   --local-market-bg:rgba(201,174,125,0.08);
 }
-body.dark .tab-theme-market .running-head{border-bottom-color:rgba(201,174,125,0.30)}
+body.paper-dark .tab-theme-market .running-head{border-bottom-color:rgba(201,174,125,0.30)}
 
-body.dark .tab-theme-social{
+body.paper-dark .tab-theme-social{
   --local-social:#8fb3d8;
 }
-body.dark .tab-theme-social .section-head h2{border-bottom-color:rgba(143,179,216,0.28)}
-body.dark .tab-theme-social .friend-avatar{border-color:rgba(143,179,216,0.28)}
-body.dark .my-handle-card{border-color:rgba(143,179,216,0.28)}
+body.paper-dark .tab-theme-social .section-head h2{border-bottom-color:rgba(143,179,216,0.28)}
+body.paper-dark .tab-theme-social .friend-avatar{border-color:rgba(143,179,216,0.28)}
+body.paper-dark .my-handle-card{border-color:rgba(143,179,216,0.28)}
 
-/* ══ SHOP THEME OVERRIDES applied to <body> via data-* attributes ══ */
-/* Ink colour themes */
-body[data-ink="sepia"] .book-prose, body[data-ink="sepia"] .book .title,
-body[data-ink="sepia"] .book .author{color:#5c3d1e}
-body[data-ink="sepia"] .running-head .chapter{color:rgba(92,61,30,0.7)}
-body[data-ink="sepia"] .page-footer .fleur{color:#7a5228}
-body[data-ink="sepia"] .drop-cap::first-letter{color:#7a5228}
-body[data-ink="sepia"] .section-head h2{color:#3d2510}
+/* ══ INK (decorative accent) ════════════════════════════════════════
+   Ink is ONE thing: the colour of decorative flourishes + the hover colour of
+   major titles. It never touches body text, folio titles, or anything you need
+   to read — those stay governed by the background so contrast is always safe.
 
-body[data-ink="vermilion"] .section-head h2{color:#8b2020}
-body[data-ink="vermilion"] .drop-cap::first-letter{color:#8b2020}
-body[data-ink="vermilion"] .tabs button.active{color:#8b2020;border-bottom-color:#8b2020}
-body[data-ink="vermilion"] .page-footer .fleur{color:#8b2020}
+   Each ink defines --flourish. To stay legible on any paper we pick the shade
+   by background family: LIGHT papers use the deep shade (default here), DARK
+   papers (body.paper-dark) use the brighter shade. Same hue, adjusted shade.
 
-body[data-ink="aquamarine"] .section-head h2{color:#1a6b6b}
-body[data-ink="aquamarine"] .drop-cap::first-letter{color:#1a6b6b}
-body[data-ink="aquamarine"] .tabs button.active{color:#1a6b6b;border-bottom-color:#1a6b6b}
-body[data-ink="aquamarine"] .page-footer .fleur{color:#1a6b6b}
+   Iron Gall (default/free) = no coloured accent; flourishes use the theme's
+   own warm gold so "no ink" still looks intentional. */
+:root{ --flourish: var(--tan-deep); }            /* Iron Gall default (light) */
+body.paper-dark{ --flourish: var(--tan-deep); }   /* Iron Gall default (dark)  */
 
-body[data-ink="peacock"] .section-head h2{color:#1a4e6e}
-body[data-ink="peacock"] .drop-cap::first-letter{color:#1a4e6e}
-body[data-ink="peacock"] .tabs button.active{color:#1a4e6e;border-bottom-color:#1a4e6e}
-body[data-ink="peacock"] .page-footer .fleur{color:#1a4e6e}
+body[data-ink="sepia"]{ --flourish:#7a5228; }
+body.paper-dark[data-ink="sepia"]{ --flourish:#c99a5e; }
+
+body[data-ink="vermilion"]{ --flourish:#8b2020; }
+body.paper-dark[data-ink="vermilion"]{ --flourish:#e0705a; }
+
+body[data-ink="aquamarine"]{ --flourish:#1a6b6b; }
+body.paper-dark[data-ink="aquamarine"]{ --flourish:#5fc4c4; }
+
+body[data-ink="peacock"]{ --flourish:#1a4e6e; }
+body.paper-dark[data-ink="peacock"]{ --flourish:#6fa8d4; }
+
+body[data-ink="sage"]{ --flourish:#3f6b3a; }
+body.paper-dark[data-ink="sage"]{ --flourish:#8fc07f; }
+
+/* ── Where ink applies (consistent across all inks) ───────────────────── */
+/* three-star fleurons + page-footer ornament */
+.fleuron{color:var(--flourish)}
+.page-footer .fleur{color:var(--flourish)}
+/* drop caps / first-letter flourishes */
+.drop-cap::first-letter{color:var(--flourish)}
+/* section-header underline accents (per-tab local accent -> ink) */
+.section-head h2{border-bottom-color:var(--flourish)}
+/* hover colour of MAJOR titles: TOC chapter names + book titles + guild names */
+.contents-row:hover .contents-chapter-name{color:var(--flourish)}
+.book:hover .title{color:var(--flourish)}
+.search-result:hover .title{color:var(--flourish)}
+.guild-card:hover .g-name{color:var(--flourish)}
+/* active chapter / tab marker */
+.tabs button.active{color:var(--flourish);border-bottom-color:var(--flourish)}
 
 /* Paper themes */
-body[data-paper="parchment"]{background:#e8d8a8 !important}
-body[data-paper="parchment"]{--paper:#e8d8a8;--paper-raise:#f0e4b8;--paper-raise2:#ddd0a0}
+/* Paper cosmetics: set --paper vars AND paint html+body directly so the
+   background actually repaints (CSS vars set on body don't cascade to html,
+   which is why equipping used to look like nothing happened). */
+/* Parchment book-cover splash keeps its warm leather cover gradient. */
 body[data-paper="parchment"] .book-cover{background:radial-gradient(circle at 50% 50%, #7a2e1e 0%,#5c2314 60%,#3d180a 100%) !important}
 
-body[data-paper="vellum"]{--paper:#f0e9d8;--paper-raise:#f8f2e4;--paper-raise2:#e8e0cc}
-body[data-paper="vellum"] html,body[data-paper="vellum"] body{background:var(--paper)}
+/* Dark backgrounds: soften ambient overlay + keep prose legible. */
+body.paper-dark .book-prose{color:var(--ink)}
+body.paper-dark::before{opacity:0.3}
 
-/* Midnight dark mode */
-body[data-paper="midnight"]{
-  --paper:#141210;--paper-raise:#1e1b17;--paper-raise2:#242019;
-  --paper-line:rgba(245,238,221,0.10);--paper-line-strong:rgba(245,238,221,0.20);
-  --ink:#e8ddc8;--ink-bright:#f5eedd;--ink-dim:rgba(232,221,200,0.62);--ink-fade:rgba(232,221,200,0.38);
-  --ink-ghost:rgba(232,221,200,0.06);
-  background:#141210;color:#e8ddc8;
+/* Monogram cosmetics. The PRIMARY slot is the large mark ABOVE the title on
+   the opening cover (.cover-monogram). The bottom colophon stays as the fixed
+   three-star decoration. The equipped glyph is injected via a CSS variable so
+   any Unicode symbol works; \FE0E forces text (non-emoji) rendering so it
+   matches the engraved serif aesthetic instead of a colour emoji. */
+.cover-monogram{
+  font-family:'EB Garamond',serif;
+  font-size:clamp(56px,14vw,104px);line-height:1;
+  color:rgba(245,238,221,0.92);
+  text-shadow:0 2px 12px rgba(0,0,0,0.45);
+  margin:0 auto 6px;user-select:none;
 }
-body[data-paper="midnight"] .book-prose{color:#e8ddc8}
-body[data-paper="midnight"]::before{opacity:0.3}
-
-/* Dark mode wins over equipped light "paper" cosmetics: keep the leather
-   night-reading background and re-tint the ink cosmetics so they stay legible
-   against it rather than sitting near-black on near-black. */
-body.dark[data-paper="parchment"],
-body.dark[data-paper="vellum"]{
-  --paper:#0f0d0a;--paper-raise:#181510;--paper-raise2:#201c15;
-  --paper-line:rgba(232,223,201,0.12);--paper-line-strong:rgba(232,223,201,0.26);
-  background:var(--paper) !important;
-}
-body.dark[data-paper="parchment"] html,body.dark[data-paper="parchment"] body,
-body.dark[data-paper="vellum"] html,body.dark[data-paper="vellum"] body{background:var(--paper)}
-
-body.dark[data-ink="sepia"] .book-prose,
-body.dark[data-ink="sepia"] .book .title,
-body.dark[data-ink="sepia"] .book .author{color:#d8b98a}
-body.dark[data-ink="sepia"] .running-head .chapter{color:rgba(216,185,138,0.75)}
-body.dark[data-ink="sepia"] .page-footer .fleur,
-body.dark[data-ink="sepia"] .drop-cap::first-letter{color:#e0c495}
-body.dark[data-ink="sepia"] .section-head h2{color:#e6cfa2}
-
-body.dark[data-ink="vermilion"] .section-head h2,
-body.dark[data-ink="vermilion"] .drop-cap::first-letter,
-body.dark[data-ink="vermilion"] .page-footer .fleur{color:#e08065}
-body.dark[data-ink="vermilion"] .tabs button.active{color:#e08065;border-bottom-color:#e08065}
-
-body.dark[data-ink="aquamarine"] .section-head h2,
-body.dark[data-ink="aquamarine"] .drop-cap::first-letter,
-body.dark[data-ink="aquamarine"] .page-footer .fleur{color:#5fb8b8}
-body.dark[data-ink="aquamarine"] .tabs button.active{color:#5fb8b8;border-bottom-color:#5fb8b8}
-
-body.dark[data-ink="peacock"] .section-head h2,
-body.dark[data-ink="peacock"] .drop-cap::first-letter,
-body.dark[data-ink="peacock"] .page-footer .fleur{color:#6fa3ca}
-body.dark[data-ink="peacock"] .tabs button.active{color:#6fa3ca;border-bottom-color:#6fa3ca}
-
-/* Monogram cosmetics on the cover splash */
-body[data-monogram="fleur"] #book-cover-splash .colophon::before{content:''}
-body[data-monogram="star"] #book-cover-splash .colophon::before{content:'*'}
-body[data-monogram="compass"] #book-cover-splash .colophon::before{content:'N'}
-body[data-monogram="anchor"] #book-cover-splash .colophon::before{content:'A'}
+.cover-monogram::before{content:var(--monogram-glyph, '&')}
+#book-cover-splash .colophon::before{content:'\2733 \2733 \2733'}
+body[data-monogram="fleur"]{--monogram-glyph:'\269C\FE0E'}
+body[data-monogram="star"]{--monogram-glyph:'\2734\FE0E'}
+body[data-monogram="compass"]{--monogram-glyph:'\2725\FE0E'}
+body[data-monogram="cross"]{--monogram-glyph:'\2720\FE0E'}
 
 /* ── Utility ─────────────────────────────────────── */
 .hidden{display:none !important}
 </style>
 </head>
 <body>
-<script>if(document.documentElement.getAttribute('data-preload-dark'))document.body.classList.add('dark');</script>
-<!-- Dark mode toggle -->
-<button id="dark-toggle" class="dark-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
-  <svg viewBox="0 0 24 24" aria-hidden="true"><path class="icon-sun" d="M12 3v2M12 19v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M3 12h2M19 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/><circle class="icon-sun" cx="12" cy="12" r="4"/><path class="icon-moon" style="display:none" d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
-</button>
+<script>(function(){try{var p=document.documentElement.getAttribute('data-preload-paper');if(p){document.body.setAttribute('data-paper',p==='cream'?'':p);if(['midnight','navy','maroon','forest','abyssal','aurora','starfall'].indexOf(p)>=0)document.body.classList.add('paper-dark');}}catch(_){}})();</script>
+<!-- Dark/light toggle removed: theme is now driven entirely by the equipped
+     background (see the Market). First-load default follows OS colour-scheme. -->
 <!-- Ambient dust motes -->
 <div class="dust-mote m1" aria-hidden="true"></div>
 <div class="dust-mote m2" aria-hidden="true"></div>
@@ -1438,7 +1606,7 @@ body[data-monogram="anchor"] #book-cover-splash .colophon::before{content:'A'}
       </div>
       <div class="cover-mid">
         <div class="cover-mark-wrap">
-          <img src="/images/ukufunda/mark.svg" alt="Ukufunda" style="width:min(160px,40vw);height:auto;filter:brightness(0) invert(1) opacity(0.90) drop-shadow(0 2px 12px rgba(0,0,0,0.45));display:block;margin:0 auto">
+          <div class="cover-monogram" aria-hidden="true"></div>
           <div class="cover-wordmark">Ukufunda</div>
           <div class="cover-tagline">reading, ranked</div>
         </div>
@@ -1480,13 +1648,13 @@ body[data-monogram="anchor"] #book-cover-splash .colophon::before{content:'A'}
     </div>
     <div class="cover-mid">
       <div class="cover-mark-wrap">
-        <img src="/images/ukufunda/mark.svg" alt="Ukufunda" style="width:min(160px,40vw);height:auto;filter:brightness(0) invert(1) opacity(0.90) drop-shadow(0 2px 12px rgba(0,0,0,0.45));display:block;margin:0 auto">
+        <div class="cover-monogram" aria-hidden="true"></div>
         <div class="cover-wordmark">Ukufunda</div>
         <div class="cover-tagline">reading, ranked</div>
       </div>
     </div>
     <div class="cover-bot">
-      <div class="colophon">*</div>
+      <div class="colophon"></div>
     </div>
     <div class="tap-hint">tap to open</div>
   </div>
@@ -1497,6 +1665,7 @@ body[data-monogram="anchor"] #book-cover-splash .colophon::before{content:'A'}
       <div class="who">
         <span id="who-name"></span>
         <span id="who-tier"></span>
+        <button id="account-btn" onclick="openAccountModal()">edit account</button>
         <button id="close-book-btn">close book</button>
         <button id="signout-btn">sign out</button>
       </div>
@@ -1507,9 +1676,9 @@ body[data-monogram="anchor"] #book-cover-splash .colophon::before{content:'A'}
     <!-- CONTENTS PAGE -->
     <div id="tab-contents" class="tab hidden">
       <div class="running-head">
-        <span class="chapter"><img src="/images/ukufunda/mark.svg" alt="" class="brand-mark">Ukufunda</span>
+        <span class="chapter">Ukufunda</span>
         <span class="right">
-          <span class="folio">contents</span>
+          <span class="folio folio-label">contents</span>
           <button class="close-book" onclick="showCoverSplash()">close book</button>
         </span>
       </div>
@@ -1520,31 +1689,37 @@ body[data-monogram="anchor"] #book-cover-splash .colophon::before{content:'A'}
           <span class="contents-num">I</span>
           <span class="contents-chapter-name">The Library</span>
           <span class="contents-dots"></span>
-          <span class="contents-folio">fol. i</span>
+          <span class="contents-folio">fol. I</span>
+        </li>
+        <li class="contents-row" onclick="switchTab('read',{direction:'left'})">
+          <span class="contents-num">II</span>
+          <span class="contents-chapter-name">The Reading Desk</span>
+          <span class="contents-dots"></span>
+          <span class="contents-folio">fol. II</span>
         </li>
         <li class="contents-row" onclick="switchTab('guilds',{direction:'left'})">
-          <span class="contents-num">II</span>
+          <span class="contents-num">III</span>
           <span class="contents-chapter-name">Guilds</span>
           <span class="contents-dots"></span>
-          <span class="contents-folio">fol. ii</span>
+          <span class="contents-folio">fol. III</span>
         </li>
         <li class="contents-row" onclick="switchTab('leaderboard',{direction:'left'})">
-          <span class="contents-num">III</span>
+          <span class="contents-num">IV</span>
           <span class="contents-chapter-name">The League</span>
           <span class="contents-dots"></span>
-          <span class="contents-folio">fol. iii</span>
+          <span class="contents-folio">fol. IV</span>
         </li>
         <li class="contents-row" onclick="switchTab('shop',{direction:'left'})">
-          <span class="contents-num">IV</span>
+          <span class="contents-num">V</span>
           <span class="contents-chapter-name">The Market</span>
           <span class="contents-dots"></span>
-          <span class="contents-folio">fol. iv</span>
+          <span class="contents-folio">fol. V</span>
         </li>
         <li class="contents-row" onclick="switchTab('friends',{direction:'left'})">
-          <span class="contents-num">V</span>
+          <span class="contents-num">VI</span>
           <span class="contents-chapter-name">Companions</span>
           <span class="contents-dots"></span>
-          <span class="contents-folio">fol. v</span>
+          <span class="contents-folio">fol. VI</span>
         </li>
       </ul>
       <div class="page-footer"><span class="fleur"></span><span class="num">* * *</span></div>
@@ -1553,10 +1728,10 @@ body[data-monogram="anchor"] #book-cover-splash .colophon::before{content:'A'}
     <!-- LIBRARY + HOME TAB (merged) -->
     <div id="tab-books" class="tab tab-theme-library">
       <div class="running-head">
-        <span class="chapter"><img src="/images/ukufunda/mark.svg" alt="" class="brand-mark">The Library</span>
+        <span class="chapter">The Library</span>
         <span class="right">
           <button class="back-contents" onclick="showContents()">contents</button>
-          <span class="folio">fol. i</span>
+          <span class="folio">fol. I</span>
           <button class="close-book" onclick="showCoverSplash()">close book</button>
         </span>
       </div>
@@ -1572,12 +1747,30 @@ body[data-monogram="anchor"] #book-cover-splash .colophon::before{content:'A'}
         <h2>Your library</h2>
         <span class="hint" id="lib-hint"></span>
       </div>
+      <div style="font-family:'EB Garamond',serif;font-style:italic;color:var(--ink-dim);font-size:14px;margin:-6px 0 14px">
+        Browse and manage every book you own. To read and track progress, open the Reading Desk.
+      </div>
       <div id="books-list"></div>
 
-      <div class="fleuron"></div>
+      <div style="text-align:center;margin-top:24px">
+        <button class="btn subtle" onclick="switchTab('read',{direction:'left'})">Go to the Reading Desk →</button>
+      </div>
+
+      <div class="page-footer"><span class="fleur"></span><span class="num">— i —</span></div>
+    </div>
+
+    <!-- READING DESK TAB (currently reading + XP/stats + session CTA) -->
+    <div id="tab-read" class="tab hidden">
+      <div class="running-head">
+        <span class="chapter">The Reading Desk</span>
+        <span class="right">
+          <button class="back-contents" onclick="showContents()">contents</button>
+          <span class="folio">fol. II</span>
+        </span>
+      </div>
 
       <!-- Hero XP wax seal -->
-      <div style="text-align:center;padding:28px 0 0;border-top:1px solid var(--paper-line)">
+      <div style="text-align:center;padding:8px 0 0">
         <div class="xp-hero">
           <div class="xp-seal tier-bronze" id="xp-seal">
             <span class="seal-inner" id="seal-letter">B</span>
@@ -1632,7 +1825,7 @@ body[data-monogram="anchor"] #book-cover-splash .colophon::before{content:'A'}
         </div>
       </div>
 
-      <div class="page-footer"><span class="fleur"></span><span class="num">— i —</span></div>
+      <div class="page-footer"><span class="fleur"></span><span class="num">— ii —</span></div>
     </div>
 
     <!-- GUILDS TAB -->
@@ -1641,7 +1834,7 @@ body[data-monogram="anchor"] #book-cover-splash .colophon::before{content:'A'}
         <span class="chapter">Guilds</span>
         <span class="right">
           <button class="back-contents" onclick="showContents()">contents</button>
-          <span class="folio">fol. ii</span>
+          <span class="folio">fol. III</span>
           <button class="close-book" onclick="showCoverSplash()">close book</button>
         </span>
       </div>
@@ -1670,6 +1863,12 @@ body[data-monogram="anchor"] #book-cover-splash .colophon::before{content:'A'}
             <label style="display:block;font-size:12px;color:var(--ink-dim);margin-bottom:6px">Description (optional)</label>
             <input id="guild-new-desc" type="text" maxlength="240" placeholder="What is this guild for?">
           </div>
+          <div class="field" style="margin-bottom:14px">
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-dim);cursor:pointer">
+              <input id="guild-new-public" type="checkbox" style="width:auto">
+              <span>Public guild — anyone can find and join it from Browse guilds. Leave unchecked to keep it private (join by handle only).</span>
+            </label>
+          </div>
           <div style="display:flex;gap:10px">
             <button class="btn ghost" onclick="toggleGuildCreate()">Cancel</button>
             <button class="btn" style="width:auto" onclick="createGuild()">Create</button>
@@ -1687,9 +1886,12 @@ body[data-monogram="anchor"] #book-cover-splash .colophon::before{content:'A'}
         </div>
 
         <div class="section-head">
-          <h2>Directory</h2>
-          <span class="hint">recently created</span>
+          <h2>Browse guilds</h2>
+          <span class="hint">open guilds you can join</span>
         </div>
+        <p style="font-family:'EB Garamond',serif;font-style:italic;color:var(--ink-dim);font-size:14px;margin:-6px 0 12px">
+          Public guilds anyone can join. Private guilds only appear here if you have their handle.
+        </p>
         <div id="guild-directory"></div>
       </div>
 
@@ -1706,12 +1908,12 @@ body[data-monogram="anchor"] #book-cover-splash .colophon::before{content:'A'}
         <span class="chapter">The League</span>
         <span class="right">
           <button class="back-contents" onclick="showContents()">contents</button>
-          <span class="folio">fol. iii</span>
+          <span class="folio">fol. IV</span>
           <button class="close-book" onclick="showCoverSplash()">close book</button>
         </span>
       </div>
 
-      <p style="margin-bottom:20px;color:var(--ink-dim);font-size:13px;font-family:'Geist',sans-serif;letter-spacing:0.02em;line-height:1.5">
+      <p style="margin-bottom:20px;color:var(--ink-dim);font-size:17px;font-family:'EB Garamond',serif;font-style:italic;line-height:1.55">
         Readers ranked by season XP. One point per page, with bonuses for long streaks and finished books.
         Friends shows only those you have added. Global shows everyone.
       </p>
@@ -1740,7 +1942,7 @@ body[data-monogram="anchor"] #book-cover-splash .colophon::before{content:'A'}
         <span class="chapter">The Market</span>
         <span class="right">
           <button class="back-contents" onclick="showContents()">contents</button>
-          <span class="folio">fol. iv</span>
+          <span class="folio">fol. V</span>
           <button class="close-book" onclick="showCoverSplash()">close book</button>
         </span>
       </div>
@@ -1756,6 +1958,14 @@ body[data-monogram="anchor"] #book-cover-splash .colophon::before{content:'A'}
         <span class="unit">xp</span>
       </div>
 
+      <div id="shop-preview-banner" class="hidden" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 18px;padding:12px 16px;border:1px solid var(--paper-line-strong);border-radius:var(--radius);background:var(--paper-raise)">
+        <span id="shop-preview-label" style="font-style:italic;color:var(--ink-dim);font-size:14px">Previewing</span>
+        <span style="display:flex;gap:8px">
+          <button class="btn small subtle" onclick="clearShopPreview()">Cancel</button>
+          <button class="btn small" onclick="buyPreviewedItem()">Buy &amp; equip</button>
+        </span>
+      </div>
+
       <div id="shop-body"></div>
 
       <div class="page-footer"><span class="fleur"></span><span class="num">— iv —</span></div>
@@ -1767,7 +1977,7 @@ body[data-monogram="anchor"] #book-cover-splash .colophon::before{content:'A'}
         <span class="chapter">Companions</span>
         <span class="right">
           <button class="back-contents" onclick="showContents()">contents</button>
-          <span class="folio">fol. v</span>
+          <span class="folio">fol. VI</span>
           <button class="close-book" onclick="showCoverSplash()">close book</button>
         </span>
       </div>
@@ -1805,6 +2015,7 @@ body[data-monogram="anchor"] #book-cover-splash .colophon::before{content:'A'}
       <select id="goal-metric">
         <option value="pages">Pages read</option>
         <option value="books">Books finished</option>
+        <option value="minutes">Minutes read (focus time)</option>
       </select>
     </div>
     <div class="field">
@@ -1869,6 +2080,64 @@ body[data-monogram="anchor"] #book-cover-splash .colophon::before{content:'A'}
   </div>
 </div>
 
+<div id="account-modal" class="modal-bg">
+  <div class="modal">
+    <h3>Your account</h3>
+    <div style="margin-bottom:16px;color:var(--ink-dim);font-size:13px;font-style:italic">Fix a misspelt name or change your handle. Progress stays intact.</div>
+    <div class="field">
+      <label for="account-name">Display name</label>
+      <input id="account-name" type="text" maxlength="24" placeholder="Your name" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="account-handle">Handle</label>
+      <input id="account-handle" type="text" maxlength="20" placeholder="handle" autocomplete="off">
+    </div>
+    <div id="account-error" style="color:var(--red);font-size:13px;min-height:16px;margin-bottom:8px"></div>
+    <div class="actions">
+      <button class="btn ghost" onclick="closeAccountModal()" style="flex:0 0 auto">Cancel</button>
+      <button class="btn" onclick="submitAccount()">Save</button>
+    </div>
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--paper-line)">
+      <button class="btn subtle" onclick="resetAccount()" style="color:var(--red);border-color:var(--red-soft)">Reset this account (start over)</button>
+      <div style="margin-top:6px;font-size:12px;color:var(--ink-fade);font-style:italic">Signs you out and clears the local device. Useful for test accounts.</div>
+    </div>
+  </div>
+</div>
+
+<div id="profile-modal" class="modal-bg">
+  <div class="modal profile-modal">
+    <div class="profile-head">
+      <div class="profile-avatar" id="profile-avatar">?</div>
+      <div class="profile-id">
+        <div class="profile-name" id="profile-name">—</div>
+        <div class="profile-handle" id="profile-handle">@—</div>
+        <div id="profile-tier"></div>
+      </div>
+    </div>
+
+    <div class="profile-section-label">Your life with Ukufunda</div>
+    <div class="profile-stats" id="profile-stats"></div>
+
+    <div class="profile-section-label">Friend code</div>
+    <div class="friend-code-row">
+      <code class="friend-code" id="profile-friend-code">@—</code>
+      <button class="btn ghost" id="copy-code-btn" onclick="copyFriendCode()" style="flex:0 0 auto;width:auto">Copy</button>
+    </div>
+    <div class="profile-hint">Share this with friends so they can add you on the Friends page.</div>
+
+    <div class="profile-section-label">Account</div>
+    <div class="profile-account" id="profile-account-details"></div>
+    <div class="actions" style="margin-top:16px">
+      <button class="btn ghost" onclick="closeProfileModal()" style="flex:0 0 auto">Close</button>
+      <button class="btn ghost" onclick="closeProfileModal();openAccountModal()">Edit account</button>
+    </div>
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--paper-line)">
+      <button class="btn subtle" id="profile-signout-btn" style="color:var(--red);border-color:var(--red-soft)">Log out</button>
+      <div style="margin-top:6px;font-size:12px;color:var(--ink-fade);font-style:italic">Signs you out on this device. Your progress on the server is kept.</div>
+    </div>
+  </div>
+</div>
+
 <div id="toast" class="toast"></div>
 
 <script>
@@ -1901,6 +2170,107 @@ function saveMe(){
 function clearMe(){
   localStorage.removeItem(LS_KEY);
   state.me = null;
+}
+
+// ============ PROFILE (life stats / friend code / logout) ============
+function openProfileModal(){
+  if (!state.me) return;
+  const s = state.stats || {};
+  const xp = s.totalXp || 0;
+  const t = tierFromXp(xp);
+  const initial = (state.me.name || '?').charAt(0).toUpperCase();
+
+  document.getElementById('profile-avatar').textContent = initial;
+  document.getElementById('profile-name').textContent = state.me.name || '';
+  document.getElementById('profile-handle').textContent = '@' + (state.me.handle || '');
+  document.getElementById('profile-tier').innerHTML =
+    '<span class="tier-badge ' + t.cls + '"><span class="dot"></span>' + t.name + '</span>';
+
+  // Life-with-Ukufunda stats.
+  const booksFinished = s.booksFinished || 0;
+  const reading = Array.isArray(state.books) ? state.books.filter(b => b && !b.finished).length : 0;
+  const cells = [
+    { v: xp.toLocaleString(), k: 'Total XP' },
+    { v: t.name, k: 'Tier' },
+    { v: (s.streak || 0), k: 'Day streak' },
+    { v: booksFinished, k: 'Books finished' },
+    { v: reading, k: 'Currently reading' },
+    { v: (s.weekPages || 0), k: 'Pages this week' },
+  ];
+  document.getElementById('profile-stats').innerHTML = cells.map(c =>
+    '<div class="profile-stat"><div class="v">' + escHtml(String(c.v)) + '</div><div class="k">' + escHtml(c.k) + '</div></div>'
+  ).join('');
+
+  document.getElementById('profile-friend-code').textContent = '@' + (state.me.handle || '');
+
+  // Account detail rows.
+  const rows = [
+    ['Display name', state.me.name || '—'],
+    ['Handle', '@' + (state.me.handle || '')],
+  ];
+  if (state.me.createdAt) {
+    const d = new Date(state.me.createdAt);
+    if (!isNaN(d)) rows.push(['Member since', d.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'})]);
+  }
+  document.getElementById('profile-account-details').innerHTML = rows.map(r =>
+    '<div class="row"><span class="lbl">' + escHtml(r[0]) + '</span><span class="val">' + escHtml(String(r[1])) + '</span></div>'
+  ).join('');
+
+  document.getElementById('profile-modal').classList.add('open');
+}
+function closeProfileModal(){
+  document.getElementById('profile-modal').classList.remove('open');
+}
+function copyFriendCode(){
+  const code = '@' + (state.me && state.me.handle || '');
+  const done = () => { const b = document.getElementById('copy-code-btn'); if (b){ const o=b.textContent; b.textContent='Copied'; setTimeout(()=>{b.textContent=o;},1400);} toast('Friend code copied'); };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(code).then(done).catch(() => { toast(code); });
+  } else {
+    try { const ta=document.createElement('textarea'); ta.value=code; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done(); }
+    catch(e){ toast(code); }
+  }
+}
+
+// ============ ACCOUNT (rename / reset) ============
+function openAccountModal(){
+  if (!state.me) return;
+  document.getElementById('account-name').value = state.me.name || '';
+  document.getElementById('account-handle').value = state.me.handle || '';
+  document.getElementById('account-error').textContent = '';
+  document.getElementById('account-modal').classList.add('open');
+}
+function closeAccountModal(){
+  document.getElementById('account-modal').classList.remove('open');
+}
+async function submitAccount(){
+  const name = document.getElementById('account-name').value.trim();
+  const handle = document.getElementById('account-handle').value.trim();
+  const errEl = document.getElementById('account-error');
+  errEl.textContent = '';
+  if (!name) { errEl.textContent = 'Name cannot be empty.'; return; }
+  try {
+    const r = await fetch(`${API}/account`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: state.me.id, name, handle })
+    });
+    const d = await r.json();
+    if (!r.ok) { errEl.textContent = d.error || 'Could not save.'; return; }
+    state.me.name = d.name;
+    state.me.handle = d.handle;
+    saveMe();
+    renderApp();
+    closeAccountModal();
+    toast('Account updated');
+  } catch(e) {
+    errEl.textContent = 'Network error. Try again.';
+  }
+}
+function resetAccount(){
+  if (!confirm('Reset this account? You will be signed out on this device and can start fresh. Your data on the server is not deleted.')) return;
+  clearMe();
+  location.reload();
 }
 
 async function signIn(){
@@ -1949,6 +2319,13 @@ function showCoverSplash(){
   if (state.me) {
     document.getElementById('cover-edition').textContent = 'The private edition of ' + state.me.name;
   }
+  // Pre-switch the underlying view to Contents (instantly, no page-turn) BEFORE
+  // the splash fades in. Otherwise the tab you closed on (e.g. Market) shows
+  // through the fade for a moment before hideCoverSplash swaps to Contents.
+  currentTab = 'contents';
+  document.querySelectorAll('.tab').forEach(t => t.classList.add('hidden'));
+  const c = document.getElementById('tab-contents');
+  if (c) c.classList.remove('hidden');
   el.classList.remove('hidden','closing');
   document.body.style.overflow = 'hidden';
 }
@@ -1961,6 +2338,9 @@ function hideCoverSplash(destinationTab){
     el.classList.remove('closing');
     document.body.style.overflow = '';
     if (destinationTab === 'contents') {
+      // Tap-to-open goes STRAIGHT to Contents. Force an instant swap (no
+      // library->contents flip) by marking us as already on contents first.
+      currentTab = 'contents';
       _switchToContents();
     } else if (destinationTab) {
       switchTab(destinationTab);
@@ -2001,10 +2381,17 @@ async function boot(){
   }
   wireSwipe();
   wireKeyboard();
-  initDarkMode();
+  applyEquippedTheme();
   document.getElementById('signin-btn').addEventListener('click', signIn);
   document.getElementById('signout-btn').addEventListener('click', () => {
     if (confirm('Sign out?')) { clearMe(); location.reload(); }
+  });
+  document.getElementById('who-name').addEventListener('click', openProfileModal);
+  document.getElementById('profile-signout-btn').addEventListener('click', () => {
+    if (confirm('Log out?')) { clearMe(); location.reload(); }
+  });
+  document.getElementById('profile-modal').addEventListener('click', (e) => {
+    if (e.target.id === 'profile-modal') closeProfileModal();
   });
   document.getElementById('close-book-btn').addEventListener('click', () => showCoverSplash());
   // No tab-bar buttons to wire — navigation is swipe or Contents
@@ -2090,11 +2477,13 @@ async function refresh(){
 
 // ============ TABS ============
 // PAGE_ORDER: Library · Guilds · Leaderboard · Shop · Friends
-const PAGE_ORDER = ['books','guilds','leaderboard','shop','friends'];
+const PAGE_ORDER = ['books','read','guilds','leaderboard','shop','friends'];
 let currentTab = 'books';
 
 function switchTab(name, opts){
   if (!document.getElementById('tab-' + name)) return;
+  // Leaving the shop discards any unsaved theme preview.
+  if (currentTab === 'shop' && name !== 'shop' && typeof clearShopPreview === 'function') clearShopPreview();
   // Check reduced-motion preference
   const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const dir = (opts && opts.direction) || null;
@@ -2119,17 +2508,16 @@ function switchTab(name, opts){
   if (name === 'shop') loadShop();
 }
 
-// ── Kindle-app page turn ──────────────────────────────────────────────────
-// The INCOMING page slides in from the side, fully opaque, ON TOP of the
-// current page. The current page sits perfectly still underneath. No curl,
-// no rotation, no transparency, no ghosting — exactly like tapping forward
-// in the Kindle app. A soft drop-shadow rides the sliding page's leading
-// edge so it reads as a real sheet moving over another.
+// ── 3D page-flip turn ─────────────────────────────────────────────────────
+// The OUTGOING page rotates away in 3D on its Y-axis (like a page being
+// turned), and the INCOMING page rotates in from the far side. A perspective
+// container + hinge origin + moving spine-shadow sells the physical turn.
+// Content still renders exactly as before — the pages just get temporarily
+// absolute-stacked and rotated during the ~460ms turn, then restored.
 //
-// dir='left'  → forward (swipe left / next chapter): new page slides in
-//               from the RIGHT, covering the old one.
-// dir='right' → backward (swipe right / prev chapter): new page slides in
-//               from the LEFT.
+// dir='left'  → forward (next chapter): old page swings away to the LEFT
+//               (hinge on left), new page swings in from the RIGHT.
+// dir='right' → backward (prev chapter): mirror image.
 //
 // Guarded against double-triggering: an in-flight turn is finalised cleanly
 // before a new one starts, so rapid swipes never strand pages or dirty the
@@ -2141,12 +2529,8 @@ function pageTurnLeaf(dir, outEl, inEl) {
   // Finalise any previous turn first so no orphaned styles/elements remain.
   if (_turnAnim) { _turnAnim.finish(); }
 
-  const DURATION = 380;
+  const DURATION = 460;
   const isFwd = dir === 'left';
-  // The incoming page starts fully off to one side and slides to centre.
-  const startX = isFwd ? '100%' : '-100%';
-  // Shadow sits on the leading edge of the sliding page.
-  const shadeSide = isFwd ? 'left' : 'right';
 
   window.scrollTo({ top: 0, behavior: 'instant' });
 
@@ -2155,6 +2539,8 @@ function pageTurnLeaf(dir, outEl, inEl) {
     parentPos: parent.style.position,
     parentMinH: parent.style.minHeight,
     parentOverflow: parent.style.overflow,
+    parentPersp: parent.style.perspective,
+    parentPerspO: parent.style.perspectiveOrigin,
   };
 
   // Reveal incoming page and measure the stack height so the
@@ -2166,6 +2552,9 @@ function pageTurnLeaf(dir, outEl, inEl) {
   parent.style.minHeight = stackH + 'px';
   parent.style.position = parent.style.position || 'relative';
   parent.style.overflow = 'hidden';
+  // 3D viewing frustum for the turn.
+  parent.style.perspective = '1600px';
+  parent.style.perspectiveOrigin = '50% 42%';
 
   const applyStack = (el) => {
     el.style.position = 'absolute';
@@ -2173,38 +2562,52 @@ function pageTurnLeaf(dir, outEl, inEl) {
     el.style.left = '0';
     el.style.right = '0';
     el.style.width = '100%';
+    el.style.backfaceVisibility = 'hidden';
+    el.style.transformStyle = 'preserve-3d';
   };
   applyStack(outEl);
   applyStack(inEl);
 
-  // Old page: sits still underneath, fully opaque, no movement.
-  outEl.style.zIndex = '1';
-  outEl.style.transform = 'none';
+  // Hinge: forward turns pivot on the left edge, backward on the right.
+  const hinge = isFwd ? 'left center' : 'right center';
+  // Outgoing page rotates AWAY from the reader; incoming starts pre-rotated
+  // on the opposite side and settles flat.
+  const outEnd  = isFwd ? 'rotateY(-118deg)' : 'rotateY(118deg)';
+  const inStart = isFwd ? 'rotateY(118deg)'  : 'rotateY(-118deg)';
+
+  // Old page: on top at start, rotates away.
+  outEl.style.transformOrigin = hinge;
+  outEl.style.transform = 'rotateY(0deg)';
   outEl.style.opacity = '1';
   outEl.style.transition = 'none';
   outEl.style.animation = 'none';
+  outEl.style.zIndex = '3';
+  outEl.style.willChange = 'transform';
+  // Spine shadow gradient that darkens as the page turns edge-on.
+  outEl.style.boxShadow = '0 0 0 rgba(60,40,20,0)';
 
-  // New page: fully opaque sheet, parked off-screen, will slide over the top.
-  // uf-sliding guarantees an opaque background so nothing shows through it.
-  inEl.classList.add('uf-sliding');
-  inEl.style.zIndex = '3';
-  inEl.style.transform = `translate3d(${startX},0,0)`;
+  // New page: parked pre-rotated underneath, rotates in to flat.
+  inEl.style.transformOrigin = hinge;
+  inEl.style.transform = inStart;
   inEl.style.opacity = '1';
   inEl.style.transition = 'none';
   inEl.style.animation = 'none';
+  inEl.style.zIndex = '2';
   inEl.style.willChange = 'transform';
-  // Soft drop-shadow on the leading edge so it reads as a sheet in motion.
-  inEl.style.boxShadow =
-    `${shadeSide === 'left' ? '-' : ''}14px 0 28px -6px var(--leaf-shadow)`;
+  inEl.style.background = 'var(--paper, #fff)';
 
-  // Force reflow so the off-screen start position is committed.
+  // Force reflow so the pre-rotated start positions are committed.
   void inEl.offsetHeight;
 
-  const ease = 'cubic-bezier(0.22, 0.61, 0.36, 1)'; // smooth Kindle glide
+  const ease = 'cubic-bezier(0.42, 0.0, 0.25, 1)'; // page-turn arc
 
   requestAnimationFrame(() => {
-    inEl.style.transition = `transform ${DURATION}ms ${ease}`;
-    inEl.style.transform = 'translate3d(0,0,0)';
+    outEl.style.transition = `transform ${DURATION}ms ${ease}, box-shadow ${DURATION}ms ${ease}`;
+    inEl.style.transition  = `transform ${DURATION}ms ${ease}`;
+    outEl.style.transform = outEnd;
+    // Leading-edge shadow deepens as the leaf goes edge-on.
+    outEl.style.boxShadow = `${isFwd ? '' : '-'}22px 0 40px -4px var(--leaf-shadow, rgba(60,40,20,0.45))`;
+    inEl.style.transform  = 'rotateY(0deg)';
   });
 
   let cleaned = false;
@@ -2214,7 +2617,6 @@ function pageTurnLeaf(dir, outEl, inEl) {
     if (_turnAnim && _turnAnim._id === cleanup) _turnAnim = null;
     clearTimeout(timer);
     outEl.classList.add('hidden');
-    inEl.classList.remove('uf-sliding');
     for (const el of [outEl, inEl]) {
       el.style.position = '';
       el.style.top = '';
@@ -2223,19 +2625,25 @@ function pageTurnLeaf(dir, outEl, inEl) {
       el.style.width = '';
       el.style.opacity = '';
       el.style.transform = '';
+      el.style.transformOrigin = '';
+      el.style.transformStyle = '';
+      el.style.backfaceVisibility = '';
       el.style.transition = '';
       el.style.zIndex = '';
       el.style.willChange = '';
       el.style.animation = '';
       el.style.boxShadow = '';
+      el.style.background = '';
     }
     parent.style.overflow = saved.parentOverflow;
     parent.style.position = saved.parentPos;
     parent.style.minHeight = saved.parentMinH;
+    parent.style.perspective = saved.parentPersp;
+    parent.style.perspectiveOrigin = saved.parentPerspO;
   };
   cleanup._id = cleanup;
 
-  const timer = setTimeout(cleanup, DURATION + 60);
+  const timer = setTimeout(cleanup, DURATION + 80);
   _turnAnim = { finish: cleanup, _id: cleanup };
 }
 
@@ -2262,28 +2670,34 @@ function flipPage(dir){
   switchTab(PAGE_ORDER[nextIdx], { direction: dir === 'next' ? 'left' : 'right' });
 }
 
-// ============ DARK MODE ============
-function initDarkMode(){
-  const btn = document.getElementById('dark-toggle');
-  if (!btn) return;
-  const stored = localStorage.getItem('ukufunda-theme');
-  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const startDark = stored ? stored === 'dark' : prefersDark;
-  applyTheme(startDark);
-  btn.addEventListener('click', () => {
-    const nowDark = !document.body.classList.contains('dark');
-    applyTheme(nowDark);
-    localStorage.setItem('ukufunda-theme', nowDark ? 'dark' : 'light');
-  });
+// ============ THEME (background-driven) ============
+// Which backgrounds are dark (flip ink to off-white via body.paper-dark).
+const DARK_PAPERS = new Set(['midnight','navy','maroon','forest','abyssal','aurora','starfall']);
+const SPECIAL_PAPERS = new Set(['abyssal','aurora','starfall']);
+const PAPER_BG_MAP = {
+  cream:'#f5eedd', parchment:'#e8d8a8', sage:'#e4ead9',
+  midnight:'#141210', navy:'#0f1a2b', maroon:'#2a1416', forest:'#12241a',
+  abyssal:'#04101f', aurora:'#0a0518', starfall:'#050512'
+};
+// Special items behave as a background. The active paper is the equipped
+// special (if any) else the equipped paper.
+function resolveActivePaper(equipped){
+  if (equipped && equipped.special && SPECIAL_PAPERS.has(equipped.special)) return equipped.special;
+  return (equipped && equipped.paper) || SHOP_DEFAULTS.paper;
 }
-function applyTheme(dark){
-  document.body.classList.toggle('dark', dark);
-  const btn = document.getElementById('dark-toggle');
-  if (!btn) return;
-  const sun = btn.querySelectorAll('.icon-sun');
-  const moon = btn.querySelector('.icon-moon');
-  sun.forEach(el => el.style.display = dark ? 'none' : '');
-  if (moon) moon.style.display = dark ? '' : 'none';
+
+// Ensure the user has a paper equipped. First load: pick from OS preference.
+function ensureDefaultPaper(){
+  const data = loadShopData();
+  if (!data.equipped) data.equipped = {};
+  if (!data.equipped.paper) {
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    data.equipped.paper = prefersDark ? 'midnight' : 'cream';
+    // Both defaults are free — make sure they're marked owned.
+    if (!data.owned) data.owned = {};
+    if (!data.owned.paper) data.owned.paper = ['cream','midnight'];
+    saveShopData(data);
+  }
 }
 
 function wireSwipe(){
@@ -2364,6 +2778,13 @@ function wireKeyboard(){
     e.preventDefault();
     flipPage(e.key === 'ArrowLeft' ? 'prev' : 'next');
   });
+}
+
+// Short tier code for the compact streak badges. `slice(0,3)` produced
+// confusing labels like "BRO" for Bronze; use explicit 3-letter codes.
+function tierShort(name){
+  const map = { Bronze:'BRZ', Silver:'SLV', Gold:'GLD', Platinum:'PLT', Diamond:'DIA', Master:'MSR' };
+  return map[name] || String(name || '').slice(0,3).toUpperCase();
 }
 
 // ============ STATS ============
@@ -2516,8 +2937,17 @@ async function loadBooks(){
   } catch(e){ console.error('loadBooks failed:', e); }
 }
 
+// Percent to 1 decimal place, dropping a trailing '.0' so whole numbers read
+// cleanly (e.g. 10.4%, 50%, 100%).
+function pct2(n){
+  const v = Math.round(n * 10) / 10;        // 1dp
+  return (v % 1 === 0) ? String(v) : v.toFixed(1);
+}
+
 function bookCard(b){
-  const pct = b.pages > 0 ? Math.min(100, Math.round((b.current / b.pages) * 100)) : 0;
+  const rawPct = b.pages > 0 ? Math.min(100, (b.current / b.pages) * 100) : 0;
+  const pct = rawPct;                        // numeric, for the bar width
+  const pctLabel = pct2(rawPct);             // 2-decimal string, for the label
   const statusEl = b.status === 'done'
     ? '<span class="status-done">finished</span>'
     : b.status === 'paused'
@@ -2527,7 +2957,7 @@ function bookCard(b){
   const coverInner = b.cover
     ? `<img src="${escHtml(b.cover)}" class="cover" alt="" onerror="this.outerHTML='<div class=cover-placeholder>${titleEsc}</div>'">`
     : `<div class="cover-placeholder">${titleEsc}</div>`;
-  const cover = `<div class="cover3d"><div class="slab"><span class="spine3d"></span><span class="pages3d"></span>${coverInner}</div></div>`;
+  const cover = `<div class="cover3d"><div class="slab"><span class="back3d"></span><span class="spine3d"></span><span class="pages3d"></span>${coverInner}</div></div>`;
   return `
     <div class="book">
       ${cover}
@@ -2539,7 +2969,7 @@ function bookCard(b){
         </div>
         <div>
           <div class="progress-bar"><div class="fill" style="width:${pct}%"></div></div>
-          <div class="progress-text"><span>${b.current} / ${b.pages}</span><span>${pct}%</span></div>
+          <div class="progress-text"><span>${b.current} / ${b.pages}</span><span>${pctLabel}%</span></div>
           <div class="actions">
             ${b.status === 'active' ? `<button class="btn small" onclick="startSession('${escHtml(b.id)}')">Start reading</button>` : ''}
             ${b.status !== 'done' ? `<button class="btn small ghost" onclick="openLogModal('${escHtml(b.id)}')">Log pages</button>` : ''}
@@ -2769,7 +3199,7 @@ function renderLeaderboard(){
       <div class="name ${meCls}">${escHtml(row.name)} <span class="h">@${escHtml(row.handle)}</span></div>
       <div class="xp">${(row.totalXp || 0).toLocaleString()}</div>
       <div class="streak">${row.streak || 0}d</div>
-      <div class="streak"><span class="tier-badge ${t.cls}" style="padding:2px 8px;font-size:10px"><span class="dot"></span>${t.name.slice(0,3)}</span></div>
+      <div class="streak"><span class="tier-badge ${t.cls}" style="padding:2px 8px;font-size:10px"><span class="dot"></span>${tierShort(t.name)}</span></div>
     </div>`;
   }).join('');
 }
@@ -2806,7 +3236,7 @@ function renderFriends(){
         </div>
       </div>
       <div style="display:flex;gap:8px;align-items:center;flex-shrink:0">
-        <span class="tier-badge ${t.cls}" style="padding:2px 8px;font-size:10px"><span class="dot"></span>${t.name.slice(0,3)}</span>
+        <span class="tier-badge ${t.cls}" style="padding:2px 8px;font-size:10px"><span class="dot"></span>${tierShort(t.name)}</span>
         <button class="btn small subtle" onclick="removeFriend('${escHtml(f.handle)}');">Remove</button>
       </div>
     </div>`;
@@ -2941,11 +3371,12 @@ async function createGuild(){
   const handle = document.getElementById('guild-new-handle').value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
   const motto = document.getElementById('guild-new-motto').value.trim();
   const description = document.getElementById('guild-new-desc').value.trim();
+  const isPublic = document.getElementById('guild-new-public').checked;
   if (!name || handle.length < 3) return toast('Name + handle (min 3) required');
   try {
     const r = await fetch(`${API}/guilds`, {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ userId: state.me.id, name, handle, motto, description })
+      body: JSON.stringify({ userId: state.me.id, name, handle, motto, description, isPublic })
     });
     const d = await r.json();
     if (!r.ok) return toast(d.error || 'Failed');
@@ -2954,6 +3385,7 @@ async function createGuild(){
     document.getElementById('guild-new-handle').value = '';
     document.getElementById('guild-new-motto').value = '';
     document.getElementById('guild-new-desc').value = '';
+    document.getElementById('guild-new-public').checked = false;
     toggleGuildCreate();
     await loadGuilds();
     openGuild(d.guild.id);
@@ -3033,7 +3465,7 @@ function renderGuildDetail(g, goals){
         <div class="name ${meCls}">${escHtml(row.name)} <span class="h">@${escHtml(row.handle)}</span></div>
         <div class="xp">${(row.totalXp||0).toLocaleString()}</div>
         <div class="streak">${row.streak||0}d</div>
-        <div class="streak"><span class="tier-badge ${t.cls}" style="padding:2px 8px;font-size:10px"><span class="dot"></span>${t.name.slice(0,3)}</span></div>
+        <div class="streak"><span class="tier-badge ${t.cls}" style="padding:2px 8px;font-size:10px"><span class="dot"></span>${tierShort(t.name)}</span></div>
       </div>`;
     }).join('')}
   </div>` : '<div class="empty" style="padding:24px">No members yet.</div>';
@@ -3061,7 +3493,10 @@ function renderGuildDetail(g, goals){
 
 function goalCard(goal){
   const cls = goal.status === 'completed' ? 'completed' : goal.status === 'failed' ? 'failed' : 'active';
-  const unit = goal.metric === 'books' ? 'books' : 'pages';
+  const unit = goal.metric === 'books' ? 'books' : goal.metric === 'minutes' ? 'min' : 'pages';
+  // Recompute percent to 2 decimals for the label (server sends a rounded int).
+  const goalPctNum = goal.target > 0 ? Math.min(100, (goal.total / goal.target) * 100) : 0;
+  const goalPctLabel = pct2(goalPctNum);
   const when = goal.deadline ? fmtDeadline(goal.deadline, goal.timeLeftMs, goal.status) : 'No deadline';
   const top3 = (goal.ranking || []).slice(0, 5);
   const rankingHtml = top3.length ? `<div class="g-ranking">${top3.map((r, i) => {
@@ -3080,7 +3515,7 @@ function goalCard(goal){
     </div>
     <div class="g-progress">
       <div class="n">${goal.total.toLocaleString()} <span class="of">/ ${goal.target.toLocaleString()} ${unit}</span></div>
-      <div>${goal.percent}%</div>
+      <div>${goalPctLabel}%</div>
     </div>
     <div class="g-bar"><div class="fill" style="width:${goal.percent}%"></div></div>
     <div class="g-when">${when}</div>
@@ -3163,8 +3598,9 @@ const SHOP_CATALOG = {
   ink: {
     label: 'Ink Colour',
     items: [
-      { id:'iron_gall',  name:'Iron Gall',   price:0,   free:true,  swatch:'#1a1712' },
-      { id:'sepia',      name:'Sepia',        price:200, free:false, swatch:'#5c3d1e' },
+      { id:'iron_gall',  name:'Iron Gall',    price:0,   free:true,  swatch:'#1a1712', note:'Default' },
+      { id:'sepia',      name:'Sepia',        price:200, free:false, swatch:'#7a5228' },
+      { id:'sage',       name:'Sage Green',   price:300, free:false, swatch:'#3f6b3a' },
       { id:'vermilion',  name:'Vermilion',    price:400, free:false, swatch:'#8b2020' },
       { id:'aquamarine', name:'Aquamarine',   price:600, free:false, swatch:'#1a6b6b' },
       { id:'peacock',    name:'Peacock Blue', price:800, free:false, swatch:'#1a4e6e' },
@@ -3173,29 +3609,44 @@ const SHOP_CATALOG = {
   paper: {
     label: 'Paper',
     items: [
-      { id:'cream',     name:'Cream',      price:0,    free:true,  swatch:'#f5eedd' },
-      { id:'parchment', name:'Parchment',  price:300,  free:false, swatch:'#e8d8a8' },
-      { id:'vellum',    name:'Vellum',     price:500,  free:false, swatch:'#f0e9d8' },
-      { id:'midnight',  name:'Midnight',   price:1000, free:false, swatch:'#141210', dark:true },
+      { id:'cream',     name:'Cream',       price:0,    free:true,  swatch:'#f5eedd' },
+      { id:'midnight',  name:'Midnight',    price:0,    free:true,  swatch:'#141210', dark:true },
+      { id:'parchment', name:'Parchment',   price:300,  free:false, swatch:'#e8d8a8' },
+      { id:'sage',      name:'Sage Green',  price:400,  free:false, swatch:'#e4ead9' },
+      { id:'navy',      name:'Navy',        price:700,  free:false, swatch:'#0f1a2b', dark:true },
+      { id:'forest',    name:'Forest Green',price:800,  free:false, swatch:'#12241a', dark:true },
+      { id:'maroon',    name:'Maroon',      price:900,  free:false, swatch:'#2a1416', dark:true },
     ]
   },
   monogram: {
     label: 'Cover Monogram',
     items: [
       { id:'ampersand', name:'Ampersand', price:0,   free:true,  swatch:null, glyph:'&' },
-      { id:'fleur',     name:'Fleur',     price:150, free:false, swatch:null, glyph:'F' },
-      { id:'star',      name:'Star',      price:150, free:false, swatch:null, glyph:'*' },
-      { id:'compass',   name:'Compass',   price:150, free:false, swatch:null, glyph:'N' },
-      { id:'anchor',    name:'Anchor',    price:150, free:false, swatch:null, glyph:'A' },
+      { id:'fleur',     name:'Fleur-de-lis', price:300, free:false, swatch:null, glyph:'\u269C\uFE0E' },
+      { id:'star',      name:'Star',      price:150, free:false, swatch:null, glyph:'\u2734\uFE0E' },
+      { id:'compass',   name:'Compass Rose', price:150, free:false, swatch:null, glyph:'\u2725\uFE0E' },
+      { id:'cross',     name:'Cross Pattee', price:150, free:false, swatch:null, glyph:'\u2720\uFE0E' },
     ]
   },
   frame: {
     label: 'Bookplate Frame',
     items: [
-      { id:'plain',     name:'Plain',     price:0,   free:true,  swatch:'#1a1712' },
-      { id:'ornate',    name:'Ornate',    price:400, free:false, swatch:'#D9BE87' },
-      { id:'botanical', name:'Botanical', price:600, free:false, swatch:'#2d5a27' },
-      { id:'gothic',    name:'Gothic',    price:900, free:false, swatch:'#5c2314' },
+      { id:'none',      name:'None',        price:0,   free:true,  swatch:'#f5eedd', note:'No frame' },
+      { id:'plain',     name:'Plain',       price:0,   free:true,  swatch:'#1a1712' },
+      { id:'ornate',    name:'Ornate',      price:400, free:false, swatch:'#D9BE87' },
+      { id:'botanical', name:'Botanical',   price:600, free:false, swatch:'#2d5a27' },
+      { id:'peacock',   name:'Peacock Blue',price:700, free:false, swatch:'#1a4e6e' },
+      { id:'gothic',    name:'Gothic',      price:900, free:false, swatch:'#5c2314' },
+    ]
+  },
+  // Permanent flagship backgrounds — always available, never rotate.
+  // 'special' items set the background (data-paper) plus interactive behaviour.
+  special: {
+    label: 'Signature',
+    items: [
+      { id:'starfall', name:'Starfall', price:2000, free:false, swatch:'#050512', dark:true, note:'Interactive · constellation', special:true },
+      { id:'abyssal',  name:'Abyssal',  price:5000, free:false, swatch:'#04101f', dark:true, note:'Interactive · fluid plumes', special:true },
+      { id:'aurora',   name:'Aurora',   price:3500, free:false, swatch:'#0a0518', dark:true, note:'Northern lights', special:true },
     ]
   }
 };
@@ -3259,51 +3710,536 @@ function loadShop(){
   renderShop(data);
 }
 
+// Render one item card. `catKey` is what shopItemClick receives.
+function _shopCard(item, catKey, ownedList, equippedId){
+  const isOwned = item.free || ownedList.includes(item.id);
+  const isEquipped = equippedId === item.id;
+  const stateClass = isEquipped ? 'equipped' : isOwned ? 'owned' : 'locked';
+  const swatchHtml = item.swatch
+    ? `<div class="item-swatch" style="background:${escHtml(item.swatch)}${item.dark ? ';border:1px solid #444' : ''}"></div>`
+    : `<div class="item-swatch swatch-ink" style="display:flex;align-items:center;justify-content:center;background:var(--paper-raise2);font-family:'EB Garamond',serif;font-size:22px;font-style:normal;font-weight:500;color:var(--ink-dim)">${escHtml(item.glyph || '?')}</div>`;
+  const actionText = isEquipped ? 'Equipped' : isOwned ? 'Equip' : item.free ? 'Select' : item.price.toLocaleString() + ' XP';
+  const priceText = item.free ? 'Free' : item.price.toLocaleString() + ' XP';
+  const noteHtml = item.note ? `<div class="item-note">${escHtml(item.note)}</div>` : '';
+  return `<div class="shop-item ${stateClass}" onclick="shopItemClick('${escHtml(catKey)}','${escHtml(item.id)}')">
+    ${isEquipped ? '<span class="item-equipped-badge">On</span>' : ''}
+    ${swatchHtml}
+    <div class="item-name">${escHtml(item.name)}</div>
+    <div class="item-price${item.free ? ' free' : ''}">${escHtml(priceText)}</div>
+    <div class="item-action">${escHtml(actionText)}</div>
+    ${noteHtml}
+  </div>`;
+}
+
 function renderShop(data){
   const body = document.getElementById('shop-body');
   if (!body) return;
   const owned = data.owned || {};
   const equipped = data.equipped || {};
 
-  body.innerHTML = Object.keys(SHOP_CATALOG).map(catKey => {
+  // Standard cosmetic categories.
+  const catsHtml = Object.keys(SHOP_CATALOG).map(catKey => {
     const cat = SHOP_CATALOG[catKey];
     const ownedList = owned[catKey] || [SHOP_DEFAULTS[catKey]];
     const equippedId = equipped[catKey] || SHOP_DEFAULTS[catKey];
-
-    const itemsHtml = cat.items.map(item => {
-      const isOwned = item.free || ownedList.includes(item.id);
-      const isEquipped = equippedId === item.id;
-      let stateClass = '';
-      if (isEquipped) stateClass = 'equipped';
-      else if (isOwned) stateClass = 'owned';
-      else stateClass = 'locked';
-
-      const swatchHtml = item.swatch
-        ? `<div class="item-swatch" style="background:${escHtml(item.swatch)}${item.dark ? ';border:1px solid #444' : ''}"></div>`
-        : `<div class="item-swatch swatch-ink" style="display:flex;align-items:center;justify-content:center;background:var(--paper-raise2);font-family:'EB Garamond',serif;font-size:20px;font-style:italic;color:var(--ink-dim)">${escHtml(item.glyph || '?')}</div>`;
-
-      const actionText = isEquipped ? 'Equipped' : isOwned ? 'Equip' : item.free ? 'Select' : item.price.toLocaleString() + ' XP';
-      const priceText = item.free ? 'Free' : item.price.toLocaleString() + ' XP';
-
-      return `<div class="shop-item ${stateClass}" onclick="shopItemClick('${escHtml(catKey)}','${escHtml(item.id)}')">
-        ${isEquipped ? '<span class="item-equipped-badge">On</span>' : ''}
-        ${swatchHtml}
-        <div class="item-name">${escHtml(item.name)}</div>
-        <div class="item-price${item.free ? ' free' : ''}">${escHtml(priceText)}</div>
-        <div class="item-action">${escHtml(actionText)}</div>
-      </div>`;
-    }).join('');
-
-    return `<div class="shop-category">
+    const itemsHtml = cat.items.map(item => _shopCard(item, catKey, ownedList, equippedId)).join('');
+    const special = catKey === 'special';
+    return `<div class="shop-category${special ? ' shop-category-signature' : ''}">
       <div class="shop-category-head">${escHtml(cat.label)}</div>
+      ${special ? '<div class="shop-signature-sub">Flagship backgrounds — always available, yours forever.</div>' : ''}
       <div class="shop-strip">${itemsHtml}</div>
     </div>`;
   }).join('');
+
+  body.innerHTML = catsHtml;
+}
+
+// Shop-only live preview. Clicking an item you don't own shows what it looks
+// like (applied to the whole shop page) WITHOUT buying. The preview is
+// discarded the moment you navigate away or the page refreshes — only a real
+// purchase + equip persists. previewState holds the pending, unsaved look.
+let shopPreview = null; // { catKey, itemId } or null
+
+function applyShopPreview(){
+  // Start from the real equipped theme, then overlay the preview selection.
+  applyEquippedTheme();
+  if (!shopPreview) return;
+  const { catKey, itemId } = shopPreview;
+  if (catKey === 'ink')      document.body.dataset.ink = itemId === 'iron_gall' ? '' : itemId;
+  if (catKey === 'paper')    { document.body.dataset.paper = itemId === 'cream' ? '' : itemId; _paintRootPaper(itemId); }
+  if (catKey === 'special')  { document.body.dataset.paper = itemId; _paintRootPaper(itemId); }
+  if (catKey === 'monogram') document.body.dataset.monogram = itemId === 'ampersand' ? '' : itemId;
+  if (catKey === 'frame') {
+    document.body.classList.remove('book-frame-ornate','book-frame-botanical','book-frame-gothic','book-frame-peacock','book-frame-none');
+    if (itemId === 'none') document.body.classList.add('book-frame-none');
+    else if (itemId !== 'plain') document.body.classList.add('book-frame-' + itemId);
+  }
+}
+
+function _paintRootPaper(paper){
+  document.documentElement.setAttribute('data-preload-paper', paper);
+  document.documentElement.style.background = PAPER_BG_MAP[paper] || '';
+  document.body.classList.toggle('paper-dark', DARK_PAPERS.has(paper));
+  setSignatureEffect(SPECIAL_PAPERS.has(paper) ? paper : null);
+}
+
+// Signature-effect manager: mounts exactly one interactive canvas engine for
+// the active flagship background (abyssal/aurora/starfall), or none.
+let _sigEffect = null; // current effect id
+function setSignatureEffect(id){
+  if (id === _sigEffect) return;
+  if (_abyssal) unmountAbyssal();
+  _sigEffect = id || null;
+  if (id) mountSignature(id);
+}
+
+// ============ SIGNATURE interactive backgrounds ============
+// One canvas engine mounted for the active flagship paper. Only mounted while
+// a special is active; costs nothing otherwise. RAF pauses when hidden and
+// honours prefers-reduced-motion (static background, no animation).
+let _abyssal = null; // shared engine state slot (name kept for teardown reuse)
+
+function mountSignature(id){
+  if (id === 'aurora')   return mountAurora();
+  if (id === 'starfall') return mountStarfall();
+  return mountAbyssal(); // abyssal (default flagship)
+}
+
+function mountAbyssal(){
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const canvas = document.createElement('canvas');
+  canvas.id = 'abyssal-canvas';
+  document.body.insertBefore(canvas, document.body.firstChild);
+  const ctx = canvas.getContext('2d');
+  const state = { canvas, ctx, points: [], raf: 0, target: null, onMove:null, onResize:null, onVis:null };
+  _abyssal = state;
+
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  function resize(){
+    canvas.width = Math.floor(window.innerWidth * dpr);
+    canvas.height = Math.floor(window.innerHeight * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  resize();
+  state.onResize = resize;
+  window.addEventListener('resize', resize);
+
+  if (reduce) return; // static navy only, no animated fluid
+
+  // Feadship-style fluid: soft, blurry blue-grey smoke/ink PLUMES that drift
+  // slowly over the dark navy, with lighter slate-blue highlights and darker
+  // recesses — no sharp edges (moonlit liquid smoke). The cursor pushes the
+  // nearby plumes so the fluid churns under/behind it, then eases back to its
+  // ambient drift. Rendered on a small offscreen buffer then upscaled with the
+  // canvas 'filter:blur' so everything is heavily feathered and cheap.
+  const W = () => window.innerWidth, H = () => window.innerHeight;
+
+  // Low-res offscreen buffer for the soft field (upscaled + blurred on draw).
+  const off = document.createElement('canvas');
+  const octx = off.getContext('2d');
+  const SCALE = 0.16;                    // buffer is ~1/6 res -> naturally soft
+  function sizeOff(){ off.width = Math.max(2, Math.round(W()*SCALE)); off.height = Math.max(2, Math.round(H()*SCALE)); }
+  sizeOff();
+  const _origResize = state.onResize;
+  state.onResize = () => { _origResize(); sizeOff(); };
+  window.removeEventListener('resize', _origResize);
+  window.addEventListener('resize', state.onResize);
+  // Blur the upscaled buffer for the smoky, edgeless look.
+  canvas.style.filter = 'blur(28px)';
+  canvas.style.opacity = '0.9';
+
+  // Free-floating plumes with real momentum. Each carries a position + velocity
+  // in PIXELS, wanders on its own, bounces softly off the edges, and gets shoved
+  // by the cursor — so you can push them, pass through them, and watch them
+  // drift apart and clump back together. Some are LIGHT highlights, some DARK.
+  const N = 11;
+  const blobs = [];
+  for (let i = 0; i < N; i++){
+    const hx = Math.random()*W(), hy = Math.random()*H();
+    blobs.push({
+      x: hx, y: hy, hx, hy,                             // current + HOME position
+      vx: (Math.random()-0.5)*0.5, vy: (Math.random()-0.5)*0.5,
+      wang: Math.random()*Math.PI*2,                   // wander heading
+      wspd: 0.4 + Math.random()*0.8,                    // wander turn rate
+      rad: 0.18 + Math.random()*0.24,                   // plume radius (frac of min dim)
+      light: i % 3 !== 0                                // ~2/3 light highlights, 1/3 dark
+    });
+  }
+
+  const pointer = { x: -1e4, y: -1e4, vx: 0, vy: 0, active: false };
+  state.onMove = (e) => {
+    const t = e.touches ? e.touches[0] : e; if (!t) return;
+    pointer.vx = t.clientX - pointer.x; pointer.vy = t.clientY - pointer.y;
+    pointer.x = t.clientX; pointer.y = t.clientY; pointer.active = true;
+  };
+  state.onLeave = () => { pointer.active = false; };
+  window.addEventListener('pointermove', state.onMove, { passive:true });
+  window.addEventListener('touchmove', state.onMove, { passive:true });
+  window.addEventListener('pointerout', state.onLeave, { passive:true });
+
+  let t0 = performance.now();
+  const PUSH_R = 300;                     // cursor influence radius (px)
+  function frame(now){
+    const time = (now - t0) * 0.001;
+    const w = W(), h = H(), md = Math.min(w, h);
+    const ow = off.width, oh = off.height;
+
+    // Base navy on the offscreen buffer.
+    octx.globalCompositeOperation = 'source-over';
+    octx.fillStyle = '#04101f';
+    octx.fillRect(0, 0, ow, oh);
+
+    for (const b of blobs){
+      // 1) GENTLE WANDER: only a whisper of self-propulsion, and only when the
+      //    plume is nearly still, so a push isn't immediately fought by steering.
+      //    Once moving, it coasts in a straight line until a wall or the cursor.
+      const cur = Math.hypot(b.vx, b.vy);
+      if (cur < 0.35){
+        b.wang += (Math.random()-0.5) * b.wspd * 0.03;
+        b.vx += Math.cos(b.wang) * 0.006;
+        b.vy += Math.sin(b.wang) * 0.006;
+      }
+
+      // 2) CURSOR FORCE: shove away from the pointer + a nudge in its travel
+      //    direction. Strong enough to fling a plume clear across the screen.
+      if (pointer.active){
+        const dx = b.x - pointer.x, dy = b.y - pointer.y, d = Math.hypot(dx, dy);
+        if (d < PUSH_R){
+          const f = (1 - d/PUSH_R);
+          const nx = d>0.001?dx/d:0, ny = d>0.001?dy/d:0;
+          b.vx += nx * f * f * 1.6 + pointer.vx * f * 0.08;
+          b.vy += ny * f * f * 1.6 + pointer.vy * f * 0.08;
+        }
+      }
+
+      // 3) HOME SPRING (very minimal): an almost-imperceptible pull back toward
+      //    the plume's origin, so over time it drifts home — but far too weak to
+      //    fight a push, which still dominates.
+      b.vx += (b.hx - b.x) * 0.00035;
+      b.vy += (b.hy - b.y) * 0.00035;
+
+      // 4) INTEGRATE with very light drag so a push COASTS a long way before
+      //    settling (glide across the screen, not snap to a stop).
+      b.vx *= 0.992; b.vy *= 0.992;
+      const sp = Math.hypot(b.vx, b.vy), MAXV = 9;
+      if (sp > MAXV){ b.vx = b.vx/sp*MAXV; b.vy = b.vy/sp*MAXV; }
+      b.x += b.vx; b.y += b.vy;
+
+      // 4) WALLS: bounce off the edges, keeping most of the momentum so they
+      //    ricochet and keep gliding rather than dying at the wall.
+      const m = 40;
+      if (b.x < m){ b.x = m; b.vx = Math.abs(b.vx)*0.92; }
+      if (b.x > w-m){ b.x = w-m; b.vx = -Math.abs(b.vx)*0.92; }
+      if (b.y < m){ b.y = m; b.vy = Math.abs(b.vy)*0.92; }
+      if (b.y > h-m){ b.y = h-m; b.vy = -Math.abs(b.vy)*0.92; }
+
+      const R = b.rad * md;
+      const bx = b.x * SCALE, by = b.y * SCALE, br = R * SCALE;
+      const g = octx.createRadialGradient(bx, by, 0, bx, by, br);
+      if (b.light){
+        g.addColorStop(0, 'rgba(120,150,205,0.55)');
+        g.addColorStop(0.5, 'rgba(70,95,150,0.22)');
+        g.addColorStop(1, 'rgba(70,95,150,0)');
+        octx.globalCompositeOperation = 'lighter';
+      } else {
+        g.addColorStop(0, 'rgba(2,6,14,0.6)');
+        g.addColorStop(1, 'rgba(2,6,14,0)');
+        octx.globalCompositeOperation = 'source-over';
+      }
+      octx.fillStyle = g;
+      octx.beginPath(); octx.arc(bx, by, br, 0, Math.PI*2); octx.fill();
+    }
+    pointer.vx *= 0.85; pointer.vy *= 0.85;
+
+    // Upscale the soft buffer onto the visible canvas (CSS blur feathers it).
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.clearRect(0, 0, w, h);
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(off, 0, 0, ow, oh, 0, 0, w, h);
+
+    state.raf = requestAnimationFrame(frame);
+  }
+
+  state.onVis = () => {
+    if (document.hidden){ if (state.raf){ cancelAnimationFrame(state.raf); state.raf = 0; } }
+    else if (!state.raf){ t0 = performance.now(); state.raf = requestAnimationFrame(frame); }
+  };
+  document.addEventListener('visibilitychange', state.onVis);
+  state.raf = requestAnimationFrame(frame);
+}
+
+function unmountAbyssal(){
+  const s = _abyssal; if (!s) return;
+  if (s.raf) cancelAnimationFrame(s.raf);
+  if (s.onMove){ window.removeEventListener('pointermove', s.onMove); window.removeEventListener('touchmove', s.onMove); }
+  if (s.onLeave) window.removeEventListener('pointerout', s.onLeave);
+  if (s.onResize) window.removeEventListener('resize', s.onResize);
+  if (s.onVis) document.removeEventListener('visibilitychange', s.onVis);
+  if (s.canvas && s.canvas.parentNode) s.canvas.parentNode.removeChild(s.canvas);
+  if (s.canvas) s.canvas.style.filter = '';
+  _abyssal = null;
+}
+
+// Shared setup for the simpler signature engines: creates the full-res canvas,
+// wires resize + visibility + pointer, and returns a handle. `draw(now,ctx,ctxW,
+// ctxH,pointer)` is called each frame. Teardown reuses unmountAbyssal.
+function _sigSetup(draw){
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const canvas = document.createElement('canvas');
+  canvas.id = 'abyssal-canvas';
+  document.body.insertBefore(canvas, document.body.firstChild);
+  const ctx = canvas.getContext('2d');
+  const state = { canvas, ctx, raf:0, onMove:null, onLeave:null, onResize:null, onVis:null };
+  _abyssal = state;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  function resize(){ canvas.width = Math.floor(innerWidth*dpr); canvas.height = Math.floor(innerHeight*dpr); ctx.setTransform(dpr,0,0,dpr,0,0); }
+  resize(); state.onResize = resize; addEventListener('resize', resize);
+  const pointer = { x:-1e4, y:-1e4, vx:0, vy:0, active:false };
+  state.onMove = (e) => { const t = e.touches?e.touches[0]:e; if(!t) return; pointer.vx=t.clientX-pointer.x; pointer.vy=t.clientY-pointer.y; pointer.x=t.clientX; pointer.y=t.clientY; pointer.active=true; };
+  state.onLeave = () => { pointer.active = false; };
+  addEventListener('pointermove', state.onMove, {passive:true});
+  addEventListener('touchmove', state.onMove, {passive:true});
+  addEventListener('pointerout', state.onLeave, {passive:true});
+  if (reduce) return; // static background only
+  const t0 = performance.now();
+  function frame(now){ draw((now-t0)*0.001, ctx, innerWidth, innerHeight, pointer); state.raf = requestAnimationFrame(frame); }
+  state.onVis = () => { if (document.hidden){ if(state.raf){cancelAnimationFrame(state.raf); state.raf=0;} } else if(!state.raf){ state.raf = requestAnimationFrame(frame); } };
+  document.addEventListener('visibilitychange', state.onVis);
+  state.raf = requestAnimationFrame(frame);
+}
+
+// AURORA — NON-INTERACTIVE northern-lights curtains. Drifting vertical bands of
+// green fading up into violet/purple over a near-black sky, with a faint
+// starfield behind. It sways entirely on its own and ignores the cursor, so it
+// reads as a calm sky rather than Abyssal's cursor-driven fluid.
+function mountAurora(){
+  // Static backdrop stars (sky, not interactive).
+  const stars = [];
+  for (let i=0;i<70;i++) stars.push({ x:Math.random(), y:Math.random()*0.7, r:0.4+Math.random()*1.1, tw:Math.random()*6.28 });
+  // Aurora curtains. Each band drifts horizontally and shimmers on its own clock.
+  const bands = [];
+  for (let i=0;i<6;i++) bands.push({
+    // green (~140) at bottom shifting toward purple (~285) at top per-band
+    baseHue: 135 + i*8,
+    phase: Math.random()*6.28,
+    speed: 0.08 + Math.random()*0.10,
+    drift: 0.006 + Math.random()*0.006,
+    xoff: (i+0.5)/6,
+  });
+  _sigSetup((time, ctx, w, h /*, pointer intentionally ignored */) => {
+    // Base sky: very dark purple-navy (distinct from Abyssal's blue).
+    const sky = ctx.createLinearGradient(0,0,0,h);
+    sky.addColorStop(0, '#0a0518');
+    sky.addColorStop(1, '#050a12');
+    ctx.fillStyle = sky; ctx.fillRect(0,0,w,h);
+
+    // Backdrop stars twinkle slowly (top ~70% of sky only).
+    for (const s of stars){
+      const tw = 0.35 + 0.35*Math.sin(time*0.8 + s.tw);
+      ctx.fillStyle = `rgba(200,205,235,${tw.toFixed(3)})`;
+      ctx.beginPath(); ctx.arc(s.x*w, s.y*h, s.r, 0, 6.283); ctx.fill();
+    }
+
+    // Curtains, additively blended for glow.
+    ctx.globalCompositeOperation = 'lighter';
+    const width = w*0.20;
+    for (const b of bands){
+      const cxBase = ((b.xoff + time*b.drift) % 1.2 - 0.1) * w; // slow autonomous drift
+      const grad = ctx.createLinearGradient(0,0,0,h);
+      // green core low, purple high — the signature aurora green+purple.
+      grad.addColorStop(0.00, `hsla(285,72%,60%,0)`);
+      grad.addColorStop(0.28, `hsla(275,70%,58%,0.10)`);
+      grad.addColorStop(0.55, `hsla(160,78%,52%,0.16)`);
+      grad.addColorStop(0.80, `hsla(${b.baseHue},82%,50%,0.12)`);
+      grad.addColorStop(1.00, `hsla(${b.baseHue},80%,45%,0)`);
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      for (let y=0;y<=h;y+=16){
+        const sway = Math.sin(y*0.005 + time*b.speed + b.phase) * 55
+                   + Math.sin(y*0.012 - time*b.speed*0.6) * 26;
+        const x = cxBase + sway;
+        if (y===0) ctx.moveTo(x - width/2, y); else ctx.lineTo(x - width/2, y);
+      }
+      for (let y=h;y>=0;y-=16){
+        const sway = Math.sin(y*0.005 + time*b.speed + b.phase) * 55
+                   + Math.sin(y*0.012 - time*b.speed*0.6) * 26;
+        const x = cxBase + sway;
+        ctx.lineTo(x + width/2, y);
+      }
+      ctx.closePath(); ctx.fill();
+    }
+    ctx.globalCompositeOperation = 'source-over';
+  });
+  if (_abyssal && _abyssal.canvas) _abyssal.canvas.style.filter = 'blur(22px)';
+}
+
+// STARFALL — a slow-drifting starfield; stars near the cursor light up and link
+// with faint constellation lines to the pointer.
+function mountStarfall(){
+  const stars = [];
+  const N = 120;
+  for (let i=0;i<N;i++) stars.push({ x: Math.random(), y: Math.random(), z: 0.3+Math.random()*0.7, tw: Math.random()*6.28 });
+  _sigSetup((time, ctx, w, h, pointer) => {
+    ctx.clearRect(0,0,w,h);
+    ctx.fillStyle = '#050512'; ctx.fillRect(0,0,w,h);
+    const LINK = 150;
+    // draw stars + twinkle
+    for (const s of stars){
+      const px = ((s.x + time*0.006*s.z) % 1) * w;
+      const py = s.y * h;
+      const tw = 0.5 + 0.5*Math.sin(time*1.5 + s.tw);
+      const r = s.z*1.6*(0.6+0.4*tw);
+      let near = 0;
+      if (pointer.active){
+        const d = Math.hypot(px-pointer.x, py-pointer.y);
+        if (d < LINK){ near = 1 - d/LINK;
+          ctx.strokeStyle = `rgba(150,170,255,${(near*0.4).toFixed(3)})`;
+          ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(pointer.x,pointer.y); ctx.stroke();
+        }
+      }
+      ctx.beginPath(); ctx.arc(px,py,r + near*1.5,0,6.28);
+      ctx.fillStyle = `rgba(${200+near*55|0},${205+near*50|0},255,${(0.35 + tw*0.4 + near*0.4).toFixed(3)})`;
+      ctx.fill();
+    }
+  });
+}
+
+// EMBER — warm sparks drifting UP from the bottom; the cursor scatters them.
+function mountEmber(){
+  const sparks = [];
+  const N = 90;
+  const spawn = () => ({ x: Math.random(), y: 1+Math.random()*0.2, vy: -(0.0006+Math.random()*0.0012),
+                        vx: (Math.random()-0.5)*0.0004, r: 0.6+Math.random()*1.8, life: Math.random() });
+  for (let i=0;i<N;i++){ const s = spawn(); s.y = Math.random(); sparks.push(s); }
+  _sigSetup((time, ctx, w, h, pointer) => {
+    ctx.clearRect(0,0,w,h); ctx.fillStyle='#160a06'; ctx.fillRect(0,0,w,h);
+    ctx.globalCompositeOperation='lighter';
+    for (const s of sparks){
+      s.x += s.vx; s.y += s.vy; s.life += 0.005;
+      const px = s.x*w, py = s.y*h;
+      if (pointer.active){ const dx=px-pointer.x, dy=py-pointer.y, d=Math.hypot(dx,dy);
+        if (d<130){ const f=(1-d/130); s.vx += (dx/(d||1))*f*0.0006; s.vy += (dy/(d||1))*f*0.0006; } }
+      if (s.y < -0.05){ Object.assign(s, spawn()); }
+      const flick = 0.6+0.4*Math.sin(time*6 + s.life*10);
+      const g = ctx.createRadialGradient(px,py,0,px,py,s.r*4);
+      g.addColorStop(0,`rgba(255,${140+flick*60|0},60,${(0.5*flick).toFixed(3)})`);
+      g.addColorStop(1,'rgba(255,120,40,0)');
+      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(px,py,s.r*4,0,6.28); ctx.fill();
+    }
+    ctx.globalCompositeOperation='source-over';
+  });
+}
+
+// TIDE — slow caustic ripple bands (like light on a pool floor); cursor warps them.
+function mountTide(){
+  _sigSetup((time, ctx, w, h, pointer) => {
+    ctx.clearRect(0,0,w,h); ctx.fillStyle='#031316'; ctx.fillRect(0,0,w,h);
+    ctx.globalCompositeOperation='lighter';
+    const rows = 14;
+    for (let i=0;i<rows;i++){
+      const yBase = (i+0.5)/rows*h;
+      const pull = pointer.active ? (pointer.y - yBase) * 0.15 : 0;
+      ctx.beginPath();
+      for (let x=0;x<=w;x+=12){
+        const y = yBase + Math.sin(x*0.008 + time*0.8 + i)*14 + Math.sin(x*0.017 - time*0.5)*8 + pull*(pointer.active?Math.max(0,1-Math.abs(x-pointer.x)/300):0);
+        if (x===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      }
+      ctx.strokeStyle='rgba(90,200,210,0.06)'; ctx.lineWidth=2; ctx.stroke();
+    }
+    ctx.globalCompositeOperation='source-over';
+  });
+  if (_abyssal && _abyssal.canvas) _abyssal.canvas.style.filter='blur(6px)';
+}
+
+// NEBULA — soft drifting cosmic dust clouds (purple/magenta) pushed by the cursor.
+function mountNebula(){
+  const clouds = [];
+  for (let i=0;i<7;i++) clouds.push({ x:Math.random(), y:Math.random(), vx:(Math.random()-0.5)*0.0004, vy:(Math.random()-0.5)*0.0004,
+                                      r:0.25+Math.random()*0.25, hue: 265+Math.random()*60 });
+  _sigSetup((time, ctx, w, h, pointer) => {
+    ctx.clearRect(0,0,w,h); ctx.fillStyle='#0a0616'; ctx.fillRect(0,0,w,h);
+    ctx.globalCompositeOperation='lighter';
+    for (const c of clouds){
+      c.x += c.vx; c.y += c.vy;
+      if (c.x<-0.3)c.x=1.3; if(c.x>1.3)c.x=-0.3; if(c.y<-0.3)c.y=1.3; if(c.y>1.3)c.y=-0.3;
+      let px=c.x*w, py=c.y*h;
+      if (pointer.active){ const dx=px-pointer.x, dy=py-pointer.y, d=Math.hypot(dx,dy);
+        if (d<300){ const f=(1-d/300); c.vx += (dx/(d||1))*f*0.00002; c.vy += (dy/(d||1))*f*0.00002; } }
+      const R=c.r*Math.min(w,h);
+      const g=ctx.createRadialGradient(px,py,0,px,py,R);
+      g.addColorStop(0,`hsla(${c.hue},70%,60%,0.10)`);
+      g.addColorStop(1,`hsla(${c.hue},70%,50%,0)`);
+      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(px,py,R,0,6.28); ctx.fill();
+    }
+    ctx.globalCompositeOperation='source-over';
+  });
+  if (_abyssal && _abyssal.canvas) _abyssal.canvas.style.filter='blur(20px)';
+}
+
+// MEADOW — fireflies bobbing over dark green; they gather toward the cursor.
+function mountMeadow(){
+  const flies = [];
+  const N = 55;
+  for (let i=0;i<N;i++) flies.push({ x:Math.random(), y:Math.random(), ph:Math.random()*6.28,
+                                     sx:0.3+Math.random()*0.7, sy:0.3+Math.random()*0.7 });
+  _sigSetup((time, ctx, w, h, pointer) => {
+    ctx.clearRect(0,0,w,h); ctx.fillStyle='#0d1608'; ctx.fillRect(0,0,w,h);
+    ctx.globalCompositeOperation='lighter';
+    for (const f of flies){
+      let px = (f.x + Math.sin(time*0.3*f.sx + f.ph)*0.03)*w;
+      let py = (f.y + Math.cos(time*0.3*f.sy + f.ph)*0.03)*h;
+      if (pointer.active){ const dx=pointer.x-px, dy=pointer.y-py, d=Math.hypot(dx,dy);
+        if (d<200){ const f2=(1-d/200)*0.25; px += dx*f2; py += dy*f2; } }
+      const glow = 0.5+0.5*Math.sin(time*3 + f.ph);
+      const g=ctx.createRadialGradient(px,py,0,px,py,6);
+      g.addColorStop(0,`rgba(200,255,140,${(0.5*glow).toFixed(3)})`);
+      g.addColorStop(1,'rgba(160,220,90,0)');
+      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(px,py,6,0,6.28); ctx.fill();
+    }
+    ctx.globalCompositeOperation='source-over';
+  });
+}
+
+// MONSOON — diagonal rainfall; the cursor pushes a gap through the streaks.
+function mountMonsoon(){
+  const drops = [];
+  const N = 160;
+  for (let i=0;i<N;i++) drops.push({ x:Math.random(), y:Math.random(), len:0.02+Math.random()*0.04, sp:0.004+Math.random()*0.006 });
+  _sigSetup((time, ctx, w, h, pointer) => {
+    ctx.clearRect(0,0,w,h); ctx.fillStyle='#0b1014'; ctx.fillRect(0,0,w,h);
+    ctx.strokeStyle='rgba(150,180,210,0.16)'; ctx.lineWidth=1;
+    for (const d of drops){
+      d.y += d.sp; d.x += d.sp*0.3;
+      if (d.y>1.1){ d.y=-0.1; d.x=Math.random(); }
+      let px=d.x*w, py=d.y*h;
+      let skip=false;
+      if (pointer.active){ const dx=px-pointer.x, dy=py-pointer.y; if (Math.hypot(dx,dy)<70) skip=true; }
+      if (skip) continue;
+      ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(px - d.len*w*0.3, py - d.len*h); ctx.stroke();
+    }
+  });
+}
+
+// Clear any preview and restore the real equipped look. Call on tab change.
+function clearShopPreview(){
+  if (!shopPreview) return;
+  shopPreview = null;
+  applyEquippedTheme();
+  const banner = document.getElementById('shop-preview-banner');
+  if (banner) banner.classList.add('hidden');
+}
+
+// Confirm-buy the currently previewed item (from the preview banner button).
+function buyPreviewedItem(){
+  if (!shopPreview) return;
+  const { catKey, itemId } = shopPreview;
+  // Second click on the same item path in shopItemClick performs the purchase.
+  shopItemClick(catKey, itemId);
 }
 
 function shopItemClick(catKey, itemId){
   const cat = SHOP_CATALOG[catKey];
-  const item = cat && cat.items.find(x => x.id === itemId);
+  let item = cat && cat.items.find(x => x.id === itemId);
   if (!item) return;
   const data = loadShopData();
   const owned = data.owned || {};
@@ -3311,7 +4247,23 @@ function shopItemClick(catKey, itemId){
   const isOwned = item.free || ownedList.includes(itemId);
 
   if (!isOwned) {
-    // Try to buy
+    // Not owned: first click PREVIEWS (no purchase). The preview banner then
+    // offers to buy. Clicking the same item again while previewed confirms buy.
+    const alreadyPreviewing = shopPreview && shopPreview.catKey === catKey && shopPreview.itemId === itemId;
+    if (!alreadyPreviewing) {
+      shopPreview = { catKey, itemId };
+      applyShopPreview();
+      const banner = document.getElementById('shop-preview-banner');
+      if (banner) {
+        banner.classList.remove('hidden');
+        const label = document.getElementById('shop-preview-label');
+        if (label) label.textContent = 'Previewing ' + item.name + ' — ' + item.price.toLocaleString() + ' XP';
+        banner.dataset.cat = catKey;
+        banner.dataset.item = itemId;
+      }
+      return;
+    }
+    // Confirm purchase
     const cost = item.price;
     const debugOn = isDebugInfiniteXp();
     if (!debugOn && (data.spendableXp || 0) < cost) {
@@ -3332,9 +4284,18 @@ function shopItemClick(catKey, itemId){
     toast('Purchased ' + item.name + '!');
   }
 
-  // Equip
+  // Any purchase/equip resolves the preview: drop the pending state and hide
+  // the banner (previously it lingered until you pressed Cancel).
+  shopPreview = null;
+  const banner = document.getElementById('shop-preview-banner');
+  if (banner) banner.classList.add('hidden');
+
+  // Equip. Paper and Signature both control the background and are mutually
+  // exclusive: equipping one clears the other so resolveActivePaper picks right.
   if (!data.equipped) data.equipped = {};
   data.equipped[catKey] = itemId;
+  if (catKey === 'special') data.equipped.paper = data.equipped.paper; // keep paper as fallback, special wins
+  if (catKey === 'paper')   data.equipped.special = '';               // choosing a normal paper drops the flagship
   saveShopData(data);
   applyEquippedTheme();
   loadShop();
@@ -3342,22 +4303,35 @@ function shopItemClick(catKey, itemId){
 }
 
 function applyEquippedTheme(){
+  ensureDefaultPaper();
   const data = loadShopData();
   const equipped = data.equipped || {};
   const ink = equipped.ink || SHOP_DEFAULTS.ink;
-  const paper = equipped.paper || SHOP_DEFAULTS.paper;
+  // Abyssal (a 'special' item) overrides the equipped paper as the background.
+  const paper = resolveActivePaper(equipped);
   const monogram = equipped.monogram || SHOP_DEFAULTS.monogram;
   const frame = equipped.frame || SHOP_DEFAULTS.frame;
 
-  // Apply as data attributes on body
+  // Apply as data attributes on body. Empty string clears the attribute.
   document.body.dataset.ink = ink === 'iron_gall' ? '' : ink;
   document.body.dataset.paper = paper === 'cream' ? '' : paper;
   document.body.dataset.monogram = monogram === 'ampersand' ? '' : monogram;
   document.body.dataset.frame = frame === 'plain' ? '' : frame;
 
+  // Dark background => flip ink to off-white via body.paper-dark.
+  document.body.classList.toggle('paper-dark', DARK_PAPERS.has(paper));
+
+  // Paint <html> + keep the preload attr in sync so the root repaints.
+  document.documentElement.setAttribute('data-preload-paper', paper);
+  document.documentElement.style.background = PAPER_BG_MAP[paper] || '';
+
   // Remove previous frame classes
-  document.body.classList.remove('book-frame-ornate','book-frame-botanical','book-frame-gothic');
-  if (frame !== 'plain') document.body.classList.add('book-frame-' + frame);
+  document.body.classList.remove('book-frame-ornate','book-frame-botanical','book-frame-gothic','book-frame-peacock','book-frame-none');
+  if (frame === 'none') document.body.classList.add('book-frame-none');
+  else if (frame !== 'plain') document.body.classList.add('book-frame-' + frame);
+
+  // Mount/unmount the active signature interactive background canvas.
+  setSignatureEffect(SPECIAL_PAPERS.has(paper) ? paper : null);
 }
 
 // ============ READING SESSION ============
@@ -3436,7 +4410,7 @@ function tickSession(){
     // Transition base-ink → gold as it approaches 30 min. Start colour adapts
     // to the theme so the ring is visible in dark mode (near-black start
     // would vanish against dark paper).
-    const isDark = document.body.classList.contains('dark');
+    const isDark = document.body.classList.contains('paper-dark');
     const r1 = isDark ? [232,223,201] : [26,23,18], r2 = [217,190,135];
     const cr = Math.round(r1[0] + (r2[0]-r1[0]) * progress);
     const cg = Math.round(r1[1] + (r2[1]-r1[1]) * progress);
@@ -3562,15 +4536,44 @@ boot();
     const r = wrap.getBoundingClientRect();
     const px = (e.clientX - r.left) / r.width - 0.5;
     const py = (e.clientY - r.top) / r.height - 0.5;
-    wrap.classList.add('tilting');
-    slab.style.transform = `rotateY(${(-22) + px*MAXY*-1}deg) rotateX(${3 + py*MAXX}deg)`;
+    const target = `rotateY(${(-22) + px*MAXY*-1}deg) rotateX(${3 + py*MAXX}deg)`;
+    if(!wrap.classList.contains('tilting')){
+      // First contact: the slab is mid-float-animation. Snapshot its CURRENT
+      // computed transform, pin it as the inline start value, then on the next
+      // frame switch to the pointer target so the .tilting transition eases
+      // smoothly FROM where the float left off (no jump to the rest angle).
+      const current = getComputedStyle(slab).transform;
+      slab.style.transition = 'none';
+      slab.style.transform = (current && current !== 'none') ? current : 'rotateY(-22deg) rotateX(3deg)';
+      wrap.classList.add('tilting');           // kills float, arms the eased transition
+      void slab.offsetWidth;                    // force reflow so the start value sticks
+      slab.style.transition = '';               // let the .tilting CSS transition take over
+      requestAnimationFrame(() => { slab.style.transform = target; });
+      return;
+    }
+    slab.style.transform = target;
   }
   function reset(e){
     const wrap = e.target.closest('.cover3d');
     if(!wrap) return;
     const slab = wrap.querySelector('.slab');
-    if(slab) slab.style.transform = '';
-    wrap.classList.remove('tilting');
+    if(slab){
+      // Smoothly ease back to rest instead of snapping. We apply a slow
+      // transition, clear the inline transform (so CSS rest state takes over),
+      // then drop the .tilting class and the temp transition once it settles.
+      slab.style.transition = 'transform .55s cubic-bezier(.22,.61,.36,1)';
+      slab.style.transform = '';
+      const done = () => {
+        slab.style.transition = '';
+        wrap.classList.remove('tilting');
+        slab.removeEventListener('transitionend', done);
+      };
+      slab.addEventListener('transitionend', done);
+      // Fallback in case transitionend doesn't fire (e.g. no visual change).
+      setTimeout(done, 620);
+    } else {
+      wrap.classList.remove('tilting');
+    }
   }
   document.addEventListener('pointermove', tilt, {passive:true});
   document.addEventListener('pointerleave', reset, true);
