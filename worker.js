@@ -181,6 +181,7 @@ export default {
         if (p === '/api/uf/signup' && request.method === 'POST')        ufRes = await ufSignup(request, env);
         else if (p === '/api/uf/me')                                    ufRes = await ufMe(url, env);
         else if (p === '/api/uf/search')                               ufRes = await ufSearch(url);
+        else if (p === '/api/uf/cover')                                 ufRes = await ufCoverProxy(url);
         else if (p === '/api/uf/account' && request.method === 'POST')  ufRes = await ufAccountUpdate(request, env);
         else if (p === '/api/uf/books' && request.method === 'GET')     ufRes = await ufBooksGet(url, env);
         else if (p === '/api/uf/books' && request.method === 'POST')    ufRes = await ufBooksAdd(request, env);
@@ -7243,6 +7244,34 @@ async function ufAccountUpdate(request, env) {
     return jsonResponse({ id: u.id, name: u.name, handle: u.handle });
   } catch (e) {
     return jsonResponse({ error: e.message }, 500);
+  }
+}
+
+// Same-origin proxy for cover images so the client can sample their pixels on a
+// canvas (dominant-colour extraction) without a cross-origin taint. Only
+// whitelisted cover hosts are proxied. Cached hard at the edge.
+async function ufCoverProxy(url) {
+  try {
+    const raw = url.searchParams.get('u') || '';
+    let target;
+    try { target = new URL(raw); } catch(_) { return jsonResponse({ error: 'bad url' }, 400); }
+    const okHost = /(^|\.)covers\.openlibrary\.org$/.test(target.hostname)
+                || /(^|\.)books\.google\.com$/.test(target.hostname)
+                || /(^|\.)googleusercontent\.com$/.test(target.hostname);
+    if (target.protocol !== 'https:' || !okHost) return jsonResponse({ error: 'host not allowed' }, 400);
+    const upstream = await fetch(target.toString(), { cf: { cacheTtl: 86400, cacheEverything: true } });
+    if (!upstream.ok) return new Response('upstream error', { status: 502 });
+    const ct = upstream.headers.get('content-type') || 'image/jpeg';
+    return new Response(upstream.body, {
+      status: 200,
+      headers: {
+        'content-type': ct,
+        'access-control-allow-origin': '*',
+        'cache-control': 'public, max-age=86400, s-maxage=604800'
+      }
+    });
+  } catch (e) {
+    return new Response('proxy error', { status: 500 });
   }
 }
 

@@ -3052,7 +3052,6 @@ function applyBookDominantColours(root){
     if (_domCache[url]) { setBookDom(cover3d, _domCache[url]); return; }
     const probe = new Image();
     probe.crossOrigin = 'anonymous';
-    probe.referrerPolicy = 'no-referrer';
     probe.onload = () => {
       try {
         const dom = dominantColourOf(probe);
@@ -3060,7 +3059,9 @@ function applyBookDominantColours(root){
       } catch(_){ /* tainted canvas or decode error: keep default tint */ }
     };
     probe.onerror = () => {};
-    probe.src = url;
+    // Route through our same-origin cover proxy so canvas reads aren't tainted
+    // (covers.openlibrary.org sends no CORS headers).
+    probe.src = `${API}/cover?u=${encodeURIComponent(url)}`;
   });
 }
 function setBookDom(cover3d, rgb){
