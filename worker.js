@@ -200,6 +200,7 @@ export default {
         else if (p === '/api/uf/guilds/join' && request.method === 'POST') ufRes = await ufGuildJoin(request, env);
         else if (p === '/api/uf/guilds/leave' && request.method === 'POST') ufRes = await ufGuildLeave(request, env);
         else if (p === '/api/uf/guild' && request.method === 'GET')     ufRes = await ufGuildGet(url, env);
+        else if (p === '/api/uf/guild/flags' && request.method === 'GET') ufRes = await ufGuildFlags(url, env);
         else if (p === '/api/uf/guild/goals' && request.method === 'GET') ufRes = await ufGuildGoalsGet(url, env);
         else if (p === '/api/uf/guild/goals' && request.method === 'POST') ufRes = await ufGuildGoalCreate(request, env);
         if (ufRes) {
@@ -7380,6 +7381,47 @@ async function ufLog(request, env) {
     const pagesRead = newPage - b.current;
     if (pagesRead <= 0) return jsonResponse({ error: 'no progress' }, 400);
 
+    // ── Realistic-pace anti-cheat ──────────────────────────────────────────
+    // XP is only earned by logging pages AFTER a timed reading session, so a
+    // session (with elapsed time) is required. If the claimed pace over the
+    // TOTAL elapsed time exceeds MAX_PPM pages/minute it's implausible for real
+    // reading: the log is NOT credited (no XP, no progress, no streak) and the
+    // account is flagged. If the reader is in a guild, the flag is surfaced to
+    // the guild leader so they can act or talk to the member.
+    const MAX_PPM = 4; // pages per minute ceiling
+    const durMsRaw = session && typeof session === 'object'
+      ? Math.max(0, Math.min(6 * 3600e3, parseInt(session.durationMs, 10) || 0))
+      : 0;
+    const elapsedMin = durMsRaw / 60000;
+    if (elapsedMin < 0.5) {
+      // Under 30s of elapsed time can't credibly cover multiple pages; require a
+      // real timed session before pages count for XP.
+      return jsonResponse({
+        error: 'no_session',
+        message: 'Log pages after a timed reading session so we can credit XP fairly.'
+      }, 400);
+    }
+    const pace = pagesRead / elapsedMin; // pages per minute over total elapsed
+    if (pace > MAX_PPM) {
+      const flag = {
+        userId, bookId,
+        bookTitle: b.title,
+        pagesClaimed: pagesRead,
+        elapsedMin: Math.round(elapsedMin * 10) / 10,
+        pace: Math.round(pace * 10) / 10,
+        maxPace: MAX_PPM,
+        at: Date.now()
+      };
+      await _ufRecordCheatFlag(env, u, flag);
+      return jsonResponse({
+        error: 'flagged',
+        message: `Log rejected: ${pagesRead} pages in ${flag.elapsedMin} min is ${flag.pace} pages/min (limit ${MAX_PPM}). This log was not credited and has been flagged for review.`,
+        flagged: true,
+        pace: flag.pace, maxPace: MAX_PPM,
+        pagesClaimed: pagesRead, elapsedMin: flag.elapsedMin
+      }, 422);
+    }
+
     // Suspicious-pace flag: > 400 pages/day is unusual for v1 honor system
     const today = _ufToday();
     const logs = await _ufGetLogs(env, userId);
@@ -7446,6 +7488,57 @@ async function ufLog(request, env) {
       tier: _ufTierFromXp(u.totalXp),
       focusMult, session: sessionMeta
     });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
+  }
+}
+
+// Record a cheating flag on the user, and if they belong to any guild, append
+// a report to each of those guilds' flag queues so the leader (guild.ownerId)
+// can review, remove, or speak with the member. KV:
+//   uf:flags:${uid}        → { count, lastAt, history:[flag] }  (on the reader)
+//   uf:guildflags:${gid}   → [ { ...flag, name, handle } ]     (leader's queue)
+async function _ufRecordCheatFlag(env, u, flag) {
+  try {
+    // 1) Mark the reader.
+    const rec = (await kvGet(env, `uf:flags:${u.id}`)) || { count: 0, lastAt: 0, history: [] };
+    rec.count = (rec.count || 0) + 1;
+    rec.lastAt = flag.at;
+    rec.history = [flag, ...(rec.history || [])].slice(0, 20);
+    await kvPut(env, `uf:flags:${u.id}`, rec);
+    u.flagCount = rec.count;
+    u.lastFlagAt = flag.at;
+
+    // 2) Surface to each guild leader.
+    const guildIds = await _ufGetMemberGuilds(env, u.id);
+    for (const gid of guildIds) {
+      const g = await _ufGetGuild(env, gid);
+      if (!g) continue;
+      const queue = (await kvGet(env, `uf:guildflags:${gid}`)) || [];
+      queue.unshift({
+        ...flag,
+        name: u.name, handle: u.handle,
+        ownerId: g.ownerId
+      });
+      await kvPut(env, `uf:guildflags:${gid}`, queue.slice(0, 100));
+    }
+  } catch (e) {
+    // Never let flag bookkeeping break the request path.
+    console.warn('cheat-flag record failed:', e && e.message);
+  }
+}
+
+// GET /api/uf/guild/flags?gid=..&id=..  — leader-only view of flagged members.
+async function ufGuildFlags(url, env) {
+  try {
+    const gid = url.searchParams.get('gid');
+    const id = url.searchParams.get('id');
+    if (!gid || !id) return jsonResponse({ error: 'gid and id required' }, 400);
+    const g = await _ufGetGuild(env, gid);
+    if (!g) return jsonResponse({ error: 'guild not found' }, 404);
+    if (g.ownerId !== id) return jsonResponse({ error: 'leader only' }, 403);
+    const flags = (await kvGet(env, `uf:guildflags:${gid}`)) || [];
+    return jsonResponse({ flags });
   } catch (e) {
     return jsonResponse({ error: e.message }, 500);
   }

@@ -672,6 +672,24 @@ header.top{display:none !important}
 }
 
 /* ── Friends ──────────────────────────────────── */
+.flag-row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:14px 0;border-bottom:1px solid var(--paper-line)}
+.flag-row:last-child{border-bottom:none}
+.flag-name{font-family:'EB Garamond',serif;font-weight:500;color:var(--ink-bright);font-size:18px}
+.flag-name .h{color:var(--blue);font-style:italic;font-size:14px;font-weight:400}
+.flag-detail{font-size:13px;color:var(--red);margin-top:3px;line-height:1.4}
+.flag-detail b{font-weight:600}
+.flag-when{font-family:'Geist',sans-serif;font-size:11px;color:var(--ink-fade);white-space:nowrap;flex-shrink:0}
+.pace-ticker{margin:4px 0 16px;padding:12px 14px;border:1px solid var(--paper-line);border-radius:var(--radius);background:var(--paper-raise)}
+.pace-ticker.hidden{display:none}
+.pace-line{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.pace-label{font-family:'Geist',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-dim)}
+.pace-value{font-family:'Geist',sans-serif;font-size:18px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--ink-bright)}
+.pace-bar{height:6px;border-radius:3px;background:var(--paper-line);overflow:hidden}
+.pace-fill{height:100%;width:0%;border-radius:3px;background:var(--flourish);transition:width .18s ease, background .18s ease}
+.pace-note{font-size:12px;color:var(--ink-dim);font-style:italic;margin-top:7px}
+.pace-ticker.over .pace-fill{background:var(--red)}
+.pace-ticker.over .pace-value{color:var(--red)}
+.pace-ticker.over .pace-note{color:var(--red);font-style:normal;font-weight:500}
 .req-head{font-family:'Geist',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-dim);margin:6px 0 4px;padding-top:8px}
 .req-pending{font-family:'Geist',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--flourish);border:1px solid var(--paper-line-strong);border-radius:var(--radius);padding:3px 8px}
 .friends-add{display:flex;gap:10px;margin-bottom:24px}
@@ -2098,9 +2116,17 @@ body[data-monogram="cross"]{--monogram-glyph:'\2720\FE0E'}
       <label>Or pages read just now</label>
       <input id="log-delta" type="number" min="0" placeholder="e.g. 20">
     </div>
+    <div id="pace-ticker" class="pace-ticker hidden">
+      <div class="pace-line">
+        <span class="pace-label">Reading pace</span>
+        <span class="pace-value" id="pace-value">—</span>
+      </div>
+      <div class="pace-bar"><div class="pace-fill" id="pace-fill"></div></div>
+      <div class="pace-note" id="pace-note">Limit 4 pages/min over your session time.</div>
+    </div>
     <div class="actions">
       <button class="btn ghost" onclick="closeLogModal()" style="flex:0 0 auto">Cancel</button>
-      <button class="btn" onclick="submitLog()">Log it</button>
+      <button class="btn" id="log-submit-btn" onclick="submitLog()">Log it</button>
     </div>
   </div>
 </div>
@@ -2434,6 +2460,10 @@ async function boot(){
   });
   document.getElementById('log-modal').addEventListener('click', (e) => {
     if (e.target.id === 'log-modal') closeLogModal();
+  });
+  ['log-page','log-delta'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', updatePaceTicker);
   });
   const gm = document.getElementById('goal-modal');
   if (gm) gm.addEventListener('click', (e) => { if (e.target.id === 'goal-modal') closeGoalModal(); });
@@ -3202,10 +3232,57 @@ function openLogModal(bookId){
   document.getElementById('log-page').value = '';
   document.getElementById('log-page').placeholder = 'e.g. ' + (book.current + 20);
   document.getElementById('log-delta').value = '';
+  updatePaceTicker();
   document.getElementById('log-modal').classList.add('open');
 }
 function closeLogModal(){
   document.getElementById('log-modal').classList.remove('open');
+}
+
+// Live reading-pace ticker. Shows pages/min for the entered pages over the
+// session's total elapsed time, and warns (red) when it exceeds the 4 pg/min
+// ceiling the server enforces. Only shown when a timed session is pending.
+const MAX_PPM = 4;
+function _pendingElapsedMin(){
+  const s = state.pendingSession;
+  if (!s || !s.durationMs) return 0;
+  return s.durationMs / 60000;
+}
+function updatePaceTicker(){
+  const ticker = document.getElementById('pace-ticker');
+  if (!ticker) return;
+  const book = state.books.find(b => b.id === state.logBookId);
+  const elapsedMin = _pendingElapsedMin();
+  if (!book || elapsedMin < 0.5) { ticker.classList.add('hidden'); return; }
+  ticker.classList.remove('hidden');
+
+  const pageStr = document.getElementById('log-page').value.trim();
+  const deltaStr = document.getElementById('log-delta').value.trim();
+  let newPage = null;
+  if (pageStr) newPage = parseInt(pageStr, 10);
+  else if (deltaStr) newPage = book.current + parseInt(deltaStr, 10);
+  let pagesRead = (newPage != null && !isNaN(newPage)) ? Math.min(book.pages, newPage) - book.current : 0;
+  if (pagesRead < 0) pagesRead = 0;
+
+  const pace = pagesRead > 0 ? pagesRead / elapsedMin : 0;
+  const valueEl = document.getElementById('pace-value');
+  const fillEl = document.getElementById('pace-fill');
+  const noteEl = document.getElementById('pace-note');
+  const btn = document.getElementById('log-submit-btn');
+  valueEl.textContent = (pagesRead > 0 ? pace.toFixed(1) : '\u2014') + ' pg/min';
+  const pct = Math.min(100, (pace / MAX_PPM) * 100);
+  fillEl.style.width = pct + '%';
+  const over = pace > MAX_PPM;
+  ticker.classList.toggle('over', over);
+  if (over) {
+    noteEl.textContent = pagesRead + ' pages in ' + (Math.round(elapsedMin*10)/10) + ' min exceeds ' + MAX_PPM + ' pg/min \u2014 this log will be rejected and flagged.';
+    if (btn) btn.textContent = 'Too fast to credit';
+  } else {
+    noteEl.textContent = pagesRead > 0
+      ? Math.round(elapsedMin*10)/10 + ' min session \u00b7 within the ' + MAX_PPM + ' pg/min limit.'
+      : 'Session: ' + (Math.round(elapsedMin*10)/10) + ' min. Limit ' + MAX_PPM + ' pages/min.';
+    if (btn) btn.textContent = 'Log it';
+  }
 }
 async function submitLog(){
   const book = state.books.find(b => b.id === state.logBookId);
@@ -3230,7 +3307,20 @@ async function submitLog(){
       body: JSON.stringify(payload)
     });
     const d = await r.json();
-    if (!r.ok) return toast(d.error || 'Log failed');
+    if (!r.ok) {
+      // Anti-cheat rejection: log not credited, account flagged.
+      if (d.error === 'flagged') {
+        const ticker = document.getElementById('pace-ticker');
+        if (ticker) { ticker.classList.remove('hidden'); ticker.classList.add('over'); }
+        toast(d.message || 'Log rejected: pace too fast. Flagged for review.');
+        return; // keep modal open so they see the ticker
+      }
+      if (d.error === 'no_session') {
+        toast(d.message || 'Start a timed reading session before logging pages.');
+        return;
+      }
+      return toast(d.message || d.error || 'Log failed');
+    }
     closeLogModal();
     const mult = d.focusMult && d.focusMult !== 1 ? ' (' + d.focusMult + 'x)' : '';
     toast('+' + pagesRead + ' pages, +' + d.xp + ' XP' + mult);
@@ -3667,7 +3757,37 @@ function renderGuildDetail(g, goals){
 
     <div class="section-head" style="margin-top:32px"><h2>Guild leaderboard</h2></div>
     ${lbHtml}
+
+    ${isOwner ? `<div class="section-head" style="margin-top:32px"><h2>Flagged members</h2></div>
+    <div id="guild-flags"><div class="empty" style="padding:24px">Loading flags...</div></div>` : ''}
   `;
+
+  if (isOwner) loadGuildFlags(guild.id);
+}
+
+// Leader-only: fetch and render members flagged for false page counts so the
+// leader can remove them or speak with them.
+async function loadGuildFlags(gid){
+  const el = document.getElementById('guild-flags');
+  if (!el) return;
+  try {
+    const r = await fetch(`${API}/guild/flags?gid=${encodeURIComponent(gid)}&id=${encodeURIComponent(state.me.id)}`);
+    const d = await r.json();
+    if (!r.ok) { el.innerHTML = '<div class="empty" style="padding:24px">' + escHtml(d.error || 'Could not load flags') + '</div>'; return; }
+    const flags = d.flags || [];
+    if (!flags.length) { el.innerHTML = '<div class="empty" style="padding:24px">No flags. Your guild is clean.</div>'; return; }
+    el.innerHTML = flags.map(f => {
+      const when = new Date(f.at);
+      const whenStr = isNaN(when) ? '' : when.toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+      return `<div class="flag-row">
+        <div class="flag-main">
+          <div class="flag-name">${escHtml(f.name || '?')} <span class="h">@${escHtml(f.handle || '')}</span></div>
+          <div class="flag-detail">Claimed <b>${f.pagesClaimed}</b> pages in <b>${f.elapsedMin}</b> min — <b>${f.pace} pg/min</b> (limit ${f.maxPace}) on “${escHtml(f.bookTitle || '')}”</div>
+        </div>
+        <div class="flag-when">${escHtml(whenStr)}</div>
+      </div>`;
+    }).join('');
+  } catch(e){ el.innerHTML = '<div class="empty" style="padding:24px">Network error loading flags.</div>'; }
 }
 
 function goalCard(goal){
@@ -4657,6 +4777,7 @@ async function endSession(){
   document.getElementById('log-page').value = '';
   document.getElementById('log-page').placeholder = 'e.g. ' + (book.current + 20);
   document.getElementById('log-delta').value = '';
+  updatePaceTicker();
   document.getElementById('log-modal').classList.add('open');
   sessionState = null;
 }
