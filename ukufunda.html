@@ -510,8 +510,6 @@ header.top{display:none !important}
 }
 .book .cover3d.tilting .slab{animation:none;transition:transform .28s cubic-bezier(.22,.61,.36,1)}
 @keyframes bookFloat{0%,100%{transform:rotateY(-22deg) rotateX(3deg) translateY(0)}50%{transform:rotateY(-15deg) rotateX(2deg) translateY(-4px)}}
-/* Gentler float for the larger, flatter mobile book (front stays prominent). */
-@keyframes bookFloatMobile{0%,100%{transform:rotateY(-9deg) rotateX(2deg) translateY(0)}50%{transform:rotateY(-5deg) rotateX(1deg) translateY(-3px)}}
 @media(prefers-reduced-motion:reduce){.book .cover3d .slab{animation:none}}
 /* A simplified, slightly-exaggerated mini-book with real thickness (~14px).
    Three synced surfaces: FRONT cover (+Z), BACK cover (-Z), and the PAGE BLOCK
@@ -608,19 +606,10 @@ header.top{display:none !important}
   .running-head .right{gap:12px;flex-wrap:wrap;justify-content:flex-start}
   .running-head .folio{font-size:10px}
 
-  /* Book card: stack cover above the info so nothing is cramped. On mobile we
-     make the FRONT face bigger and more prominent: a larger cover, a much
-     gentler tilt (so the front reads almost flat instead of shrinking away),
-     and a thinner spine/fore-edge so there's no detached floating strip. */
+  /* Book card: stack cover above the info so nothing is cramped. The 3D book
+     itself is left EXACTLY as the desktop version (same size, tilt, thickness,
+     spine/fore-edge and float animation) so mobile is a 1:1 replica. */
   .book{gap:16px;padding:18px 2px}
-  .book .cover3d{width:88px;height:132px;perspective:1100px}
-  .book .cover3d .slab{transform:rotateY(-9deg) rotateX(2deg);animation:bookFloatMobile 6s ease-in-out infinite}
-  .book .cover3d.tilting .slab{animation:none}
-  /* Thinner book thickness so the fore-edge hugs the cover (no big right gap). */
-  .book .cover3d .front3d{transform:translateZ(4px)}
-  .book .cover3d .back3d{transform:translateZ(-4px) rotateY(180deg)}
-  .book .cover3d .spine3d{width:8px;transform:translateX(-4px) rotateY(-90deg)}
-  .book .cover3d .pages3d{width:8px;transform:translateX(4px) rotateY(90deg)}
   .book .title{font-size:20px;line-height:1.15}
   .book .author{font-size:14px}
 
