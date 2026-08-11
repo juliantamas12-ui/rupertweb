@@ -625,9 +625,22 @@ header.top{display:none !important}
   .contents-row .contents-num{font-size:16px;width:22px}
 
   /* Stats grid + shop strips fit narrow screens. */
-  .grid{grid-template-columns:1fr 1fr}
+  .grid{grid-template-columns:1fr 1fr;margin:8px 0 24px}
+  .grid .card{padding:14px 12px}
   .shop-strip{grid-template-columns:repeat(auto-fill, minmax(86px, 1fr));gap:8px}
   .shop-category-signature{padding:18px 12px 16px}
+
+  /* Tame the oversized stat numerals so cards stay compact on phones. */
+  .stat{font-size:40px}
+  .card h3{margin-bottom:6px}
+  .sub{margin-top:6px}
+
+  /* Hero: less dead space above the fold on mobile. */
+  .xp-hero{padding:16px 12px 12px}
+  .xp-seal{width:76px;height:76px;margin-bottom:8px}
+  .xp-seal .seal-inner{font-size:30px}
+  .xp-hero .xp-amount{font-size:36px}
+  .tier-progress-strip{margin-bottom:18px}
 
   /* Reading-desk hero + CTA never overflow. */
   .primary-cta{width:100%;max-width:320px}
@@ -3267,6 +3280,13 @@ function onOfflineToggle(){
   const btn = document.getElementById('log-submit-btn');
   if (btn) btn.textContent = isOfflineLog() ? 'Log offline (0 XP)' : 'Log it';
 }
+function _fmtDuration(mins){
+  mins = Math.max(0, Math.round(mins));
+  if (mins < 60) return mins + ' min';
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return m ? h + 'h ' + m + 'm' : h + 'h';
+}
 function updatePaceTicker(){
   const ticker = document.getElementById('pace-ticker');
   if (!ticker) return;
@@ -3298,9 +3318,18 @@ function updatePaceTicker(){
     noteEl.textContent = pagesRead + ' pages in ' + (Math.round(elapsedMin*10)/10) + ' min exceeds ' + MAX_PPM + ' pg/min \u2014 this log will be rejected and flagged.';
     if (btn) btn.textContent = 'Too fast to credit';
   } else {
-    noteEl.textContent = pagesRead > 0
-      ? Math.round(elapsedMin*10)/10 + ' min session \u00b7 within the ' + MAX_PPM + ' pg/min limit.'
-      : 'Session: ' + (Math.round(elapsedMin*10)/10) + ' min. Limit ' + MAX_PPM + ' pages/min.';
+    if (pagesRead > 0 && pace > 0) {
+      const newPageNow = book.current + pagesRead;
+      const pagesLeft = Math.max(0, book.pages - newPageNow);
+      if (pagesLeft <= 0) {
+        noteEl.textContent = 'You\u2019ll finish the book with this log.';
+      } else {
+        const minsLeft = pagesLeft / pace;
+        noteEl.textContent = 'At this pace, ' + _fmtDuration(minsLeft) + ' left to finish (' + pagesLeft + ' pages).';
+      }
+    } else {
+      noteEl.textContent = 'Enter pages to see how long the book will take at this pace.';
+    }
     if (btn) btn.textContent = 'Log it';
   }
 }
@@ -4790,14 +4819,8 @@ async function endSession(){
     interruptionCount: s.interruptionCount,
   };
   const book = state.books.find(b => b.id === s.bookId);
-  const mins = Math.round(s.durationMs / 60000);
-  const focusHint = s.interrupted
-    ? 'Interrupted x ' + s.interruptionCount + ' — XP will be 0.75x (distraction penalty).'
-    : mins >= 30
-    ? mins + ' minutes uninterrupted — 1.25x deep-focus XP. (Photo evidence at 1.5x is TODO pending R2 activation.)'
-    : mins + ' minutes uninterrupted — normal XP.';
   document.getElementById('log-book-info').innerHTML =
-    '<div class="session-review-info"><b>' + escHtml(book.title) + '</b> — ' + focusHint + '</div>'
+    '<div class="session-review-info"><b>' + escHtml(book.title) + '</b></div>'
     + 'Currently on page ' + book.current + ' of ' + book.pages;
   document.getElementById('log-page').value = '';
   document.getElementById('log-page').placeholder = 'e.g. ' + (book.current + 20);
