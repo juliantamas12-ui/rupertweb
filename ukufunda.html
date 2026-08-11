@@ -411,6 +411,8 @@ header.top{display:none !important}
 
 /* ── Buttons ────────────────────────────────────── */
 .btn{background:var(--accent);color:var(--paper);border:none;border-radius:var(--radius);padding:12px 20px;font-weight:600;cursor:pointer;font-size:14px;display:inline-block;width:100%;transition:background .15s, transform .05s;letter-spacing:0.01em}
+.btn:disabled,.btn.disabled{opacity:0.45;cursor:not-allowed;filter:grayscale(0.3)}
+.btn:disabled:active,.btn.disabled:active{transform:none}
 .btn:hover{background:var(--accent-bright)}
 .btn:active{transform:translateY(1px)}
 .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--paper-line-strong);width:auto;padding:9px 16px;font-weight:500}
@@ -2222,6 +2224,28 @@ let state = {
   pendingSession: null,
 };
 
+// ============ PENDING SESSION PERSISTENCE ============
+// A completed timed session is worth real minutes. Persist it so an accidental
+// modal close, a reload, or a fat-fingered page number can never throw those
+// minutes away. Restored on load if the log was never completed.
+const LS_PENDING = 'uf:pendingSession';
+function savePendingSession(bookId, sess){
+  try { localStorage.setItem(LS_PENDING, JSON.stringify({ bookId, sess, savedAt: Date.now() })); } catch(e){}
+}
+function clearPendingSession(){
+  try { localStorage.removeItem(LS_PENDING); } catch(e){}
+}
+function restorePendingSession(){
+  try {
+    const raw = localStorage.getItem(LS_PENDING);
+    if (!raw) return null;
+    const d = JSON.parse(raw);
+    // Expire stale pending sessions after 12h so we don't resurrect ancient ones.
+    if (!d || !d.sess || (Date.now() - (d.savedAt || 0)) > 12 * 3600e3) { clearPendingSession(); return null; }
+    return d;
+  } catch(e){ return null; }
+}
+
 // ============ AUTH ============
 function loadMe(){
   try {
@@ -2473,7 +2497,7 @@ async function boot(){
     }
   });
   document.getElementById('log-modal').addEventListener('click', (e) => {
-    if (e.target.id === 'log-modal') closeLogModal();
+    if (e.target.id === 'log-modal') dismissLogModal();
   });
   ['log-page','log-delta'].forEach(id => {
     const el = document.getElementById(id);
@@ -2500,7 +2524,29 @@ function renderApp(){
   if (av) av.textContent = state.me.name.charAt(0).toUpperCase();
 
   switchTab('books');
-  refresh();
+  refresh().then(() => maybeResumePendingLog());
+}
+
+// If a completed session was left un-logged (accidental close / reload), bring
+// the reader straight back to the log modal so their minutes aren't wasted.
+function maybeResumePendingLog(){
+  if (state.pendingSession) return; // already have one in memory
+  const d = restorePendingSession();
+  if (!d) return;
+  const book = state.books.find(b => b.id === d.bookId);
+  if (!book || book.status === 'done') { clearPendingSession(); return; }
+  state.pendingSession = d.sess;
+  state.logBookId = d.bookId;
+  document.getElementById('log-book-info').innerHTML =
+    '<div class="session-review-info"><b>' + escHtml(book.title) + '</b></div>'
+    + 'Currently on page ' + book.current + ' of ' + book.pages
+    + '<div style="margin-top:6px;color:var(--tan-deep)">Resuming your last reading session — log your pages to claim it.</div>';
+  document.getElementById('log-page').value = '';
+  document.getElementById('log-page').placeholder = 'e.g. ' + (book.current + 20);
+  document.getElementById('log-delta').value = '';
+  refreshLogXpHint();
+  updatePaceTicker();
+  document.getElementById('log-modal').classList.add('open');
 }
 
 function showContents(){
@@ -3256,6 +3302,18 @@ function openLogModal(bookId){
 function closeLogModal(){
   document.getElementById('log-modal').classList.remove('open');
 }
+// Attempted dismiss (Cancel button or backdrop tap). If a completed timed
+// session is pending, confirm before walking away — but the session is ALSO
+// persisted to localStorage, so even "Discard" only hides the modal; the minutes
+// are recoverable next load. This prevents the old bug where a stray tap threw
+// away the reader's session.
+function dismissLogModal(){
+  if (state.pendingSession) {
+    const ok = confirm('You have an un-logged reading session. Close without logging? Your pages won\u2019t be recorded, but the session is saved and you can log it later.');
+    if (!ok) return;
+  }
+  closeLogModal();
+}
 
 // Live reading-pace ticker. Shows pages/min for the entered pages over the
 // session's total elapsed time, and warns (red) when it exceeds the 4 pg/min
@@ -3318,9 +3376,15 @@ function updatePaceTicker(){
   fillEl.style.width = pct + '%';
   const over = pace > MAX_PPM;
   ticker.classList.toggle('over', over);
+  // Block the submit button entirely when the pace is implausible. Nothing is
+  // sent to the server and the session is preserved — the reader just adjusts
+  // the page number down to something realistic and submits. No punishment, no
+  // lost session.
+  if (btn) { btn.disabled = over; btn.classList.toggle('disabled', over); }
   if (over) {
-    noteEl.textContent = pagesRead + ' pages in ' + (Math.round(elapsedMin*10)/10) + ' min exceeds ' + MAX_PPM + ' pg/min \u2014 this log will be rejected and flagged.';
-    if (btn) btn.textContent = 'Too fast to credit';
+    const maxPages = Math.floor(MAX_PPM * elapsedMin);
+    noteEl.textContent = pagesRead + ' pages in ' + (Math.round(elapsedMin*10)/10) + ' min is faster than ' + MAX_PPM + ' pg/min. For this session you can log up to ' + maxPages + ' pages — adjust the number to continue.';
+    if (btn) btn.textContent = 'Too fast — lower the pages';
   } else {
     if (pagesRead > 0 && pace > 0) {
       const newPageNow = book.current + pagesRead;
@@ -3352,6 +3416,16 @@ async function submitLog(){
   if (newPage > book.pages) newPage = book.pages;
   const pagesRead = newPage - book.current;
   if (pagesRead <= 0) return toast('That is not progress');
+  // Client-side pace guard: if this is a timed session and the claimed pace is
+  // over the limit, refuse to submit. Nothing is sent, the session is kept, and
+  // the reader simply lowers the page number. This means an over-fast entry can
+  // never cost someone their session.
+  const elapsedMin = _pendingElapsedMin();
+  if (state.pendingSession && elapsedMin >= 0.5 && (pagesRead / elapsedMin) > MAX_PPM) {
+    const maxPages = Math.floor(MAX_PPM * elapsedMin);
+    updatePaceTicker();
+    return toast('Too fast to log — for this session, up to ' + maxPages + ' pages. Lower the number and try again.');
+  }
   // XP is earned only when a completed timed session is attached. No session
   // (logged straight from the library / currently-reading) → offline: 0 XP, but
   // pages, streak and guild progress still count server-side.
@@ -3365,12 +3439,13 @@ async function submitLog(){
     });
     const d = await r.json();
     if (!r.ok) {
-      // Anti-cheat rejection: log not credited, account flagged.
-      if (d.error === 'flagged') {
-        const ticker = document.getElementById('pace-ticker');
-        if (ticker) { ticker.classList.remove('hidden'); ticker.classList.add('over'); }
-        toast(d.message || 'Log rejected: pace too fast. Flagged for review.');
-        return; // keep modal open so they see the ticker
+      // Server-side pace guard (belt-and-braces; the client already blocks this).
+      // The log is simply not credited — the session stays put so the reader can
+      // lower the number and try again. Nothing is flagged to anyone.
+      if (d.error === 'flagged' || d.error === 'too_fast') {
+        updatePaceTicker();
+        toast(d.message || 'Too fast to log — lower the pages and try again.');
+        return; // keep modal open and keep the session
       }
       if (d.error === 'no_session') {
         toast(d.message || 'Start a timed reading session before logging pages.');
@@ -3378,6 +3453,8 @@ async function submitLog(){
       }
       return toast(d.message || d.error || 'Log failed');
     }
+    // Success — the session has been claimed, so it can be forgotten now.
+    clearPendingSession();
     closeLogModal();
     if (d.offline) {
       toast('+' + pagesRead + ' pages logged offline (0 XP)' + (d.finished ? ' · book finished' : ''));
@@ -3819,36 +3896,7 @@ function renderGuildDetail(g, goals){
     <div class="section-head" style="margin-top:32px"><h2>Guild leaderboard</h2></div>
     ${lbHtml}
 
-    ${isOwner ? `<div class="section-head" style="margin-top:32px"><h2>Flagged members</h2></div>
-    <div id="guild-flags"><div class="empty" style="padding:24px">Loading flags...</div></div>` : ''}
   `;
-
-  if (isOwner) loadGuildFlags(guild.id);
-}
-
-// Leader-only: fetch and render members flagged for false page counts so the
-// leader can remove them or speak with them.
-async function loadGuildFlags(gid){
-  const el = document.getElementById('guild-flags');
-  if (!el) return;
-  try {
-    const r = await fetch(`${API}/guild/flags?gid=${encodeURIComponent(gid)}&id=${encodeURIComponent(state.me.id)}`);
-    const d = await r.json();
-    if (!r.ok) { el.innerHTML = '<div class="empty" style="padding:24px">' + escHtml(d.error || 'Could not load flags') + '</div>'; return; }
-    const flags = d.flags || [];
-    if (!flags.length) { el.innerHTML = '<div class="empty" style="padding:24px">No flags. Your guild is clean.</div>'; return; }
-    el.innerHTML = flags.map(f => {
-      const when = new Date(f.at);
-      const whenStr = isNaN(when) ? '' : when.toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
-      return `<div class="flag-row">
-        <div class="flag-main">
-          <div class="flag-name">${escHtml(f.name || '?')} <span class="h">@${escHtml(f.handle || '')}</span></div>
-          <div class="flag-detail">Claimed <b>${f.pagesClaimed}</b> pages in <b>${f.elapsedMin}</b> min — <b>${f.pace} pg/min</b> (limit ${f.maxPace}) on “${escHtml(f.bookTitle || '')}”</div>
-        </div>
-        <div class="flag-when">${escHtml(whenStr)}</div>
-      </div>`;
-    }).join('');
-  } catch(e){ el.innerHTML = '<div class="empty" style="padding:24px">Network error loading flags.</div>'; }
 }
 
 function goalCard(goal){
@@ -4825,6 +4873,10 @@ async function endSession(){
     interrupted: s.interrupted,
     interruptionCount: s.interruptionCount,
   };
+  // Persist the completed session so an accidental modal close / reload can't
+  // throw away the minutes the reader just earned. Cleared on a successful log
+  // or an explicit cancel.
+  savePendingSession(s.bookId, state.pendingSession);
   const book = state.books.find(b => b.id === s.bookId);
   document.getElementById('log-book-info').innerHTML =
     '<div class="session-review-info"><b>' + escHtml(book.title) + '</b></div>'
