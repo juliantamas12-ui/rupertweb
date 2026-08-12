@@ -1697,10 +1697,23 @@ body[data-monogram="cross"]{--monogram-glyph:'\2720\FE0E'}
         </div>
         <div class="field">
           <label for="signin-handle">Handle (friends will add you by this)</label>
-          <input id="signin-handle" type="text" placeholder="e.g. julian" maxlength="20" autocomplete="off">
+          <input id="signin-handle" type="text" placeholder="e.g. wee joe green" maxlength="20" autocomplete="off">
         </div>
         <button class="btn" id="signin-btn">Start reading</button>
         <p class="fine">Pick a handle you'll remember. Once claimed, it's yours.</p>
+        <button class="back-link" id="show-existing-btn" onclick="showExistingSignin()">Already have an account? Sign in</button>
+        <button class="back-link" onclick="closeCover()">back to cover</button>
+      </div>
+
+      <!-- Existing-account sign-in: pull your account onto this device by handle -->
+      <div class="fields hidden" id="existing-fields">
+        <div class="field">
+          <label for="signin-existing-handle">Your handle</label>
+          <input id="signin-existing-handle" type="text" placeholder="e.g. wee joe green" maxlength="20" autocomplete="off">
+        </div>
+        <button class="btn" id="signin-existing-btn" onclick="signInExisting()">Sign in</button>
+        <p class="fine">Type the handle you signed up with. Your books, XP and streak come with you.</p>
+        <button class="back-link" onclick="showNewSignin()">Create a new account instead</button>
         <button class="back-link" onclick="closeCover()">back to cover</button>
       </div>
     </div>
@@ -2207,6 +2220,13 @@ body[data-monogram="cross"]{--monogram-glyph:'\2720\FE0E'}
       <button class="btn ghost" onclick="closeProfileModal()" style="flex:0 0 auto">Close</button>
       <button class="btn ghost" onclick="closeProfileModal();openAccountModal()">Edit account</button>
     </div>
+
+    <div id="account-switcher-wrap" style="margin-top:18px;padding-top:14px;border-top:1px solid var(--paper-line)">
+      <div class="profile-section-label" style="margin-top:0">Switch account</div>
+      <div id="account-switcher-list"></div>
+      <button class="btn ghost" onclick="closeProfileModal();addAnotherAccount()" style="margin-top:8px">Add another account</button>
+      <div style="margin-top:6px;font-size:12px;color:var(--ink-fade);font-style:italic">Accounts on this device. Sign in by handle to add one from anywhere.</div>
+    </div>
     <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--paper-line)">
       <button class="btn subtle" id="profile-signout-btn" style="color:var(--red);border-color:var(--red-soft)">Log out</button>
       <div style="margin-top:6px;font-size:12px;color:var(--ink-fade);font-style:italic">Signs you out on this device. Your progress on the server is kept.</div>
@@ -2256,6 +2276,33 @@ function restorePendingSession(){
 }
 
 // ============ AUTH ============
+// Multi-account: this device can remember several accounts and switch between
+// them. LS_KEY holds the *active* account; LS_ACCOUNTS holds the roster.
+// The handle is the credential — sign in on any device by handle to pull the
+// same server-side progress. No Google, no password: honour-system.
+const LS_ACCOUNTS = 'uf:accounts';
+
+function loadAccounts(){
+  try {
+    const raw = localStorage.getItem(LS_ACCOUNTS);
+    const arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr : [];
+  } catch(e){ return []; }
+}
+function saveAccounts(list){
+  try { localStorage.setItem(LS_ACCOUNTS, JSON.stringify(list)); } catch(e){}
+}
+// Add/update an account in the roster (keyed by id), keep it de-duped.
+function rememberAccount(acc){
+  if (!acc || !acc.id) return;
+  const list = loadAccounts().filter(a => a && a.id !== acc.id);
+  list.unshift({ id: acc.id, name: acc.name, handle: acc.handle });
+  saveAccounts(list);
+}
+function forgetAccount(id){
+  saveAccounts(loadAccounts().filter(a => a && a.id !== id));
+}
+
 function loadMe(){
   try {
     const raw = localStorage.getItem(LS_KEY);
@@ -2264,10 +2311,79 @@ function loadMe(){
 }
 function saveMe(){
   localStorage.setItem(LS_KEY, JSON.stringify(state.me));
+  if (state.me) rememberAccount(state.me);
 }
 function clearMe(){
   localStorage.removeItem(LS_KEY);
   state.me = null;
+}
+
+// Switch the active account to one already known on this device. Pulls fresh
+// name/handle from the server so a rename elsewhere is reflected.
+async function switchToAccount(id){
+  const acc = loadAccounts().find(a => a && a.id === id);
+  if (!acc) return toast('Account not found on this device');
+  state.me = { id: acc.id, name: acc.name, handle: acc.handle };
+  saveMe();
+  try { sessionStorage.removeItem('uf_cover_seen'); } catch(e){}
+  location.reload();
+}
+
+// Render the list of accounts known on this device in the profile modal.
+function renderAccountSwitcher(){
+  const wrap = document.getElementById('account-switcher-wrap');
+  const listEl = document.getElementById('account-switcher-list');
+  if (!wrap || !listEl) return;
+  const accounts = loadAccounts();
+  const others = accounts.filter(a => a && (!state.me || a.id !== state.me.id));
+  // Always show the block (so "Add another account" is reachable); list others.
+  if (!others.length) {
+    listEl.innerHTML = '<div style="font-size:13px;color:var(--ink-dim);font-style:italic;padding:6px 0">No other accounts on this device yet.</div>';
+    return;
+  }
+  listEl.innerHTML = others.map(a =>
+    '<div class="friend-row" style="cursor:pointer" onclick="switchToAccount(\'' + escHtml(a.id) + '\')">' +
+      '<div class="friend-row-inner">' +
+        '<div class="friend-avatar">' + escHtml((a.name||'?').charAt(0).toUpperCase()) + '</div>' +
+        '<div><div class="fname">' + escHtml(a.name||'') + '</div>' +
+        '<div class="fmeta"><span class="h">@' + escHtml(a.handle||'') + '</span></div></div>' +
+      '</div>' +
+      '<button class="btn subtle" style="flex:0 0 auto;width:auto;padding:6px 10px;font-size:12px" ' +
+        'onclick="event.stopPropagation();removeDeviceAccount(\'' + escHtml(a.id) + '\')">Remove</button>' +
+    '</div>'
+  ).join('');
+}
+function removeDeviceAccount(id){
+  if (!confirm('Remove this account from this device? The account itself is not deleted — sign in by handle to bring it back.')) return;
+  forgetAccount(id);
+  renderAccountSwitcher();
+  toast('Removed from this device');
+}
+// "Add another account": go to the auth screen's existing-account sign-in
+// without logging the current user out of the server.
+function addAnotherAccount(){
+  document.getElementById('auth-screen').classList.remove('hidden');
+  document.getElementById('book-cover').classList.add('hidden');
+  const ep = document.getElementById('endpaper');
+  if (ep) ep.classList.remove('hidden');
+  showExistingSignin();
+}
+
+// Sign in to an existing account by handle (works on a brand-new device).
+async function recoverAccount(handle){
+  const h = String(handle || '').trim().toLowerCase().replace(/[^a-z0-9_]/g,'');
+  if (h.length < 3) { toast('Enter your handle (min 3 chars)'); return false; }
+  try {
+    const r = await fetch(`${API}/recover`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ handle: h })
+    });
+    const d = await r.json();
+    if (!r.ok) { toast(d.error || 'Could not find that account'); return false; }
+    state.me = { id: d.id, name: d.name, handle: d.handle };
+    saveMe();
+    return true;
+  } catch(e){ toast('Network error'); return false; }
 }
 
 // ============ PROFILE (life stats / friend code / logout) ============
@@ -2313,6 +2429,8 @@ function openProfileModal(){
   document.getElementById('profile-account-details').innerHTML = rows.map(r =>
     '<div class="row"><span class="lbl">' + escHtml(r[0]) + '</span><span class="val">' + escHtml(String(r[1])) + '</span></div>'
   ).join('');
+
+  renderAccountSwitcher();
 
   document.getElementById('profile-modal').classList.add('open');
 }
@@ -2387,6 +2505,25 @@ async function signIn(){
     saveMe();
     renderApp();
   } catch(e){ toast('Network error'); }
+}
+
+// Toggle the auth screen between "create new" and "sign in to existing".
+function showExistingSignin(){
+  const nf = document.querySelector('#endpaper .fields:not(#existing-fields)');
+  const ef = document.getElementById('existing-fields');
+  if (nf) nf.classList.add('hidden');
+  if (ef) { ef.classList.remove('hidden'); const i = document.getElementById('signin-existing-handle'); if (i) i.focus(); }
+}
+function showNewSignin(){
+  const nf = document.querySelector('#endpaper .fields:not(#existing-fields)');
+  const ef = document.getElementById('existing-fields');
+  if (ef) ef.classList.add('hidden');
+  if (nf) { nf.classList.remove('hidden'); const i = document.getElementById('signin-name'); if (i) i.focus(); }
+}
+async function signInExisting(){
+  const handle = document.getElementById('signin-existing-handle').value;
+  const ok = await recoverAccount(handle);
+  if (ok) { try { sessionStorage.removeItem('uf_cover_seen'); } catch(e){} renderApp(); }
 }
 
 function openCover(){

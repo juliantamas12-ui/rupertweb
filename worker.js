@@ -179,6 +179,7 @@ export default {
       if (p.startsWith('/api/uf/')) {
         let ufRes = null;
         if (p === '/api/uf/signup' && request.method === 'POST')        ufRes = await ufSignup(request, env);
+        else if (p === '/api/uf/recover' && request.method === 'POST')   ufRes = await ufRecover(request, env);
         else if (p === '/api/uf/me')                                    ufRes = await ufMe(url, env);
         else if (p === '/api/uf/search')                               ufRes = await ufSearch(url);
         else if (p === '/api/uf/cover')                                 ufRes = await ufCoverProxy(url);
@@ -7174,6 +7175,26 @@ async function ufSignup(request, env) {
     await kvPut(env, `uf:handle:${cleanHandle}`, id);
     await _ufAddToGlobal(env, id);
     return jsonResponse({ id, name: u.name, handle: u.handle });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
+  }
+}
+
+// Recover / sign in to an existing account from any device by handle.
+// The handle IS the credential (honour-system). Returns the account blob so
+// a fresh device can adopt it and pull all server-side progress.
+async function ufRecover(request, env) {
+  try {
+    const { handle } = await request.json();
+    const cleanHandle = String(handle || '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 20);
+    if (cleanHandle.length < 3) {
+      return jsonResponse({ error: 'Handle min 3 chars (a-z, 0-9, _).' }, 400);
+    }
+    const id = await kvGet(env, `uf:handle:${cleanHandle}`);
+    if (!id) return jsonResponse({ error: 'No account with that handle.' }, 404);
+    const u = await _ufGetUser(env, id);
+    if (!u) return jsonResponse({ error: 'No account with that handle.' }, 404);
+    return jsonResponse({ id: u.id, name: u.name, handle: u.handle });
   } catch (e) {
     return jsonResponse({ error: e.message }, 500);
   }
