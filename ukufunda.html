@@ -1699,20 +1699,28 @@ body[data-monogram="cross"]{--monogram-glyph:'\2720\FE0E'}
           <label for="signin-handle">Handle (friends will add you by this)</label>
           <input id="signin-handle" type="text" placeholder="e.g. wee joe green" maxlength="20" autocomplete="off">
         </div>
+        <div class="field">
+          <label for="signin-password">Password</label>
+          <input id="signin-password" type="password" placeholder="min 6 characters" maxlength="64" autocomplete="new-password">
+        </div>
         <button class="btn" id="signin-btn">Start reading</button>
-        <p class="fine">Pick a handle you'll remember. Once claimed, it's yours.</p>
-        <button class="back-link" id="show-existing-btn" onclick="showExistingSignin()">Already have an account? Sign in</button>
+        <p class="fine">Your handle + password let you log in from any device and keep your progress.</p>
+        <button class="back-link" id="show-existing-btn" onclick="showExistingSignin()">Already have an account? Log in</button>
         <button class="back-link" onclick="closeCover()">back to cover</button>
       </div>
 
-      <!-- Existing-account sign-in: pull your account onto this device by handle -->
+      <!-- Existing-account log in: handle + password pulls your account to this device -->
       <div class="fields hidden" id="existing-fields">
         <div class="field">
           <label for="signin-existing-handle">Your handle</label>
-          <input id="signin-existing-handle" type="text" placeholder="e.g. wee joe green" maxlength="20" autocomplete="off">
+          <input id="signin-existing-handle" type="text" placeholder="e.g. wee joe green" maxlength="20" autocomplete="username">
         </div>
-        <button class="btn" id="signin-existing-btn" onclick="signInExisting()">Sign in</button>
-        <p class="fine">Type the handle you signed up with. Your books, XP and streak come with you.</p>
+        <div class="field">
+          <label for="signin-existing-password">Password</label>
+          <input id="signin-existing-password" type="password" placeholder="your password" maxlength="64" autocomplete="current-password">
+        </div>
+        <button class="btn" id="signin-existing-btn" onclick="signInExisting()">Log in</button>
+        <p class="fine">Log in with your handle and password. Your books, XP and streak come with you.</p>
         <button class="back-link" onclick="showNewSignin()">Create a new account instead</button>
         <button class="back-link" onclick="closeCover()">back to cover</button>
       </div>
@@ -2369,17 +2377,19 @@ function addAnotherAccount(){
   showExistingSignin();
 }
 
-// Sign in to an existing account by handle (works on a brand-new device).
-async function recoverAccount(handle){
+// Log in to an existing account by handle + password (works on any device).
+async function recoverAccount(handle, password){
   const h = String(handle || '').trim().toLowerCase().replace(/[^a-z0-9_]/g,'');
+  const pw = String(password || '');
   if (h.length < 3) { toast('Enter your handle (min 3 chars)'); return false; }
+  if (pw.length < 6) { toast('Password must be at least 6 characters'); return false; }
   try {
-    const r = await fetch(`${API}/recover`, {
+    const r = await fetch(`${API}/login`, {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ handle: h })
+      body: JSON.stringify({ handle: h, password: pw })
     });
     const d = await r.json();
-    if (!r.ok) { toast(d.error || 'Could not find that account'); return false; }
+    if (!r.ok) { toast(d.error || 'Wrong handle or password'); return false; }
     state.me = { id: d.id, name: d.name, handle: d.handle };
     saveMe();
     return true;
@@ -2492,12 +2502,14 @@ function resetAccount(){
 async function signIn(){
   const name = document.getElementById('signin-name').value.trim();
   const handle = document.getElementById('signin-handle').value.trim().toLowerCase().replace(/[^a-z0-9_]/g,'');
+  const password = document.getElementById('signin-password').value;
   if (!name || !handle) return toast('Name and handle required');
   if (handle.length < 3) return toast('Handle too short (min 3)');
+  if (!password || password.length < 6) return toast('Password must be at least 6 characters');
   try {
     const r = await fetch(`${API}/signup`, {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({name, handle})
+      body: JSON.stringify({name, handle, password})
     });
     const d = await r.json();
     if (!r.ok) return toast(d.error || 'Signup failed');
@@ -2522,7 +2534,8 @@ function showNewSignin(){
 }
 async function signInExisting(){
   const handle = document.getElementById('signin-existing-handle').value;
-  const ok = await recoverAccount(handle);
+  const password = document.getElementById('signin-existing-password').value;
+  const ok = await recoverAccount(handle, password);
   if (ok) { try { sessionStorage.removeItem('uf_cover_seen'); } catch(e){} renderApp(); }
 }
 

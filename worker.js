@@ -179,7 +179,7 @@ export default {
       if (p.startsWith('/api/uf/')) {
         let ufRes = null;
         if (p === '/api/uf/signup' && request.method === 'POST')        ufRes = await ufSignup(request, env);
-        else if (p === '/api/uf/recover' && request.method === 'POST')   ufRes = await ufRecover(request, env);
+        else if (p === '/api/uf/login' && request.method === 'POST')     ufRes = await ufLogin(request, env);
         else if (p === '/api/uf/me')                                    ufRes = await ufMe(url, env);
         else if (p === '/api/uf/search')                               ufRes = await ufSearch(url);
         else if (p === '/api/uf/cover')                                 ufRes = await ufCoverProxy(url);
@@ -7101,6 +7101,41 @@ function _ufDayList(days) {
 function _ufRandId() {
   return 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 }
+
+// ── Password hashing (PBKDF2-SHA256, salted, 100k iterations) ──────────
+// Stored as "pbkdf2$<iters>$<saltB64>$<hashB64>". Never store plaintext.
+const _UF_PBKDF2_ITERS = 100000;
+function _b64(buf) {
+  return btoa(String.fromCharCode(...new Uint8Array(buf)));
+}
+function _fromB64(s) {
+  return Uint8Array.from(atob(s), c => c.charCodeAt(0));
+}
+async function _ufHashPassword(password, saltBytes) {
+  const enc = new TextEncoder();
+  const salt = saltBytes || crypto.getRandomValues(new Uint8Array(16));
+  const key = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', salt, iterations: _UF_PBKDF2_ITERS, hash: 'SHA-256' },
+    key, 256
+  );
+  return `pbkdf2$${_UF_PBKDF2_ITERS}$${_b64(salt)}$${_b64(bits)}`;
+}
+async function _ufVerifyPassword(password, stored) {
+  try {
+    if (!stored || typeof stored !== 'string') return false;
+    const parts = stored.split('$');
+    if (parts.length !== 4 || parts[0] !== 'pbkdf2') return false;
+    const salt = _fromB64(parts[2]);
+    const candidate = await _ufHashPassword(password, salt);
+    // Constant-time-ish compare on the final hash segment.
+    const a = candidate.split('$')[3], b = parts[3];
+    if (a.length !== b.length) return false;
+    let diff = 0;
+    for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+    return diff === 0;
+  } catch (e) { return false; }
+}
 function _ufBookId() {
   return 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 }
@@ -7148,25 +7183,28 @@ async function _ufAddToGlobal(env, id) {
 
 async function ufSignup(request, env) {
   try {
-    const { name, handle } = await request.json();
+    const { name, handle, password } = await request.json();
     const cleanName = String(name || '').trim().slice(0, 24);
     const cleanHandle = String(handle || '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 20);
+    const pw = String(password || '');
     if (!cleanName || cleanHandle.length < 3) {
       return jsonResponse({ error: 'Name required, handle min 3 chars (a-z, 0-9, _).' }, 400);
     }
+    if (pw.length < 6) {
+      return jsonResponse({ error: 'Password must be at least 6 characters.' }, 400);
+    }
     const existing = await kvGet(env, `uf:handle:${cleanHandle}`);
     if (existing) {
-      // Handle already taken. If this is really the same person coming back,
-      // return their user so they don't lose progress.
-      const u = await _ufGetUser(env, existing);
-      if (u && u.name === cleanName) {
-        return jsonResponse({ id: u.id, name: u.name, handle: u.handle });
-      }
-      return jsonResponse({ error: 'Handle taken. Try another.' }, 409);
+      // Handle already taken. With passwords, we no longer auto-return the
+      // account on a name match — that would be an account takeover. Tell them
+      // to log in instead.
+      return jsonResponse({ error: 'Handle taken. If it is yours, log in instead.' }, 409);
     }
     const id = _ufRandId();
+    const pwHash = await _ufHashPassword(pw);
     const u = {
       id, name: cleanName, handle: cleanHandle,
+      pwHash,
       createdAt: Date.now(),
       totalXp: 0, streak: 0, lastLogDay: null,
       booksFinished: 0
@@ -7180,20 +7218,35 @@ async function ufSignup(request, env) {
   }
 }
 
-// Recover / sign in to an existing account from any device by handle.
-// The handle IS the credential (honour-system). Returns the account blob so
-// a fresh device can adopt it and pull all server-side progress.
-async function ufRecover(request, env) {
+// Log in to an existing account from any device: handle + password.
+// On success returns the account blob so the device can adopt it and pull all
+// server-side progress. Legacy accounts created before passwords existed have
+// no pwHash — the first successful login (any password) sets one, so old users
+// aren't locked out but new logins are protected thereafter.
+async function ufLogin(request, env) {
   try {
-    const { handle } = await request.json();
+    const { handle, password } = await request.json();
     const cleanHandle = String(handle || '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 20);
+    const pw = String(password || '');
     if (cleanHandle.length < 3) {
-      return jsonResponse({ error: 'Handle min 3 chars (a-z, 0-9, _).' }, 400);
+      return jsonResponse({ error: 'Enter your handle.' }, 400);
+    }
+    if (pw.length < 6) {
+      return jsonResponse({ error: 'Password must be at least 6 characters.' }, 400);
     }
     const id = await kvGet(env, `uf:handle:${cleanHandle}`);
-    if (!id) return jsonResponse({ error: 'No account with that handle.' }, 404);
+    if (!id) return jsonResponse({ error: 'Wrong handle or password.' }, 401);
     const u = await _ufGetUser(env, id);
-    if (!u) return jsonResponse({ error: 'No account with that handle.' }, 404);
+    if (!u) return jsonResponse({ error: 'Wrong handle or password.' }, 401);
+
+    if (!u.pwHash) {
+      // Legacy account with no password set: claim it now with this password.
+      u.pwHash = await _ufHashPassword(pw);
+      await _ufPutUser(env, u);
+      return jsonResponse({ id: u.id, name: u.name, handle: u.handle });
+    }
+    const ok = await _ufVerifyPassword(pw, u.pwHash);
+    if (!ok) return jsonResponse({ error: 'Wrong handle or password.' }, 401);
     return jsonResponse({ id: u.id, name: u.name, handle: u.handle });
   } catch (e) {
     return jsonResponse({ error: e.message }, 500);
