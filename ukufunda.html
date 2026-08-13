@@ -467,6 +467,10 @@ header.top{display:none !important}
 
 /* ── Tier badge ────────────────────────────────── */
 .tier-badge{display:inline-flex;align-items:center;gap:6px;padding:3px 9px 2px;background:transparent;border:1.5px solid var(--ink);border-radius:0;font-weight:700;font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:var(--ink);font-family:'Geist',sans-serif;transform:rotate(-1.5deg);transform-origin:left center}
+/* Founders tag — awarded to the two original accounts. A small gilt seal. */
+.founder-tag{display:inline-flex;align-items:center;gap:4px;margin-left:7px;padding:2px 8px 1px;border:1px solid var(--t-gold, #c9a24b);border-radius:999px;background:linear-gradient(135deg,rgba(201,162,75,0.18),rgba(201,162,75,0.06));color:var(--t-gold, #c9a24b);font-family:'Geist',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;vertical-align:middle;white-space:nowrap}
+.founder-tag::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--t-gold, #c9a24b);box-shadow:0 0 6px var(--t-gold, #c9a24b)}
+.profile-id .founder-tag{font-size:10px;margin-left:0;margin-top:4px}
 .tier-badge .dot{width:5px;height:5px;border-radius:50%;background:var(--t-bronze)}
 .tier-badge.silver .dot{background:var(--t-silver)}
 .tier-badge.gold .dot{background:var(--t-gold)}
@@ -2201,6 +2205,26 @@ body[data-monogram="cross"]{--monogram-glyph:'\2720\FE0E'}
   </div>
 </div>
 
+<div id="setpw-modal" class="modal-bg">
+  <div class="modal">
+    <h3>Protect your account</h3>
+    <div id="setpw-intro" style="margin-bottom:16px;color:var(--ink-dim);font-size:13px">Your account has no password yet. Create one now so you can log in from other devices and never lose your progress when you log out.</div>
+    <div class="field">
+      <label for="setpw-password">New password</label>
+      <input id="setpw-password" type="password" placeholder="min 6 characters" maxlength="64" autocomplete="new-password">
+    </div>
+    <div class="field">
+      <label for="setpw-confirm">Confirm password</label>
+      <input id="setpw-confirm" type="password" placeholder="type it again" maxlength="64" autocomplete="new-password">
+    </div>
+    <div id="setpw-error" style="color:var(--red);font-size:13px;min-height:16px;margin-bottom:8px"></div>
+    <div class="actions">
+      <button class="btn ghost" id="setpw-later-btn" onclick="dismissSetPassword()" style="flex:0 0 auto">Later</button>
+      <button class="btn" onclick="submitSetPassword()">Save password</button>
+    </div>
+  </div>
+</div>
+
 <div id="profile-modal" class="modal-bg">
   <div class="modal profile-modal">
     <div class="profile-head">
@@ -2208,6 +2232,7 @@ body[data-monogram="cross"]{--monogram-glyph:'\2720\FE0E'}
       <div class="profile-id">
         <div class="profile-name" id="profile-name">—</div>
         <div class="profile-handle" id="profile-handle">@—</div>
+        <div id="profile-founder"></div>
         <div id="profile-tier"></div>
       </div>
     </div>
@@ -2325,6 +2350,14 @@ function clearMe(){
   localStorage.removeItem(LS_KEY);
   state.me = null;
 }
+// Log out this device. Also drops the account from the on-device roster so a
+// logged-out account isn't left behind in the switcher.
+function doLogout(){
+  const id = state.me && state.me.id;
+  if (id) forgetAccount(id);
+  clearMe();
+  location.reload();
+}
 
 // Switch the active account to one already known on this device. Pulls fresh
 // name/handle from the server so a rename elsewhere is reflected.
@@ -2377,6 +2410,60 @@ function addAnotherAccount(){
   showExistingSignin();
 }
 
+// ── Set-password (for legacy accounts with none) ──────────────────────
+// `forced` = opened as a hard block (e.g. on logout) so "Later" is hidden.
+function openSetPasswordModal(forced){
+  if (!state.me) return;
+  const m = document.getElementById('setpw-modal');
+  if (!m) return;
+  document.getElementById('setpw-password').value = '';
+  document.getElementById('setpw-confirm').value = '';
+  document.getElementById('setpw-error').textContent = '';
+  const later = document.getElementById('setpw-later-btn');
+  const intro = document.getElementById('setpw-intro');
+  if (forced) {
+    if (later) later.style.display = 'none';
+    if (intro) intro.textContent = 'Before you log out — set a password so you can get back into this account. Without one, logging out means losing it for good.';
+  } else {
+    if (later) later.style.display = '';
+    if (intro) intro.textContent = 'Your account has no password yet. Create one now so you can log in from other devices and never lose your progress when you log out.';
+  }
+  m.dataset.forced = forced ? '1' : '';
+  m.classList.add('open');
+  setTimeout(() => { const i = document.getElementById('setpw-password'); if (i) i.focus(); }, 50);
+}
+function closeSetPasswordModal(){
+  const m = document.getElementById('setpw-modal');
+  if (m) m.classList.remove('open');
+}
+function dismissSetPassword(){
+  // Only allowed when not forced. Remember for the session so we don't nag.
+  try { sessionStorage.setItem('uf_pw_prompt_dismissed', '1'); } catch(e){}
+  closeSetPasswordModal();
+}
+async function submitSetPassword(){
+  const pw = document.getElementById('setpw-password').value;
+  const confirmPw = document.getElementById('setpw-confirm').value;
+  const errEl = document.getElementById('setpw-error');
+  errEl.textContent = '';
+  if (!pw || pw.length < 6) { errEl.textContent = 'Password must be at least 6 characters.'; return; }
+  if (pw !== confirmPw) { errEl.textContent = 'Passwords do not match.'; return; }
+  try {
+    const r = await fetch(`${API}/set-password`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ id: state.me.id, password: pw })
+    });
+    const d = await r.json();
+    if (!r.ok) { errEl.textContent = d.error || 'Could not set password.'; return; }
+    if (state.me) { state.me.hasPassword = true; saveMe(); }
+    const m = document.getElementById('setpw-modal');
+    const wasForced = m && m.dataset.forced === '1';
+    closeSetPasswordModal();
+    toast('Password set — your account is safe now');
+    if (wasForced) { doLogout(); }
+  } catch(e){ errEl.textContent = 'Network error. Try again.'; }
+}
+
 // Log in to an existing account by handle + password (works on any device).
 async function recoverAccount(handle, password){
   const h = String(handle || '').trim().toLowerCase().replace(/[^a-z0-9_]/g,'');
@@ -2407,6 +2494,8 @@ function openProfileModal(){
   document.getElementById('profile-avatar').textContent = initial;
   document.getElementById('profile-name').textContent = state.me.name || '';
   document.getElementById('profile-handle').textContent = '@' + (state.me.handle || '');
+  const founderEl = document.getElementById('profile-founder');
+  if (founderEl) founderEl.innerHTML = foundersTag(state.me.handle);
   document.getElementById('profile-tier').innerHTML =
     '<span class="tier-badge ' + t.cls + '"><span class="dot"></span>' + t.name + '</span>';
 
@@ -2633,10 +2722,22 @@ async function boot(){
   document.getElementById('signin-btn').addEventListener('click', signIn);
   document.getElementById('who-name').addEventListener('click', openProfileModal);
   document.getElementById('profile-signout-btn').addEventListener('click', () => {
-    if (confirm('Log out?')) { clearMe(); location.reload(); }
+    // Guard: a legacy account with no password would be unrecoverable after
+    // logout. Force them to set one first (forced modal, no "Later").
+    if (state.me && !state.me.hasPassword) {
+      closeProfileModal();
+      openSetPasswordModal(true);
+      return;
+    }
+    if (confirm('Log out?')) doLogout();
   });
   document.getElementById('profile-modal').addEventListener('click', (e) => {
     if (e.target.id === 'profile-modal') closeProfileModal();
+  });
+  const setpwM = document.getElementById('setpw-modal');
+  if (setpwM) setpwM.addEventListener('click', (e) => {
+    // Backdrop click closes only when the prompt is not a forced (pre-logout) one.
+    if (e.target.id === 'setpw-modal' && setpwM.dataset.forced !== '1') dismissSetPassword();
   });
   document.getElementById('close-book-btn').addEventListener('click', () => showCoverSplash());
   // No tab-bar buttons to wire — navigation is swipe or Contents
@@ -3067,6 +3168,16 @@ function wireKeyboard(){
   });
 }
 
+// Founders — the two original accounts. Matched by handle so it follows them
+// even if they rename. Returns a badge span (or '') for use next to the name.
+const FOUNDER_HANDLES = new Set(['eddison', 'hrhjb']);
+function isFounder(handle){
+  return FOUNDER_HANDLES.has(String(handle || '').trim().toLowerCase());
+}
+function foundersTag(handle){
+  return isFounder(handle) ? '<span class="founder-tag" title="Founding member">Founder</span>' : '';
+}
+
 // Short tier code for the compact streak badges. `slice(0,3)` produced
 // confusing labels like "BRO" for Bronze; use explicit 3-letter codes.
 function tierShort(name){
@@ -3093,7 +3204,23 @@ async function loadStats(){
     }
     const d = await r.json();
     state.stats = d;
+    // Track whether this account has a password set on the server. Legacy
+    // accounts (made before passwords existed) come back with hasPassword:false
+    // — nudge them to create one so they don't lose the account on logout.
+    if (state.me) {
+      state.me.hasPassword = !!d.hasPassword;
+      saveMe();
+      maybePromptSetPassword();
+    }
   } catch(e){ console.error('loadStats failed:', e); }
+}
+
+// If this account has no password yet, show the one-time create-password
+// prompt (unless the user dismissed it this session). Called after stats load.
+function maybePromptSetPassword(){
+  if (!state.me || state.me.hasPassword) return;
+  try { if (sessionStorage.getItem('uf_pw_prompt_dismissed') === '1') return; } catch(e){}
+  openSetPasswordModal(false);
 }
 
 function renderLibraryHome(){
@@ -3689,7 +3816,7 @@ function renderLeaderboard(){
     const meCls = row.id === state.me.id ? 'me' : '';
     return `<div class="lb-row">
       <div class="rank ${rankCls}">${rank}</div>
-      <div class="name ${meCls}">${escHtml(row.name)} <span class="h">@${escHtml(row.handle)}</span></div>
+      <div class="name ${meCls}">${escHtml(row.name)} <span class="h">@${escHtml(row.handle)}</span>${foundersTag(row.handle)}</div>
       <div class="xp">${(row.totalXp || 0).toLocaleString()}</div>
       <div class="streak">${row.streak || 0}d</div>
       <div class="streak"><span class="tier-badge ${t.cls}" style="padding:2px 8px;font-size:10px"><span class="dot"></span>${tierShort(t.name)}</span></div>
@@ -4034,7 +4161,7 @@ function renderGuildDetail(g, goals){
       const meCls = row.id === state.me.id ? 'me' : '';
       return `<div class="lb-row">
         <div class="rank ${rankCls}">${rank}</div>
-        <div class="name ${meCls}">${escHtml(row.name)} <span class="h">@${escHtml(row.handle)}</span></div>
+        <div class="name ${meCls}">${escHtml(row.name)} <span class="h">@${escHtml(row.handle)}</span>${foundersTag(row.handle)}</div>
         <div class="xp">${(row.totalXp||0).toLocaleString()}</div>
         <div class="streak">${row.streak||0}d</div>
         <div class="streak"><span class="tier-badge ${t.cls}" style="padding:2px 8px;font-size:10px"><span class="dot"></span>${tierShort(t.name)}</span></div>

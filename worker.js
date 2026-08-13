@@ -180,6 +180,7 @@ export default {
         let ufRes = null;
         if (p === '/api/uf/signup' && request.method === 'POST')        ufRes = await ufSignup(request, env);
         else if (p === '/api/uf/login' && request.method === 'POST')     ufRes = await ufLogin(request, env);
+        else if (p === '/api/uf/set-password' && request.method === 'POST') ufRes = await ufSetPassword(request, env);
         else if (p === '/api/uf/me')                                    ufRes = await ufMe(url, env);
         else if (p === '/api/uf/search')                               ufRes = await ufSearch(url);
         else if (p === '/api/uf/cover')                                 ufRes = await ufCoverProxy(url);
@@ -7253,6 +7254,30 @@ async function ufLogin(request, env) {
   }
 }
 
+// Set a password on an account that has none yet (legacy accounts created
+// before passwords existed). Requires the caller to already hold the account
+// id on this device — which they do, since they're logged in here. Refuses to
+// overwrite an existing password (that path is a future "change password").
+async function ufSetPassword(request, env) {
+  try {
+    const { id, password } = await request.json();
+    if (!id) return jsonResponse({ error: 'id required' }, 400);
+    const pw = String(password || '');
+    if (pw.length < 6) return jsonResponse({ error: 'Password must be at least 6 characters.' }, 400);
+    const u = await _ufGetUser(env, id);
+    if (!u) return jsonResponse({ error: 'not found' }, 404);
+    if (u.pwHash) {
+      // Already has a password — nothing to do (idempotent success).
+      return jsonResponse({ ok: true, alreadySet: true });
+    }
+    u.pwHash = await _ufHashPassword(pw);
+    await _ufPutUser(env, u);
+    return jsonResponse({ ok: true });
+  } catch (e) {
+    return jsonResponse({ error: e.message }, 500);
+  }
+}
+
 async function ufMe(url, env) {
   try {
     const id = url.searchParams.get('id');
@@ -7271,6 +7296,7 @@ async function ufMe(url, env) {
     }
     return jsonResponse({
       id: u.id, name: u.name, handle: u.handle,
+      hasPassword: !!u.pwHash,
       totalXp: u.totalXp || 0,
       streak: u.streak || 0,
       booksFinished: u.booksFinished || 0,
