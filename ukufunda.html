@@ -3046,7 +3046,13 @@ function wireSwipe(){
 // session is running — same guards as the swipe handler.
 function wireKeyboard(){
   document.addEventListener('keydown', (e) => {
-    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    // Arrow keys plus Q/E — some keyboards lack arrow keys, so Q flips to the
+    // previous page and E flips to the next.
+    const k = e.key;
+    const kl = typeof k === 'string' ? k.toLowerCase() : '';
+    const isPrev = (k === 'ArrowLeft' || kl === 'q');
+    const isNext = (k === 'ArrowRight' || kl === 'e');
+    if (!isPrev && !isNext) return;
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     const app = document.getElementById('app');
     if (!app || app.classList.contains('hidden')) return;
@@ -3057,7 +3063,7 @@ function wireKeyboard(){
     const splash = document.getElementById('book-cover-splash');
     if (splash && !splash.classList.contains('hidden')) return;
     e.preventDefault();
-    flipPage(e.key === 'ArrowLeft' ? 'prev' : 'next');
+    flipPage(isPrev ? 'prev' : 'next');
   });
 }
 
@@ -4583,16 +4589,30 @@ function mountAurora(){
   // Static backdrop stars (sky, not interactive).
   const stars = [];
   for (let i=0;i<70;i++) stars.push({ x:Math.random(), y:Math.random()*0.7, r:0.4+Math.random()*1.1, tw:Math.random()*6.28 });
-  // Aurora curtains. Each band drifts horizontally and shimmers on its own clock.
+
+  // Aurora curtains. Each band drifts horizontally on its own slow clock and
+  // has an independent brightness "life" so the whole sky pulses and reforms
+  // rather than swaying in lockstep. Layered sines of different frequencies
+  // give the ribbon an organic, ever-changing shape — like a real aurora.
   const bands = [];
   for (let i=0;i<6;i++) bands.push({
     // green (~140) at bottom shifting toward purple (~285) at top per-band
     baseHue: 135 + i*8,
     phase: Math.random()*6.28,
-    speed: 0.08 + Math.random()*0.10,
-    drift: 0.006 + Math.random()*0.006,
+    speed: 0.05 + Math.random()*0.07,   // slower sway = calmer
+    drift: 0.003 + Math.random()*0.004, // slower horizontal travel
     xoff: (i+0.5)/6,
+    // Independent shape clocks so ribbons morph differently over time.
+    warp: 0.02 + Math.random()*0.03,
+    warpPhase: Math.random()*6.28,
+    // Brightness "breathing": each band brightens and fades on its own period.
+    lifeSpeed: 0.10 + Math.random()*0.14,
+    lifePhase: Math.random()*6.28,
+    // Slow width pulse — curtains widen and narrow as they reform.
+    wobble: 0.06 + Math.random()*0.05,
+    wobblePhase: Math.random()*6.28,
   });
+
   _sigSetup((time, ctx, w, h /*, pointer intentionally ignored */) => {
     // Base sky: very dark purple-navy (distinct from Abyssal's blue).
     const sky = ctx.createLinearGradient(0,0,0,h);
@@ -4607,30 +4627,51 @@ function mountAurora(){
       ctx.beginPath(); ctx.arc(s.x*w, s.y*h, s.r, 0, 6.283); ctx.fill();
     }
 
+    // A slow global brightness swell so the whole aurora surges and settles,
+    // the way real auroral substorms pulse over a minute or two.
+    const globalGlow = 0.72 + 0.28*Math.sin(time*0.06);
+
     // Curtains, additively blended for glow.
     ctx.globalCompositeOperation = 'lighter';
-    const width = w*0.20;
     for (const b of bands){
-      const cxBase = ((b.xoff + time*b.drift) % 1.2 - 0.1) * w; // slow autonomous drift
+      const cxBase = ((b.xoff + time*b.drift) % 1.3 - 0.15) * w; // slow autonomous drift
+
+      // Per-band brightness "life": rises and falls independently, clamped so
+      // ribbons sometimes nearly vanish then bloom back — the reforming look.
+      const life = 0.30 + 0.70*(0.5 + 0.5*Math.sin(time*b.lifeSpeed + b.lifePhase));
+      const glow = life * globalGlow;
+
+      // Width breathes so the curtain fattens and thins as it morphs.
+      const width = w * (0.16 + 0.08*(0.5 + 0.5*Math.sin(time*b.wobble + b.wobblePhase)));
+
       const grad = ctx.createLinearGradient(0,0,0,h);
       // green core low, purple high — the signature aurora green+purple.
+      // Opacities scale with the band's live brightness.
+      const a = (v) => Math.max(0, Math.min(1, v*glow)).toFixed(3);
       grad.addColorStop(0.00, `hsla(285,72%,60%,0)`);
-      grad.addColorStop(0.28, `hsla(275,70%,58%,0.10)`);
-      grad.addColorStop(0.55, `hsla(160,78%,52%,0.16)`);
-      grad.addColorStop(0.80, `hsla(${b.baseHue},82%,50%,0.12)`);
+      grad.addColorStop(0.24, `hsla(278,72%,60%,${a(0.11)})`);
+      grad.addColorStop(0.50, `hsla(200,80%,58%,${a(0.10)})`);   // teal transition
+      grad.addColorStop(0.66, `hsla(160,80%,52%,${a(0.18)})`);   // green heart
+      grad.addColorStop(0.85, `hsla(${b.baseHue},84%,50%,${a(0.13)})`);
       grad.addColorStop(1.00, `hsla(${b.baseHue},80%,45%,0)`);
       ctx.fillStyle = grad;
+
+      // The ribbon centre is built from three sine layers at different scales
+      // and speeds; their sum never repeats cleanly, so the curtain folds,
+      // splits and reforms into new shapes over time.
+      const shapeX = (y) =>
+        cxBase
+        + Math.sin(y*0.0045 + time*b.speed + b.phase) * 60
+        + Math.sin(y*0.011  - time*b.speed*0.55) * 30
+        + Math.sin(y*0.021  + time*b.warp + b.warpPhase) * 16;
+
       ctx.beginPath();
-      for (let y=0;y<=h;y+=16){
-        const sway = Math.sin(y*0.005 + time*b.speed + b.phase) * 55
-                   + Math.sin(y*0.012 - time*b.speed*0.6) * 26;
-        const x = cxBase + sway;
+      for (let y=0;y<=h;y+=14){
+        const x = shapeX(y);
         if (y===0) ctx.moveTo(x - width/2, y); else ctx.lineTo(x - width/2, y);
       }
-      for (let y=h;y>=0;y-=16){
-        const sway = Math.sin(y*0.005 + time*b.speed + b.phase) * 55
-                   + Math.sin(y*0.012 - time*b.speed*0.6) * 26;
-        const x = cxBase + sway;
+      for (let y=h;y>=0;y-=14){
+        const x = shapeX(y);
         ctx.lineTo(x + width/2, y);
       }
       ctx.closePath(); ctx.fill();
