@@ -9,9 +9,15 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 # Wrangler deploy token (Workers Scripts/KV/R2/Pages/Zone Routes edit)
-DEPLOY_TOKEN="${CLOUDFLARE_API_TOKEN:-cfut_q6i6vycg8Ea2r93TwDwtcDz9iTBIPNWF1UOy5ink1c206797}"
+# NEVER hardcode tokens here — this file is in a public repo.
+# Source them from the environment (or ~/yuc/.secrets/deploy.env, sourced below).
+if [ -f "$HOME/yuc/.secrets/deploy.env" ]; then
+  # shellcheck disable=SC1090
+  source "$HOME/yuc/.secrets/deploy.env"
+fi
+DEPLOY_TOKEN="${CLOUDFLARE_API_TOKEN:?CLOUDFLARE_API_TOKEN not set (see ~/yuc/.secrets/deploy.env)}"
 # Cache-purge-only token (Zone Cache Purge on rupertweb.com only)
-PURGE_TOKEN="${CLOUDFLARE_PURGE_TOKEN:-cfut_nkQvSWIaX4HxdioiZlfgdU1uCEwRE2C4iqwA5O2u959375ff}"
+PURGE_TOKEN="${CLOUDFLARE_PURGE_TOKEN:?CLOUDFLARE_PURGE_TOKEN not set (see ~/yuc/.secrets/deploy.env)}"
 ACCOUNT_ID="83e723be30278199fc80a3075ab9264d"
 ZONE_ID="0ddcb6a074e5ed919c766bed183e2eb1"
 
