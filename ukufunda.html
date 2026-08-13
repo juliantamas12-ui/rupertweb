@@ -730,6 +730,10 @@ header.top{display:none !important}
 
 /* ── Modal ────────────────────────────────────── */
 .modal-bg{position:fixed;inset:0;background:rgba(200,180,140,0.60);backdrop-filter:blur(8px) saturate(0.9);-webkit-backdrop-filter:blur(8px) saturate(0.9);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+/* Buy-confirm popup: keep the backdrop light and UN-blurred so the live
+   preview (especially animated signatures) shows through behind the dialog. */
+#buy-confirm-modal{background:rgba(20,16,10,0.28);backdrop-filter:none;-webkit-backdrop-filter:none}
+body.paper-dark #buy-confirm-modal{background:rgba(0,0,0,0.34)}
 .modal-bg.open{display:flex}
 .modal{background:var(--paper);border:none;border-top:3px double var(--ink);border-bottom:3px double var(--ink);border-radius:0;padding:32px 28px;max-width:440px;width:100%;box-shadow:0 30px 60px -15px rgba(60,40,20,0.30)}
 .modal h3{font-family:'EB Garamond',serif;font-weight:500;font-size:32px;color:var(--ink-bright);margin-bottom:6px;letter-spacing:-0.01em}
@@ -2205,6 +2209,18 @@ body[data-monogram="cross"]{--monogram-glyph:'\2720\FE0E'}
   </div>
 </div>
 
+<div id="buy-confirm-modal" class="modal-bg">
+  <div class="modal" style="max-width:340px;text-align:center">
+    <h3 id="buy-confirm-title" style="margin-bottom:6px">Buy this?</h3>
+    <div id="buy-confirm-body" style="color:var(--ink-dim);font-size:14px;margin-bottom:6px">—</div>
+    <div style="color:var(--ink-fade);font-size:12px;font-style:italic;margin-bottom:16px">Shown live behind this window.</div>
+    <div class="actions" style="justify-content:center">
+      <button class="btn ghost" onclick="closeBuyConfirm()" style="flex:0 0 auto">Cancel</button>
+      <button class="btn" id="buy-confirm-yes" onclick="confirmBuyNow()">Buy &amp; equip</button>
+    </div>
+  </div>
+</div>
+
 <div id="setpw-modal" class="modal-bg">
   <div class="modal">
     <h3>Protect your account</h3>
@@ -2738,6 +2754,10 @@ async function boot(){
   if (setpwM) setpwM.addEventListener('click', (e) => {
     // Backdrop click closes only when the prompt is not a forced (pre-logout) one.
     if (e.target.id === 'setpw-modal' && setpwM.dataset.forced !== '1') dismissSetPassword();
+  });
+  const buyM = document.getElementById('buy-confirm-modal');
+  if (buyM) buyM.addEventListener('click', (e) => {
+    if (e.target.id === 'buy-confirm-modal') closeBuyConfirm();
   });
   document.getElementById('close-book-btn').addEventListener('click', () => showCoverSplash());
   // No tab-bar buttons to wire — navigation is swipe or Contents
@@ -4972,6 +4992,34 @@ function buyPreviewedItem(){
   shopItemClick(catKey, itemId);
 }
 
+// ── Buy-confirm popup (floats over the live preview) ──────────────────
+// One-shot flag: set true only while the popup's "Buy & equip" re-invokes the
+// purchase, so shopItemClick knows this pass is a confirmed buy, not a preview.
+let _buyConfirmed = false;
+let _buyPending = null; // { catKey, itemId }
+function openBuyConfirm(catKey, itemId, item, cost){
+  _buyPending = { catKey, itemId };
+  const m = document.getElementById('buy-confirm-modal');
+  if (!m) return;
+  const title = document.getElementById('buy-confirm-title');
+  const body = document.getElementById('buy-confirm-body');
+  if (title) title.textContent = 'Buy ' + item.name + '?';
+  if (body) body.innerHTML = 'Spend <strong>' + cost.toLocaleString() + ' XP</strong> to unlock and equip <strong>' + escHtml(item.name) + '</strong>.';
+  m.classList.add('open');
+}
+function closeBuyConfirm(){
+  _buyPending = null;
+  const m = document.getElementById('buy-confirm-modal');
+  if (m) m.classList.remove('open');
+}
+function confirmBuyNow(){
+  if (!_buyPending) return closeBuyConfirm();
+  const { catKey, itemId } = _buyPending;
+  closeBuyConfirm();
+  _buyConfirmed = true;
+  shopItemClick(catKey, itemId);
+}
+
 function shopItemClick(catKey, itemId){
   const cat = SHOP_CATALOG[catKey];
   let item = cat && cat.items.find(x => x.id === itemId);
@@ -4998,14 +5046,21 @@ function shopItemClick(catKey, itemId){
       }
       return;
     }
-    // Confirm purchase
+    // Confirm purchase — open the in-page popup that floats over the live
+    // preview (so the animated signature keeps running behind the dialog).
     const cost = item.price;
     const debugOn = isDebugInfiniteXp();
     if (!debugOn && (data.spendableXp || 0) < cost) {
       toast('Not enough XP — need ' + cost.toLocaleString() + ' XP');
       return;
     }
-    if (!confirm('Spend ' + cost.toLocaleString() + ' XP on ' + item.name + '?')) return;
+    // If not already confirmed via the popup, open it and stop here. The
+    // popup's "Buy & equip" re-enters this function with _buyConfirmed set.
+    if (!_buyConfirmed) {
+      openBuyConfirm(catKey, itemId, item, cost);
+      return;
+    }
+    _buyConfirmed = false; // consume the one-shot confirmation
     if (!debugOn) {
       // Real purchase: deduct XP
       data.spendableXp = (data.spendableXp || 0) - cost;
